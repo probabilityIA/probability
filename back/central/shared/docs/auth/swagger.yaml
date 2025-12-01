@@ -1,0 +1,2793 @@
+basePath: /api/v1
+definitions:
+  request.AssignPermissionsToRoleRequest:
+    properties:
+      permission_ids:
+        items:
+          type: integer
+        type: array
+    required:
+    - permission_ids
+    type: object
+  request.AssignRoleToUserBusinessRequest:
+    type: object
+  request.BusinessRoleAssignmentItem:
+    properties:
+      business_id:
+        example: 16
+        minimum: 1
+        type: integer
+      role_id:
+        example: 4
+        minimum: 1
+        type: integer
+    required:
+    - business_id
+    - role_id
+    type: object
+  request.BusinessTypeRequest:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+      is_active:
+        type: boolean
+      name:
+        type: string
+    required:
+    - code
+    - name
+    type: object
+  request.ChangePasswordRequest:
+    properties:
+      current_password:
+        maxLength: 100
+        minLength: 6
+        type: string
+      new_password:
+        maxLength: 100
+        minLength: 6
+        type: string
+    required:
+    - current_password
+    - new_password
+    type: object
+  request.CreatePermissionRequest:
+    properties:
+      action_id:
+        description: ID de la action
+        example: 1
+        type: integer
+      business_type_id:
+        example: 11
+        type: integer
+      code:
+        description: Opcional, se genera automáticamente si no se proporciona
+        example: horizontalproperty_createuser
+        type: string
+      description:
+        example: Permite crear nuevos usuarios en el sistema
+        type: string
+      name:
+        example: Crear usuario
+        type: string
+      resource_id:
+        description: ID del resource
+        example: 1
+        type: integer
+      scope_id:
+        example: 1
+        type: integer
+    required:
+    - action_id
+    - name
+    - resource_id
+    - scope_id
+    type: object
+  request.CreateRoleRequest:
+    properties:
+      business_type_id:
+        example: 1
+        type: integer
+      description:
+        example: Rol de administrador del sistema
+        type: string
+      is_system:
+        example: false
+        type: boolean
+      level:
+        example: 2
+        maximum: 10
+        minimum: 1
+        type: integer
+      name:
+        example: Administrador
+        type: string
+      scope_id:
+        example: 1
+        type: integer
+    required:
+    - business_type_id
+    - description
+    - level
+    - name
+    - scope_id
+    type: object
+  request.GenerateBusinessTokenRequest:
+    properties:
+      business_id:
+        description: 0 para super admin, >0 para usuarios normales
+        type: integer
+    type: object
+  request.GeneratePasswordRequest:
+    properties:
+      user_id:
+        description: 'Opcional: solo para super usuarios'
+        example: 10
+        minimum: 1
+        type: integer
+    type: object
+  request.LoginRequest:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  request.UpdatePermissionRequest:
+    properties:
+      action_id:
+        description: ID de la action
+        example: 1
+        type: integer
+      business_type_id:
+        example: 11
+        type: integer
+      code:
+        example: users:create
+        type: string
+      description:
+        example: Permite crear nuevos usuarios en el sistema
+        type: string
+      name:
+        example: Crear usuarios
+        type: string
+      resource_id:
+        description: ID del resource
+        example: 1
+        type: integer
+      scope_id:
+        example: 1
+        type: integer
+    required:
+    - action_id
+    - name
+    - resource_id
+    - scope_id
+    type: object
+  request.UpdateRoleRequest:
+    properties:
+      business_type_id:
+        example: 1
+        type: integer
+      description:
+        example: Rol de administrador actualizado
+        type: string
+      is_system:
+        example: false
+        type: boolean
+      level:
+        example: 3
+        maximum: 10
+        minimum: 1
+        type: integer
+      name:
+        example: Administrador Actualizado
+        type: string
+      scope_id:
+        example: 1
+        type: integer
+    type: object
+  response.AssignPermissionsToRoleResponse:
+    properties:
+      message:
+        example: Permisos asignados exitosamente al rol
+        type: string
+      permission_ids:
+        items:
+          type: integer
+        type: array
+      role_id:
+        example: 1
+        type: integer
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.AssignRoleToUserBusinessResponse:
+    properties:
+      message:
+        example: Rol asignado exitosamente al usuario en el business
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.BusinessDetailResponse:
+    properties:
+      address:
+        type: string
+      business_type:
+        $ref: '#/definitions/response.BusinessTypeDetailResponse'
+      code:
+        type: string
+      created_at:
+        type: string
+      custom_domain:
+        type: string
+      description:
+        type: string
+      enable_delivery:
+        type: boolean
+      enable_pickup:
+        type: boolean
+      enable_reservations:
+        type: boolean
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      logo_url:
+        type: string
+      name:
+        type: string
+      navbar_image_url:
+        type: string
+      primary_color:
+        type: string
+      quaternary_color:
+        type: string
+      secondary_color:
+        type: string
+      tertiary_color:
+        type: string
+      timezone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  response.BusinessRoleAssignmentResponse:
+    properties:
+      business_id:
+        type: integer
+      business_name:
+        type: string
+      role_id:
+        type: integer
+      role_name:
+        type: string
+    type: object
+  response.BusinessTokenResponse:
+    properties:
+      token:
+        type: string
+    type: object
+  response.BusinessTypeDetailResponse:
+    properties:
+      code:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  response.BusinessTypeInfo:
+    properties:
+      code:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  response.ChangePasswordResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.CreateRoleResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.RoleData'
+      message:
+        example: Rol creado exitosamente
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.GenerateBusinessTokenErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  response.GenerateBusinessTokenSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.BusinessTokenResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.GeneratePasswordResponse:
+    properties:
+      email:
+        example: usuario@ejemplo.com
+        type: string
+      message:
+        example: Nueva contraseña generada para el usuario usuario@ejemplo.com
+        type: string
+      password:
+        example: aB3$kL9mP2xQ
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.GetBusinessByIDResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.BusinessDetailResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.GetRolePermissionsResponse:
+    properties:
+      count:
+        example: 3
+        type: integer
+      message:
+        example: Permisos del rol obtenidos exitosamente
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/services_auth_roles_internal_infra_primary_handlers_response.PermissionResponse'
+        type: array
+      role_id:
+        example: 1
+        type: integer
+      role_name:
+        example: Administrador
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.LoginBadRequestResponse:
+    properties:
+      details:
+        type: string
+      error:
+        type: string
+    type: object
+  response.LoginErrorResponse:
+    properties:
+      details:
+        type: string
+      error:
+        type: string
+    type: object
+  response.LoginResponse:
+    properties:
+      businesses:
+        items:
+          $ref: '#/definitions/services_auth_login_internal_infra_primary_handlers_response.BusinessInfo'
+        type: array
+      is_super_admin:
+        description: Indica si es super admin (scope platform o scope_id 1)
+        type: boolean
+      require_password_change:
+        type: boolean
+      scope:
+        description: Scope del usuario (platform, business, etc.)
+        type: string
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/response.UserInfo'
+    type: object
+  response.LoginSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.LoginResponse'
+      success:
+        type: boolean
+    type: object
+  response.PermissionErrorResponse:
+    properties:
+      error:
+        example: Error al procesar la solicitud
+        type: string
+    type: object
+  response.PermissionListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/services_auth_permissions_internal_infra_primary_handlers_response.PermissionResponse'
+        type: array
+      success:
+        example: true
+        type: boolean
+      total:
+        example: 10
+        type: integer
+    type: object
+  response.PermissionMessageResponse:
+    properties:
+      message:
+        example: Permiso creado exitosamente
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.PermissionSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/services_auth_permissions_internal_infra_primary_handlers_response.PermissionResponse'
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.ResourcePermissions:
+    properties:
+      actions:
+        items:
+          type: string
+        type: array
+      active:
+        description: Indica si el recurso está activo para el business
+        type: boolean
+      resource:
+        type: string
+    type: object
+  response.RoleData:
+    properties:
+      business_type_id:
+        example: 1
+        type: integer
+      created_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+      description:
+        example: Rol de administrador del sistema
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_system:
+        example: false
+        type: boolean
+      level:
+        example: 2
+        type: integer
+      name:
+        example: Administrador
+        type: string
+      scope_id:
+        example: 1
+        type: integer
+      updated_at:
+        example: "2024-01-01T00:00:00Z"
+        type: string
+    type: object
+  response.RoleErrorResponse:
+    properties:
+      error:
+        example: Error interno del servidor
+        type: string
+    type: object
+  response.RoleListResponse:
+    properties:
+      count:
+        example: 5
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/response.RoleResponse'
+        type: array
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.RoleResponse:
+    properties:
+      business_type_id:
+        example: 1
+        type: integer
+      business_type_name:
+        example: Propiedad Horizontal
+        type: string
+      code:
+        example: admin
+        type: string
+      description:
+        example: Rol de administrador del sistema
+        type: string
+      id:
+        example: 1
+        type: integer
+      is_system:
+        example: true
+        type: boolean
+      level:
+        example: 2
+        type: integer
+      name:
+        example: Administrador
+        type: string
+      scope_code:
+        example: system
+        type: string
+      scope_id:
+        example: 1
+        type: integer
+      scope_name:
+        example: Sistema
+        type: string
+    type: object
+  response.RoleSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.RoleResponse'
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.UpdateRoleResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.RoleData'
+      message:
+        example: Rol actualizado exitosamente
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.UserCreatedResponse:
+    properties:
+      email:
+        type: string
+      message:
+        type: string
+      password:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.UserErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  response.UserInfo:
+    properties:
+      avatar_url:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      last_login_at:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  response.UserListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/response.UserResponse'
+        type: array
+      pagination:
+        $ref: '#/definitions/services_auth_users_internal_infra_primary_handlers_response.PaginationInfo'
+      success:
+        type: boolean
+    type: object
+  response.UserMessageResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.UserResponse:
+    properties:
+      avatar_url:
+        type: string
+      business_role_assignments:
+        items:
+          $ref: '#/definitions/response.BusinessRoleAssignmentResponse'
+        type: array
+      created_at:
+        type: string
+      email:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      is_super_user:
+        type: boolean
+      last_login_at:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  response.UserRolesPermissionsResponse:
+    properties:
+      business_id:
+        type: integer
+      business_name:
+        type: string
+      business_type_id:
+        type: integer
+      business_type_name:
+        type: string
+      is_super:
+        type: boolean
+      resources:
+        items:
+          $ref: '#/definitions/response.ResourcePermissions'
+        type: array
+      role:
+        $ref: '#/definitions/services_auth_login_internal_infra_primary_handlers_response.RoleInfo'
+    type: object
+  response.UserRolesPermissionsSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.UserRolesPermissionsResponse'
+      success:
+        type: boolean
+    type: object
+  response.UserSuccessResponse:
+    properties:
+      data:
+        $ref: '#/definitions/response.UserResponse'
+      success:
+        type: boolean
+    type: object
+  services_auth_login_internal_infra_primary_handlers_response.BusinessInfo:
+    properties:
+      address:
+        type: string
+      business_type:
+        $ref: '#/definitions/response.BusinessTypeInfo'
+      business_type_id:
+        type: integer
+      code:
+        type: string
+      custom_domain:
+        type: string
+      description:
+        type: string
+      enable_delivery:
+        type: boolean
+      enable_pickup:
+        type: boolean
+      enable_reservations:
+        type: boolean
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      logo_url:
+        type: string
+      name:
+        type: string
+      navbar_image_url:
+        type: string
+      primary_color:
+        type: string
+      quaternary_color:
+        type: string
+      secondary_color:
+        type: string
+      tertiary_color:
+        type: string
+      timezone:
+        type: string
+    type: object
+  services_auth_login_internal_infra_primary_handlers_response.RoleInfo:
+    properties:
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  services_auth_permissions_internal_infra_primary_handlers_response.PermissionResponse:
+    properties:
+      action:
+        example: create
+        type: string
+      action_id:
+        example: 5
+        type: integer
+      business_type_id:
+        example: 11
+        type: integer
+      business_type_name:
+        example: Propiedad Horizontal
+        type: string
+      code:
+        example: users:create
+        type: string
+      description:
+        example: Permite crear nuevos usuarios en el sistema
+        type: string
+      id:
+        example: 1
+        type: integer
+      name:
+        example: Crear usuarios
+        type: string
+      resource:
+        example: users
+        type: string
+      resource_id:
+        example: 3
+        type: integer
+      scope_code:
+        example: system
+        type: string
+      scope_id:
+        example: 1
+        type: integer
+      scope_name:
+        example: Sistema
+        type: string
+    type: object
+  services_auth_roles_internal_infra_primary_handlers_response.PermissionResponse:
+    properties:
+      action:
+        example: create
+        type: string
+      description:
+        example: Crear usuarios
+        type: string
+      id:
+        example: 1
+        type: integer
+      resource:
+        example: users
+        type: string
+      scope_code:
+        example: system
+        type: string
+      scope_id:
+        example: 1
+        type: integer
+      scope_name:
+        example: Sistema
+        type: string
+    type: object
+  services_auth_users_internal_infra_primary_handlers_response.PaginationInfo:
+    properties:
+      current_page:
+        type: integer
+      has_next:
+        type: boolean
+      has_prev:
+        type: boolean
+      last_page:
+        type: integer
+      per_page:
+        type: integer
+      total:
+        type: integer
+    type: object
+host: localhost:3050
+info:
+  contact:
+    email: backend@example.com
+    name: Equipo de Backend
+  description: Servicio REST para la gestión de reservas multi-restaurante.
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://ejemplo.com/terminos
+  title: Restaurant Reservation API
+  version: "1.0"
+paths:
+  /auth/business-token:
+    post:
+      consumes:
+      - application/json
+      description: Genera un token específico para un business basado en el token
+        principal del usuario. Para super admins (scope platform), usar business_id
+        = 0
+      parameters:
+      - description: Datos del business (business_id = 0 para super admin)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.GenerateBusinessTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Token generado exitosamente
+          schema:
+            $ref: '#/definitions/response.GenerateBusinessTokenSuccessResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
+        "401":
+          description: No autorizado
+          schema:
+            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
+        "404":
+          description: Business no encontrado o sin acceso
+          schema:
+            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
+      security:
+      - BusinessTokenAuth: []
+      summary: Generar token de business
+      tags:
+      - Auth
+  /auth/change-password:
+    post:
+      consumes:
+      - application/json
+      description: Cambia la contraseña del usuario autenticado
+      parameters:
+      - description: Datos para cambiar contraseña
+        in: body
+        name: password
+        required: true
+        schema:
+          $ref: '#/definitions/request.ChangePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Contraseña cambiada exitosamente
+          schema:
+            $ref: '#/definitions/response.ChangePasswordResponse'
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "403":
+          description: Contraseña actual incorrecta
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cambiar contraseña
+      tags:
+      - Auth
+  /auth/generate-password:
+    post:
+      consumes:
+      - application/json
+      description: Genera una nueva contraseña aleatoria. Si el usuario es super admin,
+        puede especificar user_id para generar contraseña de otro usuario. Si no se
+        envía user_id, se genera para el usuario autenticado. La contraseña solo se
+        muestra una vez en esta respuesta.
+      parameters:
+      - description: Request body (user_id opcional, solo para super usuarios)
+        in: body
+        name: request
+        schema:
+          $ref: '#/definitions/request.GeneratePasswordRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Nueva contraseña generada exitosamente (solo se muestra una
+            vez)
+          schema:
+            $ref: '#/definitions/response.GeneratePasswordResponse'
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "403":
+          description: No tienes permisos para generar contraseña de otro usuario
+            o usuario inactivo
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Generar nueva contraseña aleatoria
+      tags:
+      - Auth
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica un usuario con email y contraseña, retornando información
+        del usuario y token de acceso
+      parameters:
+      - description: Credenciales de login
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login exitoso
+          schema:
+            $ref: '#/definitions/response.LoginSuccessResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            $ref: '#/definitions/response.LoginBadRequestResponse'
+        "401":
+          description: Credenciales inválidas
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "403":
+          description: Usuario inactivo
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+      summary: Autenticar usuario
+      tags:
+      - Auth
+  /auth/roles-permissions:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene los roles y permisos del usuario autenticado desde el token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Roles y permisos obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.UserRolesPermissionsSuccessResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.LoginErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener roles y permisos del usuario
+      tags:
+      - Auth
+  /business-types:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista de todos los tipos de negocio del sistema
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tipos de negocio obtenidos exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener lista de tipos de negocio
+      tags:
+      - business-types
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo tipo de negocio en el sistema
+      parameters:
+      - description: Datos del tipo de negocio a crear
+        in: body
+        name: businessType
+        required: true
+        schema:
+          $ref: '#/definitions/request.BusinessTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tipo de negocio creado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear un nuevo tipo de negocio
+      tags:
+      - business-types
+  /business-types/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un tipo de negocio del sistema
+      parameters:
+      - description: ID del tipo de negocio
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tipo de negocio eliminado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Eliminar tipo de negocio
+      tags:
+      - business-types
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un tipo de negocio específico por su ID
+      parameters:
+      - description: ID del tipo de negocio
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tipo de negocio obtenido exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener tipo de negocio por ID
+      tags:
+      - business-types
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un tipo de negocio existente
+      parameters:
+      - description: ID del tipo de negocio
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos del tipo de negocio a actualizar
+        in: body
+        name: businessType
+        required: true
+        schema:
+          $ref: '#/definitions/request.BusinessTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Tipo de negocio actualizado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar tipo de negocio
+      tags:
+      - business-types
+  /businesses:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista paginada de todos los negocios del sistema
+      parameters:
+      - description: Número de página (por defecto 1)
+        in: query
+        name: page
+        type: integer
+      - description: Elementos por página (por defecto 10)
+        in: query
+        name: per_page
+        type: integer
+      - description: Filtrar por nombre de negocio
+        in: query
+        name: name
+        type: string
+      - description: Filtrar por tipo de negocio
+        in: query
+        name: business_type_id
+        type: integer
+      - description: Filtrar por estado activo/inactivo
+        in: query
+        name: is_active
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Negocios obtenidos exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener lista de negocios
+      tags:
+      - businesses
+    post:
+      consumes:
+      - multipart/form-data
+      description: Crea un nuevo negocio en el sistema
+      parameters:
+      - description: Nombre del negocio
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Código del negocio
+        in: formData
+        name: code
+        required: true
+        type: string
+      - description: ID del tipo de negocio
+        in: formData
+        name: business_type_id
+        required: true
+        type: integer
+      - description: Zona horaria
+        in: formData
+        name: timezone
+        type: string
+      - description: Dirección
+        in: formData
+        name: address
+        type: string
+      - description: Descripción
+        in: formData
+        name: description
+        type: string
+      - description: Logo del negocio
+        in: formData
+        name: logo_url
+        type: file
+      - description: Color primario
+        in: formData
+        name: primary_color
+        type: string
+      - description: Color secundario
+        in: formData
+        name: secondary_color
+        type: string
+      - description: Dominio personalizado
+        in: formData
+        name: custom_domain
+        type: string
+      - description: Habilitar delivery
+        in: formData
+        name: enable_delivery
+        type: boolean
+      - description: Habilitar pickup
+        in: formData
+        name: enable_pickup
+        type: boolean
+      - description: Habilitar reservas
+        in: formData
+        name: enable_reservations
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Negocio creado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear un nuevo negocio
+      tags:
+      - businesses
+  /businesses/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un negocio del sistema
+      parameters:
+      - description: ID del negocio
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Negocio eliminado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Eliminar negocio
+      tags:
+      - businesses
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un negocio específico por su ID
+      parameters:
+      - description: ID del negocio
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Negocio obtenido exitosamente
+          schema:
+            $ref: '#/definitions/response.GetBusinessByIDResponse'
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener negocio por ID
+      tags:
+      - businesses
+    put:
+      consumes:
+      - multipart/form-data
+      description: Actualiza un negocio existente
+      parameters:
+      - description: ID del negocio
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nombre del negocio
+        in: formData
+        name: name
+        type: string
+      - description: Código del negocio
+        in: formData
+        name: code
+        type: string
+      - description: ID del tipo de negocio
+        in: formData
+        name: business_type_id
+        type: integer
+      - description: Zona horaria
+        in: formData
+        name: timezone
+        type: string
+      - description: Dirección
+        in: formData
+        name: address
+        type: string
+      - description: Descripción
+        in: formData
+        name: description
+        type: string
+      - description: Logo del negocio
+        in: formData
+        name: logo_url
+        type: file
+      - description: Color primario
+        in: formData
+        name: primary_color
+        type: string
+      - description: Color secundario
+        in: formData
+        name: secondary_color
+        type: string
+      - description: Dominio personalizado
+        in: formData
+        name: custom_domain
+        type: string
+      - description: ¿Activo?
+        in: formData
+        name: is_active
+        type: boolean
+      - description: Habilitar delivery
+        in: formData
+        name: enable_delivery
+        type: boolean
+      - description: Habilitar pickup
+        in: formData
+        name: enable_pickup
+        type: boolean
+      - description: Habilitar reservas
+        in: formData
+        name: enable_reservations
+        type: boolean
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Negocio actualizado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Solicitud inválida
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Token de acceso requerido
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar negocio
+      tags:
+      - businesses
+  /businesses/{id}/configured-resources:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene la configuración de recursos de un business específico
+        por su ID, incluyendo todos los recursos asociados y su estado (activo/inactivo)
+      parameters:
+      - description: ID del business
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuración de recursos del business obtenida exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parámetros inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Sin permisos
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Business no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener configuración de recursos de un business por ID
+      tags:
+      - Business Resources
+  /businesses/configured-resources:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista paginada de businesses con sus recursos configurados
+        y su estado (activo/inactivo)
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: Elementos por página
+        in: query
+        maximum: 100
+        minimum: 1
+        name: per_page
+        type: integer
+      - description: Filtrar por ID de business
+        in: query
+        name: business_id
+        type: integer
+      - description: Filtrar por ID de tipo de business
+        in: query
+        name: business_type_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de businesses con recursos obtenida exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parámetros de consulta inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Sin permisos
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener configuración de recursos de businesses
+      tags:
+      - Business Resources
+  /businesses/configured-resources/{resource_id}/activate:
+    put:
+      consumes:
+      - application/json
+      description: Activa un recurso configurado para un business específico
+      parameters:
+      - description: ID del recurso
+        in: path
+        minimum: 1
+        name: resource_id
+        required: true
+        type: integer
+      - description: ID del business (solo super admin)
+        in: query
+        minimum: 1
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recurso activado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parámetros inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Sin permisos
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Business o recurso no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Activar recurso de business
+      tags:
+      - Business Resources
+  /businesses/configured-resources/{resource_id}/deactivate:
+    put:
+      consumes:
+      - application/json
+      description: Desactiva un recurso configurado para un business específico
+      parameters:
+      - description: ID del recurso
+        in: path
+        minimum: 1
+        name: resource_id
+        required: true
+        type: integer
+      - description: ID del business (solo super admin)
+        in: query
+        minimum: 1
+        name: business_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recurso desactivado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parámetros inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Sin permisos
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Business o recurso no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Desactivar recurso de business
+      tags:
+      - Business Resources
+  /permissions:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene la lista completa de permisos del sistema con filtros opcionales
+        por tipo de business, nombre y scope
+      parameters:
+      - description: Filtrar por tipo de business (incluye genéricos)
+        in: query
+        name: business_type_id
+        type: integer
+      - description: Filtrar por nombre de permiso (búsqueda parcial)
+        in: query
+        name: name
+        type: string
+      - description: Filtrar por ID de scope
+        in: query
+        name: scope_id
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de permisos obtenida exitosamente
+          schema:
+            $ref: '#/definitions/response.PermissionListResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener todos los permisos
+      tags:
+      - Permissions
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo permiso en el sistema
+      parameters:
+      - description: Datos del permiso a crear
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Permiso creado exitosamente
+          schema:
+            $ref: '#/definitions/response.PermissionMessageResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "409":
+          description: Permiso con código o nombre duplicado
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear nuevo permiso
+      tags:
+      - Permissions
+  /permissions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina permanentemente un permiso del sistema (eliminación física,
+        no se puede recuperar)
+      parameters:
+      - description: ID del permiso
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permiso eliminado exitosamente
+          schema:
+            $ref: '#/definitions/response.PermissionMessageResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "404":
+          description: Permiso no encontrado
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar permiso permanentemente
+      tags:
+      - Permissions
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un permiso específico por su ID
+      parameters:
+      - description: ID del permiso
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permiso obtenido exitosamente
+          schema:
+            $ref: '#/definitions/response.PermissionSuccessResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "404":
+          description: Permiso no encontrado
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener permiso por ID
+      tags:
+      - Permissions
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un permiso existente en el sistema
+      parameters:
+      - description: ID del permiso
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Datos del permiso a actualizar
+        in: body
+        name: permission
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdatePermissionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permiso actualizado exitosamente
+          schema:
+            $ref: '#/definitions/response.PermissionMessageResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "404":
+          description: Permiso no encontrado
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "409":
+          description: Permiso con código duplicado
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar permiso
+      tags:
+      - Permissions
+  /permissions/resource/{resource}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene todos los permisos de un recurso específico
+      parameters:
+      - description: Recurso de los permisos
+        example: '"users"'
+        in: path
+        name: resource
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permisos por recurso obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.PermissionListResponse'
+        "400":
+          description: Recurso inválido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener permisos por recurso
+      tags:
+      - Permissions
+  /permissions/scope/{scope_id}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene todos los permisos de un scope específico
+      parameters:
+      - description: ID del scope
+        in: path
+        minimum: 1
+        name: scope_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Permisos por scope obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.PermissionListResponse'
+        "400":
+          description: Scope ID inválido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.PermissionErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener permisos por scope
+      tags:
+      - Permissions
+  /roles:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene la lista completa de roles del sistema con opciones de
+        filtrado
+      parameters:
+      - description: Filtrar por tipo de business
+        in: query
+        name: business_type_id
+        type: integer
+      - description: Filtrar por ID de scope
+        in: query
+        name: scope_id
+        type: integer
+      - description: Filtrar por rol de sistema (true/false)
+        in: query
+        name: is_system
+        type: boolean
+      - description: Buscar en el nombre del rol (búsqueda parcial)
+        in: query
+        name: name
+        type: string
+      - description: Filtrar por nivel del rol
+        in: query
+        name: level
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Roles obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.RoleListResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener todos los roles
+      tags:
+      - Roles
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo rol en el sistema con todos los campos obligatorios
+      parameters:
+      - description: Datos del rol a crear
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.CreateRoleResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear un nuevo rol
+      tags:
+      - Roles
+  /roles/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un rol específico por su ID con información del scope
+      parameters:
+      - description: ID del rol
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Rol obtenido exitosamente
+          schema:
+            $ref: '#/definitions/response.RoleSuccessResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "404":
+          description: Rol no encontrado
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener rol por ID
+      tags:
+      - Roles
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un rol existente en el sistema (actualización parcial)
+      parameters:
+      - description: ID del rol a actualizar
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos del rol a actualizar
+        in: body
+        name: role
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.UpdateRoleResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Rol no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar un rol
+      tags:
+      - Roles
+  /roles/{id}/permissions:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene la lista de permisos asignados a un rol
+      parameters:
+      - description: ID del rol
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.GetRolePermissionsResponse'
+        "400":
+          description: ID de rol inválido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "404":
+          description: Rol no encontrado
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener permisos de un rol
+      tags:
+      - Roles
+    post:
+      consumes:
+      - application/json
+      description: Asigna permisos a un rol. Solo se pueden asignar permisos que pertenezcan
+        al mismo business_type que el rol
+      parameters:
+      - description: ID del rol
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: IDs de permisos a asignar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.AssignPermissionsToRoleRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.AssignPermissionsToRoleResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "404":
+          description: Rol no encontrado
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Asignar permisos a un rol
+      tags:
+      - Roles
+  /roles/{id}/permissions/{permission_id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un permiso específico de un rol
+      parameters:
+      - description: ID del rol
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: ID del permiso
+        in: path
+        name: permission_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.RoleSuccessResponse'
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "404":
+          description: Rol o permiso no encontrado
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar permiso de un rol
+      tags:
+      - Roles
+  /roles/by-level:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene todos los roles de un nivel específico con información
+        del scope
+      parameters:
+      - description: Nivel del rol
+        in: query
+        maximum: 10
+        minimum: 1
+        name: level
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Roles obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.RoleListResponse'
+        "400":
+          description: Nivel inválido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener roles por nivel
+      tags:
+      - Roles
+  /roles/scope/{scope_id}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene todos los roles de un scope específico
+      parameters:
+      - description: ID del scope
+        in: path
+        minimum: 1
+        name: scope_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Roles por scope obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.RoleListResponse'
+        "400":
+          description: Scope ID inválido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener roles por scope
+      tags:
+      - Roles
+  /roles/system:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene solo los roles del sistema (is_system = true)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Roles del sistema obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.RoleListResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.RoleErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener roles del sistema
+      tags:
+      - Roles
+  /users:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene la lista filtrada y paginada de usuarios del sistema con
+        sus roles y businesses
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      - description: Filtrar por nombre (búsqueda parcial)
+        in: query
+        name: name
+        type: string
+      - description: Filtrar por email (búsqueda parcial)
+        in: query
+        name: email
+        type: string
+      - description: Filtrar por teléfono (búsqueda parcial)
+        in: query
+        name: phone
+        type: string
+      - description: 'Filtrar por IDs de usuarios separados por comas (ej: 1,2,3)'
+        in: query
+        name: user_ids
+        type: string
+      - description: Filtrar por estado activo
+        in: query
+        name: is_active
+        type: boolean
+      - description: Filtrar por ID de rol
+        in: query
+        name: role_id
+        type: integer
+      - description: Filtrar por ID de business
+        in: query
+        name: business_id
+        type: integer
+      - description: Filtrar por fecha de creación (YYYY-MM-DD o YYYY-MM-DD,YYYY-MM-DD
+          para rango)
+        in: query
+        name: created_at
+        type: string
+      - default: created_at
+        description: Campo para ordenar
+        enum:
+        - id
+        - name
+        - email
+        - phone
+        - is_active
+        - created_at
+        - updated_at
+        in: query
+        name: sort_by
+        type: string
+      - default: desc
+        description: Orden de clasificación
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuarios obtenidos exitosamente
+          schema:
+            $ref: '#/definitions/response.UserListResponse'
+        "400":
+          description: Parámetros de filtro inválidos
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener usuarios filtrados y paginados
+      tags:
+      - Users
+    post:
+      consumes:
+      - multipart/form-data
+      description: |-
+        Crea un nuevo usuario.
+        ENVÍO: SOLO multipart/form-data (no JSON body)
+      parameters:
+      - description: Nombre (2-100)
+        in: formData
+        name: name
+        required: true
+        type: string
+      - description: Email válido
+        in: formData
+        name: email
+        required: true
+        type: string
+      - description: Teléfono (exactamente 10 dígitos)
+        in: formData
+        name: phone
+        type: string
+      - description: ¿Activo? (true/false)
+        in: formData
+        name: is_active
+        type: boolean
+      - description: Imagen de avatar (sube a S3)
+        in: formData
+        name: avatarFile
+        type: file
+      - description: 'IDs de negocios separados por comas. Ej: ''16,21'''
+        in: formData
+        name: business_ids
+        type: string
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuario creado exitosamente (incluye contraseña generada)
+          schema:
+            $ref: '#/definitions/response.UserCreatedResponse'
+        "400":
+          description: Datos inválidos (mensajes claros de validación)
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "409":
+          description: Email ya existe
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear usuario
+      tags:
+      - Users
+  /users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un usuario del sistema
+      parameters:
+      - description: ID del usuario
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario eliminado exitosamente
+          schema:
+            $ref: '#/definitions/response.UserMessageResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar usuario
+      tags:
+      - Users
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un usuario específico por su ID con sus roles y businesses
+      parameters:
+      - description: ID del usuario
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario obtenido exitosamente
+          schema:
+            $ref: '#/definitions/response.UserSuccessResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener usuario por ID
+      tags:
+      - Users
+    put:
+      consumes:
+      - multipart/form-data
+      description: |-
+        Actualiza un usuario existente.
+        ENVÍO: SOLO multipart/form-data (no JSON body)
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Nombre (2-100)
+        in: formData
+        name: name
+        type: string
+      - description: Email válido
+        in: formData
+        name: email
+        type: string
+      - description: Teléfono (exactamente 10 dígitos)
+        in: formData
+        name: phone
+        type: string
+      - description: ¿Activo?
+        in: formData
+        name: is_active
+        type: boolean
+      - description: Eliminar avatar actual (true/false)
+        in: formData
+        name: remove_avatar
+        type: boolean
+      - description: Imagen de avatar (sube a S3)
+        in: formData
+        name: avatarFile
+        type: file
+      - description: 'IDs de negocios separados por comas. Ej: ''16,21'''
+        in: formData
+        name: business_ids
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuario actualizado (data con usuario)
+          schema:
+            $ref: '#/definitions/response.UserSuccessResponse'
+        "400":
+          description: Datos inválidos o IDs inexistentes
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "404":
+          description: Usuario no encontrado
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "409":
+          description: Email ya existe
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar usuario
+      tags:
+      - Users
+  /users/{id}/assign-role:
+    post:
+      consumes:
+      - application/json
+      description: Asigna o actualiza roles de un usuario en múltiples businesses.
+        El usuario debe estar previamente asociado a cada business. Solo se permite
+        un rol por business y cada rol debe ser del mismo tipo de business que su
+        business asociado.
+      parameters:
+      - description: ID del usuario
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Lista de asignaciones (business_id y role_id por cada asignación)
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.AssignRoleToUserBusinessRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Roles asignados exitosamente
+          schema:
+            $ref: '#/definitions/response.AssignRoleToUserBusinessResponse'
+        "400":
+          description: Datos inválidos
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "401":
+          description: Token de acceso requerido
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "403":
+          description: El usuario no está asociado a algún business o algún rol no
+            corresponde al tipo de business
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "404":
+          description: Usuario, business o rol no encontrado
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+        "500":
+          description: Error interno del servidor
+          schema:
+            $ref: '#/definitions/response.UserErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Asignar roles a usuario en businesses
+      tags:
+      - Users
+securityDefinitions:
+  BearerAuth:
+    description: Token de business JWT con el prefijo **Bearer** (para todos los endpoints)
+    in: header
+    name: Authorization
+    type: apiKey
+  BusinessTokenAuth:
+    description: Token principal JWT con el prefijo **Bearer** (solo para /auth/business-token)
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

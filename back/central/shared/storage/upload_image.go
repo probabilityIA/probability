@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"central/shared/errs"
+	"github.com/secamc93/probability/back/central/shared/errs"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"

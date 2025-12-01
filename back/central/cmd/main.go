@@ -28,7 +28,7 @@ package main
 import (
 	"context"
 
-	"central/cmd/internal/server"
+	"github.com/secamc93/probability/back/central/cmd/internal/server"
 )
 
 func main() {

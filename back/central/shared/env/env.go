@@ -150,10 +150,10 @@ type Config struct {
 	DbLogLevel     string `env:"DB_LOG_LEVEL,required"`
 	PGSSLMODE      string `env:"PGSSLMODE,required"`
 	URLBaseSwagger string `env:"URL_BASE_SWAGGER,required"`
-	S3Bucket       string `env:"S3_BUCKET,required"`
-	S3Region       string `env:"S3_REGION,required"`
-	S3AccessKey    string `env:"S3_KEY,required"`
-	S3SecretKey    string `env:"S3_SECRET,required"`
+	// S3Bucket       string `env:"S3_BUCKET,required"`
+	// S3Region       string `env:"S3_REGION,required"`
+	// S3AccessKey    string `env:"S3_KEY,required"`
+	// S3SecretKey    string `env:"S3_SECRET,required"`
 
 	// SMTP/Email
 	SMTPHost        string `env:"SMTP_HOST"`
@@ -163,7 +163,7 @@ type Config struct {
 	FromEmail       string `env:"FROM_EMAIL"`
 	SMTPUseSTARTTLS string `env:"SMTP_USE_STARTTLS"`
 	SMTPUseTLS      string `env:"SMTP_USE_TLS"`
-	UrlBaseDomainS3 string `env:"URL_BASE_DOMAIN_S3,required"`
+	// UrlBaseDomainS3 string `env:"URL_BASE_DOMAIN_S3,required"`
 }
 
 func splitTag(tag string) []string {

@@ -1,10 +1,11 @@
 package server
 
 import (
-	"central/shared/env"
-	"central/shared/log"
 	"context"
 	"fmt"
+
+	"github.com/secamc93/probability/back/central/shared/env"
+	"github.com/secamc93/probability/back/central/shared/log"
 )
 
 // LogStartupInfo muestra información de inicio del servidor y conexiones

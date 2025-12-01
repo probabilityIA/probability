@@ -1,9 +1,10 @@
 package routes
 
 import (
-	"central/internal/pkg/log"
 	"strings"
 	"time"
+
+	"github.com/secamc93/probability/back/central/shared/log"
 
 	"github.com/gin-gonic/gin"
 )

@@ -26,10 +26,10 @@ export default function Home() {
         </p>
 
         <div className="flex flex-col gap-4 sm:flex-row">
-          <button className="group relative overflow-hidden rounded-full bg-white px-8 py-4 font-semibold text-purple-900 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50">
+          <a href="/login" className="group relative overflow-hidden rounded-full bg-white px-8 py-4 font-semibold text-purple-900 transition-all hover:scale-105 hover:shadow-2xl hover:shadow-purple-500/50">
             <span className="relative z-10">Comenzar</span>
             <div className="absolute inset-0 -z-0 bg-gradient-to-r from-purple-400 to-pink-400 opacity-0 transition-opacity group-hover:opacity-100"></div>
-          </button>
+          </a>
 
           <button className="rounded-full border-2 border-white/30 bg-white/10 px-8 py-4 font-semibold text-white backdrop-blur-sm transition-all hover:scale-105 hover:border-white/50 hover:bg-white/20">
             Más Información

@@ -10420,7 +10420,7 @@ const docTemplate = `{
                 "businesses": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/services_auth_internal_infra_primary_controllers_userhandler_response.BusinessInfo"
+                        "$ref": "#/definitions/services_auth_internal_infra_primary_controllers_handlers_response.BusinessInfo"
                     }
                 },
                 "created_at": {
@@ -10447,7 +10447,7 @@ const docTemplate = `{
                 "roles": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/services_auth_internal_infra_primary_controllers_userhandler_response.RoleInfo"
+                        "$ref": "#/definitions/services_auth_internal_infra_primary_controllers_handlers_response.RoleInfo"
                     }
                 },
                 "updated_at": {
@@ -10664,7 +10664,7 @@ const docTemplate = `{
                 }
             }
         },
-        "services_auth_internal_infra_primary_controllers_userhandler_response.BusinessInfo": {
+        "services_auth_internal_infra_primary_controllers_handlers_response.BusinessInfo": {
             "type": "object",
             "properties": {
                 "business_type_id": {
@@ -10692,7 +10692,7 @@ const docTemplate = `{
                 }
             }
         },
-        "services_auth_internal_infra_primary_controllers_userhandler_response.RoleInfo": {
+        "services_auth_internal_infra_primary_controllers_handlers_response.RoleInfo": {
             "type": "object",
             "properties": {
                 "description": {
