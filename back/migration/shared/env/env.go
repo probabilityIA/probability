@@ -164,6 +164,10 @@ type Config struct {
 	SMTPUseSTARTTLS string `env:"SMTP_USE_STARTTLS"`
 	SMTPUseTLS      string `env:"SMTP_USE_TLS"`
 	UrlBaseDomainS3 string `env:"URL_BASE_DOMAIN_S3,required"`
+
+	// Default User
+	UserPassDefault  string `env:"USER_PASS_DEFAULT,required"`
+	EmailUserDefault string `env:"EMAIL_USER_DEFAULT,required"`
 }
 
 func splitTag(tag string) []string {

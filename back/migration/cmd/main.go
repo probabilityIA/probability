@@ -22,7 +22,7 @@ func main() {
 	defer database.Close()
 
 	// 4. Init Repository
-	repo := repository.New(database)
+	repo := repository.New(database, cfg)
 
 	// 5. Run Migrations
 	logger.Info().Msg("Starting database migration...")

@@ -41,7 +41,7 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Verificar permisos para mostrar items
   // TODO: Migrar usePermissions a la nueva arquitectura
-  const canAccessProperties = true; // hasResource('Propiedades') || hasResource('Residentes') || hasRouteAccess('/properties');
+
   const canAccessIAM = true; // hasResource('Usuarios') || hasResource('Roles') || hasResource('Permisos') || hasResource('Recursos') || hasResource('Tipos de Negocio') || hasResource('Negocios');
 
   return (
@@ -123,38 +123,67 @@ export function Sidebar({ user }: SidebarProps) {
                 </Link>
               </li>
 
-              {/* Item Propiedades */}
-              {canAccessProperties && (
-                <li>
-                  <Link
-                    href="/properties"
-                    className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${isActive('/properties') || pathname.startsWith('/properties')
-                        ? 'bg-white/20 text-white shadow-lg scale-105'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
-                      }
-                    `}
-                  >
-                    {/* Indicador activo (barra lateral) */}
-                    {(isActive('/properties') || pathname.startsWith('/properties')) && (
-                      <div
-                        className="absolute left-0 w-1 h-8 rounded-r-full"
-                        style={{ backgroundColor: 'var(--color-tertiary)' }}
-                      />
-                    )}
+              {/* Item Integraciones */}
+              <li>
+                <Link
+                  href="/integrations"
+                  className={`
+                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                    ${isActive('/integrations') || pathname.startsWith('/integrations')
+                      ? 'bg-white/20 text-white shadow-lg scale-105'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                    }
+                  `}
+                >
+                  {/* Indicador activo (barra lateral) */}
+                  {(isActive('/integrations') || pathname.startsWith('/integrations')) && (
+                    <div
+                      className="absolute left-0 w-1 h-8 rounded-r-full"
+                      style={{ backgroundColor: 'var(--color-tertiary)' }}
+                    />
+                  )}
 
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                    </svg>
-                    {sidebarExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">
-                        Propiedades
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              )}
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                  </svg>
+                  {sidebarExpanded && (
+                    <span className="text-sm font-medium transition-opacity duration-300">
+                      Integraciones
+                    </span>
+                  )}
+                </Link>
+              </li>
+
+              {/* Item Ordenes */}
+              <li>
+                <Link
+                  href="/orders"
+                  className={`
+                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                    ${isActive('/orders') || pathname.startsWith('/orders')
+                      ? 'bg-white/20 text-white shadow-lg scale-105'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                    }
+                  `}
+                >
+                  {/* Indicador activo (barra lateral) */}
+                  {(isActive('/orders') || pathname.startsWith('/orders')) && (
+                    <div
+                      className="absolute left-0 w-1 h-8 rounded-r-full"
+                      style={{ backgroundColor: 'var(--color-tertiary)' }}
+                    />
+                  )}
+
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                  {sidebarExpanded && (
+                    <span className="text-sm font-medium transition-opacity duration-300">
+                      Ordenes
+                    </span>
+                  )}
+                </Link>
+              </li>
 
               {/* Item IAM */}
               {canAccessIAM && (
