@@ -164,6 +164,7 @@ type Config struct {
 	SMTPUseSTARTTLS string `env:"SMTP_USE_STARTTLS"`
 	SMTPUseTLS      string `env:"SMTP_USE_TLS"`
 	// UrlBaseDomainS3 string `env:"URL_BASE_DOMAIN_S3,required"`
+	WhatsappBaseURL string `env:"WHATSAPP_BASE_URL,required"`
 }
 
 func splitTag(tag string) []string {
