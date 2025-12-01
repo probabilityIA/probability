@@ -1398,7 +1398,7 @@ definitions:
         type: string
       businesses:
         items:
-          $ref: '#/definitions/services_auth_internal_infra_primary_controllers_userhandler_response.BusinessInfo'
+          $ref: '#/definitions/services_auth_internal_infra_primary_controllers_handlers_response.BusinessInfo'
         type: array
       created_at:
         type: string
@@ -1416,7 +1416,7 @@ definitions:
         type: string
       roles:
         items:
-          $ref: '#/definitions/services_auth_internal_infra_primary_controllers_userhandler_response.RoleInfo'
+          $ref: '#/definitions/services_auth_internal_infra_primary_controllers_handlers_response.RoleInfo'
         type: array
       updated_at:
         type: string
@@ -1564,7 +1564,7 @@ definitions:
         example: Sistema
         type: string
     type: object
-  services_auth_internal_infra_primary_controllers_userhandler_response.BusinessInfo:
+  services_auth_internal_infra_primary_controllers_handlers_response.BusinessInfo:
     properties:
       business_type_id:
         type: integer
@@ -1581,7 +1581,7 @@ definitions:
         - $ref: '#/definitions/response.RoleInfoDetailed'
         description: Rol del usuario en este business
     type: object
-  services_auth_internal_infra_primary_controllers_userhandler_response.RoleInfo:
+  services_auth_internal_infra_primary_controllers_handlers_response.RoleInfo:
     properties:
       description:
         type: string

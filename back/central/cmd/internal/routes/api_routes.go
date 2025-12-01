@@ -3,18 +3,18 @@
 package routes
 
 import (
-	"central/internal/app/usecaseauth"
+	"central/internal/app/app"
 	"central/internal/domain/ports"
 	"central/internal/infra/primary/http2/handlers/authhandler"
 	"central/internal/infra/primary/http2/handlers/businesshandler"
 	"central/internal/infra/primary/http2/handlers/businesstypehandler"
 	"central/internal/infra/primary/http2/handlers/clienthandler"
+	"central/internal/infra/primary/http2/handlers/handlers"
 	"central/internal/infra/primary/http2/handlers/permissionhandler"
 	"central/internal/infra/primary/http2/handlers/reservehandler"
 	"central/internal/infra/primary/http2/handlers/rolehandler"
 	"central/internal/infra/primary/http2/handlers/roomhandler"
 	"central/internal/infra/primary/http2/handlers/tablehandler"
-	"central/internal/infra/primary/http2/handlers/userhandler"
 	"central/internal/pkg/log"
 
 	"github.com/gin-gonic/gin"
@@ -25,7 +25,7 @@ type APIRoutes struct {
 	router      *gin.Engine
 	handlers    *Handlers
 	jwtService  ports.IJWTService
-	authUseCase usecaseauth.IUseCaseAuth
+	authUseCase app.Iapp
 	logger      log.ILogger
 }
 
@@ -39,7 +39,7 @@ type Handlers struct {
 	BusinessType businesstypehandler.IBusinessTypeHandler
 	Permission   permissionhandler.IPermissionHandler
 	Role         rolehandler.IRoleHandler
-	User         userhandler.IUserHandler
+	User         handlers.Ihandlers
 	Room         roomhandler.IRoomHandler
 }
 
@@ -48,7 +48,7 @@ func NewAPIRoutes(
 	router *gin.Engine,
 	handlers *Handlers,
 	jwtService ports.IJWTService,
-	authUseCase usecaseauth.IUseCaseAuth,
+	authUseCase app.Iapp,
 	logger log.ILogger,
 ) *APIRoutes {
 	return &APIRoutes{
@@ -95,7 +95,7 @@ func (ar *APIRoutes) registerHandlerRoutes(v1Group *gin.RouterGroup) {
 	rolehandler.RegisterRoutes(v1Group, ar.handlers.Role, ar.jwtService, ar.logger)
 
 	// Gestión de usuarios
-	userhandler.RegisterRoutes(v1Group, ar.handlers.User, ar.jwtService, ar.logger)
+	handlers.RegisterRoutes(v1Group, ar.handlers.User, ar.jwtService, ar.logger)
 
 	// Gestión de salas
 	roomhandler.RegisterRoutes(v1Group, ar.handlers.Room, ar.jwtService, ar.logger)

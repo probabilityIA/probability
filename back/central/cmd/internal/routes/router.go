@@ -1,12 +1,13 @@
 package routes
 
 import (
-	"central/services/auth/middleware"
-	"central/shared/env"
-	"central/shared/log"
 	"context"
 	"net/http"
 	"time"
+
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
+	"github.com/secamc93/probability/back/central/shared/env"
+	"github.com/secamc93/probability/back/central/shared/log"
 
 	"github.com/gin-gonic/gin"
 )
