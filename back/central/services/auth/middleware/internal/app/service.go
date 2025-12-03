@@ -15,8 +15,8 @@ func NewAuthService(jwtService domain.IJWTService) *AuthService {
 	return &AuthService{jwtService: jwtService}
 }
 
-// ValidateBusinessToken validates a token and ensures it is a business token
-func (s *AuthService) ValidateBusinessToken(token string) (*domain.AuthInfo, error) {
+// ValidateToken validates the unified token
+func (s *AuthService) ValidateToken(token string) (*domain.AuthInfo, error) {
 	if token == "" {
 		return nil, &domain.AuthError{Message: "Token de autorización requerido"}
 	}
@@ -26,53 +26,36 @@ func (s *AuthService) ValidateBusinessToken(token string) (*domain.AuthInfo, err
 		token = token[7:]
 	}
 
-	// Try to validate as business token
-	businessClaims, err := s.jwtService.ValidateBusinessToken(token)
-	if err == nil {
-		if businessClaims.TokenType != "business" {
-			return nil, &domain.AuthError{Message: fmt.Sprintf("Token type inválido: %s, se requiere 'business'", businessClaims.TokenType)}
-		}
-	} else {
-		// If not business token, try to validate as main token to give better error
-		mainClaims, err2 := s.jwtService.ValidateToken(token)
-		if err2 == nil {
-			if mainClaims.TokenType == "main" {
-				return nil, &domain.AuthError{Message: "Este endpoint requiere un business token, no un token principal"}
-			}
-		}
-		return nil, &domain.AuthError{Message: "Se requiere un business token válido"}
+	// Validate unified token
+	claims, err := s.jwtService.ValidateToken(token)
+	if err != nil {
+		return nil, &domain.AuthError{Message: fmt.Sprintf("Token inválido: %v", err)}
+	}
+
+	businessTokenClaims := &domain.BusinessTokenClaims{
+		UserID:         claims.UserID,
+		BusinessID:     claims.BusinessID,
+		BusinessTypeID: claims.BusinessTypeID,
+		RoleID:         claims.RoleID,
 	}
 
 	return &domain.AuthInfo{
 		Type:                domain.AuthTypeJWT,
-		UserID:              businessClaims.UserID,
-		BusinessID:          businessClaims.BusinessID,
-		BusinessTokenClaims: businessClaims,
+		UserID:              claims.UserID,
+		BusinessID:          claims.BusinessID,
+		BusinessTypeID:      claims.BusinessTypeID,
+		RoleID:              claims.RoleID,
+		JWTClaims:           claims,
+		BusinessTokenClaims: businessTokenClaims,
 	}, nil
 }
 
-// ValidateMainToken validates a token and ensures it is a main token (for BusinessTokenAuth)
+// ValidateBusinessToken is now an alias for ValidateToken (for backward compatibility)
+func (s *AuthService) ValidateBusinessToken(token string) (*domain.AuthInfo, error) {
+	return s.ValidateToken(token)
+}
+
+// ValidateMainToken is now an alias for ValidateToken (for backward compatibility)
 func (s *AuthService) ValidateMainToken(token string) (*domain.AuthInfo, error) {
-	if token == "" {
-		return nil, &domain.AuthError{Message: "Token de autorización requerido"}
-	}
-
-	if len(token) > 7 && strings.HasPrefix(token, "Bearer ") {
-		token = token[7:]
-	}
-
-	mainClaims, err := s.jwtService.ValidateToken(token)
-	if err != nil {
-		return nil, &domain.AuthError{Message: "Token inválido"}
-	}
-
-	if mainClaims.TokenType != "main" {
-		return nil, &domain.AuthError{Message: "Se requiere un token principal, no un business token"}
-	}
-
-	return &domain.AuthInfo{
-		Type:      domain.AuthTypeJWT,
-		UserID:    mainClaims.UserID,
-		JWTClaims: mainClaims,
-	}, nil
+	return s.ValidateToken(token)
 }

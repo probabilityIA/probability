@@ -2,9 +2,11 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/domain"
+	"gorm.io/gorm"
 )
 
 // BusinessTypeRepository implementa ports.IBusinessTypeRepository
@@ -33,8 +35,24 @@ func (r *Repository) GetBusinessTypeByID(ctx context.Context, id uint) (*domain.
 func (r *Repository) GetBusinessTypeByCode(ctx context.Context, code string) (*domain.BusinessType, error) {
 	var businessType domain.BusinessType
 	if err := r.database.Conn(ctx).Table("business_type").Where("code = ?", code).First(&businessType).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrBusinessTypeNotFound
+		}
 		r.logger.Error().Str("code", code).Err(err).Msg("Error al obtener tipo de negocio por código")
-		return nil, err
+		return nil, fmt.Errorf("error al consultar tipo de negocio por código: %w", err)
+	}
+	return &businessType, nil
+}
+
+// GetBusinessTypeByName obtiene un tipo de negocio por su nombre
+func (r *Repository) GetBusinessTypeByName(ctx context.Context, name string) (*domain.BusinessType, error) {
+	var businessType domain.BusinessType
+	if err := r.database.Conn(ctx).Table("business_type").Where("name = ?", name).First(&businessType).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrBusinessTypeNotFound
+		}
+		r.logger.Error().Str("name", name).Err(err).Msg("Error al obtener tipo de negocio por nombre")
+		return nil, fmt.Errorf("error al consultar tipo de negocio por nombre: %w", err)
 	}
 	return &businessType, nil
 }

@@ -16,6 +16,7 @@ type IBusinessRepository interface {
 	GetBusinessTypes(ctx context.Context) ([]BusinessType, error)
 	GetBusinessTypeByID(ctx context.Context, id uint) (*BusinessType, error)
 	GetBusinessTypeByCode(ctx context.Context, code string) (*BusinessType, error)
+	GetBusinessTypeByName(ctx context.Context, name string) (*BusinessType, error)
 	CreateBusinessType(ctx context.Context, businessType BusinessType) (string, error)
 	UpdateBusinessType(ctx context.Context, id uint, businessType BusinessType) (string, error)
 	DeleteBusinessType(ctx context.Context, id uint) (string, error)

@@ -17,11 +17,8 @@ type IAuthRepository interface {
 	GetRoleByID(ctx context.Context, id uint) (*Role, error)
 }
 type IJWTService interface {
-	GenerateToken(userID uint) (string, error)
+	// Token unificado que incluye toda la información
+	GenerateToken(userID, businessID, businessTypeID, roleID uint) (string, error)
 	ValidateToken(tokenString string) (*JWTClaims, error)
 	RefreshToken(tokenString string) (string, error)
-
-	// Tokens para business
-	GenerateBusinessToken(userID, businessID, businessTypeID, roleID uint) (string, error)
-	ValidateBusinessToken(tokenString string) (*BusinessTokenClaims, error)
 }

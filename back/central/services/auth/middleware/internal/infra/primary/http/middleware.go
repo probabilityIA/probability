@@ -39,24 +39,24 @@ func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 		c.Set("auth_info", authInfo)
 		c.Set("auth_type", authInfo.Type)
 		c.Set("user_id", authInfo.UserID)
+		c.Set("business_id", authInfo.BusinessID)
+		c.Set("business_type_id", authInfo.BusinessTypeID)
+		c.Set("role_id", authInfo.RoleID)
+		c.Set("business_token_claims", authInfo.BusinessTokenClaims)
+		c.Set("jwt_claims", authInfo.JWTClaims)
+		c.Set("is_super_admin", authInfo.BusinessID == 0)
 
-		if authInfo.BusinessTokenClaims != nil {
-			c.Set("business_id", authInfo.BusinessTokenClaims.BusinessID)
-			c.Set("business_type_id", authInfo.BusinessTokenClaims.BusinessTypeID)
-			c.Set("role_id", authInfo.BusinessTokenClaims.RoleID)
-			c.Set("business_token_claims", authInfo.BusinessTokenClaims)
-			c.Set("is_super_admin", authInfo.BusinessTokenClaims.BusinessID == 0)
-
-			if authInfo.BusinessTokenClaims.BusinessID == 0 {
-				m.logger.Debug().
-					Uint("user_id", authInfo.UserID).
-					Msg("Business token de SUPER ADMIN validado exitosamente")
-			} else {
-				m.logger.Debug().
-					Uint("user_id", authInfo.UserID).
-					Uint("business_id", authInfo.BusinessTokenClaims.BusinessID).
-					Msg("Business token validado exitosamente")
-			}
+		if authInfo.BusinessID == 0 {
+			m.logger.Debug().
+				Uint("user_id", authInfo.UserID).
+				Msg("Token de SUPER ADMIN validado exitosamente")
+		} else {
+			m.logger.Debug().
+				Uint("user_id", authInfo.UserID).
+				Uint("business_id", authInfo.BusinessID).
+				Uint("business_type_id", authInfo.BusinessTypeID).
+				Uint("role_id", authInfo.RoleID).
+				Msg("Token unificado validado exitosamente")
 		}
 
 		c.Next()
@@ -64,26 +64,8 @@ func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 }
 
 func (m *Middleware) BusinessTokenAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
-		authInfo, err := m.authService.ValidateMainToken(token)
-		if err != nil {
-			m.logger.Error().Err(err).Msg("Token inválido")
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": err.Error(),
-			})
-			c.Abort()
-			return
-		}
-
-		m.logger.Debug().
-			Uint("user_id", authInfo.UserID).
-			Msg("Token principal validado exitosamente")
-
-		c.Set("user_id", authInfo.UserID)
-		c.Set("jwt_claims", authInfo.JWTClaims)
-		c.Next()
-	}
+	// Ahora es un alias de AuthMiddleware ya que usamos token unificado
+	return m.AuthMiddleware()
 }
 
 func (m *Middleware) APIKeyMiddleware() gin.HandlerFunc {

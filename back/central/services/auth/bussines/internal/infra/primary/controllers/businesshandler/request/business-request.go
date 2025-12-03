@@ -5,8 +5,8 @@ import "mime/multipart"
 // BusinessRequest representa la solicitud para crear/actualizar un negocio
 type BusinessRequest struct {
 	Name           string `form:"name" binding:"required"`
-	Code           string `form:"code" binding:"required"`
-	BusinessTypeID uint   `form:"business_type_id" binding:"required"`
+	Code           string `form:"code"`
+	BusinessTypeID uint   `form:"business_type_id"`
 	Timezone       string `form:"timezone"`
 	Address        string `form:"address"`
 	Description    string `form:"description"`
