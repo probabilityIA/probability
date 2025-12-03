@@ -14,6 +14,8 @@ type AuthInfo struct {
 	Email               string
 	Roles               []string
 	BusinessID          uint
+	BusinessTypeID      uint
+	RoleID              uint
 	APIKey              string
 	JWTClaims           *JWTClaims
 	BusinessTokenClaims *BusinessTokenClaims

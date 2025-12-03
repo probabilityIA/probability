@@ -161,28 +161,63 @@ func (uc *AuthUseCase) Login(ctx context.Context, request domain.LoginRequest) (
 		roleNames[i] = role.Name
 	}
 
-	// Determinar business_id para token: si es super admin sin businesses, usar 0
-	var businessID uint
-	if isSuperAdmin(roles) {
-		businessID = 0 // Super admin sin business específico
+	// Determinar business_id, business_type_id y role_id para token
+	var businessID, businessTypeID, roleID uint
+	isSuperAdminUser := isSuperAdmin(roles)
+
+	if isSuperAdminUser {
+		// Super admin: business_id = 0, usar el primer rol
+		businessID = 0
+		businessTypeID = 0
+		if len(roles) > 0 {
+			roleID = roles[0].ID
+		}
 		uc.log.Info().
 			Uint("user_id", userAuth.ID).
 			Uint("business_id", businessID).
+			Uint("role_id", roleID).
 			Msg("Usuario super admin - usando business_id = 0")
 	} else if len(businesses) > 0 {
+		// Usuario normal: usar el primer business
 		businessID = businesses[0].ID
+		businessTypeID = businesses[0].BusinessTypeID
+
+		// Obtener el rol del usuario en este business
+		userRole, err := uc.repository.GetUserRoleByBusiness(ctx, userAuth.ID, businessID)
+		if err != nil || userRole == nil {
+			uc.log.Warn().
+				Err(err).
+				Uint("user_id", userAuth.ID).
+				Uint("business_id", businessID).
+				Msg("No se pudo obtener rol del usuario en el business, usando primer rol disponible")
+			// Fallback: usar el primer rol disponible
+			if len(roles) > 0 {
+				roleID = roles[0].ID
+			}
+		} else {
+			roleID = userRole.ID
+		}
+
 		uc.log.Info().
 			Uint("user_id", userAuth.ID).
 			Uint("business_id", businessID).
-			Msg("Usando primer business para token JWT")
+			Uint("business_type_id", businessTypeID).
+			Uint("role_id", roleID).
+			Msg("Usando primer business para token JWT unificado")
 	} else {
+		// Usuario sin businesses
 		businessID = 0
+		businessTypeID = 0
+		if len(roles) > 0 {
+			roleID = roles[0].ID
+		}
 		uc.log.Warn().
 			Uint("user_id", userAuth.ID).
 			Msg("Usuario sin businesses - usando business_id = 0")
 	}
 
-	token, err := uc.jwtService.GenerateToken(userAuth.ID)
+	// Generar token JWT unificado con toda la información
+	token, err := uc.jwtService.GenerateToken(userAuth.ID, businessID, businessTypeID, roleID)
 	if err != nil {
 		uc.log.Error().Err(err).Uint("user_id", userAuth.ID).Msg("Error al generar token JWT")
 		return nil, fmt.Errorf("error interno del servidor")

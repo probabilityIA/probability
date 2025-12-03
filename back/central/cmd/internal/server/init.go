@@ -11,6 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/permissions"
 	"github.com/secamc93/probability/back/central/services/auth/roles"
 	"github.com/secamc93/probability/back/central/services/auth/users"
+	"github.com/secamc93/probability/back/central/services/integrations"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/email"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -39,6 +40,9 @@ func Init(ctx context.Context) error {
 	roles.New(v1Group, database, logger)
 	users.New(v1Group, database, logger, environment, nil)
 	business.New(v1Group, database, logger, environment, nil)
+
+	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, etc.)
+	_ = integrations.New(v1Group, database, logger, environment)
 
 	LogStartupInfo(ctx, logger, environment)
 

@@ -164,7 +164,14 @@ type Config struct {
 	SMTPUseSTARTTLS string `env:"SMTP_USE_STARTTLS"`
 	SMTPUseTLS      string `env:"SMTP_USE_TLS"`
 	// UrlBaseDomainS3 string `env:"URL_BASE_DOMAIN_S3,required"`
-	WhatsappBaseURL string `env:"WHATSAPP_BASE_URL,required"`
+	WhatsAppURL        string `env:"WHATSAPP_URL,required"`
+	WhatsAppToken      string `env:"WHATSAPP_TOKEN,required"`
+	WhatsAppPhoneNumID string `env:"WHATSAPP_PHONE_NUMBER_ID,required"`
+
+	// DynamoDB
+	DynamoRegion    string `env:"DYNAMO_REGION"`
+	DynamoAccessKey string `env:"DYNAMO_ACCESS_KEY"`
+	DynamoSecretKey string `env:"DYNAMO_SECRET_KEY"`
 }
 
 func splitTag(tag string) []string {

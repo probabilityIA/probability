@@ -2,14 +2,16 @@ package repository
 
 import (
 	"context"
-
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/domain"
 	"github.com/secamc93/probability/back/central/services/auth/bussines/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/gorm"
 )
 
 type Repository struct {
@@ -90,8 +92,11 @@ func (r *Repository) GetBusinessByCode(ctx context.Context, code string) (*domai
 		Preload("BusinessType").
 		Where("code = ?", code).
 		First(&business).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrBusinessNotFound
+		}
 		r.logger.Error().Str("code", code).Err(err).Msg("Error al obtener negocio por código")
-		return nil, err
+		return nil, fmt.Errorf("error al consultar negocio por código: %w", err)
 	}
 
 	entity := mappers.ToBusinessEntity(business)
@@ -99,15 +104,18 @@ func (r *Repository) GetBusinessByCode(ctx context.Context, code string) (*domai
 }
 
 // GetBusinessByCustomDomain obtiene un negocio por su dominio personalizado
-func (r *Repository) GetBusinessByCustomDomain(ctx context.Context, domain string) (*domain.Business, error) {
+func (r *Repository) GetBusinessByCustomDomain(ctx context.Context, customDomain string) (*domain.Business, error) {
 	var business models.Business
 	if err := r.database.Conn(ctx).
 		Model(&models.Business{}).
 		Preload("BusinessType").
-		Where("custom_domain = ?", domain).
+		Where("custom_domain = ?", customDomain).
 		First(&business).Error; err != nil {
-		r.logger.Error().Str("domain", domain).Err(err).Msg("Error al obtener negocio por dominio personalizado")
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrBusinessNotFound
+		}
+		r.logger.Error().Str("domain", customDomain).Err(err).Msg("Error al obtener negocio por dominio personalizado")
+		return nil, fmt.Errorf("error al consultar negocio por dominio personalizado: %w", err)
 	}
 
 	entity := mappers.ToBusinessEntity(business)
@@ -119,8 +127,23 @@ func (r *Repository) CreateBusiness(ctx context.Context, business domain.Busines
 	businessModel := mappers.ToBusinessModel(business)
 
 	if err := r.database.Conn(ctx).Create(&businessModel).Error; err != nil {
-		r.logger.Error().Err(err).Msg("Error al crear negocio")
-		return 0, err
+		// Detectar errores de foreign key constraint y proporcionar mensaje más claro
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "foreign key constraint") || strings.Contains(errMsg, "SQLSTATE 23503") {
+			if strings.Contains(errMsg, "fk_business_type_businesses") {
+				r.logger.Error().
+					Err(err).
+					Uint("business_type_id", business.BusinessTypeID).
+					Msg("Error de foreign key: el tipo de negocio especificado no existe")
+				return 0, fmt.Errorf("el tipo de negocio con ID %d no existe o no es válido", business.BusinessTypeID)
+			}
+		}
+		r.logger.Error().Err(err).
+			Str("name", business.Name).
+			Str("code", business.Code).
+			Uint("business_type_id", business.BusinessTypeID).
+			Msg("Error al crear negocio en la base de datos")
+		return 0, fmt.Errorf("error al guardar el negocio en la base de datos: %w", err)
 	}
 
 	// Obtener todos los recursos permitidos para el tipo de negocio

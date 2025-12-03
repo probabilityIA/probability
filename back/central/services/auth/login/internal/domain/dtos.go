@@ -223,7 +223,6 @@ type ValidateAPIKeyResponse struct {
 	APIKeyID   uint
 }
 
-type BusinessTokenClaims = jwt.BusinessTokenClaims
 type JWTClaims = jwt.JWTClaims
 type GenerateAPIKeyRequest struct {
 	UserID      uint

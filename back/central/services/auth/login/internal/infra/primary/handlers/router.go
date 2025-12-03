@@ -14,6 +14,6 @@ func (h *AuthHandler) RegisterRoutes(v1Group *gin.RouterGroup, handler IAuthHand
 		authGroup.GET("/roles-permissions", middleware.JWT(), handler.GetUserRolesPermissionsHandler)
 		authGroup.POST("/change-password", middleware.JWT(), handler.ChangePasswordHandler)
 		authGroup.POST("/generate-password", middleware.JWT(), handler.GeneratePasswordHandler)
-		authGroup.POST("/business-token", middleware.BusinessTokenAuth(), handler.GenerateBusinessTokenHandler)
+		// Endpoint /business-token eliminado - ahora el login genera el token unificado directamente
 	}
 }

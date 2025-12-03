@@ -1,15 +1,16 @@
 package domain
 
 type JWTClaims struct {
-	UserID    uint
-	TokenType string
+	UserID         uint
+	BusinessID     uint
+	BusinessTypeID uint
+	RoleID         uint
 }
 type BusinessTokenClaims struct {
 	UserID         uint
 	BusinessID     uint
 	BusinessTypeID uint
 	RoleID         uint
-	TokenType      string
 }
 type ValidateAPIKeyRequest struct {
 	APIKey string
