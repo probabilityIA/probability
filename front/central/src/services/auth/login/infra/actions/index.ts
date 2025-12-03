@@ -1,5 +1,6 @@
 'use server';
 
+import { cookies } from 'next/headers';
 import { LoginRepository } from '../repository';
 import { LoginUseCase } from '../../app';
 import {
@@ -25,7 +26,18 @@ const useCase = new LoginUseCase(repository);
  */
 export const loginAction = async (credentials: LoginRequest): Promise<LoginSuccessResponse> => {
     try {
-        return await useCase.login(credentials);
+        const response = await useCase.login(credentials);
+
+        // Set cookie for server-side access
+        const cookieStore = await cookies();
+        cookieStore.set('session_token', response.data.token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            maxAge: 60 * 60 * 24 * 7 // 1 week
+        });
+
+        return response;
     } catch (error: any) {
         console.error('Login Action Error:', error.message);
         throw new Error(error.message); // Re-throw to be caught by client
@@ -35,27 +47,40 @@ export const loginAction = async (credentials: LoginRequest): Promise<LoginSucce
 /**
  * Server Action para cambiar contraseña
  */
+/**
+ * Server Action para cambiar contraseña
+ */
 export const changePasswordAction = async (data: ChangePasswordRequest, token: string): Promise<ChangePasswordResponse> => {
-    return useCase.changePassword(data, token);
+    try {
+        return await useCase.changePassword(data, token);
+    } catch (error: any) {
+        console.error('Change Password Action Error:', error.message);
+        throw new Error(error.message);
+    }
 };
 
 /**
  * Server Action para generar contraseña
  */
 export const generatePasswordAction = async (data: GeneratePasswordRequest, token: string): Promise<GeneratePasswordResponse> => {
-    return useCase.generatePassword(data, token);
+    try {
+        return await useCase.generatePassword(data, token);
+    } catch (error: any) {
+        console.error('Generate Password Action Error:', error.message);
+        throw new Error(error.message);
+    }
 };
 
 /**
  * Server Action para obtener roles y permisos
  */
 export const getRolesPermissionsAction = async (token: string): Promise<UserRolesPermissionsSuccessResponse> => {
-    return useCase.getRolesPermissions(token);
+    try {
+        return await useCase.getRolesPermissions(token);
+    } catch (error: any) {
+        console.error('Get Roles Permissions Action Error:', error.message);
+        throw new Error(error.message);
+    }
 };
 
-/**
- * Server Action para generar token de negocio
- */
-export const generateBusinessTokenAction = async (data: GenerateBusinessTokenRequest, token: string): Promise<GenerateBusinessTokenSuccessResponse> => {
-    return useCase.generateBusinessToken(data, token);
-};
+

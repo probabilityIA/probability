@@ -3,6 +3,7 @@ package models
 import (
 	"time"
 
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -87,6 +88,7 @@ type Business struct {
 	Clients                     []Client
 	Users                       []User                       `gorm:"many2many:user_businesses;"` // Usuarios del negocio (muchos a muchos)
 	BusinessResourcesConfigured []BusinessResourceConfigured `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Integrations                []Integration                `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Integraciones del negocio
 }
 
 // ───────────────────────────────────────────
@@ -270,4 +272,48 @@ type APIKey struct {
 	User      User     `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Business  Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	CreatedBy User     `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+// ───────────────────────────────────────────
+//
+//	INTEGRATIONS – Integraciones del sistema (WhatsApp, Shopify, Mercado Libre, etc.)
+//
+// ───────────────────────────────────────────
+type Integration struct {
+	gorm.Model
+
+	// Identificación
+	Name     string `gorm:"size:100;not null"`       // "WhatsApp Principal", "Shopify Store 1"
+	Code     string `gorm:"size:50;not null;unique"` // "whatsapp_platform", "shopify_store_1"
+	Type     string `gorm:"size:50;not null;index"`  // "whatsapp", "shopify", "mercado_libre"
+	Category string `gorm:"size:20;not null;index"`  // "internal" | "external"
+
+	// Relación con Business
+	// NULL = integración global (como WhatsApp - una sola para toda la plataforma)
+	// NOT NULL = integración específica de un business (como Shopify - puede haber múltiples)
+	BusinessID *uint     `gorm:"index"`
+	Business   *Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+
+	// Estado
+	IsActive  bool `gorm:"default:true;index"`
+	IsDefault bool `gorm:"default:false;index"` // Si es la integración por defecto para este tipo
+
+	// Configuración (JSON flexible - no contiene información sensible)
+	// Ejemplo WhatsApp: {"phone_number_id": "123", "webhook_url": "...", "template_language": "es"}
+	// Ejemplo Shopify: {"store_name": "mi-tienda", "api_version": "2024-01"}
+	Config datatypes.JSON `gorm:"type:jsonb"`
+
+	// Credenciales encriptadas (JSON)
+	// Contiene tokens, API keys, secrets encriptados
+	// Ejemplo: {"access_token": "encrypted_value", "api_key": "encrypted_value"}
+	Credentials datatypes.JSON `gorm:"type:jsonb"`
+
+	// Metadata
+	Description string `gorm:"size:500"`
+	CreatedByID uint   `gorm:"index"`
+	UpdatedByID *uint  `gorm:"index"`
+
+	// Relaciones
+	CreatedBy User  `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	UpdatedBy *User `gorm:"foreignKey:UpdatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }

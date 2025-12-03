@@ -17,5 +17,5 @@ export interface ILoginRepository {
     changePassword(data: ChangePasswordRequest, token: string): Promise<ChangePasswordResponse>;
     generatePassword(data: GeneratePasswordRequest, token: string): Promise<GeneratePasswordResponse>;
     getRolesPermissions(token: string): Promise<UserRolesPermissionsSuccessResponse>;
-    generateBusinessToken(data: GenerateBusinessTokenRequest, token: string): Promise<GenerateBusinessTokenSuccessResponse>;
+
 }

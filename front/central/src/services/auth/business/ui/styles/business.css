@@ -1,0 +1,10 @@
+/* Business Module Styles */
+
+/* Example of a custom class if needed, though Tailwind is preferred */
+.business-card-hover {
+    transition: transform 0.2s;
+}
+
+.business-card-hover:hover {
+    transform: translateY(-2px);
+}
