@@ -32,7 +32,5 @@ export class LoginUseCase {
         return this.repository.getRolesPermissions(token);
     }
 
-    async generateBusinessToken(data: GenerateBusinessTokenRequest, token: string): Promise<GenerateBusinessTokenSuccessResponse> {
-        return this.repository.generateBusinessToken(data, token);
-    }
+
 }

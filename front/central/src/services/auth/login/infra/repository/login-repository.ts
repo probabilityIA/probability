@@ -3,23 +3,19 @@ import {
     LoginRequest,
     ChangePasswordRequest,
     GeneratePasswordRequest,
-    GenerateBusinessTokenRequest,
     mapLoginRequest,
     mapChangePasswordRequest,
-    mapGeneratePasswordRequest,
-    mapGenerateBusinessTokenRequest
+    mapGeneratePasswordRequest
 } from './mapper/request';
 import {
     LoginSuccessResponse,
     UserRolesPermissionsSuccessResponse,
     ChangePasswordResponse,
     GeneratePasswordResponse,
-    GenerateBusinessTokenSuccessResponse,
     mapLoginResponse,
     mapUserRolesPermissionsResponse,
     mapChangePasswordResponse,
-    mapGeneratePasswordResponse,
-    mapGenerateBusinessTokenResponse
+    mapGeneratePasswordResponse
 } from './mapper/response';
 
 import { ILoginRepository } from '../../domain';
@@ -31,35 +27,48 @@ export class LoginRepository implements ILoginRepository {
         this.baseUrl = env.API_BASE_URL;
     }
 
+    private async fetch<T>(url: string, options: RequestInit = {}): Promise<T> {
+        console.log(`[API Request] ${options.method || 'GET'} ${url}`, {
+            headers: options.headers,
+            body: options.body
+        });
+
+        try {
+            const res = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+            });
+
+            const data = await res.json();
+
+            console.log(`[API Response] ${res.status} ${url}`, data);
+
+            if (!res.ok) {
+                console.error(`[API Error] ${res.status} ${url}`, data);
+                throw new Error(data.error || data.message || res.statusText || 'An error occurred');
+            }
+
+            return data;
+        } catch (error) {
+            console.error(`[API Network Error] ${url}`, error);
+            throw error;
+        }
+    }
+
     /**
      * Autentica un usuario
      * POST /auth/login
      */
     async login(credentials: LoginRequest): Promise<LoginSuccessResponse> {
         const payload = mapLoginRequest(credentials);
-        const response = await fetch(`${this.baseUrl}/auth/login`, {
+        const data = await this.fetch<any>(`${this.baseUrl}/auth/login`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
             body: JSON.stringify(payload),
-            cache: 'no-store', // SSR: No cachear login
+            cache: 'no-store',
         });
-
-        if (!response.ok) {
-            let errorMessage = `Error en login: ${response.statusText}`;
-            try {
-                const errorData = await response.json();
-                if (errorData && errorData.error) {
-                    errorMessage = errorData.error;
-                }
-            } catch (e) {
-                // Si no se puede parsear el JSON, usar el statusText por defecto
-            }
-            throw new Error(errorMessage);
-        }
-
-        const data = await response.json();
         return mapLoginResponse(data);
     }
 
@@ -69,20 +78,13 @@ export class LoginRepository implements ILoginRepository {
      */
     async changePassword(data: ChangePasswordRequest, token: string): Promise<ChangePasswordResponse> {
         const payload = mapChangePasswordRequest(data);
-        const response = await fetch(`${this.baseUrl}/auth/change-password`, {
+        const resData = await this.fetch<any>(`${this.baseUrl}/auth/change-password`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify(payload),
         });
-
-        if (!response.ok) {
-            throw new Error(`Error al cambiar contraseña: ${response.statusText}`);
-        }
-
-        const resData = await response.json();
         return mapChangePasswordResponse(resData);
     }
 
@@ -92,20 +94,13 @@ export class LoginRepository implements ILoginRepository {
      */
     async generatePassword(data: GeneratePasswordRequest, token: string): Promise<GeneratePasswordResponse> {
         const payload = mapGeneratePasswordRequest(data);
-        const response = await fetch(`${this.baseUrl}/auth/generate-password`, {
+        const resData = await this.fetch<any>(`${this.baseUrl}/auth/generate-password`, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify(payload),
         });
-
-        if (!response.ok) {
-            throw new Error(`Error al generar contraseña: ${response.statusText}`);
-        }
-
-        const resData = await response.json();
         return mapGeneratePasswordResponse(resData);
     }
 
@@ -114,43 +109,15 @@ export class LoginRepository implements ILoginRepository {
      * GET /auth/roles-permissions
      */
     async getRolesPermissions(token: string): Promise<UserRolesPermissionsSuccessResponse> {
-        const response = await fetch(`${this.baseUrl}/auth/roles-permissions`, {
+        const data = await this.fetch<any>(`${this.baseUrl}/auth/roles-permissions`, {
             method: 'GET',
             headers: {
-                'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token}`,
             },
-            cache: 'no-store', // SSR: Datos frescos siempre
+            cache: 'no-store',
         });
-
-        if (!response.ok) {
-            throw new Error(`Error al obtener roles y permisos: ${response.statusText}`);
-        }
-
-        const data = await response.json();
         return mapUserRolesPermissionsResponse(data);
     }
 
-    /**
-     * Genera un token de negocio
-     * POST /auth/business-token
-     */
-    async generateBusinessToken(data: GenerateBusinessTokenRequest, token: string): Promise<GenerateBusinessTokenSuccessResponse> {
-        const payload = mapGenerateBusinessTokenRequest(data);
-        const response = await fetch(`${this.baseUrl}/auth/business-token`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`,
-            },
-            body: JSON.stringify(payload),
-        });
 
-        if (!response.ok) {
-            throw new Error(`Error al generar token de negocio: ${response.statusText}`);
-        }
-
-        const resData = await response.json();
-        return mapGenerateBusinessTokenResponse(resData);
-    }
 }

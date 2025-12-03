@@ -1,0 +1,54 @@
+import { IIntegrationRepository } from '../domain/ports';
+import {
+    Integration,
+    PaginatedResponse,
+    GetIntegrationsParams,
+    SingleResponse,
+    CreateIntegrationDTO,
+    UpdateIntegrationDTO,
+    ActionResponse
+} from '../domain/types';
+
+export class IntegrationUseCases {
+    constructor(private readonly repository: IIntegrationRepository) { }
+
+    async getIntegrations(params?: GetIntegrationsParams): Promise<PaginatedResponse<Integration>> {
+        return this.repository.getIntegrations(params);
+    }
+
+    async getIntegrationById(id: number): Promise<SingleResponse<Integration>> {
+        return this.repository.getIntegrationById(id);
+    }
+
+    async getIntegrationByType(type: string, businessId?: number): Promise<SingleResponse<Integration>> {
+        return this.repository.getIntegrationByType(type, businessId);
+    }
+
+    async createIntegration(data: CreateIntegrationDTO): Promise<SingleResponse<Integration>> {
+        return this.repository.createIntegration(data);
+    }
+
+    async updateIntegration(id: number, data: UpdateIntegrationDTO): Promise<SingleResponse<Integration>> {
+        return this.repository.updateIntegration(id, data);
+    }
+
+    async deleteIntegration(id: number): Promise<ActionResponse> {
+        return this.repository.deleteIntegration(id);
+    }
+
+    async testConnection(id: number): Promise<ActionResponse> {
+        return this.repository.testConnection(id);
+    }
+
+    async activateIntegration(id: number): Promise<ActionResponse> {
+        return this.repository.activateIntegration(id);
+    }
+
+    async deactivateIntegration(id: number): Promise<ActionResponse> {
+        return this.repository.deactivateIntegration(id);
+    }
+
+    async setAsDefault(id: number): Promise<ActionResponse> {
+        return this.repository.setAsDefault(id);
+    }
+}

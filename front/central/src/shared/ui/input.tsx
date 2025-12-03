@@ -5,7 +5,7 @@
 
 'use client';
 
-import { InputHTMLAttributes, ReactNode } from 'react';
+import { InputHTMLAttributes, ReactNode, useId } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -15,24 +15,25 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   rightIcon?: ReactNode;
 }
 
-export function Input({ 
-  label, 
-  error, 
-  helperText, 
-  leftIcon, 
+export function Input({
+  label,
+  error,
+  helperText,
+  leftIcon,
   rightIcon,
   className = '',
   id,
-  ...props 
+  ...props
 }: InputProps) {
-  const inputId = id || `input-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const inputId = id || generatedId;
 
   return (
     <div className="space-y-2">
       {/* Label */}
       {label && (
-        <label 
-          htmlFor={inputId} 
+        <label
+          htmlFor={inputId}
           className="block text-sm font-medium text-gray-700"
         >
           {label}
@@ -73,7 +74,7 @@ export function Input({
           {error}
         </p>
       )}
-      
+
       {!error && helperText && (
         <p className="text-sm text-gray-500">{helperText}</p>
       )}

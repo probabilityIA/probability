@@ -44,29 +44,10 @@ export default function AuthLayout({
       const businessesData = TokenStorage.getBusinessesData();
       const isBusinessUser = scope === 'business';
 
-      // Si es super admin y no tiene business token, generarlo automáticamente
-      if (isSuperAdmin && !businessToken) {
-        console.log('🔑 Auth Layout - Generando business token para super admin');
-        (async () => {
-          try {
-            const { generateBusinessTokenAction } = await import('@/services/auth/login/infra/actions');
-            const result = await generateBusinessTokenAction({ business_id: 0 }, sessionToken);
-            if (result.success && result.data) {
-              TokenStorage.setBusinessToken(result.data.token);
-              TokenStorage.removeUserPermissions(); // Limpiar permisos anteriores
-              TokenStorage.setActiveBusiness(0);
-              console.log('✅ Business token generado para super admin');
-              window.location.reload();
-              return;
-            }
-          } catch (err) {
-            console.error('Error generando business token para super admin:', err);
-          }
-        })();
-        return;
-      }
+      // Si es super admin, no necesitamos generar token de negocio adicional
+      // El token de sesión ya tiene los permisos necesarios
 
-      // Usuario business que NO es super admin: requiere business token
+      // Usuario business: validación básica
       if (isBusinessUser && !isSuperAdmin) {
         // Verificar si tiene negocios asignados
         if (!businessesData || businessesData.length === 0) {
@@ -74,13 +55,6 @@ export default function AuthLayout({
           console.error('❌ Usuario business sin negocios asignados');
           TokenStorage.clearSession();
           router.push('/login?error=no_business');
-          return;
-        }
-
-        // Tiene negocios pero no tiene business token: mostrar selector
-        if (!businessToken) {
-          setShowBusinessSelector(true);
-          setLoading(false);
           return;
         }
       }
@@ -91,11 +65,7 @@ export default function AuthLayout({
     setLoading(false);
   }, [router, isLoginPage, pathname]);
 
-  const handleBusinessSelected = () => {
-    setShowBusinessSelector(false);
-    // Recargar la página para asegurar que todos los componentes usen el nuevo token
-    window.location.reload();
-  };
+
 
   // Si debe mostrar el selector de negocios
   if (showBusinessSelector && !isLoginPage) {

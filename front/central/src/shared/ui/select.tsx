@@ -5,7 +5,7 @@
 
 'use client';
 
-import { SelectHTMLAttributes } from 'react';
+import { SelectHTMLAttributes, useId } from 'react';
 
 interface SelectOption {
   value: string | number;
@@ -21,24 +21,25 @@ interface SelectProps extends Omit<SelectHTMLAttributes<HTMLSelectElement>, 'chi
   placeholder?: string;
 }
 
-export function Select({ 
-  label, 
-  error, 
+export function Select({
+  label,
+  error,
   helperText,
   options,
   placeholder,
   className = '',
   id,
-  ...props 
+  ...props
 }: SelectProps) {
-  const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
+  const generatedId = useId();
+  const selectId = id || generatedId;
 
   return (
     <div className="space-y-2">
       {/* Label */}
       {label && (
-        <label 
-          htmlFor={selectId} 
+        <label
+          htmlFor={selectId}
           className="block text-sm font-medium text-gray-700"
         >
           {label}
@@ -59,8 +60,8 @@ export function Select({
             </option>
           )}
           {options.map((option) => (
-            <option 
-              key={option.value} 
+            <option
+              key={option.value}
               value={option.value}
               disabled={option.disabled}
             >
@@ -86,7 +87,7 @@ export function Select({
           {error}
         </p>
       )}
-      
+
       {!error && helperText && (
         <p className="text-sm text-gray-500">{helperText}</p>
       )}
