@@ -77,3 +77,39 @@ export interface ActionResponse {
     message: string;
     error?: string;
 }
+
+export interface IntegrationType {
+    id: number;
+    name: string;
+    code: string;
+    description?: string;
+    icon?: string;
+    category: 'internal' | 'external' | string;
+    is_active: boolean;
+    config_schema?: any;
+    credentials_schema?: any;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface CreateIntegrationTypeDTO {
+    name: string;
+    code?: string;
+    description?: string;
+    icon?: string;
+    category: string;
+    is_active?: boolean;
+    config_schema?: any;
+    credentials_schema?: any;
+}
+
+export interface UpdateIntegrationTypeDTO {
+    name?: string;
+    code?: string;
+    description?: string;
+    icon?: string;
+    category?: string;
+    is_active?: boolean;
+    config_schema?: any;
+    credentials_schema?: any;
+}

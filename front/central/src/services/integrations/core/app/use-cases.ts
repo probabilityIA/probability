@@ -6,7 +6,10 @@ import {
     SingleResponse,
     CreateIntegrationDTO,
     UpdateIntegrationDTO,
-    ActionResponse
+    ActionResponse,
+    IntegrationType,
+    CreateIntegrationTypeDTO,
+    UpdateIntegrationTypeDTO
 } from '../domain/types';
 
 export class IntegrationUseCases {
@@ -50,5 +53,34 @@ export class IntegrationUseCases {
 
     async setAsDefault(id: number): Promise<ActionResponse> {
         return this.repository.setAsDefault(id);
+    }
+
+    // Integration Types
+    async getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
+        return this.repository.getIntegrationTypes();
+    }
+
+    async getActiveIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
+        return this.repository.getActiveIntegrationTypes();
+    }
+
+    async getIntegrationTypeById(id: number): Promise<SingleResponse<IntegrationType>> {
+        return this.repository.getIntegrationTypeById(id);
+    }
+
+    async getIntegrationTypeByCode(code: string): Promise<SingleResponse<IntegrationType>> {
+        return this.repository.getIntegrationTypeByCode(code);
+    }
+
+    async createIntegrationType(data: CreateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        return this.repository.createIntegrationType(data);
+    }
+
+    async updateIntegrationType(id: number, data: UpdateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        return this.repository.updateIntegrationType(id, data);
+    }
+
+    async deleteIntegrationType(id: number): Promise<ActionResponse> {
+        return this.repository.deleteIntegrationType(id);
     }
 }

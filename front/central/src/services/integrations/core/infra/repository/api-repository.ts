@@ -7,7 +7,10 @@ import {
     SingleResponse,
     CreateIntegrationDTO,
     UpdateIntegrationDTO,
-    ActionResponse
+    ActionResponse,
+    IntegrationType,
+    CreateIntegrationTypeDTO,
+    UpdateIntegrationTypeDTO
 } from '../../domain/types';
 
 export class IntegrationApiRepository implements IIntegrationRepository {
@@ -124,6 +127,43 @@ export class IntegrationApiRepository implements IIntegrationRepository {
     async setAsDefault(id: number): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/integrations/${id}/set-default`, {
             method: 'PUT',
+        });
+    }
+
+    // Integration Types
+    async getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
+        return this.fetch<SingleResponse<IntegrationType[]>>('/integration-types');
+    }
+
+    async getActiveIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
+        return this.fetch<SingleResponse<IntegrationType[]>>('/integration-types/active');
+    }
+
+    async getIntegrationTypeById(id: number): Promise<SingleResponse<IntegrationType>> {
+        return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`);
+    }
+
+    async getIntegrationTypeByCode(code: string): Promise<SingleResponse<IntegrationType>> {
+        return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/code/${code}`);
+    }
+
+    async createIntegrationType(data: CreateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        return this.fetch<SingleResponse<IntegrationType>>('/integration-types', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateIntegrationType(id: number, data: UpdateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteIntegrationType(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integration-types/${id}`, {
+            method: 'DELETE',
         });
     }
 }

@@ -276,6 +276,37 @@ type APIKey struct {
 
 // ───────────────────────────────────────────
 //
+//	INTEGRATION TYPES - Tipos de integraciones disponibles
+//
+// ───────────────────────────────────────────
+type IntegrationType struct {
+	gorm.Model
+	Name        string `gorm:"size:100;not null;unique"` // "WhatsApp", "Shopify", "Mercado Libre"
+	Code        string `gorm:"size:50;not null;unique"`  // "whatsapp", "shopify", "mercado_libre"
+	Description string `gorm:"size:500"`                 // Descripción del tipo de integración
+	Icon        string `gorm:"size:100"`                 // Icono para UI
+	Category    string `gorm:"size:20;not null;index"`   // "internal" | "external"
+	IsActive    bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
+
+	// Configuración requerida (JSON schema - define qué campos de config son necesarios)
+	// Ejemplo: {"required_fields": ["phone_number_id"], "optional_fields": ["webhook_url"]}
+	ConfigSchema datatypes.JSON `gorm:"type:jsonb"`
+
+	// Credenciales requeridas (JSON schema - define qué credenciales son necesarias)
+	// Ejemplo: {"required_fields": ["access_token"], "optional_fields": ["refresh_token"]}
+	CredentialsSchema datatypes.JSON `gorm:"type:jsonb"`
+
+	// Relaciones
+	Integrations []Integration `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+// TableName especifica el nombre de la tabla para IntegrationType
+func (IntegrationType) TableName() string {
+	return "integration_types"
+}
+
+// ───────────────────────────────────────────
+//
 //	INTEGRATIONS – Integraciones del sistema (WhatsApp, Shopify, Mercado Libre, etc.)
 //
 // ───────────────────────────────────────────
@@ -285,8 +316,11 @@ type Integration struct {
 	// Identificación
 	Name     string `gorm:"size:100;not null"`       // "WhatsApp Principal", "Shopify Store 1"
 	Code     string `gorm:"size:50;not null;unique"` // "whatsapp_platform", "shopify_store_1"
-	Type     string `gorm:"size:50;not null;index"`  // "whatsapp", "shopify", "mercado_libre"
-	Category string `gorm:"size:20;not null;index"`  // "internal" | "external"
+	Category string `gorm:"size:20;not null;index"`  // "internal" | "external" (redundante, pero útil para queries)
+
+	// Relación con IntegrationType (obligatorio)
+	IntegrationTypeID uint            `gorm:"not null;index"`
+	IntegrationType   IntegrationType `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Relación con Business
 	// NULL = integración global (como WhatsApp - una sola para toda la plataforma)
@@ -316,4 +350,9 @@ type Integration struct {
 	// Relaciones
 	CreatedBy User  `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	UpdatedBy *User `gorm:"foreignKey:UpdatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+}
+
+// TableName especifica el nombre de la tabla para Integration
+func (Integration) TableName() string {
+	return "integrations"
 }

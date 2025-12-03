@@ -42,7 +42,7 @@ func Init(ctx context.Context) error {
 	business.New(v1Group, database, logger, environment, nil)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, etc.)
-	_ = integrations.New(v1Group, database, logger, environment)
+	integrations.New(v1Group, database, logger, environment)
 
 	LogStartupInfo(ctx, logger, environment)
 

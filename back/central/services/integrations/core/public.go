@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 )
 
@@ -40,11 +40,11 @@ type IIntegrationCore interface {
 
 // integrationCore implementa IIntegrationCore
 type integrationCore struct {
-	useCase domain.IIntegrationUseCase
+	useCase usecaseintegrations.IIntegrationUseCase
 }
 
 // NewIntegrationCore crea una nueva instancia de IIntegrationCore
-func NewIntegrationCore(useCase domain.IIntegrationUseCase) IIntegrationCore {
+func NewIntegrationCore(useCase usecaseintegrations.IIntegrationUseCase) IIntegrationCore {
 	return &integrationCore{
 		useCase: useCase,
 	}
@@ -76,7 +76,7 @@ func (ic *integrationCore) GetIntegrationConfig(ctx context.Context, integration
 // TestIntegration testea la conexión usando el tester registrado
 func (ic *integrationCore) TestIntegration(ctx context.Context, integrationType string, config map[string]interface{}, credentials map[string]interface{}) error {
 	// Obtener el usecase interno para acceder al registry
-	useCaseImpl, ok := ic.useCase.(*app.IntegrationUseCase)
+	useCaseImpl, ok := ic.useCase.(*usecaseintegrations.IntegrationUseCase)
 	if !ok {
 		return fmt.Errorf("error interno: no se puede acceder al registry de testers")
 	}
@@ -93,7 +93,7 @@ func (ic *integrationCore) TestIntegration(ctx context.Context, integrationType 
 
 // RegisterTester registra un tester para un tipo de integración
 func (ic *integrationCore) RegisterTester(integrationType string, tester ITestIntegration) error {
-	useCaseImpl, ok := ic.useCase.(*app.IntegrationUseCase)
+	useCaseImpl, ok := ic.useCase.(*usecaseintegrations.IntegrationUseCase)
 	if !ok {
 		return fmt.Errorf("error interno: no se puede acceder al registry de testers")
 	}

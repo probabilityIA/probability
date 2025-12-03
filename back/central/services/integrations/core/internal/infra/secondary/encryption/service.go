@@ -27,12 +27,22 @@ func newEncryptionService(config env.IConfig, logger log.ILogger) *encryptionSer
 			Msg("ENCRYPTION_KEY no está configurada - es requerida para encriptar credenciales")
 	}
 
-	// La clave debe tener exactamente 32 bytes para AES-256
-	key := []byte(encryptionKey)
-	if len(key) != 32 {
-		logger.Fatal(context.Background()).
-			Int("key_length", len(key)).
-			Msg("ENCRYPTION_KEY debe tener exactamente 32 bytes (256 bits) para AES-256")
+	var key []byte
+
+	// Intentar decodificar como base64 primero (formato común)
+	decoded, decodeErr := base64.StdEncoding.DecodeString(encryptionKey)
+	if decodeErr == nil && len(decoded) == 32 {
+		// La clave está en base64 y tiene 32 bytes decodificados
+		key = decoded
+	} else {
+		// Si no es base64 válido, intentar usar directamente como string
+		key = []byte(encryptionKey)
+		if len(key) != 32 {
+			logger.Fatal(context.Background()).
+				Int("key_length", len(key)).
+				Err(decodeErr).
+				Msg("ENCRYPTION_KEY debe tener exactamente 32 bytes (256 bits) para AES-256. Puede ser una cadena de 32 caracteres o una cadena base64 que decodifique a 32 bytes")
+		}
 	}
 
 	return &encryptionService{

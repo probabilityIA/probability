@@ -37,6 +37,8 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.Client{},
 		&models.Action{},
 		&models.APIKey{},
+		&models.IntegrationType{},
+		&models.Integration{},
 	); err != nil {
 		return err
 	}

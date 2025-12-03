@@ -2,22 +2,30 @@ package domain
 
 import "context"
 
-// IIntegrationRepository define la interfaz del repositorio de integraciones
-type IIntegrationRepository interface {
-	// CRUD básico
-	Create(ctx context.Context, integration *Integration) error
-	Update(ctx context.Context, id uint, integration *Integration) error
-	GetByID(ctx context.Context, id uint) (*Integration, error)
-	Delete(ctx context.Context, id uint) error
-	List(ctx context.Context, filters IntegrationFilters) ([]*Integration, int64, error)
+// IRepository define la interfaz unificada del repositorio de integraciones y tipos de integración
+type IRepository interface {
+	// Métodos de Integrations
+	CreateIntegration(ctx context.Context, integration *Integration) error
+	UpdateIntegration(ctx context.Context, id uint, integration *Integration) error
+	GetIntegrationByID(ctx context.Context, id uint) (*Integration, error)
+	DeleteIntegration(ctx context.Context, id uint) error
+	ListIntegrations(ctx context.Context, filters IntegrationFilters) ([]*Integration, int64, error)
+	GetIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*Integration, error)
+	GetActiveIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*Integration, error)
+	ListIntegrationsByBusiness(ctx context.Context, businessID uint) ([]*Integration, error)
+	ListIntegrationsByIntegrationTypeID(ctx context.Context, integrationTypeID uint) ([]*Integration, error)
+	SetIntegrationAsDefault(ctx context.Context, id uint) error
+	ExistsIntegrationByCode(ctx context.Context, code string, businessID *uint) (bool, error)
 
-	// Métodos específicos
-	GetByType(ctx context.Context, integrationType string, businessID *uint) (*Integration, error)
-	GetActiveByType(ctx context.Context, integrationType string, businessID *uint) (*Integration, error)
-	ListByBusiness(ctx context.Context, businessID uint) ([]*Integration, error)
-	ListByType(ctx context.Context, integrationType string) ([]*Integration, error)
-	SetAsDefault(ctx context.Context, id uint) error
-	ExistsByCode(ctx context.Context, code string, businessID *uint) (bool, error)
+	// Métodos de IntegrationTypes
+	CreateIntegrationType(ctx context.Context, integrationType *IntegrationType) error
+	UpdateIntegrationType(ctx context.Context, id uint, integrationType *IntegrationType) error
+	GetIntegrationTypeByID(ctx context.Context, id uint) (*IntegrationType, error)
+	GetIntegrationTypeByCode(ctx context.Context, code string) (*IntegrationType, error)
+	GetIntegrationTypeByName(ctx context.Context, name string) (*IntegrationType, error)
+	DeleteIntegrationType(ctx context.Context, id uint) error
+	ListIntegrationTypes(ctx context.Context) ([]*IntegrationType, error)
+	ListActiveIntegrationTypes(ctx context.Context) ([]*IntegrationType, error)
 }
 
 // IEncryptionService define la interfaz del servicio de encriptación
@@ -35,16 +43,6 @@ type IEncryptionService interface {
 	DecryptValue(ctx context.Context, encryptedValue string) (string, error)
 }
 
+// IIntegrationTypeUseCase define la interfaz del caso de uso de tipos de integración
+
 // IIntegrationUseCase define la interfaz del caso de uso de integraciones
-type IIntegrationUseCase interface {
-	CreateIntegration(ctx context.Context, dto CreateIntegrationDTO) (*Integration, error)
-	UpdateIntegration(ctx context.Context, id uint, dto UpdateIntegrationDTO) (*Integration, error)
-	GetIntegrationByID(ctx context.Context, id uint) (*Integration, error)
-	GetIntegrationByType(ctx context.Context, integrationType string, businessID *uint) (*IntegrationWithCredentials, error)
-	DeleteIntegration(ctx context.Context, id uint) error
-	ListIntegrations(ctx context.Context, filters IntegrationFilters) ([]*Integration, int64, error)
-	TestIntegration(ctx context.Context, id uint) error
-	ActivateIntegration(ctx context.Context, id uint) error
-	DeactivateIntegration(ctx context.Context, id uint) error
-	SetAsDefault(ctx context.Context, id uint) error
-}

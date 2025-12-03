@@ -6,7 +6,9 @@ import { IntegrationUseCases } from '../../app/use-cases';
 import {
     GetIntegrationsParams,
     CreateIntegrationDTO,
-    UpdateIntegrationDTO
+    UpdateIntegrationDTO,
+    CreateIntegrationTypeDTO,
+    UpdateIntegrationTypeDTO
 } from '../../domain/types';
 
 async function getUseCases() {
@@ -102,6 +104,70 @@ export const setAsDefaultAction = async (id: number) => {
         return await (await getUseCases()).setAsDefault(id);
     } catch (error: any) {
         console.error('Set As Default Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+// Integration Types
+export const getIntegrationTypesAction = async () => {
+    try {
+        return await (await getUseCases()).getIntegrationTypes();
+    } catch (error: any) {
+        console.error('Get Integration Types Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const getActiveIntegrationTypesAction = async () => {
+    try {
+        return await (await getUseCases()).getActiveIntegrationTypes();
+    } catch (error: any) {
+        console.error('Get Active Integration Types Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const getIntegrationTypeByIdAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).getIntegrationTypeById(id);
+    } catch (error: any) {
+        console.error('Get Integration Type By Id Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const getIntegrationTypeByCodeAction = async (code: string) => {
+    try {
+        return await (await getUseCases()).getIntegrationTypeByCode(code);
+    } catch (error: any) {
+        console.error('Get Integration Type By Code Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const createIntegrationTypeAction = async (data: CreateIntegrationTypeDTO) => {
+    try {
+        return await (await getUseCases()).createIntegrationType(data);
+    } catch (error: any) {
+        console.error('Create Integration Type Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const updateIntegrationTypeAction = async (id: number, data: UpdateIntegrationTypeDTO) => {
+    try {
+        return await (await getUseCases()).updateIntegrationType(id, data);
+    } catch (error: any) {
+        console.error('Update Integration Type Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const deleteIntegrationTypeAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).deleteIntegrationType(id);
+    } catch (error: any) {
+        console.error('Delete Integration Type Action Error:', error.message);
         throw new Error(error.message);
     }
 };

@@ -6,20 +6,12 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
-	"github.com/secamc93/probability/back/central/shared/db"
-	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
-type integrationRepository struct {
-	db                db.IDatabase
-	log               log.ILogger
-	encryptionService domain.IEncryptionService
-}
-
-// Create crea una nueva integración
-func (r *integrationRepository) Create(ctx context.Context, integration *domain.Integration) error {
+// CreateIntegration crea una nueva integración
+func (r *Repository) CreateIntegration(ctx context.Context, integration *domain.Integration) error {
 	// Encriptar credenciales antes de guardar
 	if len(integration.Credentials) > 0 {
 		// datatypes.JSON es []byte, convertir a map para encriptar
@@ -51,8 +43,8 @@ func (r *integrationRepository) Create(ctx context.Context, integration *domain.
 	return nil
 }
 
-// Update actualiza una integración existente
-func (r *integrationRepository) Update(ctx context.Context, id uint, integration *domain.Integration) error {
+// UpdateIntegration actualiza una integración existente
+func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration *domain.Integration) error {
 	// Encriptar credenciales si se están actualizando
 	if len(integration.Credentials) > 0 {
 		var credentialsMap map[string]interface{}
@@ -85,10 +77,10 @@ func (r *integrationRepository) Update(ctx context.Context, id uint, integration
 	return nil
 }
 
-// GetByID obtiene una integración por su ID
-func (r *integrationRepository) GetByID(ctx context.Context, id uint) (*domain.Integration, error) {
+// GetIntegrationByID obtiene una integración por su ID
+func (r *Repository) GetIntegrationByID(ctx context.Context, id uint) (*domain.Integration, error) {
 	var model models.Integration
-	if err := r.db.Conn(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("IntegrationType").First(&model, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("integración con ID %d no encontrada", id)
 		}
@@ -99,8 +91,8 @@ func (r *integrationRepository) GetByID(ctx context.Context, id uint) (*domain.I
 	return r.toDomain(&model), nil
 }
 
-// Delete elimina una integración
-func (r *integrationRepository) Delete(ctx context.Context, id uint) error {
+// DeleteIntegration elimina una integración
+func (r *Repository) DeleteIntegration(ctx context.Context, id uint) error {
 	if err := r.db.Conn(ctx).Delete(&models.Integration{}, id).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al eliminar integración")
 		return fmt.Errorf("error al eliminar integración: %w", err)
@@ -108,16 +100,20 @@ func (r *integrationRepository) Delete(ctx context.Context, id uint) error {
 	return nil
 }
 
-// List lista integraciones con filtros
-func (r *integrationRepository) List(ctx context.Context, filters domain.IntegrationFilters) ([]*domain.Integration, int64, error) {
+// ListIntegrations lista integraciones con filtros
+func (r *Repository) ListIntegrations(ctx context.Context, filters domain.IntegrationFilters) ([]*domain.Integration, int64, error) {
 	var integrationModels []models.Integration
 	var total int64
 
 	query := r.db.Conn(ctx).Model(&models.Integration{})
 
 	// Aplicar filtros
-	if filters.Type != nil {
-		query = query.Where("type = ?", *filters.Type)
+	if filters.IntegrationTypeID != nil {
+		query = query.Where("integration_type_id = ?", *filters.IntegrationTypeID)
+	} else if filters.IntegrationTypeCode != nil {
+		// Si se filtra por código, necesitamos hacer un JOIN con integration_type
+		query = query.Joins("JOIN integration_type ON integration.integration_type_id = integration_type.id").
+			Where("integration_type.code = ?", *filters.IntegrationTypeCode)
 	}
 	if filters.Category != nil {
 		query = query.Where("category = ?", *filters.Category)
@@ -169,10 +165,10 @@ func (r *integrationRepository) List(ctx context.Context, filters domain.Integra
 	return integrations, total, nil
 }
 
-// GetByType obtiene una integración por tipo y business_id
-func (r *integrationRepository) GetByType(ctx context.Context, integrationType string, businessID *uint) (*domain.Integration, error) {
+// GetIntegrationByIntegrationTypeID obtiene una integración por tipo y business_id
+func (r *Repository) GetIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*domain.Integration, error) {
 	var model models.Integration
-	query := r.db.Conn(ctx).Where("type = ?", integrationType)
+	query := r.db.Conn(ctx).Where("integration_type_id = ?", integrationTypeID)
 
 	if businessID != nil {
 		query = query.Where("business_id = ?", *businessID)
@@ -182,19 +178,19 @@ func (r *integrationRepository) GetByType(ctx context.Context, integrationType s
 
 	if err := query.First(&model).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("integración de tipo '%s' no encontrada", integrationType)
+			return nil, fmt.Errorf("integración de tipo con ID %d no encontrada", integrationTypeID)
 		}
-		r.log.Error(ctx).Err(err).Str("type", integrationType).Msg("Error al obtener integración por tipo")
+		r.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Error al obtener integración por tipo")
 		return nil, fmt.Errorf("error al obtener integración por tipo: %w", err)
 	}
 
 	return r.toDomain(&model), nil
 }
 
-// GetActiveByType obtiene una integración activa por tipo y business_id
-func (r *integrationRepository) GetActiveByType(ctx context.Context, integrationType string, businessID *uint) (*domain.Integration, error) {
+// GetActiveIntegrationByIntegrationTypeID obtiene una integración activa por tipo y business_id
+func (r *Repository) GetActiveIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*domain.Integration, error) {
 	var model models.Integration
-	query := r.db.Conn(ctx).Where("type = ? AND is_active = ?", integrationType, true)
+	query := r.db.Conn(ctx).Where("integration_type_id = ? AND is_active = ?", integrationTypeID, true)
 
 	if businessID != nil {
 		query = query.Where("business_id = ?", *businessID)
@@ -204,17 +200,17 @@ func (r *integrationRepository) GetActiveByType(ctx context.Context, integration
 
 	if err := query.First(&model).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			return nil, fmt.Errorf("integración activa de tipo '%s' no encontrada", integrationType)
+			return nil, fmt.Errorf("integración activa de tipo con ID %d no encontrada", integrationTypeID)
 		}
-		r.log.Error(ctx).Err(err).Str("type", integrationType).Msg("Error al obtener integración activa por tipo")
+		r.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Error al obtener integración activa por tipo")
 		return nil, fmt.Errorf("error al obtener integración activa por tipo: %w", err)
 	}
 
 	return r.toDomain(&model), nil
 }
 
-// ListByBusiness lista integraciones de un business
-func (r *integrationRepository) ListByBusiness(ctx context.Context, businessID uint) ([]*domain.Integration, error) {
+// ListIntegrationsByBusiness lista integraciones de un business
+func (r *Repository) ListIntegrationsByBusiness(ctx context.Context, businessID uint) ([]*domain.Integration, error) {
 	var integrationModels []models.Integration
 	if err := r.db.Conn(ctx).Where("business_id = ?", businessID).Find(&integrationModels).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("Error al listar integraciones por business")
@@ -229,11 +225,11 @@ func (r *integrationRepository) ListByBusiness(ctx context.Context, businessID u
 	return integrations, nil
 }
 
-// ListByType lista integraciones por tipo
-func (r *integrationRepository) ListByType(ctx context.Context, integrationType string) ([]*domain.Integration, error) {
+// ListIntegrationsByIntegrationTypeID lista integraciones por tipo de integración
+func (r *Repository) ListIntegrationsByIntegrationTypeID(ctx context.Context, integrationTypeID uint) ([]*domain.Integration, error) {
 	var integrationModels []models.Integration
-	if err := r.db.Conn(ctx).Where("type = ?", integrationType).Find(&integrationModels).Error; err != nil {
-		r.log.Error(ctx).Err(err).Str("type", integrationType).Msg("Error al listar integraciones por tipo")
+	if err := r.db.Conn(ctx).Where("integration_type_id = ?", integrationTypeID).Find(&integrationModels).Error; err != nil {
+		r.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Error al listar integraciones por tipo")
 		return nil, fmt.Errorf("error al listar integraciones por tipo: %w", err)
 	}
 
@@ -245,8 +241,8 @@ func (r *integrationRepository) ListByType(ctx context.Context, integrationType 
 	return integrations, nil
 }
 
-// SetAsDefault marca una integración como default
-func (r *integrationRepository) SetAsDefault(ctx context.Context, id uint) error {
+// SetIntegrationAsDefault marca una integración como default
+func (r *Repository) SetIntegrationAsDefault(ctx context.Context, id uint) error {
 	// Primero obtener la integración para saber su tipo y business_id
 	var integration models.Integration
 	if err := r.db.Conn(ctx).First(&integration, id).Error; err != nil {
@@ -255,7 +251,7 @@ func (r *integrationRepository) SetAsDefault(ctx context.Context, id uint) error
 
 	// Desmarcar todas las demás del mismo tipo y business como no default
 	query := r.db.Conn(ctx).Model(&models.Integration{}).
-		Where("type = ? AND id != ?", integration.Type, id)
+		Where("integration_type_id = ? AND id != ?", integration.IntegrationTypeID, id)
 
 	if integration.BusinessID != nil {
 		query = query.Where("business_id = ?", *integration.BusinessID)
@@ -277,8 +273,8 @@ func (r *integrationRepository) SetAsDefault(ctx context.Context, id uint) error
 	return nil
 }
 
-// ExistsByCode verifica si existe una integración con el código dado
-func (r *integrationRepository) ExistsByCode(ctx context.Context, code string, businessID *uint) (bool, error) {
+// ExistsIntegrationByCode verifica si existe una integración con el código dado
+func (r *Repository) ExistsIntegrationByCode(ctx context.Context, code string, businessID *uint) (bool, error) {
 	var count int64
 	query := r.db.Conn(ctx).Model(&models.Integration{}).Where("code = ?", code)
 
@@ -296,24 +292,24 @@ func (r *integrationRepository) ExistsByCode(ctx context.Context, code string, b
 }
 
 // toModel convierte domain.Integration a models.Integration
-func (r *integrationRepository) toModel(integration *domain.Integration) *models.Integration {
+func (r *Repository) toModel(integration *domain.Integration) *models.Integration {
 	model := &models.Integration{
 		Model: gorm.Model{
 			ID:        integration.ID,
 			CreatedAt: integration.CreatedAt,
 			UpdatedAt: integration.UpdatedAt,
 		},
-		Name:        integration.Name,
-		Code:        integration.Code,
-		Type:        integration.Type,
-		Category:    integration.Category,
-		BusinessID:  integration.BusinessID,
-		IsActive:    integration.IsActive,
-		IsDefault:   integration.IsDefault,
-		Config:      integration.Config,
-		Credentials: integration.Credentials,
-		Description: integration.Description,
-		CreatedByID: integration.CreatedByID,
+		Name:              integration.Name,
+		Code:              integration.Code,
+		IntegrationTypeID: integration.IntegrationTypeID,
+		Category:          integration.Category,
+		BusinessID:        integration.BusinessID,
+		IsActive:          integration.IsActive,
+		IsDefault:         integration.IsDefault,
+		Config:            integration.Config,
+		Credentials:       integration.Credentials,
+		Description:       integration.Description,
+		CreatedByID:       integration.CreatedByID,
 	}
 	if integration.UpdatedByID != nil {
 		model.UpdatedByID = integration.UpdatedByID
@@ -322,28 +318,48 @@ func (r *integrationRepository) toModel(integration *domain.Integration) *models
 }
 
 // toDomain convierte models.Integration a domain.Integration
-func (r *integrationRepository) toDomain(model *models.Integration) *domain.Integration {
+func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 	businessID := model.BusinessID
 	var updatedByID *uint
 	if model.UpdatedByID != nil {
 		updatedByID = model.UpdatedByID
 	}
 
-	return &domain.Integration{
-		ID:          model.ID,
-		Name:        model.Name,
-		Code:        model.Code,
-		Type:        model.Type,
-		Category:    model.Category,
-		BusinessID:  businessID,
-		IsActive:    model.IsActive,
-		IsDefault:   model.IsDefault,
-		Config:      model.Config,
-		Credentials: model.Credentials, // Mantener encriptado
-		Description: model.Description,
-		CreatedByID: model.CreatedByID,
-		UpdatedByID: updatedByID,
-		CreatedAt:   model.CreatedAt,
-		UpdatedAt:   model.UpdatedAt,
+	integration := &domain.Integration{
+		ID:                model.ID,
+		Name:              model.Name,
+		Code:              model.Code,
+		IntegrationTypeID: model.IntegrationTypeID,
+		Category:          model.Category,
+		BusinessID:        businessID,
+		IsActive:          model.IsActive,
+		IsDefault:         model.IsDefault,
+		Config:            model.Config,
+		Credentials:       model.Credentials, // Mantener encriptado
+		Description:       model.Description,
+		CreatedByID:       model.CreatedByID,
+		UpdatedByID:       updatedByID,
+		CreatedAt:         model.CreatedAt,
+		UpdatedAt:         model.UpdatedAt,
 	}
+
+	// Cargar IntegrationType si está disponible en el modelo
+	if model.IntegrationType.ID != 0 {
+		integrationType := domain.IntegrationType{
+			ID:                model.IntegrationType.ID,
+			Name:              model.IntegrationType.Name,
+			Code:              model.IntegrationType.Code,
+			Description:       model.IntegrationType.Description,
+			Icon:              model.IntegrationType.Icon,
+			Category:          model.IntegrationType.Category,
+			IsActive:          model.IntegrationType.IsActive,
+			ConfigSchema:      model.IntegrationType.ConfigSchema,
+			CredentialsSchema: model.IntegrationType.CredentialsSchema,
+			CreatedAt:         model.IntegrationType.CreatedAt,
+			UpdatedAt:         model.IntegrationType.UpdatedAt,
+		}
+		integration.IntegrationType = &integrationType
+	}
+
+	return integration
 }
