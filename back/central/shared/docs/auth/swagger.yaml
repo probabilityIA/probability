@@ -28,6 +28,7 @@ definitions:
   request.BusinessTypeRequest:
     properties:
       code:
+        description: Opcional, se genera automáticamente si no se proporciona
         type: string
       description:
         type: string
@@ -38,7 +39,6 @@ definitions:
       name:
         type: string
     required:
-    - code
     - name
     type: object
   request.ChangePasswordRequest:
@@ -54,6 +54,89 @@ definitions:
     required:
     - current_password
     - new_password
+    type: object
+  request.CreateActionRequest:
+    description: Solicitud para crear un nuevo action en el sistema
+    properties:
+      description:
+        example: Permite crear nuevos registros
+        type: string
+      name:
+        example: create
+        type: string
+    required:
+    - name
+    type: object
+  request.CreateIntegrationRequest:
+    properties:
+      business_id:
+        description: NULL para integraciones globales
+        example: 16
+        type: integer
+      category:
+        example: internal
+        type: string
+      code:
+        example: whatsapp_platform
+        type: string
+      config:
+        additionalProperties: true
+        description: Configuración flexible
+        type: object
+      credentials:
+        additionalProperties: true
+        description: Credenciales (se encriptarán)
+        type: object
+      description:
+        example: Integración principal de WhatsApp
+        type: string
+      integration_type_id:
+        description: ID del tipo de integración
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      is_default:
+        example: true
+        type: boolean
+      name:
+        example: WhatsApp Principal
+        type: string
+    required:
+    - category
+    - code
+    - integration_type_id
+    - name
+    type: object
+  request.CreateIntegrationTypeRequest:
+    properties:
+      category:
+        example: internal
+        type: string
+      code:
+        description: Opcional, se genera automáticamente
+        example: whatsapp
+        type: string
+      credentials_schema:
+        additionalProperties: true
+        description: JSON schema para credenciales
+        type: object
+      description:
+        example: Integración con WhatsApp Cloud API
+        type: string
+      icon:
+        example: whatsapp-icon
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: WhatsApp
+        type: string
+    required:
+    - category
+    - name
     type: object
   request.CreatePermissionRequest:
     properties:
@@ -87,6 +170,21 @@ definitions:
     - resource_id
     - scope_id
     type: object
+  request.CreateResourceRequest:
+    description: Solicitud para crear un nuevo recurso en el sistema
+    properties:
+      business_type_id:
+        example: 11
+        type: integer
+      description:
+        example: Gestión de usuarios del sistema
+        type: string
+      name:
+        example: users
+        type: string
+    required:
+    - name
+    type: object
   request.CreateRoleRequest:
     properties:
       business_type_id:
@@ -116,12 +214,6 @@ definitions:
     - name
     - scope_id
     type: object
-  request.GenerateBusinessTokenRequest:
-    properties:
-      business_id:
-        description: 0 para super admin, >0 para usuarios normales
-        type: integer
-    type: object
   request.GeneratePasswordRequest:
     properties:
       user_id:
@@ -139,6 +231,72 @@ definitions:
     required:
     - email
     - password
+    type: object
+  request.UpdateActionRequest:
+    description: Solicitud para actualizar un action existente
+    properties:
+      description:
+        example: Permite crear nuevos registros
+        type: string
+      name:
+        example: create
+        type: string
+    required:
+    - name
+    type: object
+  request.UpdateIntegrationRequest:
+    properties:
+      code:
+        example: whatsapp_platform
+        type: string
+      config:
+        additionalProperties: true
+        description: Configuración flexible
+        type: object
+      credentials:
+        additionalProperties: true
+        description: Credenciales (se encriptarán)
+        type: object
+      description:
+        example: Nueva descripción
+        type: string
+      integration_type_id:
+        description: ID del tipo de integración (opcional)
+        example: 1
+        type: integer
+      is_active:
+        example: true
+        type: boolean
+      is_default:
+        example: true
+        type: boolean
+      name:
+        example: WhatsApp Actualizado
+        type: string
+    type: object
+  request.UpdateIntegrationTypeRequest:
+    properties:
+      category:
+        example: internal
+        type: string
+      code:
+        example: whatsapp
+        type: string
+      credentials_schema:
+        additionalProperties: true
+        type: object
+      description:
+        example: Nueva descripción
+        type: string
+      icon:
+        example: whatsapp-icon
+        type: string
+      is_active:
+        example: true
+        type: boolean
+      name:
+        example: WhatsApp Actualizado
+        type: string
     type: object
   request.UpdatePermissionRequest:
     properties:
@@ -170,6 +328,21 @@ definitions:
     - name
     - resource_id
     - scope_id
+    type: object
+  request.UpdateResourceRequest:
+    description: Solicitud para actualizar un recurso existente
+    properties:
+      business_type_id:
+        example: 11
+        type: integer
+      description:
+        example: Gestión de usuarios del sistema
+        type: string
+      name:
+        example: users
+        type: string
+    required:
+    - name
     type: object
   request.UpdateRoleRequest:
     properties:
@@ -273,11 +446,6 @@ definitions:
       role_name:
         type: string
     type: object
-  response.BusinessTokenResponse:
-    properties:
-      token:
-        type: string
-    type: object
   response.BusinessTypeDetailResponse:
     properties:
       code:
@@ -326,20 +494,6 @@ definitions:
         type: string
       success:
         example: true
-        type: boolean
-    type: object
-  response.GenerateBusinessTokenErrorResponse:
-    properties:
-      error:
-        type: string
-    type: object
-  response.GenerateBusinessTokenSuccessResponse:
-    properties:
-      data:
-        $ref: '#/definitions/response.BusinessTokenResponse'
-      message:
-        type: string
-      success:
         type: boolean
     type: object
   response.GeneratePasswordResponse:
@@ -835,48 +989,267 @@ info:
   title: Restaurant Reservation API
   version: "1.0"
 paths:
-  /auth/business-token:
-    post:
+  /actions:
+    get:
       consumes:
       - application/json
-      description: Genera un token específico para un business basado en el token
-        principal del usuario. Para super admins (scope platform), usar business_id
-        = 0
+      description: Obtiene una lista paginada de actions del sistema con opciones
+        de filtrado
       parameters:
-      - description: Datos del business (business_id = 0 para super admin)
-        in: body
-        name: request
-        required: true
-        schema:
-          $ref: '#/definitions/request.GenerateBusinessTokenRequest'
+      - default: 1
+        description: Número de página
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      - description: Filtrar por nombre (búsqueda parcial)
+        in: query
+        name: name
+        type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Token generado exitosamente
+          description: Lista de actions obtenida exitosamente
           schema:
-            $ref: '#/definitions/response.GenerateBusinessTokenSuccessResponse'
+            additionalProperties: true
+            type: object
         "400":
-          description: Datos de entrada inválidos
+          description: Parámetros de consulta inválidos
           schema:
-            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
+            additionalProperties: true
+            type: object
         "401":
           description: No autorizado
           schema:
-            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
-        "404":
-          description: Business no encontrado o sin acceso
-          schema:
-            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
+            additionalProperties: true
+            type: object
         "500":
           description: Error interno del servidor
           schema:
-            $ref: '#/definitions/response.GenerateBusinessTokenErrorResponse'
+            additionalProperties: true
+            type: object
       security:
-      - BusinessTokenAuth: []
-      summary: Generar token de business
+      - BearerAuth: []
+      summary: Obtener actions
       tags:
-      - Auth
+      - Actions
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo action en el sistema con nombre y descripción únicos
+      parameters:
+      - description: Datos del action a crear
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateActionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Action creado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Solo super usuarios pueden crear actions
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Action ya existe
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear action
+      tags:
+      - Actions
+  /actions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un action del sistema por su ID único. No se puede eliminar
+        si tiene permisos asociados.
+      parameters:
+      - description: ID del action
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Action eliminado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID de action inválido
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Solo super usuarios pueden eliminar actions
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Action no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Action tiene permisos asociados
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Eliminar action
+      tags:
+      - Actions
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un action específico del sistema por su ID único
+      parameters:
+      - description: ID del action
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Action obtenido exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID de action inválido
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Action no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener action por ID
+      tags:
+      - Actions
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un action existente en el sistema
+      parameters:
+      - description: ID del action
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Datos del action a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateActionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Action actualizado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Solo super usuarios pueden actualizar actions
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Action no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflicto con action existente
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar action
+      tags:
+      - Actions
   /auth/change-password:
     post:
       consumes:
@@ -1293,12 +1666,10 @@ paths:
       - description: Código del negocio
         in: formData
         name: code
-        required: true
         type: string
       - description: ID del tipo de negocio
         in: formData
         name: business_type_id
-        required: true
         type: integer
       - description: Zona horaria
         in: formData
@@ -1759,6 +2130,609 @@ paths:
       summary: Desactivar recurso de business
       tags:
       - Business Resources
+  /integration-types:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene todos los tipos de integración disponibles
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar tipos de integración
+      tags:
+      - IntegrationTypes
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo tipo de integración en el sistema
+      parameters:
+      - description: Datos del tipo de integración
+        in: body
+        name: integrationType
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateIntegrationTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear tipo de integración
+      tags:
+      - IntegrationTypes
+  /integration-types/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un tipo de integración del sistema
+      parameters:
+      - description: ID del tipo de integración
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Eliminar tipo de integración
+      tags:
+      - IntegrationTypes
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un tipo de integración específico por su ID
+      parameters:
+      - description: ID del tipo de integración
+        example: 1
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener tipo de integración por ID
+      tags:
+      - IntegrationTypes
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un tipo de integración existente
+      parameters:
+      - description: ID del tipo de integración
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos actualizados del tipo de integración
+        in: body
+        name: integrationType
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateIntegrationTypeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar tipo de integración
+      tags:
+      - IntegrationTypes
+  /integration-types/active:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene solo los tipos de integración que están activos
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar tipos de integración activos
+      tags:
+      - IntegrationTypes
+  /integration-types/code/{code}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un tipo de integración específico por su código
+      parameters:
+      - description: Código del tipo de integración
+        example: whatsapp
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener tipo de integración por código
+      tags:
+      - IntegrationTypes
+  /integrations:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista paginada de integraciones con filtros
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        name: page_size
+        type: integer
+      - description: Filtrar por ID del tipo de integración
+        in: query
+        name: integration_type_id
+        type: integer
+      - description: Filtrar por código del tipo de integración
+        in: query
+        name: integration_type_code
+        type: string
+      - description: Filtrar por categoría
+        in: query
+        name: category
+        type: string
+      - description: Filtrar por business ID
+        in: query
+        name: business_id
+        type: integer
+      - description: Filtrar por estado activo
+        in: query
+        name: is_active
+        type: boolean
+      - description: Buscar por nombre o código
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener integraciones
+      tags:
+      - Integrations
+    post:
+      consumes:
+      - application/json
+      description: Crea una nueva integración en el sistema
+      parameters:
+      - description: Datos de la integración
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateIntegrationRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear integración
+      tags:
+      - Integrations
+  /integrations/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina una integración del sistema
+      parameters:
+      - description: ID de la integración
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Eliminar integración
+      tags:
+      - Integrations
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una integración específica por su ID
+      parameters:
+      - description: ID de la integración
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener integración por ID
+      tags:
+      - Integrations
+    put:
+      consumes:
+      - application/json
+      description: Actualiza una integración existente
+      parameters:
+      - description: ID de la integración
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateIntegrationRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar integración
+      tags:
+      - Integrations
+  /integrations/{id}/deactivate:
+    put:
+      consumes:
+      - application/json
+      description: Desactiva una integración del sistema
+      parameters:
+      - description: ID de la integración
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Desactivar integración
+      tags:
+      - Integrations
+  /integrations/{id}/test:
+    post:
+      consumes:
+      - application/json
+      description: Prueba la conexión de una integración sin guardar cambios
+      parameters:
+      - description: ID de la integración
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Probar integración
+      tags:
+      - Integrations
   /permissions:
     get:
       consumes:
@@ -2038,6 +3012,270 @@ paths:
       summary: Obtener permisos por scope
       tags:
       - Permissions
+  /resources:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista paginada de recursos del sistema con opciones
+        de filtrado y ordenamiento
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        minimum: 1
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        type: integer
+      - description: Filtrar por nombre (búsqueda parcial)
+        in: query
+        name: name
+        type: string
+      - description: Filtrar por descripción (búsqueda parcial)
+        in: query
+        name: description
+        type: string
+      - description: Filtrar por tipo de business (incluye genéricos)
+        in: query
+        name: business_type_id
+        type: integer
+      - description: Campo para ordenar
+        enum:
+        - name
+        - created_at
+        - updated_at
+        in: query
+        name: sort_by
+        type: string
+      - description: Orden
+        enum:
+        - asc
+        - desc
+        in: query
+        name: sort_order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de recursos obtenida exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Parámetros de consulta inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener recursos
+      tags:
+      - Resources
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo recurso en el sistema con nombre y descripción únicos
+      parameters:
+      - description: Datos del recurso a crear
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.CreateResourceRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Recurso creado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Recurso ya existe
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Crear recurso
+      tags:
+      - Resources
+  /resources/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina permanentemente un recurso del sistema por su ID único
+        con eliminación en cascada
+      parameters:
+      - description: ID del recurso
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recurso eliminado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID de recurso inválido
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Recurso no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Eliminar recurso
+      tags:
+      - Resources
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un recurso específico del sistema por su ID único
+      parameters:
+      - description: ID del recurso
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recurso obtenido exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: ID de recurso inválido
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Recurso no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obtener recurso por ID
+      tags:
+      - Resources
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un recurso existente en el sistema
+      parameters:
+      - description: ID del recurso
+        in: path
+        minimum: 1
+        name: id
+        required: true
+        type: integer
+      - description: Datos del recurso a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateResourceRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Recurso actualizado exitosamente
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Datos de entrada inválidos
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: No autorizado
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Recurso no encontrado
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflicto con recurso existente
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Error interno del servidor
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Actualizar recurso
+      tags:
+      - Resources
   /roles:
     get:
       consumes:

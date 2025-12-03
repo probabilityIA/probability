@@ -2,8 +2,10 @@ package core
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app"
-	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrationtype"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrationtype"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/secondary/encryption"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -25,14 +27,17 @@ func New(
 	repo := repository.New(db, logger, encryptionService)
 
 	// 3. Inicializar Casos de Uso
-	useCase := app.New(repo, encryptionService, logger)
+	IntegrationUseCase := usecaseintegrations.New(repo, encryptionService, logger)
+	integrationTypeUseCase := usecaseintegrationtype.New(repo, logger)
 
 	// 4. Inicializar Handlers
-	handler := handlers.New(useCase, logger)
+	handlerIntegrations := handlerintegrations.New(IntegrationUseCase, logger)
+	handlerIntegrationType := handlerintegrationtype.New(integrationTypeUseCase, logger)
 
 	// 5. Registrar Rutas
-	handler.RegisterRoutes(router, handler, logger)
+	handlerIntegrations.RegisterRoutes(router, logger)
+	handlerIntegrationType.RegisterRoutes(router, logger)
 
 	// 6. Crear y retornar interfaz pública
-	return NewIntegrationCore(useCase)
+	return NewIntegrationCore(IntegrationUseCase)
 }

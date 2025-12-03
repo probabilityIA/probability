@@ -172,6 +172,8 @@ type Config struct {
 	DynamoRegion    string `env:"DYNAMO_REGION"`
 	DynamoAccessKey string `env:"DYNAMO_ACCESS_KEY"`
 	DynamoSecretKey string `env:"DYNAMO_SECRET_KEY"`
+
+	EncryptionKey string `env:"ENCRYPTION_KEY,required"`
 }
 
 func splitTag(tag string) []string {
