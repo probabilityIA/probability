@@ -39,6 +39,15 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.APIKey{},
 		&models.IntegrationType{},
 		&models.Integration{},
+
+		// Payment Methods
+		&models.PaymentMethod{},
+		&models.PaymentMethodMapping{},
+		&models.OrderStatusMapping{},
+
+		// Orders
+		&models.Order{},
+		&models.OrderHistory{},
 	); err != nil {
 		return err
 	}

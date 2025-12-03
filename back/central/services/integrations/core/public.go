@@ -23,10 +23,14 @@ const (
 	IntegrationTypeMercadoLibre = "mercado_libre"
 )
 
+// IntegrationWithCredentials representa una integración con credenciales desencriptadas
+// Este es un tipo público que envuelve el tipo interno
+type IntegrationWithCredentials = domain.IntegrationWithCredentials
+
 // IIntegrationCore es la interfaz pública que expone Core para que otras integraciones lo consuman
 type IIntegrationCore interface {
 	// GetIntegrationByType obtiene una integración con credenciales desencriptadas (para uso interno)
-	GetIntegrationByType(ctx context.Context, integrationType string, businessID *uint) (*domain.IntegrationWithCredentials, error)
+	GetIntegrationByType(ctx context.Context, integrationType string, businessID *uint) (*IntegrationWithCredentials, error)
 
 	// GetIntegrationConfig obtiene solo la configuración de una integración (sin credenciales)
 	GetIntegrationConfig(ctx context.Context, integrationType string, businessID *uint) (map[string]interface{}, error)

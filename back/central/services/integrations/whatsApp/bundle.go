@@ -36,7 +36,7 @@ func New(config env.IConfig, integrationCore core.IIntegrationCore) IWhatsAppBun
 		if err := integrationCore.RegisterTester(core.IntegrationTypeWhatsApp, whatsAppTester); err != nil {
 			logger.Error().Err(err).Msg("Error al registrar tester de WhatsApp")
 		} else {
-			logger.Info().Msg("Tester de WhatsApp registrado exitosamente")
+
 		}
 	}
 

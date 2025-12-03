@@ -1,0 +1,565 @@
+basePath: /api/v1
+definitions:
+  domain.CreatePaymentMappingRequest:
+    properties:
+      integration_type:
+        enum:
+        - shopify
+        - whatsapp
+        - mercadolibre
+        type: string
+      original_method:
+        maxLength: 128
+        type: string
+      payment_method_id:
+        type: integer
+      priority:
+        type: integer
+    required:
+    - integration_type
+    - original_method
+    - payment_method_id
+    type: object
+  domain.CreatePaymentMethodRequest:
+    properties:
+      category:
+        enum:
+        - card
+        - digital_wallet
+        - bank_transfer
+        - cash
+        type: string
+      code:
+        maxLength: 64
+        type: string
+      color:
+        maxLength: 32
+        type: string
+      description:
+        type: string
+      icon:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 128
+        type: string
+      provider:
+        maxLength: 64
+        type: string
+    required:
+    - category
+    - code
+    - name
+    type: object
+  domain.PaymentMappingResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      integration_type:
+        type: string
+      is_active:
+        type: boolean
+      original_method:
+        type: string
+      payment_method:
+        $ref: '#/definitions/domain.PaymentMethodResponse'
+      payment_method_id:
+        type: integer
+      priority:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  domain.PaymentMappingsListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/domain.PaymentMappingResponse'
+        type: array
+      total:
+        type: integer
+    type: object
+  domain.PaymentMethodResponse:
+    properties:
+      category:
+        type: string
+      code:
+        type: string
+      color:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      icon:
+        type: string
+      id:
+        type: integer
+      is_active:
+        type: boolean
+      name:
+        type: string
+      provider:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  domain.PaymentMethodsListResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/domain.PaymentMethodResponse'
+        type: array
+      page:
+        type: integer
+      page_size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  domain.UpdatePaymentMappingRequest:
+    properties:
+      original_method:
+        maxLength: 128
+        type: string
+      payment_method_id:
+        type: integer
+      priority:
+        type: integer
+    required:
+    - original_method
+    - payment_method_id
+    type: object
+  domain.UpdatePaymentMethodRequest:
+    properties:
+      category:
+        enum:
+        - card
+        - digital_wallet
+        - bank_transfer
+        - cash
+        type: string
+      color:
+        maxLength: 32
+        type: string
+      description:
+        type: string
+      icon:
+        maxLength: 255
+        type: string
+      name:
+        maxLength: 128
+        type: string
+      provider:
+        maxLength: 64
+        type: string
+    required:
+    - category
+    - name
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: API documentation for Modules service
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Modules API
+  version: "1.0"
+paths:
+  /payments/mappings:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista de mapeos de métodos de pago con filtros opcionales
+      parameters:
+      - description: Filtrar por tipo de integración (shopify, whatsapp, mercadolibre)
+        in: query
+        name: integration_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMappingsListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar mapeos de métodos de pago
+      tags:
+      - Payment Mappings
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo mapeo entre un método de pago original y uno unificado
+      parameters:
+      - description: Datos del mapeo
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreatePaymentMappingRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.PaymentMappingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear mapeo de método de pago
+      tags:
+      - Payment Mappings
+  /payments/mappings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un mapeo de método de pago
+      parameters:
+      - description: ID del mapeo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Eliminar mapeo de método de pago
+      tags:
+      - Payment Mappings
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un mapeo de método de pago por su ID
+      parameters:
+      - description: ID del mapeo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMappingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener mapeo de método de pago
+      tags:
+      - Payment Mappings
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un mapeo existente
+      parameters:
+      - description: ID del mapeo
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdatePaymentMappingRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMappingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Actualizar mapeo de método de pago
+      tags:
+      - Payment Mappings
+  /payments/mappings/{id}/toggle:
+    patch:
+      consumes:
+      - application/json
+      description: Cambia el estado activo/inactivo de un mapeo
+      parameters:
+      - description: ID del mapeo
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMappingResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Activar/Desactivar mapeo
+      tags:
+      - Payment Mappings
+  /payments/mappings/integration/{type}:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene todos los mapeos de un tipo de integración específico
+      parameters:
+      - description: Tipo de integración (shopify, whatsapp, mercadolibre)
+        in: path
+        name: type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/domain.PaymentMappingResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener mapeos por tipo de integración
+      tags:
+      - Payment Mappings
+  /payments/methods:
+    get:
+      consumes:
+      - application/json
+      description: Obtiene una lista paginada de métodos de pago con filtros opcionales
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        name: page_size
+        type: integer
+      - description: Filtrar por categoría (card, digital_wallet, bank_transfer, cash)
+        in: query
+        name: category
+        type: string
+      - description: Buscar por nombre o código
+        in: query
+        name: search
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMethodsListResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Listar métodos de pago
+      tags:
+      - Payment Methods
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo método de pago en el sistema
+      parameters:
+      - description: Datos del método de pago
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.CreatePaymentMethodRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/domain.PaymentMethodResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Crear método de pago
+      tags:
+      - Payment Methods
+  /payments/methods/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Elimina un método de pago (no se puede eliminar si tiene mapeos
+        activos)
+      parameters:
+      - description: ID del método de pago
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Eliminar método de pago
+      tags:
+      - Payment Methods
+    get:
+      consumes:
+      - application/json
+      description: Obtiene un método de pago por su ID
+      parameters:
+      - description: ID del método de pago
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMethodResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Obtener método de pago
+      tags:
+      - Payment Methods
+    put:
+      consumes:
+      - application/json
+      description: Actualiza un método de pago existente
+      parameters:
+      - description: ID del método de pago
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos a actualizar
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/domain.UpdatePaymentMethodRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMethodResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Actualizar método de pago
+      tags:
+      - Payment Methods
+  /payments/methods/{id}/toggle:
+    patch:
+      consumes:
+      - application/json
+      description: Cambia el estado activo/inactivo de un método de pago
+      parameters:
+      - description: ID del método de pago
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/domain.PaymentMethodResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Activar/Desactivar método de pago
+      tags:
+      - Payment Methods
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

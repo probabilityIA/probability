@@ -10,6 +10,9 @@ import (
 
 // LogStartupInfo muestra información de inicio del servidor y conexiones
 func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig) {
+	// No mostrar nombre de función en logs de startup
+	ctx = log.WithSkipFunctionCtx(ctx)
+
 	port := e.Get("HTTP_PORT")
 	serverURL := fmt.Sprintf("http://localhost:%s", port)
 
@@ -24,13 +27,13 @@ func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig) {
 	coloredDocs := fmt.Sprintf("\033[33;4m%s\033[0m", docsURL)  // amarillo subrayado
 
 	// Espacio inicial
-	logger.Info().Msg(" ")
+	logger.Info(ctx).Msg(" ")
 
 	// Cabecera
-	logger.Info().Msg(" 🚀 Servidor HTTP iniciado correctamente")
-	logger.Info().Msgf(" 📍 Disponible en: %s", coloredURL)
-	logger.Info().Msgf(" 📖 Documentación: %s", coloredDocs)
-	logger.Info().Msg(" ")
+	logger.Info(ctx).Msg(" 🚀 Servidor HTTP iniciado correctamente")
+	logger.Info(ctx).Msgf(" 📍 Disponible en: %s", coloredURL)
+	logger.Info(ctx).Msgf(" 📖 Documentación: %s", coloredDocs)
+	logger.Info(ctx).Msg(" ")
 
 	// PostgreSQL (si aplica)
 	dbHost := e.Get("DB_HOST")
@@ -39,8 +42,19 @@ func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig) {
 	if dbHost != "" && dbPort != "" && dbName != "" {
 		dbURL := fmt.Sprintf("postgres://%s:%s/%s", dbHost, dbPort, dbName)
 		coloredDB := fmt.Sprintf("\033[36;4m%s\033[0m", dbURL) // cian subrayado
-		logger.Info().Msgf(" 🗄️  Conexión PostgreSQL: %s", coloredDB)
-		logger.Info().Msg(" ")
+		logger.Info(ctx).Msgf(" 🗄️  Conexión PostgreSQL: %s", coloredDB)
+		logger.Info(ctx).Msg(" ")
+	}
+
+	// RabbitMQ
+	rabbitHost := e.Get("RABBITMQ_HOST")
+	rabbitPort := e.Get("RABBITMQ_PORT")
+	rabbitVHost := e.Get("RABBITMQ_VHOST")
+	if rabbitHost != "" && rabbitPort != "" {
+		rabbitURL := fmt.Sprintf("amqp://%s:%s%s", rabbitHost, rabbitPort, rabbitVHost)
+		coloredRabbit := fmt.Sprintf("\033[32;4m%s\033[0m", rabbitURL) // verde subrayado
+		logger.Info(ctx).Msgf(" 🐰 RabbitMQ: %s", coloredRabbit)
+		logger.Info(ctx).Msg(" ")
 	}
 
 	// S3 (si aplica)
@@ -49,10 +63,10 @@ func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig) {
 	if s3Bucket != "" {
 		s3URL := fmt.Sprintf("s3://%s (%s)", s3Bucket, s3Region)
 		coloredS3 := fmt.Sprintf("\033[35;4m%s\033[0m", s3URL) // magenta subrayado
-		logger.Info().Msgf(" ☁️  AWS S3: %s", coloredS3)
-		logger.Info().Msg(" ")
+		logger.Info(ctx).Msgf(" ☁️  AWS S3: %s", coloredS3)
+		logger.Info(ctx).Msg(" ")
 	}
 
 	// Espacio final
-	logger.Info().Msg(" ")
+	logger.Info(ctx).Msg(" ")
 }

@@ -174,6 +174,12 @@ type Config struct {
 	DynamoSecretKey string `env:"DYNAMO_SECRET_KEY"`
 
 	EncryptionKey string `env:"ENCRYPTION_KEY,required"`
+
+	RabbitMQHost  string `env:"RABBITMQ_HOST,required"`
+	RabbitMQPort  string `env:"RABBITMQ_PORT,required"`
+	RabbitMQUser  string `env:"RABBITMQ_USER,required"`
+	RabbitMQPass  string `env:"RABBITMQ_PASS,required"`
+	RabbitMQVHost string `env:"RABBITMQ_VHOST,required"`
 }
 
 func splitTag(tag string) []string {

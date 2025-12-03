@@ -28,7 +28,7 @@ func BuildRouter(ctx context.Context, logger log.ILogger, environment env.IConfi
 	r.Use(gin.Recovery())
 
 	// Health check endpoint
-	logger.Info().Msg("Registrando endpoint /health")
+
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "healthy",

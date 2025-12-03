@@ -140,9 +140,18 @@ func (l *logger) addContextualFields(event *zerolog.Event, ctx context.Context) 
 	}
 
 	// Agregar nombre de función automáticamente
-	funcName := getFunctionName()
-	if funcName != "" {
-		event = event.Str("function", funcName)
+	skipFunc := false
+	if ctx != nil {
+		if skip, ok := SkipFunctionFromCtx(ctx); ok && skip {
+			skipFunc = true
+		}
+	}
+
+	if !skipFunc {
+		funcName := getFunctionName()
+		if funcName != "" {
+			event = event.Str("function", funcName)
+		}
 	}
 
 	// Agregar campos del contexto si están disponibles
@@ -429,4 +438,18 @@ func WithStatusCodeCtx(ctx context.Context, statusCode int) context.Context {
 // WithFunctionCtx agrega el nombre de función al contexto
 func WithFunctionCtx(ctx context.Context, function string) context.Context {
 	return context.WithValue(ctx, function, function)
+}
+
+type skipFunctionKey struct{}
+
+var skipFunction skipFunctionKey
+
+func SkipFunctionFromCtx(ctx context.Context) (bool, bool) {
+	skip, ok := ctx.Value(skipFunction).(bool)
+	return skip, ok
+}
+
+// WithSkipFunctionCtx agrega la instrucción de saltar el nombre de función al contexto
+func WithSkipFunctionCtx(ctx context.Context) context.Context {
+	return context.WithValue(ctx, skipFunction, true)
 }
