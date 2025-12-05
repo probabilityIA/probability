@@ -112,21 +112,27 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
-    async activateIntegration(id: number): Promise<ActionResponse> {
-        return this.fetch<ActionResponse>(`/integrations/${id}/activate`, {
+    async activateIntegration(id: number): Promise<SingleResponse<Integration>> {
+        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}/activate`, {
             method: 'PUT',
         });
     }
 
-    async deactivateIntegration(id: number): Promise<ActionResponse> {
-        return this.fetch<ActionResponse>(`/integrations/${id}/deactivate`, {
+    async deactivateIntegration(id: number): Promise<SingleResponse<Integration>> {
+        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}/deactivate`, {
             method: 'PUT',
         });
     }
 
-    async setAsDefault(id: number): Promise<ActionResponse> {
-        return this.fetch<ActionResponse>(`/integrations/${id}/set-default`, {
+    async setAsDefault(id: number): Promise<SingleResponse<Integration>> {
+        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}/set-default`, {
             method: 'PUT',
+        });
+    }
+
+    async testIntegration(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/test`, {
+            method: 'POST',
         });
     }
 

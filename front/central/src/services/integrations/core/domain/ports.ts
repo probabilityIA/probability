@@ -20,9 +20,10 @@ export interface IIntegrationRepository {
     updateIntegration(id: number, data: UpdateIntegrationDTO): Promise<SingleResponse<Integration>>;
     deleteIntegration(id: number): Promise<ActionResponse>;
     testConnection(id: number): Promise<ActionResponse>;
-    activateIntegration(id: number): Promise<ActionResponse>;
-    deactivateIntegration(id: number): Promise<ActionResponse>;
-    setAsDefault(id: number): Promise<ActionResponse>;
+    activateIntegration(id: number): Promise<SingleResponse<Integration>>;
+    deactivateIntegration(id: number): Promise<SingleResponse<Integration>>;
+    setAsDefault(id: number): Promise<SingleResponse<Integration>>;
+    testIntegration(id: number): Promise<ActionResponse>;
 
     // Integration Types
     getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>>;

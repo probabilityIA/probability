@@ -29,7 +29,7 @@ const sizeClasses = {
 
 export function Modal({ isOpen, onClose, title, children, size = 'md', glass = false }: ModalProps) {
   console.log('🔧 Modal - isOpen:', isOpen, 'title:', title);
-  
+
   // Cerrar con ESC
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -63,19 +63,34 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
       {/* Modal */}
       <div className={size === 'full' ? 'fixed inset-0 z-50 flex items-center justify-center' : 'modal'}>
         {size === 'full' ? (
-          <div 
+          <div
             className={`${glass ? 'bg-white/80 backdrop-blur-xl border border-white/20' : 'bg-white'} rounded-3xl shadow-2xl flex flex-col overflow-hidden`}
             style={{
               width: '90vw',
               height: '90vh',
               maxWidth: '90vw',
               maxHeight: '90vh',
-              minWidth: '90vw',
-              minHeight: '90vh'
             }}
           >
-            {/* Content */}
-            <div className="flex-1 overflow-hidden">{children}</div>
+            {/* Header for full screen */}
+            {title && (
+              <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 bg-white">
+                <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            )}
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto px-8 py-6">
+              {children}
+            </div>
           </div>
         ) : (
           <div className={`${glass ? 'modal-glass' : 'modal-content'} ${sizeClasses[size]}`}>

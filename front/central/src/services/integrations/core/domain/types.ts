@@ -10,6 +10,7 @@ export interface Integration {
     id: number;
     name: string;
     code: string;
+    integration_type_id: number;
     type: 'whatsapp' | 'shopify' | 'mercado_libre' | string;
     category: 'internal' | 'external' | string;
     business_id: number | null;
@@ -26,7 +27,8 @@ export interface Integration {
 export interface CreateIntegrationDTO {
     name: string;
     code: string;
-    type: string;
+    integration_type_id: number;
+    type?: string;
     category: string;
     business_id: number | null;
     is_active?: boolean;

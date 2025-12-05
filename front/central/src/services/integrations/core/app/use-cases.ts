@@ -55,6 +55,10 @@ export class IntegrationUseCases {
         return this.repository.setAsDefault(id);
     }
 
+    async testIntegration(id: number): Promise<ActionResponse> {
+        return this.repository.testIntegration(id);
+    }
+
     // Integration Types
     async getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
         return this.repository.getIntegrationTypes();

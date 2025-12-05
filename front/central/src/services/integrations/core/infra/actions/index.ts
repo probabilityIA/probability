@@ -108,6 +108,15 @@ export const setAsDefaultAction = async (id: number) => {
     }
 };
 
+export const testIntegrationAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).testIntegration(id);
+    } catch (error: any) {
+        console.error('Test Integration Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
 // Integration Types
 export const getIntegrationTypesAction = async () => {
     try {

@@ -13,10 +13,21 @@ export default function IntegrationsPage() {
     const [activeTab, setActiveTab] = useState<'integrations' | 'types'>('integrations');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [modalSize, setModalSize] = useState<'md' | 'full'>('md');
 
     const handleSuccess = () => {
         setShowCreateModal(false);
         setRefreshKey(prev => prev + 1);
+        setModalSize('md'); // Reset to small when closing
+    };
+
+    const handleTypeSelected = (hasTypeSelected: boolean) => {
+        setModalSize(hasTypeSelected ? 'full' : 'md');
+    };
+
+    const handleModalClose = () => {
+        setShowCreateModal(false);
+        setModalSize('md'); // Reset to small when closing
     };
 
     return (
@@ -67,18 +78,20 @@ export default function IntegrationsPage() {
 
             <Modal
                 isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
+                onClose={handleModalClose}
                 title={activeTab === 'integrations' ? "Nueva Integración" : "Nuevo Tipo de Integración"}
+                size={modalSize}
             >
                 {activeTab === 'integrations' ? (
                     <IntegrationForm
                         onSuccess={handleSuccess}
-                        onCancel={() => setShowCreateModal(false)}
+                        onCancel={handleModalClose}
+                        onTypeSelected={handleTypeSelected}
                     />
                 ) : (
                     <IntegrationTypeForm
                         onSuccess={handleSuccess}
-                        onCancel={() => setShowCreateModal(false)}
+                        onCancel={handleModalClose}
                     />
                 )}
             </Modal>

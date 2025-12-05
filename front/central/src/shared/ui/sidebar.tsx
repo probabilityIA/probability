@@ -185,6 +185,37 @@ export function Sidebar({ user }: SidebarProps) {
                 </Link>
               </li>
 
+              {/* Item Order Status */}
+              <li>
+                <Link
+                  href="/order-status"
+                  className={`
+                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                    ${isActive('/order-status') || pathname.startsWith('/order-status')
+                      ? 'bg-white/20 text-white shadow-lg scale-105'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                    }
+                  `}
+                >
+                  {/* Indicador activo (barra lateral) */}
+                  {(isActive('/order-status') || pathname.startsWith('/order-status')) && (
+                    <div
+                      className="absolute left-0 w-1 h-8 rounded-r-full"
+                      style={{ backgroundColor: 'var(--color-tertiary)' }}
+                    />
+                  )}
+
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  {sidebarExpanded && (
+                    <span className="text-sm font-medium transition-opacity duration-300">
+                      Order Status
+                    </span>
+                  )}
+                </Link>
+              </li>
+
               {/* Item Businesses */}
               {canAccessIAM && (
                 <li>
@@ -334,6 +365,37 @@ export function Sidebar({ user }: SidebarProps) {
                     {sidebarExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">
                         Permissions
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {/* Item Resources */}
+              {canAccessIAM && (
+                <li>
+                  <Link
+                    href="/resources"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${isActive('/resources') || pathname.startsWith('/resources')
+                        ? 'bg-white/20 text-white shadow-lg scale-105'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                      }
+                    `}
+                  >
+                    {(isActive('/resources') || pathname.startsWith('/resources')) && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                    </svg>
+                    {sidebarExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">
+                        Resources
                       </span>
                     )}
                   </Link>
