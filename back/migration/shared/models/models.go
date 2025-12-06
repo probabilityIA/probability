@@ -296,6 +296,9 @@ type IntegrationType struct {
 	// Ejemplo: {"required_fields": ["access_token"], "optional_fields": ["refresh_token"]}
 	CredentialsSchema datatypes.JSON `gorm:"type:jsonb"`
 
+	// Instrucciones paso a paso para configurar la integración
+	SetupInstructions string `gorm:"type:text"`
+
 	// Relaciones
 	Integrations []Integration `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }

@@ -59,6 +59,10 @@ export class IntegrationUseCases {
         return this.repository.testIntegration(id);
     }
 
+    async testConnectionRaw(typeCode: string, config: any, credentials: any): Promise<ActionResponse> {
+        return this.repository.testConnectionRaw(typeCode, config, credentials);
+    }
+
     // Integration Types
     async getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
         return this.repository.getIntegrationTypes();

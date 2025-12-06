@@ -5,7 +5,11 @@ import { useIntegrations } from '../hooks/useIntegrations';
 import { Integration } from '../../domain/types';
 import { Input, Button, Badge, Spinner, Table, Alert, ConfirmModal } from '@/shared/ui';
 
-export default function IntegrationList() {
+interface IntegrationListProps {
+    onEdit?: (integration: Integration) => void;
+}
+
+export default function IntegrationList({ onEdit }: IntegrationListProps) {
     const {
         integrations,
         loading,
@@ -101,6 +105,15 @@ export default function IntegrationList() {
                 >
                     Probar
                 </Button>
+                {onEdit && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onEdit(integration)}
+                    >
+                        Editar
+                    </Button>
+                )}
                 <Button
                     variant="outline"
                     size="sm"

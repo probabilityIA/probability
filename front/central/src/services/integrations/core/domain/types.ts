@@ -17,6 +17,7 @@ export interface Integration {
     is_active: boolean;
     is_default: boolean;
     config: IntegrationConfig;
+    credentials?: IntegrationCredentials; // Solo se incluye cuando se solicita para edición
     description?: string;
     created_by_id: number;
     updated_by_id: number | null;
@@ -90,6 +91,7 @@ export interface IntegrationType {
     is_active: boolean;
     config_schema?: any;
     credentials_schema?: any;
+    setup_instructions?: string;
     created_at: string;
     updated_at: string;
 }
@@ -103,6 +105,7 @@ export interface CreateIntegrationTypeDTO {
     is_active?: boolean;
     config_schema?: any;
     credentials_schema?: any;
+    setup_instructions?: string;
 }
 
 export interface UpdateIntegrationTypeDTO {
@@ -114,4 +117,5 @@ export interface UpdateIntegrationTypeDTO {
     is_active?: boolean;
     config_schema?: any;
     credentials_schema?: any;
+    setup_instructions?: string;
 }

@@ -13,6 +13,7 @@ type IntegrationTypeResponse struct {
 	IsActive          bool           `json:"is_active" example:"true"`
 	ConfigSchema      datatypes.JSON `json:"config_schema"`
 	CredentialsSchema datatypes.JSON `json:"credentials_schema"`
+	SetupInstructions string         `json:"setup_instructions" example:"1. Ve a Meta Business Suite\n2. Configura WhatsApp\n3. Copia credenciales"`
 	CreatedAt         string         `json:"created_at"`
 	UpdatedAt         string         `json:"updated_at"`
 }

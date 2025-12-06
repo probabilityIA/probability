@@ -18,10 +18,15 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// El router ya viene como /api/v1, así que core.New registrará las rutas en /api/v1/integrations
 	integrationCore := core.New(router, db, logger, config)
 
-	// 2. Inicializar módulos de integraciones específicos
-	// Cada módulo se registra automáticamente con el core si es necesario
-	_ = whatsapp.New(config, integrationCore)
+	whatsappBundle := whatsapp.New(config, logger)
+	// Registrar con ambos códigos posibles para compatibilidad
+	if err := integrationCore.RegisterTester(core.IntegrationTypeWhatsApp, whatsappBundle); err != nil {
+		logger.Error().Err(err).Msg("Error registrando tester de WhatsApp")
+	}
+	// También registrar con "whatsap" (sin doble 'p') por si viene de la BD con ese código
+	if err := integrationCore.RegisterTester("whatsap", whatsappBundle); err != nil {
+		logger.Error().Err(err).Msg("Error registrando tester de WhatsApp (código alternativo)")
+	}
 
-	// Inicializar Shopify
 	shopify.New(router, db, logger, config, integrationCore)
 }

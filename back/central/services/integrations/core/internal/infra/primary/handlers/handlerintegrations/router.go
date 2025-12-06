@@ -15,6 +15,7 @@ type IIntegrationHandler interface {
 	UpdateIntegrationHandler(c *gin.Context)
 	DeleteIntegrationHandler(c *gin.Context)
 	TestIntegrationHandler(c *gin.Context)
+	TestConnectionRawHandler(c *gin.Context)
 	ActivateIntegrationHandler(c *gin.Context)
 	DeactivateIntegrationHandler(c *gin.Context)
 	SetAsDefaultHandler(c *gin.Context)
@@ -27,13 +28,14 @@ func (h *IntegrationHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 	{
 		// CRUD básico
 		integrationsGroup.GET("", middleware.JWT(), h.GetIntegrationsHandler)
-		integrationsGroup.GET("/:id", middleware.JWT(), h.GetIntegrationByIDHandler)
+		integrationsGroup.GET("/:id", middleware.JWT(), h.GetIntegrationByIDHandler) // Devuelve credenciales solo si es super admin
 		integrationsGroup.GET("/type/:type", middleware.JWT(), h.GetIntegrationByTypeHandler)
 		integrationsGroup.POST("", middleware.JWT(), h.CreateIntegrationHandler)
 		integrationsGroup.PUT("/:id", middleware.JWT(), h.UpdateIntegrationHandler)
 		integrationsGroup.DELETE("/:id", middleware.JWT(), h.DeleteIntegrationHandler)
 
 		// Acciones específicas
+		integrationsGroup.POST("/test", middleware.JWT(), h.TestConnectionRawHandler)
 		integrationsGroup.POST("/:id/test", middleware.JWT(), h.TestIntegrationHandler)
 		integrationsGroup.PUT("/:id/activate", middleware.JWT(), h.ActivateIntegrationHandler)
 		integrationsGroup.PUT("/:id/deactivate", middleware.JWT(), h.DeactivateIntegrationHandler)

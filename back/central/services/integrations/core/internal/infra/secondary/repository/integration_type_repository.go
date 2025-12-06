@@ -129,6 +129,7 @@ func toIntegrationTypeModel(d *domain.IntegrationType) models.IntegrationType {
 		IsActive:          d.IsActive,
 		ConfigSchema:      d.ConfigSchema,
 		CredentialsSchema: d.CredentialsSchema,
+		SetupInstructions: d.SetupInstructions,
 	}
 }
 
@@ -144,6 +145,7 @@ func toIntegrationTypeDomain(m models.IntegrationType) domain.IntegrationType {
 		IsActive:          m.IsActive,
 		ConfigSchema:      m.ConfigSchema,
 		CredentialsSchema: m.CredentialsSchema,
+		SetupInstructions: m.SetupInstructions,
 		CreatedAt:         m.CreatedAt,
 		UpdatedAt:         m.UpdatedAt,
 	}

@@ -21,6 +21,7 @@ type IntegrationResponse struct {
 	IsActive          bool                   `json:"is_active" example:"true"`
 	IsDefault         bool                   `json:"is_default" example:"true"`
 	Config            map[string]interface{} `json:"config"`
+	Credentials       map[string]interface{} `json:"credentials,omitempty"` // Solo se incluye cuando se solicita para edición
 	Description       string                 `json:"description" example:"Integración principal de WhatsApp"`
 	CreatedByID       uint                   `json:"created_by_id" example:"1"`
 	UpdatedByID       *uint                  `json:"updated_by_id"`

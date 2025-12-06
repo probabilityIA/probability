@@ -21,6 +21,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         icon: '',
         category: 'internal',
         is_active: true,
+        config_schema: '{}',
+        credentials_schema: '{}',
+        setup_instructions: '',
     });
 
     const [loading, setLoading] = useState(false);
@@ -35,6 +38,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 icon: integrationType.icon || '',
                 category: integrationType.category,
                 is_active: integrationType.is_active,
+                config_schema: JSON.stringify(integrationType.config_schema || {}, null, 2),
+                credentials_schema: JSON.stringify(integrationType.credentials_schema || {}, null, 2),
+                setup_instructions: integrationType.setup_instructions || '',
             });
         }
     }, [integrationType]);
@@ -55,6 +61,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     icon: formData.icon,
                     category: formData.category,
                     is_active: formData.is_active,
+                    config_schema: formData.config_schema ? JSON.parse(formData.config_schema) : undefined,
+                    credentials_schema: formData.credentials_schema ? JSON.parse(formData.credentials_schema) : undefined,
+                    setup_instructions: formData.setup_instructions,
                 };
                 success = await updateIntegrationType(integrationType.id, updateData);
             } else {
@@ -66,6 +75,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     icon: formData.icon,
                     category: formData.category,
                     is_active: formData.is_active,
+                    config_schema: formData.config_schema ? JSON.parse(formData.config_schema) : undefined,
+                    credentials_schema: formData.credentials_schema ? JSON.parse(formData.credentials_schema) : undefined,
+                    setup_instructions: formData.setup_instructions,
                 };
                 success = await createIntegrationType(createData);
             }
@@ -82,53 +94,64 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
             {error && (
                 <Alert type="error" onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Nombre *
-                </label>
-                <Input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
+            {/* Basic Info - 3 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Nombre *
+                    </label>
+                    <Input
+                        type="text"
+                        required
+                        value={formData.name}
+                        onChange={(e) => {
+                            const name = e.target.value;
+                            setFormData({
+                                ...formData,
+                                name,
+                                // Auto-generate code from name if creating new
+                                code: integrationType ? formData.code : name.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+                            });
+                        }}
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Categoría *
+                    </label>
+                    <Select
+                        required
+                        value={formData.category}
+                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                        options={[
+                            { value: 'internal', label: 'Interna' },
+                            { value: 'external', label: 'Externa' }
+                        ]}
+                    />
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Icono
+                    </label>
+                    <Input
+                        type="text"
+                        value={formData.icon}
+                        onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                        placeholder="Nombre del icono (ej: whatsapp-icon)"
+                    />
+                </div>
             </div>
 
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Código *
-                </label>
-                <Input
-                    type="text"
-                    required
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value })}
-                    disabled={!!integrationType} // Code usually shouldn't change
-                />
-            </div>
-
-            <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Categoría *
-                </label>
-                <Select
-                    required
-                    value={formData.category}
-                    onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    options={[
-                        { value: 'internal', label: 'Interna' },
-                        { value: 'external', label: 'Externa' }
-                    ]}
-                />
-            </div>
-
+            {/* Description - Full width */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                     Descripción
@@ -136,23 +159,68 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    rows={3}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={2}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                 />
             </div>
 
+            {/* JSON Editors - 2 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Config Schema JSON Editor */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Config Schema (JSON)
+                    </label>
+                    <textarea
+                        value={formData.config_schema}
+                        onChange={(e) => setFormData({ ...formData, config_schema: e.target.value })}
+                        rows={12}
+                        className="w-full px-3 py-2 bg-gray-900 text-green-400 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs"
+                        placeholder='{"type": "object", "properties": {...}}'
+                        spellCheck={false}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        Campos de configuración (no sensibles)
+                    </p>
+                </div>
+
+                {/* Credentials Schema JSON Editor */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Credentials Schema (JSON)
+                    </label>
+                    <textarea
+                        value={formData.credentials_schema}
+                        onChange={(e) => setFormData({ ...formData, credentials_schema: e.target.value })}
+                        rows={12}
+                        className="w-full px-3 py-2 bg-gray-900 text-green-400 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs"
+                        placeholder='{"type": "object", "properties": {...}}'
+                        spellCheck={false}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        Campos de credenciales (tokens, keys, etc.)
+                    </p>
+                </div>
+            </div>
+
+            {/* Setup Instructions - Full width */}
             <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Icono
+                    Instrucciones de Configuración
                 </label>
-                <Input
-                    type="text"
-                    value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    placeholder="Nombre del icono (ej: whatsapp-icon)"
+                <textarea
+                    value={formData.setup_instructions}
+                    onChange={(e) => setFormData({ ...formData, setup_instructions: e.target.value })}
+                    rows={6}
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                    placeholder="Pasos para configurar esta integración:&#10;&#10;1. Ve a...&#10;2. Configura...&#10;3. Copia..."
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                    Instrucciones paso a paso para el usuario
+                </p>
             </div>
 
+            {/* Active Checkbox */}
             <div className="flex items-center space-x-4">
                 <label className="flex items-center">
                     <input
@@ -165,7 +233,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </label>
             </div>
 
-            <div className="flex justify-end space-x-3 pt-4">
+            <div className="flex justify-end space-x-3 pt-4 border-t">
                 {onCancel && (
                     <Button
                         type="button"

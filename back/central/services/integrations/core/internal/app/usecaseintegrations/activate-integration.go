@@ -23,7 +23,8 @@ func (uc *IntegrationUseCase) ActivateIntegration(ctx context.Context, id uint) 
 
 	isActive := true
 	dto := domain.UpdateIntegrationDTO{
-		IsActive: &isActive,
+		IsActive:    &isActive,
+		UpdatedByID: 0, // No actualizar updated_by_id en activar/desactivar
 	}
 
 	_, err = uc.UpdateIntegration(ctx, id, dto)

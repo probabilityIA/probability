@@ -117,6 +117,15 @@ export const testIntegrationAction = async (id: number) => {
     }
 };
 
+export const testConnectionRawAction = async (typeCode: string, config: any, credentials: any) => {
+    try {
+        return await (await getUseCases()).testConnectionRaw(typeCode, config, credentials);
+    } catch (error: any) {
+        console.error('Test Connection Raw Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
 // Integration Types
 export const getIntegrationTypesAction = async () => {
     try {

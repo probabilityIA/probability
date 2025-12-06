@@ -45,6 +45,48 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	// Por ejemplo, si el tipo es WhatsApp, debe ser global (BusinessID = NULL)
 	// Esto se puede hacer consultando el IntegrationType y sus reglas
 
+	// Obtener el tipo de integración para validar la conexión
+	integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, dto.IntegrationTypeID)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Uint("integration_type_id", dto.IntegrationTypeID).Msg("Error al obtener tipo de integración")
+		return nil, fmt.Errorf("error al obtener tipo de integración: %w", err)
+	}
+
+	// VALIDAR CONEXIÓN ANTES DE GUARDAR
+	// Obtener tester registrado para este tipo
+	tester, err := uc.testerReg.GetTester(integrationType.Code)
+	if err != nil {
+		uc.log.Warn(ctx).
+			Str("type_code", integrationType.Code).
+			Msg("No hay tester registrado, solo validando credenciales básicas")
+		// Fallback: validación básica si no hay tester
+		if err := uc.validateBasicCredentials(ctx, integrationType.Code, dto.Credentials); err != nil {
+			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
+		}
+	} else {
+		// Deserializar Config a map para el tester
+		var configMap map[string]interface{}
+		if len(dto.Config) > 0 {
+			if err := json.Unmarshal(dto.Config, &configMap); err != nil {
+				return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationConfigDeserialize, err)
+			}
+		}
+
+		// Testear conexión con el tester específico
+		if err := tester.TestConnection(ctx, configMap, dto.Credentials); err != nil {
+			uc.log.Error(ctx).
+				Err(err).
+				Str("type_code", integrationType.Code).
+				Str("integration_code", dto.Code).
+				Msg("Test de conexión falló al crear integración")
+			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
+		}
+		uc.log.Info(ctx).
+			Str("type_code", integrationType.Code).
+			Str("integration_code", dto.Code).
+			Msg("Test de conexión exitoso antes de crear integración")
+	}
+
 	// Convertir Config a datatypes.JSON
 	var configJSON datatypes.JSON
 	if len(dto.Config) > 0 {

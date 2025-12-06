@@ -62,7 +62,11 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		existing.Description = *dto.Description
 	}
 
-	existing.UpdatedByID = &dto.UpdatedByID
+	// Solo actualizar UpdatedByID si es un ID válido (mayor que 0)
+	if dto.UpdatedByID > 0 {
+		existing.UpdatedByID = &dto.UpdatedByID
+	}
+	// Si UpdatedByID es 0, no actualizamos el campo (mantiene el valor existente o NULL)
 
 	// Guardar cambios
 	if err := uc.repo.UpdateIntegration(ctx, id, existing); err != nil {

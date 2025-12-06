@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 
@@ -23,7 +24,15 @@ func (r *Repository) CreateIntegration(ctx context.Context, integration *domain.
 				r.log.Error(ctx).Err(err).Msg("Error al encriptar credenciales")
 				return fmt.Errorf("error al encriptar credenciales: %w", err)
 			}
-			integration.Credentials = encrypted
+			// Codificar en base64 para guardar en JSONB (que requiere UTF-8)
+			encoded := base64.StdEncoding.EncodeToString(encrypted)
+			// Crear un JSON con el valor codificado
+			encodedJSON, err := json.Marshal(map[string]string{"encrypted": encoded})
+			if err != nil {
+				r.log.Error(ctx).Err(err).Msg("Error al codificar credenciales en JSON")
+				return fmt.Errorf("error al codificar credenciales: %w", err)
+			}
+			integration.Credentials = encodedJSON
 		}
 	}
 
@@ -55,14 +64,42 @@ func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration
 				r.log.Error(ctx).Err(err).Msg("Error al encriptar credenciales")
 				return fmt.Errorf("error al encriptar credenciales: %w", err)
 			}
-			integration.Credentials = encrypted
+			// Codificar en base64 para guardar en JSONB (que requiere UTF-8)
+			encoded := base64.StdEncoding.EncodeToString(encrypted)
+			// Crear un JSON con el valor codificado
+			encodedJSON, err := json.Marshal(map[string]string{"encrypted": encoded})
+			if err != nil {
+				r.log.Error(ctx).Err(err).Msg("Error al codificar credenciales en JSON")
+				return fmt.Errorf("error al codificar credenciales: %w", err)
+			}
+			integration.Credentials = encodedJSON
 		}
 	}
 
 	model := r.toModel(integration)
 	model.ID = id
 
-	if err := r.db.Conn(ctx).Model(&models.Integration{}).Where("id = ?", id).Updates(model).Error; err != nil {
+	// Preparar campos para actualizar, excluyendo UpdatedByID si es 0 o nil
+	updateFields := map[string]interface{}{
+		"name":                model.Name,
+		"code":                model.Code,
+		"category":            model.Category,
+		"integration_type_id": model.IntegrationTypeID,
+		"business_id":         model.BusinessID,
+		"is_active":           model.IsActive,
+		"is_default":          model.IsDefault,
+		"config":              model.Config,
+		"credentials":         model.Credentials,
+		"description":         model.Description,
+		"updated_at":          model.UpdatedAt,
+	}
+
+	// Solo incluir updated_by_id si tiene un valor válido (mayor que 0)
+	if model.UpdatedByID != nil && *model.UpdatedByID > 0 {
+		updateFields["updated_by_id"] = *model.UpdatedByID
+	}
+
+	if err := r.db.Conn(ctx).Model(&models.Integration{}).Where("id = ?", id).Updates(updateFields).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al actualizar integración")
 		return fmt.Errorf("error al actualizar integración: %w", err)
 	}
