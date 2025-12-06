@@ -84,6 +84,8 @@ func (u *SendMessageUsecase) SendMessage(ctx context.Context, req domain.SendMes
 	u.log.Info(ctx).
 		Str("to", msg.To).
 		Str("order_number", req.OrderNumber).
+		Uint("phone_number_id", uint(phoneNumberID)).
+		Str("template_name", msg.Template.Name).
 		Msg("[WhatsApp] - enviando mensaje")
 
 	messageID, err := u.whatsApp.SendMessage(ctx, uint(phoneNumberID), msg)
@@ -91,13 +93,16 @@ func (u *SendMessageUsecase) SendMessage(ctx context.Context, req domain.SendMes
 		u.log.Error(ctx).Err(err).
 			Str("phone_number", req.PhoneNumber).
 			Str("order_number", req.OrderNumber).
+			Uint("phone_number_id", uint(phoneNumberID)).
+			Str("template_name", msg.Template.Name).
 			Msg("[WhatsApp] - error enviando mensaje")
-		return "", err
+		return "", fmt.Errorf("error al enviar mensaje de WhatsApp: %w", err)
 	}
 
 	u.log.Info(ctx).
 		Str("message_id", messageID).
 		Str("order_number", req.OrderNumber).
+		Str("phone_number", req.PhoneNumber).
 		Msg("[WhatsApp] - mensaje enviado correctamente")
 
 	return messageID, nil

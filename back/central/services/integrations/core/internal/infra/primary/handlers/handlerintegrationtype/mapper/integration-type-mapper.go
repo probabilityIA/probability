@@ -22,6 +22,7 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType) response
 		IsActive:          integrationType.IsActive,
 		ConfigSchema:      integrationType.ConfigSchema,
 		CredentialsSchema: integrationType.CredentialsSchema,
+		SetupInstructions: integrationType.SetupInstructions,
 		CreatedAt:         integrationType.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:         integrationType.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}

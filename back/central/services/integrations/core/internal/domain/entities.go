@@ -17,6 +17,7 @@ type IntegrationType struct {
 	IsActive          bool           `json:"is_active"`
 	ConfigSchema      datatypes.JSON `json:"config_schema"`      // JSON schema para campos de configuración requeridos
 	CredentialsSchema datatypes.JSON `json:"credentials_schema"` // JSON schema para credenciales requeridas
+	SetupInstructions string         `json:"setup_instructions"` // Instrucciones paso a paso para configurar la integración
 	CreatedAt         time.Time      `json:"created_at"`
 	UpdatedAt         time.Time      `json:"updated_at"`
 }

@@ -24,6 +24,7 @@ export interface IIntegrationRepository {
     deactivateIntegration(id: number): Promise<SingleResponse<Integration>>;
     setAsDefault(id: number): Promise<SingleResponse<Integration>>;
     testIntegration(id: number): Promise<ActionResponse>;
+    testConnectionRaw(typeCode: string, config: any, credentials: any): Promise<ActionResponse>;
 
     // Integration Types
     getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>>;

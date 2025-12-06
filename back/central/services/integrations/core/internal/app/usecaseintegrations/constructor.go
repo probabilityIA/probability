@@ -11,10 +11,12 @@ type IIntegrationUseCase interface {
 	CreateIntegration(ctx context.Context, dto domain.CreateIntegrationDTO) (*domain.Integration, error)
 	UpdateIntegration(ctx context.Context, id uint, dto domain.UpdateIntegrationDTO) (*domain.Integration, error)
 	GetIntegrationByID(ctx context.Context, id uint) (*domain.Integration, error)
+	GetIntegrationByIDWithCredentials(ctx context.Context, id uint) (*domain.IntegrationWithCredentials, error)
 	GetIntegrationByType(ctx context.Context, integrationTypeCode string, businessID *uint) (*domain.IntegrationWithCredentials, error)
 	DeleteIntegration(ctx context.Context, id uint) error
 	ListIntegrations(ctx context.Context, filters domain.IntegrationFilters) ([]*domain.Integration, int64, error)
 	TestIntegration(ctx context.Context, id uint) error
+	TestConnectionRaw(ctx context.Context, integrationTypeCode string, config map[string]interface{}, credentials map[string]interface{}) error
 	ActivateIntegration(ctx context.Context, id uint) error
 	DeactivateIntegration(ctx context.Context, id uint) error
 	SetAsDefault(ctx context.Context, id uint) error

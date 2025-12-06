@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/mapper"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/response"
@@ -39,6 +40,44 @@ func (h *IntegrationHandler) GetIntegrationByIDHandler(c *gin.Context) {
 		return
 	}
 
+	// Si es super admin, obtener con credenciales desencriptadas
+	if middleware.IsSuperAdmin(c) {
+		integrationWithCreds, err := h.usecase.GetIntegrationByIDWithCredentials(c.Request.Context(), uint(id))
+		if err != nil {
+			statusCode := http.StatusNotFound
+			errorMsg := "Integración no encontrada"
+
+			if !errors.Is(err, domain.ErrIntegrationNotFound) {
+				statusCode = http.StatusInternalServerError
+				errorMsg = "Error interno del servidor al obtener la integración"
+			}
+
+			h.logger.Error().
+				Err(err).
+				Uint64("integration_id", id).
+				Int("status_code", statusCode).
+				Msg("Error al obtener integración por ID con credenciales en el usecase")
+			c.JSON(statusCode, response.IntegrationErrorResponse{
+				Success: false,
+				Message: errorMsg,
+				Error:   err.Error(),
+			})
+			return
+		}
+
+		// Convertir a respuesta con credenciales desencriptadas
+		integrationResp := mapper.ToIntegrationResponse(&integrationWithCreds.Integration)
+		integrationResp.Credentials = integrationWithCreds.DecryptedCredentials
+
+		c.JSON(http.StatusOK, response.IntegrationSuccessResponse{
+			Success: true,
+			Message: "Integración obtenida exitosamente",
+			Data:    integrationResp,
+		})
+		return
+	}
+
+	// Si no es super admin, obtener sin credenciales (comportamiento normal)
 	integration, err := h.usecase.GetIntegrationByID(c.Request.Context(), uint(id))
 	if err != nil {
 		statusCode := http.StatusNotFound

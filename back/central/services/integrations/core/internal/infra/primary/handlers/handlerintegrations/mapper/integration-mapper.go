@@ -72,6 +72,14 @@ func ToUpdateIntegrationDTO(req request.UpdateIntegrationRequest, updatedByID ui
 func ToIntegrationResponse(integration *domain.Integration) response.IntegrationResponse {
 	var config map[string]interface{}
 
+	// Parsear Config desde datatypes.JSON ([]byte) a map[string]interface{}
+	if len(integration.Config) > 0 {
+		if err := json.Unmarshal(integration.Config, &config); err != nil {
+			// Si falla el parseo, dejar config vacío
+			config = make(map[string]interface{})
+		}
+	}
+
 	resp := response.IntegrationResponse{
 		ID:                integration.ID,
 		Name:              integration.Name,

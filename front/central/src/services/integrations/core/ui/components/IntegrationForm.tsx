@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction } from '../../infra/actions';
+import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction } from '../../infra/actions';
 import { Integration, IntegrationType } from '../../domain/types';
 import { Alert } from '@/shared/ui';
 import ShopifyIntegrationForm from './ShopifyIntegrationForm';
 import WhatsAppIntegrationView from './WhatsAppIntegrationView';
+import DynamicIntegrationForm from './DynamicIntegrationForm';
 
 interface IntegrationFormProps {
     integration?: Integration;
@@ -129,13 +130,137 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
 
     // If editing an existing integration
     if (integration) {
-        // WhatsApp is read-only
-        if (selectedType?.code.toLowerCase() === 'whatsapp' || selectedType?.code.toLowerCase() === 'whatsap') {
+        console.log('📋 Integration recibida para editar:', integration);
+        
+        // Parse config if it's a string
+        let parsedConfig = integration.config || {};
+        if (typeof integration.config === 'string') {
+            try {
+                parsedConfig = JSON.parse(integration.config);
+                console.log('✅ Config parseado en IntegrationForm:', parsedConfig);
+            } catch (e) {
+                console.error('❌ Error parsing config:', e);
+                parsedConfig = {};
+            }
+        } else if (integration.config) {
+            parsedConfig = integration.config;
+            console.log('✅ Config ya es objeto en IntegrationForm:', parsedConfig);
+        }
+
+        // Show edit form for WhatsApp and other dynamic types
+        if (selectedType && (selectedType.code.toLowerCase() === 'whatsapp' || selectedType.code.toLowerCase() === 'whatsap')) {
+            if (selectedType.config_schema && selectedType.credentials_schema) {
+                return (
+                    <DynamicIntegrationForm
+                        integrationType={selectedType}
+                        isEdit={true}
+                        initialData={{
+                            name: integration.name,
+                            code: integration.code,
+                            config: parsedConfig,
+                            credentials: integration.credentials || {}, // Credenciales desencriptadas (si están disponibles)
+                            business_id: integration.business_id,
+                        }}
+                        onSubmit={async (data) => {
+                            try {
+                                if (!integration.id) {
+                                    throw new Error('ID de integración no encontrado');
+                                }
+                                // Solo enviar credenciales si hay valores (no vacío)
+                                const updateData: any = {
+                                    name: data.name,
+                                    code: data.code,
+                                    config: data.config,
+                                };
+                                // Solo incluir credenciales si hay valores ingresados
+                                if (data.credentials && Object.keys(data.credentials).length > 0) {
+                                    updateData.credentials = data.credentials;
+                                }
+                                const result = await updateIntegrationAction(integration.id, updateData);
+
+                                if (result.success) {
+                                    onSuccess?.();
+                                } else {
+                                    setError(result.message || 'Error al actualizar la integración');
+                                }
+                            } catch (err: any) {
+                                setError(err.message || 'Error al actualizar la integración');
+                            }
+                        }}
+                        onTest={async (config, credentials) => {
+                            try {
+                                const result = await testConnectionRawAction(selectedType.code, config, credentials);
+                                return {
+                                    success: result.success,
+                                    message: result.message
+                                };
+                            } catch (error: any) {
+                                return {
+                                    success: false,
+                                    message: error.message
+                                };
+                            }
+                        }}
+                        onCancel={onCancel}
+                    />
+                );
+            }
+        }
+
+        // For other types with schemas, show dynamic form
+        if (selectedType && selectedType.config_schema && selectedType.credentials_schema) {
             return (
-                <WhatsAppIntegrationView
-                    integration={integration}
-                    onTestConnection={handleWhatsAppTest}
-                    onRefresh={() => window.location.reload()}
+                <DynamicIntegrationForm
+                    integrationType={selectedType}
+                    isEdit={true}
+                    initialData={{
+                        name: integration.name,
+                        code: integration.code,
+                        config: parsedConfig,
+                        credentials: integration.credentials || {}, // Credenciales desencriptadas (si están disponibles)
+                        business_id: integration.business_id,
+                    }}
+                    onSubmit={async (data) => {
+                        try {
+                            if (!integration.id) {
+                                throw new Error('ID de integración no encontrado');
+                            }
+                            // Solo enviar credenciales si hay valores (no vacío)
+                            const updateData: any = {
+                                name: data.name,
+                                code: data.code,
+                                config: data.config,
+                            };
+                            // Solo incluir credenciales si hay valores ingresados
+                            if (data.credentials && Object.keys(data.credentials).length > 0) {
+                                updateData.credentials = data.credentials;
+                            }
+                            const result = await updateIntegrationAction(integration.id, updateData);
+
+                            if (result.success) {
+                                onSuccess?.();
+                            } else {
+                                setError(result.message || 'Error al actualizar la integración');
+                            }
+                        } catch (err: any) {
+                            setError(err.message || 'Error al actualizar la integración');
+                        }
+                    }}
+                    onTest={async (config, credentials) => {
+                        try {
+                            const result = await testConnectionRawAction(selectedType.code, config, credentials);
+                            return {
+                                success: result.success,
+                                message: result.message
+                            };
+                        } catch (error: any) {
+                            return {
+                                success: false,
+                                message: error.message
+                            };
+                        }
+                    }}
+                    onCancel={onCancel}
                 />
             );
         }
@@ -174,7 +299,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                             className="w-10 h-10 object-contain"
                                         />
                                     )}
-                                    {(type.code.toLowerCase() === 'whatsapp' || type.code.toLowerCase() === 'whatsap') && (
+                                    {(type.code.toLowerCase() === 'whatsapp') && (
                                         <img
                                             src="/integrations/whatsapp.png"
                                             alt="WhatsApp"
@@ -220,17 +345,53 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
-                    {(selectedType.code.toLowerCase() === 'whatsapp' || selectedType.code.toLowerCase() === 'whatsap') && (
-                        <Alert type="info">
-                            <p className="font-medium">WhatsApp es una integración interna</p>
-                            <p className="text-sm mt-1">No se pueden crear nuevas integraciones de WhatsApp. Solo existe una integración global para toda la plataforma.</p>
-                        </Alert>
+                    {selectedType.code.toLowerCase() !== 'shopify' && selectedType.config_schema && selectedType.credentials_schema && (
+                        <DynamicIntegrationForm
+                            integrationType={selectedType}
+                            onSubmit={async (data) => {
+                                try {
+                                    const result = await createIntegrationAction({
+                                        name: data.name,
+                                        code: data.code,
+                                        integration_type_id: selectedType.id,
+                                        category: selectedType.category,
+                                        business_id: data.business_id || null,
+                                        config: data.config,
+                                        credentials: data.credentials,
+                                        is_active: true,
+                                    });
+
+                                    if (result.success) {
+                                        onSuccess?.();
+                                    } else {
+                                        setError(result.message || 'Error al crear la integración');
+                                    }
+                                } catch (err: any) {
+                                    setError(err.message || 'Error al crear la integración');
+                                }
+                            }}
+                            onTest={async (config, credentials) => {
+                                try {
+                                    const result = await testConnectionRawAction(selectedType.code, config, credentials);
+                                    return {
+                                        success: result.success,
+                                        message: result.message
+                                    };
+                                } catch (error: any) {
+                                    return {
+                                        success: false,
+                                        message: error.message
+                                    };
+                                }
+                            }}
+                            onCancel={onCancel}
+                        />
                     )}
 
-                    {selectedType.code.toLowerCase() !== 'shopify' && selectedType.code.toLowerCase() !== 'whatsapp' && selectedType.code.toLowerCase() !== 'whatsap' && (
+                    {selectedType.code.toLowerCase() !== 'shopify' && (!selectedType.config_schema || !selectedType.credentials_schema) && (
                         <Alert type="warning">
-                            <p className="font-medium">Tipo de integración no soportado</p>
-                            <p className="text-sm mt-1">El formulario para {selectedType.name} aún no está implementado.</p>
+                            <p className="font-medium">Esquema no configurado</p>
+                            <p className="text-sm mt-1">Este tipo de integración aún no tiene un esquema configurado. Por favor, configura los schemas en el módulo de administración.</p>
                         </Alert>
                     )}
                 </div>

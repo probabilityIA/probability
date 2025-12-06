@@ -22,7 +22,12 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 	// Desencriptar credenciales
 	var credentials domain.DecryptedCredentials
 	if len(integration.Credentials) > 0 {
-		decrypted, err := uc.encryption.DecryptCredentials(ctx, []byte(integration.Credentials))
+		// Las credenciales están codificadas en base64 dentro de un JSON
+		encryptedBytes, err := decodeEncryptedCredentials([]byte(integration.Credentials))
+		if err != nil {
+			return fmt.Errorf("%w: %w", domain.ErrIntegrationCredentialsDecrypt, err)
+		}
+		decrypted, err := uc.encryption.DecryptCredentials(ctx, encryptedBytes)
 		if err != nil {
 			return fmt.Errorf("%w: %w", domain.ErrIntegrationCredentialsDecrypt, err)
 		}
@@ -51,13 +56,34 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 	}
 
 	// Obtener tester registrado para este tipo
+	uc.log.Info(ctx).
+		Str("type_code", integrationTypeCode).
+		Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
+		Msg("Buscando tester registrado para tipo de integración")
+
 	tester, err := uc.testerReg.GetTester(integrationTypeCode)
 	if err != nil {
 		uc.log.Warn(ctx).
+			Err(err).
 			Str("type_code", integrationTypeCode).
+			Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
 			Msg("No hay tester registrado, solo validando credenciales básicas")
 		// Fallback: validación básica si no hay tester
 		return uc.validateBasicCredentials(ctx, integrationTypeCode, credentials)
+	}
+
+	uc.log.Info(ctx).
+		Str("type_code", integrationTypeCode).
+		Msg("Tester encontrado, ejecutando test de conexión real")
+
+	// Para integraciones existentes, verificar que test_phone_number esté presente
+	// (solo para WhatsApp, pero verificamos de forma genérica)
+	if testPhone, ok := configMap["test_phone_number"].(string); !ok || testPhone == "" {
+		uc.log.Error(ctx).
+			Uint("id", integration.ID).
+			Str("type_code", integrationTypeCode).
+			Msg("test_phone_number no encontrado en la configuración de la integración")
+		return fmt.Errorf("%w: no hay número de prueba guardado en la configuración de la integración. Por favor, edita la integración y guarda un número de prueba en el campo 'Número de Prueba'", domain.ErrIntegrationTestFailed)
 	}
 
 	// Llamar al tester específico
@@ -89,6 +115,47 @@ func (uc *IntegrationUseCase) validateBasicCredentials(ctx context.Context, inte
 	uc.log.Info(ctx).
 		Str("type", integrationType).
 		Msg("Validación básica de credenciales exitosa (sin tester registrado)")
+
+	return nil
+}
+
+// TestConnectionRaw prueba la conexión con datos proporcionados directamente (sin guardar en BD)
+func (uc *IntegrationUseCase) TestConnectionRaw(ctx context.Context, integrationTypeCode string, config map[string]interface{}, credentials map[string]interface{}) error {
+	ctx = log.WithFunctionCtx(ctx, "TestConnectionRaw")
+
+	// Obtener tester registrado para este tipo
+	uc.log.Info(ctx).
+		Str("type_code", integrationTypeCode).
+		Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
+		Msg("Buscando tester registrado para tipo de integración (TestConnectionRaw)")
+
+	tester, err := uc.testerReg.GetTester(integrationTypeCode)
+	if err != nil {
+		uc.log.Warn(ctx).
+			Err(err).
+			Str("type_code", integrationTypeCode).
+			Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
+			Msg("No hay tester registrado, solo validando credenciales básicas")
+		// Fallback: validación básica si no hay tester
+		return uc.validateBasicCredentials(ctx, integrationTypeCode, credentials)
+	}
+
+	uc.log.Info(ctx).
+		Str("type_code", integrationTypeCode).
+		Msg("Tester encontrado, ejecutando test de conexión real")
+
+	// Llamar al tester específico
+	if err := tester.TestConnection(ctx, config, credentials); err != nil {
+		uc.log.Error(ctx).
+			Err(err).
+			Str("type_code", integrationTypeCode).
+			Msg("Test de conexión falló")
+		return fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
+	}
+
+	uc.log.Info(ctx).
+		Str("type_code", integrationTypeCode).
+		Msg("Test de conexión exitoso")
 
 	return nil
 }

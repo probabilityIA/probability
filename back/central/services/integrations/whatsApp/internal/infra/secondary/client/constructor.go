@@ -42,8 +42,10 @@ func New(config env.IConfig) domain.IWhatsApp {
 		SetRetryCount(2).
 		SetRetryWaitTime(5 * time.Second).
 		OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
+			// Solo loguear, no devolver error aquí para que SendMessage pueda manejar el error
+			// con más contexto (status code, body, etc.)
 			if r.StatusCode() >= 400 {
-				return fmt.Errorf("whatsapp_request_failed: status_code=%d, body=%s", r.StatusCode(), r.String())
+				fmt.Printf("⚠️ [WhatsAppClient] OnAfterResponse detectó error HTTP %d: %s\n", r.StatusCode(), r.String())
 			}
 			return nil
 		})
@@ -64,26 +66,53 @@ func New(config env.IConfig) domain.IWhatsApp {
 // La URL se construye como: {baseURL}{phone_number_id}/messages
 // El token se obtiene de la variable de entorno WHATSAPP_TOKEN.
 func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, msg domain.TemplateMessage) (string, error) {
+	fmt.Printf("🚀 [WhatsAppClient] SendMessage called for PhoneID: %d\n", phoneNumberID)
 	payload := mappers.MapDomainToRequest(msg)
 
 	// Construir la URL específica para este phone_number_id
 	endpoint := fmt.Sprintf("%d/messages", phoneNumberID)
 
 	var result response.SendMessageResponse
+	var errorResponse map[string]interface{}
+
 	resp, err := c.rest.R().
 		SetContext(ctx).
 		SetHeader("Authorization", "Bearer "+c.accessToken).
 		SetBody(payload).
 		SetResult(&result).
+		SetError(&errorResponse).
 		SetDebug(true).
 		Post(endpoint)
+
+	// Verificar errores de red o HTTP
 	if err != nil {
-		return "", err
+		fmt.Printf("❌ [WhatsAppClient] Error de red/HTTP: %v\n", err)
+		return "", fmt.Errorf("error al comunicarse con WhatsApp API: %w", err)
 	}
 
-	if len(result.Messages) > 0 {
-		return result.Messages[0].ID, nil
+	// Verificar código de estado HTTP explícitamente
+	statusCode := resp.StatusCode()
+	if statusCode < 200 || statusCode >= 300 {
+		errorBody := resp.String()
+		fmt.Printf("❌ [WhatsAppClient] Error HTTP %d: %s\n", statusCode, errorBody)
+
+		// Intentar extraer mensaje de error de la respuesta
+		errorMsg := fmt.Sprintf("WhatsApp API retornó error %d", statusCode)
+		if errorBody != "" {
+			errorMsg = fmt.Sprintf("WhatsApp API error %d: %s", statusCode, errorBody)
+		}
+
+		return "", fmt.Errorf(errorMsg)
 	}
 
-	return resp.Status(), nil
+	// Verificar que la respuesta contiene mensajes
+	if len(result.Messages) == 0 {
+		errorBody := resp.String()
+		fmt.Printf("❌ [WhatsAppClient] Respuesta exitosa pero sin mensajes: %s\n", errorBody)
+		return "", fmt.Errorf("la respuesta de WhatsApp no contiene mensajes: %s", errorBody)
+	}
+
+	messageID := result.Messages[0].ID
+	fmt.Printf("✅ [WhatsAppClient] Mensaje enviado exitosamente. MessageID: %s\n", messageID)
+	return messageID, nil
 }

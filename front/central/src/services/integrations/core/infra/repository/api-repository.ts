@@ -136,6 +136,17 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
+    async testConnectionRaw(typeCode: string, config: Record<string, any>, credentials: Record<string, any>): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>('/integrations/test', {
+            method: 'POST',
+            body: JSON.stringify({
+                type_code: typeCode,
+                config,
+                credentials
+            })
+        });
+    }
+
     // Integration Types
     async getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
         return this.fetch<SingleResponse<IntegrationType[]>>('/integration-types');

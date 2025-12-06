@@ -8,26 +8,45 @@ import {
     IntegrationTypeForm
 } from '@/services/integrations/core/ui';
 import { Button, Modal } from '@/shared/ui';
+import { IntegrationType, Integration } from '@/services/integrations/core/domain/types';
+import { getIntegrationByIdAction } from '@/services/integrations/core/infra/actions';
 
 export default function IntegrationsPage() {
     const [activeTab, setActiveTab] = useState<'integrations' | 'types'>('integrations');
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showEditIntegrationModal, setShowEditIntegrationModal] = useState(false);
+    const [selectedType, setSelectedType] = useState<IntegrationType | undefined>(undefined);
+    const [selectedIntegration, setSelectedIntegration] = useState<Integration | undefined>(undefined);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [modalSize, setModalSize] = useState<'md' | 'full'>('md');
+    const [modalSize, setModalSize] = useState<'md' | '4xl' | 'full'>('md');
 
     const handleSuccess = () => {
         setShowCreateModal(false);
+        setShowEditModal(false);
+        setShowEditIntegrationModal(false);
+        setSelectedType(undefined);
+        setSelectedIntegration(undefined);
         setRefreshKey(prev => prev + 1);
         setModalSize('md'); // Reset to small when closing
     };
 
     const handleTypeSelected = (hasTypeSelected: boolean) => {
-        setModalSize(hasTypeSelected ? 'full' : 'md');
+        setModalSize(hasTypeSelected ? '4xl' : 'md');
     };
 
     const handleModalClose = () => {
         setShowCreateModal(false);
+        setShowEditModal(false);
+        setShowEditIntegrationModal(false);
+        setSelectedType(undefined);
+        setSelectedIntegration(undefined);
         setModalSize('md'); // Reset to small when closing
+    };
+
+    const handleEditType = (type: IntegrationType) => {
+        setSelectedType(type);
+        setShowEditModal(true);
     };
 
     return (
@@ -71,16 +90,39 @@ export default function IntegrationsPage() {
             </div>
 
             {activeTab === 'integrations' ? (
-                <IntegrationList key={`list-${refreshKey}`} />
+                <IntegrationList 
+                    key={`list-${refreshKey}`}
+                    onEdit={async (integration) => {
+                        try {
+                            // Obtener la integración completa por ID
+                            // Si el usuario es super admin, el endpoint devolverá credenciales desencriptadas automáticamente
+                            const response = await getIntegrationByIdAction(integration.id);
+                            if (response.success && response.data) {
+                                setSelectedIntegration(response.data);
+                                setShowEditIntegrationModal(true);
+                            } else {
+                                console.error('Error al obtener integración:', response.message);
+                                alert('Error al cargar la integración para editar');
+                            }
+                        } catch (error: any) {
+                            console.error('Error al obtener integración:', error);
+                            alert('Error al cargar la integración para editar');
+                        }
+                    }}
+                />
             ) : (
-                <IntegrationTypeList key={`types-${refreshKey}`} />
+                <IntegrationTypeList
+                    key={`types-${refreshKey}`}
+                    onEdit={handleEditType}
+                />
             )}
 
+            {/* Create Modal */}
             <Modal
                 isOpen={showCreateModal}
                 onClose={handleModalClose}
                 title={activeTab === 'integrations' ? "Nueva Integración" : "Nuevo Tipo de Integración"}
-                size={modalSize}
+                size={activeTab === 'types' ? 'full' : modalSize}
             >
                 {activeTab === 'integrations' ? (
                     <IntegrationForm
@@ -94,6 +136,35 @@ export default function IntegrationsPage() {
                         onCancel={handleModalClose}
                     />
                 )}
+            </Modal>
+
+            {/* Edit Modal for Integration Types */}
+            <Modal
+                isOpen={showEditModal}
+                onClose={handleModalClose}
+                title="Editar Tipo de Integración"
+                size="full"
+            >
+                <IntegrationTypeForm
+                    integrationType={selectedType}
+                    onSuccess={handleSuccess}
+                    onCancel={handleModalClose}
+                />
+            </Modal>
+
+            {/* Edit Modal for Integrations */}
+            <Modal
+                isOpen={showEditIntegrationModal}
+                onClose={handleModalClose}
+                title="Editar Integración"
+                size="4xl"
+            >
+                <IntegrationForm
+                    integration={selectedIntegration}
+                    onSuccess={handleSuccess}
+                    onCancel={handleModalClose}
+                    onTypeSelected={handleTypeSelected}
+                />
             </Modal>
         </div>
     );
