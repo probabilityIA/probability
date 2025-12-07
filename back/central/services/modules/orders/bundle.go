@@ -4,18 +4,18 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/orders/app/usecases"
-	"github.com/secamc93/probability/back/central/services/modules/orders/infra/primary/handlers"
-	"github.com/secamc93/probability/back/central/services/modules/orders/infra/primary/queue"
-	"github.com/secamc93/probability/back/central/services/modules/orders/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecases"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/queue"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
-	sharedQueue "github.com/secamc93/probability/back/central/shared/queue"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // New inicializa el módulo de orders
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ sharedQueue.IQueue) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue) {
 	// 1. Init Repositories
 	repo := repository.New(database)
 

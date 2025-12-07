@@ -1,4 +1,4 @@
-package usecases
+package usecaseorder
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
@@ -17,7 +17,7 @@ import (
 // ───────────────────────────────────────────
 
 // CreateOrder crea una nueva orden
-func (uc *UseCases) CreateOrder(ctx context.Context, req *domain.CreateOrderRequest) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *domain.CreateOrderRequest) (*domain.OrderResponse, error) {
 	// Validar que no exista una orden con el mismo external_id para la misma integración
 	exists, err := uc.repo.OrderExists(ctx, req.ExternalID, req.IntegrationID)
 	if err != nil {
@@ -140,7 +140,7 @@ func (uc *UseCases) CreateOrder(ctx context.Context, req *domain.CreateOrderRequ
 // ───────────────────────────────────────────
 
 // GetOrderByID obtiene una orden por su ID
-func (uc *UseCases) GetOrderByID(ctx context.Context, id string) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrder) GetOrderByID(ctx context.Context, id string) (*domain.OrderResponse, error) {
 	if id == "" {
 		return nil, errors.New("order ID is required")
 	}
@@ -160,7 +160,7 @@ func (uc *UseCases) GetOrderByID(ctx context.Context, id string) (*domain.OrderR
 // ───────────────────────────────────────────
 
 // ListOrders obtiene una lista paginada de órdenes con filtros
-func (uc *UseCases) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*domain.OrdersListResponse, error) {
+func (uc *UseCaseOrder) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*domain.OrdersListResponse, error) {
 	// Validar paginación
 	if page < 1 {
 		page = 1
@@ -200,7 +200,7 @@ func (uc *UseCases) ListOrders(ctx context.Context, page, pageSize int, filters 
 // ───────────────────────────────────────────
 
 // UpdateOrder actualiza una orden existente
-func (uc *UseCases) UpdateOrder(ctx context.Context, id string, req *domain.UpdateOrderRequest) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *domain.UpdateOrderRequest) (*domain.OrderResponse, error) {
 	if id == "" {
 		return nil, errors.New("order ID is required")
 	}
@@ -416,7 +416,7 @@ func (uc *UseCases) UpdateOrder(ctx context.Context, id string, req *domain.Upda
 // ───────────────────────────────────────────
 
 // DeleteOrder elimina (soft delete) una orden
-func (uc *UseCases) DeleteOrder(ctx context.Context, id string) error {
+func (uc *UseCaseOrder) DeleteOrder(ctx context.Context, id string) error {
 	if id == "" {
 		return errors.New("order ID is required")
 	}

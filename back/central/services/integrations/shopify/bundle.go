@@ -13,7 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
-	sharedQueue "github.com/secamc93/probability/back/central/shared/queue"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 func New(
@@ -27,7 +27,7 @@ func New(
 	shopifyClient := client.New()
 
 	// Init RabbitMQ connection
-	rabbitMQ, err := sharedQueue.New(logger, config)
+	rabbitMQ, err := rabbitmq.New(logger, config)
 	if err != nil {
 		logger.Error().
 			Err(err).
