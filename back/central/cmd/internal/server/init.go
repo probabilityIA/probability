@@ -17,6 +17,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/email"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	sharedQueue "github.com/secamc93/probability/back/central/shared/queue"
 )
 
 func Init(ctx context.Context) error {
@@ -26,6 +27,18 @@ func Init(ctx context.Context) error {
 	database := db.New(logger, environment)
 	// s3 := storage.New(environment, logger)
 	_ = email.New(environment, logger)
+
+	// Initialize RabbitMQ (opcional - si falla, se registra warning y continúa)
+	var rabbitMQ sharedQueue.IQueue
+	rabbitMQInstance, err := sharedQueue.New(logger, environment)
+	if err != nil {
+		logger.Warn().
+			Err(err).
+			Msg("Failed to connect to RabbitMQ, queue features will not be available")
+	} else {
+		rabbitMQ = rabbitMQInstance
+		logger.Info().Msg("RabbitMQ connected successfully")
+	}
 
 	middleware.InitFromEnv(environment, logger)
 	r := routes.BuildRouter(ctx, logger, environment)
@@ -46,7 +59,7 @@ func Init(ctx context.Context) error {
 	integrations.New(v1Group, database, logger, environment)
 
 	// Initialize Order Module
-	modules.New(v1Group, database, logger, environment)
+	modules.New(v1Group, database, logger, environment, rabbitMQ)
 
 	LogStartupInfo(ctx, logger, environment)
 

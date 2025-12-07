@@ -185,3 +185,49 @@ func (r *Repository) OrderExists(ctx context.Context, externalID string, integra
 
 	return count > 0, nil
 }
+
+// ───────────────────────────────────────────
+//
+//	MÉTODOS PARA TABLAS RELACIONADAS
+//
+// ───────────────────────────────────────────
+
+// CreateOrderItems crea múltiples items de orden
+func (r *Repository) CreateOrderItems(ctx context.Context, items []*models.OrderItem) error {
+	if len(items) == 0 {
+		return nil
+	}
+	return r.db.Conn(ctx).CreateInBatches(items, 100).Error
+}
+
+// CreateAddresses crea múltiples direcciones
+func (r *Repository) CreateAddresses(ctx context.Context, addresses []*models.Address) error {
+	if len(addresses) == 0 {
+		return nil
+	}
+	return r.db.Conn(ctx).CreateInBatches(addresses, 100).Error
+}
+
+// CreatePayments crea múltiples pagos
+func (r *Repository) CreatePayments(ctx context.Context, payments []*models.Payment) error {
+	if len(payments) == 0 {
+		return nil
+	}
+	return r.db.Conn(ctx).CreateInBatches(payments, 100).Error
+}
+
+// CreateShipments crea múltiples envíos
+func (r *Repository) CreateShipments(ctx context.Context, shipments []*models.Shipment) error {
+	if len(shipments) == 0 {
+		return nil
+	}
+	return r.db.Conn(ctx).CreateInBatches(shipments, 100).Error
+}
+
+// CreateChannelMetadata crea metadata del canal
+func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *models.OrderChannelMetadata) error {
+	if metadata == nil {
+		return nil
+	}
+	return r.db.Conn(ctx).Create(metadata).Error
+}

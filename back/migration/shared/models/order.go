@@ -163,6 +163,13 @@ type Order struct {
 	Business      *Business     `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	Integration   Integration   `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	PaymentMethod PaymentMethod `gorm:"foreignKey:PaymentMethodID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	// Relaciones con tablas relacionadas (Modelo Canónico)
+	OrderItems      []OrderItem            `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Addresses       []Address              `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Payments        []Payment              `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Shipments       []Shipment             `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	ChannelMetadata []OrderChannelMetadata `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName especifica el nombre de la tabla para Order
@@ -242,4 +249,254 @@ func generateRandomString(n int) string {
 		b[i] = letters[mathrand.Intn(len(letters))]
 	}
 	return string(b)
+}
+
+// ───────────────────────────────────────────
+//
+//	ORDER ITEMS - Items/Productos de la orden
+//
+// ───────────────────────────────────────────
+
+// OrderItem representa un producto/item dentro de una orden
+type OrderItem struct {
+	gorm.Model
+
+	// Relación con la orden
+	OrderID string `gorm:"type:varchar(36);not null;index"` // UUID de la orden
+
+	// Identificadores del producto
+	ProductID    *string `gorm:"size:255;index"`    // ID del producto en el sistema
+	ProductSKU   string  `gorm:"size:128;index"`    // SKU del producto
+	ProductName  string  `gorm:"size:255;not null"` // Nombre del producto
+	ProductTitle string  `gorm:"size:255"`          // Título/variante del producto
+	VariantID    *string `gorm:"size:255"`          // ID de la variante (si aplica)
+
+	// Información de cantidad y precio
+	Quantity   int     `gorm:"not null;default:1"`          // Cantidad
+	UnitPrice  float64 `gorm:"type:decimal(12,2);not null"` // Precio unitario
+	TotalPrice float64 `gorm:"type:decimal(12,2);not null"` // Precio total (quantity * unit_price)
+	Currency   string  `gorm:"size:10;default:'USD'"`       // Moneda
+
+	// Descuentos y ajustes
+	Discount float64  `gorm:"type:decimal(12,2);default:0"` // Descuento aplicado
+	Tax      float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto
+	TaxRate  *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto (ej: 0.19 para 19%)
+
+	// Información adicional del producto
+	ImageURL          *string        `gorm:"size:512"`           // URL de imagen
+	ProductURL        *string        `gorm:"size:512"`           // URL del producto
+	Weight            *float64       `gorm:"type:decimal(10,2)"` // Peso del item
+	RequiresShipping  bool           `gorm:"default:true"`       // Si requiere envío
+	IsGiftCard        bool           `gorm:"default:false"`      // Si es tarjeta de regalo
+	FulfillmentStatus *string        `gorm:"size:64"`            // Estado de fulfillment del item
+	Metadata          datatypes.JSON `gorm:"type:jsonb"`         // Metadata adicional del canal
+
+	// Relación
+	Order Order `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+// TableName especifica el nombre de la tabla
+func (OrderItem) TableName() string {
+	return "order_items"
+}
+
+// ───────────────────────────────────────────
+//
+//	ADDRESSES - Direcciones de envío y facturación
+//
+// ───────────────────────────────────────────
+
+// Address representa una dirección (puede ser de envío o facturación)
+type Address struct {
+	gorm.Model
+
+	// Tipo de dirección
+	Type string `gorm:"size:20;not null;index"` // "shipping" o "billing"
+
+	// Relación con la orden
+	OrderID string `gorm:"type:varchar(36);not null;index"` // UUID de la orden
+
+	// Información del destinatario
+	FirstName string `gorm:"size:128"` // Nombre
+	LastName  string `gorm:"size:128"` // Apellido
+	Company   string `gorm:"size:255"` // Empresa (opcional)
+	Phone     string `gorm:"size:32"`  // Teléfono
+
+	// Dirección física
+	Street     string `gorm:"size:255;not null"` // Calle y número
+	Street2    string `gorm:"size:255"`          // Segunda línea (apt, suite, etc.)
+	City       string `gorm:"size:128;not null"` // Ciudad
+	State      string `gorm:"size:128"`          // Estado/Provincia
+	Country    string `gorm:"size:128;not null"` // País (código ISO)
+	PostalCode string `gorm:"size:32"`           // Código postal
+
+	// Coordenadas geográficas
+	Latitude  *float64 `gorm:"type:decimal(10,8)"` // Latitud
+	Longitude *float64 `gorm:"type:decimal(11,8)"` // Longitud
+
+	// Información adicional
+	Instructions *string        `gorm:"type:text"`     // Instrucciones de entrega
+	IsDefault    bool           `gorm:"default:false"` // Si es dirección por defecto
+	Metadata     datatypes.JSON `gorm:"type:jsonb"`    // Metadata adicional del canal
+
+	// Relación
+	Order Order `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+// TableName especifica el nombre de la tabla
+func (Address) TableName() string {
+	return "addresses"
+}
+
+// ───────────────────────────────────────────
+//
+//	PAYMENTS - Pagos de la orden
+//
+// ───────────────────────────────────────────
+
+// Payment representa un pago asociado a una orden
+type Payment struct {
+	gorm.Model
+
+	// Relación con la orden
+	OrderID string `gorm:"type:varchar(36);not null;index"` // UUID de la orden
+
+	// Método de pago
+	PaymentMethodID uint `gorm:"not null;index"` // FK a payment_methods
+
+	// Información financiera
+	Amount       float64  `gorm:"type:decimal(12,2);not null"` // Monto pagado
+	Currency     string   `gorm:"size:10;default:'USD'"`       // Moneda
+	ExchangeRate *float64 `gorm:"type:decimal(10,4)"`          // Tasa de cambio (si aplica)
+
+	// Estado del pago
+	Status      string     `gorm:"size:64;not null;index"` // "pending", "completed", "failed", "refunded"
+	PaidAt      *time.Time `gorm:"index"`                  // Cuándo se pagó
+	ProcessedAt *time.Time // Cuándo se procesó
+
+	// Identificadores del canal
+	TransactionID    *string `gorm:"size:255;index"` // ID de transacción del canal
+	PaymentReference *string `gorm:"size:255"`       // Referencia de pago
+	Gateway          *string `gorm:"size:64"`        // Gateway utilizado (ej: "stripe", "paypal")
+
+	// Información adicional
+	RefundAmount  *float64       `gorm:"type:decimal(12,2)"` // Monto reembolsado
+	RefundedAt    *time.Time     // Cuándo se reembolsó
+	FailureReason *string        `gorm:"type:text"`  // Razón de fallo (si aplica)
+	Metadata      datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional del canal
+
+	// Relaciones
+	Order         Order         `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	PaymentMethod PaymentMethod `gorm:"foreignKey:PaymentMethodID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+// TableName especifica el nombre de la tabla
+func (Payment) TableName() string {
+	return "payments"
+}
+
+// ───────────────────────────────────────────
+//
+//	SHIPMENTS - Envíos de la orden
+//
+// ───────────────────────────────────────────
+
+// Shipment representa un envío asociado a una orden
+type Shipment struct {
+	gorm.Model
+
+	// Relación con la orden
+	OrderID string `gorm:"type:varchar(36);not null;index"` // UUID de la orden
+
+	// Información de tracking
+	TrackingNumber *string `gorm:"size:128;index"` // Número de rastreo
+	TrackingURL    *string `gorm:"size:512"`       // URL de rastreo
+	Carrier        *string `gorm:"size:128"`       // Transportista (ej: "FedEx", "DHL")
+	CarrierCode    *string `gorm:"size:50"`        // Código del transportista
+
+	// Información de guía
+	GuideID  *string `gorm:"size:128;index"` // ID de guía de envío
+	GuideURL *string `gorm:"size:512"`       // URL de la guía
+
+	// Estado del envío
+	Status      string     `gorm:"size:64;not null;index;default:'pending'"` // "pending", "in_transit", "delivered", "failed"
+	ShippedAt   *time.Time `gorm:"index"`                                    // Cuándo se envió
+	DeliveredAt *time.Time // Cuándo se entregó
+
+	// Información de dirección
+	ShippingAddressID *uint    // FK a addresses (opcional, puede usar la de la orden)
+	ShippingAddress   *Address `gorm:"foreignKey:ShippingAddressID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+
+	// Costos
+	ShippingCost  *float64 `gorm:"type:decimal(12,2)"` // Costo de envío
+	InsuranceCost *float64 `gorm:"type:decimal(12,2)"` // Costo de seguro
+	TotalCost     *float64 `gorm:"type:decimal(12,2)"` // Costo total
+
+	// Dimensiones y peso
+	Weight *float64 `gorm:"type:decimal(10,2)"` // Peso en kg
+	Height *float64 `gorm:"type:decimal(10,2)"` // Alto en cm
+	Width  *float64 `gorm:"type:decimal(10,2)"` // Ancho en cm
+	Length *float64 `gorm:"type:decimal(10,2)"` // Largo en cm
+
+	// Información de fulfillment
+	WarehouseID   *uint  `gorm:"index"`         // ID del almacén
+	WarehouseName string `gorm:"size:128"`      // Nombre del almacén
+	DriverID      *uint  `gorm:"index"`         // ID del conductor
+	DriverName    string `gorm:"size:255"`      // Nombre del conductor
+	IsLastMile    bool   `gorm:"default:false"` // Si es última milla
+
+	// Información adicional
+	EstimatedDelivery *time.Time     `gorm:"index"`      // Entrega estimada
+	DeliveryNotes     *string        `gorm:"type:text"`  // Notas de entrega
+	Metadata          datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional del canal
+
+	// Relación
+	Order Order `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+}
+
+// TableName especifica el nombre de la tabla
+func (Shipment) TableName() string {
+	return "shipments"
+}
+
+// ───────────────────────────────────────────
+//
+//	ORDER CHANNEL METADATA - Datos crudos del canal
+//
+// ───────────────────────────────────────────
+
+// OrderChannelMetadata almacena los datos crudos originales de la orden
+// tal como los recibió el canal de venta (Shopify, Mercado Libre, etc.)
+// Esta tabla es crucial para trazabilidad y flexibilidad
+type OrderChannelMetadata struct {
+	gorm.Model
+
+	// Relación con la orden
+	OrderID string `gorm:"type:varchar(36);not null;index"` // UUID de la orden
+
+	// Identificación del canal
+	ChannelSource string `gorm:"size:50;not null;index"` // "shopify", "mercado_libre", "paris", etc.
+	IntegrationID uint   `gorm:"not null;index"`         // ID de la integración
+
+	// Datos crudos
+	RawData datatypes.JSON `gorm:"type:jsonb;not null"` // Payload completo de la API del canal
+
+	// Metadata adicional
+	Version     string     `gorm:"size:20"` // Versión del API/webhook recibido
+	ReceivedAt  time.Time  `gorm:"index"`   // Cuándo se recibió el dato
+	ProcessedAt *time.Time // Cuándo se procesó (si aplica)
+	IsLatest    bool       `gorm:"default:true;index"` // Si es la versión más reciente
+
+	// Información de sincronización
+	LastSyncedAt *time.Time // Última vez que se sincronizó con el canal
+	SyncStatus   string     `gorm:"size:64;default:'pending'"` // Estado de sincronización
+
+	// Relaciones
+	Order       Order       `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Integration Integration `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+// TableName especifica el nombre de la tabla
+func (OrderChannelMetadata) TableName() string {
+	return "order_channel_metadata"
 }
