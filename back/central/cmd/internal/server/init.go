@@ -5,19 +5,15 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/cmd/internal/routes"
-	business "github.com/secamc93/probability/back/central/services/auth/bussines"
-	"github.com/secamc93/probability/back/central/services/auth/login"
+	"github.com/secamc93/probability/back/central/services/auth"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
-	"github.com/secamc93/probability/back/central/services/auth/permissions"
-	"github.com/secamc93/probability/back/central/services/auth/roles"
-	"github.com/secamc93/probability/back/central/services/auth/users"
 	"github.com/secamc93/probability/back/central/services/integrations"
 	"github.com/secamc93/probability/back/central/services/modules"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/email"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
-	sharedQueue "github.com/secamc93/probability/back/central/shared/queue"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 func Init(ctx context.Context) error {
@@ -29,8 +25,8 @@ func Init(ctx context.Context) error {
 	_ = email.New(environment, logger)
 
 	// Initialize RabbitMQ (opcional - si falla, se registra warning y continúa)
-	var rabbitMQ sharedQueue.IQueue
-	rabbitMQInstance, err := sharedQueue.New(logger, environment)
+	var rabbitMQ rabbitmq.IQueue
+	rabbitMQInstance, err := rabbitmq.New(logger, environment)
 	if err != nil {
 		logger.Warn().
 			Err(err).
@@ -49,14 +45,10 @@ func Init(ctx context.Context) error {
 	v1Group := r.Group("/api/v1")
 
 	// Initialize Auth Modules
-	login.New(v1Group, database, logger, environment)
-	permissions.New(v1Group, database, logger)
-	roles.New(v1Group, database, logger)
-	users.New(v1Group, database, logger, environment, nil)
-	business.New(v1Group, database, logger, environment, nil)
+	auth.New(v1Group, database, logger, environment)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, etc.)
-	integrations.New(v1Group, database, logger, environment)
+	integrations.New(v1Group, database, logger, environment, rabbitMQ)
 
 	// Initialize Order Module
 	modules.New(v1Group, database, logger, environment, rabbitMQ)

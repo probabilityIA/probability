@@ -3,9 +3,9 @@ package usecases
 import (
 	"context"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/app/usecaseorder"
-	"github.com/secamc93/probability/back/central/services/modules/orders/app/usecaseordermapping"
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseordermapping"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 )
 
 // UseCases contiene todos los casos de uso del módulo orders

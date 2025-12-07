@@ -8,11 +8,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
-	sharedQueue "github.com/secamc93/probability/back/central/shared/queue"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // New inicializa todos los módulos
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ sharedQueue.IQueue) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue) {
 	// Inicializar módulo de payments
 	payments.New(router, database, logger, environment)
 

@@ -7,7 +7,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
-	sharedQueue "github.com/secamc93/probability/back/central/shared/queue"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 const (
@@ -15,11 +15,11 @@ const (
 )
 
 type rabbitMQPublisher struct {
-	queue  sharedQueue.IQueue
+	queue  rabbitmq.IQueue
 	logger log.ILogger
 }
 
-func New(queue sharedQueue.IQueue, logger log.ILogger) domain.OrderPublisher {
+func New(queue rabbitmq.IQueue, logger log.ILogger) domain.OrderPublisher {
 	return &rabbitMQPublisher{
 		queue:  queue,
 		logger: logger,

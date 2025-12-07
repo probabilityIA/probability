@@ -351,11 +351,66 @@ type Integration struct {
 	UpdatedByID *uint  `gorm:"index"`
 
 	// Relaciones
-	CreatedBy User  `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	UpdatedBy *User `gorm:"foreignKey:UpdatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	CreatedBy           User                            `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	UpdatedBy           *User                           `gorm:"foreignKey:UpdatedByID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	NotificationConfigs []IntegrationNotificationConfig `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName especifica el nombre de la tabla para Integration
 func (Integration) TableName() string {
 	return "integrations"
+}
+
+// ───────────────────────────────────────────
+//
+//	INTEGRATION NOTIFICATION CONFIG - Configuraciones de notificaciones por integración
+//
+// ───────────────────────────────────────────
+type IntegrationNotificationConfig struct {
+	gorm.Model
+
+	// Relación con Integration
+	IntegrationID uint        `gorm:"not null;index"`
+	Integration   Integration `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+
+	// Tipo de notificación
+	// "whatsapp" | "email" | "sms"
+	NotificationType string `gorm:"size:20;not null;index"`
+
+	// Estado de la notificación
+	IsActive bool `gorm:"default:true;index"`
+
+	// Condiciones/Eventos que disparan la notificación
+	// JSON que define cuándo se debe enviar la notificación
+	// Ejemplo para estados de orden:
+	//   {"trigger": "order_status_change", "statuses": ["en_entrega", "entregada"]}
+	// Ejemplo para eventos:
+	//   {"trigger": "order_created"}
+	//   {"trigger": "payment_completed"}
+	//   {"trigger": "shipment_delivered"}
+	// Ejemplo combinado:
+	//   {"trigger": "order_status_change", "statuses": ["en_entrega"], "conditions": {"total_amount": {"gte": 50000}}}
+	Conditions datatypes.JSON `gorm:"type:jsonb;not null"`
+
+	// Configuración adicional de la notificación
+	// Contiene templates, destinatarios, configuración específica del canal
+	// Ejemplo WhatsApp:
+	//   {"template_id": "order_status_update", "language": "es", "recipient_type": "customer"}
+	// Ejemplo Email:
+	//   {"template": "order_confirmation", "subject": "Tu orden está en camino", "recipient_type": "customer"}
+	// Ejemplo SMS:
+	//   {"message_template": "Tu orden #{{order_number}} está en camino", "recipient_type": "customer"}
+	Config datatypes.JSON `gorm:"type:jsonb"`
+
+	// Descripción opcional
+	Description string `gorm:"size:500"`
+
+	// Prioridad (para cuando hay múltiples configuraciones que coinciden)
+	// Mayor número = mayor prioridad
+	Priority int `gorm:"default:0;index"`
+}
+
+// TableName especifica el nombre de la tabla para IntegrationNotificationConfig
+func (IntegrationNotificationConfig) TableName() string {
+	return "integration_notification_configs"
 }

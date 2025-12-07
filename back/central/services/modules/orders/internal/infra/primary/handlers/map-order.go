@@ -4,24 +4,24 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 )
 
-// CreateOrder godoc
-// @Summary      Crear orden
-// @Description  Crea una nueva orden en el sistema
+// MapAndSaveOrder godoc
+// @Summary      Mapear y guardar orden canónica
+// @Description  Recibe una orden en formato canónico (después de mapeo) y la guarda en todas las tablas relacionadas
 // @Tags         Orders
 // @Accept       json
 // @Produce      json
-// @Param        order  body      domain.CreateOrderRequest  true  "Datos de la orden"
+// @Param        order  body      domain.CanonicalOrderDTO  true  "Orden en formato canónico"
 // @Security     BearerAuth
 // @Success      201  {object}  domain.OrderResponse
 // @Failure      400  {object}  map[string]interface{}
 // @Failure      409  {object}  map[string]interface{}
 // @Failure      500  {object}  map[string]interface{}
-// @Router       /orders [post]
-func (h *Handlers) CreateOrder(c *gin.Context) {
-	var req domain.CreateOrderRequest
+// @Router       /orders/map [post]
+func (h *Handlers) MapAndSaveOrder(c *gin.Context) {
+	var req domain.CanonicalOrderDTO
 
 	// Validar el request body
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -33,8 +33,8 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 		return
 	}
 
-	// Llamar al caso de uso
-	order, err := h.uc.CreateOrder(c.Request.Context(), &req)
+	// Llamar al caso de uso de mapeo
+	order, err := h.uc.OrderMapping.MapAndSaveOrder(c.Request.Context(), &req)
 	if err != nil {
 		// Verificar si es un error de duplicado
 		if err.Error() == "order with this external_id already exists for this integration" {
@@ -48,7 +48,7 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Error al crear orden",
+			"message": "Error al mapear y guardar orden",
 			"error":   err.Error(),
 		})
 		return
@@ -56,7 +56,7 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
-		"message": "Orden creada exitosamente",
+		"message": "Orden mapeada y guardada exitosamente",
 		"data":    order,
 	})
 }

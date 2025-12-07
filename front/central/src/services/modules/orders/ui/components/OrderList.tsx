@@ -118,11 +118,11 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                     <input
                         type="text"
                         placeholder="Buscar por email..."
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white"
                         onChange={(e) => setFilters({ ...filters, customer_email: e.target.value || undefined })}
                     />
                     <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                         onChange={(e) => setFilters({ ...filters, status: e.target.value || undefined })}
                     >
                         <option value="">Todos los estados</option>
@@ -133,7 +133,7 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                         <option value="cancelled">Cancelado</option>
                     </select>
                     <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
                         onChange={(e) => setFilters({ ...filters, platform: e.target.value || undefined })}
                     >
                         <option value="">Todas las plataformas</option>
@@ -141,9 +141,12 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                         <option value="woocommerce">WooCommerce</option>
                         <option value="manual">Manual</option>
                     </select>
-                    <Button variant="outline" onClick={fetchOrders}>
+                    <button
+                        onClick={fetchOrders}
+                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
                         🔄 Actualizar
-                    </Button>
+                    </button>
                 </div>
             </div>
 
@@ -219,7 +222,7 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                                                 {onView && (
                                                     <button
                                                         onClick={() => onView(order)}
-                                                        className="text-blue-600 hover:text-blue-900"
+                                                        className="px-3 py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                                                     >
                                                         Ver
                                                     </button>
@@ -227,14 +230,14 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                                                 {onEdit && (
                                                     <button
                                                         onClick={() => onEdit(order)}
-                                                        className="text-indigo-600 hover:text-indigo-900"
+                                                        className="px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
                                                     >
                                                         Editar
                                                     </button>
                                                 )}
                                                 <button
                                                     onClick={() => handleDelete(order.id)}
-                                                    className="text-red-600 hover:text-red-900"
+                                                    className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                                 >
                                                     Eliminar
                                                 </button>

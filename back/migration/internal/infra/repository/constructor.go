@@ -40,6 +40,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.IntegrationType{},
 		&models.Integration{},
 
+		// Integration Notification Configs (debe ir después de Integration)
+		&models.IntegrationNotificationConfig{},
+
 		// Payment Methods
 		&models.PaymentMethod{},
 		&models.PaymentMethodMapping{},
@@ -48,6 +51,21 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		// Orders
 		&models.Order{},
 		&models.OrderHistory{},
+
+		// Order Channel Metadata
+		&models.OrderChannelMetadata{},
+
+		// Order Items
+		&models.OrderItem{},
+
+		// Addresses
+		&models.Address{},
+
+		// Payments
+		&models.Payment{},
+
+		// Shipments
+		&models.Shipment{},
 	); err != nil {
 		return err
 	}

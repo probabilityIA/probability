@@ -3,7 +3,7 @@ package usecaseordermapping
 import (
 	"context"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 )
 
 // ───────────────────────────────────────────

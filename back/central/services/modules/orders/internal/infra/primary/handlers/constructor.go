@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/secamc93/probability/back/central/services/modules/orders/app/usecases"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecases"
 )
 
 // Handlers contiene todos los handlers del módulo orders
