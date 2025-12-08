@@ -50,15 +50,15 @@ func (s *S3Uploader) UploadImage(ctx context.Context, file *multipart.FileHeader
 	filename = strings.ToLower(filename)
 
 	// Subir a S3
+	// ServerSideEncryption removido: requiere KMS configurado, no compatible con MinIO local
 	_, err = s.client.PutObject(ctx, &s3.PutObjectInput{
-		Bucket:               aws.String(s.bucket),
-		Key:                  aws.String(filename),
-		Body:                 src,
-		ContentType:          aws.String(contentType),
-		ContentDisposition:   aws.String("inline"),
-		ServerSideEncryption: types.ServerSideEncryptionAes256,
-		StorageClass:         types.StorageClassStandard,             // Mejor para acceso frecuente
-		CacheControl:         aws.String("public, max-age=31536000"), // Cache por 1 año
+		Bucket:             aws.String(s.bucket),
+		Key:                aws.String(filename),
+		Body:               src,
+		ContentType:        aws.String(contentType),
+		ContentDisposition: aws.String("inline"),
+		StorageClass:       types.StorageClassStandard,             // Mejor para acceso frecuente
+		CacheControl:       aws.String("public, max-age=31536000"), // Cache por 1 año
 	})
 	if err != nil {
 		s.log.Error(ctx).Err(err).Msg("error subiendo imagen a S3")

@@ -257,42 +257,42 @@ func generateRandomString(n int) string {
 //
 // ───────────────────────────────────────────
 
-// OrderItem representa un producto/item dentro de una orden
+// OrderItem representa la relación entre una orden y un producto del catálogo
+// Esta tabla solo guarda información específica de la orden (cantidad, precios de la venta, descuentos)
+// Toda la información del producto (nombre, SKU, descripción, etc.) se obtiene de la tabla products
 type OrderItem struct {
 	gorm.Model
 
-	// Relación con la orden
-	OrderID string `gorm:"type:varchar(36);not null;index"` // UUID de la orden
+	// Relaciones
+	OrderID   string  `gorm:"type:varchar(36);not null;index"` // FK a orders.id
+	ProductID *string `gorm:"type:varchar(64);index"`          // FK a products.id (puede ser NULL si el producto se elimina)
+	Order     Order   `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Product   Product `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
-	// Identificadores del producto
-	ProductID    *string `gorm:"size:255;index"`    // ID del producto en el sistema
-	ProductSKU   string  `gorm:"size:128;index"`    // SKU del producto
-	ProductName  string  `gorm:"size:255;not null"` // Nombre del producto
-	ProductTitle string  `gorm:"size:255"`          // Título/variante del producto
-	VariantID    *string `gorm:"size:255"`          // ID de la variante (si aplica)
+	// ============================================
+	// INFORMACIÓN ESPECÍFICA DE LA ORDEN
+	// (No está en products, es específica de esta venta)
+	// ============================================
 
-	// Información de cantidad y precio
-	Quantity   int     `gorm:"not null;default:1"`          // Cantidad
-	UnitPrice  float64 `gorm:"type:decimal(12,2);not null"` // Precio unitario
+	// Cantidad y precios de la venta (pueden diferir del precio actual del producto)
+	Quantity   int     `gorm:"not null;default:1"`          // Cantidad comprada
+	UnitPrice  float64 `gorm:"type:decimal(12,2);not null"` // Precio unitario al momento de la venta
 	TotalPrice float64 `gorm:"type:decimal(12,2);not null"` // Precio total (quantity * unit_price)
-	Currency   string  `gorm:"size:10;default:'USD'"`       // Moneda
+	Currency   string  `gorm:"size:10;default:'USD'"`       // Moneda de la venta
 
-	// Descuentos y ajustes
-	Discount float64  `gorm:"type:decimal(12,2);default:0"` // Descuento aplicado
-	Tax      float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto
-	TaxRate  *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto (ej: 0.19 para 19%)
+	// Descuentos y ajustes aplicados en esta orden
+	Discount float64  `gorm:"type:decimal(12,2);default:0"` // Descuento aplicado en esta orden
+	Tax      float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto de esta orden
+	TaxRate  *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto aplicada (ej: 0.19 para 19%)
 
-	// Información adicional del producto
-	ImageURL          *string        `gorm:"size:512"`           // URL de imagen
-	ProductURL        *string        `gorm:"size:512"`           // URL del producto
-	Weight            *float64       `gorm:"type:decimal(10,2)"` // Peso del item
-	RequiresShipping  bool           `gorm:"default:true"`       // Si requiere envío
-	IsGiftCard        bool           `gorm:"default:false"`      // Si es tarjeta de regalo
-	FulfillmentStatus *string        `gorm:"size:64"`            // Estado de fulfillment del item
-	Metadata          datatypes.JSON `gorm:"type:jsonb"`         // Metadata adicional del canal
+	// ============================================
+	// INFORMACIÓN ESPECÍFICA DEL CONTEXTO
+	// (Específica de esta orden, no del producto)
+	// ============================================
 
-	// Relación
-	Order Order `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	VariantID         *string        `gorm:"size:255"`   // ID de la variante en el sistema externo (si aplica)
+	FulfillmentStatus *string        `gorm:"size:64"`    // Estado de fulfillment de este item en esta orden
+	Metadata          datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional del canal para este item específico
 }
 
 // TableName especifica el nombre de la tabla

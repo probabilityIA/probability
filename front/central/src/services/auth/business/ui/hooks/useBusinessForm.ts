@@ -15,6 +15,8 @@ export const useBusinessForm = (initialData?: Business, onSuccess?: () => void) 
         description: '',
         primary_color: '#000000',
         secondary_color: '#ffffff',
+        tertiary_color: '#cccccc',
+        quaternary_color: '#eeeeee',
         is_active: true,
         enable_delivery: false,
         enable_pickup: false,
@@ -32,10 +34,14 @@ export const useBusinessForm = (initialData?: Business, onSuccess?: () => void) 
                 description: initialData.description,
                 primary_color: initialData.primary_color,
                 secondary_color: initialData.secondary_color,
+                tertiary_color: initialData.tertiary_color,
+                quaternary_color: initialData.quaternary_color,
                 is_active: initialData.is_active,
                 enable_delivery: initialData.enable_delivery,
                 enable_pickup: initialData.enable_pickup,
                 enable_reservations: initialData.enable_reservations,
+                // No incluir logo_file ni navbar_image_file aquí, solo las URLs
+                // Los archivos se manejan cuando el usuario selecciona nuevos archivos
             });
         }
     }, [initialData]);

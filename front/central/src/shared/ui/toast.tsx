@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 export type ToastType = 'success' | 'info' | 'warning' | 'error';
 
@@ -11,9 +11,19 @@ export interface ToastProps {
 }
 
 export const Toast: React.FC<ToastProps> = ({ id, message, type, duration = 6000, onClose }) => {
+    const [isVisible, setIsVisible] = useState(false);
+
+    useEffect(() => {
+        // Animación de entrada
+        const timer = setTimeout(() => setIsVisible(true), 10);
+        return () => clearTimeout(timer);
+    }, []);
+
     useEffect(() => {
         const timer = setTimeout(() => {
-            onClose(id);
+            setIsVisible(false);
+            // Esperar a que termine la animación de salida antes de cerrar
+            setTimeout(() => onClose(id), 300);
         }, duration);
 
         return () => clearTimeout(timer);
@@ -58,7 +68,13 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, duration = 6000
     };
 
     return (
-        <div className={`flex items-start w-full max-w-md p-4 mb-4 rounded-lg shadow-lg border ${bgColors[type]} transition-all duration-300 ease-in-out transform translate-y-0 opacity-100`}>
+        <div 
+            className={`flex items-start w-full max-w-md p-4 mb-4 rounded-lg shadow-lg border ${bgColors[type]} transition-all duration-300 ease-out transform ${
+                isVisible 
+                    ? 'translate-y-0 opacity-100' 
+                    : '-translate-y-full opacity-0'
+            }`}
+        >
             <div className="flex-shrink-0 pt-0.5">
                 {icons[type]}
             </div>

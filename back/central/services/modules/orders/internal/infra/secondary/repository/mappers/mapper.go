@@ -194,9 +194,6 @@ func ToDBOrderItems(items []domain.OrderItem) []models.OrderItem {
 			},
 			OrderID:           item.OrderID,
 			ProductID:         item.ProductID,
-			ProductSKU:        item.ProductSKU,
-			ProductName:       item.ProductName,
-			ProductTitle:      item.ProductTitle,
 			VariantID:         item.VariantID,
 			Quantity:          item.Quantity,
 			UnitPrice:         item.UnitPrice,
@@ -205,11 +202,6 @@ func ToDBOrderItems(items []domain.OrderItem) []models.OrderItem {
 			Discount:          item.Discount,
 			Tax:               item.Tax,
 			TaxRate:           item.TaxRate,
-			ImageURL:          item.ImageURL,
-			ProductURL:        item.ProductURL,
-			Weight:            item.Weight,
-			RequiresShipping:  item.RequiresShipping,
-			IsGiftCard:        item.IsGiftCard,
 			FulfillmentStatus: item.FulfillmentStatus,
 			Metadata:          item.Metadata,
 		}
@@ -231,16 +223,14 @@ func ToDomainOrderItems(items []models.OrderItem) []domain.OrderItem {
 		if item.DeletedAt.Valid {
 			deletedAt = &item.DeletedAt.Time
 		}
-		result[i] = domain.OrderItem{
+		// Mapear campos básicos del modelo
+		domainItem := domain.OrderItem{
 			ID:                item.ID,
 			CreatedAt:         item.CreatedAt,
 			UpdatedAt:         item.UpdatedAt,
 			DeletedAt:         deletedAt,
 			OrderID:           item.OrderID,
 			ProductID:         item.ProductID,
-			ProductSKU:        item.ProductSKU,
-			ProductName:       item.ProductName,
-			ProductTitle:      item.ProductTitle,
 			VariantID:         item.VariantID,
 			Quantity:          item.Quantity,
 			UnitPrice:         item.UnitPrice,
@@ -249,14 +239,19 @@ func ToDomainOrderItems(items []models.OrderItem) []domain.OrderItem {
 			Discount:          item.Discount,
 			Tax:               item.Tax,
 			TaxRate:           item.TaxRate,
-			ImageURL:          item.ImageURL,
-			ProductURL:        item.ProductURL,
-			Weight:            item.Weight,
-			RequiresShipping:  item.RequiresShipping,
-			IsGiftCard:        item.IsGiftCard,
 			FulfillmentStatus: item.FulfillmentStatus,
 			Metadata:          item.Metadata,
 		}
+
+		// Si el Product está preloaded, obtener información del producto
+		// Verificar si Product fue preloaded (ID no es cero)
+		if item.Product.ID != "" && item.Product.SKU != "" {
+			domainItem.ProductSKU = item.Product.SKU
+			domainItem.ProductName = item.Product.Name
+			// ProductTitle no existe en el modelo Product, se deja vacío
+		}
+
+		result[i] = domainItem
 	}
 	return result
 }

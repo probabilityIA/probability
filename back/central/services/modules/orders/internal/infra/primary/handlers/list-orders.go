@@ -21,6 +21,8 @@ import (
 // @Param        status            query    string  false  "Filtrar por estado"
 // @Param        customer_email    query    string  false  "Filtrar por email del cliente"
 // @Param        customer_phone    query    string  false  "Filtrar por teléfono del cliente"
+// @Param        order_number      query    string  false  "Filtrar por número de orden"
+// @Param        internal_number   query    string  false  "Filtrar por número interno"
 // @Param        platform          query    string  false  "Filtrar por plataforma"
 // @Param        is_paid           query    bool    false  "Filtrar por estado de pago"
 // @Param        warehouse_id      query    int     false  "Filtrar por ID de almacén"
@@ -68,6 +70,14 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 
 	if customerPhone := c.Query("customer_phone"); customerPhone != "" {
 		filters["customer_phone"] = customerPhone
+	}
+
+	if orderNumber := c.Query("order_number"); orderNumber != "" {
+		filters["order_number"] = orderNumber
+	}
+
+	if internalNumber := c.Query("internal_number"); internalNumber != "" {
+		filters["internal_number"] = internalNumber
 	}
 
 	if platform := c.Query("platform"); platform != "" {

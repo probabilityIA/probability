@@ -130,6 +130,8 @@ export interface GetOrdersParams {
     status?: string;
     customer_email?: string;
     customer_phone?: string;
+    order_number?: string;
+    internal_number?: string;
     platform?: string;
     is_paid?: boolean;
     warehouse_id?: number;

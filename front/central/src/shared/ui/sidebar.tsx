@@ -10,7 +10,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { TokenStorage } from '@/shared/config';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
-// import { UserInfoModal } from '@modules/auth';
+import { UserProfileModal } from './user-profile-modal';
 // import { usePermissions } from '@modules/auth/ui/hooks';
 
 interface SidebarProps {
@@ -69,23 +69,33 @@ export function Sidebar({ user }: SidebarProps) {
           <div
             className="p-4 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors"
             onClick={() => setShowUserModal(true)}
+            title="Haz clic para cambiar tu foto de perfil"
           >
             <div className="flex items-center gap-3">
-              {/* Avatar */}
-              {user.avatarUrl ? (
-                <img
-                  src={user.avatarUrl}
-                  alt={user.name}
-                  className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-white/20"
-                />
-              ) : (
-                <div
-                  className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold flex-shrink-0"
-                  style={{ backgroundColor: 'var(--color-secondary)' }}
-                >
-                  {user.name.charAt(0).toUpperCase()}
+              {/* Avatar clickeable */}
+              <div className="relative group">
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className="w-12 h-12 rounded-full object-cover flex-shrink-0 border-2 border-white/20 transition-all group-hover:border-white/40 group-hover:ring-2 group-hover:ring-white/20"
+                  />
+                ) : (
+                  <div
+                    className="w-12 h-12 rounded-full flex items-center justify-center text-white text-lg font-bold flex-shrink-0 transition-all group-hover:ring-2 group-hover:ring-white/20"
+                    style={{ backgroundColor: 'var(--color-secondary)' }}
+                  >
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                )}
+                {/* Indicador de que es clickeable */}
+                <div className="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                  <svg className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                 </div>
-              )}
+              </div>
 
               {/* Nombre (solo visible cuando está expandido) */}
               {primaryExpanded && (
@@ -239,13 +249,16 @@ export function Sidebar({ user }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Modal con información del usuario */}
-      {/* <UserInfoModal
+      {/* Modal para cambiar foto de perfil */}
+      <UserProfileModal
         isOpen={showUserModal}
         onClose={() => setShowUserModal(false)}
-        onLogout={handleLogout}
         user={user}
-      /> */}
+        onUpdate={() => {
+          // Recargar la página para actualizar el avatar en el sidebar
+          window.location.reload();
+        }}
+      />
     </>
   );
 }

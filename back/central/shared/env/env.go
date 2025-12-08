@@ -157,14 +157,14 @@ type Config struct {
 	S3Endpoint     string `env:"S3_ENDPOINT"`
 
 	// SMTP/Email
-	SMTPHost        string `env:"SMTP_HOST"`
-	SMTPPort        string `env:"SMTP_PORT"`
-	SMTPUser        string `env:"SMTP_USER"`
-	SMTPPass        string `env:"SMTP_PASS"`
-	FromEmail       string `env:"FROM_EMAIL"`
-	SMTPUseSTARTTLS string `env:"SMTP_USE_STARTTLS"`
-	SMTPUseTLS      string `env:"SMTP_USE_TLS"`
-	// UrlBaseDomainS3 string `env:"URL_BASE_DOMAIN_S3,required"`
+	SMTPHost           string `env:"SMTP_HOST"`
+	SMTPPort           string `env:"SMTP_PORT"`
+	SMTPUser           string `env:"SMTP_USER"`
+	SMTPPass           string `env:"SMTP_PASS"`
+	FromEmail          string `env:"FROM_EMAIL"`
+	SMTPUseSTARTTLS    string `env:"SMTP_USE_STARTTLS"`
+	SMTPUseTLS         string `env:"SMTP_USE_TLS"`
+	UrlBaseDomainS3    string `env:"URL_BASE_DOMAIN_S3"`
 	WhatsAppURL        string `env:"WHATSAPP_URL,required"`
 	WhatsAppToken      string `env:"WHATSAPP_TOKEN,required"`
 	WhatsAppPhoneNumID string `env:"WHATSAPP_PHONE_NUMBER_ID,required"`

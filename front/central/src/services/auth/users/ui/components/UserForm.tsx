@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
-import { FileInput } from '@/shared/ui/file-input';
 import { Alert } from '@/shared/ui/alert';
 import { Spinner } from '@/shared/ui/spinner';
+import { AvatarUpload } from '@/shared/ui/avatar-upload';
 import { User } from '../../domain/types';
 import { useUserForm } from '../hooks/useUserForm';
 
@@ -68,11 +68,13 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('phone', e.target.value)}
             />
 
-            <FileInput
-                label="Avatar"
-                onChange={handleFileChange}
-                accept="image/*"
-            />
+            <div className="flex flex-col items-center gap-4 py-4">
+                <AvatarUpload
+                    currentAvatarUrl={initialData?.avatar_url || null}
+                    onFileSelect={handleFileChange}
+                    size="lg"
+                />
+            </div>
 
             <div className="flex items-center gap-2 mt-4">
                 <input

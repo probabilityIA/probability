@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Select } from '@/shared/ui/select';
@@ -24,6 +24,46 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
         submit,
         setError
     } = useBusinessForm(initialData, onSuccess);
+
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [navbarPreview, setNavbarPreview] = useState<string | null>(null);
+
+    // Limpiar previews cuando se desmonta el componente
+    useEffect(() => {
+        return () => {
+            if (logoPreview && logoPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(logoPreview);
+            }
+            if (navbarPreview && navbarPreview.startsWith('blob:')) {
+                URL.revokeObjectURL(navbarPreview);
+            }
+        };
+    }, [logoPreview, navbarPreview]);
+
+    // Actualizar previews cuando cambian los archivos o hay datos iniciales
+    useEffect(() => {
+        if (formData.logo_file) {
+            const url = URL.createObjectURL(formData.logo_file);
+            setLogoPreview(url);
+            return () => URL.revokeObjectURL(url);
+        } else if (initialData?.logo_url) {
+            setLogoPreview(initialData.logo_url);
+        } else {
+            setLogoPreview(null);
+        }
+    }, [formData.logo_file, initialData?.logo_url]);
+
+    useEffect(() => {
+        if (formData.navbar_image_file) {
+            const url = URL.createObjectURL(formData.navbar_image_file);
+            setNavbarPreview(url);
+            return () => URL.revokeObjectURL(url);
+        } else if (initialData?.navbar_image_url) {
+            setNavbarPreview(initialData.navbar_image_url);
+        } else {
+            setNavbarPreview(null);
+        }
+    }, [formData.navbar_image_file, initialData?.navbar_image_url]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -86,20 +126,71 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                         <span className="text-sm text-gray-500">{formData.secondary_color || '#ffffff'}</span>
                     </div>
                 </div>
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Color Terciario</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="color"
+                            value={formData.tertiary_color || '#cccccc'}
+                            onChange={(e) => handleChange('tertiary_color', e.target.value)}
+                            className="h-10 w-20 p-1 rounded border cursor-pointer"
+                        />
+                        <span className="text-sm text-gray-500">{formData.tertiary_color || '#cccccc'}</span>
+                    </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                    <label className="text-sm font-medium text-gray-700">Color Cuaternario</label>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="color"
+                            value={formData.quaternary_color || '#eeeeee'}
+                            onChange={(e) => handleChange('quaternary_color', e.target.value)}
+                            className="h-10 w-20 p-1 rounded border cursor-pointer"
+                        />
+                        <span className="text-sm text-gray-500">{formData.quaternary_color || '#eeeeee'}</span>
+                    </div>
+                </div>
             </div>
 
-            {/* 
-            <div className="grid grid-cols-2 gap-4 hidden">
-                <FileInput
-                    label="Logo"
-                    onChange={(file: File | null) => handleChange('logo_file', file)}
-                />
-                <FileInput
-                    label="Imagen de Navbar"
-                    onChange={(file: File | null) => handleChange('navbar_image_file', file)}
-                />
+            {/* Campos de imagen */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <FileInput
+                        label="Logo del Negocio"
+                        accept="image/*"
+                        buttonText="Seleccionar Logo"
+                        onChange={(file: File | null) => handleChange('logo_file', file)}
+                        helperText="Formatos: JPG, PNG, GIF, WEBP (máx. 10MB)"
+                    />
+                    {logoPreview && (
+                        <div className="mt-2">
+                            <img
+                                src={logoPreview}
+                                alt="Logo preview"
+                                className="w-full h-32 object-contain border rounded-lg bg-gray-50"
+                            />
+                        </div>
+                    )}
+                </div>
+                <div className="space-y-2">
+                    <FileInput
+                        label="Imagen de Navbar"
+                        accept="image/*"
+                        buttonText="Seleccionar Imagen"
+                        onChange={(file: File | null) => handleChange('navbar_image_file', file)}
+                        helperText="Formatos: JPG, PNG, GIF, WEBP (máx. 10MB)"
+                    />
+                    {navbarPreview && (
+                        <div className="mt-2">
+                            <img
+                                src={navbarPreview}
+                                alt="Navbar preview"
+                                className="w-full h-32 object-contain border rounded-lg bg-gray-50"
+                            />
+                        </div>
+                    )}
+                </div>
             </div>
-            */}
 
             <div className="flex justify-end gap-2 mt-6">
                 <Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button>

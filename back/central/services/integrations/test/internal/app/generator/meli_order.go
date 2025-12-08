@@ -224,49 +224,78 @@ func (g *OrderGenerator) MapMeliJSONToCanonical(meliJSON map[string]interface{},
 	buyerData, _ := meliJSON["buyer"].(map[string]interface{})
 
 	// Mapear order items
-	orderItemsData, _ := meliJSON["order_items"].([]interface{})
-	orderItems := make([]domain.CanonicalOrderItemDTO, 0, len(orderItemsData))
+	var orderItemsData []interface{}
+	if items, ok := meliJSON["order_items"].([]interface{}); ok {
+		orderItemsData = items
+	}
 
-	for _, itemData := range orderItemsData {
-		item, _ := itemData.(map[string]interface{})
-		itemInfo, _ := item["item"].(map[string]interface{})
+	orderItems := make([]domain.CanonicalOrderItemDTO, 0)
+	if len(orderItemsData) == 0 {
+		// Si no hay order_items en el JSON, crear items desde FakeProducts
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		numItems := r.Intn(3) + 1
+		for i := 0; i < numItems; i++ {
+			product := domain.FakeProducts[r.Intn(len(domain.FakeProducts))]
+			quantity := r.Intn(2) + 1
+			price := product.Price
+			totalPrice := price * float64(quantity)
+			tax := totalPrice * 0.19
+			taxRate := 0.19
 
-		unitPrice := 0.0
-		if up, ok := item["unit_price"].(float64); ok {
-			unitPrice = up
+			orderItems = append(orderItems, domain.CanonicalOrderItemDTO{
+				ProductSKU:   product.SKU,
+				ProductName:  product.Name,
+				ProductTitle: product.Title,
+				Quantity:     quantity,
+				UnitPrice:    price,
+				TotalPrice:   totalPrice,
+				Currency:     "COP",
+				Tax:          tax,
+				TaxRate:      &taxRate,
+			})
 		}
+	} else {
+		for _, itemData := range orderItemsData {
+			item, _ := itemData.(map[string]interface{})
+			itemInfo, _ := item["item"].(map[string]interface{})
 
-		quantity := 0
-		if q, ok := item["quantity"].(float64); ok {
-			quantity = int(q)
-		} else if q, ok := item["quantity"].(int); ok {
-			quantity = q
+			unitPrice := 0.0
+			if up, ok := item["unit_price"].(float64); ok {
+				unitPrice = up
+			}
+
+			quantity := 0
+			if q, ok := item["quantity"].(float64); ok {
+				quantity = int(q)
+			} else if q, ok := item["quantity"].(int); ok {
+				quantity = q
+			}
+
+			totalPrice := unitPrice * float64(quantity)
+			tax := totalPrice * 0.19
+
+			var sku string
+			if s, ok := itemInfo["seller_sku"].(string); ok {
+				sku = s
+			}
+
+			var productName string
+			if n, ok := itemInfo["title"].(string); ok {
+				productName = n
+			}
+
+			orderItems = append(orderItems, domain.CanonicalOrderItemDTO{
+				ProductSKU:   sku,
+				ProductName:  productName,
+				ProductTitle: productName,
+				Quantity:     quantity,
+				UnitPrice:    unitPrice,
+				TotalPrice:   totalPrice,
+				Currency:     "COP",
+				Tax:          tax,
+				TaxRate:      floatPtr(0.19),
+			})
 		}
-
-		totalPrice := unitPrice * float64(quantity)
-		tax := totalPrice * 0.19
-
-		var sku string
-		if s, ok := itemInfo["seller_sku"].(string); ok {
-			sku = s
-		}
-
-		var productName string
-		if n, ok := itemInfo["title"].(string); ok {
-			productName = n
-		}
-
-		orderItems = append(orderItems, domain.CanonicalOrderItemDTO{
-			ProductSKU:   sku,
-			ProductName:  productName,
-			ProductTitle: productName,
-			Quantity:     quantity,
-			UnitPrice:    unitPrice,
-			TotalPrice:   totalPrice,
-			Currency:     "COP",
-			Tax:          tax,
-			TaxRate:      floatPtr(0.19),
-		})
 	}
 
 	// Calcular totales

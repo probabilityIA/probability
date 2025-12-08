@@ -7,7 +7,9 @@ import {
     SingleResponse,
     CreateProductDTO,
     UpdateProductDTO,
-    ActionResponse
+    ActionResponse,
+    AddProductIntegrationDTO,
+    ProductIntegrationsResponse
 } from '../../domain/types';
 
 export class ProductApiRepository implements IProductRepository {
@@ -91,5 +93,32 @@ export class ProductApiRepository implements IProductRepository {
         return this.fetch<ActionResponse>(`/products/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    // ═══════════════════════════════════════════
+    // Product-Integration Management
+    // ═══════════════════════════════════════════
+
+    async addProductIntegration(
+        productId: string,
+        data: AddProductIntegrationDTO
+    ): Promise<SingleResponse<any>> {
+        return this.fetch<SingleResponse<any>>(`/products/${productId}/integrations`, {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async removeProductIntegration(
+        productId: string,
+        integrationId: number
+    ): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/products/${productId}/integrations/${integrationId}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async getProductIntegrations(productId: string): Promise<ProductIntegrationsResponse> {
+        return this.fetch<ProductIntegrationsResponse>(`/products/${productId}/integrations`);
     }
 }

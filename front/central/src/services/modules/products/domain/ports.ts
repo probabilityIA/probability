@@ -5,7 +5,9 @@ import {
     SingleResponse,
     CreateProductDTO,
     UpdateProductDTO,
-    ActionResponse
+    ActionResponse,
+    AddProductIntegrationDTO,
+    ProductIntegrationsResponse
 } from './types';
 
 export interface IProductRepository {
@@ -14,4 +16,9 @@ export interface IProductRepository {
     createProduct(data: CreateProductDTO): Promise<SingleResponse<Product>>;
     updateProduct(id: string, data: UpdateProductDTO): Promise<SingleResponse<Product>>;
     deleteProduct(id: string): Promise<ActionResponse>;
+
+    // Product-Integration Management
+    addProductIntegration(productId: string, data: AddProductIntegrationDTO): Promise<SingleResponse<any>>;
+    removeProductIntegration(productId: string, integrationId: number): Promise<ActionResponse>;
+    getProductIntegrations(productId: string): Promise<ProductIntegrationsResponse>;
 }

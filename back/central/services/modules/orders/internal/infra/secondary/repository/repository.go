@@ -42,6 +42,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Order
 		Preload("Business").
 		Preload("Integration").
 		Preload("PaymentMethod").
+		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("id = ?", id).
 		First(&order).Error
 
@@ -62,6 +63,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		Preload("Business").
 		Preload("Integration").
 		Preload("PaymentMethod").
+		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("internal_number = ?", internalNumber).
 		First(&order).Error
 
@@ -83,8 +85,24 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	query := r.db.Conn(ctx).Model(&models.Order{})
 
 	// Aplicar filtros
+	if customerEmail, ok := filters["customer_email"].(string); ok && customerEmail != "" {
+		query = query.Where("customer_email ILIKE ?", "%"+customerEmail+"%")
+	}
+
 	if customerPhone, ok := filters["customer_phone"].(string); ok && customerPhone != "" {
 		query = query.Where("customer_phone ILIKE ?", "%"+customerPhone+"%")
+	}
+
+	if orderNumber, ok := filters["order_number"].(string); ok && orderNumber != "" {
+		query = query.Where("order_number ILIKE ?", "%"+orderNumber+"%")
+	}
+
+	if internalNumber, ok := filters["internal_number"].(string); ok && internalNumber != "" {
+		query = query.Where("internal_number ILIKE ?", "%"+internalNumber+"%")
+	}
+
+	if status, ok := filters["status"].(string); ok && status != "" {
+		query = query.Where("status = ?", status)
 	}
 
 	if platform, ok := filters["platform"].(string); ok && platform != "" {
@@ -136,7 +154,8 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	// Precargar relaciones
 	query = query.Preload("Business").
 		Preload("Integration").
-		Preload("PaymentMethod")
+		Preload("PaymentMethod").
+		Preload("OrderItems.Product") // Precargar OrderItems con Product para obtener información del catálogo
 
 	// Paginación
 	offset = (page - 1) * pageSize
@@ -200,52 +219,22 @@ func (r *Repository) CreateOrderItems(ctx context.Context, items []*domain.Order
 		return nil
 	}
 
-	// Convertir []*domain.OrderItem a []domain.OrderItem para el mapper
-	// (El mapper espera slice de valores, no punteros, o debería ajustarlo)
-	// Ajustaré la lógica aquí para ser eficiente
-
-	dbItems := make([]*models.OrderItem, len(items))
+	// Convertir []*domain.OrderItem a []domain.OrderItem para usar el mapper
+	domainItems := make([]domain.OrderItem, len(items))
 	for i, item := range items {
-		// Reutilizar lógica del mapper pero para un solo item si es necesario,
-		// o crear un helper. Pero el mapper tiene ToDBOrderItems([]domain.OrderItem).
-		// Aquí recibimos []*domain.OrderItem.
-
-		// Manual conversion for single item to avoid dereferencing loop
-		dbItem := &models.OrderItem{
-			Model: gorm.Model{
-				ID:        item.ID,
-				CreatedAt: item.CreatedAt,
-				UpdatedAt: item.UpdatedAt,
-				DeletedAt: gorm.DeletedAt{},
-			},
-			OrderID:           item.OrderID,
-			ProductID:         item.ProductID,
-			ProductSKU:        item.ProductSKU,
-			ProductName:       item.ProductName,
-			ProductTitle:      item.ProductTitle,
-			VariantID:         item.VariantID,
-			Quantity:          item.Quantity,
-			UnitPrice:         item.UnitPrice,
-			TotalPrice:        item.TotalPrice,
-			Currency:          item.Currency,
-			Discount:          item.Discount,
-			Tax:               item.Tax,
-			TaxRate:           item.TaxRate,
-			ImageURL:          item.ImageURL,
-			ProductURL:        item.ProductURL,
-			Weight:            item.Weight,
-			RequiresShipping:  item.RequiresShipping,
-			IsGiftCard:        item.IsGiftCard,
-			FulfillmentStatus: item.FulfillmentStatus,
-			Metadata:          item.Metadata,
-		}
-		if item.DeletedAt != nil {
-			dbItem.DeletedAt = gorm.DeletedAt{Time: *item.DeletedAt, Valid: true}
-		}
-		dbItems[i] = dbItem
+		domainItems[i] = *item
 	}
 
-	return r.db.Conn(ctx).CreateInBatches(dbItems, 100).Error
+	// Usar el mapper para convertir a modelos de BD
+	dbItems := mappers.ToDBOrderItems(domainItems)
+
+	// Convertir a slice de punteros para CreateInBatches
+	dbItemsPtrs := make([]*models.OrderItem, len(dbItems))
+	for i := range dbItems {
+		dbItemsPtrs[i] = &dbItems[i]
+	}
+
+	return r.db.Conn(ctx).CreateInBatches(dbItemsPtrs, 100).Error
 }
 
 // CreateAddresses crea múltiples direcciones

@@ -36,7 +36,7 @@ func (r *Repository) CreateProduct(ctx context.Context, product *domain.Product)
 }
 
 // GetProductByID obtiene un producto por su ID
-func (r *Repository) GetProductByID(ctx context.Context, id uint) (*domain.Product, error) {
+func (r *Repository) GetProductByID(ctx context.Context, id string) (*domain.Product, error) {
 	var product models.Product
 	err := r.db.Conn(ctx).
 		Preload("Business").
@@ -217,7 +217,7 @@ func (r *Repository) UpdateProduct(ctx context.Context, product *domain.Product)
 }
 
 // DeleteProduct elimina (soft delete) un producto
-func (r *Repository) DeleteProduct(ctx context.Context, id uint) error {
+func (r *Repository) DeleteProduct(ctx context.Context, id string) error {
 	return r.db.Conn(ctx).Where("id = ?", id).Delete(&models.Product{}).Error
 }
 
@@ -227,6 +227,135 @@ func (r *Repository) ProductExists(ctx context.Context, businessID uint, sku str
 	err := r.db.Conn(ctx).
 		Model(&models.Product{}).
 		Where("business_id = ? AND sku = ?", businessID, sku).
+		Count(&count).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
+// ───────────────────────────────────────────
+//
+//	PRODUCT-INTEGRATION MANAGEMENT
+//
+// ───────────────────────────────────────────
+
+// AddProductIntegration asocia un producto con una integración
+func (r *Repository) AddProductIntegration(ctx context.Context, productID string, integrationID uint, externalProductID string) (*domain.ProductBusinessIntegration, error) {
+	// Verificar que el producto existe y obtener su BusinessID
+	var product models.Product
+	if err := r.db.Conn(ctx).Where("id = ?", productID).First(&product).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrProductNotFound
+		}
+		return nil, err
+	}
+
+	// Verificar que la integración existe
+	var integration models.Integration
+	if err := r.db.Conn(ctx).Where("id = ?", integrationID).First(&integration).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("integration not found")
+		}
+		return nil, err
+	}
+
+	// Validar que la integración pertenece al mismo negocio que el producto
+	if integration.BusinessID == nil || *integration.BusinessID != product.BusinessID {
+		return nil, fmt.Errorf("integration does not belong to the same business as the product")
+	}
+
+	// Verificar si ya existe la asociación
+	var existingCount int64
+	err := r.db.Conn(ctx).
+		Model(&models.ProductBusinessIntegration{}).
+		Where("product_id = ? AND integration_id = ?", productID, integrationID).
+		Count(&existingCount).Error
+	if err != nil {
+		return nil, err
+	}
+	if existingCount > 0 {
+		return nil, fmt.Errorf("product is already associated with this integration")
+	}
+
+	// Crear la asociación
+	dbPI := &models.ProductBusinessIntegration{
+		ProductID:         productID,
+		BusinessID:        product.BusinessID,
+		IntegrationID:     integrationID,
+		ExternalProductID: externalProductID,
+	}
+
+	if err := r.db.Conn(ctx).Create(dbPI).Error; err != nil {
+		return nil, err
+	}
+
+	return mappers.ToDomainProductIntegration(dbPI), nil
+}
+
+// RemoveProductIntegration remueve la asociación entre un producto y una integración
+func (r *Repository) RemoveProductIntegration(ctx context.Context, productID string, integrationID uint) error {
+	result := r.db.Conn(ctx).
+		Where("product_id = ? AND integration_id = ?", productID, integrationID).
+		Delete(&models.ProductBusinessIntegration{})
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("product integration association not found")
+	}
+
+	return nil
+}
+
+// GetProductIntegrations obtiene todas las integraciones asociadas a un producto
+func (r *Repository) GetProductIntegrations(ctx context.Context, productID string) ([]domain.ProductBusinessIntegration, error) {
+	var integrations []models.ProductBusinessIntegration
+	err := r.db.Conn(ctx).
+		Preload("Integration").
+		Preload("Integration.IntegrationType").
+		Where("product_id = ?", productID).
+		Find(&integrations).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return mappers.ToDomainProductIntegrations(integrations), nil
+}
+
+// GetProductsByIntegration obtiene todos los productos asociados a una integración
+func (r *Repository) GetProductsByIntegration(ctx context.Context, integrationID uint) ([]domain.Product, error) {
+	var products []models.Product
+	err := r.db.Conn(ctx).
+		Joins("INNER JOIN product_business_integrations ON products.id = product_business_integrations.product_id").
+		Where("product_business_integrations.integration_id = ?", integrationID).
+		Preload("Business").
+		Find(&products).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Convertir a dominio
+	domainProducts := make([]domain.Product, len(products))
+	for i, product := range products {
+		domainProducts[i] = *mappers.ToDomainProduct(&product)
+	}
+
+	return domainProducts, nil
+}
+
+// ProductIntegrationExists verifica si existe una asociación producto-integración
+func (r *Repository) ProductIntegrationExists(ctx context.Context, productID string, integrationID uint) (bool, error) {
+	var count int64
+	err := r.db.Conn(ctx).
+		Model(&models.ProductBusinessIntegration{}).
+		Where("product_id = ? AND integration_id = ?", productID, integrationID).
 		Count(&count).Error
 
 	if err != nil {

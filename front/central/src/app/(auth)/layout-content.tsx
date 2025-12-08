@@ -81,3 +81,4 @@ function LayoutContent({ user, children }: LayoutContentProps) {
 }
 
 export default LayoutContent;
+

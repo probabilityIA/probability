@@ -51,7 +51,7 @@ export default function OrdersPage() {
             </div>
 
             <OrderList
-                key={refreshKey}
+                refreshKey={refreshKey}
                 onView={handleView}
                 onEdit={handleEdit}
             />

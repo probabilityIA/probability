@@ -17,6 +17,7 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
 
     // Separate state for file input as it's not part of initialData usually
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [removeAvatar, setRemoveAvatar] = useState(false);
 
     useEffect(() => {
         if (initialData) {
@@ -36,6 +37,13 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
 
     const handleFileChange = (file: File | null) => {
         setAvatarFile(file);
+        // Si se elimina el archivo y hay datos iniciales con avatar, marcar para eliminar avatar
+        if (!file && initialData?.avatar_url) {
+            setRemoveAvatar(true);
+        } else {
+            // Si se selecciona un nuevo archivo, no eliminar el avatar existente
+            setRemoveAvatar(false);
+        }
     };
 
     const submit = async () => {
@@ -44,9 +52,19 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
         setSuccessMessage(null);
 
         try {
-            const dataToSubmit = { ...formData };
+            let dataToSubmit: CreateUserDTO | UpdateUserDTO = { ...formData };
+            
             if (avatarFile) {
                 dataToSubmit.avatarFile = avatarFile;
+            }
+            
+            // Si estamos actualizando y se eliminó el avatar, agregar flag
+            if (initialData) {
+                const updateData = dataToSubmit as UpdateUserDTO;
+                if (removeAvatar) {
+                    updateData.remove_avatar = true;
+                }
+                dataToSubmit = updateData;
             }
 
             let response;

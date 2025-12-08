@@ -57,33 +57,13 @@ func (uc *UserUseCase) GetUsers(ctx context.Context, filters domain.UserFilters)
 	// Convertir UserQueryDTO a UserDTO y obtener relaciones
 	userDTOs := make([]domain.UserDTO, len(users))
 	for i, user := range users {
-		// Procesar URL del avatar
+		// Completar URL del avatar si es path relativo
 		avatarURL := user.AvatarURL
-		if avatarURL != "" {
-			// Verificar si es un path relativo (no empieza con http)
-			if !strings.HasPrefix(avatarURL, "http") {
-				// Verificar si la imagen existe en S3
-				exists, err := uc.s3.ImageExists(ctx, avatarURL)
-				if err != nil {
-					uc.log.Error().Err(err).Str("avatar_path", avatarURL).Msg("Error al verificar existencia de imagen en S3")
-					// No fallar si hay error al verificar, continuar con URL por defecto
-				} else if exists {
-					// Generar URL completa usando el dominio de media
-					mediaBaseURL := uc.getMediaBaseURL()
-					if mediaBaseURL != "" {
-						// Construir URL completa: MEDIA_BASE_URL + / + avatar_path
-						avatarURL = fmt.Sprintf("%s/%s", mediaBaseURL, strings.TrimLeft(avatarURL, "/"))
-						uc.log.Debug().Str("avatar_path", user.AvatarURL).Str("full_url", avatarURL).Msg("URL de avatar generada (media)")
-					} else {
-						uc.log.Warn().Str("avatar_path", avatarURL).Msg("URL_BASE_DOMAIN_S3 no configurada, usando path relativo")
-					}
-				} else {
-					uc.log.Warn().Str("avatar_path", avatarURL).Msg("Imagen de avatar no encontrada en S3")
-					// Si la imagen no existe, limpiar la URL
-					avatarURL = ""
-				}
+		if avatarURL != "" && !strings.HasPrefix(avatarURL, "http") {
+			base := strings.TrimRight(uc.env.Get("URL_BASE_DOMAIN_S3"), "/")
+			if base != "" {
+				avatarURL = fmt.Sprintf("%s/%s", base, strings.TrimLeft(avatarURL, "/"))
 			}
-			// Si ya es una URL completa (empieza con http), mantenerla tal como está
 		}
 
 		// Convertir datos básicos
@@ -136,7 +116,7 @@ func (uc *UserUseCase) GetUsers(ctx context.Context, filters domain.UserFilters)
 				for _, business := range businesses {
 					navbarURL := business.NavbarImageURL
 					if navbarURL != "" && !strings.HasPrefix(navbarURL, "http") {
-						base := strings.TrimRight(uc.getMediaBaseURL(), "/")
+						base := strings.TrimRight(uc.env.Get("URL_BASE_DOMAIN_S3"), "/")
 						if base != "" {
 							navbarURL = fmt.Sprintf("%s/%s", base, strings.TrimLeft(navbarURL, "/"))
 						}

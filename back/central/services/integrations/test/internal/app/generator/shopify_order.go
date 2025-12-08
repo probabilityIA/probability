@@ -471,7 +471,19 @@ func (g *OrderGenerator) MapShopifyJSONToCanonical(shopifyJSON map[string]interf
 
 	for _, itemData := range lineItemsData {
 		item, _ := itemData.(map[string]interface{})
-		price := getFloat("price")
+
+		// Helper para obtener valores del item
+		getItemString := func(key string) string {
+			if v, ok := item[key].(string); ok {
+				return v
+			}
+			return ""
+		}
+
+		// Extract price from item
+		priceStr := getItemString("price")
+		price, _ := strconv.ParseFloat(priceStr, 64)
+
 		quantity := 0
 		if q, ok := item["quantity"].(float64); ok {
 			quantity = int(q)

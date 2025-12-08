@@ -134,3 +134,30 @@ export interface UpdateProductDTO {
     is_active?: boolean;
     metadata?: any;
 }
+
+// ═══════════════════════════════════════════
+// Product-Integration Management Types
+// ═══════════════════════════════════════════
+
+export interface ProductIntegration {
+    id: number;
+    product_id: string;
+    integration_id: number;
+    integration_type?: string;
+    integration_name?: string;
+    external_product_id: string;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface AddProductIntegrationDTO {
+    integration_id: number;
+    external_product_id: string;
+}
+
+export interface ProductIntegrationsResponse {
+    success: boolean;
+    message: string;
+    data: ProductIntegration[];
+    total: number;
+}

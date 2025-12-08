@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { getProductsAction, deleteProductAction } from '../../infra/actions';
 import { Product, GetProductsParams } from '../../domain/types';
 import { Button, Alert, Badge } from '@/shared/ui';
+import ProductIntegrationsModal from './ProductIntegrationsModal';
 
 interface ProductListProps {
     onView?: (product: Product) => void;
@@ -17,6 +18,10 @@ export default function ProductList({ onView, onEdit }: ProductListProps) {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+
+    // Modal de integraciones
+    const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+    const [isIntegrationsModalOpen, setIsIntegrationsModalOpen] = useState(false);
 
     // Filters
     const [filters, setFilters] = useState<GetProductsParams>({
@@ -221,6 +226,15 @@ export default function ProductList({ onView, onEdit }: ProductListProps) {
                                                     </button>
                                                 )}
                                                 <button
+                                                    onClick={() => {
+                                                        setSelectedProduct(product);
+                                                        setIsIntegrationsModalOpen(true);
+                                                    }}
+                                                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-purple-500 hover:bg-purple-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                                    >
+                                                        Integraciones
+                                                    </button>
+                                                <button
                                                     onClick={() => handleDelete(product.id)}
                                                     className="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                                                 >
@@ -335,6 +349,22 @@ export default function ProductList({ onView, onEdit }: ProductListProps) {
                     </div>
                 )}
             </div>
+
+            {/* Modal de Integraciones */}
+            {selectedProduct && (
+                <ProductIntegrationsModal
+                    product={selectedProduct}
+                    isOpen={isIntegrationsModalOpen}
+                    onClose={() => {
+                        setIsIntegrationsModalOpen(false);
+                        setSelectedProduct(null);
+                    }}
+                    onSuccess={() => {
+                        // Recargar productos si es necesario
+                        fetchProducts();
+                    }}
+                />
+            )}
         </div>
     );
 }

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/domain"
@@ -14,7 +13,7 @@ import (
 // @Tags         Products
 // @Accept       json
 // @Produce      json
-// @Param        id   path      int  true  "ID del producto"
+// @Param        id   path      string  true  "ID del producto (hash alfanumérico)"
 // @Security     BearerAuth
 // @Success      200  {object}  domain.ProductResponse
 // @Failure      400  {object}  map[string]interface{}
@@ -22,19 +21,18 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /products/{id} [get]
 func (h *Handlers) GetProductByID(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
-	if err != nil {
+	id := c.Param("id")
+	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"message": "ID de producto inválido",
-			"error":   "El ID debe ser un número válido",
+			"error":   "El ID es requerido",
 		})
 		return
 	}
 
 	// Llamar al caso de uso
-	product, err := h.uc.GetProductByID(c.Request.Context(), uint(id))
+	product, err := h.uc.GetProductByID(c.Request.Context(), id)
 	if err != nil {
 		if err == domain.ErrProductNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -59,4 +57,3 @@ func (h *Handlers) GetProductByID(c *gin.Context) {
 		"data":    product,
 	})
 }
-

@@ -14,6 +14,10 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		products.POST("", h.CreateProduct)
 		products.PUT("/:id", h.UpdateProduct)
 		products.DELETE("/:id", h.DeleteProduct)
+
+		// Gestión de integraciones
+		products.POST("/:id/integrations", h.AddProductIntegration)
+		products.GET("/:id/integrations", h.GetProductIntegrations)
+		products.DELETE("/:id/integrations/:integration_id", h.RemoveProductIntegration)
 	}
 }
-

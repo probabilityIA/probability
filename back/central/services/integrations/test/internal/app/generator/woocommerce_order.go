@@ -15,7 +15,7 @@ import (
 func (g *OrderGenerator) GenerateWooCommerceOrderJSON(r *rand.Rand) (map[string]interface{}, error) {
 	// Seleccionar cliente aleatorio
 	customer := domain.FakeCustomers[r.Intn(len(domain.FakeCustomers))]
-	
+
 	// Seleccionar dirección aleatoria
 	address := domain.FakeAddresses[r.Intn(len(domain.FakeAddresses))]
 
@@ -53,8 +53,8 @@ func (g *OrderGenerator) GenerateWooCommerceOrderJSON(r *rand.Rand) (map[string]
 				},
 			},
 			"meta_data": []interface{}{},
-			"sku":        product.SKU,
-			"price":      price,
+			"sku":       product.SKU,
+			"price":     price,
 		}
 	}
 
@@ -155,17 +155,17 @@ func (g *OrderGenerator) GenerateWooCommerceOrderJSON(r *rand.Rand) (map[string]
 		"tax_lines":  []interface{}{},
 		"shipping_lines": []map[string]interface{}{
 			{
-				"id":          317,
+				"id":           317,
 				"method_title": "Envío Rápido",
 				"method_id":    "flat_rate",
 				"instance_id":  "2",
-				"total":       fmt.Sprintf("%.2f", shippingTotal),
-				"total_tax":   "0.00",
-				"taxes":       []interface{}{},
-				"meta_data":   []interface{}{},
+				"total":        fmt.Sprintf("%.2f", shippingTotal),
+				"total_tax":    "0.00",
+				"taxes":        []interface{}{},
+				"meta_data":    []interface{}{},
 			},
 		},
-		"fee_lines":   []interface{}{},
+		"fee_lines":    []interface{}{},
 		"coupon_lines": []interface{}{},
 		"refunds":      []interface{}{},
 	}
@@ -215,59 +215,88 @@ func (g *OrderGenerator) MapWooCommerceJSONToCanonical(wooJSON map[string]interf
 	shippingData, _ := wooJSON["shipping"].(map[string]interface{})
 
 	// Mapear line items
-	lineItemsData, _ := wooJSON["line_items"].([]interface{})
-	orderItems := make([]domain.CanonicalOrderItemDTO, 0, len(lineItemsData))
-	
-	for _, itemData := range lineItemsData {
-		item, _ := itemData.(map[string]interface{})
-		
-		price := 0.0
-		if p, ok := item["price"].(float64); ok {
-			price = p
-		}
-		
-		quantity := 0
-		if q, ok := item["quantity"].(float64); ok {
-			quantity = int(q)
-		} else if q, ok := item["quantity"].(int); ok {
-			quantity = q
-		}
-		
-		totalPrice := 0.0
-		if tp, ok := item["total"].(string); ok {
-			if f, err := strconv.ParseFloat(tp, 64); err == nil {
-				totalPrice = f
-			}
-		}
-		
-		tax := 0.0
-		if tt, ok := item["total_tax"].(string); ok {
-			if f, err := strconv.ParseFloat(tt, 64); err == nil {
-				tax = f
-			}
-		}
-		
-		var sku string
-		if s, ok := item["sku"].(string); ok {
-			sku = s
-		}
-		
-		var productName string
-		if n, ok := item["name"].(string); ok {
-			productName = n
-		}
+	var lineItemsData []interface{}
+	if items, ok := wooJSON["line_items"].([]interface{}); ok {
+		lineItemsData = items
+	}
 
-		orderItems = append(orderItems, domain.CanonicalOrderItemDTO{
-			ProductSKU:   sku,
-			ProductName:  productName,
-			ProductTitle: productName,
-			Quantity:     quantity,
-			UnitPrice:    price,
-			TotalPrice:   totalPrice,
-			Currency:     "COP",
-			Tax:          tax,
-			TaxRate:      floatPtr(0.19),
-		})
+	orderItems := make([]domain.CanonicalOrderItemDTO, 0)
+	if len(lineItemsData) == 0 {
+		// Si no hay line_items en el JSON, crear items desde FakeProducts
+		r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		numItems := r.Intn(3) + 1
+		for i := 0; i < numItems; i++ {
+			product := domain.FakeProducts[r.Intn(len(domain.FakeProducts))]
+			quantity := r.Intn(2) + 1
+			price := product.Price
+			totalPrice := price * float64(quantity)
+			tax := totalPrice * 0.19
+			taxRate := 0.19
+
+			orderItems = append(orderItems, domain.CanonicalOrderItemDTO{
+				ProductSKU:   product.SKU,
+				ProductName:  product.Name,
+				ProductTitle: product.Title,
+				Quantity:     quantity,
+				UnitPrice:    price,
+				TotalPrice:   totalPrice,
+				Currency:     "COP",
+				Tax:          tax,
+				TaxRate:      &taxRate,
+			})
+		}
+	} else {
+		for _, itemData := range lineItemsData {
+			item, _ := itemData.(map[string]interface{})
+
+			price := 0.0
+			if p, ok := item["price"].(float64); ok {
+				price = p
+			}
+
+			quantity := 0
+			if q, ok := item["quantity"].(float64); ok {
+				quantity = int(q)
+			} else if q, ok := item["quantity"].(int); ok {
+				quantity = q
+			}
+
+			totalPrice := 0.0
+			if tp, ok := item["total"].(string); ok {
+				if f, err := strconv.ParseFloat(tp, 64); err == nil {
+					totalPrice = f
+				}
+			}
+
+			tax := 0.0
+			if tt, ok := item["total_tax"].(string); ok {
+				if f, err := strconv.ParseFloat(tt, 64); err == nil {
+					tax = f
+				}
+			}
+
+			var sku string
+			if s, ok := item["sku"].(string); ok {
+				sku = s
+			}
+
+			var productName string
+			if n, ok := item["name"].(string); ok {
+				productName = n
+			}
+
+			orderItems = append(orderItems, domain.CanonicalOrderItemDTO{
+				ProductSKU:   sku,
+				ProductName:  productName,
+				ProductTitle: productName,
+				Quantity:     quantity,
+				UnitPrice:    price,
+				TotalPrice:   totalPrice,
+				Currency:     "COP",
+				Tax:          tax,
+				TaxRate:      floatPtr(0.19),
+			})
+		}
 	}
 
 	// Calcular totales
@@ -330,7 +359,7 @@ func (g *OrderGenerator) MapWooCommerceJSONToCanonical(wooJSON map[string]interf
 	paymentMethod := getString("payment_method")
 	datePaidStr := getString("date_paid")
 	status := getString("status")
-	
+
 	paymentStatus := "pending"
 	if status == "processing" || status == "completed" {
 		paymentStatus = "completed"
@@ -339,7 +368,7 @@ func (g *OrderGenerator) MapWooCommerceJSONToCanonical(wooJSON map[string]interf
 	} else if status == "refunded" {
 		paymentStatus = "refunded"
 	}
-	
+
 	paidAt := &dateCreated
 	if datePaidStr != "" {
 		if dt, err := time.Parse("2006-01-02T15:04:05", datePaidStr); err == nil {
@@ -349,19 +378,19 @@ func (g *OrderGenerator) MapWooCommerceJSONToCanonical(wooJSON map[string]interf
 	if paymentStatus == "pending" {
 		paidAt = nil
 	}
-	
+
 	paymentMethodTitle := getString("payment_method_title")
 	if paymentMethodTitle == "" {
 		paymentMethodTitle = paymentMethod
 	}
-	
+
 	payments = append(payments, domain.CanonicalPaymentDTO{
-		PaymentMethodID: 1, // Default
-		Amount:          totalAmount,
-		Currency:        "COP",
-		Status:          paymentStatus,
-		PaidAt:          paidAt,
-		Gateway:         stringPtr(paymentMethod),
+		PaymentMethodID:  1, // Default
+		Amount:           totalAmount,
+		Currency:         "COP",
+		Status:           paymentStatus,
+		PaidAt:           paidAt,
+		Gateway:          stringPtr(paymentMethod),
 		PaymentReference: stringPtr(paymentMethodTitle),
 	})
 
@@ -430,4 +459,3 @@ func mapWooCommerceStatus(status string) string {
 		return "pending"
 	}
 }
-

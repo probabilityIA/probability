@@ -1,0 +1,169 @@
+version: "3.8"
+
+services:
+
+  frontend:
+    platform: linux/arm64
+    image: public.ecr.aws/d3a6d4r1/cam/reserve:frontend-latest
+    container_name: frontend_prod
+    ports:
+      - "8080:80"
+    env_file:
+    - .env 
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+    depends_on:
+      - central_reserve
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  central_reserve:
+    image: public.ecr.aws/d3a6d4r1/cam/reserve:backend-latest
+    container_name: central_reserve_prod
+    ports:
+      - "3050:3050"
+    environment:
+      DB_HOST:             "postgres"
+      DB_PORT:             "5432"
+      DB_NAME:             "${DB_NAME}"
+      DB_USER:             "${DB_USER}"
+      DB_PASS:             "${DB_PASSWORD}"
+      DB_LOG_LEVEL:        "${DB_LOG_LEVEL}"
+      PGSSLMODE:           "${DB_SSLMODE}"
+      APP_ENV:             "${APP_ENV}"
+      HTTP_PORT:           "3050"
+      LOG_LEVEL:           "${LOG_LEVEL}"
+      JWT_SECRET:          "${JWT_SECRET}"
+      URL_BASE_SWAGGER:    "${URL_BASE_SWAGGER}"
+      SMTP_HOST:           "${SMTP_HOST}"
+      SMTP_PORT:           "${SMTP_PORT}"
+      SMTP_USER:           "${SMTP_USER}"
+      SMTP_PASS:           "${SMTP_PASS}"
+      FROM_EMAIL:          "${FROM_EMAIL:-}"
+      SMTP_USE_STARTTLS:   "${SMTP_USE_STARTTLS}"
+      SMTP_USE_TLS:        "${SMTP_USE_TLS}"
+      # S3 y media
+      S3_BUCKET:           "${S3_BUCKET}"
+      S3_REGION:           "${S3_REGION}"
+      S3_KEY:              "${S3_KEY}"
+      S3_SECRET:           "${S3_SECRET}"
+      URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
+    restart: unless-stopped
+  
+    networks:
+      - app-network
+    depends_on:
+      - postgres
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 512M
+        reservations:
+          cpus: "0.50"
+          memory: 256M
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres_prod
+    env_file:
+      - .env
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB:       "${DB_NAME}"
+      POSTGRES_USER:     "${DB_USER}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "50m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1G
+        reservations:
+          memory: 512M
+
+  nginx:
+    image: public.ecr.aws/d3a6d4r1/cam/reserve:nginx-latest
+    container_name: nginx_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: "${DOMAIN}"
+      SSL_CERT_PATH: "${SSL_CERT_PATH}"
+      SSL_KEY_PATH: "${SSL_KEY_PATH}"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - frontend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  calculate-flow-print:
+    image: public.ecr.aws/d3a6d4r1/cam/reserve:dtf-calculator
+    container_name: alculate_flow_print_prod
+    env_file:
+      - .env.flow
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+    networks:
+      - app-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local

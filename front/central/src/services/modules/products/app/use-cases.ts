@@ -2,7 +2,8 @@ import { IProductRepository } from '../domain/ports';
 import {
     GetProductsParams,
     CreateProductDTO,
-    UpdateProductDTO
+    UpdateProductDTO,
+    AddProductIntegrationDTO
 } from '../domain/types';
 
 export class ProductUseCases {
@@ -26,5 +27,21 @@ export class ProductUseCases {
 
     async deleteProduct(id: string) {
         return this.repository.deleteProduct(id);
+    }
+
+    // ═══════════════════════════════════════════
+    // Product-Integration Management
+    // ═══════════════════════════════════════════
+
+    async addProductIntegration(productId: string, data: AddProductIntegrationDTO) {
+        return this.repository.addProductIntegration(productId, data);
+    }
+
+    async removeProductIntegration(productId: string, integrationId: number) {
+        return this.repository.removeProductIntegration(productId, integrationId);
+    }
+
+    async getProductIntegrations(productId: string) {
+        return this.repository.getProductIntegrations(productId);
     }
 }

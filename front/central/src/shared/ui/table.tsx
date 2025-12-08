@@ -6,6 +6,7 @@
 'use client';
 
 import React, { ReactNode } from 'react';
+import { DynamicFilters, FilterOption, ActiveFilter } from './dynamic-filters';
 
 export interface TableColumn<T = Record<string, unknown>> {
   key: string;
@@ -26,6 +27,17 @@ export interface PaginationProps {
   itemsPerPageOptions?: number[];
 }
 
+export interface TableFiltersProps {
+  availableFilters: FilterOption[];
+  activeFilters: ActiveFilter[];
+  onAddFilter: (filterKey: string, value: any) => void;
+  onRemoveFilter: (filterKey: string) => void;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
+  onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
+  sortOptions?: Array<{ value: string; label: string }>;
+}
+
 interface TableProps<T = Record<string, unknown>> {
   columns: TableColumn<T>[];
   data: T[];
@@ -34,6 +46,7 @@ interface TableProps<T = Record<string, unknown>> {
   loading?: boolean;
   onRowClick?: (row: T, index: number) => void;
   pagination?: PaginationProps;
+  filters?: TableFiltersProps;
 }
 
 export function Table<T = Record<string, unknown>>({ 
@@ -44,6 +57,7 @@ export function Table<T = Record<string, unknown>>({
   loading = false,
   onRowClick,
   pagination,
+  filters,
 }: TableProps<T>) {
   const alignClass = {
     left: 'text-left',
@@ -119,9 +133,31 @@ export function Table<T = Record<string, unknown>>({
   };
 
   return (
-    <div className="card overflow-hidden p-0 w-full">
-      <div className="overflow-x-auto w-full">
-        <table className="table w-full">
+    <div className="w-full">
+      {/* Filtros dinámicos */}
+      {filters && (
+        <div className="mb-0">
+          <DynamicFilters
+            availableFilters={filters.availableFilters}
+            activeFilters={filters.activeFilters}
+            onAddFilter={filters.onAddFilter}
+            onRemoveFilter={filters.onRemoveFilter}
+            sortBy={filters.sortBy || 'created_at'}
+            sortOrder={filters.sortOrder || 'desc'}
+            onSortChange={filters.onSortChange}
+            sortOptions={filters.sortOptions || [
+              { value: 'created_at', label: 'Ordenar por fecha' },
+              { value: 'updated_at', label: 'Ordenar por actualización' },
+              { value: 'total_amount', label: 'Ordenar por monto' },
+            ]}
+          />
+        </div>
+      )}
+
+      {/* Tabla */}
+      <div className={`card overflow-hidden p-0 w-full ${filters ? 'rounded-t-none border-t-0' : ''}`}>
+        <div className="overflow-x-auto w-full">
+          <table className="table w-full">
           {/* Header */}
           <thead>
             <tr>
@@ -189,9 +225,13 @@ export function Table<T = Record<string, unknown>>({
           </tbody>
         </table>
       </div>
-      {/* Paginación integrada */}
-      {renderPagination()}
+        {/* Paginación integrada */}
+        {renderPagination()}
+      </div>
     </div>
   );
 }
+
+// Re-exportar tipos de filtros para facilitar el uso
+export type { FilterOption, ActiveFilter } from './dynamic-filters';
 

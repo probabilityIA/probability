@@ -14,12 +14,10 @@ func ToDBProduct(p *domain.Product) *models.Product {
 		return nil
 	}
 	return &models.Product{
-		Model: gorm.Model{
-			ID:        p.ID,
-			CreatedAt: p.CreatedAt,
-			UpdatedAt: p.UpdatedAt,
-			DeletedAt: gorm.DeletedAt{},
-		},
+		ID:         p.ID,
+		CreatedAt:  p.CreatedAt,
+		UpdatedAt:  p.UpdatedAt,
+		DeletedAt:  p.DeletedAt,
 		BusinessID: p.BusinessID,
 		SKU:        p.SKU,
 		Name:       p.Name,
@@ -32,15 +30,11 @@ func ToDomainProduct(p *models.Product) *domain.Product {
 	if p == nil {
 		return nil
 	}
-	var deletedAt *time.Time
-	if p.DeletedAt.Valid {
-		deletedAt = &p.DeletedAt.Time
-	}
 	return &domain.Product{
 		ID:         p.ID,
 		CreatedAt:  p.CreatedAt,
 		UpdatedAt:  p.UpdatedAt,
-		DeletedAt:  deletedAt,
+		DeletedAt:  p.DeletedAt,
 		BusinessID: p.BusinessID,
 		SKU:        p.SKU,
 		Name:       p.Name,

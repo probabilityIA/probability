@@ -1,25 +1,119 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { getOrdersAction, deleteOrderAction } from '../../infra/actions';
 import { Order, GetOrdersParams } from '../../domain/types';
-import { Button, Alert } from '@/shared/ui';
+import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
 import RawOrderModal from './RawOrderModal';
 
+// Componente memoizado para las filas de la tabla
+const OrderRow = memo(({ 
+    order, 
+    onView, 
+    onEdit, 
+    onDelete, 
+    onShowRaw,
+    formatCurrency,
+    formatDate,
+    getStatusBadge
+}: {
+    order: Order;
+    onView?: (order: Order) => void;
+    onEdit?: (order: Order) => void;
+    onDelete: (id: string) => void;
+    onShowRaw: (id: string) => void;
+    formatCurrency: (amount: number, currency?: string) => string;
+    formatDate: (dateString: string) => string;
+    getStatusBadge: (status: string) => React.ReactNode;
+}) => {
+    return (
+        <tr className="hover:bg-gray-50 transition-colors">
+            <td className="px-3 sm:px-6 py-4">
+                <div className="text-sm font-medium text-gray-900">
+                    {order.order_number}
+                </div>
+                <div className="text-xs text-gray-500 sm:hidden">
+                    {order.customer_name}
+                </div>
+                <div className="text-xs text-gray-500">
+                    {order.internal_number}
+                </div>
+            </td>
+            <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
+                <div className="text-sm text-gray-900">{order.customer_name}</div>
+                <div className="text-xs text-gray-500">{order.customer_email}</div>
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                <div className="text-sm font-semibold text-gray-900">
+                    {formatCurrency(order.total_amount, order.currency)}
+                </div>
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                {getStatusBadge(order.status)}
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                <span className="text-sm text-gray-900 capitalize">
+                    {order.platform}
+                </span>
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                {formatDate(order.created_at)}
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <div className="flex flex-col sm:flex-row justify-end gap-1 sm:gap-2">
+                    {onView && (
+                        <button
+                            onClick={() => onView(order)}
+                            className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        >
+                            Ver
+                        </button>
+                    )}
+                    {onEdit && (
+                        <button
+                            onClick={() => onEdit(order)}
+                            className="px-2 sm:px-3 py-1 sm:py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                        >
+                            Editar
+                        </button>
+                    )}
+                    <button
+                        onClick={() => onShowRaw(order.id)}
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-500 hover:bg-gray-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                    >
+                        Original
+                    </button>
+                    <button
+                        onClick={() => onDelete(order.id)}
+                        className="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    >
+                        Eliminar
+                    </button>
+                </div>
+            </td>
+        </tr>
+    );
+});
+
+OrderRow.displayName = 'OrderRow';
+
 interface OrderListProps {
     onView?: (order: Order) => void;
     onEdit?: (order: Order) => void;
+    refreshKey?: number;
 }
 
-export default function OrderList({ onView, onEdit }: OrderListProps) {
+export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps) {
     const [orders, setOrders] = useState<Order[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [initialLoading, setInitialLoading] = useState(true);
+    const [tableLoading, setTableLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const isFirstLoad = useRef(true);
 
     // Raw Data Modal
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -33,7 +127,164 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
 
     const { showToast } = useToast();
 
-    // SSE Integration
+    // Definir filtros disponibles
+    const availableFilters: FilterOption[] = [
+        {
+            key: 'order_number',
+            label: 'ID de orden',
+            type: 'text',
+            placeholder: 'Buscar por ID de orden...',
+        },
+        {
+            key: 'internal_number',
+            label: 'Número interno',
+            type: 'text',
+            placeholder: 'Buscar por número interno...',
+        },
+        {
+            key: 'status',
+            label: 'Estado',
+            type: 'select',
+            options: [
+                { value: 'pending', label: 'Pendiente' },
+                { value: 'processing', label: 'Procesando' },
+                { value: 'shipped', label: 'Enviado' },
+                { value: 'delivered', label: 'Entregado' },
+                { value: 'cancelled', label: 'Cancelado' },
+            ],
+        },
+        {
+            key: 'platform',
+            label: 'Plataforma',
+            type: 'select',
+            options: [
+                { value: 'shopify', label: 'Shopify' },
+                { value: 'woocommerce', label: 'WooCommerce' },
+                { value: 'manual', label: 'Manual' },
+            ],
+        },
+        {
+            key: 'is_paid',
+            label: 'Estado de pago',
+            type: 'boolean',
+        },
+        {
+            key: 'start_date',
+            label: 'Rango de fechas',
+            type: 'date-range',
+        },
+    ];
+
+    // Convertir filtros a ActiveFilter[]
+    const activeFilters: ActiveFilter[] = useMemo(() => {
+        const active: ActiveFilter[] = [];
+
+        if (filters.order_number) {
+            active.push({
+                key: 'order_number',
+                label: 'ID de orden',
+                value: filters.order_number,
+                type: 'text',
+            });
+        }
+
+        if (filters.internal_number) {
+            active.push({
+                key: 'internal_number',
+                label: 'Número interno',
+                value: filters.internal_number,
+                type: 'text',
+            });
+        }
+
+
+        if (filters.status) {
+            active.push({
+                key: 'status',
+                label: 'Estado',
+                value: filters.status,
+                type: 'select',
+            });
+        }
+
+        if (filters.platform) {
+            active.push({
+                key: 'platform',
+                label: 'Plataforma',
+                value: filters.platform,
+                type: 'select',
+            });
+        }
+
+        if (filters.is_paid !== undefined) {
+            active.push({
+                key: 'is_paid',
+                label: 'Estado de pago',
+                value: filters.is_paid,
+                type: 'boolean',
+            });
+        }
+
+        if (filters.start_date || filters.end_date) {
+            active.push({
+                key: 'start_date',
+                label: 'Rango de fechas',
+                value: {
+                    start: filters.start_date,
+                    end: filters.end_date,
+                },
+                type: 'date-range',
+            });
+        }
+
+        return active;
+    }, [filters]);
+
+    // Manejar adición de filtro
+    const handleAddFilter = useCallback((filterKey: string, value: any) => {
+        setFilters((prev) => {
+            const newFilters = { ...prev, page: 1 };
+
+            if (filterKey === 'start_date' && typeof value === 'object') {
+                newFilters.start_date = value.start;
+                newFilters.end_date = value.end;
+            } else if (filterKey === 'is_paid') {
+                newFilters.is_paid = value === true;
+            } else {
+                (newFilters as any)[filterKey] = value;
+            }
+
+            return newFilters;
+        });
+    }, []);
+
+    // Manejar eliminación de filtro
+    const handleRemoveFilter = useCallback((filterKey: string) => {
+        setFilters((prev) => {
+            const newFilters = { ...prev, page: 1 };
+
+            if (filterKey === 'start_date') {
+                delete newFilters.start_date;
+                delete newFilters.end_date;
+            } else {
+                delete (newFilters as any)[filterKey];
+            }
+
+            return newFilters;
+        });
+    }, []);
+
+    // Manejar cambio de ordenamiento
+    const handleSortChange = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
+        setFilters((prev) => ({
+            ...prev,
+            sort_by: sortBy as 'created_at' | 'updated_at' | 'total_amount',
+            sort_order: sortOrder,
+            page: 1,
+        }));
+    }, []);
+
+    // SSE Integration - Actualizar sin recargar toda la página
     useSSE({
         eventTypes: ['order.created'],
         onMessage: (event) => {
@@ -42,7 +293,8 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                 if (data.type === 'order.created') {
                     const orderNumber = data.data?.order_number || 'Desconocida';
                     showToast(`Nueva orden recibida: #${orderNumber}`, 'success');
-                    fetchOrders(); // Refresh list
+                    // Actualizar solo la tabla sin recargar toda la página
+                    refreshTableOnly();
                 }
             } catch (e) {
                 console.error('Error processing SSE message:', e);
@@ -50,12 +302,31 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
         },
     });
 
-    useEffect(() => {
-        fetchOrders();
+    // Función para actualizar solo la tabla (sin mostrar loading inicial)
+    const refreshTableOnly = useCallback(async () => {
+        setTableLoading(true);
+        try {
+            const response = await getOrdersAction(filters);
+            if (response.success && response.data) {
+                setOrders(response.data);
+                setTotal(response.total || 0);
+                setTotalPages(response.total_pages || 1);
+                setPage(response.page || 1);
+            }
+        } catch (err: any) {
+            console.error('Error al actualizar órdenes:', err);
+        } finally {
+            setTableLoading(false);
+        }
     }, [filters]);
 
-    const fetchOrders = async () => {
-        setLoading(true);
+    // Función unificada para cargar órdenes
+    const loadOrders = useCallback(async (showInitialLoading = false) => {
+        if (showInitialLoading) {
+            setInitialLoading(true);
+        } else {
+            setTableLoading(true);
+        }
         setError(null);
         try {
             const response = await getOrdersAction(filters);
@@ -70,9 +341,32 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
         } catch (err: any) {
             setError(err.message || 'Error al cargar las órdenes');
         } finally {
-            setLoading(false);
+            setInitialLoading(false);
+            setTableLoading(false);
         }
-    };
+    }, [filters]);
+
+    // Carga inicial - solo una vez
+    useEffect(() => {
+        if (isFirstLoad.current) {
+            isFirstLoad.current = false;
+            loadOrders(true);
+        }
+    }, [loadOrders]);
+
+    // Actualizar cuando cambian los filtros (sin loading inicial, solo tabla)
+    useEffect(() => {
+        if (!isFirstLoad.current) {
+            loadOrders(false);
+        }
+    }, [filters, loadOrders]);
+
+    // Refresh cuando cambia el refreshKey (desde el padre, después de crear/editar)
+    useEffect(() => {
+        if (refreshKey !== undefined && refreshKey > 0) {
+            refreshTableOnly();
+        }
+    }, [refreshKey, refreshTableOnly]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('¿Estás seguro de que deseas eliminar esta orden?')) return;
@@ -80,7 +374,7 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
         try {
             const response = await deleteOrderAction(id);
             if (response.success) {
-                fetchOrders();
+                refreshTableOnly();
             } else {
                 alert(response.message || 'Error al eliminar la orden');
             }
@@ -89,14 +383,14 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
         }
     };
 
-    const formatCurrency = (amount: number, currency: string = 'USD') => {
+    const formatCurrency = useCallback((amount: number, currency: string = 'USD') => {
         return new Intl.NumberFormat('es-CO', {
             style: 'currency',
             currency: currency,
         }).format(amount);
-    };
+    }, []);
 
-    const formatDate = (dateString: string) => {
+    const formatDate = useCallback((dateString: string) => {
         return new Date(dateString).toLocaleDateString('es-CO', {
             year: 'numeric',
             month: 'short',
@@ -104,9 +398,9 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
             hour: '2-digit',
             minute: '2-digit',
         });
-    };
+    }, []);
 
-    const getStatusBadge = (status: string) => {
+    const getStatusBadge = useCallback((status: string) => {
         const statusColors: Record<string, string> = {
             pending: 'bg-yellow-100 text-yellow-800',
             processing: 'bg-blue-100 text-blue-800',
@@ -122,9 +416,9 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                 {status}
             </span>
         );
-    };
+    }, []);
 
-    if (loading) {
+    if (initialLoading) {
         return <div className="text-center py-8">Cargando órdenes...</div>;
     }
 
@@ -137,59 +431,38 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
     }
 
     return (
-        <div className="space-y-4">
-            {/* Filters */}
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                    <input
-                        type="text"
-                        placeholder="Buscar por email..."
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white"
-                        onChange={(e) => setFilters({ ...filters, customer_email: e.target.value || undefined })}
-                    />
-                    <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                        onChange={(e) => setFilters({ ...filters, status: e.target.value || undefined })}
-                    >
-                        <option value="">Todos los estados</option>
-                        <option value="pending">Pendiente</option>
-                        <option value="processing">Procesando</option>
-                        <option value="shipped">Enviado</option>
-                        <option value="delivered">Entregado</option>
-                        <option value="cancelled">Cancelado</option>
-                    </select>
-                    <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                        onChange={(e) => setFilters({ ...filters, platform: e.target.value || undefined })}
-                    >
-                        <option value="">Todas las plataformas</option>
-                        <option value="shopify">Shopify</option>
-                        <option value="woocommerce">WooCommerce</option>
-                        <option value="manual">Manual</option>
-                    </select>
-                    <input
-                        type="date"
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                        onChange={(e) => setFilters({ ...filters, start_date: e.target.value || undefined })}
-                    />
-                    <input
-                        type="date"
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                        onChange={(e) => setFilters({ ...filters, end_date: e.target.value || undefined })}
-                    />
-                    <button
-                        onClick={fetchOrders}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
-                    >
-                        🔄 Actualizar
-                    </button>
-                </div>
+        <div>
+            {/* Dynamic Filters */}
+            <div>
+                <DynamicFilters
+                    availableFilters={availableFilters}
+                    activeFilters={activeFilters}
+                    onAddFilter={handleAddFilter}
+                    onRemoveFilter={handleRemoveFilter}
+                    sortBy={filters.sort_by || 'created_at'}
+                    sortOrder={filters.sort_order || 'desc'}
+                    onSortChange={handleSortChange}
+                    sortOptions={[
+                        { value: 'created_at', label: 'Ordenar por fecha' },
+                        { value: 'updated_at', label: 'Ordenar por actualización' },
+                        { value: 'total_amount', label: 'Ordenar por monto' },
+                    ]}
+                />
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden relative">
+                {/* Overlay de carga solo para la tabla */}
+                {tableLoading && (
+                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center transition-opacity duration-200">
+                        <div className="flex flex-col items-center gap-2">
+                            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            <p className="text-sm text-gray-600">Actualizando...</p>
+                        </div>
+                    </div>
+                )}
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
+                    <table className={`min-w-full divide-y divide-gray-200 transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
                         <thead className="bg-gray-50">
                             <tr>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -224,74 +497,20 @@ export default function OrderList({ onView, onEdit }: OrderListProps) {
                                 </tr>
                             ) : (
                                 orders.map((order) => (
-                                    <tr key={order.id} className="hover:bg-gray-50">
-                                        <td className="px-3 sm:px-6 py-4">
-                                            <div className="text-sm font-medium text-gray-900">
-                                                {order.order_number}
-                                            </div>
-                                            <div className="text-xs text-gray-500 sm:hidden">
-                                                {order.customer_name}
-                                            </div>
-                                            <div className="text-xs text-gray-500">
-                                                {order.internal_number}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
-                                            <div className="text-sm text-gray-900">{order.customer_name}</div>
-                                            <div className="text-xs text-gray-500">{order.customer_email}</div>
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-semibold text-gray-900">
-                                                {formatCurrency(order.total_amount, order.currency)}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                            {getStatusBadge(order.status)}
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                                            <span className="text-sm text-gray-900 capitalize">
-                                                {order.platform}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                                            {formatDate(order.created_at)}
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex flex-col sm:flex-row justify-end gap-1 sm:gap-2">
-                                                {onView && (
-                                                    <button
-                                                        onClick={() => onView(order)}
-                                                        className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                                                    >
-                                                        Ver
-                                                    </button>
-                                                )}
-                                                {onEdit && (
-                                                    <button
-                                                        onClick={() => onEdit(order)}
-                                                        className="px-2 sm:px-3 py-1 sm:py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                                                    >
-                                                        Editar
-                                                    </button>
-                                                )}
-                                                <button
-                                                    onClick={() => {
-                                                        setSelectedOrderId(order.id);
-                                                        setIsRawModalOpen(true);
-                                                    }}
-                                                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-500 hover:bg-gray-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                                                >
-                                                    Original
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(order.id)}
-                                                    className="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
+                                    <OrderRow
+                                        key={order.id}
+                                        order={order}
+                                        onView={onView}
+                                        onEdit={onEdit}
+                                        onDelete={handleDelete}
+                                        onShowRaw={(id) => {
+                                            setSelectedOrderId(id);
+                                            setIsRawModalOpen(true);
+                                        }}
+                                        formatCurrency={formatCurrency}
+                                        formatDate={formatDate}
+                                        getStatusBadge={getStatusBadge}
+                                    />
                                 ))
                             )}
                         </tbody>

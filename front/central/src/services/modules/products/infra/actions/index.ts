@@ -6,7 +6,8 @@ import { ProductUseCases } from '../../app/use-cases';
 import {
     GetProductsParams,
     CreateProductDTO,
-    UpdateProductDTO
+    UpdateProductDTO,
+    AddProductIntegrationDTO
 } from '../../domain/types';
 
 async function getUseCases() {
@@ -66,5 +67,55 @@ export const deleteProductAction = async (id: string) => {
     } catch (error: any) {
         console.error('Delete Product Action Error:', error.message);
         throw new Error(error.message);
+    }
+};
+
+// ═══════════════════════════════════════════
+// Product-Integration Management Actions
+// ═══════════════════════════════════════════
+
+export const addProductIntegrationAction = async (
+    productId: string,
+    data: AddProductIntegrationDTO
+) => {
+    try {
+        return await (await getUseCases()).addProductIntegration(productId, data);
+    } catch (error: any) {
+        console.error('Add Product Integration Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al asociar producto con integración',
+            data: null
+        };
+    }
+};
+
+export const removeProductIntegrationAction = async (
+    productId: string,
+    integrationId: number
+) => {
+    try {
+        return await (await getUseCases()).removeProductIntegration(productId, integrationId);
+    } catch (error: any) {
+        console.error('Remove Product Integration Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al remover integración',
+            error: error.message
+        };
+    }
+};
+
+export const getProductIntegrationsAction = async (productId: string) => {
+    try {
+        return await (await getUseCases()).getProductIntegrations(productId);
+    } catch (error: any) {
+        console.error('Get Product Integrations Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al obtener integraciones',
+            data: [],
+            total: 0
+        };
     }
 };

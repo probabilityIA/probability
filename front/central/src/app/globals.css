@@ -502,3 +502,119 @@ body {
 .delay-1000 {
   animation-delay: 1s;
 }
+
+/* ============================================
+   REACT-DAY-PICKER ESTILOS
+   ============================================ */
+@import 'react-day-picker/dist/style.css';
+
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: #3b82f6;
+  --rdp-background-color: #eff6ff;
+  --rdp-accent-color-dark: #1e40af;
+  --rdp-background-color-dark: #1e3a8a;
+  --rdp-outline: 2px solid var(--rdp-accent-color);
+  --rdp-outline-selected: 3px solid var(--rdp-accent-color);
+  margin: 0;
+  font-family: inherit;
+}
+
+/* Días de la semana - NEGRO para mejor legibilidad */
+.rdp-head_cell {
+  font-weight: 600 !important;
+  font-size: 0.75rem !important;
+  color: #000000 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Días normales - NEGRO por defecto */
+.rdp-day {
+  color: #000000 !important;
+  font-weight: 500 !important;
+}
+
+/* Días dentro del rango seleccionado */
+.rdp-day_range_start,
+.rdp-day_range_end {
+  background-color: var(--rdp-accent-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 0.375rem !important;
+}
+
+.rdp-day_range_middle {
+  background-color: var(--rdp-background-color) !important;
+  color: var(--rdp-accent-color) !important;
+  border-radius: 0 !important;
+  font-weight: 500 !important;
+}
+
+/* Hover en días no seleccionados */
+.rdp-day:hover:not([disabled]):not(.rdp-day_selected):not(.rdp-day_range_start):not(.rdp-day_range_end):not(.rdp-day_range_middle) {
+  background-color: #f3f4f6 !important;
+  border-radius: 0.375rem !important;
+  color: #000000 !important;
+}
+
+/* Día seleccionado individual */
+.rdp-day_selected:not([disabled]):not(.rdp-day_range_start):not(.rdp-day_range_end) {
+  background-color: var(--rdp-accent-color) !important;
+  color: white !important;
+  font-weight: 600 !important;
+  border-radius: 0.375rem !important;
+}
+
+/* Día de hoy - NEGRO con fondo gris */
+.rdp-day_today {
+  font-weight: 700 !important;
+  color: #000000 !important;
+}
+
+.rdp-day_today:not(.rdp-day_selected):not(.rdp-day_range_start):not(.rdp-day_range_end):not(.rdp-day_range_middle) {
+  background-color: #f3f4f6 !important;
+  color: #000000 !important;
+  border: 2px solid var(--rdp-accent-color) !important;
+}
+
+/* Días fuera del mes - gris pero legible */
+.rdp-day_outside {
+  color: #9ca3af !important;
+  opacity: 0.6 !important;
+}
+
+/* Días deshabilitados */
+.rdp-day_disabled {
+  color: #d1d5db !important;
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}
+
+/* Botones de navegación */
+.rdp-button:hover:not([disabled]) {
+  background-color: #f3f4f6 !important;
+  border-radius: 0.375rem !important;
+}
+
+.rdp-button_reset {
+  border-radius: 0.375rem !important;
+}
+
+/* Título del mes - NEGRO y más grande */
+.rdp-caption_label {
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  color: #000000 !important;
+}
+
+/* Botones de navegación de mes */
+.rdp-nav_button {
+  border-radius: 0.375rem !important;
+  color: #000000 !important;
+}
+
+.rdp-nav_button:hover {
+  background-color: #f3f4f6 !important;
+  color: #000000 !important;
+}

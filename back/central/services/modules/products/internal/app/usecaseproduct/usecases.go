@@ -26,12 +26,57 @@ func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateP
 		return nil, domain.ErrProductAlreadyExists
 	}
 
-	// Crear el modelo de producto
+	// Crear el modelo de producto con todos los campos
 	product := &domain.Product{
+		// Identificadores
 		BusinessID: req.BusinessID,
 		SKU:        req.SKU,
-		Name:       req.Name,
 		ExternalID: req.ExternalID,
+
+		// Información Básica
+		Name:             req.Name,
+		Title:            req.Title,
+		Description:      req.Description,
+		ShortDescription: req.ShortDescription,
+		Slug:             req.Slug,
+
+		// Pricing
+		Price:          req.Price,
+		CompareAtPrice: req.CompareAtPrice,
+		CostPrice:      req.CostPrice,
+		Currency:       req.Currency,
+
+		// Inventory
+		StockQuantity:     req.StockQuantity,
+		TrackInventory:    req.TrackInventory,
+		AllowBackorder:    req.AllowBackorder,
+		LowStockThreshold: req.LowStockThreshold,
+
+		// Media
+		ImageURL: req.ImageURL,
+		Images:   req.Images,
+		VideoURL: req.VideoURL,
+
+		// Dimensiones y Peso
+		Weight:        req.Weight,
+		WeightUnit:    req.WeightUnit,
+		Length:        req.Length,
+		Width:         req.Width,
+		Height:        req.Height,
+		DimensionUnit: req.DimensionUnit,
+
+		// Categorización
+		Category: req.Category,
+		Tags:     req.Tags,
+		Brand:    req.Brand,
+
+		// Estado
+		Status:     req.Status,
+		IsActive:   req.IsActive,
+		IsFeatured: req.IsFeatured,
+
+		// Metadata
+		Metadata: req.Metadata,
 	}
 
 	// Guardar en la base de datos
@@ -50,8 +95,8 @@ func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateP
 // ───────────────────────────────────────────
 
 // GetProductByID obtiene un producto por su ID
-func (uc *UseCaseProduct) GetProductByID(ctx context.Context, id uint) (*domain.ProductResponse, error) {
-	if id == 0 {
+func (uc *UseCaseProduct) GetProductByID(ctx context.Context, id string) (*domain.ProductResponse, error) {
+	if id == "" {
 		return nil, errors.New("product ID is required")
 	}
 
@@ -114,8 +159,8 @@ func (uc *UseCaseProduct) ListProducts(ctx context.Context, page, pageSize int, 
 // ───────────────────────────────────────────
 
 // UpdateProduct actualiza un producto existente
-func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, id uint, req *domain.UpdateProductRequest) (*domain.ProductResponse, error) {
-	if id == 0 {
+func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, id string, req *domain.UpdateProductRequest) (*domain.ProductResponse, error) {
+	if id == "" {
 		return nil, errors.New("product ID is required")
 	}
 
@@ -130,6 +175,7 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, id uint, req *domai
 	}
 
 	// Actualizar solo los campos proporcionados
+	// Identificadores
 	if req.SKU != nil {
 		// Si se cambia el SKU, verificar que no exista otro producto con ese SKU
 		if *req.SKU != product.SKU {
@@ -143,11 +189,111 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, id uint, req *domai
 		}
 		product.SKU = *req.SKU
 	}
+	if req.ExternalID != nil {
+		product.ExternalID = *req.ExternalID
+	}
+
+	// Información Básica
 	if req.Name != nil {
 		product.Name = *req.Name
 	}
-	if req.ExternalID != nil {
-		product.ExternalID = *req.ExternalID
+	if req.Title != nil {
+		product.Title = *req.Title
+	}
+	if req.Description != nil {
+		product.Description = *req.Description
+	}
+	if req.ShortDescription != nil {
+		product.ShortDescription = *req.ShortDescription
+	}
+	if req.Slug != nil {
+		product.Slug = *req.Slug
+	}
+
+	// Pricing
+	if req.Price != nil {
+		product.Price = *req.Price
+	}
+	if req.CompareAtPrice != nil {
+		product.CompareAtPrice = req.CompareAtPrice
+	}
+	if req.CostPrice != nil {
+		product.CostPrice = req.CostPrice
+	}
+	if req.Currency != nil {
+		product.Currency = *req.Currency
+	}
+
+	// Inventory
+	if req.StockQuantity != nil {
+		product.StockQuantity = *req.StockQuantity
+	}
+	if req.TrackInventory != nil {
+		product.TrackInventory = *req.TrackInventory
+	}
+	if req.AllowBackorder != nil {
+		product.AllowBackorder = *req.AllowBackorder
+	}
+	if req.LowStockThreshold != nil {
+		product.LowStockThreshold = req.LowStockThreshold
+	}
+
+	// Media
+	if req.ImageURL != nil {
+		product.ImageURL = *req.ImageURL
+	}
+	if req.Images != nil {
+		product.Images = req.Images
+	}
+	if req.VideoURL != nil {
+		product.VideoURL = req.VideoURL
+	}
+
+	// Dimensiones y Peso
+	if req.Weight != nil {
+		product.Weight = req.Weight
+	}
+	if req.WeightUnit != nil {
+		product.WeightUnit = *req.WeightUnit
+	}
+	if req.Length != nil {
+		product.Length = req.Length
+	}
+	if req.Width != nil {
+		product.Width = req.Width
+	}
+	if req.Height != nil {
+		product.Height = req.Height
+	}
+	if req.DimensionUnit != nil {
+		product.DimensionUnit = *req.DimensionUnit
+	}
+
+	// Categorización
+	if req.Category != nil {
+		product.Category = *req.Category
+	}
+	if req.Tags != nil {
+		product.Tags = req.Tags
+	}
+	if req.Brand != nil {
+		product.Brand = *req.Brand
+	}
+
+	// Estado
+	if req.Status != nil {
+		product.Status = *req.Status
+	}
+	if req.IsActive != nil {
+		product.IsActive = *req.IsActive
+	}
+	if req.IsFeatured != nil {
+		product.IsFeatured = *req.IsFeatured
+	}
+
+	// Metadata
+	if req.Metadata != nil {
+		product.Metadata = req.Metadata
 	}
 
 	// Guardar cambios
@@ -164,20 +310,16 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, id uint, req *domai
 //
 // ───────────────────────────────────────────
 
-// DeleteProduct elimina (soft delete) un producto
-func (uc *UseCaseProduct) DeleteProduct(ctx context.Context, id uint) error {
-	if id == 0 {
+// DeleteProduct elimina un producto por su ID
+func (uc *UseCaseProduct) DeleteProduct(ctx context.Context, id string) error {
+	if id == "" {
 		return errors.New("product ID is required")
 	}
 
-	// Verificar que el producto existe
-	product, err := uc.repo.GetProductByID(ctx, id)
+	// Validar que el producto existe
+	_, err := uc.repo.GetProductByID(ctx, id)
 	if err != nil {
-		return fmt.Errorf("error getting product: %w", err)
-	}
-
-	if product == nil {
-		return domain.ErrProductNotFound
+		return err
 	}
 
 	// Eliminar el producto
@@ -197,14 +339,60 @@ func (uc *UseCaseProduct) DeleteProduct(ctx context.Context, id uint) error {
 // mapProductToResponse convierte un modelo Product a ProductResponse
 func mapProductToResponse(product *domain.Product) *domain.ProductResponse {
 	return &domain.ProductResponse{
-		ID:         product.ID,
-		CreatedAt:  product.CreatedAt,
-		UpdatedAt:  product.UpdatedAt,
-		DeletedAt:  product.DeletedAt,
+		// Timestamps
+		ID:        product.ID,
+		CreatedAt: product.CreatedAt,
+		UpdatedAt: product.UpdatedAt,
+		DeletedAt: product.DeletedAt,
+
+		// Identificadores
 		BusinessID: product.BusinessID,
 		SKU:        product.SKU,
-		Name:       product.Name,
 		ExternalID: product.ExternalID,
+
+		// Información Básica
+		Name:             product.Name,
+		Title:            product.Title,
+		Description:      product.Description,
+		ShortDescription: product.ShortDescription,
+		Slug:             product.Slug,
+
+		// Pricing
+		Price:          product.Price,
+		CompareAtPrice: product.CompareAtPrice,
+		CostPrice:      product.CostPrice,
+		Currency:       product.Currency,
+
+		// Inventory
+		StockQuantity:     product.StockQuantity,
+		TrackInventory:    product.TrackInventory,
+		AllowBackorder:    product.AllowBackorder,
+		LowStockThreshold: product.LowStockThreshold,
+
+		// Media
+		ImageURL: product.ImageURL,
+		Images:   product.Images,
+		VideoURL: product.VideoURL,
+
+		// Dimensiones y Peso
+		Weight:        product.Weight,
+		WeightUnit:    product.WeightUnit,
+		Length:        product.Length,
+		Width:         product.Width,
+		Height:        product.Height,
+		DimensionUnit: product.DimensionUnit,
+
+		// Categorización
+		Category: product.Category,
+		Tags:     product.Tags,
+		Brand:    product.Brand,
+
+		// Estado
+		Status:     product.Status,
+		IsActive:   product.IsActive,
+		IsFeatured: product.IsFeatured,
+
+		// Metadata
+		Metadata: product.Metadata,
 	}
 }
-
