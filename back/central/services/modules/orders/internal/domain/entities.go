@@ -239,12 +239,13 @@ type OrderResponse struct {
 	PaidAt          *time.Time `json:"paid_at,omitempty"`
 
 	// Información de envío/logística
-	TrackingNumber *string    `json:"tracking_number,omitempty"`
-	TrackingLink   *string    `json:"tracking_link,omitempty"`
-	GuideID        *string    `json:"guide_id,omitempty"`
-	GuideLink      *string    `json:"guide_link,omitempty"`
-	DeliveryDate   *time.Time `json:"delivery_date,omitempty"`
-	DeliveredAt    *time.Time `json:"delivered_at,omitempty"`
+	TrackingNumber      *string    `json:"tracking_number,omitempty"`
+	TrackingLink        *string    `json:"tracking_link,omitempty"`
+	GuideID             *string    `json:"guide_id,omitempty"`
+	GuideLink           *string    `json:"guide_link,omitempty"`
+	DeliveryDate        *time.Time `json:"delivery_date,omitempty"`
+	DeliveredAt         *time.Time `json:"delivered_at,omitempty"`
+	DeliveryProbability *float64   `json:"delivery_probability,omitempty"`
 
 	// Información de fulfillment
 	WarehouseID   *uint  `json:"warehouse_id,omitempty"`
@@ -294,21 +295,22 @@ type OrderResponse struct {
 
 // OrderSummary representa un resumen de la orden para listados
 type OrderSummary struct {
-	ID              string    `json:"id"`
-	CreatedAt       time.Time `json:"created_at"`
-	BusinessID      uint      `json:"business_id"`
-	IntegrationID   uint      `json:"integration_id"`
-	IntegrationType string    `json:"integration_type"`
-	Platform        string    `json:"platform"`
-	ExternalID      string    `json:"external_id"`
-	OrderNumber     string    `json:"order_number"`
-	TotalAmount     float64   `json:"total_amount"`
-	Currency        string    `json:"currency"`
-	CustomerName    string    `json:"customer_name"`
-	CustomerEmail   string    `json:"customer_email"`
-	Status          string    `json:"status"`
-	PaymentStatus   string    `json:"payment_status"` // derived from IsPaid
-	ItemsCount      int       `json:"items_count"`    // derived from len(Items)
+	ID                  string    `json:"id"`
+	CreatedAt           time.Time `json:"created_at"`
+	BusinessID          uint      `json:"business_id"`
+	IntegrationID       uint      `json:"integration_id"`
+	IntegrationType     string    `json:"integration_type"`
+	Platform            string    `json:"platform"`
+	ExternalID          string    `json:"external_id"`
+	OrderNumber         string    `json:"order_number"`
+	TotalAmount         float64   `json:"total_amount"`
+	Currency            string    `json:"currency"`
+	CustomerName        string    `json:"customer_name"`
+	CustomerEmail       string    `json:"customer_email"`
+	Status              string    `json:"status"`
+	PaymentStatus       string    `json:"payment_status"` // derived from IsPaid
+	ItemsCount          int       `json:"items_count"`    // derived from len(Items)
+	DeliveryProbability *float64  `json:"delivery_probability"`
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos

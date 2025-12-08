@@ -9,15 +9,16 @@ import { useToast } from '@/shared/providers/toast-provider';
 import RawOrderModal from './RawOrderModal';
 
 // Componente memoizado para las filas de la tabla
-const OrderRow = memo(({ 
-    order, 
-    onView, 
-    onEdit, 
-    onDelete, 
+const OrderRow = memo(({
+    order,
+    onView,
+    onEdit,
+    onDelete,
     onShowRaw,
     formatCurrency,
     formatDate,
-    getStatusBadge
+    getStatusBadge,
+    getProbabilityColor
 }: {
     order: Order;
     onView?: (order: Order) => void;
@@ -27,6 +28,7 @@ const OrderRow = memo(({
     formatCurrency: (amount: number, currency?: string) => string;
     formatDate: (dateString: string) => string;
     getStatusBadge: (status: string) => React.ReactNode;
+    getProbabilityColor: (probability: number) => string;
 }) => {
     return (
         <tr className="hover:bg-gray-50 transition-colors">
@@ -57,6 +59,21 @@ const OrderRow = memo(({
                 <span className="text-sm text-gray-900 capitalize">
                     {order.platform}
                 </span>
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden xl:table-cell">
+                {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
+                    <div className="flex items-center gap-2">
+                        <div className="w-24 bg-gray-200 rounded-full h-2.5">
+                            <div
+                                className={`h-2.5 rounded-full ${getProbabilityColor(order.delivery_probability)}`}
+                                style={{ width: `${order.delivery_probability}%` }}
+                            ></div>
+                        </div>
+                        <span className="text-xs font-medium text-gray-700">{order.delivery_probability}%</span>
+                    </div>
+                ) : (
+                    <span className="text-xs text-gray-400">N/A</span>
+                )}
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                 {formatDate(order.created_at)}
@@ -418,6 +435,12 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
         );
     }, []);
 
+    const getProbabilityColor = useCallback((probability: number) => {
+        if (probability < 30) return 'bg-red-500';
+        if (probability < 70) return 'bg-yellow-500';
+        return 'bg-green-500';
+    }, []);
+
     if (initialLoading) {
         return <div className="text-center py-8">Cargando órdenes...</div>;
     }
@@ -480,6 +503,9 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                                     Plataforma
                                 </th>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                                    Probabilidad
+                                </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Fecha
                                 </th>
@@ -510,6 +536,7 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                                         formatCurrency={formatCurrency}
                                         formatDate={formatDate}
                                         getStatusBadge={getStatusBadge}
+                                        getProbabilityColor={getProbabilityColor}
                                     />
                                 ))
                             )}

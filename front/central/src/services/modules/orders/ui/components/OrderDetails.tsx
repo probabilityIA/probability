@@ -77,6 +77,22 @@ export default function OrderDetails({ order }: OrderDetailsProps) {
                         {order.shipping_city}, {order.shipping_state} {order.shipping_postal_code}
                     </p>
                     <p className="text-sm text-gray-900">{order.shipping_country}</p>
+                    {order.delivery_probability !== undefined && order.delivery_probability !== null && (
+                        <div className="mt-2 pt-2 border-t border-purple-200">
+                            <p className="text-sm text-gray-500 mb-1">Probabilidad de Entrega</p>
+                            <div className="flex items-center gap-2">
+                                <div className="flex-1 bg-white rounded-full h-2.5 border border-purple-200">
+                                    <div
+                                        className={`h-2.5 rounded-full ${order.delivery_probability < 30 ? 'bg-red-500' :
+                                                order.delivery_probability < 70 ? 'bg-yellow-500' : 'bg-green-500'
+                                            }`}
+                                        style={{ width: `${order.delivery_probability}%` }}
+                                    ></div>
+                                </div>
+                                <span className="text-sm font-medium text-gray-900">{order.delivery_probability}%</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
 

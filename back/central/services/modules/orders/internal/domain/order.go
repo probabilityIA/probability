@@ -55,12 +55,13 @@ type Order struct {
 	PaidAt          *time.Time `json:"paid_at"`
 
 	// Información de envío/logística
-	TrackingNumber *string    `json:"tracking_number"`
-	TrackingLink   *string    `json:"tracking_link"`
-	GuideID        *string    `json:"guide_id"`
-	GuideLink      *string    `json:"guide_link"`
-	DeliveryDate   *time.Time `json:"delivery_date"`
-	DeliveredAt    *time.Time `json:"delivered_at"`
+	TrackingNumber      *string    `json:"tracking_number"`
+	TrackingLink        *string    `json:"tracking_link"`
+	GuideID             *string    `json:"guide_id"`
+	GuideLink           *string    `json:"guide_link"`
+	DeliveryDate        *time.Time `json:"delivery_date"`
+	DeliveredAt         *time.Time `json:"delivered_at"`
+	DeliveryProbability *float64   `json:"delivery_probability"`
 
 	// Información de fulfillment
 	WarehouseID   *uint  `json:"warehouse_id"`

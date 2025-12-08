@@ -83,12 +83,13 @@ type Order struct {
 	// ============================================
 	// INFORMACIÓN DE ENVÍO/LOGÍSTICA
 	// ============================================
-	TrackingNumber *string    `gorm:"size:128;index"` // Número de rastreo
-	TrackingLink   *string    `gorm:"size:512"`       // Link de rastreo
-	GuideID        *string    `gorm:"size:128"`       // ID de guía de envío
-	GuideLink      *string    `gorm:"size:512"`       // Link de guía
-	DeliveryDate   *time.Time `gorm:"index"`          // Fecha de entrega programada
-	DeliveredAt    *time.Time // Fecha de entrega real
+	TrackingNumber      *string    `gorm:"size:128;index"` // Número de rastreo
+	TrackingLink        *string    `gorm:"size:512"`       // Link de rastreo
+	GuideID             *string    `gorm:"size:128"`       // ID de guía de envío
+	GuideLink           *string    `gorm:"size:512"`       // Link de guía
+	DeliveryDate        *time.Time `gorm:"index"`          // Fecha de entrega programada
+	DeliveredAt         *time.Time // Fecha de entrega real
+	DeliveryProbability *float64   `gorm:"type:decimal(5,2)"` // Probabilidad de entrega (1-100)
 
 	// ============================================
 	// INFORMACIÓN DE FULFILLMENT
