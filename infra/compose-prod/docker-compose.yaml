@@ -35,7 +35,7 @@ services:
           memory: 128M
 
   central_reserve:
-    image: public.ecr.aws/d3a6d4r1/cam/reserve:backend-latest
+    image: public.ecr.aws/d3a6d4r1/cam/probability-back-central:backend-latest
     container_name: central_reserve_prod
     ports:
       - "3050:3050"
@@ -71,6 +71,9 @@ services:
       - app-network
     depends_on:
       - postgres
+      - redis
+      - minio
+      - rabbitmq
     logging:
       driver: "json-file"
       options:
@@ -113,6 +116,68 @@ services:
           memory: 1G
         reservations:
           memory: 512M
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: redis_prod
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # MinIO Object Storage (S3 compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: minio_prod
+    ports:
+      - "9000:9000"  # API endpoint
+      - "9001:9001"  # Console endpoint
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+
+  # RabbitMQ Message Queue
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq_prod
+    ports:
+      - "5672:5672"   # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: admin
+      RABBITMQ_DEFAULT_VHOST: /
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    restart: unless-stopped
 
   nginx:
     image: public.ecr.aws/d3a6d4r1/cam/reserve:nginx-latest
@@ -158,12 +223,16 @@ services:
           cpus: "0.25"
           memory: 128M
 
-  
-
 networks:
   app-network:
     driver: bridge
 
 volumes:
   postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  minio_data:
+    driver: local
+  rabbitmq_data:
     driver: local

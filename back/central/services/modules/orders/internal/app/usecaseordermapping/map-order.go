@@ -354,12 +354,13 @@ func mapOrderToResponse(order *domain.Order) *domain.OrderResponse {
 		PaidAt:          order.PaidAt,
 
 		// Información de envío/logística
-		TrackingNumber: order.TrackingNumber,
-		TrackingLink:   order.TrackingLink,
-		GuideID:        order.GuideID,
-		GuideLink:      order.GuideLink,
-		DeliveryDate:   order.DeliveryDate,
-		DeliveredAt:    order.DeliveredAt,
+		TrackingNumber:      order.TrackingNumber,
+		TrackingLink:        order.TrackingLink,
+		GuideID:             order.GuideID,
+		GuideLink:           order.GuideLink,
+		DeliveryDate:        order.DeliveryDate,
+		DeliveredAt:         order.DeliveredAt,
+		DeliveryProbability: order.DeliveryProbability,
 
 		// Información de fulfillment
 		WarehouseID:   order.WarehouseID,

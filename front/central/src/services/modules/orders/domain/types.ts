@@ -52,6 +52,7 @@ export interface Order {
     guide_link?: string;
     delivery_date?: string;
     delivered_at?: string;
+    delivery_probability?: number;
 
     // Información de fulfillment
     warehouse_id?: number;
