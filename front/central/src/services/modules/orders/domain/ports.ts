@@ -14,4 +14,5 @@ export interface IOrderRepository {
     createOrder(data: CreateOrderDTO): Promise<SingleResponse<Order>>;
     updateOrder(id: string, data: UpdateOrderDTO): Promise<SingleResponse<Order>>;
     deleteOrder(id: string): Promise<ActionResponse>;
+    getOrderRaw(id: string): Promise<SingleResponse<any>>;
 }

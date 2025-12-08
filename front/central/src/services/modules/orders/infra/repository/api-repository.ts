@@ -87,9 +87,13 @@ export class OrderApiRepository implements IOrderRepository {
         });
     }
 
-    async deleteOrder(id: string): Promise<ActionResponse> {
+    deleteOrder(id: string): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/orders/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    async getOrderRaw(id: string): Promise<SingleResponse<any>> {
+        return this.fetch<SingleResponse<any>>(`/orders/${id}/raw`);
     }
 }

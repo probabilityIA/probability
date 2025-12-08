@@ -11,12 +11,13 @@ import (
 
 // OrderScheduler programa la generación automática de órdenes cada 5 minutos
 type OrderScheduler struct {
-	useCases  *usecases.UseCases
-	logger    log.ILogger
-	config    *SchedulerConfig
-	ticker    *time.Ticker
-	stopChan  chan bool
-	isRunning bool
+	useCases      *usecases.UseCases
+	logger        log.ILogger
+	config        *SchedulerConfig
+	ticker        *time.Ticker
+	stopChan      chan bool
+	isRunning     bool
+	platformIndex int // Índice para rotar entre plataformas
 }
 
 // SchedulerConfig contiene la configuración para la generación automática
@@ -48,11 +49,12 @@ func NewOrderScheduler(uc *usecases.UseCases, logger log.ILogger, config *Schedu
 	}
 
 	return &OrderScheduler{
-		useCases:  uc,
-		logger:    logger,
-		config:    config,
-		stopChan:  make(chan bool),
-		isRunning: false,
+		useCases:      uc,
+		logger:        logger,
+		config:        config,
+		stopChan:      make(chan bool),
+		isRunning:     false,
+		platformIndex: 0,
 	}
 }
 
@@ -102,31 +104,49 @@ func (s *OrderScheduler) Stop() {
 }
 
 // generateOrders genera las órdenes según la configuración
+// Genera una orden de cada plataforma (Shopify, Meli, WooCommerce) en cada ciclo
 func (s *OrderScheduler) generateOrders(ctx context.Context) {
-	req := &domain.GenerateOrderRequest{
-		Count:           s.config.OrdersPerBatch,
-		IntegrationID:   s.config.IntegrationID,
-		BusinessID:      s.config.BusinessID,
-		Platform:        s.config.Platform,
-		Status:          s.config.Status,
-		IncludePayment:  s.config.IncludePayment,
-		IncludeShipment: s.config.IncludeShipment,
+	// Definir las tres plataformas con sus respectivos integration IDs
+	platforms := []struct {
+		Platform      string
+		IntegrationID uint
+	}{
+		{"shopify", 1},
+		{"meli", 5},
+		{"woocommerce", 6},
 	}
 
-	response, err := s.useCases.GenerateAndPublishOrders(ctx, req)
-	if err != nil {
-		s.logger.Error().
-			Err(err).
+	// Generar una orden de cada plataforma
+	for _, platform := range platforms {
+		req := &domain.GenerateOrderRequest{
+			Count:           1,
+			IntegrationID:   platform.IntegrationID,
+			BusinessID:      s.config.BusinessID,
+			Platform:        platform.Platform,
+			Status:          s.config.Status,
+			IncludePayment:  s.config.IncludePayment,
+			IncludeShipment: s.config.IncludeShipment,
+		}
+
+		response, err := s.useCases.GenerateAndPublishOrders(ctx, req)
+		if err != nil {
+			s.logger.Error().
+				Err(err).
+				Str("platform", platform.Platform).
+				Uint("integration_id", platform.IntegrationID).
+				Int("generated", response.Generated).
+				Int("published", response.Published).
+				Int("failed", response.Failed).
+				Msg("Error generating orders in scheduler")
+			continue
+		}
+
+		s.logger.Info().
+			Str("platform", platform.Platform).
+			Uint("integration_id", platform.IntegrationID).
 			Int("generated", response.Generated).
 			Int("published", response.Published).
 			Int("failed", response.Failed).
-			Msg("Error generating orders in scheduler")
-		return
+			Msg("Orders generated automatically by scheduler")
 	}
-
-	s.logger.Info().
-		Int("generated", response.Generated).
-		Int("published", response.Published).
-		Int("failed", response.Failed).
-		Msg("Orders generated automatically by scheduler")
 }

@@ -150,10 +150,11 @@ type Config struct {
 	DbLogLevel     string `env:"DB_LOG_LEVEL,required"`
 	PGSSLMODE      string `env:"PGSSLMODE,required"`
 	URLBaseSwagger string `env:"URL_BASE_SWAGGER,required"`
-	// S3Bucket       string `env:"S3_BUCKET,required"`
-	// S3Region       string `env:"S3_REGION,required"`
-	// S3AccessKey    string `env:"S3_KEY,required"`
-	// S3SecretKey    string `env:"S3_SECRET,required"`
+	S3Bucket       string `env:"S3_BUCKET,required"`
+	S3Region       string `env:"S3_REGION,required"`
+	S3AccessKey    string `env:"S3_KEY,required"`
+	S3SecretKey    string `env:"S3_SECRET,required"`
+	S3Endpoint     string `env:"S3_ENDPOINT"`
 
 	// SMTP/Email
 	SMTPHost        string `env:"SMTP_HOST"`
@@ -180,6 +181,8 @@ type Config struct {
 	RabbitMQUser  string `env:"RABBITMQ_USER,required"`
 	RabbitMQPass  string `env:"RABBITMQ_PASS,required"`
 	RabbitMQVHost string `env:"RABBITMQ_VHOST,required"`
+
+	RedisOrderEventsChannel string `env:"REDIS_ORDER_EVENTS_CHANNEL,required"`
 }
 
 func splitTag(tag string) []string {

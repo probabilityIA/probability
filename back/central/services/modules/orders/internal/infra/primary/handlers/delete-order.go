@@ -32,7 +32,7 @@ func (h *Handlers) DeleteOrder(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso
-	err := h.uc.DeleteOrder(c.Request.Context(), id)
+	err := h.orderCRUD.DeleteOrder(c.Request.Context(), id)
 	if err != nil {
 		if err.Error() == "order not found" {
 			c.JSON(http.StatusNotFound, gin.H{

@@ -7,7 +7,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { TokenStorage } from '@shared/config';
+import { TokenStorage } from '@/shared/config';
 
 interface BusinessColors {
   primary: string;
@@ -27,7 +27,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
+
     // También escuchar un evento custom para cambios locales
     window.addEventListener('businessChanged', handleStorageChange);
 
@@ -45,12 +45,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
  */
 function applyBusinessColors() {
   const colors = TokenStorage.getBusinessColors();
-  
+
   if (colors) {
-    document.documentElement.style.setProperty('--color-primary', colors.primary);
-    document.documentElement.style.setProperty('--color-secondary', colors.secondary);
-    document.documentElement.style.setProperty('--color-tertiary', colors.tertiary);
-    document.documentElement.style.setProperty('--color-quaternary', colors.quaternary);
+    document.documentElement.style.setProperty('--color-primary', colors.primary || '');
+    document.documentElement.style.setProperty('--color-secondary', colors.secondary || '');
+    document.documentElement.style.setProperty('--color-tertiary', colors.tertiary || '');
+    document.documentElement.style.setProperty('--color-quaternary', colors.quaternary || '');
   }
 }
 
@@ -61,19 +61,26 @@ export function useTheme() {
   const setColors = (colors: BusinessColors) => {
     // Guardar en localStorage
     TokenStorage.setBusinessColors(colors);
-    
+
     // Aplicar inmediatamente
     document.documentElement.style.setProperty('--color-primary', colors.primary);
     document.documentElement.style.setProperty('--color-secondary', colors.secondary);
     document.documentElement.style.setProperty('--color-tertiary', colors.tertiary);
     document.documentElement.style.setProperty('--color-quaternary', colors.quaternary);
-    
+
     // Disparar evento para otros componentes
     window.dispatchEvent(new Event('businessChanged'));
   };
 
   const getColors = (): BusinessColors | null => {
-    return TokenStorage.getBusinessColors();
+    const colors = TokenStorage.getBusinessColors();
+    if (!colors) return null;
+    return {
+      primary: colors.primary || '',
+      secondary: colors.secondary || '',
+      tertiary: colors.tertiary || '',
+      quaternary: colors.quaternary || '',
+    };
   };
 
   return {

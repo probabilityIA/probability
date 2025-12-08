@@ -36,18 +36,14 @@ func New(router *gin.RouterGroup, logger log.ILogger, rabbitMQ rabbitmq.IQueue) 
 	// 5. Register Routes
 	h.RegisterRoutes(router)
 
-	// 6. Init and Start Scheduler (genera órdenes cada 5 minutos automáticamente)
-	// IMPORTANTE: Requisitos para que funcione correctamente:
-	// - BusinessID: 7 debe existir en la tabla businesses
-	// - IntegrationID: 1 debe existir en la tabla integrations y estar relacionado con BusinessID: 7
-	// - PaymentMethodID: 1-5 deben existir en la tabla payment_methods (usados por FakePaymentMethods)
-	businessID := uint(7) // Business ID existente
+	// 6. Init and Start Scheduler (genera órdenes cada 30 segundos de las tres plataformas)
+	businessID := uint(7)
 	schedulerConfig := &worker.SchedulerConfig{
-		Interval:        5 * time.Minute,
+		Interval:        30 * time.Second,
 		OrdersPerBatch:  1,
-		IntegrationID:   1,           // Debe existir y estar relacionado con BusinessID: 7
-		BusinessID:      &businessID, // Business ID: 7
-		Platform:        "test",
+		IntegrationID:   1, // Se ignorará, se usa por plataforma
+		BusinessID:      &businessID,
+		Platform:        "", // Se rotará entre las tres plataformas
 		Status:          "pending",
 		IncludePayment:  true,
 		IncludeShipment: true,

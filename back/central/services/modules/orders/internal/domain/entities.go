@@ -292,13 +292,39 @@ type OrderResponse struct {
 	ImportedAt time.Time `json:"imported_at"`
 }
 
+// OrderSummary representa un resumen de la orden para listados
+type OrderSummary struct {
+	ID              string    `json:"id"`
+	CreatedAt       time.Time `json:"created_at"`
+	BusinessID      uint      `json:"business_id"`
+	IntegrationID   uint      `json:"integration_id"`
+	IntegrationType string    `json:"integration_type"`
+	Platform        string    `json:"platform"`
+	ExternalID      string    `json:"external_id"`
+	OrderNumber     string    `json:"order_number"`
+	TotalAmount     float64   `json:"total_amount"`
+	Currency        string    `json:"currency"`
+	CustomerName    string    `json:"customer_name"`
+	CustomerEmail   string    `json:"customer_email"`
+	Status          string    `json:"status"`
+	PaymentStatus   string    `json:"payment_status"` // derived from IsPaid
+	ItemsCount      int       `json:"items_count"`    // derived from len(Items)
+}
+
+// OrderRawResponse representa la respuesta con los datos crudos
+type OrderRawResponse struct {
+	OrderID       string         `json:"order_id"`
+	ChannelSource string         `json:"channel_source"`
+	RawData       datatypes.JSON `json:"raw_data"`
+}
+
 // OrdersListResponse representa la respuesta paginada de órdenes
 type OrdersListResponse struct {
-	Data       []OrderResponse `json:"data"`
-	Total      int64           `json:"total"`
-	Page       int             `json:"page"`
-	PageSize   int             `json:"page_size"`
-	TotalPages int             `json:"total_pages"`
+	Data       []OrderSummary `json:"data"`
+	Total      int64          `json:"total"`
+	Page       int            `json:"page"`
+	PageSize   int            `json:"page_size"`
+	TotalPages int            `json:"total_pages"`
 }
 
 // ───────────────────────────────────────────

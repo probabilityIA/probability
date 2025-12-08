@@ -34,7 +34,7 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso
-	order, err := h.uc.CreateOrder(c.Request.Context(), &req)
+	order, err := h.orderCRUD.CreateOrder(c.Request.Context(), &req)
 	if err != nil {
 		// Verificar si es un error de duplicado
 		if err.Error() == "order with this external_id already exists for this integration" {

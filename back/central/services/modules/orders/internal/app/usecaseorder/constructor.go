@@ -6,12 +6,14 @@ import (
 
 // UseCaseOrder contiene los casos de uso CRUD básicos de órdenes
 type UseCaseOrder struct {
-	repo domain.IRepository
+	repo           domain.IRepository
+	eventPublisher domain.IOrderEventPublisher
 }
 
 // New crea una nueva instancia de UseCaseOrder
-func New(repo domain.IRepository) *UseCaseOrder {
+func New(repo domain.IRepository, eventPublisher domain.IOrderEventPublisher) *UseCaseOrder {
 	return &UseCaseOrder{
-		repo: repo,
+		repo:           repo,
+		eventPublisher: eventPublisher,
 	}
 }

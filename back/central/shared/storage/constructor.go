@@ -5,12 +5,24 @@ import (
 	"io"
 	"mime/multipart"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
+
+// maskString oculta parte de una cadena para logging seguro
+func maskString(s string) string {
+	if s == "" {
+		return "<empty>"
+	}
+	if len(s) <= 4 {
+		return "****"
+	}
+	return s[:2] + "****" + s[len(s)-2:]
+}
 
 // Tipos de archivo permitidos para imágenes
 var allowedImageTypes = map[string]bool{
@@ -51,6 +63,23 @@ func New(env env.IConfig, logger log.ILogger) IS3Service {
 	s3Region := env.Get("S3_REGION")
 	s3Bucket := env.Get("S3_BUCKET")
 
+	// Debug: verificar qué valores se están leyendo
+	logger.Debug(context.Background()).
+		Str("s3_key", maskString(s3Key)).
+		Str("s3_secret", maskString(s3Secret)).
+		Str("s3_region", s3Region).
+		Str("s3_bucket", s3Bucket).
+		Msg("S3 configuration loaded")
+
+	// Validar que las credenciales no estén vacías
+	if s3Key == "" || s3Secret == "" {
+		logger.Fatal(context.Background()).
+			Bool("has_key", s3Key != "").
+			Bool("has_secret", s3Secret != "").
+			Msg("❌ S3 credentials are empty - check S3_KEY and S3_SECRET environment variables")
+		panic("S3 credentials are empty")
+	}
+
 	// Intentar conectar a S3
 	awsCfg, err := config.LoadDefaultConfig(context.Background(),
 		config.WithCredentialsProvider(credentials.NewStaticCredentialsProvider(s3Key, s3Secret, "")),
@@ -62,8 +91,18 @@ func New(env env.IConfig, logger log.ILogger) IS3Service {
 		panic("Error conectando a S3: " + err.Error())
 	}
 
+	// Configurar endpoint personalizado si está disponible (útil para MinIO en desarrollo)
+	// Si S3_ENDPOINT está vacío, usa AWS S3 estándar (producción)
+	s3Endpoint := env.Get("S3_ENDPOINT")
+
 	s3Client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
 		o.Region = s3Region
+		// Si hay endpoint personalizado (MinIO), configurarlo
+		if s3Endpoint != "" {
+			o.BaseEndpoint = aws.String(s3Endpoint)
+			o.UsePathStyle = true // Necesario para MinIO y S3-compatibles
+		}
+		// Si no hay endpoint, usa AWS S3 estándar (producción)
 	})
 
 	// Probar la conexión

@@ -10,8 +10,61 @@ import (
 )
 
 // GenerateRandomOrder genera una orden canónica aleatoria
+// Si la plataforma es "shopify", genera primero el JSON de Shopify y luego lo mapea
 func (g *OrderGenerator) GenerateRandomOrder(req *domain.GenerateOrderRequest) *domain.CanonicalOrderDTO {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
+
+	// Si es Shopify, generar JSON de Shopify y mapearlo
+	if req.Platform == "shopify" {
+		shopifyJSON, err := g.GenerateShopifyOrderJSON(r)
+		if err != nil {
+			// Si falla, usar el método genérico
+			return g.generateGenericOrder(req, r)
+		}
+		canonicalOrder, err := g.MapShopifyJSONToCanonical(shopifyJSON, req.IntegrationID, req.BusinessID)
+		if err != nil {
+			// Si falla el mapeo, usar el método genérico
+			return g.generateGenericOrder(req, r)
+		}
+		return canonicalOrder
+	}
+
+	// Si es Mercado Libre, generar JSON de Meli y mapearlo
+	if req.Platform == "meli" || req.Platform == "mercado_libre" {
+		meliJSON, err := g.GenerateMeliOrderJSON(r)
+		if err != nil {
+			// Si falla, usar el método genérico
+			return g.generateGenericOrder(req, r)
+		}
+		canonicalOrder, err := g.MapMeliJSONToCanonical(meliJSON, req.IntegrationID, req.BusinessID)
+		if err != nil {
+			// Si falla el mapeo, usar el método genérico
+			return g.generateGenericOrder(req, r)
+		}
+		return canonicalOrder
+	}
+
+	// Si es WooCommerce, generar JSON de WooCommerce y mapearlo
+	if req.Platform == "woocommerce" || req.Platform == "woo" {
+		wooJSON, err := g.GenerateWooCommerceOrderJSON(r)
+		if err != nil {
+			// Si falla, usar el método genérico
+			return g.generateGenericOrder(req, r)
+		}
+		canonicalOrder, err := g.MapWooCommerceJSONToCanonical(wooJSON, req.IntegrationID, req.BusinessID)
+		if err != nil {
+			// Si falla el mapeo, usar el método genérico
+			return g.generateGenericOrder(req, r)
+		}
+		return canonicalOrder
+	}
+
+	// Para otras plataformas, usar el método genérico
+	return g.generateGenericOrder(req, r)
+}
+
+// generateGenericOrder genera una orden canónica genérica (método original)
+func (g *OrderGenerator) generateGenericOrder(req *domain.GenerateOrderRequest, r *rand.Rand) *domain.CanonicalOrderDTO {
 
 	// Seleccionar cliente aleatorio
 	customer := domain.FakeCustomers[r.Intn(len(domain.FakeCustomers))]

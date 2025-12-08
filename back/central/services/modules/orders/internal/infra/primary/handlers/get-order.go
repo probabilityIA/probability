@@ -32,7 +32,7 @@ func (h *Handlers) GetOrderByID(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso
-	order, err := h.uc.GetOrderByID(c.Request.Context(), id)
+	order, err := h.orderCRUD.GetOrderByID(c.Request.Context(), id)
 	if err != nil {
 		if err.Error() == "order not found" {
 			c.JSON(http.StatusNotFound, gin.H{

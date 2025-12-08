@@ -27,4 +27,8 @@ export class OrderUseCases {
     async deleteOrder(id: string) {
         return this.repository.deleteOrder(id);
     }
+
+    async getOrderRaw(id: string) {
+        return this.repository.getOrderRaw(id);
+    }
 }

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
@@ -24,12 +25,18 @@ func New(database db.IDatabase) domain.IRepository {
 }
 
 // CreateOrder crea una nueva orden en la base de datos
-func (r *Repository) CreateOrder(ctx context.Context, order *models.Order) error {
-	return r.db.Conn(ctx).Create(order).Error
+func (r *Repository) CreateOrder(ctx context.Context, order *domain.Order) error {
+	dbOrder := mappers.ToDBOrder(order)
+	if err := r.db.Conn(ctx).Create(dbOrder).Error; err != nil {
+		return err
+	}
+	// Actualizar el ID del modelo de dominio con el ID generado
+	order.ID = dbOrder.ID
+	return nil
 }
 
 // GetOrderByID obtiene una orden por su ID
-func (r *Repository) GetOrderByID(ctx context.Context, id string) (*models.Order, error) {
+func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Order, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
@@ -45,11 +52,11 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*models.Order
 		return nil, err
 	}
 
-	return &order, nil
+	return mappers.ToDomainOrder(&order), nil
 }
 
 // GetOrderByInternalNumber obtiene una orden por su número interno
-func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*models.Order, error) {
+func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*domain.Order, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
@@ -65,38 +72,17 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		return nil, err
 	}
 
-	return &order, nil
+	return mappers.ToDomainOrder(&order), nil
 }
 
 // ListOrders obtiene una lista paginada de órdenes con filtros
-func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]models.Order, int64, error) {
-	var orders []models.Order
+func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.Order, int64, error) {
+	var dbOrders []models.Order
 	var total int64
 
-	// Construir query base
 	query := r.db.Conn(ctx).Model(&models.Order{})
 
 	// Aplicar filtros
-	if businessID, ok := filters["business_id"].(uint); ok && businessID > 0 {
-		query = query.Where("business_id = ?", businessID)
-	}
-
-	if integrationID, ok := filters["integration_id"].(uint); ok && integrationID > 0 {
-		query = query.Where("integration_id = ?", integrationID)
-	}
-
-	if integrationType, ok := filters["integration_type"].(string); ok && integrationType != "" {
-		query = query.Where("integration_type = ?", integrationType)
-	}
-
-	if status, ok := filters["status"].(string); ok && status != "" {
-		query = query.Where("status = ?", status)
-	}
-
-	if customerEmail, ok := filters["customer_email"].(string); ok && customerEmail != "" {
-		query = query.Where("customer_email ILIKE ?", "%"+customerEmail+"%")
-	}
-
 	if customerPhone, ok := filters["customer_phone"].(string); ok && customerPhone != "" {
 		query = query.Where("customer_phone ILIKE ?", "%"+customerPhone+"%")
 	}
@@ -147,23 +133,39 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	// Aplicar paginación
 	offset := (page - 1) * pageSize
 	query = query.Offset(offset).Limit(pageSize)
-
 	// Precargar relaciones
 	query = query.Preload("Business").
 		Preload("Integration").
 		Preload("PaymentMethod")
 
-	// Ejecutar query
-	if err := query.Find(&orders).Error; err != nil {
+	// Paginación
+	offset = (page - 1) * pageSize
+	if err := query.Offset(offset).Limit(pageSize).Find(&dbOrders).Error; err != nil {
 		return nil, 0, err
+	}
+
+	// Mapear a dominio
+	orders := make([]domain.Order, len(dbOrders))
+	for i, dbOrder := range dbOrders {
+		orders[i] = *mappers.ToDomainOrder(&dbOrder)
 	}
 
 	return orders, total, nil
 }
 
+// GetOrderRaw obtiene los metadatos crudos de una orden
+func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*domain.OrderChannelMetadata, error) {
+	var dbMetadata models.OrderChannelMetadata
+	if err := r.db.Conn(ctx).Where("order_id = ?", id).First(&dbMetadata).Error; err != nil {
+		return nil, err
+	}
+	return mappers.ToDomainChannelMetadata(&dbMetadata), nil
+}
+
 // UpdateOrder actualiza una orden existente
-func (r *Repository) UpdateOrder(ctx context.Context, order *models.Order) error {
-	return r.db.Conn(ctx).Save(order).Error
+func (r *Repository) UpdateOrder(ctx context.Context, order *domain.Order) error {
+	dbOrder := mappers.ToDBOrder(order)
+	return r.db.Conn(ctx).Save(dbOrder).Error
 }
 
 // DeleteOrder elimina (soft delete) una orden
@@ -193,41 +195,255 @@ func (r *Repository) OrderExists(ctx context.Context, externalID string, integra
 // ───────────────────────────────────────────
 
 // CreateOrderItems crea múltiples items de orden
-func (r *Repository) CreateOrderItems(ctx context.Context, items []*models.OrderItem) error {
+func (r *Repository) CreateOrderItems(ctx context.Context, items []*domain.OrderItem) error {
 	if len(items) == 0 {
 		return nil
 	}
-	return r.db.Conn(ctx).CreateInBatches(items, 100).Error
+
+	// Convertir []*domain.OrderItem a []domain.OrderItem para el mapper
+	// (El mapper espera slice de valores, no punteros, o debería ajustarlo)
+	// Ajustaré la lógica aquí para ser eficiente
+
+	dbItems := make([]*models.OrderItem, len(items))
+	for i, item := range items {
+		// Reutilizar lógica del mapper pero para un solo item si es necesario,
+		// o crear un helper. Pero el mapper tiene ToDBOrderItems([]domain.OrderItem).
+		// Aquí recibimos []*domain.OrderItem.
+
+		// Manual conversion for single item to avoid dereferencing loop
+		dbItem := &models.OrderItem{
+			Model: gorm.Model{
+				ID:        item.ID,
+				CreatedAt: item.CreatedAt,
+				UpdatedAt: item.UpdatedAt,
+				DeletedAt: gorm.DeletedAt{},
+			},
+			OrderID:           item.OrderID,
+			ProductID:         item.ProductID,
+			ProductSKU:        item.ProductSKU,
+			ProductName:       item.ProductName,
+			ProductTitle:      item.ProductTitle,
+			VariantID:         item.VariantID,
+			Quantity:          item.Quantity,
+			UnitPrice:         item.UnitPrice,
+			TotalPrice:        item.TotalPrice,
+			Currency:          item.Currency,
+			Discount:          item.Discount,
+			Tax:               item.Tax,
+			TaxRate:           item.TaxRate,
+			ImageURL:          item.ImageURL,
+			ProductURL:        item.ProductURL,
+			Weight:            item.Weight,
+			RequiresShipping:  item.RequiresShipping,
+			IsGiftCard:        item.IsGiftCard,
+			FulfillmentStatus: item.FulfillmentStatus,
+			Metadata:          item.Metadata,
+		}
+		if item.DeletedAt != nil {
+			dbItem.DeletedAt = gorm.DeletedAt{Time: *item.DeletedAt, Valid: true}
+		}
+		dbItems[i] = dbItem
+	}
+
+	return r.db.Conn(ctx).CreateInBatches(dbItems, 100).Error
 }
 
 // CreateAddresses crea múltiples direcciones
-func (r *Repository) CreateAddresses(ctx context.Context, addresses []*models.Address) error {
+func (r *Repository) CreateAddresses(ctx context.Context, addresses []*domain.Address) error {
 	if len(addresses) == 0 {
 		return nil
 	}
-	return r.db.Conn(ctx).CreateInBatches(addresses, 100).Error
+
+	dbAddresses := make([]*models.Address, len(addresses))
+	for i, addr := range addresses {
+		dbAddr := &models.Address{
+			Model: gorm.Model{
+				ID:        addr.ID,
+				CreatedAt: addr.CreatedAt,
+				UpdatedAt: addr.UpdatedAt,
+				DeletedAt: gorm.DeletedAt{},
+			},
+			Type:         addr.Type,
+			OrderID:      addr.OrderID,
+			FirstName:    addr.FirstName,
+			LastName:     addr.LastName,
+			Company:      addr.Company,
+			Phone:        addr.Phone,
+			Street:       addr.Street,
+			Street2:      addr.Street2,
+			City:         addr.City,
+			State:        addr.State,
+			Country:      addr.Country,
+			PostalCode:   addr.PostalCode,
+			Latitude:     addr.Latitude,
+			Longitude:    addr.Longitude,
+			Instructions: addr.Instructions,
+			IsDefault:    addr.IsDefault,
+			Metadata:     addr.Metadata,
+		}
+		if addr.DeletedAt != nil {
+			dbAddr.DeletedAt = gorm.DeletedAt{Time: *addr.DeletedAt, Valid: true}
+		}
+		dbAddresses[i] = dbAddr
+	}
+
+	return r.db.Conn(ctx).CreateInBatches(dbAddresses, 100).Error
 }
 
 // CreatePayments crea múltiples pagos
-func (r *Repository) CreatePayments(ctx context.Context, payments []*models.Payment) error {
+func (r *Repository) CreatePayments(ctx context.Context, payments []*domain.Payment) error {
 	if len(payments) == 0 {
 		return nil
 	}
-	return r.db.Conn(ctx).CreateInBatches(payments, 100).Error
+
+	dbPayments := make([]*models.Payment, len(payments))
+	for i, p := range payments {
+		dbPay := &models.Payment{
+			Model: gorm.Model{
+				ID:        p.ID,
+				CreatedAt: p.CreatedAt,
+				UpdatedAt: p.UpdatedAt,
+				DeletedAt: gorm.DeletedAt{},
+			},
+			OrderID:          p.OrderID,
+			PaymentMethodID:  p.PaymentMethodID,
+			Amount:           p.Amount,
+			Currency:         p.Currency,
+			ExchangeRate:     p.ExchangeRate,
+			Status:           p.Status,
+			PaidAt:           p.PaidAt,
+			ProcessedAt:      p.ProcessedAt,
+			TransactionID:    p.TransactionID,
+			PaymentReference: p.PaymentReference,
+			Gateway:          p.Gateway,
+			RefundAmount:     p.RefundAmount,
+			RefundedAt:       p.RefundedAt,
+			FailureReason:    p.FailureReason,
+			Metadata:         p.Metadata,
+		}
+		if p.DeletedAt != nil {
+			dbPay.DeletedAt = gorm.DeletedAt{Time: *p.DeletedAt, Valid: true}
+		}
+		dbPayments[i] = dbPay
+	}
+
+	return r.db.Conn(ctx).CreateInBatches(dbPayments, 100).Error
 }
 
 // CreateShipments crea múltiples envíos
-func (r *Repository) CreateShipments(ctx context.Context, shipments []*models.Shipment) error {
+func (r *Repository) CreateShipments(ctx context.Context, shipments []*domain.Shipment) error {
 	if len(shipments) == 0 {
 		return nil
 	}
-	return r.db.Conn(ctx).CreateInBatches(shipments, 100).Error
+
+	dbShipments := make([]*models.Shipment, len(shipments))
+	for i, s := range shipments {
+		dbShip := &models.Shipment{
+			Model: gorm.Model{
+				ID:        s.ID,
+				CreatedAt: s.CreatedAt,
+				UpdatedAt: s.UpdatedAt,
+				DeletedAt: gorm.DeletedAt{},
+			},
+			OrderID:           s.OrderID,
+			TrackingNumber:    s.TrackingNumber,
+			TrackingURL:       s.TrackingURL,
+			Carrier:           s.Carrier,
+			CarrierCode:       s.CarrierCode,
+			GuideID:           s.GuideID,
+			GuideURL:          s.GuideURL,
+			Status:            s.Status,
+			ShippedAt:         s.ShippedAt,
+			DeliveredAt:       s.DeliveredAt,
+			ShippingAddressID: s.ShippingAddressID,
+			ShippingCost:      s.ShippingCost,
+			InsuranceCost:     s.InsuranceCost,
+			TotalCost:         s.TotalCost,
+			Weight:            s.Weight,
+			Height:            s.Height,
+			Width:             s.Width,
+			Length:            s.Length,
+			WarehouseID:       s.WarehouseID,
+			WarehouseName:     s.WarehouseName,
+			DriverID:          s.DriverID,
+			DriverName:        s.DriverName,
+			IsLastMile:        s.IsLastMile,
+			EstimatedDelivery: s.EstimatedDelivery,
+			DeliveryNotes:     s.DeliveryNotes,
+			Metadata:          s.Metadata,
+		}
+		if s.DeletedAt != nil {
+			dbShip.DeletedAt = gorm.DeletedAt{Time: *s.DeletedAt, Valid: true}
+		}
+		dbShipments[i] = dbShip
+	}
+
+	return r.db.Conn(ctx).CreateInBatches(dbShipments, 100).Error
 }
 
 // CreateChannelMetadata crea metadata del canal
-func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *models.OrderChannelMetadata) error {
+func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *domain.OrderChannelMetadata) error {
 	if metadata == nil {
 		return nil
 	}
-	return r.db.Conn(ctx).Create(metadata).Error
+	dbMetadata := mappers.ToDBChannelMetadata(metadata)
+	return r.db.Conn(ctx).Create(dbMetadata).Error
+}
+
+// ───────────────────────────────────────────
+//
+//	MÉTODOS DE CATÁLOGO (VALIDACIÓN)
+//
+// ───────────────────────────────────────────
+
+// GetProductBySKU busca un producto por SKU y BusinessID
+func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*domain.Product, error) {
+	var product models.Product
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND sku = ?", businessID, sku).
+		First(&product).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // Retornar nil si no existe, no error
+		}
+		return nil, err
+	}
+	return mappers.ToDomainProduct(&product), nil
+}
+
+// CreateProduct crea un nuevo producto
+func (r *Repository) CreateProduct(ctx context.Context, product *domain.Product) error {
+	dbProduct := mappers.ToDBProduct(product)
+	if err := r.db.Conn(ctx).Create(dbProduct).Error; err != nil {
+		return err
+	}
+	product.ID = dbProduct.ID
+	return nil
+}
+
+// GetClientByEmail busca un cliente por Email y BusinessID
+func (r *Repository) GetClientByEmail(ctx context.Context, businessID uint, email string) (*domain.Client, error) {
+	var client models.Client
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND email = ?", businessID, email).
+		First(&client).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // Retornar nil si no existe
+		}
+		return nil, err
+	}
+	return mappers.ToDomainClient(&client), nil
+}
+
+// CreateClient crea un nuevo cliente
+func (r *Repository) CreateClient(ctx context.Context, client *domain.Client) error {
+	dbClient := mappers.ToDBClient(client)
+	if err := r.db.Conn(ctx).Create(dbClient).Error; err != nil {
+		return err
+	}
+	client.ID = dbClient.ID
+	return nil
 }

@@ -109,7 +109,7 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso
-	response, err := h.uc.ListOrders(c.Request.Context(), page, pageSize, filters)
+	response, err := h.orderCRUD.ListOrders(c.Request.Context(), page, pageSize, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,

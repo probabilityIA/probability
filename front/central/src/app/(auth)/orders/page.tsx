@@ -38,12 +38,13 @@ export default function OrdersPage() {
     };
 
     return (
-        <div className="w-full px-6 py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Órdenes</h1>
+        <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Órdenes</h1>
                 <Button
                     variant="primary"
                     onClick={() => setShowCreateModal(true)}
+                    className="w-full sm:w-auto"
                 >
                     + Crear Orden
                 </Button>

@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction } from '../../infra/actions';
 import { Integration, IntegrationType } from '../../domain/types';
 import { Alert } from '@/shared/ui';
-import ShopifyIntegrationForm from './ShopifyIntegrationForm';
-import WhatsAppIntegrationView from './WhatsAppIntegrationView';
+import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
+import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
 import DynamicIntegrationForm from './DynamicIntegrationForm';
 
 interface IntegrationFormProps {

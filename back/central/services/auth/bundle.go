@@ -12,12 +12,13 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // New inicializa todos los módulos de autenticación y autorización
 // Este bundle coordina la inicialización de todos los submódulos de auth
 // (login, permissions, roles, users, business, actions, resources)
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, s3Service storage.IS3Service) {
 	// Inicializar módulo de login
 	login.New(router, database, logger, environment)
 
@@ -27,11 +28,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de roles
 	roles.New(router, database, logger)
 
-	// Inicializar módulo de users (s3Service se pasa como nil por ahora)
-	users.New(router, database, logger, environment, nil)
+	// Inicializar módulo de users
+	users.New(router, database, logger, environment, s3Service)
 
-	// Inicializar módulo de business (s3Service se pasa como nil por ahora)
-	business.New(router, database, logger, environment, nil)
+	// Inicializar módulo de business
+	business.New(router, database, logger, environment, s3Service)
 
 	// Inicializar módulo de actions
 	actions.New(database, logger, router)

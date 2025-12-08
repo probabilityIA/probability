@@ -25,7 +25,7 @@ export default function OrderStatusMappingDetails({ mapping }: OrderStatusMappin
                 <h3 className="text-lg font-semibold text-gray-900">
                     Detalles del Mapping
                 </h3>
-                <Badge variant={mapping.is_active ? 'success' : 'secondary'}>
+                <Badge type={mapping.is_active ? 'success' : 'secondary'}>
                     {mapping.is_active ? 'Activo' : 'Inactivo'}
                 </Badge>
             </div>

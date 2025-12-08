@@ -7,23 +7,40 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
-	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
 // MapAndSaveOrder recibe una orden en formato canónico y la guarda en todas las tablas relacionadas
 // Este es el punto de entrada principal para todas las integraciones después de mapear sus datos
 func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.CanonicalOrderDTO) (*domain.OrderResponse, error) {
+	// 0. Validar datos obligatorios de integración
+	if dto.IntegrationID == 0 {
+		return nil, errors.New("integration_id is required")
+	}
+	if dto.BusinessID == nil || *dto.BusinessID == 0 {
+		return nil, errors.New("business_id is required")
+	}
+
 	// 1. Validar que no exista una orden con el mismo external_id para la misma integración
 	exists, err := uc.repo.OrderExists(ctx, dto.ExternalID, dto.IntegrationID)
 	if err != nil {
 		return nil, fmt.Errorf("error checking if order exists: %w", err)
 	}
 	if exists {
-		return nil, errors.New("order with this external_id already exists for this integration")
+		return nil, domain.ErrOrderAlreadyExists
 	}
 
-	// 2. Crear el modelo de orden principal
-	order := &models.Order{
+	// 1.5. Validar/Crear Cliente
+	client, err := uc.GetOrCreateCustomer(ctx, *dto.BusinessID, dto)
+	if err != nil {
+		return nil, fmt.Errorf("error processing customer: %w", err)
+	}
+	var clientID *uint
+	if client != nil {
+		clientID = &client.ID
+	}
+
+	// 2. Crear la entidad de dominio Order
+	order := &domain.Order{
 		// Identificadores de integración
 		BusinessID:      dto.BusinessID,
 		IntegrationID:   dto.IntegrationID,
@@ -44,8 +61,8 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		Currency:     dto.Currency,
 		CodTotal:     dto.CodTotal,
 
-		// Información del cliente (desnormalizado para compatibilidad)
-		CustomerID:    dto.CustomerID,
+		// Información del cliente
+		CustomerID:    clientID, // Usar el ID del cliente validado/creado
 		CustomerName:  dto.CustomerName,
 		CustomerEmail: dto.CustomerEmail,
 		CustomerPhone: dto.CustomerPhone,
@@ -70,7 +87,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		InvoiceID:       dto.InvoiceID,
 		InvoiceProvider: dto.InvoiceProvider,
 
-		// Datos estructurados (JSONB) - Para compatibilidad
+		// Datos estructurados (JSONB)
 		Items:              dto.Items,
 		Metadata:           dto.Metadata,
 		FinancialDetails:   dto.FinancialDetails,
@@ -83,29 +100,32 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		ImportedAt: dto.ImportedAt,
 	}
 
-	// 2.1. Asignar PaymentMethodID desde el primer pago (si existe y es válido)
-	// El modelo Order requiere PaymentMethodID (not null), así que lo tomamos del primer pago
-	// Si no hay pagos o el PaymentMethodID es 0, usamos un valor por defecto
-	order.PaymentMethodID = 1 // Valor por defecto (debe existir en payment_methods)
+	// 2.1. Asignar PaymentMethodID desde el primer pago
+	order.PaymentMethodID = 1 // Valor por defecto
 	if len(dto.Payments) > 0 && dto.Payments[0].PaymentMethodID > 0 {
 		order.PaymentMethodID = dto.Payments[0].PaymentMethodID
-		// También establecer IsPaid y PaidAt si el pago está completado
 		if dto.Payments[0].Status == "completed" && dto.Payments[0].PaidAt != nil {
 			order.IsPaid = true
 			order.PaidAt = dto.Payments[0].PaidAt
 		}
 	}
 
-	// 3. Guardar la orden principal primero (para obtener el ID)
+	// 3. Guardar la orden principal
 	if err := uc.repo.CreateOrder(ctx, order); err != nil {
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
 
 	// 4. Guardar OrderItems
 	if len(dto.OrderItems) > 0 {
-		orderItems := make([]*models.OrderItem, len(dto.OrderItems))
+		orderItems := make([]*domain.OrderItem, len(dto.OrderItems))
 		for i, itemDTO := range dto.OrderItems {
-			orderItems[i] = &models.OrderItem{
+			// Validar/Crear Producto
+			_, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
+			if err != nil {
+				return nil, fmt.Errorf("error processing product for item %s: %w", itemDTO.ProductSKU, err)
+			}
+
+			orderItems[i] = &domain.OrderItem{
 				OrderID:          order.ID,
 				ProductID:        itemDTO.ProductID,
 				ProductSKU:       itemDTO.ProductSKU,
@@ -122,7 +142,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 				ImageURL:         itemDTO.ImageURL,
 				ProductURL:       itemDTO.ProductURL,
 				Weight:           itemDTO.Weight,
-				RequiresShipping: true, // Por defecto requiere envío
+				RequiresShipping: true,
 				IsGiftCard:       false,
 				Metadata:         itemDTO.Metadata,
 			}
@@ -134,9 +154,9 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 5. Guardar Addresses
 	if len(dto.Addresses) > 0 {
-		addresses := make([]*models.Address, len(dto.Addresses))
+		addresses := make([]*domain.Address, len(dto.Addresses))
 		for i, addrDTO := range dto.Addresses {
-			addresses[i] = &models.Address{
+			addresses[i] = &domain.Address{
 				Type:         addrDTO.Type,
 				OrderID:      order.ID,
 				FirstName:    addrDTO.FirstName,
@@ -163,9 +183,9 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 6. Guardar Payments
 	if len(dto.Payments) > 0 {
-		payments := make([]*models.Payment, len(dto.Payments))
+		payments := make([]*domain.Payment, len(dto.Payments))
 		for i, payDTO := range dto.Payments {
-			payments[i] = &models.Payment{
+			payments[i] = &domain.Payment{
 				OrderID:          order.ID,
 				PaymentMethodID:  payDTO.PaymentMethodID,
 				Amount:           payDTO.Amount,
@@ -190,9 +210,9 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 7. Guardar Shipments
 	if len(dto.Shipments) > 0 {
-		shipments := make([]*models.Shipment, len(dto.Shipments))
+		shipments := make([]*domain.Shipment, len(dto.Shipments))
 		for i, shipDTO := range dto.Shipments {
-			shipments[i] = &models.Shipment{
+			shipments[i] = &domain.Shipment{
 				OrderID:           order.ID,
 				TrackingNumber:    shipDTO.TrackingNumber,
 				TrackingURL:       shipDTO.TrackingURL,
@@ -228,7 +248,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 8. Guardar ChannelMetadata (datos crudos)
 	if dto.ChannelMetadata != nil {
-		metadata := &models.OrderChannelMetadata{
+		metadata := &domain.OrderChannelMetadata{
 			OrderID:       order.ID,
 			ChannelSource: dto.ChannelMetadata.ChannelSource,
 			IntegrationID: dto.IntegrationID,
@@ -251,12 +271,41 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		}
 	}
 
-	// 9. Retornar la respuesta mapeada
+	// 9. Publicar evento de orden creada
+	if uc.eventPublisher != nil {
+		eventData := domain.OrderEventData{
+			OrderNumber:    order.OrderNumber,
+			InternalNumber: order.InternalNumber,
+			ExternalID:     order.ExternalID,
+			CurrentStatus:  order.Status,
+			CustomerEmail:  order.CustomerEmail,
+			TotalAmount:    &order.TotalAmount,
+			Currency:       order.Currency,
+			Platform:       order.Platform,
+		}
+		event := domain.NewOrderEvent(domain.OrderEventTypeCreated, order.ID, eventData)
+		event.BusinessID = order.BusinessID
+		if order.IntegrationID > 0 {
+			integrationID := order.IntegrationID
+			event.IntegrationID = &integrationID
+		}
+		// Publicar de forma asíncrona (no bloquear si falla)
+		go func() {
+			if err := uc.eventPublisher.PublishOrderEvent(ctx, event); err != nil {
+				uc.logger.Error(ctx).
+					Err(err).
+					Str("order_id", order.ID).
+					Msg("Error al publicar evento de orden creada")
+			}
+		}()
+	}
+
+	// 10. Retornar la respuesta mapeada
 	return mapOrderToResponse(order), nil
 }
 
 // mapOrderToResponse convierte un modelo Order a OrderResponse
-func mapOrderToResponse(order *models.Order) *domain.OrderResponse {
+func mapOrderToResponse(order *domain.Order) *domain.OrderResponse {
 	return &domain.OrderResponse{
 		ID:        order.ID,
 		CreatedAt: order.CreatedAt,

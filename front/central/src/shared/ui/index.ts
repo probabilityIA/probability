@@ -15,6 +15,8 @@ export * from './select';
 export * from './sidebar';
 export * from './spinner';
 export * from './table';
+export * from './iam-sidebar';
+export * from './orders-sidebar';
 
 // Re-exportar tipos útiles
 export type { TableColumn, PaginationProps } from './table';

@@ -14,6 +14,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 func Init(ctx context.Context) error {
@@ -21,20 +23,16 @@ func Init(ctx context.Context) error {
 	environment := env.New(logger)
 
 	database := db.New(logger, environment)
-	// s3 := storage.New(environment, logger)
 	_ = email.New(environment, logger)
 
-	// Initialize RabbitMQ (opcional - si falla, se registra warning y continúa)
-	var rabbitMQ rabbitmq.IQueue
-	rabbitMQInstance, err := rabbitmq.New(logger, environment)
-	if err != nil {
-		logger.Warn().
-			Err(err).
-			Msg("Failed to connect to RabbitMQ, queue features will not be available")
-	} else {
-		rabbitMQ = rabbitMQInstance
-		logger.Info().Msg("RabbitMQ connected successfully")
-	}
+	// Initialize S3
+	s3Service := storage.New(environment, logger)
+
+	// Initialize RabbitMQ
+	rabbitMQ, _ := rabbitmq.New(logger, environment)
+
+	// Initialize Redis
+	redisClient := redis.New(logger, environment)
 
 	middleware.InitFromEnv(environment, logger)
 	r := routes.BuildRouter(ctx, logger, environment)
@@ -45,13 +43,13 @@ func Init(ctx context.Context) error {
 	v1Group := r.Group("/api/v1")
 
 	// Initialize Auth Modules
-	auth.New(v1Group, database, logger, environment)
+	auth.New(v1Group, database, logger, environment, s3Service)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, etc.)
 	integrations.New(v1Group, database, logger, environment, rabbitMQ)
 
 	// Initialize Order Module
-	modules.New(v1Group, database, logger, environment, rabbitMQ)
+	modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
 
 	LogStartupInfo(ctx, logger, environment)
 

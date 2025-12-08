@@ -46,7 +46,7 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso
-	order, err := h.uc.UpdateOrder(c.Request.Context(), id, &req)
+	order, err := h.orderCRUD.UpdateOrder(c.Request.Context(), id, &req)
 	if err != nil {
 		if err.Error() == "order not found" {
 			c.JSON(http.StatusNotFound, gin.H{

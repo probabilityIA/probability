@@ -1,6 +1,6 @@
 /**
- * Layout para páginas autenticadas
- * Incluye el sidebar de navegación
+ * Layout para p?ginas autenticadas
+ * Incluye el sidebar de navegaci?n
  */
 
 'use client';
@@ -8,7 +8,10 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { TokenStorage } from '@/shared/config';
-import { Sidebar, Spinner } from '@/shared/ui';
+import { Spinner } from '@/shared/ui';
+import { ToastProvider } from '@/shared/providers/toast-provider';
+import { SidebarProvider } from '@/shared/contexts/sidebar-context';
+import LayoutContent from './layout-content';
 // import { BusinessSelector } from '@modules/auth/ui';
 
 export default function AuthLayout({
@@ -20,14 +23,13 @@ export default function AuthLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<{ userId: string; name: string; email: string; role: string; avatarUrl?: string; is_super_admin?: boolean; scope?: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [sidebarExpanded, setSidebarExpanded] = useState(false);
   const [showBusinessSelector, setShowBusinessSelector] = useState(false);
 
-  // Páginas que NO deben tener sidebar (login)
+  // P?ginas que NO deben tener sidebar (login)
   const isLoginPage = pathname === '/login';
 
   useEffect(() => {
-    // Verificar autenticación (solo si no es login)
+    // Verificar autenticaci?n (solo si no es login)
     if (!isLoginPage) {
       const sessionToken = TokenStorage.getSessionToken();
       const businessToken = TokenStorage.getBusinessToken();
@@ -45,14 +47,14 @@ export default function AuthLayout({
       const isBusinessUser = scope === 'business';
 
       // Si es super admin, no necesitamos generar token de negocio adicional
-      // El token de sesión ya tiene los permisos necesarios
+      // El token de sesi?n ya tiene los permisos necesarios
 
-      // Usuario business: validación básica
+      // Usuario business: validaci?n b?sica
       if (isBusinessUser && !isSuperAdmin) {
         // Verificar si tiene negocios asignados
         if (!businessesData || businessesData.length === 0) {
           // No tiene negocios, redirigir al login con mensaje
-          console.error('❌ Usuario business sin negocios asignados');
+          console.error('? Usuario business sin negocios asignados');
           TokenStorage.clearSession();
           router.push('/login?error=no_business');
           return;
@@ -76,7 +78,7 @@ export default function AuthLayout({
         <div className="min-h-screen flex items-center justify-center bg-gray-900 text-white">
           <div className="text-center">
             <h2 className="text-xl font-bold mb-4">Seleccionar Negocio</h2>
-            <p>El componente de selección de negocio está en migración.</p>
+            <p>El componente de selecci?n de negocio est? en migraci?n.</p>
             {/* 
             <BusinessSelector
               businesses={mappedBusinesses}
@@ -100,28 +102,20 @@ export default function AuthLayout({
     );
   }
 
-  // Si es la página de login, renderizar sin sidebar
+  // Si es la p?gina de login, renderizar sin sidebar
   if (isLoginPage) {
     return <>{children}</>;
   }
 
-  // Páginas autenticadas con sidebar
+  // P?ginas autenticadas con sidebar
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar user={user} />
-
-      {/* Contenido principal */}
-      <main
-        className="flex-1 transition-all duration-300"
-        style={{
-          marginLeft: sidebarExpanded ? '250px' : '80px'
-        }}
-        onMouseEnter={() => setSidebarExpanded(false)}
-      >
-        {children}
-      </main>
-    </div>
+    <ToastProvider>
+      <SidebarProvider>
+        <LayoutContent user={user}>
+          {children}
+        </LayoutContent>
+      </SidebarProvider>
+    </ToastProvider>
   );
 }
 

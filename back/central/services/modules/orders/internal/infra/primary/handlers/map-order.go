@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -34,10 +35,11 @@ func (h *Handlers) MapAndSaveOrder(c *gin.Context) {
 	}
 
 	// Llamar al caso de uso de mapeo
-	order, err := h.uc.OrderMapping.MapAndSaveOrder(c.Request.Context(), &req)
+	order, err := h.orderMapping.MapAndSaveOrder(c.Request.Context(), &req)
 	if err != nil {
 		// Verificar si es un error de duplicado
-		if err.Error() == "order with this external_id already exists for this integration" {
+		// Verificar si es un error de duplicado
+		if errors.Is(err, domain.ErrOrderAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{
 				"success": false,
 				"message": "Orden ya existe",

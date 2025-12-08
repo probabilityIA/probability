@@ -33,6 +33,21 @@ func (h *Handlers) GenerateOrders(c *gin.Context) {
 		return
 	}
 
+	// Forzar business_id=7 e integration_id según la plataforma
+	if req.Platform == "shopify" {
+		businessID := uint(7)
+		req.BusinessID = &businessID
+		req.IntegrationID = 1
+	} else if req.Platform == "meli" || req.Platform == "mercado_libre" {
+		businessID := uint(7)
+		req.BusinessID = &businessID
+		req.IntegrationID = 5
+	} else if req.Platform == "woocommerce" || req.Platform == "woo" {
+		businessID := uint(7)
+		req.BusinessID = &businessID
+		req.IntegrationID = 6
+	}
+
 	// Llamar al caso de uso
 	response, err := h.uc.GenerateAndPublishOrders(c.Request.Context(), &req)
 	if err != nil {

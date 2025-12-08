@@ -28,6 +28,7 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.BusinessType{},
 		&models.Scope{},
 		&models.Business{},
+		&models.BusinessNotificationConfig{},
 		&models.BusinessResourceConfigured{},
 		&models.Resource{},
 		&models.Role{},
@@ -47,10 +48,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.PaymentMethod{},
 		&models.PaymentMethodMapping{},
 		&models.OrderStatusMapping{},
+		&models.Product{},
 
 		// Orders
 		&models.Order{},
 		&models.OrderHistory{},
+		&models.OrderError{},
 
 		// Order Channel Metadata
 		&models.OrderChannelMetadata{},

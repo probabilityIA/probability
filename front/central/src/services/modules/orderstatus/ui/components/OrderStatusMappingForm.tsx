@@ -90,12 +90,13 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                         onChange={(e) => handleChange('integration_type', e.target.value)}
                         required
                         disabled={!!mapping}
-                    >
-                        <option value="">Seleccionar tipo</option>
-                        <option value="shopify">Shopify</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="woocommerce">WooCommerce</option>
-                    </Select>
+                        placeholder="Seleccionar tipo"
+                        options={[
+                            { value: 'shopify', label: 'Shopify' },
+                            { value: 'whatsapp', label: 'WhatsApp' },
+                            { value: 'woocommerce', label: 'WooCommerce' },
+                        ]}
+                    />
                 </div>
 
                 {/* Original Status */}

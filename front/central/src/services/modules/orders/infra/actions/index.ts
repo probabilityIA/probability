@@ -60,3 +60,12 @@ export const deleteOrderAction = async (id: string) => {
         throw new Error(error.message);
     }
 };
+
+export const getOrderRawAction = async (id: string) => {
+    try {
+        return await (await getUseCases()).getOrderRaw(id);
+    } catch (error: any) {
+        console.error('Get Order Raw Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};

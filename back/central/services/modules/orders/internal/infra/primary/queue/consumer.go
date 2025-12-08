@@ -3,6 +3,7 @@ package queue
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseordermapping"
@@ -103,6 +104,14 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 	// Llamar al caso de uso para mapear y guardar la orden
 	orderResponse, err := c.orderMappingUC.MapAndSaveOrder(ctx, &orderDTO)
 	if err != nil {
+		if errors.Is(err, domain.ErrOrderAlreadyExists) {
+			c.logger.Info().
+				Str("queue", OrdersCanonicalQueueName).
+				Str("external_id", orderDTO.ExternalID).
+				Msg("Order already exists, skipping")
+			return nil
+		}
+
 		c.logger.Error().
 			Err(err).
 			Str("queue", OrdersCanonicalQueueName).

@@ -183,7 +183,7 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <Badge variant={mapping.is_active ? 'success' : 'secondary'}>
+                                            <Badge type={mapping.is_active ? 'success' : 'secondary'}>
                                                 {mapping.is_active ? 'Activo' : 'Inactivo'}
                                             </Badge>
                                         </td>
