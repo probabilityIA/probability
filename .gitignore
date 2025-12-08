@@ -30,3 +30,8 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Compiled Binaries
+back/central/main
+back/central/central_reserve
+back/central/probability-back-central
