@@ -67,7 +67,8 @@ fi
 
 # Build de la imagen
 print_status "🔨 Construyendo imagen Docker..."
-docker build -f docker/Dockerfile -t $FULL_IMAGE_NAME .
+# Usamos el directorio padre como contexto para incluir el módulo migration
+docker build -f docker/Dockerfile -t $FULL_IMAGE_NAME ..
 
 if [ $? -eq 0 ]; then
     print_success "✅ Imagen construida exitosamente: $FULL_IMAGE_NAME"

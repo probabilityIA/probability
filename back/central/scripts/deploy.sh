@@ -7,7 +7,8 @@ set -e
 
 # Variables
 IMAGE_NAME="probability-back-central"
-ECR_REPO="public.ecr.aws/d3a6d4r1/cam/probability-back-central"
+# Nuevo repositorio público en AWS ECR
+ECR_REPO="public.ecr.aws/c1l9h7c9/probability"
 VERSION=${1:-"latest"}
 DOCKERFILE_PATH="docker/Dockerfile"
 
@@ -46,7 +47,8 @@ go mod tidy
 
 # Construir la imagen
 echo -e "${YELLOW}🔨 Construyendo imagen Docker...${NC}"
-docker buildx build --platform linux/amd64 -f ${DOCKERFILE_PATH} -t ${IMAGE_NAME}:${VERSION} --load .
+# Usamos el directorio padre como contexto para incluir el módulo migration
+docker buildx build --platform linux/amd64 -f ${DOCKERFILE_PATH} -t ${IMAGE_NAME}:${VERSION} --load ..
 
 # Etiquetar para ECR con nombres descriptivos
 echo -e "${YELLOW}🏷️ Etiquetando imagen para ECR...${NC}"
@@ -108,4 +110,4 @@ else
     echo -e "  - ${ECR_REPO}:${DESCRIPTIVE_TAG}"
 fi
 echo -e "${YELLOW}🌐 URL del repositorio ECR:${NC}"
-echo -e "https://gallery.ecr.aws/d3a6d4r1/cam/probability-back-central"
+echo -e "https://gallery.ecr.aws/c1l9h7c9/probability"
