@@ -9,19 +9,23 @@ ENV CGO_ENABLED=0 \
 # Crear usuario no root
 RUN adduser -D -g '' appuser
 
-WORKDIR /build
+# Usaremos un workspace que contenga ambos módulos: central y migration
+WORKDIR /workspace/central
 
-# Copiar go.mod y go.sum para aprovechar cache de Docker
-COPY go.mod go.sum ./
+# Copiar go.mod y go.sum del módulo central
+COPY central/go.mod central/go.sum ./
 
-# Descargar dependencias
+# Copiar el módulo migration en la ruta esperada por el replace ../migration
+COPY migration /workspace/migration
+
+# Descargar dependencias (ahora que ../migration existe)
 RUN go mod download
 
-# Copiar todo el código fuente
-COPY . .
+# Copiar todo el código fuente del módulo central
+COPY central .
 
 # Compilar el servicio central
-RUN go build -ldflags="-w -s" -o probability-back-central ./cmd/central-service/main.go
+RUN go build -ldflags="-w -s" -o probability-back-central ./cmd/main.go
 
 # Etapa 2: Imagen final minimalista
 FROM alpine:3.19
@@ -35,7 +39,7 @@ RUN adduser -D -g '' appuser
 WORKDIR /app
 
 # Copiar binario desde build stage
-COPY --from=builder /build/probability-back-central .
+COPY --from=builder /workspace/central/probability-back-central .
 
 # Instalar certificados SSL y configurar zona horaria
 RUN apk update && apk add --no-cache \
