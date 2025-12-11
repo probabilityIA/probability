@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { DayPicker } from 'react-day-picker';
+import { DayPicker, DateRange } from 'react-day-picker';
 import { es } from 'date-fns/locale';
 import { format } from 'date-fns';
 // Los estilos se aplican inline con styled-jsx
@@ -23,7 +23,7 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     // Estado temporal para la selección (no se aplica hasta hacer clic en "Aplicar")
-    const [tempRange, setTempRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    const [tempRange, setTempRange] = useState<DateRange | undefined>({
         from: startDate ? new Date(startDate) : undefined,
         to: endDate ? new Date(endDate) : undefined,
     });
@@ -32,10 +32,14 @@ export function DateRangePicker({
     // Sincronizar el estado temporal con las props cuando se abre el calendario
     useEffect(() => {
         if (isOpen) {
-            setTempRange({
-                from: startDate ? new Date(startDate) : undefined,
-                to: endDate ? new Date(endDate) : undefined,
-            });
+            setTempRange(
+                startDate || endDate
+                    ? {
+                          from: startDate ? new Date(startDate) : undefined,
+                          to: endDate ? new Date(endDate) : undefined,
+                      }
+                    : undefined
+            );
         }
     }, [isOpen, startDate, endDate]);
 
@@ -55,20 +59,16 @@ export function DateRangePicker({
         };
     }, [isOpen]);
 
-    const handleSelect = (range: { from: Date | undefined; to: Date | undefined } | undefined) => {
+    const handleSelect = (range: DateRange | undefined) => {
         // Solo actualizar el estado temporal, NO aplicar los cambios aún
-        if (range) {
-            setTempRange(range);
-            // NO cerrar el calendario, esperar a que el usuario haga clic en "Aplicar"
-        } else {
-            setTempRange({ from: undefined, to: undefined });
-        }
+        setTempRange(range);
+        // NO cerrar el calendario, esperar a que el usuario haga clic en "Aplicar"
     };
 
     const handleApply = () => {
         // Aplicar los cambios solo cuando se hace clic en "Aplicar"
-        const fromString = tempRange.from ? format(tempRange.from, 'yyyy-MM-dd') : undefined;
-        const toString = tempRange.to ? format(tempRange.to, 'yyyy-MM-dd') : undefined;
+        const fromString = tempRange?.from ? format(tempRange.from, 'yyyy-MM-dd') : undefined;
+        const toString = tempRange?.to ? format(tempRange.to, 'yyyy-MM-dd') : undefined;
         onChange(fromString, toString);
         setIsOpen(false);
     };
@@ -89,7 +89,7 @@ export function DateRangePicker({
     };
 
     const clearDates = () => {
-        setTempRange({ from: undefined, to: undefined });
+        setTempRange(undefined);
         // No aplicar los cambios hasta hacer clic en "Aplicar"
     };
 
@@ -109,12 +109,12 @@ export function DateRangePicker({
                     {/* Indicador de selección */}
                     <div className="mb-3 px-2 py-2 bg-gray-50 rounded-md">
                         <div className="flex items-center gap-2 text-sm">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange.from ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
-                                {tempRange.from ? format(tempRange.from, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar inicio'}
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.from ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                                {tempRange?.from ? format(tempRange.from, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar inicio'}
                             </span>
                             <span className="text-gray-400">→</span>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange.to ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
-                                {tempRange.to ? format(tempRange.to, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fin'}
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.to ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                                {tempRange?.to ? format(tempRange.to, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fin'}
                             </span>
                         </div>
                     </div>

@@ -5,7 +5,7 @@
 
 'use client';
 
-import { ButtonHTMLAttributes, ReactNode } from 'react';
+import { ButtonHTMLAttributes, ReactNode, forwardRef } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'tertiary' | 'quaternary' | 'outline' | 'success' | 'danger' | 'error';
@@ -16,7 +16,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   rightIcon?: ReactNode;
 }
 
-export function Button({ 
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button({ 
   variant = 'primary',
   size = 'md',
   children,
@@ -26,7 +26,7 @@ export function Button({
   className = '',
   disabled,
   ...props 
-}: ButtonProps) {
+}, ref) {
   const baseClasses = 'btn';
   const variantClasses = {
     primary: 'btn-primary',
@@ -48,6 +48,7 @@ export function Button({
 
   return (
     <button
+      ref={ref}
       className={`${baseClasses} ${variantClasses[variant]} ${sizeClasses[size]} ${className}`}
       disabled={isDisabled}
       {...props}
@@ -64,5 +65,5 @@ export function Button({
       )}
     </button>
   );
-}
+});
 

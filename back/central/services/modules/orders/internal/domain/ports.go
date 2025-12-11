@@ -53,6 +53,7 @@ type IRepository interface {
 
 	// Clients
 	GetClientByEmail(ctx context.Context, businessID uint, email string) (*Client, error)
+	GetClientByDNI(ctx context.Context, businessID uint, dni string) (*Client, error)
 	CreateClient(ctx context.Context, client *Client) error
 }
 

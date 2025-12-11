@@ -1,10 +1,10 @@
 # Etapa 1: Build con Go
-FROM golang:1.23-alpine AS builder
+FROM --platform=linux/arm64 golang:1.23-alpine AS builder
 
 # Variables de compilación
 ENV CGO_ENABLED=0 \
     GOOS=linux \
-    GOARCH=amd64
+    GOARCH=arm64
 
 # Crear usuario no root
 RUN adduser -D -g '' appuser
@@ -28,7 +28,7 @@ COPY central .
 RUN go build -ldflags="-w -s" -o probability-back-central ./cmd/main.go
 
 # Etapa 2: Imagen final minimalista
-FROM alpine:3.19
+FROM --platform=linux/arm64 alpine:3.19
 
 # Variables de entorno
 ENV TZ=America/Bogota

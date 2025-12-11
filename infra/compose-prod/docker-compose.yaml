@@ -1,10 +1,8 @@
-version: "3.8"
-
 services:
 
-  frontend:
+  font-central:
     platform: linux/arm64
-    image: public.ecr.aws/d3a6d4r1/cam/reserve:frontend-latest
+    image: public.ecr.aws/c1l9h7c9/probability:frontend-latest
     container_name: frontend_prod
     ports:
       - "8080:80"
@@ -19,7 +17,7 @@ services:
     networks:
       - app-network
     depends_on:
-      - central_reserve
+      - back-central
     logging:
       driver: "json-file"
       options:
@@ -34,13 +32,16 @@ services:
           cpus: "0.25"
           memory: 128M
 
-  central_reserve:
-    image: public.ecr.aws/d3a6d4r1/cam/probability-back-central:backend-latest
+  back-central:
+    platform: linux/arm64
+    image: public.ecr.aws/c1l9h7c9/probability:backend-latest
     container_name: central_reserve_prod
     ports:
       - "3050:3050"
     environment:
-      DB_HOST:             "postgres"
+      # Nota: DB_HOST debe apuntar a tu base de datos PostgreSQL externa
+      # Si usas una BD externa, cambia "postgres" por el hostname real
+      DB_HOST:             "${DB_HOST:-postgres}"
       DB_PORT:             "5432"
       DB_NAME:             "${DB_NAME}"
       DB_USER:             "${DB_USER}"
@@ -65,15 +66,32 @@ services:
       S3_KEY:              "${S3_KEY}"
       S3_SECRET:           "${S3_SECRET}"
       URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
+      # WhatsApp
+      WHATSAPP_URL:        "${WHATSAPP_URL}"
+      WHATSAPP_TOKEN:      "${WHATSAPP_TOKEN}"
+      WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
+      # Encryption
+      ENCRYPTION_KEY:      "${ENCRYPTION_KEY}"
+      # Redis (usar nombre del servicio en la red Docker)
+      REDIS_HOST:         "redis"
+      REDIS_PORT:         "6379"
+      REDIS_PASSWORD:     "${REDIS_PASSWORD:-}"
+      REDIS_ORDER_EVENTS_CHANNEL: "${REDIS_ORDER_EVENTS_CHANNEL:-probability:orders:events}"
+      # RabbitMQ (usar nombre del servicio en la red Docker)
+      RABBITMQ_HOST:      "rabbitmq"
+      RABBITMQ_PORT:      "5672"
+      RABBITMQ_USER:      "${RABBITMQ_USER:-admin}"
+      RABBITMQ_PASS:      "${RABBITMQ_PASS:-admin}"
+      RABBITMQ_VHOST:     "${RABBITMQ_VHOST:-/}"
     restart: unless-stopped
   
     networks:
       - app-network
     depends_on:
-      - postgres
-      - redis
-      - minio
-      - rabbitmq
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     logging:
       driver: "json-file"
       options:
@@ -88,34 +106,6 @@ services:
           cpus: "0.50"
           memory: 256M
 
-  postgres:
-    image: postgres:15-alpine
-    container_name: postgres_prod
-    env_file:
-      - .env
-    ports:
-      - "5433:5432"
-    environment:
-      POSTGRES_DB:       "${DB_NAME}"
-      POSTGRES_USER:     "${DB_USER}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD}"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - app-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "50m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 1G
-        reservations:
-          memory: 512M
 
   # Redis Cache
   redis:
@@ -135,27 +125,7 @@ services:
       retries: 5
     restart: unless-stopped
 
-  # MinIO Object Storage (S3 compatible)
-  minio:
-    image: minio/minio:latest
-    container_name: minio_prod
-    ports:
-      - "9000:9000"  # API endpoint
-      - "9001:9001"  # Console endpoint
-    environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
-    command: server /data --console-address ":9001"
-    volumes:
-      - minio_data:/data
-    networks:
-      - app-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    restart: unless-stopped
+
 
   # RabbitMQ Message Queue
   rabbitmq:
@@ -180,7 +150,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: public.ecr.aws/d3a6d4r1/cam/reserve:nginx-latest
+    image: public.ecr.aws/c1l9h7c9/probability:nginx-latest
     container_name: nginx_prod
     ports:
       - "80:80"
@@ -192,47 +162,17 @@ services:
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
-      - frontend
+      - font-central
     networks:
       - app-network
     restart: unless-stopped
-
-  calculate-flow-print:
-    image: public.ecr.aws/d3a6d4r1/cam/reserve:dtf-calculator
-    container_name: alculate_flow_print_prod
-    env_file:
-      - .env.flow
-    ports:
-      - "3000:3000"
-    environment:
-      NODE_ENV: production
-    networks:
-      - app-network
-    restart: unless-stopped
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 256M
-        reservations:
-          cpus: "0.25"
-          memory: 128M
 
 networks:
   app-network:
     driver: bridge
 
 volumes:
-  postgres_data:
-    driver: local
   redis_data:
-    driver: local
-  minio_data:
     driver: local
   rabbitmq_data:
     driver: local

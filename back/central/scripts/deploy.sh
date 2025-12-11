@@ -11,6 +11,7 @@ IMAGE_NAME="probability-back-central"
 ECR_REPO="public.ecr.aws/c1l9h7c9/probability"
 VERSION=${1:-"latest"}
 DOCKERFILE_PATH="docker/Dockerfile"
+AWS_PROFILE_NAME="probability"
 
 # Colores para output
 RED='\033[0;31m'
@@ -20,6 +21,7 @@ NC='\033[0m' # No Color
 
 echo -e "${GREEN}🚀 Iniciando despliegue de Probability Backend Central${NC}"
 echo -e "${YELLOW}Versión: ${VERSION}${NC}"
+echo -e "${YELLOW}Perfil de AWS: ${AWS_PROFILE_NAME}${NC}"
 
 # Verificar que estamos en el directorio correcto
 if [ ! -f "go.mod" ]; then
@@ -33,9 +35,16 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Verificar que AWS CLI esté configurado
-if ! aws sts get-caller-identity > /dev/null 2>&1; then
+# Verificar que AWS CLI esté configurado con el perfil correcto
+if ! aws --profile "${AWS_PROFILE_NAME}" sts get-caller-identity > /dev/null 2>&1; then
     echo -e "${RED}❌ Error: AWS CLI no está configurado correctamente${NC}"
+    exit 1
+fi
+
+# Verificar que buildx esté disponible
+if ! docker buildx version > /dev/null 2>&1; then
+    echo -e "${RED}❌ Error: Docker buildx no está disponible${NC}"
+    echo -e "${YELLOW}💡 Instala buildx: https://docs.docker.com/buildx/working-with-buildx/${NC}"
     exit 1
 fi
 
@@ -45,10 +54,31 @@ echo -e "${GREEN}✅ Verificaciones completadas${NC}"
 echo -e "${YELLOW}📦 Limpiando dependencias...${NC}"
 go mod tidy
 
+# Crear builder multi-arquitectura si no existe
+echo -e "${YELLOW}🔧 Configurando builder multi-arquitectura...${NC}"
+if ! docker buildx inspect multiarch-builder > /dev/null 2>&1; then
+    docker buildx create --name multiarch-builder --driver docker-container --use
+else
+    docker buildx use multiarch-builder
+fi
+
 # Construir la imagen
-echo -e "${YELLOW}🔨 Construyendo imagen Docker...${NC}"
+echo -e "${YELLOW}🔨 Construyendo imagen Docker para linux/arm64...${NC}"
+echo -e "${BLUE}   Esto puede tomar varios minutos...${NC}"
 # Usamos el directorio padre como contexto para incluir el módulo migration
-docker buildx build --platform linux/amd64 -f ${DOCKERFILE_PATH} -t ${IMAGE_NAME}:${VERSION} --load ..
+docker buildx build \
+    --platform linux/arm64 \
+    -f ${DOCKERFILE_PATH} \
+    -t ${IMAGE_NAME}:${VERSION} \
+    --load \
+    ..
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Imagen construida exitosamente${NC}"
+else
+    echo -e "${RED}❌ Error construyendo la imagen${NC}"
+    exit 1
+fi
 
 # Etiquetar para ECR con nombres descriptivos
 echo -e "${YELLOW}🏷️ Etiquetando imagen para ECR...${NC}"
@@ -76,23 +106,49 @@ else
 fi
 
 # Login a ECR público
-echo -e "${YELLOW}🔐 Haciendo login a ECR público...${NC}"
-aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+echo -e "${YELLOW}🔐 Haciendo login a ECR público con el perfil '${AWS_PROFILE_NAME}'...${NC}"
+aws --profile "${AWS_PROFILE_NAME}" ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 
 # Push de las imágenes
 echo -e "${YELLOW}⬆️ Subiendo imágenes a ECR...${NC}"
+echo -e "${BLUE}   Esto puede tomar varios minutos dependiendo de tu conexión...${NC}"
 
 if [ "${VERSION}" = "latest" ]; then
     # Subir todos los tags para latest
     docker push ${ECR_REPO}:${VERSION}
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Error subiendo imagen con tag: ${VERSION}${NC}"
+        exit 1
+    fi
+    
     docker push ${ECR_REPO}:${DESCRIPTIVE_TAG}
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Error subiendo imagen con tag: ${DESCRIPTIVE_TAG}${NC}"
+        exit 1
+    fi
+    
     docker push ${ECR_REPO}:${DATED_TAG}
-    echo -e "${GREEN}✅ Imágenes subidas con tags: latest, ${DESCRIPTIVE_TAG}, ${DATED_TAG}${NC}"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Error subiendo imagen con tag: ${DATED_TAG}${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ Todas las imágenes subidas exitosamente${NC}"
 else
     # Subir tags para versiones específicas
     docker push ${ECR_REPO}:${VERSION}
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Error subiendo imagen con tag: ${VERSION}${NC}"
+        exit 1
+    fi
+    
     docker push ${ECR_REPO}:${DESCRIPTIVE_TAG}
-    echo -e "${GREEN}✅ Imágenes subidas con tags: ${VERSION}, ${DESCRIPTIVE_TAG}${NC}"
+    if [ $? -ne 0 ]; then
+        echo -e "${RED}❌ Error subiendo imagen con tag: ${DESCRIPTIVE_TAG}${NC}"
+        exit 1
+    fi
+    
+    echo -e "${GREEN}✅ Imágenes subidas exitosamente${NC}"
 fi
 
 echo -e "${GREEN}🎉 Despliegue completado exitosamente!${NC}"

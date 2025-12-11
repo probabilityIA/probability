@@ -1,0 +1,27 @@
+{
+    "sqltools.connections": [
+        {
+            "pgOptions": {
+                "ssl": {
+                    "rejectUnauthorized": false,
+                    "requestCert": false
+                }
+            },
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "database-1.capmmoe4cw2e.us-east-1.rds.amazonaws.com",
+            "port": 5432,
+            "sshOptions": {
+                "port": 5432,
+                "host": "database-1.capmmoe4cw2e.us-east-1.rds.amazonaws.com",
+                "username": "postgres",
+                "password": "8dqGjXh292YJbw66NzqH"
+            },
+            "driver": "PostgreSQL",
+            "name": "probability-prod",
+            "database": "postgres",
+            "username": "postgres",
+            "password": "8dqGjXh292YJbw66NzqH"
+        }
+    ]
+}

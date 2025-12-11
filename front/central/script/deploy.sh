@@ -1,15 +1,17 @@
 #!/bin/bash
 
 # Script de despliegue para ECR público
-# Rupu Central - Frontend Next.js
+# Probability - Frontend Central
 
 set -e
 
 # Variables
-IMAGE_NAME="rupu-central-frontend"
-ECR_REPO="public.ecr.aws/d3a6d4r1/cam/reserve"
+IMAGE_NAME="probability-front-central"
+# Mismo repositorio que el backend, diferentes etiquetas
+ECR_REPO="public.ecr.aws/c1l9h7c9/probability"
 VERSION=${1:-"latest"}
 DOCKERFILE_PATH="docker/Dockerfile"
+AWS_PROFILE_NAME="probability"
 
 # Colores para output
 RED='\033[0;31m'
@@ -18,8 +20,9 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-echo -e "${GREEN}🚀 Iniciando despliegue de Rupu Central Frontend${NC}"
+echo -e "${GREEN}🚀 Iniciando despliegue de Probability Frontend Central${NC}"
 echo -e "${YELLOW}Versión: ${VERSION}${NC}"
+echo -e "${YELLOW}Perfil de AWS: ${AWS_PROFILE_NAME}${NC}"
 
 # Verificar que estamos en el directorio correcto
 if [ ! -f "package.json" ]; then
@@ -33,8 +36,8 @@ if ! docker info > /dev/null 2>&1; then
     exit 1
 fi
 
-# Verificar que AWS CLI esté configurado
-if ! aws sts get-caller-identity > /dev/null 2>&1; then
+# Verificar que AWS CLI esté configurado con el perfil correcto
+if ! aws --profile "${AWS_PROFILE_NAME}" sts get-caller-identity > /dev/null 2>&1; then
     echo -e "${RED}❌ Error: AWS CLI no está configurado correctamente${NC}"
     exit 1
 fi
@@ -73,7 +76,7 @@ fi
 # NEXT_PUBLIC_API_BASE_URL = Cliente (SSE, dominio público)
 # API_BASE_URL = Servidor (Server Actions, red interna Docker)
 PUBLIC_API_URL=${NEXT_PUBLIC_API_BASE_URL:-"https://xn--rup-joa.com/api/v1"}
-SERVER_API_URL=${API_BASE_URL:-"http://central_reserve:3050/api/v1"}
+SERVER_API_URL=${API_BASE_URL:-"http://back-central:3050/api/v1"}
 
 echo -e "${BLUE}🌐 URLs del API:${NC}"
 echo -e "   Cliente (SSE):  ${PUBLIC_API_URL}"
@@ -119,8 +122,8 @@ else
 fi
 
 # Login a ECR público
-echo -e "${YELLOW}🔐 Haciendo login a ECR público...${NC}"
-aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
+echo -e "${YELLOW}🔐 Haciendo login a ECR público con el perfil '${AWS_PROFILE_NAME}'...${NC}"
+aws --profile "${AWS_PROFILE_NAME}" ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws
 
 # Push de las imágenes
 echo -e "${YELLOW}⬆️  Subiendo imágenes a ECR...${NC}"
@@ -157,7 +160,7 @@ fi
 echo ""
 echo -e "${BLUE}🐳 Para ejecutar en producción (ARM64):${NC}"
 echo -e "   docker run -d \\"
-echo -e "     --name rupu-central-frontend \\"
+echo -e "     --name probability-front-central \\"
 echo -e "     --restart unless-stopped \\"
 echo -e "     --network app-network \\"
 echo -e "     -p 8080:80 \\"
@@ -172,7 +175,7 @@ echo -e "   • Servidor (Actions): ${SERVER_API_URL}"
 
 echo ""
 echo -e "${BLUE}🌐 Repositorio ECR:${NC}"
-echo -e "   https://gallery.ecr.aws/d3a6d4r1/cam/reserve"
+echo -e "   https://gallery.ecr.aws/c1l9h7c9/probability"
 echo ""
 echo -e "${YELLOW}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""

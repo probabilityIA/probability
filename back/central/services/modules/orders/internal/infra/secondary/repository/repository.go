@@ -427,6 +427,26 @@ func (r *Repository) GetClientByEmail(ctx context.Context, businessID uint, emai
 	return mappers.ToDomainClient(&client), nil
 }
 
+// GetClientByDNI busca un cliente por DNI y BusinessID
+func (r *Repository) GetClientByDNI(ctx context.Context, businessID uint, dni string) (*domain.Client, error) {
+	if dni == "" {
+		return nil, nil // No buscar si el DNI está vacío
+	}
+
+	var client models.Client
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND dni = ?", businessID, dni).
+		First(&client).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // Retornar nil si no existe
+		}
+		return nil, err
+	}
+	return mappers.ToDomainClient(&client), nil
+}
+
 // CreateClient crea un nuevo cliente
 func (r *Repository) CreateClient(ctx context.Context, client *domain.Client) error {
 	dbClient := mappers.ToDBClient(client)
