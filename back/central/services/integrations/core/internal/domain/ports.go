@@ -1,6 +1,9 @@
 package domain
 
-import "context"
+import (
+	"context"
+	"time"
+)
 
 // IRepository define la interfaz unificada del repositorio de integraciones y tipos de integración
 type IRepository interface {
@@ -16,6 +19,7 @@ type IRepository interface {
 	ListIntegrationsByIntegrationTypeID(ctx context.Context, integrationTypeID uint) ([]*Integration, error)
 	SetIntegrationAsDefault(ctx context.Context, id uint) error
 	ExistsIntegrationByCode(ctx context.Context, code string, businessID *uint) (bool, error)
+	UpdateLastSync(ctx context.Context, id uint, lastSync time.Time) error
 
 	// Métodos de IntegrationTypes
 	CreateIntegrationType(ctx context.Context, integrationType *IntegrationType) error

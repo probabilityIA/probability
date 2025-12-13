@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 )
 
 // GetOrderRaw obtiene los datos crudos de una orden

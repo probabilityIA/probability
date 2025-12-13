@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )

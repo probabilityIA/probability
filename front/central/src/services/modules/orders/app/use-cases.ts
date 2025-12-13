@@ -31,4 +31,8 @@ export class OrderUseCases {
     async getOrderRaw(id: string) {
         return this.repository.getOrderRaw(id);
     }
+
+    async getAIRecommendation(origin: string, destination: string) {
+        return this.repository.getAIRecommendation(origin, destination);
+    }
 }

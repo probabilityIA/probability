@@ -1,0 +1,5142 @@
+{
+    "domina": {
+        "status_summary": {
+            "cancelled": 47,
+            "completed": 212,
+            "delivered": 57,
+            "packing": 54,
+            "ready_to_ship": 1,
+            "returned": 71,
+            "sent": 97,
+            "shipping_new": 26,
+            "total": 565
+        },
+        "coverage": [
+            {
+                "origin": "Antioquia",
+                "destination": "Antioquia",
+                "count": 32
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cesar",
+                "count": 2
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cundinamarca",
+                "count": 55
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Huila",
+                "count": 3
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Meta",
+                "count": 4
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Narino",
+                "count": 2
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Quindio",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Valle",
+                "count": 5
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Antioquia",
+                "count": 5
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Atlantico",
+                "count": 3
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cesar",
+                "count": 3
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cundinamarca",
+                "count": 42
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Risaralda",
+                "count": 7
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Sucre",
+                "count": 2
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Tolima",
+                "count": 4
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Valle",
+                "count": 14
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Huila",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Meta",
+                "count": 2
+            },
+            {
+                "origin": "Valle",
+                "destination": "Valle",
+                "count": 4
+            }
+        ]
+    },
+    "envia": {
+        "status_summary": {
+            "cancelled": 518,
+            "completed": 2692,
+            "delivered": 208,
+            "packing": 167,
+            "ready_to_ship": 2,
+            "returned": 721,
+            "sent": 279,
+            "shipping_new": 69,
+            "total": 4656
+        },
+        "coverage": [
+            {
+                "origin": "Antioquia",
+                "destination": "Antioquia",
+                "count": 32
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Atlantico",
+                "count": 22
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Bolivar",
+                "count": 18
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Boyaca",
+                "count": 7
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Caldas",
+                "count": 11
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Caqueta",
+                "count": 4
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Casanare",
+                "count": 6
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cauca",
+                "count": 9
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cesar",
+                "count": 18
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cordoba",
+                "count": 16
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cundinamarca",
+                "count": 73
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Huila",
+                "count": 12
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "La guajira",
+                "count": 11
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Magdalena",
+                "count": 16
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Meta",
+                "count": 20
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Narino",
+                "count": 9
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Norte de santander",
+                "count": 16
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Quindio",
+                "count": 5
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Risaralda",
+                "count": 18
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Santander",
+                "count": 27
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Sucre",
+                "count": 8
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Tolima",
+                "count": 14
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Valle",
+                "count": 72
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Antioquia",
+                "count": 4
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cesar",
+                "count": 3
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cundinamarca",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Huila",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Magdalena",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Santander",
+                "count": 3
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Valle",
+                "count": 5
+            },
+            {
+                "origin": "Cesar",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Cesar",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Choco",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Antioquia",
+                "count": 203
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Atlantico",
+                "count": 51
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Bolivar",
+                "count": 59
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Boyaca",
+                "count": 33
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caldas",
+                "count": 38
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caqueta",
+                "count": 9
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Casanare",
+                "count": 14
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cauca",
+                "count": 16
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cesar",
+                "count": 44
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cordoba",
+                "count": 37
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cundinamarca",
+                "count": 107
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Huila",
+                "count": 32
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "La guajira",
+                "count": 26
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Magdalena",
+                "count": 35
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Meta",
+                "count": 26
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Narino",
+                "count": 36
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Norte de santander",
+                "count": 26
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Quindio",
+                "count": 23
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Risaralda",
+                "count": 49
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Santander",
+                "count": 54
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Sucre",
+                "count": 12
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Tolima",
+                "count": 39
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Valle",
+                "count": 150
+            },
+            {
+                "origin": "Huila",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Boyaca",
+                "count": 3
+            },
+            {
+                "origin": "Huila",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Norte de santander",
+                "count": 4
+            },
+            {
+                "origin": "Huila",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Antioquia",
+                "count": 4
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Atlantico",
+                "count": 6
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Caldas",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Cordoba",
+                "count": 3
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Meta",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Risaralda",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Valle",
+                "count": 2
+            },
+            {
+                "origin": "Meta",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Quindio",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Antioquia",
+                "count": 85
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Atlantico",
+                "count": 41
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Bolivar",
+                "count": 35
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Boyaca",
+                "count": 4
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Caldas",
+                "count": 12
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Caqueta",
+                "count": 10
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Casanare",
+                "count": 6
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cauca",
+                "count": 9
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cesar",
+                "count": 14
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cordoba",
+                "count": 15
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cundinamarca",
+                "count": 84
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Huila",
+                "count": 14
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "La guajira",
+                "count": 11
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Magdalena",
+                "count": 16
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Meta",
+                "count": 6
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Narino",
+                "count": 8
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Norte de santander",
+                "count": 2
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Quindio",
+                "count": 4
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Risaralda",
+                "count": 14
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Santander",
+                "count": 23
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Sucre",
+                "count": 8
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Tolima",
+                "count": 23
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Valle",
+                "count": 69
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Antioquia",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Quindio",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Tolima",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Valle",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Antioquia",
+                "count": 5
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Bolivar",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Caqueta",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cundinamarca",
+                "count": 9
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Huila",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Meta",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Narino",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Sucre",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Tolima",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Valle",
+                "count": 10
+            },
+            {
+                "origin": "Santander",
+                "destination": "Antioquia",
+                "count": 20
+            },
+            {
+                "origin": "Santander",
+                "destination": "Atlantico",
+                "count": 5
+            },
+            {
+                "origin": "Santander",
+                "destination": "Bolivar",
+                "count": 7
+            },
+            {
+                "origin": "Santander",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Caldas",
+                "count": 4
+            },
+            {
+                "origin": "Santander",
+                "destination": "Caqueta",
+                "count": 3
+            },
+            {
+                "origin": "Santander",
+                "destination": "Casanare",
+                "count": 2
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cesar",
+                "count": 3
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cundinamarca",
+                "count": 16
+            },
+            {
+                "origin": "Santander",
+                "destination": "Huila",
+                "count": 4
+            },
+            {
+                "origin": "Santander",
+                "destination": "La guajira",
+                "count": 7
+            },
+            {
+                "origin": "Santander",
+                "destination": "Magdalena",
+                "count": 4
+            },
+            {
+                "origin": "Santander",
+                "destination": "Meta",
+                "count": 6
+            },
+            {
+                "origin": "Santander",
+                "destination": "Narino",
+                "count": 2
+            },
+            {
+                "origin": "Santander",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Quindio",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Risaralda",
+                "count": 3
+            },
+            {
+                "origin": "Santander",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "Santander",
+                "destination": "Sucre",
+                "count": 4
+            },
+            {
+                "origin": "Santander",
+                "destination": "Tolima",
+                "count": 3
+            },
+            {
+                "origin": "Santander",
+                "destination": "Valle",
+                "count": 12
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Antioquia",
+                "count": 3
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Bolivar",
+                "count": 2
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Cundinamarca",
+                "count": 6
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Bolivar",
+                "count": 3
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cesar",
+                "count": 3
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cundinamarca",
+                "count": 4
+            },
+            {
+                "origin": "Tolima",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Magdalena",
+                "count": 3
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Sucre",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Valle",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Antioquia",
+                "count": 26
+            },
+            {
+                "origin": "Valle",
+                "destination": "Atlantico",
+                "count": 15
+            },
+            {
+                "origin": "Valle",
+                "destination": "Bolivar",
+                "count": 10
+            },
+            {
+                "origin": "Valle",
+                "destination": "Boyaca",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caldas",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caqueta",
+                "count": 2
+            },
+            {
+                "origin": "Valle",
+                "destination": "Casanare",
+                "count": 4
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cauca",
+                "count": 4
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cesar",
+                "count": 9
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cordoba",
+                "count": 8
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cundinamarca",
+                "count": 40
+            },
+            {
+                "origin": "Valle",
+                "destination": "Huila",
+                "count": 10
+            },
+            {
+                "origin": "Valle",
+                "destination": "La guajira",
+                "count": 4
+            },
+            {
+                "origin": "Valle",
+                "destination": "Magdalena",
+                "count": 7
+            },
+            {
+                "origin": "Valle",
+                "destination": "Meta",
+                "count": 8
+            },
+            {
+                "origin": "Valle",
+                "destination": "Narino",
+                "count": 13
+            },
+            {
+                "origin": "Valle",
+                "destination": "Norte de santander",
+                "count": 6
+            },
+            {
+                "origin": "Valle",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Quindio",
+                "count": 4
+            },
+            {
+                "origin": "Valle",
+                "destination": "Risaralda",
+                "count": 4
+            },
+            {
+                "origin": "Valle",
+                "destination": "Santander",
+                "count": 18
+            },
+            {
+                "origin": "Valle",
+                "destination": "Sucre",
+                "count": 3
+            },
+            {
+                "origin": "Valle",
+                "destination": "Tolima",
+                "count": 6
+            },
+            {
+                "origin": "Valle",
+                "destination": "Valle",
+                "count": 46
+            }
+        ]
+    },
+    "galaga": {
+        "status_summary": {
+            "cancelled": 18,
+            "completed": 6,
+            "delivered": 4,
+            "packing": 0,
+            "ready_to_ship": 0,
+            "returned": 11,
+            "sent": 45,
+            "shipping_new": 7,
+            "total": 91
+        },
+        "coverage": [
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cundinamarca",
+                "count": 3
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Huila",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Magdalena",
+                "count": 2
+            }
+        ]
+    },
+    "interrapidisimo": {
+        "status_summary": {
+            "cancelled": 1301,
+            "completed": 17210,
+            "delivered": 904,
+            "packing": 531,
+            "ready_to_ship": 28,
+            "returned": 4088,
+            "sent": 2932,
+            "shipping_new": 410,
+            "total": 27404
+        },
+        "coverage": [
+            {
+                "origin": "Antioquia",
+                "destination": "Amazonas",
+                "count": 6
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Antioquia",
+                "count": 358
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Arauca",
+                "count": 29
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Atlantico",
+                "count": 40
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Bolivar",
+                "count": 64
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Boyaca",
+                "count": 51
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Caldas",
+                "count": 69
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Caqueta",
+                "count": 39
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Casanare",
+                "count": 32
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cauca",
+                "count": 49
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cesar",
+                "count": 57
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Choco",
+                "count": 35
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cordoba",
+                "count": 61
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cundinamarca",
+                "count": 162
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Guainia",
+                "count": 9
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Guaviare",
+                "count": 7
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Huila",
+                "count": 73
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "La guajira",
+                "count": 30
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Magdalena",
+                "count": 38
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Meta",
+                "count": 53
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Narino",
+                "count": 77
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Norte de santander",
+                "count": 61
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Putumayo",
+                "count": 21
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Quindio",
+                "count": 35
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Risaralda",
+                "count": 47
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Santander",
+                "count": 70
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Sucre",
+                "count": 35
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Tolima",
+                "count": 70
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Valle",
+                "count": 112
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Vichada",
+                "count": 5
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Antioquia",
+                "count": 22
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Atlantico",
+                "count": 6
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Bolivar",
+                "count": 8
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Boyaca",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Caqueta",
+                "count": 5
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Casanare",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cauca",
+                "count": 5
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cesar",
+                "count": 15
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Choco",
+                "count": 11
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cordoba",
+                "count": 18
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cundinamarca",
+                "count": 13
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Guainia",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Huila",
+                "count": 7
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "La guajira",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Magdalena",
+                "count": 4
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Meta",
+                "count": 10
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Narino",
+                "count": 6
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Norte de santander",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Santander",
+                "count": 8
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Sucre",
+                "count": 4
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Tolima",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Valle",
+                "count": 5
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Vichada",
+                "count": 1
+            },
+            {
+                "origin": "Boyaca",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Boyaca",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Boyaca",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Boyaca",
+                "destination": "Meta",
+                "count": 2
+            },
+            {
+                "origin": "Boyaca",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Caldas",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Caldas",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Caldas",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "Caldas",
+                "destination": "Cesar",
+                "count": 1
+            },
+            {
+                "origin": "Caldas",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Caldas",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Caqueta",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Caqueta",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Caqueta",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Antioquia",
+                "count": 6
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Boyaca",
+                "count": 3
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Caldas",
+                "count": 4
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Casanare",
+                "count": 4
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cesar",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cundinamarca",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Huila",
+                "count": 4
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Norte de santander",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Valle",
+                "count": 2
+            },
+            {
+                "origin": "Cesar",
+                "destination": "Cesar",
+                "count": 1
+            },
+            {
+                "origin": "Cesar",
+                "destination": "Narino",
+                "count": 2
+            },
+            {
+                "origin": "Cesar",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Antioquia",
+                "count": 6
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Bolivar",
+                "count": 2
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Caqueta",
+                "count": 2
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Cauca",
+                "count": 2
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Cesar",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Cundinamarca",
+                "count": 5
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Huila",
+                "count": 3
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Meta",
+                "count": 2
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Norte de santander",
+                "count": 2
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Sucre",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Tolima",
+                "count": 5
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Amazonas",
+                "count": 12
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Antioquia",
+                "count": 1887
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Arauca",
+                "count": 179
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Atlantico",
+                "count": 321
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Bolivar",
+                "count": 345
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Boyaca",
+                "count": 438
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caldas",
+                "count": 275
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caqueta",
+                "count": 178
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Casanare",
+                "count": 214
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cauca",
+                "count": 307
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cesar",
+                "count": 304
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Choco",
+                "count": 95
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cordoba",
+                "count": 284
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cundinamarca",
+                "count": 1251
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Guainia",
+                "count": 18
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Guaviare",
+                "count": 44
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Huila",
+                "count": 400
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "La guajira",
+                "count": 177
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Magdalena",
+                "count": 192
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Meta",
+                "count": 409
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Narino",
+                "count": 465
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Norte de santander",
+                "count": 269
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Putumayo",
+                "count": 150
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Quindio",
+                "count": 149
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Risaralda",
+                "count": 247
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Santander",
+                "count": 526
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Sucre",
+                "count": 154
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Tolima",
+                "count": 428
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Valle",
+                "count": 778
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Vichada",
+                "count": 10
+            },
+            {
+                "origin": "Huila",
+                "destination": "Antioquia",
+                "count": 2
+            },
+            {
+                "origin": "Huila",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Huila",
+                "count": 2
+            },
+            {
+                "origin": "Huila",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Sucre",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Tolima",
+                "count": 2
+            },
+            {
+                "origin": "Huila",
+                "destination": "Valle",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Antioquia",
+                "count": 3
+            },
+            {
+                "origin": "Meta",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Cauca",
+                "count": 2
+            },
+            {
+                "origin": "Meta",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Meta",
+                "destination": "Cundinamarca",
+                "count": 5
+            },
+            {
+                "origin": "Meta",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Meta",
+                "count": 5
+            },
+            {
+                "origin": "Meta",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Quindio",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Sucre",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Antioquia",
+                "count": 15
+            },
+            {
+                "origin": "Narino",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "Narino",
+                "destination": "Bolivar",
+                "count": 3
+            },
+            {
+                "origin": "Narino",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Caldas",
+                "count": 2
+            },
+            {
+                "origin": "Narino",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Cauca",
+                "count": 2
+            },
+            {
+                "origin": "Narino",
+                "destination": "Choco",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Cundinamarca",
+                "count": 9
+            },
+            {
+                "origin": "Narino",
+                "destination": "Huila",
+                "count": 4
+            },
+            {
+                "origin": "Narino",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Magdalena",
+                "count": 2
+            },
+            {
+                "origin": "Narino",
+                "destination": "Meta",
+                "count": 3
+            },
+            {
+                "origin": "Narino",
+                "destination": "Narino",
+                "count": 2
+            },
+            {
+                "origin": "Narino",
+                "destination": "Norte de santander",
+                "count": 2
+            },
+            {
+                "origin": "Narino",
+                "destination": "Putumayo",
+                "count": 3
+            },
+            {
+                "origin": "Narino",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Santander",
+                "count": 4
+            },
+            {
+                "origin": "Narino",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Valle",
+                "count": 9
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Amazonas",
+                "count": 8
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Antioquia",
+                "count": 321
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Arauca",
+                "count": 14
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Atlantico",
+                "count": 65
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Bolivar",
+                "count": 53
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Boyaca",
+                "count": 48
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Caldas",
+                "count": 41
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Caqueta",
+                "count": 40
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Casanare",
+                "count": 21
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cauca",
+                "count": 41
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cesar",
+                "count": 77
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Choco",
+                "count": 41
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cordoba",
+                "count": 86
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cundinamarca",
+                "count": 209
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Guainia",
+                "count": 6
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Guaviare",
+                "count": 8
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Huila",
+                "count": 38
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "La guajira",
+                "count": 38
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Magdalena",
+                "count": 49
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Meta",
+                "count": 48
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Narino",
+                "count": 64
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Norte de santander",
+                "count": 40
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Putumayo",
+                "count": 33
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Quindio",
+                "count": 22
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Risaralda",
+                "count": 33
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Santander",
+                "count": 84
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Sucre",
+                "count": 44
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Tolima",
+                "count": 66
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Valle",
+                "count": 114
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Vichada",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Antioquia",
+                "count": 9
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Atlantico",
+                "count": 3
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Bolivar",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cauca",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cesar",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cundinamarca",
+                "count": 5
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Meta",
+                "count": 8
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Narino",
+                "count": 3
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Risaralda",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Tolima",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Antioquia",
+                "count": 16
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Arauca",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Atlantico",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Bolivar",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Boyaca",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Caldas",
+                "count": 5
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Caqueta",
+                "count": 8
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Casanare",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cauca",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cesar",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Choco",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cundinamarca",
+                "count": 12
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Huila",
+                "count": 5
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Magdalena",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Meta",
+                "count": 5
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Narino",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Norte de santander",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Putumayo",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Santander",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Sucre",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Tolima",
+                "count": 9
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Valle",
+                "count": 6
+            },
+            {
+                "origin": "Santander",
+                "destination": "Amazonas",
+                "count": 5
+            },
+            {
+                "origin": "Santander",
+                "destination": "Antioquia",
+                "count": 176
+            },
+            {
+                "origin": "Santander",
+                "destination": "Arauca",
+                "count": 19
+            },
+            {
+                "origin": "Santander",
+                "destination": "Atlantico",
+                "count": 12
+            },
+            {
+                "origin": "Santander",
+                "destination": "Bolivar",
+                "count": 46
+            },
+            {
+                "origin": "Santander",
+                "destination": "Boyaca",
+                "count": 32
+            },
+            {
+                "origin": "Santander",
+                "destination": "Caldas",
+                "count": 18
+            },
+            {
+                "origin": "Santander",
+                "destination": "Caqueta",
+                "count": 39
+            },
+            {
+                "origin": "Santander",
+                "destination": "Casanare",
+                "count": 23
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cauca",
+                "count": 33
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cesar",
+                "count": 47
+            },
+            {
+                "origin": "Santander",
+                "destination": "Choco",
+                "count": 36
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cordoba",
+                "count": 54
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cundinamarca",
+                "count": 95
+            },
+            {
+                "origin": "Santander",
+                "destination": "Guainia",
+                "count": 4
+            },
+            {
+                "origin": "Santander",
+                "destination": "Guaviare",
+                "count": 8
+            },
+            {
+                "origin": "Santander",
+                "destination": "Huila",
+                "count": 49
+            },
+            {
+                "origin": "Santander",
+                "destination": "La guajira",
+                "count": 17
+            },
+            {
+                "origin": "Santander",
+                "destination": "Magdalena",
+                "count": 21
+            },
+            {
+                "origin": "Santander",
+                "destination": "Meta",
+                "count": 44
+            },
+            {
+                "origin": "Santander",
+                "destination": "Narino",
+                "count": 47
+            },
+            {
+                "origin": "Santander",
+                "destination": "Norte de santander",
+                "count": 28
+            },
+            {
+                "origin": "Santander",
+                "destination": "Putumayo",
+                "count": 20
+            },
+            {
+                "origin": "Santander",
+                "destination": "Quindio",
+                "count": 17
+            },
+            {
+                "origin": "Santander",
+                "destination": "Risaralda",
+                "count": 12
+            },
+            {
+                "origin": "Santander",
+                "destination": "Santander",
+                "count": 50
+            },
+            {
+                "origin": "Santander",
+                "destination": "Sucre",
+                "count": 15
+            },
+            {
+                "origin": "Santander",
+                "destination": "Tolima",
+                "count": 39
+            },
+            {
+                "origin": "Santander",
+                "destination": "Valle",
+                "count": 44
+            },
+            {
+                "origin": "Santander",
+                "destination": "Vichada",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Antioquia",
+                "count": 63
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Arauca",
+                "count": 5
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Atlantico",
+                "count": 9
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Bolivar",
+                "count": 8
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Boyaca",
+                "count": 8
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Caldas",
+                "count": 6
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Caqueta",
+                "count": 6
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Casanare",
+                "count": 5
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cauca",
+                "count": 14
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cesar",
+                "count": 9
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Choco",
+                "count": 4
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cordoba",
+                "count": 10
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cundinamarca",
+                "count": 60
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Guaviare",
+                "count": 4
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Huila",
+                "count": 9
+            },
+            {
+                "origin": "Tolima",
+                "destination": "La guajira",
+                "count": 4
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Meta",
+                "count": 9
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Narino",
+                "count": 12
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Norte de santander",
+                "count": 12
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Putumayo",
+                "count": 8
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Risaralda",
+                "count": 5
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Santander",
+                "count": 15
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Sucre",
+                "count": 9
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Tolima",
+                "count": 10
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Valle",
+                "count": 14
+            },
+            {
+                "origin": "Valle",
+                "destination": "Amazonas",
+                "count": 3
+            },
+            {
+                "origin": "Valle",
+                "destination": "Antioquia",
+                "count": 141
+            },
+            {
+                "origin": "Valle",
+                "destination": "Arauca",
+                "count": 12
+            },
+            {
+                "origin": "Valle",
+                "destination": "Atlantico",
+                "count": 14
+            },
+            {
+                "origin": "Valle",
+                "destination": "Bolivar",
+                "count": 11
+            },
+            {
+                "origin": "Valle",
+                "destination": "Boyaca",
+                "count": 22
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caldas",
+                "count": 31
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caqueta",
+                "count": 13
+            },
+            {
+                "origin": "Valle",
+                "destination": "Casanare",
+                "count": 15
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cauca",
+                "count": 41
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cesar",
+                "count": 20
+            },
+            {
+                "origin": "Valle",
+                "destination": "Choco",
+                "count": 7
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cordoba",
+                "count": 27
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cundinamarca",
+                "count": 103
+            },
+            {
+                "origin": "Valle",
+                "destination": "Guaviare",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Huila",
+                "count": 32
+            },
+            {
+                "origin": "Valle",
+                "destination": "La guajira",
+                "count": 12
+            },
+            {
+                "origin": "Valle",
+                "destination": "Magdalena",
+                "count": 9
+            },
+            {
+                "origin": "Valle",
+                "destination": "Meta",
+                "count": 30
+            },
+            {
+                "origin": "Valle",
+                "destination": "Narino",
+                "count": 32
+            },
+            {
+                "origin": "Valle",
+                "destination": "Norte de santander",
+                "count": 18
+            },
+            {
+                "origin": "Valle",
+                "destination": "Putumayo",
+                "count": 14
+            },
+            {
+                "origin": "Valle",
+                "destination": "Quindio",
+                "count": 17
+            },
+            {
+                "origin": "Valle",
+                "destination": "Risaralda",
+                "count": 35
+            },
+            {
+                "origin": "Valle",
+                "destination": "Santander",
+                "count": 30
+            },
+            {
+                "origin": "Valle",
+                "destination": "Sucre",
+                "count": 12
+            },
+            {
+                "origin": "Valle",
+                "destination": "Tolima",
+                "count": 35
+            },
+            {
+                "origin": "Valle",
+                "destination": "Valle",
+                "count": 57
+            }
+        ]
+    },
+    "servientrega": {
+        "status_summary": {
+            "cancelled": 663,
+            "completed": 3969,
+            "delivered": 439,
+            "packing": 468,
+            "ready_to_ship": 12,
+            "returned": 953,
+            "sent": 1269,
+            "shipping_new": 500,
+            "total": 8273
+        },
+        "coverage": [
+            {
+                "origin": "Antioquia",
+                "destination": "Antioquia",
+                "count": 66
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Atlantico",
+                "count": 19
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Bolivar",
+                "count": 23
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Boyaca",
+                "count": 12
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Caldas",
+                "count": 9
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Caqueta",
+                "count": 6
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Casanare",
+                "count": 12
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cauca",
+                "count": 7
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cesar",
+                "count": 13
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Choco",
+                "count": 5
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cordoba",
+                "count": 7
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cundinamarca",
+                "count": 71
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "La guajira",
+                "count": 15
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Magdalena",
+                "count": 9
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Meta",
+                "count": 11
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Narino",
+                "count": 6
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Norte de santander",
+                "count": 13
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Putumayo",
+                "count": 4
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Quindio",
+                "count": 7
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Risaralda",
+                "count": 7
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Santander",
+                "count": 36
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Sucre",
+                "count": 9
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Tolima",
+                "count": 17
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Valle",
+                "count": 51
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Antioquia",
+                "count": 14
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Atlantico",
+                "count": 18
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Bolivar",
+                "count": 10
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Boyaca",
+                "count": 2
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Caldas",
+                "count": 2
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Caqueta",
+                "count": 2
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Casanare",
+                "count": 4
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cauca",
+                "count": 9
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cesar",
+                "count": 4
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Choco",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cundinamarca",
+                "count": 42
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Huila",
+                "count": 9
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "La guajira",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Magdalena",
+                "count": 11
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Meta",
+                "count": 9
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Narino",
+                "count": 2
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Norte de santander",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Quindio",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Risaralda",
+                "count": 4
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Santander",
+                "count": 12
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Sucre",
+                "count": 5
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Tolima",
+                "count": 7
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Valle",
+                "count": 34
+            },
+            {
+                "origin": "Casanare",
+                "destination": "Huila",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Antioquia",
+                "count": 9
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Boyaca",
+                "count": 3
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Caldas",
+                "count": 4
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Casanare",
+                "count": 4
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cesar",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cordoba",
+                "count": 5
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Cundinamarca",
+                "count": 13
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Huila",
+                "count": 4
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Magdalena",
+                "count": 5
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Narino",
+                "count": 5
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Norte de santander",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Risaralda",
+                "count": 3
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Sucre",
+                "count": 2
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Tolima",
+                "count": 5
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Valle",
+                "count": 9
+            },
+            {
+                "origin": "Cesar",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Cesar",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Cordoba",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Antioquia",
+                "count": 249
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Arauca",
+                "count": 4
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Atlantico",
+                "count": 54
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Bolivar",
+                "count": 99
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Boyaca",
+                "count": 58
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caldas",
+                "count": 66
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caqueta",
+                "count": 24
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Casanare",
+                "count": 30
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cauca",
+                "count": 43
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cesar",
+                "count": 39
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Choco",
+                "count": 6
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cordoba",
+                "count": 46
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cundinamarca",
+                "count": 360
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Guaviare",
+                "count": 4
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Huila",
+                "count": 74
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "La guajira",
+                "count": 61
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Magdalena",
+                "count": 74
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Meta",
+                "count": 77
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Narino",
+                "count": 67
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Norte de santander",
+                "count": 56
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Putumayo",
+                "count": 24
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Quindio",
+                "count": 39
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Risaralda",
+                "count": 48
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Santander",
+                "count": 119
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Sucre",
+                "count": 24
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Tolima",
+                "count": 64
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Valle",
+                "count": 187
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Vichada",
+                "count": 6
+            },
+            {
+                "origin": "Huila",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Choco",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Cundinamarca",
+                "count": 5
+            },
+            {
+                "origin": "Huila",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "Huila",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Huila",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Antioquia",
+                "count": 5
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Bolivar",
+                "count": 6
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Boyaca",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Caldas",
+                "count": 5
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Casanare",
+                "count": 3
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Cundinamarca",
+                "count": 7
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Magdalena",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Quindio",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Risaralda",
+                "count": 2
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Santander",
+                "count": 4
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Sucre",
+                "count": 1
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Tolima",
+                "count": 5
+            },
+            {
+                "origin": "La guajira",
+                "destination": "Valle",
+                "count": 6
+            },
+            {
+                "origin": "Magdalena",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Magdalena",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Cundinamarca",
+                "count": 2
+            },
+            {
+                "origin": "Meta",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Cundinamarca",
+                "count": 2
+            },
+            {
+                "origin": "Narino",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Narino",
+                "count": 3
+            },
+            {
+                "origin": "Narino",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Antioquia",
+                "count": 66
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Atlantico",
+                "count": 24
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Bolivar",
+                "count": 22
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Boyaca",
+                "count": 6
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Caldas",
+                "count": 10
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Caqueta",
+                "count": 5
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Casanare",
+                "count": 7
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cauca",
+                "count": 4
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cesar",
+                "count": 10
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Choco",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cordoba",
+                "count": 21
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cundinamarca",
+                "count": 71
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Huila",
+                "count": 8
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "La guajira",
+                "count": 11
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Magdalena",
+                "count": 24
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Meta",
+                "count": 14
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Narino",
+                "count": 7
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Norte de santander",
+                "count": 9
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Putumayo",
+                "count": 12
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Quindio",
+                "count": 4
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Risaralda",
+                "count": 12
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Santander",
+                "count": 19
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Sucre",
+                "count": 9
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Tolima",
+                "count": 17
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Valle",
+                "count": 48
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Antioquia",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Bolivar",
+                "count": 3
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Caldas",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cundinamarca",
+                "count": 8
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Magdalena",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Quindio",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Risaralda",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Valle",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Antioquia",
+                "count": 6
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Arauca",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Atlantico",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Bolivar",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Boyaca",
+                "count": 5
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Caldas",
+                "count": 6
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Caqueta",
+                "count": 5
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Casanare",
+                "count": 9
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cauca",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cordoba",
+                "count": 5
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cundinamarca",
+                "count": 13
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Guaviare",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Huila",
+                "count": 9
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Magdalena",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Meta",
+                "count": 10
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Norte de santander",
+                "count": 8
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Putumayo",
+                "count": 10
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Risaralda",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Santander",
+                "count": 8
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Tolima",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Valle",
+                "count": 9
+            },
+            {
+                "origin": "Santander",
+                "destination": "Antioquia",
+                "count": 15
+            },
+            {
+                "origin": "Santander",
+                "destination": "Atlantico",
+                "count": 5
+            },
+            {
+                "origin": "Santander",
+                "destination": "Bolivar",
+                "count": 11
+            },
+            {
+                "origin": "Santander",
+                "destination": "Boyaca",
+                "count": 2
+            },
+            {
+                "origin": "Santander",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cauca",
+                "count": 3
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cesar",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cordoba",
+                "count": 6
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cundinamarca",
+                "count": 12
+            },
+            {
+                "origin": "Santander",
+                "destination": "Huila",
+                "count": 9
+            },
+            {
+                "origin": "Santander",
+                "destination": "La guajira",
+                "count": 6
+            },
+            {
+                "origin": "Santander",
+                "destination": "Magdalena",
+                "count": 8
+            },
+            {
+                "origin": "Santander",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Norte de santander",
+                "count": 7
+            },
+            {
+                "origin": "Santander",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Santander",
+                "destination": "Risaralda",
+                "count": 10
+            },
+            {
+                "origin": "Santander",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Sucre",
+                "count": 5
+            },
+            {
+                "origin": "Santander",
+                "destination": "Tolima",
+                "count": 6
+            },
+            {
+                "origin": "Santander",
+                "destination": "Valle",
+                "count": 9
+            },
+            {
+                "origin": "Santander",
+                "destination": "Vichada",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Antioquia",
+                "count": 2
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Cundinamarca",
+                "count": 8
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Valle",
+                "count": 3
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Antioquia",
+                "count": 5
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Bolivar",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Caldas",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Casanare",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cordoba",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cundinamarca",
+                "count": 6
+            },
+            {
+                "origin": "Tolima",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Magdalena",
+                "count": 3
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Norte de santander",
+                "count": 3
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Putumayo",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Risaralda",
+                "count": 4
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Santander",
+                "count": 4
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Tolima",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Archipielago de san andres",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Antioquia",
+                "count": 39
+            },
+            {
+                "origin": "Valle",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Atlantico",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Bolivar",
+                "count": 4
+            },
+            {
+                "origin": "Valle",
+                "destination": "Boyaca",
+                "count": 8
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caldas",
+                "count": 6
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cauca",
+                "count": 7
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cesar",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Choco",
+                "count": 3
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cordoba",
+                "count": 3
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cundinamarca",
+                "count": 27
+            },
+            {
+                "origin": "Valle",
+                "destination": "Huila",
+                "count": 8
+            },
+            {
+                "origin": "Valle",
+                "destination": "La guajira",
+                "count": 4
+            },
+            {
+                "origin": "Valle",
+                "destination": "Magdalena",
+                "count": 8
+            },
+            {
+                "origin": "Valle",
+                "destination": "Meta",
+                "count": 7
+            },
+            {
+                "origin": "Valle",
+                "destination": "Narino",
+                "count": 3
+            },
+            {
+                "origin": "Valle",
+                "destination": "Norte de santander",
+                "count": 10
+            },
+            {
+                "origin": "Valle",
+                "destination": "Putumayo",
+                "count": 7
+            },
+            {
+                "origin": "Valle",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Valle",
+                "destination": "Risaralda",
+                "count": 7
+            },
+            {
+                "origin": "Valle",
+                "destination": "Santander",
+                "count": 15
+            },
+            {
+                "origin": "Valle",
+                "destination": "Tolima",
+                "count": 7
+            },
+            {
+                "origin": "Valle",
+                "destination": "Valle",
+                "count": 38
+            }
+        ]
+    },
+    "tcc": {
+        "status_summary": {
+            "cancelled": 467,
+            "completed": 3167,
+            "delivered": 105,
+            "packing": 1,
+            "ready_to_ship": 132,
+            "returned": 1133,
+            "sent": 165,
+            "shipping_new": 739,
+            "total": 5909
+        },
+        "coverage": [
+            {
+                "origin": "Antioquia",
+                "destination": "Antioquia",
+                "count": 66
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Arauca",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Atlantico",
+                "count": 35
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Bolivar",
+                "count": 32
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Boyaca",
+                "count": 7
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Caldas",
+                "count": 10
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cauca",
+                "count": 8
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cesar",
+                "count": 4
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cordoba",
+                "count": 12
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Cundinamarca",
+                "count": 179
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Magdalena",
+                "count": 16
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Meta",
+                "count": 13
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Norte de santander",
+                "count": 16
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Quindio",
+                "count": 3
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Risaralda",
+                "count": 8
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Santander",
+                "count": 32
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Sucre",
+                "count": 3
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Tolima",
+                "count": 13
+            },
+            {
+                "origin": "Antioquia",
+                "destination": "Valle",
+                "count": 77
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Antioquia",
+                "count": 2
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Atlantico",
+                "count": 3
+            },
+            {
+                "origin": "Bolivar",
+                "destination": "Cundinamarca",
+                "count": 3
+            },
+            {
+                "origin": "Cauca",
+                "destination": "Valle",
+                "count": 2
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Antioquia",
+                "count": 243
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Arauca",
+                "count": 2
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Atlantico",
+                "count": 85
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Bolivar",
+                "count": 62
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Boyaca",
+                "count": 39
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caldas",
+                "count": 32
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Caqueta",
+                "count": 8
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Casanare",
+                "count": 9
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cauca",
+                "count": 34
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cesar",
+                "count": 7
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cordoba",
+                "count": 5
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Cundinamarca",
+                "count": 386
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Guaviare",
+                "count": 1
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Huila",
+                "count": 19
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "La guajira",
+                "count": 3
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Magdalena",
+                "count": 30
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Meta",
+                "count": 28
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Narino",
+                "count": 15
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Norte de santander",
+                "count": 39
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Quindio",
+                "count": 18
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Risaralda",
+                "count": 64
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Santander",
+                "count": 96
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Sucre",
+                "count": 6
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Tolima",
+                "count": 35
+            },
+            {
+                "origin": "Cundinamarca",
+                "destination": "Valle",
+                "count": 173
+            },
+            {
+                "origin": "Magdalena",
+                "destination": "Cundinamarca",
+                "count": 1
+            },
+            {
+                "origin": "Magdalena",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Meta",
+                "destination": "Tolima",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Meta",
+                "count": 1
+            },
+            {
+                "origin": "Narino",
+                "destination": "Valle",
+                "count": 2
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Antioquia",
+                "count": 61
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Atlantico",
+                "count": 47
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Bolivar",
+                "count": 30
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Boyaca",
+                "count": 4
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Caldas",
+                "count": 4
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Choco",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Cundinamarca",
+                "count": 139
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "La guajira",
+                "count": 3
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Magdalena",
+                "count": 17
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Meta",
+                "count": 5
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Narino",
+                "count": 2
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Norte de santander",
+                "count": 8
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Quindio",
+                "count": 2
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Risaralda",
+                "count": 11
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Santander",
+                "count": 26
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Sucre",
+                "count": 3
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Tolima",
+                "count": 8
+            },
+            {
+                "origin": "Norte de santander",
+                "destination": "Valle",
+                "count": 56
+            },
+            {
+                "origin": "Quindio",
+                "destination": "Cundinamarca",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Antioquia",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Atlantico",
+                "count": 2
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Bolivar",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cordoba",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Cundinamarca",
+                "count": 14
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Narino",
+                "count": 4
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Santander",
+                "count": 1
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Tolima",
+                "count": 3
+            },
+            {
+                "origin": "Risaralda",
+                "destination": "Valle",
+                "count": 5
+            },
+            {
+                "origin": "Santander",
+                "destination": "Antioquia",
+                "count": 17
+            },
+            {
+                "origin": "Santander",
+                "destination": "Atlantico",
+                "count": 14
+            },
+            {
+                "origin": "Santander",
+                "destination": "Bolivar",
+                "count": 21
+            },
+            {
+                "origin": "Santander",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Choco",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Cundinamarca",
+                "count": 37
+            },
+            {
+                "origin": "Santander",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Magdalena",
+                "count": 6
+            },
+            {
+                "origin": "Santander",
+                "destination": "Meta",
+                "count": 3
+            },
+            {
+                "origin": "Santander",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Santander",
+                "destination": "Quindio",
+                "count": 4
+            },
+            {
+                "origin": "Santander",
+                "destination": "Risaralda",
+                "count": 5
+            },
+            {
+                "origin": "Santander",
+                "destination": "Santander",
+                "count": 2
+            },
+            {
+                "origin": "Santander",
+                "destination": "Tolima",
+                "count": 6
+            },
+            {
+                "origin": "Santander",
+                "destination": "Valle",
+                "count": 24
+            },
+            {
+                "origin": "Sucre",
+                "destination": "Valle",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Antioquia",
+                "count": 25
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Atlantico",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Boyaca",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Cundinamarca",
+                "count": 2
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Narino",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Norte de santander",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Risaralda",
+                "count": 1
+            },
+            {
+                "origin": "Tolima",
+                "destination": "Valle",
+                "count": 15
+            },
+            {
+                "origin": "Valle",
+                "destination": "Antioquia",
+                "count": 74
+            },
+            {
+                "origin": "Valle",
+                "destination": "Atlantico",
+                "count": 24
+            },
+            {
+                "origin": "Valle",
+                "destination": "Bolivar",
+                "count": 13
+            },
+            {
+                "origin": "Valle",
+                "destination": "Boyaca",
+                "count": 15
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caldas",
+                "count": 13
+            },
+            {
+                "origin": "Valle",
+                "destination": "Caqueta",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Casanare",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cauca",
+                "count": 13
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cesar",
+                "count": 2
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cordoba",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "Cundinamarca",
+                "count": 165
+            },
+            {
+                "origin": "Valle",
+                "destination": "Huila",
+                "count": 5
+            },
+            {
+                "origin": "Valle",
+                "destination": "La guajira",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Magdalena",
+                "count": 10
+            },
+            {
+                "origin": "Valle",
+                "destination": "Meta",
+                "count": 3
+            },
+            {
+                "origin": "Valle",
+                "destination": "Narino",
+                "count": 11
+            },
+            {
+                "origin": "Valle",
+                "destination": "Norte de santander",
+                "count": 9
+            },
+            {
+                "origin": "Valle",
+                "destination": "Putumayo",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Quindio",
+                "count": 12
+            },
+            {
+                "origin": "Valle",
+                "destination": "Risaralda",
+                "count": 12
+            },
+            {
+                "origin": "Valle",
+                "destination": "Santander",
+                "count": 26
+            },
+            {
+                "origin": "Valle",
+                "destination": "Sucre",
+                "count": 1
+            },
+            {
+                "origin": "Valle",
+                "destination": "Tolima",
+                "count": 12
+            },
+            {
+                "origin": "Valle",
+                "destination": "Valle",
+                "count": 58
+            }
+        ]
+    }
+}

@@ -69,3 +69,12 @@ export const getOrderRawAction = async (id: string) => {
         throw new Error(error.message);
     }
 };
+
+export const getAIRecommendationAction = async (origin: string, destination: string) => {
+    try {
+        return await (await getUseCases()).getAIRecommendation(origin, destination);
+    } catch (error: any) {
+        console.error('Get AI Recommendation Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};

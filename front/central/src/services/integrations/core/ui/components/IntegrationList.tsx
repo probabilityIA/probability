@@ -27,6 +27,7 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
         toggleActive,
         setAsDefault,
         testConnection,
+        syncOrders,
         setError
     } = useIntegrations();
 
@@ -54,6 +55,21 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
             alert('✅ Conexión exitosa');
         } else {
             alert(`❌ Error: ${result.message}`);
+        }
+    };
+
+    const handleSync = async (id: number) => {
+        // Implement logic to show loading state if needed, or just toast
+        // Since we don't have toast in this component (it seems), we use alert for now or try to get toast provider
+        // Wait, OrderList had toast provider. Let's see imports.
+        // It imports Alert from ui but not useToast.
+        // I'll stick to alert for simplicity as requested, or just call the function.
+        // The user said "better move that button".
+        const result = await syncOrders(id);
+        if (result.success) {
+            alert('✅ Sincronización iniciada correctamente');
+        } else {
+            alert(`❌ Error al iniciar sincronización: ${result.message}`);
         }
     };
 
@@ -104,6 +120,13 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
                     onClick={() => handleTest(integration.id)}
                 >
                     Probar
+                </Button>
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleSync(integration.id)}
+                >
+                    ↻ Sincronizar
                 </Button>
                 {onEdit && (
                     <Button

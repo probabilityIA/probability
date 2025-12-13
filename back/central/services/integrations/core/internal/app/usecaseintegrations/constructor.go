@@ -7,6 +7,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
+type IntegrationCreatedObserver func(ctx context.Context, integration *domain.Integration)
+
 type IIntegrationUseCase interface {
 	CreateIntegration(ctx context.Context, dto domain.CreateIntegrationDTO) (*domain.Integration, error)
 	UpdateIntegration(ctx context.Context, id uint, dto domain.UpdateIntegrationDTO) (*domain.Integration, error)
@@ -20,6 +22,8 @@ type IIntegrationUseCase interface {
 	ActivateIntegration(ctx context.Context, id uint) error
 	DeactivateIntegration(ctx context.Context, id uint) error
 	SetAsDefault(ctx context.Context, id uint) error
+	UpdateLastSync(ctx context.Context, integrationID string) error
+	RegisterObserver(observer IntegrationCreatedObserver)
 }
 
 type IntegrationUseCase struct {
@@ -27,6 +31,7 @@ type IntegrationUseCase struct {
 	encryption domain.IEncryptionService
 	testerReg  *IntegrationTesterRegistry
 	log        log.ILogger
+	observers  []IntegrationCreatedObserver
 }
 
 // New crea una nueva instancia del caso de uso de integraciones
@@ -36,7 +41,12 @@ func New(repo domain.IRepository, encryption domain.IEncryptionService, logger l
 		encryption: encryption,
 		testerReg:  NewIntegrationTesterRegistry(),
 		log:        logger,
+		observers:  make([]IntegrationCreatedObserver, 0),
 	}
+}
+
+func (uc *IntegrationUseCase) RegisterObserver(observer IntegrationCreatedObserver) {
+	uc.observers = append(uc.observers, observer)
 }
 
 // GetTesterRegistry retorna el registry de testers (para uso interno del core)

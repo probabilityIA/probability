@@ -7,7 +7,8 @@ import {
     activateIntegrationAction,
     deactivateIntegrationAction,
     setAsDefaultAction,
-    testConnectionAction
+    testConnectionAction,
+    syncOrdersAction
 } from '../../infra/actions';
 import { Integration } from '../../domain/types';
 
@@ -94,6 +95,16 @@ export const useIntegrations = () => {
         }
     };
 
+    const syncOrders = async (id: number) => {
+        try {
+            const res = await syncOrdersAction(id);
+            return res;
+        } catch (err: any) {
+            console.error('Error syncing orders:', err);
+            return { success: false, message: err.message || 'Error syncing orders' };
+        }
+    };
+
     useEffect(() => {
         fetchIntegrations();
     }, [fetchIntegrations]);
@@ -115,7 +126,9 @@ export const useIntegrations = () => {
         toggleActive,
         setAsDefault,
         testConnection,
+        syncOrders,
         refresh: fetchIntegrations,
+
         setError
     };
 };

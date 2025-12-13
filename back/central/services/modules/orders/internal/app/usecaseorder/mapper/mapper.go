@@ -1,7 +1,10 @@
 package mapper
 
 import (
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"encoding/json"
+
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain" // Added import for service
+	"gorm.io/datatypes"
 )
 
 // ToOrderResponse convierte un modelo Order a OrderResponse
@@ -9,6 +12,17 @@ func ToOrderResponse(order *domain.Order) *domain.OrderResponse {
 	if order == nil {
 		return nil
 	}
+
+	// 1. Backward Compatibility: Populate Items (JSONB) from OrderItems (Relation) if Items (JSONB) is empty
+	// This ensures that legacy orders or orders where JSONB wasn't populated still show products
+	items := order.Items
+	if (len(items) == 0 || string(items) == "null") && len(order.OrderItems) > 0 {
+		if itemsJSON, err := json.Marshal(order.OrderItems); err == nil {
+			items = datatypes.JSON(itemsJSON)
+		}
+	}
+
+	// Checking imports first...
 	return &domain.OrderResponse{
 		ID:        order.ID,
 		CreatedAt: order.CreatedAt,
@@ -96,6 +110,7 @@ func ToOrderResponse(order *domain.Order) *domain.OrderResponse {
 		InvoiceURL:      order.InvoiceURL,
 		InvoiceID:       order.InvoiceID,
 		InvoiceProvider: order.InvoiceProvider,
+		OrderStatusURL:  order.OrderStatusURL,
 
 		// Datos estructurados
 		Items:              order.Items,
@@ -108,7 +123,19 @@ func ToOrderResponse(order *domain.Order) *domain.OrderResponse {
 		// Timestamps
 		OccurredAt: order.OccurredAt,
 		ImportedAt: order.ImportedAt,
+
+		// Calculated Fields
+		NegativeFactors: UnmarshalNegativeFactors(order.NegativeFactors),
 	}
+}
+
+func UnmarshalNegativeFactors(jsonData datatypes.JSON) []string {
+	if len(jsonData) == 0 || string(jsonData) == "null" {
+		return []string{}
+	}
+	var factors []string
+	_ = json.Unmarshal(jsonData, &factors)
+	return factors
 }
 
 // ToOrderSummary convierte un modelo Order a OrderSummary
@@ -140,5 +167,6 @@ func ToOrderSummary(order *domain.Order) domain.OrderSummary {
 		PaymentStatus:       paymentStatus,
 		ItemsCount:          len(order.Items),
 		DeliveryProbability: order.DeliveryProbability,
+		NegativeFactors:     UnmarshalNegativeFactors(order.NegativeFactors),
 	}
 }

@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseordermapping"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/queue"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -18,8 +18,8 @@ import (
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
 
-// New inicializa el módulo de orders
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redisclient.IRedis) {
+// New inicializa el módulo de orders y retorna el caso de uso de mapping para integraciones
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redisclient.IRedis) domain.IOrderMappingUseCase {
 	// 1. Init Repositories
 	repo := repository.New(database)
 
@@ -57,4 +57,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 			}
 		}()
 	}
+
+	return orderMapping
 }
