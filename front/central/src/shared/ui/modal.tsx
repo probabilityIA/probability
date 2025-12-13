@@ -12,7 +12,7 @@ interface ModalProps {
   onClose: () => void;
   title?: string;
   children: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '6xl' | 'full';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
   glass?: boolean; // Efecto glassmorphism
 }
 
@@ -23,7 +23,9 @@ const sizeClasses = {
   xl: 'max-w-xl',
   '2xl': 'max-w-2xl',
   '4xl': 'max-w-4xl',
+  '5xl': 'max-w-5xl',
   '6xl': 'max-w-6xl',
+  '7xl': 'max-w-7xl',
   'full': 'max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] mx-auto my-[5vh]',
 };
 

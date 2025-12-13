@@ -20,6 +20,7 @@ type IRepository interface {
 	UpdateOrder(ctx context.Context, order *Order) error
 	DeleteOrder(ctx context.Context, id string) error
 	GetOrderRaw(ctx context.Context, id string) (*OrderChannelMetadata, error)
+	CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error)
 
 	// Validation
 	OrderExists(ctx context.Context, externalID string, integrationID uint) (bool, error)
@@ -67,4 +68,15 @@ type IRepository interface {
 type IOrderConsumer interface {
 	// Start inicia el consumidor de órdenes
 	Start(ctx context.Context) error
+}
+
+// ───────────────────────────────────────────
+//
+//	USE CASE INTERFACES
+//
+// ───────────────────────────────────────────
+
+// IOrderMappingUseCase define el caso de uso para mapear y guardar órdenes desde integraciones
+type IOrderMappingUseCase interface {
+	MapAndSaveOrder(ctx context.Context, dto *CanonicalOrderDTO) (*OrderResponse, error)
 }

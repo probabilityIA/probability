@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseordermapping"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -22,14 +22,14 @@ const (
 type OrderConsumer struct {
 	queue          rabbitmq.IQueue
 	logger         log.ILogger
-	orderMappingUC usecaseordermapping.IOrderMappingUseCase
+	orderMappingUC domain.IOrderMappingUseCase
 }
 
 // New crea una nueva instancia del consumidor de órdenes
 func New(
 	queue rabbitmq.IQueue,
 	logger log.ILogger,
-	orderMappingUC usecaseordermapping.IOrderMappingUseCase,
+	orderMappingUC domain.IOrderMappingUseCase,
 ) domain.IOrderConsumer {
 	return &OrderConsumer{
 		queue:          queue,
@@ -104,11 +104,32 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 	// Llamar al caso de uso para mapear y guardar la orden
 	orderResponse, err := c.orderMappingUC.MapAndSaveOrder(ctx, &orderDTO)
 	if err != nil {
+		errStr := err.Error()
+		// Check for specific errors to discard message
 		if errors.Is(err, domain.ErrOrderAlreadyExists) {
 			c.logger.Info().
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Order already exists, skipping")
+			return nil
+		}
+
+		// Discard messages with missing required business/integration checks from domain logic
+		if contains(errStr, "business_id is required") || contains(errStr, "integration_id is required") {
+			c.logger.Warn().
+				Str("queue", OrdersCanonicalQueueName).
+				Str("external_id", orderDTO.ExternalID).
+				Msg("Discarding invalid message: missing required fields (drain queue)")
+			return nil
+		}
+
+		// If error is a FK violation (data integrity), discard message to avoid loop
+		if contains(errStr, "violates foreign key constraint") {
+			c.logger.Warn().
+				Err(err).
+				Str("queue", OrdersCanonicalQueueName).
+				Str("external_id", orderDTO.ExternalID).
+				Msg("Order failed with data integrity error (FK violation), discarding message")
 			return nil
 		}
 
@@ -135,4 +156,8 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		Msg("Order processed and saved successfully from queue")
 
 	return nil
+}
+
+func contains(s, substr string) bool {
+	return strings.Contains(s, substr)
 }

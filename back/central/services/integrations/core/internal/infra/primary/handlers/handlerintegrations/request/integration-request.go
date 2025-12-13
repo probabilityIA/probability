@@ -5,7 +5,7 @@ type CreateIntegrationRequest struct {
 	Name              string                 `json:"name" binding:"required" example:"WhatsApp Principal"`
 	Code              string                 `json:"code" binding:"required" example:"whatsapp_platform"`
 	IntegrationTypeID uint                   `json:"integration_type_id" binding:"required" example:"1"` // ID del tipo de integración
-	Category          string                 `json:"category" binding:"required" example:"internal"`
+	Category          string                 `json:"category" binding:"omitempty" example:"internal"`
 	BusinessID        *uint                  `json:"business_id" example:"16"` // NULL para integraciones globales
 	IsActive          bool                   `json:"is_active" example:"true"`
 	IsDefault         bool                   `json:"is_default" example:"true"`

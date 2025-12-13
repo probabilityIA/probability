@@ -55,6 +55,10 @@ export class IntegrationUseCases {
         return this.repository.setAsDefault(id);
     }
 
+    async syncOrders(id: number): Promise<ActionResponse> {
+        return this.repository.syncOrders(id);
+    }
+
     async testIntegration(id: number): Promise<ActionResponse> {
         return this.repository.testIntegration(id);
     }

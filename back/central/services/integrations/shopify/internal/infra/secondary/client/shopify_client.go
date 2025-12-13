@@ -28,7 +28,7 @@ func (c *shopifyClient) ValidateToken(ctx context.Context, storeName, accessToke
 		storeName = storeName + ".myshopify.com"
 	}
 
-	url := fmt.Sprintf("https://%s/admin/api/2024-01/shop.json", storeName)
+	url := fmt.Sprintf("https://%s/admin/api/2024-10/shop.json", storeName)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return false, nil, err
@@ -59,7 +59,7 @@ func (c *shopifyClient) FetchOrders(ctx context.Context, storeName, accessToken 
 		storeName = storeName + ".myshopify.com"
 	}
 
-	url := fmt.Sprintf("https://%s/admin/api/2024-01/orders.json", storeName)
+	url := fmt.Sprintf("https://%s/admin/api/2024-10/orders.json", storeName)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {

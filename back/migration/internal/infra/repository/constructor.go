@@ -159,5 +159,33 @@ func (r *Repository) seedInitialData(ctx context.Context) error {
 		}
 	}
 
+	// 5. Seed Integration Type "Shopify"
+	var shopifyType models.IntegrationType
+	configSchema := `{
+		"type": "object",
+		"required": ["store_url", "access_token"],
+		"properties": {
+			"store_url": {
+				"type": "string",
+				"description": "Shopify store URL (e.g., mystore.myshopify.com)",
+				"pattern": ".+\\.myshopify\\.com$"
+			},
+			"access_token": {
+				"type": "string",
+				"description": "Shopify Admin API access token",
+				"minLength": 10
+			}
+		}
+	}`
+	if err := db.Where("code = ?", "shopify").FirstOrCreate(&shopifyType, models.IntegrationType{
+		Name:         "Shopify",
+		Code:         "shopify",
+		Description:  "Shopify e-commerce platform integration",
+		IsActive:     true,
+		ConfigSchema: []byte(configSchema),
+	}).Error; err != nil {
+		return fmt.Errorf("failed to seed shopify integration type: %w", err)
+	}
+
 	return nil
 }

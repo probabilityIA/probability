@@ -75,6 +75,19 @@ const OrderRow = memo(({
                     <span className="text-xs text-gray-400">N/A</span>
                 )}
             </td>
+            <td className="px-3 sm:px-6 py-4 hidden xl:table-cell">
+                <div className="flex flex-wrap gap-1">
+                    {order.negative_factors && order.negative_factors.length > 0 ? (
+                        order.negative_factors.map((factor, idx) => (
+                            <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                {factor}
+                            </span>
+                        ))
+                    ) : (
+                        <span className="text-xs text-gray-400">-</span>
+                    )}
+                </div>
+            </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                 {formatDate(order.created_at)}
             </td>
@@ -295,7 +308,7 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
     const handleSortChange = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
         setFilters((prev) => ({
             ...prev,
-            sort_by: sortBy as 'created_at' | 'updated_at' | 'total_amount',
+            sort_by: sortBy as 'created_at' | 'updated_at' | 'total_amount' | 'order_number',
             sort_order: sortOrder,
             page: 1,
         }));
@@ -436,7 +449,7 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
     }, []);
 
     const getProbabilityColor = useCallback((probability: number) => {
-        if (probability < 30) return 'bg-red-500';
+        if (probability < 50) return 'bg-red-500';
         if (probability < 70) return 'bg-yellow-500';
         return 'bg-green-500';
     }, []);
@@ -469,6 +482,7 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                         { value: 'created_at', label: 'Ordenar por fecha' },
                         { value: 'updated_at', label: 'Ordenar por actualización' },
                         { value: 'total_amount', label: 'Ordenar por monto' },
+                        { value: 'order_number', label: 'Ordenar por ID' },
                     ]}
                 />
             </div>
@@ -488,8 +502,18 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                     <table className={`min-w-full divide-y divide-gray-200 transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Orden
+                                <th
+                                    className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group"
+                                    onClick={() => handleSortChange('order_number', filters.sort_order === 'asc' ? 'desc' : 'asc')}
+                                >
+                                    <div className="flex items-center gap-1">
+                                        Orden
+                                        {filters.sort_by === 'order_number' && (
+                                            <span className="text-gray-400">
+                                                {filters.sort_order === 'asc' ? '↑' : '↓'}
+                                            </span>
+                                        )}
+                                    </div>
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
                                     Cliente
@@ -505,6 +529,9 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
                                     Probabilidad
+                                </th>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                                    Datos Faltantes
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Fecha

@@ -7,6 +7,6 @@ import (
 func (h *ShopifyHandlers) RegisterRoutes(router *gin.RouterGroup) {
 	shopifyGroup := router.Group("/shopify")
 	{
-		shopifyGroup.POST("/sync", h.SyncOrders)
+		shopifyGroup.POST("/sync/:id", h.SyncOrders)
 	}
 }
