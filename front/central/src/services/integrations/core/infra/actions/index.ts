@@ -108,6 +108,15 @@ export const setAsDefaultAction = async (id: number) => {
     }
 };
 
+export const syncOrdersAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).syncOrders(id);
+    } catch (error: any) {
+        console.error('Sync Orders Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
 export const testIntegrationAction = async (id: number) => {
     try {
         return await (await getUseCases()).testIntegration(id);

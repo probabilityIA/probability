@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 )
 
 // GetOrCreateCustomer verifica si el cliente existe, si no, lo crea
@@ -36,18 +36,18 @@ func (uc *UseCaseOrderMapping) GetOrCreateCustomer(ctx context.Context, business
 	}
 
 	// 3. Crear nuevo cliente solo si no existe ni por email ni por DNI
+	// Handle DNI: Save as NULL if empty to avoid unique constraint violations
+	var dni *string
+	if dto.CustomerDNI != "" {
+		dni = &dto.CustomerDNI
+	}
+
 	newClient := &domain.Client{
 		BusinessID: businessID,
 		Name:       dto.CustomerName,
 		Email:      dto.CustomerEmail,
 		Phone:      dto.CustomerPhone,
-	}
-
-	// Solo asignar DNI si no está vacío (para evitar violaciones de constraint único)
-	if dto.CustomerDNI != "" {
-		newClient.Dni = &dto.CustomerDNI
-	} else {
-		newClient.Dni = nil
+		Dni:        dni,
 	}
 
 	if err := uc.repo.CreateClient(ctx, newClient); err != nil {

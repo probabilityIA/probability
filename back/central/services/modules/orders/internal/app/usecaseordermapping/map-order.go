@@ -2,11 +2,14 @@ package usecaseordermapping
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/service"
+	"gorm.io/datatypes"
 )
 
 // MapAndSaveOrder recibe una orden en formato canónico y la guarda en todas las tablas relacionadas
@@ -86,6 +89,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		InvoiceURL:      dto.InvoiceURL,
 		InvoiceID:       dto.InvoiceID,
 		InvoiceProvider: dto.InvoiceProvider,
+		OrderStatusURL:  dto.OrderStatusURL,
 
 		// Datos estructurados (JSONB)
 		Items:              dto.Items,
@@ -109,6 +113,58 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 			order.PaidAt = dto.Payments[0].PaidAt
 		}
 	}
+
+	// 2.3 POPULAR CAMPOS JSONB ITEMS SI ESTÁN VACÍOS (BACKWARD COMPATIBILITY)
+	// Si items (JSONB) está vacío pero tenemos OrderItems (Relación), serializamos para llenar el campo JSONB
+	if len(dto.OrderItems) > 0 && (dto.Items == nil || len(dto.Items) <= 4) {
+		itemsJSON, err := json.Marshal(dto.OrderItems)
+		if err == nil {
+			order.Items = datatypes.JSON(itemsJSON)
+		}
+	}
+
+	// 2.2 POPULAR CAMPOS PLANOS DE DIRECCIÓN (FLAT FIELDS)
+	// Iterar sobre addresses para encontrar la de shipping y llenar los campos del modelo Order
+	// Esto es crucial para compatibilidad con frontend que usa shipping_street, shipping_city, etc.
+	for _, addr := range dto.Addresses {
+		if addr.Type == "shipping" {
+			order.ShippingStreet = addr.Street
+			order.ShippingCity = addr.City
+			order.ShippingState = addr.State
+			order.ShippingCountry = addr.Country
+			order.ShippingPostalCode = addr.PostalCode
+			order.ShippingLat = addr.Latitude
+			order.ShippingLng = addr.Longitude
+
+			// Si hay complemento (Street2), lo concatenamos o guardamos en shipping_details si el modelo no tiene campo
+			// El modelo actual no parece tener ShippingStreet2 plano, así que concatenamos o dependemos de la tabla addresses.
+			// Por ahora, solo mapeamos lo que cabe.
+			if addr.Street2 != "" {
+				order.ShippingStreet = fmt.Sprintf("%s %s", order.ShippingStreet, addr.Street2)
+				order.ShippingStreet2 = addr.Street2 // Populate for scoring
+			}
+			break
+		}
+	}
+
+	// 2.3. CALCULAR HISTORIAL DE COMPRA
+	if clientID != nil {
+		count, err := uc.repo.CountOrdersByClientID(ctx, *clientID)
+		if err == nil {
+			order.CustomerOrderCount = int(count)
+		}
+	}
+
+	// 2.4. CALCULAR DELIVERY PROBABILITY (SCORE)
+	score, factors := service.CalculateOrderScore(order) // Returns score, factors
+	order.DeliveryProbability = &score
+
+	// Serializar factors a JSON
+	if len(factors) > 0 {
+		factorsJSON, _ := json.Marshal(factors)
+		order.NegativeFactors = datatypes.JSON(factorsJSON)
+	}
+	fmt.Printf("[DEBUG] Saving Order %s with Score: %.2f and NegativeFactors: %s\n", order.OrderNumber, score, order.NegativeFactors)
 
 	// 3. Guardar la orden principal
 	if err := uc.repo.CreateOrder(ctx, order); err != nil {
@@ -394,6 +450,7 @@ func mapOrderToResponse(order *domain.Order) *domain.OrderResponse {
 		InvoiceURL:      order.InvoiceURL,
 		InvoiceID:       order.InvoiceID,
 		InvoiceProvider: order.InvoiceProvider,
+		OrderStatusURL:  order.OrderStatusURL,
 
 		// Datos estructurados
 		Items:              order.Items,

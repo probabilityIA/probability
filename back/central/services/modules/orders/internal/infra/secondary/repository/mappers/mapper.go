@@ -3,7 +3,7 @@ package mappers
 import (
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
@@ -78,6 +78,7 @@ func ToDBOrder(o *domain.Order) *models.Order {
 		InvoiceURL:          o.InvoiceURL,
 		InvoiceID:           o.InvoiceID,
 		InvoiceProvider:     o.InvoiceProvider,
+		OrderStatusURL:      o.OrderStatusURL,
 		Items:               o.Items,
 		Metadata:            o.Metadata,
 		FinancialDetails:    o.FinancialDetails,
@@ -164,6 +165,7 @@ func ToDomainOrder(o *models.Order) *domain.Order {
 		InvoiceURL:          o.InvoiceURL,
 		InvoiceID:           o.InvoiceID,
 		InvoiceProvider:     o.InvoiceProvider,
+		OrderStatusURL:      o.OrderStatusURL,
 		Items:               o.Items,
 		Metadata:            o.Metadata,
 		FinancialDetails:    o.FinancialDetails,

@@ -23,6 +23,7 @@ export interface IIntegrationRepository {
     activateIntegration(id: number): Promise<SingleResponse<Integration>>;
     deactivateIntegration(id: number): Promise<SingleResponse<Integration>>;
     setAsDefault(id: number): Promise<SingleResponse<Integration>>;
+    syncOrders(id: number): Promise<ActionResponse>;
     testIntegration(id: number): Promise<ActionResponse>;
     testConnectionRaw(typeCode: string, config: any, credentials: any): Promise<ActionResponse>;
 

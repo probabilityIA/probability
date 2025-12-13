@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 )
 
 // UpdateOrder actualiza una orden existente

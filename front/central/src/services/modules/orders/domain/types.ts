@@ -98,6 +98,9 @@ export interface Order {
     // Timestamps
     occurred_at: string;
     imported_at: string;
+
+    // Calculated Fields
+    negative_factors?: string[];
 }
 
 export interface PaginatedResponse<T> {
@@ -139,7 +142,7 @@ export interface GetOrdersParams {
     driver_id?: number;
     start_date?: string;
     end_date?: string;
-    sort_by?: 'created_at' | 'updated_at' | 'total_amount';
+    sort_by?: 'created_at' | 'updated_at' | 'total_amount' | 'order_number';
     sort_order?: 'asc' | 'desc';
 }
 

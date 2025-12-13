@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
@@ -110,10 +111,27 @@ func New(env env.IConfig, logger log.ILogger) IS3Service {
 		Bucket: &s3Bucket,
 	})
 	if err != nil {
-		logger.Fatal(context.Background()).
+		logger.Warn(context.Background()).
 			Err(err).
-			Msg("❌ No se pudo conectar a S3 - verifica credenciales y permisos")
-		panic("Error conectando a S3: " + err.Error())
+			Str("bucket", s3Bucket).
+			Msg("⚠️ Bucket not found or not accessible. Attempting to create...")
+
+		// Try to create the bucket
+		_, errCreate := s3Client.CreateBucket(context.Background(), &s3.CreateBucketInput{
+			Bucket: &s3Bucket,
+			CreateBucketConfiguration: &types.CreateBucketConfiguration{
+				LocationConstraint: types.BucketLocationConstraint(s3Region),
+			},
+		})
+
+		if errCreate != nil {
+			logger.Fatal(context.Background()).
+				Err(errCreate).
+				Msg("❌ Failed to create S3 bucket. Please create it manually or check permissions.")
+			panic("Error creating S3 bucket: " + errCreate.Error())
+		}
+
+		logger.Info(context.Background()).Str("bucket", s3Bucket).Msg("✅ S3 Bucket created successfully")
 	}
 
 	return &S3Uploader{
