@@ -135,6 +135,11 @@ type Order struct {
 	InvoiceProvider *string `gorm:"size:64"`        // Proveedor de facturación (ej: "siigo")
 
 	// ============================================
+	// ENLACES EXTERNOS
+	// ============================================
+	OrderStatusURL string `gorm:"size:512"` // URL pública del estado de la orden
+
+	// ============================================
 	// DATOS ESTRUCTURADOS (JSONB)
 	// ============================================
 	Items    datatypes.JSON `gorm:"type:jsonb"` // Items de la orden

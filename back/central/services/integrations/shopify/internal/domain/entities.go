@@ -60,6 +60,9 @@ type UnifiedOrder struct {
 	// Timestamps
 	OccurredAt time.Time `json:"occurred_at"` // Cuándo ocurrió la orden en la plataforma
 	ImportedAt time.Time `json:"imported_at"` // Cuándo se importó a Probability
+
+	// Enlaces
+	OrderStatusURL string `json:"order_status_url,omitempty"` // URL pública del estado de la orden (ej: Shopify Thank You page)
 }
 
 type UnifiedCustomer struct {
@@ -70,6 +73,7 @@ type UnifiedCustomer struct {
 
 type UnifiedAddress struct {
 	Street      string `json:"street"`
+	Address2    string `json:"address2"` // Complemento de dirección
 	City        string `json:"city"`
 	State       string `json:"state"`
 	Country     string `json:"country"`

@@ -130,6 +130,12 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
+    async syncOrders(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/shopify/sync/${id}`, {
+            method: 'POST',
+        });
+    }
+
     async testIntegration(id: number): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/integrations/${id}/test`, {
             method: 'POST',

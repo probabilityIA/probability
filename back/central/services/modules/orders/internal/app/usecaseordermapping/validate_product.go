@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 )
 
 // GetOrCreateProduct verifica si el producto existe, si no, lo crea

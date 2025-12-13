@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/migration/shared/models"
@@ -85,6 +85,14 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	query := r.db.Conn(ctx).Model(&models.Order{})
 
 	// Aplicar filtros
+	if businessID, ok := filters["business_id"].(uint); ok && businessID > 0 {
+		query = query.Where("business_id = ?", businessID)
+	}
+
+	if integrationID, ok := filters["integration_id"].(uint); ok && integrationID > 0 {
+		query = query.Where("integration_id = ?", integrationID)
+	}
+
 	if customerEmail, ok := filters["customer_email"].(string); ok && customerEmail != "" {
 		query = query.Where("customer_email ILIKE ?", "%"+customerEmail+"%")
 	}
@@ -455,4 +463,14 @@ func (r *Repository) CreateClient(ctx context.Context, client *domain.Client) er
 	}
 	client.ID = dbClient.ID
 	return nil
+}
+
+// CountOrdersByClientID cuenta las órdenes de un cliente
+func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error) {
+	var count int64
+	err := r.db.Conn(ctx).
+		Model(&models.Order{}).
+		Where("customer_id = ?", clientID).
+		Count(&count).Error
+	return count, err
 }

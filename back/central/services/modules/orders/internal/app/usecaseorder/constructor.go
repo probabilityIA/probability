@@ -1,7 +1,7 @@
 package usecaseorder
 
 import (
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 )
 
 // UseCaseOrder contiene los casos de uso CRUD básicos de órdenes

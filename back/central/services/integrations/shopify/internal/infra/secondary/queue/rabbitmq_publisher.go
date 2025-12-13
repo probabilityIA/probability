@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	OrdersQueueName = "probability.orders.created"
+	OrdersQueueName = "probability.orders.canonical"
 )
 
 type rabbitMQPublisher struct {
@@ -27,8 +27,12 @@ func New(queue rabbitmq.IQueue, logger log.ILogger) domain.OrderPublisher {
 }
 
 func (p *rabbitMQPublisher) Publish(ctx context.Context, order *domain.UnifiedOrder) error {
-	// Serializar la orden a JSON
-	orderJSON, err := json.Marshal(order)
+	// Map UnifiedOrder to CanonicalOrderDTO to ensure correct JSON structure for Consumer
+	// Consumer expects flattened address fields or CanonicalAddressDTOs
+	canonicalOrder := mapUnifiedToCanonical(order)
+
+	// Serializar la orden canónica a JSON
+	orderJSON, err := json.Marshal(canonicalOrder)
 	if err != nil {
 		p.logger.Error(ctx).
 			Err(err).

@@ -96,4 +96,9 @@ export class OrderApiRepository implements IOrderRepository {
     async getOrderRaw(id: string): Promise<SingleResponse<any>> {
         return this.fetch<SingleResponse<any>>(`/orders/${id}/raw`);
     }
+
+    async getAIRecommendation(origin: string, destination: string): Promise<any> {
+        const searchParams = new URLSearchParams({ origin, destination });
+        return this.fetch<any>(`/ai/recommendation?${searchParams.toString()}`);
+    }
 }

@@ -280,6 +280,9 @@ type OrderResponse struct {
 	InvoiceID       *string `json:"invoice_id,omitempty"`
 	InvoiceProvider *string `json:"invoice_provider,omitempty"`
 
+	// Enlaces Externos
+	OrderStatusURL string `json:"order_status_url,omitempty"`
+
 	// Datos estructurados (JSONB)
 	Items              datatypes.JSON `json:"items,omitempty"`
 	Metadata           datatypes.JSON `json:"metadata,omitempty"`
@@ -287,6 +290,7 @@ type OrderResponse struct {
 	ShippingDetails    datatypes.JSON `json:"shipping_details,omitempty"`
 	PaymentDetails     datatypes.JSON `json:"payment_details,omitempty"`
 	FulfillmentDetails datatypes.JSON `json:"fulfillment_details,omitempty"`
+	NegativeFactors    []string       `json:"negative_factors,omitempty"`
 
 	// Timestamps
 	OccurredAt time.Time `json:"occurred_at"`
@@ -311,6 +315,7 @@ type OrderSummary struct {
 	PaymentStatus       string    `json:"payment_status"` // derived from IsPaid
 	ItemsCount          int       `json:"items_count"`    // derived from len(Items)
 	DeliveryProbability *float64  `json:"delivery_probability"`
+	NegativeFactors     []string  `json:"negative_factors"`
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos
@@ -383,6 +388,9 @@ type CanonicalOrderDTO struct {
 	InvoiceURL      *string `json:"invoice_url"`
 	InvoiceID       *string `json:"invoice_id"`
 	InvoiceProvider *string `json:"invoice_provider"`
+
+	// Enlaces Externos
+	OrderStatusURL string `json:"order_status_url,omitempty"`
 
 	// Timestamps
 	OccurredAt time.Time `json:"occurred_at"`

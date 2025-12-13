@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 )
 
 // ListOrders obtiene una lista paginada de órdenes con filtros

@@ -96,6 +96,9 @@ type Order struct {
 	InvoiceID       *string `json:"invoice_id"`
 	InvoiceProvider *string `json:"invoice_provider"`
 
+	// Enlaces Externos
+	OrderStatusURL string `json:"order_status_url,omitempty"`
+
 	// Datos estructurados (JSONB)
 	Items              datatypes.JSON `json:"items"`
 	Metadata           datatypes.JSON `json:"metadata"`
@@ -114,6 +117,11 @@ type Order struct {
 	Payments        []Payment              `json:"payments"`
 	Shipments       []Shipment             `json:"shipments"`
 	ChannelMetadata []OrderChannelMetadata `json:"channel_metadata"`
+	NegativeFactors datatypes.JSON         `json:"negative_factors"`
+
+	// Campos auxiliares para cálculo de score (No persistir)
+	CustomerOrderCount int    `json:"-" gorm:"-"`
+	ShippingStreet2    string `json:"-" gorm:"-"`
 }
 
 // OrderItem representa un item de la orden en el dominio

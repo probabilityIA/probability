@@ -5,6 +5,7 @@ import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui
 import { Order } from '@/services/modules/orders/domain/types';
 import { Button, Modal } from '@/shared/ui';
 
+
 export default function OrdersPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
@@ -74,9 +75,9 @@ export default function OrdersPage() {
                 isOpen={showViewModal}
                 onClose={handleCancel}
                 title="Detalles de la Orden"
-                size="2xl"
+                size="full"
             >
-                {selectedOrder && <OrderDetails order={selectedOrder} />}
+                {selectedOrder && <OrderDetails initialOrder={selectedOrder} onClose={handleCancel} />}
             </Modal>
 
             {/* Edit Modal */}

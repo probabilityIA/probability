@@ -134,5 +134,21 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		Str("code", integration.Code).
 		Msg("Integración creada exitosamente")
 
+	// Notificar observadores (e.g., para auto-sync)
+	// Hacemos esto de forma asíncrona para no bloquear la respuesta HTTP
+	go func() {
+		for _, observer := range uc.observers {
+			// Crear un nuevo contexto desconectado del request HTTP cancelar
+			bgCtx := context.Background()
+			// Tratar pánicos en observadores para no romper nada
+			defer func() {
+				if r := recover(); r != nil {
+					uc.log.Error(bgCtx).Interface("recover", r).Msg("Pánico en observador de creación de integración")
+				}
+			}()
+			observer(bgCtx, integration)
+		}
+	}()
+
 	return integration, nil
 }
