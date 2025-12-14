@@ -6,8 +6,8 @@ import (
 	"gorm.io/datatypes"
 )
 
-// Order representa una orden en el dominio
-type Order struct {
+// ProbabilityOrder representa una orden que se guarda en la base de datos
+type ProbabilityOrder struct {
 	ID        string     `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -112,20 +112,20 @@ type Order struct {
 	ImportedAt time.Time `json:"imported_at"`
 
 	// Relaciones
-	OrderItems      []OrderItem            `json:"order_items"`
-	Addresses       []Address              `json:"addresses"`
-	Payments        []Payment              `json:"payments"`
-	Shipments       []Shipment             `json:"shipments"`
-	ChannelMetadata []OrderChannelMetadata `json:"channel_metadata"`
-	NegativeFactors datatypes.JSON         `json:"negative_factors"`
+	OrderItems      []ProbabilityOrderItem            `json:"order_items"`
+	Addresses       []ProbabilityAddress              `json:"addresses"`
+	Payments        []ProbabilityPayment              `json:"payments"`
+	Shipments       []ProbabilityShipment             `json:"shipments"`
+	ChannelMetadata []ProbabilityOrderChannelMetadata `json:"channel_metadata"`
+	NegativeFactors datatypes.JSON                    `json:"negative_factors"`
 
 	// Campos auxiliares para cálculo de score (No persistir)
 	CustomerOrderCount int    `json:"-" gorm:"-"`
 	ShippingStreet2    string `json:"-" gorm:"-"`
 }
 
-// OrderItem representa un item de la orden en el dominio
-type OrderItem struct {
+// ProbabilityOrderItem representa un item de la orden que se guarda en la base de datos
+type ProbabilityOrderItem struct {
 	ID        uint       `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -157,8 +157,8 @@ type OrderItem struct {
 	Metadata          datatypes.JSON `json:"metadata"`
 }
 
-// Address representa una dirección en el dominio
-type Address struct {
+// ProbabilityAddress representa una dirección que se guarda en la base de datos
+type ProbabilityAddress struct {
 	ID        uint       `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -187,8 +187,8 @@ type Address struct {
 	Metadata     datatypes.JSON `json:"metadata"`
 }
 
-// Payment representa un pago en el dominio
-type Payment struct {
+// ProbabilityPayment representa un pago que se guarda en la base de datos
+type ProbabilityPayment struct {
 	ID        uint       `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -215,8 +215,8 @@ type Payment struct {
 	Metadata      datatypes.JSON `json:"metadata"`
 }
 
-// Shipment representa un envío en el dominio
-type Shipment struct {
+// ProbabilityShipment representa un envío que se guarda en la base de datos
+type ProbabilityShipment struct {
 	ID        uint       `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
@@ -258,8 +258,8 @@ type Shipment struct {
 	Metadata          datatypes.JSON `json:"metadata"`
 }
 
-// OrderChannelMetadata representa metadata del canal en el dominio
-type OrderChannelMetadata struct {
+// ProbabilityOrderChannelMetadata representa metadata del canal que se guarda en la base de datos
+type ProbabilityOrderChannelMetadata struct {
 	ID        uint       `json:"id"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`

@@ -166,6 +166,9 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 		search := "%" + *filters.Search + "%"
 		query = query.Where("name ILIKE ? OR code ILIKE ?", search, search)
 	}
+	if filters.StoreID != nil && *filters.StoreID != "" {
+		query = query.Where("store_id = ?", *filters.StoreID)
+	}
 
 	// Contar total
 	if err := query.Count(&total).Error; err != nil {
@@ -341,6 +344,7 @@ func (r *Repository) toModel(integration *domain.Integration) *models.Integratio
 		IntegrationTypeID: integration.IntegrationTypeID,
 		Category:          integration.Category,
 		BusinessID:        integration.BusinessID,
+		StoreID:           integration.StoreID,
 		IsActive:          integration.IsActive,
 		IsDefault:         integration.IsDefault,
 		Config:            integration.Config,
@@ -369,6 +373,7 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 		IntegrationTypeID: model.IntegrationTypeID,
 		Category:          model.Category,
 		BusinessID:        businessID,
+		StoreID:           model.StoreID,
 		IsActive:          model.IsActive,
 		IsDefault:         model.IsDefault,
 		Config:            model.Config,

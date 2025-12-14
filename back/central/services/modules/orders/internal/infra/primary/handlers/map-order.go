@@ -14,7 +14,7 @@ import (
 // @Tags         Orders
 // @Accept       json
 // @Produce      json
-// @Param        order  body      domain.CanonicalOrderDTO  true  "Orden en formato canónico"
+// @Param        order  body      domain.ProbabilityOrderDTO  true  "Orden en formato de lógica de negocio"
 // @Security     BearerAuth
 // @Success      201  {object}  domain.OrderResponse
 // @Failure      400  {object}  map[string]interface{}
@@ -22,7 +22,7 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /orders/map [post]
 func (h *Handlers) MapAndSaveOrder(c *gin.Context) {
-	var req domain.CanonicalOrderDTO
+	var req domain.ProbabilityOrderDTO
 
 	// Validar el request body
 	if err := c.ShouldBindJSON(&req); err != nil {

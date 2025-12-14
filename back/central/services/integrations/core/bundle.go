@@ -1,9 +1,12 @@
 package core
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrationtype"
+
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrationtype"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/secondary/encryption"
@@ -13,13 +16,30 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// New inicializa el módulo core de integraciones y retorna la interfaz pública
-func New(
-	router *gin.RouterGroup,
-	db db.IDatabase,
-	logger log.ILogger,
-	config env.IConfig,
-) IIntegrationCore {
+type IIntegrationContract interface {
+	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
+	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
+	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
+}
+
+type IIntegrationCore interface {
+	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
+	GetIntegrationByStoreID(ctx context.Context, storeID string, integrationType int) (*Integration, error)
+	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
+	RegisterIntegration(integrationType int, integration IIntegrationContract)
+	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
+	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
+	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
+	RegisterObserverForType(integrationType int, observer func(context.Context, *Integration))
+}
+
+type integrationCore struct {
+	useCase      usecaseintegrations.IIntegrationUseCase
+	integrations map[int]IIntegrationContract
+	logger       log.ILogger
+}
+
+func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig) IIntegrationCore {
 	// 1. Inicializar Servicio de Encriptación
 	encryptionService := encryption.New(config, logger)
 
@@ -31,13 +51,18 @@ func New(
 	integrationTypeUseCase := usecaseintegrationtype.New(repo, logger)
 
 	// 4. Inicializar Handlers
-	handlerIntegrations := handlerintegrations.New(IntegrationUseCase, logger)
+	coreIntegration := &integrationCore{
+		useCase:      IntegrationUseCase,
+		integrations: make(map[int]IIntegrationContract),
+		logger:       logger.WithModule("integrations-core"),
+	}
+
+	handlerIntegrations := handlerintegrations.New(IntegrationUseCase, logger, coreIntegration)
 	handlerIntegrationType := handlerintegrationtype.New(integrationTypeUseCase, logger)
 
 	// 5. Registrar Rutas
 	handlerIntegrations.RegisterRoutes(router, logger)
 	handlerIntegrationType.RegisterRoutes(router, logger)
 
-	// 6. Crear y retornar interfaz pública
-	return NewIntegrationCore(IntegrationUseCase)
+	return coreIntegration
 }

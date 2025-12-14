@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
 	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
 )
 
 // CreateOrder crea una nueva orden
@@ -21,7 +21,7 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *domain.CreateOrder
 	}
 
 	// Crear el modelo de orden
-	order := &domain.Order{
+	order := &domain.ProbabilityOrder{
 		// Identificadores de integración
 		BusinessID:      req.BusinessID,
 		IntegrationID:   req.IntegrationID,

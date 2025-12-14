@@ -7,20 +7,6 @@ import (
 )
 
 // IIntegrationHandler define la interfaz del handler de integraciones
-type IIntegrationHandler interface {
-	GetIntegrationsHandler(c *gin.Context)
-	GetIntegrationByIDHandler(c *gin.Context)
-	GetIntegrationByTypeHandler(c *gin.Context)
-	CreateIntegrationHandler(c *gin.Context)
-	UpdateIntegrationHandler(c *gin.Context)
-	DeleteIntegrationHandler(c *gin.Context)
-	TestIntegrationHandler(c *gin.Context)
-	TestConnectionRawHandler(c *gin.Context)
-	ActivateIntegrationHandler(c *gin.Context)
-	DeactivateIntegrationHandler(c *gin.Context)
-	SetAsDefaultHandler(c *gin.Context)
-	RegisterRoutes(router *gin.RouterGroup, handler IIntegrationHandler, logger log.ILogger)
-}
 
 // RegisterRoutes registra las rutas del handler de integraciones
 func (h *IntegrationHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger) {
@@ -37,8 +23,10 @@ func (h *IntegrationHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 		// Acciones específicas
 		integrationsGroup.POST("/test", middleware.JWT(), h.TestConnectionRawHandler)
 		integrationsGroup.POST("/:id/test", middleware.JWT(), h.TestIntegrationHandler)
+		integrationsGroup.POST("/:id/sync", middleware.JWT(), h.SyncOrdersByIntegrationIDHandler)
 		integrationsGroup.PUT("/:id/activate", middleware.JWT(), h.ActivateIntegrationHandler)
 		integrationsGroup.PUT("/:id/deactivate", middleware.JWT(), h.DeactivateIntegrationHandler)
 		integrationsGroup.PUT("/:id/set-default", middleware.JWT(), h.SetAsDefaultHandler)
+		integrationsGroup.POST("/:business_id/sync-orders", middleware.JWT(), h.SyncOrdersByBusinessHandler)
 	}
 }

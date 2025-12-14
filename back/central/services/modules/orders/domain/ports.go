@@ -13,13 +13,13 @@ import (
 // IRepository define todos los métodos de repositorio del módulo orders
 type IRepository interface {
 	// CRUD Operations
-	CreateOrder(ctx context.Context, order *Order) error
-	GetOrderByID(ctx context.Context, id string) (*Order, error)
-	GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*Order, error)
-	ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]Order, int64, error)
-	UpdateOrder(ctx context.Context, order *Order) error
+	CreateOrder(ctx context.Context, order *ProbabilityOrder) error
+	GetOrderByID(ctx context.Context, id string) (*ProbabilityOrder, error)
+	GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*ProbabilityOrder, error)
+	ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]ProbabilityOrder, int64, error)
+	UpdateOrder(ctx context.Context, order *ProbabilityOrder) error
 	DeleteOrder(ctx context.Context, id string) error
-	GetOrderRaw(ctx context.Context, id string) (*OrderChannelMetadata, error)
+	GetOrderRaw(ctx context.Context, id string) (*ProbabilityOrderChannelMetadata, error)
 	CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error)
 
 	// Validation
@@ -30,19 +30,19 @@ type IRepository interface {
 	// ============================================
 
 	// OrderItems
-	CreateOrderItems(ctx context.Context, items []*OrderItem) error
+	CreateOrderItems(ctx context.Context, items []*ProbabilityOrderItem) error
 
 	// Addresses
-	CreateAddresses(ctx context.Context, addresses []*Address) error
+	CreateAddresses(ctx context.Context, addresses []*ProbabilityAddress) error
 
 	// Payments
-	CreatePayments(ctx context.Context, payments []*Payment) error
+	CreatePayments(ctx context.Context, payments []*ProbabilityPayment) error
 
 	// Shipments
-	CreateShipments(ctx context.Context, shipments []*Shipment) error
+	CreateShipments(ctx context.Context, shipments []*ProbabilityShipment) error
 
 	// ChannelMetadata
-	CreateChannelMetadata(ctx context.Context, metadata *OrderChannelMetadata) error
+	CreateChannelMetadata(ctx context.Context, metadata *ProbabilityOrderChannelMetadata) error
 
 	// ============================================
 	// MÉTODOS DE CATÁLOGO (VALIDACIÓN)
@@ -78,5 +78,5 @@ type IOrderConsumer interface {
 
 // IOrderMappingUseCase define el caso de uso para mapear y guardar órdenes desde integraciones
 type IOrderMappingUseCase interface {
-	MapAndSaveOrder(ctx context.Context, dto *CanonicalOrderDTO) (*OrderResponse, error)
+	MapAndSaveOrder(ctx context.Context, dto *ProbabilityOrderDTO) (*OrderResponse, error)
 }

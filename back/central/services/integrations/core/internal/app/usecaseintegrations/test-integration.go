@@ -55,18 +55,28 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 		integrationTypeCode = integrationType.Code
 	}
 
+	// Convertir código string a int
+	integrationTypeInt := getIntegrationTypeCodeAsInt(integrationTypeCode)
+
 	// Obtener tester registrado para este tipo
+	registeredTypes := uc.testerReg.ListRegisteredTypes()
+	registeredTypesStr := make([]string, len(registeredTypes))
+	for i, t := range registeredTypes {
+		registeredTypesStr[i] = fmt.Sprintf("%d", t)
+	}
 	uc.log.Info(ctx).
 		Str("type_code", integrationTypeCode).
-		Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
+		Int("type_int", integrationTypeInt).
+		Strs("registered_types", registeredTypesStr).
 		Msg("Buscando tester registrado para tipo de integración")
 
-	tester, err := uc.testerReg.GetTester(integrationTypeCode)
+	tester, err := uc.testerReg.GetTester(integrationTypeInt)
 	if err != nil {
 		uc.log.Warn(ctx).
 			Err(err).
 			Str("type_code", integrationTypeCode).
-			Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
+			Int("type_int", integrationTypeInt).
+			Strs("registered_types", registeredTypesStr).
 			Msg("No hay tester registrado, solo validando credenciales básicas")
 		// Fallback: validación básica si no hay tester
 		return uc.validateBasicCredentials(ctx, integrationTypeCode, credentials)
@@ -123,18 +133,28 @@ func (uc *IntegrationUseCase) validateBasicCredentials(ctx context.Context, inte
 func (uc *IntegrationUseCase) TestConnectionRaw(ctx context.Context, integrationTypeCode string, config map[string]interface{}, credentials map[string]interface{}) error {
 	ctx = log.WithFunctionCtx(ctx, "TestConnectionRaw")
 
+	// Convertir código string a int
+	integrationTypeInt := getIntegrationTypeCodeAsInt(integrationTypeCode)
+
 	// Obtener tester registrado para este tipo
+	registeredTypes := uc.testerReg.ListRegisteredTypes()
+	registeredTypesStr := make([]string, len(registeredTypes))
+	for i, t := range registeredTypes {
+		registeredTypesStr[i] = fmt.Sprintf("%d", t)
+	}
 	uc.log.Info(ctx).
 		Str("type_code", integrationTypeCode).
-		Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
+		Int("type_int", integrationTypeInt).
+		Strs("registered_types", registeredTypesStr).
 		Msg("Buscando tester registrado para tipo de integración (TestConnectionRaw)")
 
-	tester, err := uc.testerReg.GetTester(integrationTypeCode)
+	tester, err := uc.testerReg.GetTester(integrationTypeInt)
 	if err != nil {
 		uc.log.Warn(ctx).
 			Err(err).
 			Str("type_code", integrationTypeCode).
-			Strs("registered_types", uc.testerReg.ListRegisteredTypes()).
+			Int("type_int", integrationTypeInt).
+			Strs("registered_types", registeredTypesStr).
 			Msg("No hay tester registrado, solo validando credenciales básicas")
 		// Fallback: validación básica si no hay tester
 		return uc.validateBasicCredentials(ctx, integrationTypeCode, credentials)

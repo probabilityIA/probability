@@ -15,6 +15,9 @@ type IIntegrationUseCase interface {
 	GetIntegrationByID(ctx context.Context, id uint) (*domain.Integration, error)
 	GetIntegrationByIDWithCredentials(ctx context.Context, id uint) (*domain.IntegrationWithCredentials, error)
 	GetIntegrationByType(ctx context.Context, integrationTypeCode string, businessID *uint) (*domain.IntegrationWithCredentials, error)
+	GetPublicIntegrationByID(ctx context.Context, integrationID string) (*PublicIntegration, error)
+	GetIntegrationConfig(ctx context.Context, integrationType string, businessID *uint) (map[string]interface{}, error)
+	DecryptCredentialField(ctx context.Context, integrationID string, fieldName string) (string, error)
 	DeleteIntegration(ctx context.Context, id uint) error
 	ListIntegrations(ctx context.Context, filters domain.IntegrationFilters) ([]*domain.Integration, int64, error)
 	TestIntegration(ctx context.Context, id uint) error

@@ -4,90 +4,220 @@ import (
 	"time"
 )
 
-// ShopifyOrderDTO represents the raw structure of an order from Shopify
-// This is used for internal mapping and processing, not for DB storage.
+type Integration struct {
+	ID              uint
+	BusinessID      *uint
+	Name            string
+	StoreID         string
+	IntegrationType int
+	Config          interface{}
+}
+
 type ShopifyOrderDTO struct {
-	ID                string                 `json:"id"`
-	OrderNumber       string                 `json:"order_number"`
-	TotalPrice        float64                `json:"total_price"`
-	Currency          string                 `json:"currency"`
-	PaymentType       string                 `json:"payment_type"`
-	CustomerName      string                 `json:"customer_name"`
-	CustomerEmail     string                 `json:"customer_email"`
-	Phone             string                 `json:"phone"`
-	Country           string                 `json:"country"`
-	Province          string                 `json:"province"`
-	City              string                 `json:"city"`
-	Address           string                 `json:"address"`
-	AddressComplement string                 `json:"address_complement"`
-	FinancialStatus   string                 `json:"financial_status"`
-	FulfillmentStatus string                 `json:"fulfillment_status"`
-	CreatedAt         time.Time              `json:"created_at"`
-	RawData           map[string]interface{} `json:"raw_data"`
+	ID                string
+	OrderNumber       string
+	TotalPrice        float64
+	Currency          string
+	PaymentType       string
+	CustomerName      string
+	CustomerEmail     string
+	Phone             string
+	Country           string
+	Province          string
+	City              string
+	Address           string
+	AddressComplement string
+	FinancialStatus   string
+	FulfillmentStatus string
+	CreatedAt         time.Time
+	RawData           map[string]interface{}
 }
 
-// UnifiedOrder represents the standardized order structure for the system
-// This is what we publish to the queue for the Orders module to consume.
-type UnifiedOrder struct {
-	// Identificadores de la integración
-	BusinessID      *uint  `json:"business_id"`      // ID del negocio (null = global)
-	IntegrationID   uint   `json:"integration_id"`   // ID de la integración específica
-	IntegrationType string `json:"integration_type"` // Tipo de integración: "shopify", "whatsapp", etc.
-
-	// Identificadores de la orden
-	Platform    string `json:"platform"`     // Plataforma origen: "shopify", "whatsapp", etc.
-	ExternalID  string `json:"external_id"`  // ID de la orden en la plataforma externa
-	OrderNumber string `json:"order_number"` // Número de orden visible
-
-	// Información financiera
-	TotalAmount float64 `json:"total_amount"`
-	Currency    string  `json:"currency"`
-
-	// Información del cliente y envío
-	Customer        UnifiedCustomer `json:"customer"`
-	ShippingAddress UnifiedAddress  `json:"shipping_address"`
-
-	// Estado
-	Status         string `json:"status"`          // Estado mapeado interno
-	OriginalStatus string `json:"original_status"` // Estado original de la plataforma
-
-	// Items de la orden
-	Items []UnifiedOrderItem `json:"items"`
-
-	// Metadata adicional (puede contener datos específicos de cada plataforma)
-	Metadata map[string]interface{} `json:"metadata"`
-
-	// Timestamps
-	OccurredAt time.Time `json:"occurred_at"` // Cuándo ocurrió la orden en la plataforma
-	ImportedAt time.Time `json:"imported_at"` // Cuándo se importó a Probability
-
-	// Enlaces
-	OrderStatusURL string `json:"order_status_url,omitempty"` // URL pública del estado de la orden (ej: Shopify Thank You page)
+type ShopifyOrder struct {
+	BusinessID      *uint
+	IntegrationID   uint
+	IntegrationType string
+	Platform        string
+	ExternalID      string
+	OrderNumber     string
+	TotalAmount     float64
+	Currency        string
+	Customer        ShopifyCustomer
+	ShippingAddress ShopifyAddress
+	Status          string
+	OriginalStatus  string
+	Items           []ShopifyOrderItem
+	Metadata        map[string]interface{}
+	OccurredAt      time.Time
+	ImportedAt      time.Time
+	OrderStatusURL  string
 }
 
-type UnifiedCustomer struct {
-	Name  string `json:"name"`
-	Email string `json:"email"`
-	Phone string `json:"phone"`
+type ShopifyCustomer struct {
+	Name  string
+	Email string
+	Phone string
 }
 
-type UnifiedAddress struct {
-	Street      string `json:"street"`
-	Address2    string `json:"address2"` // Complemento de dirección
-	City        string `json:"city"`
-	State       string `json:"state"`
-	Country     string `json:"country"`
-	PostalCode  string `json:"postal_code"`
+type ShopifyAddress struct {
+	Street      string
+	Address2    string
+	City        string
+	State       string
+	Country     string
+	PostalCode  string
 	Coordinates *struct {
-		Lat float64 `json:"lat"`
-		Lng float64 `json:"lng"`
-	} `json:"coordinates,omitempty"`
+		Lat float64
+		Lng float64
+	}
 }
 
-type UnifiedOrderItem struct {
-	ExternalID string  `json:"external_id"`
-	Name       string  `json:"name"`
-	SKU        string  `json:"sku"`
-	Quantity   int     `json:"quantity"`
-	UnitPrice  float64 `json:"unit_price"`
+type ShopifyOrderItem struct {
+	ExternalID string
+	Name       string
+	SKU        string
+	Quantity   int
+	UnitPrice  float64
+}
+
+type ProbabilityOrderDTO struct {
+	BusinessID         *uint
+	IntegrationID      uint
+	IntegrationType    string
+	Platform           string
+	ExternalID         string
+	OrderNumber        string
+	InternalNumber     string
+	Subtotal           float64
+	Tax                float64
+	Discount           float64
+	ShippingCost       float64
+	TotalAmount        float64
+	Currency           string
+	CodTotal           *float64
+	CustomerID         *uint
+	CustomerName       string
+	CustomerEmail      string
+	CustomerPhone      string
+	CustomerDNI        string
+	OrderTypeID        *uint
+	OrderTypeName      string
+	Status             string
+	OriginalStatus     string
+	Notes              *string
+	Coupon             *string
+	Approved           *bool
+	UserID             *uint
+	UserName           string
+	Invoiceable        bool
+	InvoiceURL         *string
+	InvoiceID          *string
+	InvoiceProvider    *string
+	OrderStatusURL     string
+	OccurredAt         time.Time
+	ImportedAt         time.Time
+	Items              []byte
+	Metadata           []byte
+	FinancialDetails   []byte
+	ShippingDetails    []byte
+	PaymentDetails     []byte
+	FulfillmentDetails []byte
+	OrderItems         []ProbabilityOrderItemDTO
+	Addresses          []ProbabilityAddressDTO
+	Payments           []ProbabilityPaymentDTO
+	Shipments          []ProbabilityShipmentDTO
+	ChannelMetadata    *ProbabilityChannelMetadataDTO
+}
+
+type ProbabilityOrderItemDTO struct {
+	ProductID    *string
+	ProductSKU   string
+	ProductName  string
+	ProductTitle string
+	VariantID    *string
+	Quantity     int
+	UnitPrice    float64
+	TotalPrice   float64
+	Currency     string
+	Discount     float64
+	Tax          float64
+	TaxRate      *float64
+	ImageURL     *string
+	ProductURL   *string
+	Weight       *float64
+	Metadata     []byte
+}
+
+type ProbabilityAddressDTO struct {
+	Type         string
+	FirstName    string
+	LastName     string
+	Company      string
+	Phone        string
+	Street       string
+	Street2      string
+	City         string
+	State        string
+	Country      string
+	PostalCode   string
+	Latitude     *float64
+	Longitude    *float64
+	Instructions *string
+	Metadata     []byte
+}
+
+type ProbabilityPaymentDTO struct {
+	PaymentMethodID  uint
+	Amount           float64
+	Currency         string
+	ExchangeRate     *float64
+	Status           string
+	PaidAt           *time.Time
+	ProcessedAt      *time.Time
+	TransactionID    *string
+	PaymentReference *string
+	Gateway          *string
+	RefundAmount     *float64
+	RefundedAt       *time.Time
+	FailureReason    *string
+	Metadata         []byte
+}
+
+type ProbabilityShipmentDTO struct {
+	TrackingNumber    *string
+	TrackingURL       *string
+	Carrier           *string
+	CarrierCode       *string
+	GuideID           *string
+	GuideURL          *string
+	Status            string
+	ShippedAt         *time.Time
+	DeliveredAt       *time.Time
+	ShippingAddressID *uint
+	ShippingCost      *float64
+	InsuranceCost     *float64
+	TotalCost         *float64
+	Weight            *float64
+	Height            *float64
+	Width             *float64
+	Length            *float64
+	WarehouseID       *uint
+	WarehouseName     string
+	DriverID          *uint
+	DriverName        string
+	IsLastMile        bool
+	EstimatedDelivery *time.Time
+	DeliveryNotes     *string
+	Metadata          []byte
+}
+
+type ProbabilityChannelMetadataDTO struct {
+	ChannelSource string
+	RawData       []byte
+	Version       string
+	ReceivedAt    time.Time
+	ProcessedAt   *time.Time
+	IsLatest      bool
+	LastSyncedAt  *time.Time
+	SyncStatus    string
 }

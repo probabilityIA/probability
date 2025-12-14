@@ -9,8 +9,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client/mappers"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client/response"
-	httpclient "github.com/secamc93/probability/back/central/shared/client"
 	"github.com/secamc93/probability/back/central/shared/env"
+	"github.com/secamc93/probability/back/central/shared/httpclient"
 )
 
 // implementa domain.IWhatsApp

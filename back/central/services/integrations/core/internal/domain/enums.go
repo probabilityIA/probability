@@ -2,9 +2,9 @@ package domain
 
 // IntegrationType representa los tipos de integración disponibles
 const (
-	IntegrationTypeWhatsApp     = "whatsapp"
-	IntegrationTypeShopify      = "shopify"
-	IntegrationTypeMercadoLibre = "mercado_libre"
+	IntegrationTypeShopify      = 1
+	IntegrationTypeWhatsApp     = 2
+	IntegrationTypeMercadoLibre = 3
 )
 
 // IntegrationCategory representa la categoría de integración
@@ -14,10 +14,10 @@ const (
 )
 
 // IsValidType valida si un tipo de integración es válido
-func IsValidType(integrationType string) bool {
-	validTypes := []string{
-		IntegrationTypeWhatsApp,
+func IsValidType(integrationType int) bool {
+	validTypes := []int{
 		IntegrationTypeShopify,
+		IntegrationTypeWhatsApp,
 		IntegrationTypeMercadoLibre,
 	}
 	for _, validType := range validTypes {

@@ -8,7 +8,7 @@ import (
 )
 
 // GetOrCreateProduct verifica si el producto existe, si no, lo crea
-func (uc *UseCaseOrderMapping) GetOrCreateProduct(ctx context.Context, businessID uint, itemDTO domain.CanonicalOrderItemDTO) (*domain.Product, error) {
+func (uc *UseCaseOrderMapping) GetOrCreateProduct(ctx context.Context, businessID uint, itemDTO domain.ProbabilityOrderItemDTO) (*domain.Product, error) {
 	if itemDTO.ProductSKU == "" {
 		return nil, fmt.Errorf("product SKU is required")
 	}

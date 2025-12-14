@@ -64,6 +64,7 @@ type IntegrationFilters struct {
 	BusinessID          *uint
 	IsActive            *bool
 	Search              *string // Búsqueda por nombre o código
+	StoreID             *string // Identificador externo (p.e. shop domain)
 }
 
 // IntegrationWithCredentials representa una integración con credenciales desencriptadas

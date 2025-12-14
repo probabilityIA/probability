@@ -8,7 +8,7 @@ import (
 )
 
 // ToOrderResponse convierte un modelo Order a OrderResponse
-func ToOrderResponse(order *domain.Order) *domain.OrderResponse {
+func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 	if order == nil {
 		return nil
 	}
@@ -139,7 +139,7 @@ func UnmarshalNegativeFactors(jsonData datatypes.JSON) []string {
 }
 
 // ToOrderSummary convierte un modelo Order a OrderSummary
-func ToOrderSummary(order *domain.Order) domain.OrderSummary {
+func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
 	paymentStatus := "unpaid"
 	if order.IsPaid {
 		paymentStatus = "paid"
