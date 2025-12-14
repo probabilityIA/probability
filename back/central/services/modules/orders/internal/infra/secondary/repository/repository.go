@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/migration/shared/models"
@@ -27,11 +27,19 @@ func New(database db.IDatabase) domain.IRepository {
 // CreateOrder crea una nueva orden en la base de datos
 func (r *Repository) CreateOrder(ctx context.Context, order *domain.ProbabilityOrder) error {
 	dbOrder := mappers.ToDBOrder(order)
+	if order.DeliveryProbability != nil {
+		fmt.Printf("[Repository.CreateOrder] Saving Order %s with DeliveryProbability: %.2f\n", order.OrderNumber, *order.DeliveryProbability)
+	} else {
+		fmt.Printf("[Repository.CreateOrder] WARNING: Order %s has nil DeliveryProbability!\n", order.OrderNumber)
+	}
 	if err := r.db.Conn(ctx).Create(dbOrder).Error; err != nil {
 		return err
 	}
 	// Actualizar el ID del modelo de dominio con el ID generado
 	order.ID = dbOrder.ID
+	if dbOrder.DeliveryProbability != nil {
+		fmt.Printf("[Repository.CreateOrder] Order %s saved successfully with DeliveryProbability: %.2f\n", order.OrderNumber, *dbOrder.DeliveryProbability)
+	}
 	return nil
 }
 
@@ -213,6 +221,27 @@ func (r *Repository) OrderExists(ctx context.Context, externalID string, integra
 	}
 
 	return count > 0, nil
+}
+
+// GetOrderByExternalID obtiene una orden por external_id e integration_id
+func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*domain.ProbabilityOrder, error) {
+	var order models.Order
+	err := r.db.Conn(ctx).
+		Preload("Business").
+		Preload("Integration").
+		Preload("PaymentMethod").
+		Preload("OrderItems.Product").
+		Where("external_id = ? AND integration_id = ?", externalID, integrationID).
+		First(&order).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("order not found")
+		}
+		return nil, err
+	}
+
+	return mappers.ToDomainOrder(&order), nil
 }
 
 // ───────────────────────────────────────────

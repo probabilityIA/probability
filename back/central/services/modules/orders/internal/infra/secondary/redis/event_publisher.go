@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
@@ -49,13 +49,14 @@ func (p *OrderEventPublisher) PublishOrderEvent(ctx context.Context, event *doma
 		return err
 	}
 
-	p.logger.Debug(ctx).
+	p.logger.Info(ctx).
 		Str("event_id", event.ID).
 		Str("event_type", string(event.Type)).
 		Str("order_id", event.OrderID).
+		Interface("business_id", event.BusinessID).
+		Interface("integration_id", event.IntegrationID).
 		Str("channel", p.channel).
-		Msg("Evento de orden publicado a Redis")
+		Msg("✅ Evento de orden publicado a Redis Pub/Sub")
 
 	return nil
 }
-

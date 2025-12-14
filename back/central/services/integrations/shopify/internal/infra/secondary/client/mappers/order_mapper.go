@@ -101,13 +101,19 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, businessID *uint, 
 		orderStatusURL = *orderResp.OrderStatusURL
 	}
 
+	// Usar el Name de Shopify (ej: "#1001") como OrderNumber, o el OrderNumber numérico si Name está vacío
+	orderNumber := orderResp.Name
+	if orderNumber == "" {
+		orderNumber = strconv.Itoa(orderResp.OrderNumber)
+	}
+
 	return domain.ShopifyOrder{
 		BusinessID:      businessID,
 		IntegrationID:   integrationID,
 		IntegrationType: integrationType,
 		Platform:        "shopify",
 		ExternalID:      strconv.FormatInt(orderResp.ID, 10),
-		OrderNumber:     strconv.Itoa(orderResp.OrderNumber),
+		OrderNumber:     orderNumber,
 		TotalAmount:     totalAmount,
 		Currency:        orderResp.Currency,
 		Customer:        customer,

@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/shopify"
-	"github.com/secamc93/probability/back/central/services/integrations/test"
 
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -26,5 +25,4 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	shopify.New(router, logger, config, integrationCore, rabbitMQ)
 
-	test.New(router, logger, rabbitMQ)
 }

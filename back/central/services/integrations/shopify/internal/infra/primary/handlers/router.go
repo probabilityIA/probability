@@ -7,7 +7,7 @@ import (
 
 // RegisterRoutes registra las rutas del handler de Shopify
 func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger) {
-	shopifyGroup := router.Group("/shopify")
+	shopifyGroup := router.Group("/integrations/shopify")
 	{
 		// Webhook endpoint - sin autenticación JWT (Shopify valida con HMAC)
 		shopifyGroup.POST("/webhook", h.WebhookHandler)

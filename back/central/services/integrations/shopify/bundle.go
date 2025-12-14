@@ -58,7 +58,20 @@ func (a *integrationServiceAdapter) DecryptCredential(ctx context.Context, integ
 
 func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue) {
 	shopifyClient := client.New()
-	orderPublisher := queue.New(rabbitMQ, logger, config)
+
+	// Crear publisher solo si RabbitMQ está disponible
+	var orderPublisher domain.OrderPublisher
+	if rabbitMQ != nil {
+		orderPublisher = queue.New(rabbitMQ, logger, config)
+		logger.Info(context.Background()).
+			Msg("RabbitMQ publisher initialized for Shopify integration")
+	} else {
+		logger.Warn(context.Background()).
+			Msg("RabbitMQ not available, Shopify orders will not be published to queue")
+		// Crear un publisher no-op para evitar panics
+		orderPublisher = queue.NewNoOpPublisher(logger)
+	}
+
 	shopifyCore := shopifycore.New(coreIntegration, shopifyClient, orderPublisher)
 	coreIntegration.RegisterIntegration(core.IntegrationTypeShopify, shopifyCore)
 

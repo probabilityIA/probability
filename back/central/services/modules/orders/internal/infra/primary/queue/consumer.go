@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )

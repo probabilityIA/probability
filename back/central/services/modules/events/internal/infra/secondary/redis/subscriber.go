@@ -89,15 +89,18 @@ func (s *OrderEventSubscriber) processMessages(ctx context.Context) {
 			// Enviar al canal de eventos
 			select {
 			case s.eventChan <- &orderEvent:
-				s.logger.Debug(ctx).
+				s.logger.Info(ctx).
 					Str("event_id", orderEvent.ID).
 					Str("event_type", string(orderEvent.Type)).
 					Str("order_id", orderEvent.OrderID).
-					Msg("Evento de orden recibido desde Redis")
+					Interface("business_id", orderEvent.BusinessID).
+					Interface("integration_id", orderEvent.IntegrationID).
+					Msg("📥 Evento de orden recibido desde Redis, enviando al consumer...")
 			default:
 				s.logger.Warn(ctx).
 					Str("event_id", orderEvent.ID).
-					Msg("Canal de eventos lleno, descartando evento")
+					Str("event_type", string(orderEvent.Type)).
+					Msg("⚠️ Canal de eventos lleno, descartando evento")
 			}
 
 		case <-s.stopChan:

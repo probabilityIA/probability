@@ -6,7 +6,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/events"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
 	"github.com/secamc93/probability/back/central/services/modules/products"
@@ -19,7 +18,7 @@ import (
 )
 
 // New inicializa todos los módulos
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) domain.IOrderMappingUseCase {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) {
 	// Inicializar módulo de payments
 	payments.New(router, database, logger, environment)
 
@@ -27,7 +26,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	orderstatus.New(router, database, logger, environment)
 
 	// Inicializar módulo de orders
-	orderMapping := orders.New(router, database, logger, environment, rabbitMQ, redisClient)
+	orders.New(router, database, logger, environment, rabbitMQ, redisClient)
 
 	// Inicializar módulo de products
 	products.New(router, database, logger, environment)
@@ -48,5 +47,4 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de AI
 	ai.New(router, logger)
 
-	return orderMapping
 }
