@@ -8,7 +8,7 @@ import (
 )
 
 // GetOrCreateCustomer verifica si el cliente existe, si no, lo crea
-func (uc *UseCaseOrderMapping) GetOrCreateCustomer(ctx context.Context, businessID uint, dto *domain.CanonicalOrderDTO) (*domain.Client, error) {
+func (uc *UseCaseOrderMapping) GetOrCreateCustomer(ctx context.Context, businessID uint, dto *domain.ProbabilityOrderDTO) (*domain.Client, error) {
 	if dto.CustomerEmail == "" {
 		return nil, nil // No hay email para validar
 	}

@@ -340,9 +340,9 @@ type OrdersListResponse struct {
 //
 // ───────────────────────────────────────────
 
-// CanonicalOrderDTO representa la estructura canónica que todas las integraciones
+// ProbabilityOrderDTO representa la estructura de orden en la lógica de negocio que todas las integraciones
 // deben enviar después de mapear sus datos específicos
-type CanonicalOrderDTO struct {
+type ProbabilityOrderDTO struct {
 	// Identificadores de integración
 	BusinessID      *uint  `json:"business_id"`
 	IntegrationID   uint   `json:"integration_id" binding:"required"`
@@ -409,23 +409,23 @@ type CanonicalOrderDTO struct {
 	// ============================================
 
 	// Items de la orden
-	OrderItems []CanonicalOrderItemDTO `json:"order_items" binding:"dive"`
+	OrderItems []ProbabilityOrderItemDTO `json:"order_items" binding:"dive"`
 
 	// Direcciones
-	Addresses []CanonicalAddressDTO `json:"addresses" binding:"dive"`
+	Addresses []ProbabilityAddressDTO `json:"addresses" binding:"dive"`
 
 	// Pagos
-	Payments []CanonicalPaymentDTO `json:"payments" binding:"dive"`
+	Payments []ProbabilityPaymentDTO `json:"payments" binding:"dive"`
 
 	// Envíos
-	Shipments []CanonicalShipmentDTO `json:"shipments" binding:"dive"`
+	Shipments []ProbabilityShipmentDTO `json:"shipments" binding:"dive"`
 
 	// Metadata del canal (datos crudos)
-	ChannelMetadata *CanonicalChannelMetadataDTO `json:"channel_metadata"`
+	ChannelMetadata *ProbabilityChannelMetadataDTO `json:"channel_metadata"`
 }
 
-// CanonicalOrderItemDTO representa un item/producto de la orden
-type CanonicalOrderItemDTO struct {
+// ProbabilityOrderItemDTO representa un item/producto de la orden
+type ProbabilityOrderItemDTO struct {
 	ProductID    *string        `json:"product_id"`
 	ProductSKU   string         `json:"product_sku" binding:"required,max=128"`
 	ProductName  string         `json:"product_name" binding:"required,max=255"`
@@ -444,8 +444,8 @@ type CanonicalOrderItemDTO struct {
 	Metadata     datatypes.JSON `json:"metadata,omitempty"`
 }
 
-// CanonicalAddressDTO representa una dirección (envío o facturación)
-type CanonicalAddressDTO struct {
+// ProbabilityAddressDTO representa una dirección (envío o facturación)
+type ProbabilityAddressDTO struct {
 	Type         string         `json:"type" binding:"required,oneof=shipping billing"` // "shipping" o "billing"
 	FirstName    string         `json:"first_name" binding:"max=128"`
 	LastName     string         `json:"last_name" binding:"max=128"`
@@ -463,8 +463,8 @@ type CanonicalAddressDTO struct {
 	Metadata     datatypes.JSON `json:"metadata,omitempty"`
 }
 
-// CanonicalPaymentDTO representa un pago de la orden
-type CanonicalPaymentDTO struct {
+// ProbabilityPaymentDTO representa un pago de la orden
+type ProbabilityPaymentDTO struct {
 	PaymentMethodID  uint           `json:"payment_method_id" binding:"required"`
 	Amount           float64        `json:"amount" binding:"required,min=0"`
 	Currency         string         `json:"currency" binding:"max=10"`
@@ -481,8 +481,8 @@ type CanonicalPaymentDTO struct {
 	Metadata         datatypes.JSON `json:"metadata,omitempty"`
 }
 
-// CanonicalShipmentDTO representa un envío de la orden
-type CanonicalShipmentDTO struct {
+// ProbabilityShipmentDTO representa un envío de la orden
+type ProbabilityShipmentDTO struct {
 	TrackingNumber    *string        `json:"tracking_number"`
 	TrackingURL       *string        `json:"tracking_url"`
 	Carrier           *string        `json:"carrier"`
@@ -510,8 +510,8 @@ type CanonicalShipmentDTO struct {
 	Metadata          datatypes.JSON `json:"metadata,omitempty"`
 }
 
-// CanonicalChannelMetadataDTO representa los datos crudos del canal
-type CanonicalChannelMetadataDTO struct {
+// ProbabilityChannelMetadataDTO representa los datos crudos del canal
+type ProbabilityChannelMetadataDTO struct {
 	ChannelSource string         `json:"channel_source" binding:"required,max=50"`
 	RawData       datatypes.JSON `json:"raw_data" binding:"required"`
 	Version       string         `json:"version" binding:"max=20"`

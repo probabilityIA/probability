@@ -1,8 +1,10 @@
-package whatsapp
+package whatsApp
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/app"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/app/usecasetestconnection"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
@@ -15,8 +17,6 @@ import (
 type IWhatsAppBundle interface {
 	// SendMessage envía un mensaje de WhatsApp con el número de orden y número de teléfono
 	SendMessage(ctx context.Context, orderNumber, phoneNumber string) (string, error)
-	// TestConnection prueba la conexión (implementa core.ITestIntegration)
-	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 }
 
 type bundle struct {
@@ -26,7 +26,7 @@ type bundle struct {
 }
 
 // New crea una nueva instancia del bundle de WhatsApp y retorna la interfaz
-func New(config env.IConfig, logger log.ILogger) IWhatsAppBundle {
+func New(config env.IConfig, logger log.ILogger) core.IIntegrationContract {
 	logger.WithModule("whatsapp")
 	wa := client.New(config)
 	usecase := app.New(wa, logger, config)
@@ -57,4 +57,14 @@ func (b *bundle) TestConnection(ctx context.Context, config map[string]interface
 
 	// Delegar al caso de uso pasando los mapas directamente
 	return b.testUsecase.TestConnection(ctx, config, credentials, clientFactory)
+}
+
+// SyncOrdersByIntegrationID no está soportado para WhatsApp
+func (b *bundle) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
+	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
+}
+
+// SyncOrdersByBusiness no está soportado para WhatsApp
+func (b *bundle) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {
+	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
 }

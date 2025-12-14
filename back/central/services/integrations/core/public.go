@@ -9,185 +9,223 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 )
 
-// ITestIntegration define la interfaz que cada integración debe implementar para testear su conexión
-type ITestIntegration interface {
-	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
-}
-
-// Constantes públicas para tipos de integración
 const (
-	IntegrationTypeWhatsApp     = "whatsapp"
-	IntegrationTypeShopify      = "shopify"
-	IntegrationTypeMercadoLibre = "mercado_libre"
+	IntegrationTypeShopify      = 1
+	IntegrationTypeWhatsApp     = 2
+	IntegrationTypeMercadoLibre = 3
 )
 
-// IntegrationWithCredentials representa una integración con credenciales desencriptadas
 type IntegrationWithCredentials = domain.IntegrationWithCredentials
 
-// Integration es el tipo público para representar una integración
 type Integration struct {
-	ID         uint
-	BusinessID *uint
-	Name       string
-	Config     interface{}
+	ID              uint
+	BusinessID      *uint
+	Name            string
+	StoreID         string
+	IntegrationType int
+	Config          interface{}
 }
 
-// IIntegrationCore es la interfaz pública que expone Core para que otras integraciones lo consuman
-type IIntegrationCore interface {
-	GetIntegrationByType(ctx context.Context, integrationType string, businessID *uint) (*IntegrationWithCredentials, error)
-	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
-	GetIntegrationConfig(ctx context.Context, integrationType string, businessID *uint) (map[string]interface{}, error)
-	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
-	UpdateLastSync(ctx context.Context, integrationID string) error
-	TestIntegration(ctx context.Context, integrationType string, config map[string]interface{}, credentials map[string]interface{}) error
-	RegisterTester(integrationType string, tester ITestIntegration) error
-	RegisterObserver(observer func(context.Context, *Integration))
-}
-
-// integrationCore implementa IIntegrationCore
-type integrationCore struct {
-	useCase usecaseintegrations.IIntegrationUseCase
-}
-
-// NewIntegrationCore crea una nueva instancia de IIntegrationCore
-func NewIntegrationCore(useCase usecaseintegrations.IIntegrationUseCase) IIntegrationCore {
-	return &integrationCore{useCase: useCase}
-}
-
-// GetIntegrationByType obtiene una integración con credenciales desencriptadas
-func (ic *integrationCore) GetIntegrationByType(ctx context.Context, integrationType string, businessID *uint) (*domain.IntegrationWithCredentials, error) {
-	return ic.useCase.GetIntegrationByType(ctx, integrationType, businessID)
-}
-
-// GetIntegrationByID obtiene una integración por su ID
 func (ic *integrationCore) GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error) {
-	var id uint
-	if _, err := fmt.Sscanf(integrationID, "%d", &id); err != nil {
-		return nil, fmt.Errorf("invalid integration ID: %w", err)
-	}
-
-	integration, err := ic.useCase.GetIntegrationByID(ctx, id)
+	publicIntegration, err := ic.useCase.GetPublicIntegrationByID(ctx, integrationID)
 	if err != nil {
 		return nil, err
-	}
-
-	var config map[string]interface{}
-	if len(integration.Config) > 0 {
-		if err := json.Unmarshal(integration.Config, &config); err != nil {
-			return nil, err
-		}
 	}
 
 	return &Integration{
-		ID:         integration.ID,
-		BusinessID: integration.BusinessID,
-		Name:       integration.Name,
-		Config:     config,
+		ID:              publicIntegration.ID,
+		BusinessID:      publicIntegration.BusinessID,
+		Name:            publicIntegration.Name,
+		StoreID:         publicIntegration.StoreID,
+		IntegrationType: publicIntegration.IntegrationType,
+		Config:          publicIntegration.Config,
 	}, nil
 }
 
-// GetIntegrationConfig obtiene solo la configuración (sin credenciales)
-func (ic *integrationCore) GetIntegrationConfig(ctx context.Context, integrationType string, businessID *uint) (map[string]interface{}, error) {
-	integration, err := ic.useCase.GetIntegrationByType(ctx, integrationType, businessID)
-	if err != nil {
-		return nil, err
+// GetIntegrationByStoreID busca una integración por StoreID (ej: shop domain) y tipo
+func (ic *integrationCore) GetIntegrationByStoreID(ctx context.Context, storeID string, integrationType int) (*Integration, error) {
+	var typeID *uint
+	if integrationType > 0 {
+		tid := uint(integrationType)
+		typeID = &tid
 	}
+
+	filters := domain.IntegrationFilters{
+		Page:              1,
+		PageSize:          1,
+		IntegrationTypeID: typeID,
+		StoreID:           &storeID,
+	}
+
+	integrations, _, err := ic.useCase.ListIntegrations(ctx, filters)
+	if err != nil {
+		return nil, fmt.Errorf("error listing integrations: %w", err)
+	}
+	if len(integrations) == 0 {
+		return nil, fmt.Errorf("integration not found for store_id %s", storeID)
+	}
+
+	integration := integrations[0]
 
 	var config map[string]interface{}
 	if len(integration.Config) > 0 {
-		if err := json.Unmarshal(integration.Config, &config); err != nil {
-			return nil, err
-		}
+		_ = json.Unmarshal(integration.Config, &config)
 	}
 
-	return config, nil
+	integrationTypeCode := integrationType
+	if integrationTypeCode == 0 && integration.IntegrationType != nil {
+		integrationTypeCode = getIntegrationTypeCodeAsInt(integration.IntegrationType.Code)
+	} else if integrationTypeCode == 0 {
+		integrationTypeCode = int(integration.IntegrationTypeID)
+	}
+
+	return &Integration{
+		ID:              integration.ID,
+		BusinessID:      integration.BusinessID,
+		Name:            integration.Name,
+		StoreID:         integration.StoreID,
+		IntegrationType: integrationTypeCode,
+		Config:          config,
+	}, nil
 }
 
-// DecryptCredential desencripta un campo específico de las credenciales
 func (ic *integrationCore) DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
-	var id uint
-	if _, err := fmt.Sscanf(integrationID, "%d", &id); err != nil {
-		return "", fmt.Errorf("invalid integration ID: %w", err)
-	}
-
-	integration, err := ic.useCase.GetIntegrationByIDWithCredentials(ctx, id)
-	if err != nil {
-		return "", err
-	}
-
-	if integration.DecryptedCredentials == nil {
-		return "", fmt.Errorf("no credentials found for integration")
-	}
-
-	value, ok := integration.DecryptedCredentials[fieldName]
-	if !ok {
-		return "", fmt.Errorf("field %s not found in credentials", fieldName)
-	}
-
-	strValue, ok := value.(string)
-	if !ok {
-		return "", fmt.Errorf("field %s is not a string", fieldName)
-	}
-
-	return strValue, nil
+	return ic.useCase.DecryptCredentialField(ctx, integrationID, fieldName)
 }
 
-// UpdateLastSync actualiza el timestamp de última sincronización
-func (ic *integrationCore) UpdateLastSync(ctx context.Context, integrationID string) error {
-	return ic.useCase.UpdateLastSync(ctx, integrationID)
-}
+func (ic *integrationCore) RegisterIntegration(integrationType int, integration IIntegrationContract) {
+	if integrationType == 0 {
+		ic.logger.Error().Msg("RegisterIntegration: integration type cannot be zero")
+		return
+	}
+	if integration == nil {
+		ic.logger.Error().Msg("RegisterIntegration: integration cannot be nil")
+		return
+	}
 
-// TestIntegration testea la conexión usando el tester registrado
-func (ic *integrationCore) TestIntegration(ctx context.Context, integrationType string, config map[string]interface{}, credentials map[string]interface{}) error {
+	ic.integrations[integrationType] = integration
+
 	useCaseImpl, ok := ic.useCase.(*usecaseintegrations.IntegrationUseCase)
 	if !ok {
-		return fmt.Errorf("error interno: no se puede acceder al registry de testers")
+		ic.logger.Error().Msg("RegisterIntegration: error interno: no se puede acceder al registry de testers")
+		return
 	}
 
-	tester, err := useCaseImpl.GetTesterRegistry().GetTester(integrationType)
-	if err != nil {
-		return fmt.Errorf("no hay tester registrado para tipo %s: %w", integrationType, err)
+	adapter := &integrationAdapter{integration: integration}
+	if err := useCaseImpl.GetTesterRegistry().Register(integrationType, adapter); err != nil {
+		ic.logger.Error().Err(err).Int("integration_type", integrationType).Msg("RegisterIntegration: error al registrar tester")
+		return
 	}
 
-	adapter := &testIntegrationAdapter{tester: tester}
-	return adapter.TestConnection(ctx, config, credentials)
+	ic.logger.Info().Int("integration_type", integrationType).Msg("Integration registered successfully")
 }
 
-// RegisterTester registra un tester para un tipo de integración
-func (ic *integrationCore) RegisterTester(integrationType string, tester ITestIntegration) error {
+func (ic *integrationCore) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
+	// Intentar obtener como int primero, luego como string para compatibilidad
+	var integrationType int
+	if intVal, ok := config["integration_type"].(int); ok {
+		integrationType = intVal
+	} else if floatVal, ok := config["integration_type"].(float64); ok {
+		// JSON numbers se deserializan como float64
+		integrationType = int(floatVal)
+	} else if strVal, ok := config["integration_type"].(string); ok {
+		// Compatibilidad con strings antiguos
+		integrationType = getIntegrationTypeCodeAsInt(strVal)
+	} else {
+		return fmt.Errorf("integration_type is required in config and must be int or string")
+	}
+
+	if integrationType == 0 {
+		return fmt.Errorf("integration_type cannot be zero")
+	}
+
+	integration, ok := ic.integrations[integrationType]
+	if !ok {
+		return fmt.Errorf("integration no registrada para tipo %d", integrationType)
+	}
+	return integration.TestConnection(ctx, config, credentials)
+}
+
+func (ic *integrationCore) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
+	integration, err := ic.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return err
+	}
+
+	integrationImpl, ok := ic.integrations[integration.IntegrationType]
+	if !ok {
+		return fmt.Errorf("integration no registrada para tipo %d", integration.IntegrationType)
+	}
+
+	return integrationImpl.SyncOrdersByIntegrationID(ctx, integrationID)
+}
+
+func (ic *integrationCore) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {
 	useCaseImpl, ok := ic.useCase.(*usecaseintegrations.IntegrationUseCase)
 	if !ok {
-		return fmt.Errorf("error interno: no se puede acceder al registry de testers")
+		return fmt.Errorf("error interno: no se puede acceder al use case")
 	}
 
-	adapter := &testIntegrationAdapter{tester: tester}
-	return useCaseImpl.GetTesterRegistry().Register(integrationType, adapter)
+	businessIDPtr := &businessID
+	filters := domain.IntegrationFilters{
+		BusinessID: businessIDPtr,
+		IsActive:   &[]bool{true}[0],
+	}
+
+	integrations, _, err := useCaseImpl.ListIntegrations(ctx, filters)
+	if err != nil {
+		return fmt.Errorf("error al obtener integraciones: %w", err)
+	}
+
+	for _, integration := range integrations {
+		if integration.IntegrationType == nil {
+			continue
+		}
+
+		integrationID := fmt.Sprintf("%d", integration.ID)
+		if err := ic.SyncOrdersByIntegrationID(ctx, integrationID); err != nil {
+			continue
+		}
+	}
+
+	return nil
 }
 
-// RegisterObserver registra un observador para eventos de creación
-func (ic *integrationCore) RegisterObserver(observer func(context.Context, *Integration)) {
+func (ic *integrationCore) RegisterObserverForType(integrationType int, observer func(context.Context, *Integration)) {
 	ic.useCase.RegisterObserver(func(ctx context.Context, integration *domain.Integration) {
-		// Map domain.Integration to public core.Integration
-		var config map[string]interface{}
-		if len(integration.Config) > 0 {
-			_ = json.Unmarshal(integration.Config, &config)
+		var integrationTypeCode int
+		if integration.IntegrationType != nil {
+			// Convertir el código del tipo de integración a int si es necesario
+			// Por ahora asumimos que el código puede ser convertido o comparado
+			integrationTypeCode = getIntegrationTypeCodeAsInt(integration.IntegrationType.Code)
 		}
 
-		publicIntegration := &Integration{
-			ID:         integration.ID,
-			BusinessID: integration.BusinessID,
-			Name:       integration.Name,
-			Config:     config,
+		if integrationTypeCode == integrationType {
+			publicIntegration := mapDomainToPublicIntegration(ic.useCase, integration)
+			observer(ctx, publicIntegration)
 		}
-		observer(ctx, publicIntegration)
 	})
 }
 
-// testIntegrationAdapter adapta ITestIntegration pública a la interfaz interna
-type testIntegrationAdapter struct {
-	tester ITestIntegration
+// getIntegrationTypeCodeAsInt convierte el código de tipo de integración a int
+// Esta función mapea los códigos antiguos (strings) a los nuevos (int)
+func getIntegrationTypeCodeAsInt(code string) int {
+	switch code {
+	case "shopify":
+		return IntegrationTypeShopify
+	case "whatsapp":
+		return IntegrationTypeWhatsApp
+	case "mercado_libre":
+		return IntegrationTypeMercadoLibre
+	default:
+		return 0
+	}
 }
 
-func (a *testIntegrationAdapter) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
-	return a.tester.TestConnection(ctx, config, credentials)
+type integrationAdapter struct {
+	integration IIntegrationContract
+}
+
+func (a *integrationAdapter) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
+	return a.integration.TestConnection(ctx, config, credentials)
 }

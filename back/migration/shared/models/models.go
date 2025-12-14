@@ -320,6 +320,7 @@ type Integration struct {
 	Name     string `gorm:"size:100;not null"`       // "WhatsApp Principal", "Shopify Store 1"
 	Code     string `gorm:"size:50;not null;unique"` // "whatsapp_platform", "shopify_store_1"
 	Category string `gorm:"size:20;not null;index"`  // "internal" | "external" (redundante, pero útil para queries)
+	StoreID  string `gorm:"size:150;index"`          // Identificador externo (p.e. shop domain)
 
 	// Relación con IntegrationType (obligatorio)
 	IntegrationTypeID uint            `gorm:"not null;index"`

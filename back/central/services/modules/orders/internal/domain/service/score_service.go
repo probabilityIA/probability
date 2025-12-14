@@ -12,7 +12,7 @@ import (
 )
 
 // CalculateOrderScore calcula el score de una orden y sus factores negativos
-func CalculateOrderScore(order *domain.Order) (float64, []string) {
+func CalculateOrderScore(order *domain.ProbabilityOrder) (float64, []string) {
 	// Start with 100
 	score := 100.0
 
@@ -61,7 +61,7 @@ func CalculateOrderScore(order *domain.Order) (float64, []string) {
 }
 
 // GetStaticNegativeFactors obtiene la lista de factores negativos estáticos
-func GetStaticNegativeFactors(order *domain.Order) []string {
+func GetStaticNegativeFactors(order *domain.ProbabilityOrder) []string {
 	var factors []string
 
 	// 1. Validación de correo
@@ -111,7 +111,7 @@ func isValidEmail(email string) bool {
 	return re.MatchString(email)
 }
 
-func IsCODPayment(order *domain.Order) bool {
+func IsCODPayment(order *domain.ProbabilityOrder) bool {
 	// 1. Check PaymentMethodID if we have a mapping (Placeholder)
 	// 2. Check Financial Details (Shopify)
 	// "financial_status": "pending" AND gateway is often "manual" or "cash_on_delivery"

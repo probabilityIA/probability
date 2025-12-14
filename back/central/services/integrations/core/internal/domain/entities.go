@@ -31,6 +31,7 @@ type Integration struct {
 	IntegrationType   *IntegrationType `json:"integration_type,omitempty"` // Relación cargada
 	Category          string           `json:"category"`                   // "internal" | "external" (redundante pero útil para queries)
 	BusinessID        *uint            `json:"business_id"`                // NULL = global (como WhatsApp)
+	StoreID           string           `json:"store_id"`                   // Identificador externo (p.e. shop domain)
 	IsActive          bool             `json:"is_active"`
 	IsDefault         bool             `json:"is_default"`
 	Config            datatypes.JSON   `json:"config"` // Configuración en JSON (no sensible)

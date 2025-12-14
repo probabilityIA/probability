@@ -5,9 +5,7 @@ import (
 	"time"
 )
 
-// IRepository define la interfaz unificada del repositorio de integraciones y tipos de integración
 type IRepository interface {
-	// Métodos de Integrations
 	CreateIntegration(ctx context.Context, integration *Integration) error
 	UpdateIntegration(ctx context.Context, id uint, integration *Integration) error
 	GetIntegrationByID(ctx context.Context, id uint) (*Integration, error)
@@ -21,7 +19,6 @@ type IRepository interface {
 	ExistsIntegrationByCode(ctx context.Context, code string, businessID *uint) (bool, error)
 	UpdateLastSync(ctx context.Context, id uint, lastSync time.Time) error
 
-	// Métodos de IntegrationTypes
 	CreateIntegrationType(ctx context.Context, integrationType *IntegrationType) error
 	UpdateIntegrationType(ctx context.Context, id uint, integrationType *IntegrationType) error
 	GetIntegrationTypeByID(ctx context.Context, id uint) (*IntegrationType, error)
@@ -32,21 +29,14 @@ type IRepository interface {
 	ListActiveIntegrationTypes(ctx context.Context) ([]*IntegrationType, error)
 }
 
-// IEncryptionService define la interfaz del servicio de encriptación
 type IEncryptionService interface {
-	// Encriptar credenciales antes de guardar
 	EncryptCredentials(ctx context.Context, credentials map[string]interface{}) ([]byte, error)
-
-	// Desencriptar credenciales para usar
 	DecryptCredentials(ctx context.Context, encryptedData []byte) (map[string]interface{}, error)
-
-	// Encriptar un valor individual
 	EncryptValue(ctx context.Context, value string) (string, error)
-
-	// Desencriptar un valor individual
 	DecryptValue(ctx context.Context, encryptedValue string) (string, error)
 }
 
-// IIntegrationTypeUseCase define la interfaz del caso de uso de tipos de integración
-
-// IIntegrationUseCase define la interfaz del caso de uso de integraciones
+type IOrderSyncService interface {
+	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
+	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
+}

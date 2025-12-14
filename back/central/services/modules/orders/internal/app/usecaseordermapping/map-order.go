@@ -14,7 +14,7 @@ import (
 
 // MapAndSaveOrder recibe una orden en formato canónico y la guarda en todas las tablas relacionadas
 // Este es el punto de entrada principal para todas las integraciones después de mapear sus datos
-func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.CanonicalOrderDTO) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.ProbabilityOrderDTO) (*domain.OrderResponse, error) {
 	// 0. Validar datos obligatorios de integración
 	if dto.IntegrationID == 0 {
 		return nil, errors.New("integration_id is required")
@@ -42,8 +42,8 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		clientID = &client.ID
 	}
 
-	// 2. Crear la entidad de dominio Order
-	order := &domain.Order{
+	// 2. Crear la entidad de dominio ProbabilityOrder
+	order := &domain.ProbabilityOrder{
 		// Identificadores de integración
 		BusinessID:      dto.BusinessID,
 		IntegrationID:   dto.IntegrationID,
@@ -173,7 +173,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 4. Guardar OrderItems
 	if len(dto.OrderItems) > 0 {
-		orderItems := make([]*domain.OrderItem, len(dto.OrderItems))
+		orderItems := make([]*domain.ProbabilityOrderItem, len(dto.OrderItems))
 		for i, itemDTO := range dto.OrderItems {
 			// Validar/Crear Producto
 			_, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
@@ -181,7 +181,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 				return nil, fmt.Errorf("error processing product for item %s: %w", itemDTO.ProductSKU, err)
 			}
 
-			orderItems[i] = &domain.OrderItem{
+			orderItems[i] = &domain.ProbabilityOrderItem{
 				OrderID:          order.ID,
 				ProductID:        itemDTO.ProductID,
 				ProductSKU:       itemDTO.ProductSKU,
@@ -210,9 +210,9 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 5. Guardar Addresses
 	if len(dto.Addresses) > 0 {
-		addresses := make([]*domain.Address, len(dto.Addresses))
+		addresses := make([]*domain.ProbabilityAddress, len(dto.Addresses))
 		for i, addrDTO := range dto.Addresses {
-			addresses[i] = &domain.Address{
+			addresses[i] = &domain.ProbabilityAddress{
 				Type:         addrDTO.Type,
 				OrderID:      order.ID,
 				FirstName:    addrDTO.FirstName,
@@ -239,9 +239,9 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 6. Guardar Payments
 	if len(dto.Payments) > 0 {
-		payments := make([]*domain.Payment, len(dto.Payments))
+		payments := make([]*domain.ProbabilityPayment, len(dto.Payments))
 		for i, payDTO := range dto.Payments {
-			payments[i] = &domain.Payment{
+			payments[i] = &domain.ProbabilityPayment{
 				OrderID:          order.ID,
 				PaymentMethodID:  payDTO.PaymentMethodID,
 				Amount:           payDTO.Amount,
@@ -266,9 +266,9 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 7. Guardar Shipments
 	if len(dto.Shipments) > 0 {
-		shipments := make([]*domain.Shipment, len(dto.Shipments))
+		shipments := make([]*domain.ProbabilityShipment, len(dto.Shipments))
 		for i, shipDTO := range dto.Shipments {
-			shipments[i] = &domain.Shipment{
+			shipments[i] = &domain.ProbabilityShipment{
 				OrderID:           order.ID,
 				TrackingNumber:    shipDTO.TrackingNumber,
 				TrackingURL:       shipDTO.TrackingURL,
@@ -304,7 +304,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 
 	// 8. Guardar ChannelMetadata (datos crudos)
 	if dto.ChannelMetadata != nil {
-		metadata := &domain.OrderChannelMetadata{
+		metadata := &domain.ProbabilityOrderChannelMetadata{
 			OrderID:       order.ID,
 			ChannelSource: dto.ChannelMetadata.ChannelSource,
 			IntegrationID: dto.IntegrationID,
@@ -361,7 +361,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 }
 
 // mapOrderToResponse convierte un modelo Order a OrderResponse
-func mapOrderToResponse(order *domain.Order) *domain.OrderResponse {
+func mapOrderToResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 	return &domain.OrderResponse{
 		ID:        order.ID,
 		CreatedAt: order.CreatedAt,

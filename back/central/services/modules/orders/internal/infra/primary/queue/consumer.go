@@ -74,8 +74,8 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		Int("message_size", len(messageBody)).
 		Msg("Processing order message from queue")
 
-	// Deserializar el mensaje a CanonicalOrderDTO
-	var orderDTO domain.CanonicalOrderDTO
+	// Deserializar el mensaje a ProbabilityOrderDTO
+	var orderDTO domain.ProbabilityOrderDTO
 	if err := json.Unmarshal(messageBody, &orderDTO); err != nil {
 		c.logger.Error().
 			Err(err).

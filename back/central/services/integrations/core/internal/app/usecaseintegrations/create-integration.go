@@ -53,8 +53,9 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	}
 
 	// VALIDAR CONEXIÓN ANTES DE GUARDAR
-	// Obtener tester registrado para este tipo
-	tester, err := uc.testerReg.GetTester(integrationType.Code)
+	// Convertir código string a int y obtener tester registrado para este tipo
+	integrationTypeInt := getIntegrationTypeCodeAsInt(integrationType.Code)
+	tester, err := uc.testerReg.GetTester(integrationTypeInt)
 	if err != nil {
 		uc.log.Warn(ctx).
 			Str("type_code", integrationType.Code).

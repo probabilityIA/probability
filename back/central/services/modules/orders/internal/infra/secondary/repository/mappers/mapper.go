@@ -9,7 +9,7 @@ import (
 )
 
 // ToDBOrder convierte una orden de dominio a modelo de base de datos
-func ToDBOrder(o *domain.Order) *models.Order {
+func ToDBOrder(o *domain.ProbabilityOrder) *models.Order {
 	if o == nil {
 		return nil
 	}
@@ -96,12 +96,12 @@ func ToDBOrder(o *domain.Order) *models.Order {
 }
 
 // ToDomainOrder convierte una orden de base de datos a dominio
-func ToDomainOrder(o *models.Order) *domain.Order {
+func ToDomainOrder(o *models.Order) *domain.ProbabilityOrder {
 	if o == nil {
 		return nil
 	}
 
-	return &domain.Order{
+	return &domain.ProbabilityOrder{
 		ID:                  o.ID,
 		CreatedAt:           o.CreatedAt,
 		UpdatedAt:           o.UpdatedAt,
@@ -183,7 +183,7 @@ func ToDomainOrder(o *models.Order) *domain.Order {
 }
 
 // ToDBOrderItems convierte una lista de items de dominio a base de datos
-func ToDBOrderItems(items []domain.OrderItem) []models.OrderItem {
+func ToDBOrderItems(items []domain.ProbabilityOrderItem) []models.OrderItem {
 	if items == nil {
 		return nil
 	}
@@ -217,18 +217,18 @@ func ToDBOrderItems(items []domain.OrderItem) []models.OrderItem {
 }
 
 // ToDomainOrderItems convierte una lista de items de base de datos a dominio
-func ToDomainOrderItems(items []models.OrderItem) []domain.OrderItem {
+func ToDomainOrderItems(items []models.OrderItem) []domain.ProbabilityOrderItem {
 	if items == nil {
 		return nil
 	}
-	result := make([]domain.OrderItem, len(items))
+	result := make([]domain.ProbabilityOrderItem, len(items))
 	for i, item := range items {
 		var deletedAt *time.Time
 		if item.DeletedAt.Valid {
 			deletedAt = &item.DeletedAt.Time
 		}
 		// Mapear campos básicos del modelo
-		domainItem := domain.OrderItem{
+		domainItem := domain.ProbabilityOrderItem{
 			ID:                item.ID,
 			CreatedAt:         item.CreatedAt,
 			UpdatedAt:         item.UpdatedAt,
@@ -261,7 +261,7 @@ func ToDomainOrderItems(items []models.OrderItem) []domain.OrderItem {
 }
 
 // ToDBAddresses convierte una lista de direcciones de dominio a base de datos
-func ToDBAddresses(addresses []domain.Address) []models.Address {
+func ToDBAddresses(addresses []domain.ProbabilityAddress) []models.Address {
 	if addresses == nil {
 		return nil
 	}
@@ -300,17 +300,17 @@ func ToDBAddresses(addresses []domain.Address) []models.Address {
 }
 
 // ToDomainAddresses convierte una lista de direcciones de base de datos a dominio
-func ToDomainAddresses(addresses []models.Address) []domain.Address {
+func ToDomainAddresses(addresses []models.Address) []domain.ProbabilityAddress {
 	if addresses == nil {
 		return nil
 	}
-	result := make([]domain.Address, len(addresses))
+	result := make([]domain.ProbabilityAddress, len(addresses))
 	for i, addr := range addresses {
 		var deletedAt *time.Time
 		if addr.DeletedAt.Valid {
 			deletedAt = &addr.DeletedAt.Time
 		}
-		result[i] = domain.Address{
+		result[i] = domain.ProbabilityAddress{
 			ID:           addr.ID,
 			CreatedAt:    addr.CreatedAt,
 			UpdatedAt:    addr.UpdatedAt,
@@ -338,7 +338,7 @@ func ToDomainAddresses(addresses []models.Address) []domain.Address {
 }
 
 // ToDBPayments convierte una lista de pagos de dominio a base de datos
-func ToDBPayments(payments []domain.Payment) []models.Payment {
+func ToDBPayments(payments []domain.ProbabilityPayment) []models.Payment {
 	if payments == nil {
 		return nil
 	}
@@ -375,17 +375,17 @@ func ToDBPayments(payments []domain.Payment) []models.Payment {
 }
 
 // ToDomainPayments convierte una lista de pagos de base de datos a dominio
-func ToDomainPayments(payments []models.Payment) []domain.Payment {
+func ToDomainPayments(payments []models.Payment) []domain.ProbabilityPayment {
 	if payments == nil {
 		return nil
 	}
-	result := make([]domain.Payment, len(payments))
+	result := make([]domain.ProbabilityPayment, len(payments))
 	for i, p := range payments {
 		var deletedAt *time.Time
 		if p.DeletedAt.Valid {
 			deletedAt = &p.DeletedAt.Time
 		}
-		result[i] = domain.Payment{
+		result[i] = domain.ProbabilityPayment{
 			ID:               p.ID,
 			CreatedAt:        p.CreatedAt,
 			UpdatedAt:        p.UpdatedAt,
@@ -411,7 +411,7 @@ func ToDomainPayments(payments []models.Payment) []domain.Payment {
 }
 
 // ToDBShipments convierte una lista de envíos de dominio a base de datos
-func ToDBShipments(shipments []domain.Shipment) []models.Shipment {
+func ToDBShipments(shipments []domain.ProbabilityShipment) []models.Shipment {
 	if shipments == nil {
 		return nil
 	}
@@ -459,17 +459,17 @@ func ToDBShipments(shipments []domain.Shipment) []models.Shipment {
 }
 
 // ToDomainShipments convierte una lista de envíos de base de datos a dominio
-func ToDomainShipments(shipments []models.Shipment) []domain.Shipment {
+func ToDomainShipments(shipments []models.Shipment) []domain.ProbabilityShipment {
 	if shipments == nil {
 		return nil
 	}
-	result := make([]domain.Shipment, len(shipments))
+	result := make([]domain.ProbabilityShipment, len(shipments))
 	for i, s := range shipments {
 		var deletedAt *time.Time
 		if s.DeletedAt.Valid {
 			deletedAt = &s.DeletedAt.Time
 		}
-		result[i] = domain.Shipment{
+		result[i] = domain.ProbabilityShipment{
 			ID:                s.ID,
 			CreatedAt:         s.CreatedAt,
 			UpdatedAt:         s.UpdatedAt,
@@ -506,7 +506,7 @@ func ToDomainShipments(shipments []models.Shipment) []domain.Shipment {
 }
 
 // ToDBChannelMetadataList convierte una lista de metadata de canal de dominio a base de datos
-func ToDBChannelMetadataList(metadata []domain.OrderChannelMetadata) []models.OrderChannelMetadata {
+func ToDBChannelMetadataList(metadata []domain.ProbabilityOrderChannelMetadata) []models.OrderChannelMetadata {
 	if metadata == nil {
 		return nil
 	}
@@ -538,17 +538,17 @@ func ToDBChannelMetadataList(metadata []domain.OrderChannelMetadata) []models.Or
 }
 
 // ToDomainChannelMetadataList convierte una lista de metadata de canal de base de datos a dominio
-func ToDomainChannelMetadataList(metadata []models.OrderChannelMetadata) []domain.OrderChannelMetadata {
+func ToDomainChannelMetadataList(metadata []models.OrderChannelMetadata) []domain.ProbabilityOrderChannelMetadata {
 	if metadata == nil {
 		return nil
 	}
-	result := make([]domain.OrderChannelMetadata, len(metadata))
+	result := make([]domain.ProbabilityOrderChannelMetadata, len(metadata))
 	for i, m := range metadata {
 		var deletedAt *time.Time
 		if m.DeletedAt.Valid {
 			deletedAt = &m.DeletedAt.Time
 		}
-		result[i] = domain.OrderChannelMetadata{
+		result[i] = domain.ProbabilityOrderChannelMetadata{
 			ID:            m.ID,
 			CreatedAt:     m.CreatedAt,
 			UpdatedAt:     m.UpdatedAt,
@@ -569,7 +569,7 @@ func ToDomainChannelMetadataList(metadata []models.OrderChannelMetadata) []domai
 }
 
 // ToDBChannelMetadata convierte metadata de canal de dominio a base de datos (singular)
-func ToDBChannelMetadata(m *domain.OrderChannelMetadata) *models.OrderChannelMetadata {
+func ToDBChannelMetadata(m *domain.ProbabilityOrderChannelMetadata) *models.OrderChannelMetadata {
 	if m == nil {
 		return nil
 	}
@@ -599,7 +599,7 @@ func ToDBChannelMetadata(m *domain.OrderChannelMetadata) *models.OrderChannelMet
 }
 
 // ToDomainChannelMetadata convierte metadata de canal de base de datos a dominio (singular)
-func ToDomainChannelMetadata(m *models.OrderChannelMetadata) *domain.OrderChannelMetadata {
+func ToDomainChannelMetadata(m *models.OrderChannelMetadata) *domain.ProbabilityOrderChannelMetadata {
 	if m == nil {
 		return nil
 	}
@@ -609,7 +609,7 @@ func ToDomainChannelMetadata(m *models.OrderChannelMetadata) *domain.OrderChanne
 		deletedAt = &m.DeletedAt.Time
 	}
 
-	return &domain.OrderChannelMetadata{
+	return &domain.ProbabilityOrderChannelMetadata{
 		ID:            m.ID,
 		CreatedAt:     m.CreatedAt,
 		UpdatedAt:     m.UpdatedAt,

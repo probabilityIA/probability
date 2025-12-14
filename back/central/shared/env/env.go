@@ -176,11 +176,13 @@ type Config struct {
 
 	EncryptionKey string `env:"ENCRYPTION_KEY,required"`
 
-	RabbitMQHost  string `env:"RABBITMQ_HOST,required"`
-	RabbitMQPort  string `env:"RABBITMQ_PORT,required"`
-	RabbitMQUser  string `env:"RABBITMQ_USER,required"`
-	RabbitMQPass  string `env:"RABBITMQ_PASS,required"`
-	RabbitMQVHost string `env:"RABBITMQ_VHOST,required"`
+	RabbitMQHost                 string `env:"RABBITMQ_HOST,required"`
+	RabbitMQPort                 string `env:"RABBITMQ_PORT,required"`
+	RabbitMQUser                 string `env:"RABBITMQ_USER,required"`
+	RabbitMQPass                 string `env:"RABBITMQ_PASS,required"`
+	RabbitMQVHost                string `env:"RABBITMQ_VHOST,required"`
+	RabbitMQOrdersQueue          string `env:"RABBITMQ_ORDERS_CREATE,required"`
+	RabbitMQOrdersCanonicalQueue string `env:"RABBITMQ_ORDERS_CANONICAL_QUEUE,required"`
 
 	RedisOrderEventsChannel string `env:"REDIS_ORDER_EVENTS_CHANNEL,required"`
 }
