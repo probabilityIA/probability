@@ -45,6 +45,13 @@ func (m *EventManager) broadcastToBusinesses(event domain.Event) {
 		// Si debe recibir, aplicar filtros
 		if shouldReceive {
 			if connection.Filter != nil && !connection.Filter.Matches(event) {
+				if m.logger != nil {
+					m.logger.Debug(context.Background()).
+						Str("connection_id", connectionID).
+						Str("event_type", string(event.Type)).
+						Uint("business_id", connection.BusinessID).
+						Msg("Evento filtrado por filtros de conexión SSE")
+				}
 				filteredCount++
 				aliveConnections = append(aliveConnections, connectionID)
 				continue
@@ -53,11 +60,12 @@ func (m *EventManager) broadcastToBusinesses(event domain.Event) {
 			// Enviar evento a esta conexión
 			if err := m.sendSSEMessage(connection.Writer, event); err != nil {
 				if m.logger != nil {
-					m.logger.Debug(context.Background()).
+					m.logger.Error(context.Background()).
 						Err(err).
 						Str("connection_id", connectionID).
 						Uint("business_id", connection.BusinessID).
-						Msg("Removiendo conexión SSE rota")
+						Str("event_type", string(event.Type)).
+						Msg("Error enviando evento SSE, removiendo conexión rota")
 				}
 				continue
 			}
@@ -66,11 +74,12 @@ func (m *EventManager) broadcastToBusinesses(event domain.Event) {
 			aliveConnections = append(aliveConnections, connectionID)
 
 			if m.logger != nil {
-				m.logger.Debug(context.Background()).
+				m.logger.Info(context.Background()).
 					Str("connection_id", connectionID).
 					Uint("business_id", connection.BusinessID).
 					Str("event_type", string(event.Type)).
-					Msg("Evento SSE enviado exitosamente")
+					Str("event_id", event.ID).
+					Msg("✅ Evento SSE enviado exitosamente a conexión")
 			}
 		} else {
 			// Mantener conexión viva aunque no reciba este evento

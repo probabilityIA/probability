@@ -65,6 +65,12 @@ func (c *OrderEventConsumer) processEvents(ctx context.Context) {
 
 			// Verificar si el evento debe ser notificado según la configuración
 			if c.shouldNotifyEvent(ctx, event) {
+				c.logger.Info(ctx).
+					Str("event_id", event.ID).
+					Str("event_type", string(event.Type)).
+					Str("order_id", event.OrderID).
+					Interface("business_id", event.BusinessID).
+					Msg("Evento de orden aprobado para notificación, publicando...")
 				// Convertir evento de orden a evento genérico y publicar
 				c.publishOrderEvent(ctx, event)
 			} else {
@@ -170,11 +176,14 @@ func (c *OrderEventConsumer) publishOrderEvent(ctx context.Context, orderEvent *
 	// Publicar el evento
 	c.eventManager.PublishEvent(genericEvent)
 
-	c.logger.Debug(ctx).
+	c.logger.Info(ctx).
 		Str("event_id", orderEvent.ID).
 		Str("event_type", string(orderEvent.Type)).
 		Str("order_id", orderEvent.OrderID).
-		Msg("Evento de orden publicado al sistema de eventos")
+		Str("generic_event_type", string(genericEvent.Type)).
+		Str("generic_business_id", genericEvent.BusinessID).
+		Int64("generic_integration_id", genericEvent.IntegrationID).
+		Msg("Evento de orden publicado al sistema de eventos (EventManager)")
 }
 
 // Stop detiene el consumidor

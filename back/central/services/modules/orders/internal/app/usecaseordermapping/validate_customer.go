@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 )
 
 // GetOrCreateCustomer verifica si el cliente existe, si no, lo crea

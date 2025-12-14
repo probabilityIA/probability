@@ -7,8 +7,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/service"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"gorm.io/datatypes"
 )
 
@@ -23,13 +22,17 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		return nil, errors.New("business_id is required")
 	}
 
-	// 1. Validar que no exista una orden con el mismo external_id para la misma integración
+	// 1. Verificar si existe una orden con el mismo external_id para la misma integración
 	exists, err := uc.repo.OrderExists(ctx, dto.ExternalID, dto.IntegrationID)
 	if err != nil {
 		return nil, fmt.Errorf("error checking if order exists: %w", err)
 	}
 	if exists {
-		return nil, domain.ErrOrderAlreadyExists
+		existingOrder, err := uc.repo.GetOrderByExternalID(ctx, dto.ExternalID, dto.IntegrationID)
+		if err != nil {
+			return nil, fmt.Errorf("error getting existing order: %w", err)
+		}
+		return uc.UpdateOrder(ctx, existingOrder, dto)
 	}
 
 	// 1.5. Validar/Crear Cliente
@@ -147,29 +150,12 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		}
 	}
 
-	// 2.3. CALCULAR HISTORIAL DE COMPRA
-	if clientID != nil {
-		count, err := uc.repo.CountOrdersByClientID(ctx, *clientID)
-		if err == nil {
-			order.CustomerOrderCount = int(count)
-		}
-	}
-
-	// 2.4. CALCULAR DELIVERY PROBABILITY (SCORE)
-	score, factors := service.CalculateOrderScore(order) // Returns score, factors
-	order.DeliveryProbability = &score
-
-	// Serializar factors a JSON
-	if len(factors) > 0 {
-		factorsJSON, _ := json.Marshal(factors)
-		order.NegativeFactors = datatypes.JSON(factorsJSON)
-	}
-	fmt.Printf("[DEBUG] Saving Order %s with Score: %.2f and NegativeFactors: %s\n", order.OrderNumber, score, order.NegativeFactors)
-
-	// 3. Guardar la orden principal
+	// 3. Guardar la orden principal (sin score por ahora, se calculará mediante evento)
 	if err := uc.repo.CreateOrder(ctx, order); err != nil {
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
+
+	fmt.Printf("[MapAndSaveOrder] Orden %s guardada exitosamente. Publicando evento para calcular score...\n", order.ID)
 
 	// 4. Guardar OrderItems
 	if len(dto.OrderItems) > 0 {
@@ -327,8 +313,9 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		}
 	}
 
-	// 9. Publicar evento de orden creada
+	// 9. Publicar eventos
 	if uc.eventPublisher != nil {
+		// 9.1. Publicar evento de orden creada
 		eventData := domain.OrderEventData{
 			OrderNumber:    order.OrderNumber,
 			InternalNumber: order.InternalNumber,
@@ -345,13 +332,49 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 			integrationID := order.IntegrationID
 			event.IntegrationID = &integrationID
 		}
-		// Publicar de forma asíncrona (no bloquear si falla)
 		go func() {
+			uc.logger.Info(ctx).
+				Str("order_id", order.ID).
+				Str("event_type", string(event.Type)).
+				Interface("business_id", event.BusinessID).
+				Interface("integration_id", event.IntegrationID).
+				Str("order_number", order.OrderNumber).
+				Msg("📤 Publicando evento order.created a Redis...")
 			if err := uc.eventPublisher.PublishOrderEvent(ctx, event); err != nil {
 				uc.logger.Error(ctx).
 					Err(err).
 					Str("order_id", order.ID).
-					Msg("Error al publicar evento de orden creada")
+					Str("event_type", string(event.Type)).
+					Msg("❌ Error al publicar evento de orden creada")
+			} else {
+				uc.logger.Info(ctx).
+					Str("order_id", order.ID).
+					Str("event_type", string(event.Type)).
+					Msg("✅ Evento order.created publicado exitosamente a Redis")
+			}
+		}()
+
+		// 9.2. Publicar evento para calcular score
+		scoreEventData := domain.OrderEventData{
+			OrderNumber:    order.OrderNumber,
+			InternalNumber: order.InternalNumber,
+			ExternalID:     order.ExternalID,
+		}
+		scoreEvent := domain.NewOrderEvent(domain.OrderEventTypeScoreCalculationRequested, order.ID, scoreEventData)
+		scoreEvent.BusinessID = order.BusinessID
+		if order.IntegrationID > 0 {
+			integrationID := order.IntegrationID
+			scoreEvent.IntegrationID = &integrationID
+		}
+		go func() {
+			fmt.Printf("[MapAndSaveOrder] Publicando evento order.score_calculation_requested para orden %s\n", order.ID)
+			if err := uc.eventPublisher.PublishOrderEvent(ctx, scoreEvent); err != nil {
+				uc.logger.Error(ctx).
+					Err(err).
+					Str("order_id", order.ID).
+					Msg("Error al publicar evento de cálculo de score")
+			} else {
+				fmt.Printf("[MapAndSaveOrder] Evento order.score_calculation_requested publicado exitosamente para orden %s\n", order.ID)
 			}
 		}()
 	}

@@ -46,7 +46,7 @@ func Init(ctx context.Context) error {
 	auth.New(v1Group, database, logger, environment, s3Service)
 
 	// Initialize Order Module (and others)
-	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
+	modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, etc.)
 	integrations.New(v1Group, database, logger, environment, rabbitMQ)

@@ -36,6 +36,16 @@ func New(queue rabbitmq.IQueue, logger log.ILogger, config env.IConfig) domain.O
 }
 
 func (p *rabbitMQPublisher) Publish(ctx context.Context, order *domain.ProbabilityOrderDTO) error {
+	// Validar que la cola de RabbitMQ esté disponible
+	if p.queue == nil {
+		p.logger.Warn(ctx).
+			Str("order_number", order.OrderNumber).
+			Str("platform", order.Platform).
+			Uint("integration_id", order.IntegrationID).
+			Msg("RabbitMQ queue not available, skipping order publication")
+		return fmt.Errorf("rabbitmq queue not available")
+	}
+
 	// Mapear desde dominio (sin etiquetas) a estructura de serialización (con etiquetas JSON)
 	orderForSerialization := mapper.MapDomainToSerializable(order)
 

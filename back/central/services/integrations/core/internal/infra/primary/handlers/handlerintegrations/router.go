@@ -22,11 +22,11 @@ func (h *IntegrationHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 
 		// Acciones específicas
 		integrationsGroup.POST("/test", middleware.JWT(), h.TestConnectionRawHandler)
+		integrationsGroup.POST("/sync-orders/business/:business_id", middleware.JWT(), h.SyncOrdersByBusinessHandler)
 		integrationsGroup.POST("/:id/test", middleware.JWT(), h.TestIntegrationHandler)
 		integrationsGroup.POST("/:id/sync", middleware.JWT(), h.SyncOrdersByIntegrationIDHandler)
 		integrationsGroup.PUT("/:id/activate", middleware.JWT(), h.ActivateIntegrationHandler)
 		integrationsGroup.PUT("/:id/deactivate", middleware.JWT(), h.DeactivateIntegrationHandler)
 		integrationsGroup.PUT("/:id/set-default", middleware.JWT(), h.SetAsDefaultHandler)
-		integrationsGroup.POST("/:business_id/sync-orders", middleware.JWT(), h.SyncOrdersByBusinessHandler)
 	}
 }

@@ -34,14 +34,21 @@ const OrderRow = memo(({
         <tr className="hover:bg-gray-50 transition-colors">
             <td className="px-3 sm:px-6 py-4">
                 <div className="text-sm font-medium text-gray-900">
-                    {order.order_number}
+                    {order.order_number || order.external_id || order.id}
                 </div>
                 <div className="text-xs text-gray-500 sm:hidden">
                     {order.customer_name}
                 </div>
-                <div className="text-xs text-gray-500">
-                    {order.internal_number}
-                </div>
+                {order.internal_number && (
+                    <div className="text-xs text-gray-500">
+                        Interno: {order.internal_number}
+                    </div>
+                )}
+                {order.external_id && order.order_number && order.external_id !== order.order_number && (
+                    <div className="text-xs text-gray-400">
+                        Ext: {order.external_id}
+                    </div>
+                )}
             </td>
             <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
                 <div className="text-sm text-gray-900">{order.customer_name}</div>
@@ -60,22 +67,25 @@ const OrderRow = memo(({
                     {order.platform}
                 </span>
             </td>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden xl:table-cell">
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
-                    <div className="flex items-center gap-2">
-                        <div className="w-24 bg-gray-200 rounded-full h-2.5">
+                    <div className="flex items-center gap-2 min-w-[120px]">
+                        <div className="flex-1 bg-gray-200 rounded-full h-3 overflow-hidden shadow-inner">
                             <div
-                                className={`h-2.5 rounded-full ${getProbabilityColor(order.delivery_probability)}`}
-                                style={{ width: `${order.delivery_probability}%` }}
+                                className={`h-full rounded-full transition-all duration-300 ${getProbabilityColor(order.delivery_probability)}`}
+                                style={{ width: `${Math.min(order.delivery_probability, 100)}%` }}
+                                title={`Probabilidad de entrega: ${order.delivery_probability.toFixed(1)}%`}
                             ></div>
                         </div>
-                        <span className="text-xs font-medium text-gray-700">{order.delivery_probability}%</span>
+                        <span className="text-xs font-semibold text-gray-700 min-w-[40px] text-right">
+                            {order.delivery_probability.toFixed(0)}%
+                        </span>
                     </div>
                 ) : (
                     <span className="text-xs text-gray-400">N/A</span>
                 )}
             </td>
-            <td className="px-3 sm:px-6 py-4 hidden xl:table-cell">
+            <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
                 <div className="flex flex-wrap gap-1">
                     {order.negative_factors && order.negative_factors.length > 0 ? (
                         order.negative_factors.map((factor, idx) => (
@@ -449,9 +459,13 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
     }, []);
 
     const getProbabilityColor = useCallback((probability: number) => {
-        if (probability < 50) return 'bg-red-500';
-        if (probability < 70) return 'bg-yellow-500';
-        return 'bg-green-500';
+        if (probability >= 80) return 'bg-green-500';
+        if (probability >= 70) return 'bg-green-400';
+        if (probability >= 60) return 'bg-yellow-400';
+        if (probability >= 50) return 'bg-yellow-500';
+        if (probability >= 40) return 'bg-orange-500';
+        if (probability >= 30) return 'bg-orange-600';
+        return 'bg-red-500';
     }, []);
 
     if (initialLoading) {
@@ -527,10 +541,10 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                                     Plataforma
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Probabilidad
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                                     Datos Faltantes
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">

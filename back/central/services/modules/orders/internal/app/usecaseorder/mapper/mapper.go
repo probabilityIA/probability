@@ -3,7 +3,7 @@ package mapper
 import (
 	"encoding/json"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/domain" // Added import for service
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain" // Added import for service
 	"gorm.io/datatypes"
 )
 
@@ -71,12 +71,13 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		PaidAt:          order.PaidAt,
 
 		// Información de envío/logística
-		TrackingNumber: order.TrackingNumber,
-		TrackingLink:   order.TrackingLink,
-		GuideID:        order.GuideID,
-		GuideLink:      order.GuideLink,
-		DeliveryDate:   order.DeliveryDate,
-		DeliveredAt:    order.DeliveredAt,
+		TrackingNumber:      order.TrackingNumber,
+		TrackingLink:        order.TrackingLink,
+		GuideID:             order.GuideID,
+		GuideLink:           order.GuideLink,
+		DeliveryDate:        order.DeliveryDate,
+		DeliveredAt:         order.DeliveredAt,
+		DeliveryProbability: order.DeliveryProbability,
 
 		// Información de fulfillment
 		WarehouseID:   order.WarehouseID,

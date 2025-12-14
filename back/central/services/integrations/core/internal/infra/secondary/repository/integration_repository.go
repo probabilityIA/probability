@@ -86,6 +86,7 @@ func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration
 		"category":            model.Category,
 		"integration_type_id": model.IntegrationTypeID,
 		"business_id":         model.BusinessID,
+		"store_id":            model.StoreID,
 		"is_active":           model.IsActive,
 		"is_default":          model.IsDefault,
 		"config":              model.Config,
