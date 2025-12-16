@@ -10,14 +10,15 @@ import (
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // New inicializa todos los servicios de integraciones
 // Este bundle coordina la inicialización de todos los módulos de integraciones
 // (core, WhatsApp, Shopify, etc.) sin exponer dependencias externas
-func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue) {
+func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service) {
 
-	integrationCore := core.New(router, db, logger, config)
+	integrationCore := core.New(router, db, logger, config, s3)
 
 	whatsappBundle := whatsApp.New(config, logger)
 

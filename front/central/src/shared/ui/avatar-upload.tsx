@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { CameraIcon } from '@heroicons/react/24/outline';
 
 interface AvatarUploadProps {
@@ -17,7 +17,8 @@ export function AvatarUpload({
   className = '',
 }: AvatarUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [preview, setPreview] = useState<string | null>(null);
+  const [localPreview, setLocalPreview] = useState<string | null>(null);
+  const [hasError, setHasError] = useState(false);
 
   // Tamaños del avatar
   const sizeClasses = {
@@ -32,48 +33,61 @@ export function AvatarUpload({
     lg: 'w-6 h-6',
   };
 
-  // Limpiar preview cuando se desmonta
+  // Limpiar blob URL al desmontar
   useEffect(() => {
     return () => {
-      if (preview && preview.startsWith('blob:')) {
-        URL.revokeObjectURL(preview);
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
       }
     };
-  }, [preview]);
+  }, [localPreview]);
 
-  const handleClick = () => {
+  const handleClick = useCallback(() => {
     fileInputRef.current?.click();
-  };
+  }, []);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     
     if (file) {
-      // Crear preview de la nueva imagen
+      // Limpiar preview anterior
+      if (localPreview) {
+        URL.revokeObjectURL(localPreview);
+      }
       const url = URL.createObjectURL(file);
-      setPreview(url);
+      setLocalPreview(url);
+      setHasError(false);
       onFileSelect(file);
-    } else {
-      setPreview(null);
-      onFileSelect(null);
     }
-  };
+  }, [localPreview, onFileSelect]);
 
-  const handleRemove = (e: React.MouseEvent) => {
+  const handleRemove = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
-    // Limpiar preview si es un blob URL
-    if (preview && preview.startsWith('blob:')) {
-      URL.revokeObjectURL(preview);
+    if (localPreview) {
+      URL.revokeObjectURL(localPreview);
     }
-    setPreview(null);
+    setLocalPreview(null);
+    setHasError(false);
     onFileSelect(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
-  };
+  }, [localPreview, onFileSelect]);
 
-  // Determinar qué imagen mostrar
-  const imageUrl = preview || currentAvatarUrl || null;
+  const handleImageError = useCallback(() => {
+    console.error('AvatarUpload - Failed to load image');
+    setHasError(true);
+  }, []);
+
+  const handleImageLoad = useCallback(() => {
+    setHasError(false);
+  }, []);
+
+  // Determinar qué imagen mostrar:
+  // Si hay un preview local (archivo seleccionado), usarlo
+  // Si no, usar la URL del avatar actual
+  const displayUrl = localPreview || currentAvatarUrl;
+  const showImage = displayUrl && !hasError;
 
   return (
     <div className={`flex flex-col items-center gap-2 ${className}`}>
@@ -95,26 +109,23 @@ export function AvatarUpload({
           `}
           aria-label="Cambiar foto de perfil"
         >
-          {imageUrl ? (
+          {showImage ? (
             <img
-              src={imageUrl}
+              src={displayUrl}
               alt="Avatar"
               className="w-full h-full object-cover"
+              onError={handleImageError}
+              onLoad={handleImageLoad}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
               <CameraIcon className={`${iconSizes[size]} text-gray-500`} />
             </div>
           )}
-          
-          {/* Overlay al hacer hover */}
-          <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-200 flex items-center justify-center">
-            <CameraIcon className={`${iconSizes[size]} text-white opacity-0 group-hover:opacity-100 transition-opacity duration-200`} />
-          </div>
         </button>
 
         {/* Botón para eliminar si hay imagen */}
-        {imageUrl && (
+        {showImage && (
           <button
             type="button"
             onClick={handleRemove}

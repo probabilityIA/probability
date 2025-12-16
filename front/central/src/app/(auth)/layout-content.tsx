@@ -30,7 +30,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
   } = useSidebar();
 
   // Rutas que pertenecen al módulo IAM
-  const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/business-types', '/resources'];
+  const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
   const showIAMSidebar = iamRoutes.some(route => pathname.startsWith(route));
 
   // Rutas que pertenecen al módulo de Ordenes
@@ -68,13 +68,15 @@ function LayoutContent({ user, children }: LayoutContentProps) {
 
       {/* Contenido principal */}
       <main
-        className="flex-1 transition-all duration-300"
+        className="flex-1 transition-all duration-300 w-full overflow-x-hidden"
         style={{
           marginLeft: `${totalSidebarWidth}px`
         }}
         onMouseEnter={handleMainMouseEnter}
       >
-        {children}
+        <div className="w-full min-w-0">
+          {children}
+        </div>
       </main>
     </div>
   );

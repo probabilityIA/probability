@@ -26,9 +26,11 @@ var (
 	ErrIntegrationTypeCodeRequired = errors.New("el código del tipo de integración es obligatorio")
 
 	// Errores de negocio de tipo de integración
-	ErrIntegrationTypeNameExists      = errors.New("el nombre del tipo de integración ya está en uso")
-	ErrIntegrationTypeCodeExists      = errors.New("el código del tipo de integración ya está en uso")
-	ErrIntegrationTypeHasIntegrations = errors.New("no se puede eliminar un tipo de integración que tiene integraciones asociadas")
+	ErrIntegrationTypeNameExists        = errors.New("el nombre del tipo de integración ya está en uso")
+	ErrIntegrationTypeCodeExists        = errors.New("el código del tipo de integración ya está en uso")
+	ErrIntegrationTypeHasIntegrations   = errors.New("no se puede eliminar un tipo de integración que tiene integraciones asociadas")
+	ErrIntegrationTypeImageUploadFailed = errors.New("error al subir imagen del tipo de integración")
+	ErrIntegrationTypeImageDeleteFailed = errors.New("error al eliminar imagen del tipo de integración")
 
 	// Errores de tester registry
 	ErrTesterTypeEmpty     = errors.New("tipo de integración no puede estar vacío")

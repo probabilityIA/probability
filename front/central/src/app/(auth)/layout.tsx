@@ -11,6 +11,7 @@ import { TokenStorage } from '@/shared/config';
 import { Spinner } from '@/shared/ui';
 import { ToastProvider } from '@/shared/providers/toast-provider';
 import { SidebarProvider } from '@/shared/contexts/sidebar-context';
+import { PermissionsProvider } from '@/shared/contexts/permissions-context';
 import LayoutContent from './layout-content';
 // import { BusinessSelector } from '@modules/auth/ui';
 
@@ -110,11 +111,13 @@ export default function AuthLayout({
   // P?ginas autenticadas con sidebar
   return (
     <ToastProvider>
-      <SidebarProvider>
-        <LayoutContent user={user}>
-          {children}
-        </LayoutContent>
-      </SidebarProvider>
+      <PermissionsProvider>
+        <SidebarProvider>
+          <LayoutContent user={user}>
+            {children}
+          </LayoutContent>
+        </SidebarProvider>
+      </PermissionsProvider>
     </ToastProvider>
   );
 }

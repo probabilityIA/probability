@@ -28,6 +28,7 @@ func ToUserModel(user domain.UsersEntity) models.User {
 		Phone:       user.Phone,
 		AvatarURL:   user.AvatarURL,
 		IsActive:    user.IsActive,
+		ScopeID:     user.ScopeID,
 		LastLoginAt: user.LastLoginAt,
 	}
 }
@@ -47,6 +48,7 @@ func ToUserEntity(user models.User) domain.UsersEntity {
 		Phone:       user.Phone,
 		AvatarURL:   user.AvatarURL,
 		IsActive:    user.IsActive,
+		ScopeID:     user.ScopeID,
 		LastLoginAt: user.LastLoginAt,
 		CreatedAt:   user.Model.CreatedAt,
 		UpdatedAt:   user.Model.UpdatedAt,
@@ -63,6 +65,7 @@ func CreateUserModel(user domain.UsersEntity) models.User {
 		Phone:       user.Phone,
 		AvatarURL:   user.AvatarURL,
 		IsActive:    user.IsActive,
+		ScopeID:     user.ScopeID,
 		LastLoginAt: user.LastLoginAt,
 	}
 }

@@ -10,7 +10,7 @@ type UseCaseOrderMapping struct {
 	repo           domain.IRepository
 	logger         log.ILogger
 	eventPublisher domain.IOrderEventPublisher
-	scoreUseCase   *usecaseorderscore.UseCaseOrderScore
+	scoreUseCase   domain.IOrderScoreUseCase
 }
 
 func New(repo domain.IRepository, logger log.ILogger, eventPublisher domain.IOrderEventPublisher) domain.IOrderMappingUseCase {
@@ -18,6 +18,6 @@ func New(repo domain.IRepository, logger log.ILogger, eventPublisher domain.IOrd
 		repo:           repo,
 		logger:         logger,
 		eventPublisher: eventPublisher,
-		scoreUseCase:   usecaseorderscore.New(repo).(*usecaseorderscore.UseCaseOrderScore),
+		scoreUseCase:   usecaseorderscore.New(repo),
 	}
 }

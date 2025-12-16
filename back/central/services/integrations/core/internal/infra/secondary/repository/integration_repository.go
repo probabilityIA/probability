@@ -191,8 +191,8 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 	}
 	offset := (page - 1) * pageSize
 
-	// Obtener resultados
-	if err := query.Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&integrationModels).Error; err != nil {
+	// Obtener resultados con la relación IntegrationType cargada
+	if err := query.Preload("IntegrationType").Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&integrationModels).Error; err != nil {
 		r.log.Error(ctx).Err(err).Msg("Error al listar integraciones")
 		return nil, 0, fmt.Errorf("error al listar integraciones: %w", err)
 	}
@@ -209,7 +209,7 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 // GetIntegrationByIntegrationTypeID obtiene una integración por tipo y business_id
 func (r *Repository) GetIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*domain.Integration, error) {
 	var model models.Integration
-	query := r.db.Conn(ctx).Where("integration_type_id = ?", integrationTypeID)
+	query := r.db.Conn(ctx).Preload("IntegrationType").Where("integration_type_id = ?", integrationTypeID)
 
 	if businessID != nil {
 		query = query.Where("business_id = ?", *businessID)
@@ -231,7 +231,7 @@ func (r *Repository) GetIntegrationByIntegrationTypeID(ctx context.Context, inte
 // GetActiveIntegrationByIntegrationTypeID obtiene una integración activa por tipo y business_id
 func (r *Repository) GetActiveIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*domain.Integration, error) {
 	var model models.Integration
-	query := r.db.Conn(ctx).Where("integration_type_id = ? AND is_active = ?", integrationTypeID, true)
+	query := r.db.Conn(ctx).Preload("IntegrationType").Where("integration_type_id = ? AND is_active = ?", integrationTypeID, true)
 
 	if businessID != nil {
 		query = query.Where("business_id = ?", *businessID)
@@ -394,10 +394,12 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 			Code:              model.IntegrationType.Code,
 			Description:       model.IntegrationType.Description,
 			Icon:              model.IntegrationType.Icon,
+			ImageURL:          model.IntegrationType.ImageURL,
 			Category:          model.IntegrationType.Category,
 			IsActive:          model.IntegrationType.IsActive,
 			ConfigSchema:      model.IntegrationType.ConfigSchema,
 			CredentialsSchema: model.IntegrationType.CredentialsSchema,
+			SetupInstructions: model.IntegrationType.SetupInstructions,
 			CreatedAt:         model.IntegrationType.CreatedAt,
 			UpdatedAt:         model.IntegrationType.UpdatedAt,
 		}

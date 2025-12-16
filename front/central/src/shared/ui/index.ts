@@ -13,6 +13,7 @@ export * from './date-picker';
 export * from './date-range-picker';
 export * from './file-input';
 export * from './form-modal';
+export * from './full-width-modal';
 export * from './input';
 export * from './modal';
 export * from './select';
@@ -27,8 +28,11 @@ export * from './user-profile-modal';
 export type { 
   TableColumn, 
   PaginationProps, 
-  TableFiltersProps,
+  TableFiltersProps
+} from './table';
+
+export type {
   FilterOption,
   ActiveFilter
-} from './table';
+} from './dynamic-filters';
 

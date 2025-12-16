@@ -11,7 +11,7 @@ import Link from 'next/link';
 import { TokenStorage } from '@/shared/config';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { UserProfileModal } from './user-profile-modal';
-// import { usePermissions } from '@modules/auth/ui/hooks';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 
 interface SidebarProps {
   user: {
@@ -28,14 +28,54 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const { primaryExpanded, requestExpand, requestCollapse } = useSidebar();
   const [showUserModal, setShowUserModal] = useState(false);
+  const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
   
   // Determinar si hay sidebar secundario basado en la ruta actual
-  const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/business-types', '/resources'];
+  const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
   const ordersRoutes = ['/products', '/orders', '/shipments', '/order-status', '/notification-config'];
   const hasSecondarySidebar = iamRoutes.some(route => pathname.startsWith(route)) || 
                                ordersRoutes.some(route => pathname.startsWith(route));
+
+  // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
+  const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
+
+  // Verificar permisos para cada módulo
+  const canViewBusinesses = permissionsNotLoaded || isSuperAdmin || hasPermission('Empresas', 'Read');
+  const canViewUsers = permissionsNotLoaded || isSuperAdmin || hasPermission('Usuarios', 'Read');
+  const canViewRoles = permissionsNotLoaded || isSuperAdmin || hasPermission('Roles', 'Read');
+  const canViewPermissions = permissionsNotLoaded || isSuperAdmin || hasPermission('Permisos', 'Read');
+  const canViewResources = permissionsNotLoaded || isSuperAdmin || hasPermission('Recursos', 'Read');
   
-  // const { hasResource, hasRouteAccess } = usePermissions();
+  const canViewProducts = permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read');
+  const canViewOrders = permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read');
+  const canViewShipments = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
+  const canViewOrderStatus = permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read');
+  const canViewNotifications = permissionsNotLoaded || isSuperAdmin || hasPermission('Configuración de Notificaciones', 'Read');
+  
+  const canViewIntegrations = permissionsNotLoaded || isSuperAdmin || hasPermission('Integraciones', 'Read');
+
+  // Verificar si tiene acceso a los módulos principales
+  const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
+  const canAccessOrders = canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications;
+
+  // Determinar la ruta de entrada para cada módulo (primera disponible)
+  const getIAMEntryRoute = () => {
+    if (canViewUsers) return '/users';
+    if (canViewRoles) return '/roles';
+    if (canViewPermissions) return '/permissions';
+    if (canViewBusinesses) return '/businesses';
+    if (canViewResources) return '/resources';
+    return '/users';
+  };
+
+  const getOrdersEntryRoute = () => {
+    if (canViewOrders) return '/orders';
+    if (canViewProducts) return '/products';
+    if (canViewShipments) return '/shipments';
+    if (canViewOrderStatus) return '/order-status';
+    if (canViewNotifications) return '/notification-config';
+    return '/orders';
+  };
 
   const handleLogout = () => {
     TokenStorage.clearSession();
@@ -46,11 +86,6 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Helper para determinar si un link está activo
   const isActive = (path: string) => pathname === path;
-
-  // Verificar permisos para mostrar items
-  // TODO: Migrar usePermissions a la nueva arquitectura
-
-  const canAccessIAM = true; // hasResource('Usuarios') || hasResource('Roles') || hasResource('Permisos') || hasResource('Recursos') || hasResource('Tipos de Negocio') || hasResource('Negocios');
 
   return (
     <>
@@ -110,7 +145,7 @@ export function Sidebar({ user }: SidebarProps) {
           {/* Menú de navegación */}
           <nav className="flex-1 py-6 px-3">
             <ul className="space-y-2">
-              {/* Item Home */}
+              {/* Item Home - Siempre visible */}
               <li>
                 <Link
                   href="/home"
@@ -141,80 +176,84 @@ export function Sidebar({ user }: SidebarProps) {
                 </Link>
               </li>
 
-              {/* Item Integraciones */}
-              <li>
-                <Link
-                  href="/integrations"
-                  className={`
-                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                    ${isActive('/integrations') || pathname.startsWith('/integrations')
-                      ? 'bg-white/20 text-white shadow-lg scale-105'
-                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
-                    }
-                  `}
-                >
-                  {/* Indicador activo (barra lateral) */}
-                  {(isActive('/integrations') || pathname.startsWith('/integrations')) && (
-                    <div
-                      className="absolute left-0 w-1 h-8 rounded-r-full"
-                      style={{ backgroundColor: 'var(--color-tertiary)' }}
-                    />
-                  )}
-
-                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
-                  </svg>
-                  {primaryExpanded && (
-                    <span className="text-sm font-medium transition-opacity duration-300">
-                      Integraciones
-                    </span>
-                  )}
-                </Link>
-              </li>
-
-              {/* Item Ordenes (Gestión de Ordenes) */}
-              <li>
-                <Link
-                  href="/orders" // Default entry point for Orders
-                  className={`
-                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                    ${isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')
-                      ? 'bg-white/20 text-white shadow-lg scale-105'
-                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
-                    }
-                  `}
-                >
-                  {(isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')) && (
-                    <div
-                      className="absolute left-0 w-1 h-8 rounded-r-full"
-                      style={{ backgroundColor: 'var(--color-tertiary)' }}
-                    />
-                  )}
-                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                  </svg>
-                  {primaryExpanded && (
-                    <span className="text-sm font-medium transition-opacity duration-300">
-                      Ordenes
-                    </span>
-                  )}
-                </Link>
-              </li>
-
-              {/* Item IAM (Gestión de Identidad) */}
-              {canAccessIAM && (
+              {/* Item Integraciones - Solo si tiene permiso */}
+              {canViewIntegrations && (
                 <li>
                   <Link
-                    href="/users" // Default entry point for IAM
+                    href="/integrations"
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/business-types') || isActive('/resources')
+                      ${isActive('/integrations') || pathname.startsWith('/integrations')
                         ? 'bg-white/20 text-white shadow-lg scale-105'
                         : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
                       }
                     `}
                   >
-                    {(isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/business-types') || isActive('/resources')) && (
+                    {/* Indicador activo (barra lateral) */}
+                    {(isActive('/integrations') || pathname.startsWith('/integrations')) && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">
+                        Integraciones
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {/* Item Ordenes (Gestión de Ordenes) - Solo si tiene permiso */}
+              {canAccessOrders && (
+                <li>
+                  <Link
+                    href={getOrdersEntryRoute()}
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')
+                        ? 'bg-white/20 text-white shadow-lg scale-105'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                      }
+                    `}
+                  >
+                    {(isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')) && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">
+                        Ordenes
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {/* Item IAM (Gestión de Identidad) - Solo si tiene permiso */}
+              {canAccessIAM && (
+                <li>
+                  <Link
+                    href={getIAMEntryRoute()}
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/resources')
+                        ? 'bg-white/20 text-white shadow-lg scale-105'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                      }
+                    `}
+                  >
+                    {(isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/resources')) && (
                       <div
                         className="absolute left-0 w-1 h-8 rounded-r-full"
                         style={{ backgroundColor: 'var(--color-tertiary)' }}
@@ -262,4 +301,3 @@ export function Sidebar({ user }: SidebarProps) {
     </>
   );
 }
-

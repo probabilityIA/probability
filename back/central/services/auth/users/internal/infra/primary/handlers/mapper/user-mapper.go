@@ -72,6 +72,7 @@ func ToCreateUserDTO(req request.CreateUserRequest) domain.CreateUserDTO {
 		AvatarURL:   req.AvatarURL,
 		AvatarFile:  req.AvatarFile,
 		IsActive:    req.IsActive,
+		ScopeID:     req.ScopeID,
 		BusinessIDs: businessIDs,
 	}
 }
@@ -132,6 +133,9 @@ func ToUserResponse(dto domain.UserDTO) response.UserResponse {
 		AvatarURL:               dto.AvatarURL,
 		IsActive:                dto.IsActive,
 		IsSuperUser:             dto.IsSuperUser,
+		ScopeID:                 dto.ScopeID,
+		ScopeCode:               dto.ScopeCode,
+		ScopeName:               dto.ScopeName,
 		LastLoginAt:             dto.LastLoginAt,
 		BusinessRoleAssignments: businessRoleAssignments,
 		CreatedAt:               dto.CreatedAt,

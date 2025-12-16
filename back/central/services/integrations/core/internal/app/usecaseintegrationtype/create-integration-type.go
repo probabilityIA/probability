@@ -84,11 +84,30 @@ func (uc *integrationTypeUseCase) CreateIntegrationType(ctx context.Context, dto
 		Str("category", dto.Category).
 		Msg("Creando tipo de integración")
 
+	// Procesar imagen si se proporciona
+	imageURL := ""
+	if dto.ImageFile != nil {
+		uc.log.Info(ctx).Str("name", dto.Name).Msg("Subiendo imagen del tipo de integración a S3")
+
+		// Subir imagen a S3 en la carpeta "integration-types"
+		// Retorna el path relativo (ej: "integration-types/1234567890_logo.jpg")
+		imagePath, err := uc.s3.UploadImage(ctx, dto.ImageFile, "integration-types")
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Str("name", dto.Name).Msg("Error al subir imagen del tipo de integración")
+			return nil, fmt.Errorf("%w: %v", domain.ErrIntegrationTypeImageUploadFailed, err)
+		}
+
+		// Guardar solo el path relativo en la base de datos
+		imageURL = imagePath
+		uc.log.Info(ctx).Str("name", dto.Name).Str("image_path", imagePath).Msg("Imagen del tipo de integración subida exitosamente")
+	}
+
 	integrationType := &domain.IntegrationType{
 		Name:              dto.Name,
 		Code:              code,
 		Description:       dto.Description,
 		Icon:              dto.Icon,
+		ImageURL:          imageURL,
 		Category:          dto.Category,
 		IsActive:          dto.IsActive,
 		ConfigSchema:      dto.ConfigSchema,

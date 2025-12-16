@@ -1,8 +1,9 @@
 package request
 
 // BusinessRoleAssignmentItem representa una asignación individual de rol a business
+// BusinessID es opcional para super admins (puede ser 0 para indicar acceso global)
 type BusinessRoleAssignmentItem struct {
-	BusinessID uint `json:"business_id" binding:"required,min=1" example:"16"`
+	BusinessID uint `json:"business_id" binding:"omitempty,min=1" example:"16"`
 	RoleID     uint `json:"role_id" binding:"required,min=1" example:"4"`
 }
 

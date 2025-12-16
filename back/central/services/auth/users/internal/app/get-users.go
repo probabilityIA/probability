@@ -75,6 +75,9 @@ func (uc *UserUseCase) GetUsers(ctx context.Context, filters domain.UserFilters)
 			AvatarURL:   avatarURL, // URL completa o vacía
 			IsActive:    user.IsActive,
 			LastLoginAt: user.LastLoginAt,
+			ScopeID:     user.ScopeID,
+			ScopeCode:   user.ScopeCode,
+			ScopeName:   user.ScopeName,
 			CreatedAt:   user.CreatedAt,
 			UpdatedAt:   user.UpdatedAt,
 			DeletedAt:   user.DeletedAt,

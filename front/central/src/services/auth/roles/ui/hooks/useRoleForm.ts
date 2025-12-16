@@ -12,7 +12,7 @@ export const useRoleForm = (initialData?: Role, onSuccess?: () => void) => {
         level: undefined,
         is_system: false,
         scope_id: undefined,
-        business_type_id: undefined,
+        business_type_id: 1, // Siempre es 1
     });
 
     useEffect(() => {
@@ -37,10 +37,16 @@ export const useRoleForm = (initialData?: Role, onSuccess?: () => void) => {
         setError(null);
 
         try {
+            // Asegurar que business_type_id siempre sea 1
+            const dataToSubmit = {
+                ...formData,
+                business_type_id: 1,
+            };
+
             if (initialData) {
-                await updateRoleAction(initialData.id, formData as UpdateRoleDTO);
+                await updateRoleAction(initialData.id, dataToSubmit as UpdateRoleDTO);
             } else {
-                await createRoleAction(formData as CreateRoleDTO);
+                await createRoleAction(dataToSubmit as CreateRoleDTO);
             }
             if (onSuccess) onSuccess();
             return true;

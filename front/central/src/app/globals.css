@@ -242,16 +242,28 @@ body {
 
 /* Modal container */
 .modal {
-  @apply fixed inset-0 z-50 flex items-center justify-center p-4;
+  @apply fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4;
 }
 
 .modal-content {
-  @apply bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all;
+  @apply bg-white rounded-2xl shadow-2xl w-full p-4 sm:p-6 transform transition-all;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  /* El max-width se controla por las clases de tamaño (max-w-md, max-w-5xl, etc.) */
 }
+
+/* Modal grande - para formularios que necesitan más espacio */
+/* Nota: Estos estilos se aplican via inline styles en el componente Modal */
 
 /* Modal glassmorphism - fondo transparente con blur */
 .modal-glass {
-  @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl max-w-md w-full p-6 transform transition-all;
+  @apply bg-white/80 backdrop-blur-xl border border-white/20 shadow-2xl rounded-2xl max-w-md w-full p-4 sm:p-6 transform transition-all;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
 /* Listas - usando colores dinámicos */
@@ -617,4 +629,28 @@ body {
 .rdp-nav_button:hover {
   background-color: #f3f4f6 !important;
   color: #000000 !important;
+}
+
+/* ============================================
+   ANIMACIÓN PARA NUEVAS ÓRDENES EN TABLA
+   ============================================ */
+@keyframes slide-in {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+    background-color: rgba(16, 185, 129, 0.1);
+  }
+  50% {
+    opacity: 0.7;
+    background-color: rgba(16, 185, 129, 0.15);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    background-color: rgba(16, 185, 129, 0.05);
+  }
+}
+
+.animate-slide-in {
+  animation: slide-in 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }

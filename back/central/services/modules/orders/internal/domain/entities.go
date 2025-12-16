@@ -21,9 +21,10 @@ type ProbabilityOrder struct {
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 
 	// Identificadores de integración
-	BusinessID      *uint  `json:"business_id"`
-	IntegrationID   uint   `json:"integration_id"`
-	IntegrationType string `json:"integration_type"`
+	BusinessID         *uint   `json:"business_id"`
+	IntegrationID      uint    `json:"integration_id"`
+	IntegrationType    string  `json:"integration_type"`
+	IntegrationLogoURL *string `json:"integration_logo_url,omitempty"` // URL del logo del tipo de integración
 
 	// Identificadores de la orden
 	Platform       string `json:"platform"`

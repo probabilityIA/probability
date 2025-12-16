@@ -333,28 +333,46 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 			event.IntegrationID = &integrationID
 		}
 		go func() {
-			uc.logger.Info(ctx).
+			// Usar context.Background() para evitar que el contexto cancelado afecte la publicación
+			bgCtx := context.Background()
+			uc.logger.Info(bgCtx).
 				Str("order_id", order.ID).
 				Str("event_type", string(event.Type)).
 				Interface("business_id", event.BusinessID).
 				Interface("integration_id", event.IntegrationID).
 				Str("order_number", order.OrderNumber).
 				Msg("📤 Publicando evento order.created a Redis...")
-			if err := uc.eventPublisher.PublishOrderEvent(ctx, event); err != nil {
-				uc.logger.Error(ctx).
+			if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
+				uc.logger.Error(bgCtx).
 					Err(err).
 					Str("order_id", order.ID).
 					Str("event_type", string(event.Type)).
 					Msg("❌ Error al publicar evento de orden creada")
 			} else {
-				uc.logger.Info(ctx).
+				uc.logger.Info(bgCtx).
 					Str("order_id", order.ID).
 					Str("event_type", string(event.Type)).
 					Msg("✅ Evento order.created publicado exitosamente a Redis")
 			}
 		}()
 
-		// 9.2. Publicar evento para calcular score
+		// 9.2. Calcular score directamente cuando llega por RabbitMQ
+		go func() {
+			fmt.Printf("[MapAndSaveOrder] Calculando score directamente para orden %s\n", order.ID)
+			if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
+				uc.logger.Error(ctx).
+					Err(err).
+					Str("order_id", order.ID).
+					Msg("Error al calcular score de la orden")
+			} else {
+				uc.logger.Info(ctx).
+					Str("order_id", order.ID).
+					Str("order_number", order.OrderNumber).
+					Msg("✅ Score calculado exitosamente para la orden")
+			}
+		}()
+
+		// 9.3. Publicar evento para calcular score (mantener para otros consumidores)
 		scoreEventData := domain.OrderEventData{
 			OrderNumber:    order.OrderNumber,
 			InternalNumber: order.InternalNumber,
@@ -392,9 +410,10 @@ func mapOrderToResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		DeletedAt: order.DeletedAt,
 
 		// Identificadores de integración
-		BusinessID:      order.BusinessID,
-		IntegrationID:   order.IntegrationID,
-		IntegrationType: order.IntegrationType,
+		BusinessID:         order.BusinessID,
+		IntegrationID:      order.IntegrationID,
+		IntegrationType:    order.IntegrationType,
+		IntegrationLogoURL: order.IntegrationLogoURL,
 
 		// Identificadores de la orden
 		Platform:       order.Platform,

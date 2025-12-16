@@ -64,7 +64,9 @@ func (h *IntegrationTypeHandler) GetIntegrationTypeByIDHandler(c *gin.Context) {
 		return
 	}
 
-	integrationTypeResp := mapper.ToIntegrationTypeResponse(integrationType)
+	// Obtener URL base de S3 para construir URLs completas
+	imageURLBase := h.getImageURLBase()
+	integrationTypeResp := mapper.ToIntegrationTypeResponse(integrationType, imageURLBase)
 	c.JSON(http.StatusOK, response.IntegrationTypeDetailResponse{
 		Success: true,
 		Message: "Tipo de integración obtenido exitosamente",
@@ -122,7 +124,9 @@ func (h *IntegrationTypeHandler) GetIntegrationTypeByCodeHandler(c *gin.Context)
 		return
 	}
 
-	integrationTypeResp := mapper.ToIntegrationTypeResponse(integrationType)
+	// Obtener URL base de S3 para construir URLs completas
+	imageURLBase := h.getImageURLBase()
+	integrationTypeResp := mapper.ToIntegrationTypeResponse(integrationType, imageURLBase)
 	c.JSON(http.StatusOK, response.IntegrationTypeDetailResponse{
 		Success: true,
 		Message: "Tipo de integración obtenido exitosamente",

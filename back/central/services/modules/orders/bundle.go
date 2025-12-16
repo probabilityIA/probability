@@ -23,7 +23,7 @@ import (
 // New inicializa el módulo de orders y retorna el caso de uso de mapping para integraciones
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redisclient.IRedis) domain.IOrderMappingUseCase {
 	// 1. Init Repositories
-	repo := repository.New(database)
+	repo := repository.New(database, environment)
 
 	// 2. Init Event Publisher (si Redis está disponible)
 	var eventPublisher domain.IOrderEventPublisher

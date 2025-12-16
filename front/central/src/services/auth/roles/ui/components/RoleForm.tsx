@@ -1,6 +1,7 @@
 import React from 'react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
+import { Select } from '@/shared/ui/select';
 import { Alert } from '@/shared/ui/alert';
 import { Spinner } from '@/shared/ui/spinner';
 import { Role } from '../../domain/types';
@@ -32,13 +33,13 @@ export const RoleForm: React.FC<RoleFormProps> = ({ initialData, onSuccess, onCa
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
 
             <Input
-                label="Name"
+                label="Nombre"
                 value={formData.name || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('name', e.target.value)}
                 required
             />
             <Input
-                label="Description"
+                label="Descripción"
                 value={formData.description || ''}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('description', e.target.value)}
                 required
@@ -46,7 +47,7 @@ export const RoleForm: React.FC<RoleFormProps> = ({ initialData, onSuccess, onCa
 
             <div className="grid grid-cols-2 gap-4">
                 <Input
-                    label="Level (1-10)"
+                    label="Nivel (1-10)"
                     type="number"
                     min={1}
                     max={10}
@@ -60,31 +61,25 @@ export const RoleForm: React.FC<RoleFormProps> = ({ initialData, onSuccess, onCa
                         checked={formData.is_system}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('is_system', e.target.checked)}
                     />
-                    System Role
+                    Rol del Sistema
                 </label>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-                <Input
-                    label="Scope ID"
-                    type="number"
-                    value={formData.scope_id || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('scope_id', Number(e.target.value))}
-                    required
-                />
-                <Input
-                    label="Business Type ID"
-                    type="number"
-                    value={formData.business_type_id || ''}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange('business_type_id', Number(e.target.value))}
-                    required
-                />
-            </div>
+            <Select
+                label="Scope"
+                value={formData.scope_id || ''}
+                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => handleChange('scope_id', Number(e.target.value))}
+                options={[
+                    { value: 1, label: 'Platform' },
+                    { value: 2, label: 'Business' },
+                ]}
+                required
+            />
 
             <div className="flex justify-end gap-2 mt-6">
-                <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
+                <Button type="button" variant="secondary" onClick={onCancel}>Cancelar</Button>
                 <Button type="submit" disabled={loading}>
-                    {loading ? <Spinner size="sm" /> : (initialData ? 'Update' : 'Create')}
+                    {loading ? <Spinner size="sm" /> : (initialData ? 'Actualizar' : 'Crear')}
                 </Button>
             </div>
         </form>

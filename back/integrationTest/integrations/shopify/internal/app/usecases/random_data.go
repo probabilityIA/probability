@@ -266,3 +266,4 @@ func (g *RandomDataGenerator) floatPtr(f float64) *float64 {
 func (g *RandomDataGenerator) timePtr(t time.Time) *time.Time {
 	return &t
 }
+

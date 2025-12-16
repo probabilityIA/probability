@@ -16,6 +16,8 @@ type CreateUserRequest struct {
 	AvatarURL  string                `form:"avatar_url" json:"avatar_url" binding:"omitempty,url"`
 	AvatarFile *multipart.FileHeader `form:"avatarFile"`
 	IsActive   bool                  `form:"is_active" json:"is_active"`
+	// Scope del usuario: 1 = platform (super admin), 2 = business
+	ScopeID *uint `form:"scope_id" json:"scope_id"`
 	// Relación de businesses
 	BusinessIDsRaw string `form:"business_ids"`
 	BusinessIDs    []uint `json:"business_ids"`

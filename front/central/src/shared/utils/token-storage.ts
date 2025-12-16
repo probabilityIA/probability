@@ -27,6 +27,21 @@ export interface UserData {
     scope?: string;
 }
 
+export interface ResourcePermission {
+    resource: string;
+    actions: string[];
+    active: boolean;
+}
+
+export interface UserPermissions {
+    is_super: boolean;
+    business_id: number;
+    business_name: string;
+    role_id: number;
+    role_name: string;
+    resources: ResourcePermission[];
+}
+
 const KEYS = {
     SESSION_TOKEN: 'session_token',
     BUSINESS_TOKEN: 'business_token',
@@ -94,6 +109,17 @@ export const TokenStorage = {
         if (typeof window === 'undefined') return null;
         const data = localStorage.getItem(KEYS.BUSINESS_COLORS);
         return data ? JSON.parse(data) : null;
+    },
+
+    getPermissions: (): UserPermissions | null => {
+        if (typeof window === 'undefined') return null;
+        const data = localStorage.getItem(KEYS.PERMISSIONS);
+        return data ? JSON.parse(data) : null;
+    },
+
+    setPermissions: (permissions: UserPermissions) => {
+        if (typeof window === 'undefined') return;
+        localStorage.setItem(KEYS.PERMISSIONS, JSON.stringify(permissions));
     },
 
     removeUserPermissions: () => {

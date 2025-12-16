@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useIntegrationTypes } from '../hooks/useIntegrationTypes';
 import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO } from '../../domain/types';
-import { Input, Select, Button, Alert } from '@/shared/ui';
+import { Input, Select, Button, Alert, FileInput } from '@/shared/ui';
 
 interface IntegrationTypeFormProps {
     integrationType?: IntegrationType;
@@ -18,7 +18,6 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         name: '',
         code: '',
         description: '',
-        icon: '',
         category: 'internal',
         is_active: true,
         config_schema: '{}',
@@ -28,6 +27,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [removeImage, setRemoveImage] = useState(false);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
         if (integrationType) {
@@ -35,15 +37,34 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 name: integrationType.name,
                 code: integrationType.code,
                 description: integrationType.description || '',
-                icon: integrationType.icon || '',
                 category: integrationType.category,
                 is_active: integrationType.is_active,
                 config_schema: JSON.stringify(integrationType.config_schema || {}, null, 2),
                 credentials_schema: JSON.stringify(integrationType.credentials_schema || {}, null, 2),
                 setup_instructions: integrationType.setup_instructions || '',
             });
+            // Cargar preview de imagen existente si hay
+            if (integrationType.image_url) {
+                setImagePreview(integrationType.image_url);
+            }
         }
     }, [integrationType]);
+
+    const handleImageChange = (file: File | null) => {
+        setImageFile(file);
+        setRemoveImage(false);
+        if (file) {
+            // Crear preview de la nueva imagen
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setImagePreview(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        } else {
+            // Si se elimina el archivo seleccionado, volver a la imagen original
+            setImagePreview(integrationType?.image_url || null);
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -58,12 +79,13 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     name: formData.name,
                     code: formData.code,
                     description: formData.description,
-                    icon: formData.icon,
                     category: formData.category,
                     is_active: formData.is_active,
                     config_schema: formData.config_schema ? JSON.parse(formData.config_schema) : undefined,
                     credentials_schema: formData.credentials_schema ? JSON.parse(formData.credentials_schema) : undefined,
                     setup_instructions: formData.setup_instructions,
+                    image_file: imageFile || undefined,
+                    remove_image: removeImage || undefined,
                 };
                 success = await updateIntegrationType(integrationType.id, updateData);
             } else {
@@ -72,12 +94,12 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     name: formData.name,
                     code: formData.code,
                     description: formData.description,
-                    icon: formData.icon,
                     category: formData.category,
                     is_active: formData.is_active,
                     config_schema: formData.config_schema ? JSON.parse(formData.config_schema) : undefined,
                     credentials_schema: formData.credentials_schema ? JSON.parse(formData.credentials_schema) : undefined,
                     setup_instructions: formData.setup_instructions,
+                    image_file: imageFile || undefined,
                 };
                 success = await createIntegrationType(createData);
             }
@@ -101,8 +123,8 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </Alert>
             )}
 
-            {/* Basic Info - 3 columns */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Basic Info - 2 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Nombre *
@@ -137,17 +159,60 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         ]}
                     />
                 </div>
+            </div>
 
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Icono
-                    </label>
-                    <Input
-                        type="text"
-                        value={formData.icon}
-                        onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                        placeholder="Nombre del icono (ej: whatsapp-icon)"
+            {/* Image Upload Section */}
+            <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Logo del Tipo de Integración
+                </label>
+                <div className="space-y-4">
+                    {/* Image Preview */}
+                    {imagePreview && (
+                        <div className="flex items-center gap-4">
+                            <img
+                                src={imagePreview}
+                                alt="Preview"
+                                className="w-24 h-24 object-contain border border-gray-300 rounded-lg p-2 bg-gray-50"
+                            />
+                            <div className="flex-1">
+                                <p className="text-sm text-gray-600">
+                                    {imageFile ? 'Nueva imagen seleccionada' : 'Imagen actual'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* File Input */}
+                    <FileInput
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        buttonText="Seleccionar imagen"
+                        helperText="Formatos soportados: JPG, PNG, GIF, WEBP. Tamaño máximo: 10MB"
                     />
+
+                    {/* Remove Image Option (only when editing and has existing image) */}
+                    {integrationType && integrationType.image_url && (
+                        <div className="flex items-center">
+                            <label className="flex items-center">
+                                <input
+                                    type="checkbox"
+                                    checked={removeImage}
+                                    onChange={(e) => {
+                                        setRemoveImage(e.target.checked);
+                                        if (e.target.checked) {
+                                            setImageFile(null);
+                                            setImagePreview(null);
+                                        } else {
+                                            setImagePreview(integrationType.image_url || null);
+                                        }
+                                    }}
+                                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                />
+                                <span className="text-sm text-gray-700">Eliminar imagen actual</span>
+                            </label>
+                        </div>
+                    )}
                 </div>
             </div>
 

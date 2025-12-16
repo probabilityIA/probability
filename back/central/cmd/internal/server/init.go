@@ -49,7 +49,7 @@ func Init(ctx context.Context) error {
 	modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, etc.)
-	integrations.New(v1Group, database, logger, environment, rabbitMQ)
+	integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service)
 
 	LogStartupInfo(ctx, logger, environment)
 

@@ -33,6 +33,22 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 		return
 	}
 
+	// Validaciones adicionales para prevenir órdenes mal formadas
+	if req.ExternalID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "external_id es requerido",
+		})
+		return
+	}
+	if req.IntegrationID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "integration_id es requerido",
+		})
+		return
+	}
+
 	// Llamar al caso de uso
 	order, err := h.orderCRUD.CreateOrder(c.Request.Context(), &req)
 	if err != nil {

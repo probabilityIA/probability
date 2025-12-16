@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from './modal';
 import { AvatarUpload } from './avatar-upload';
 import { Button } from './button';
@@ -27,6 +27,21 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  // Resetear estado cuando el modal se abre o cambia el usuario
+  useEffect(() => {
+    if (isOpen && user) {
+      console.log('UserProfileModal - Modal opened/User changed:', {
+        userId: user.userId,
+        avatarUrl: user.avatarUrl,
+        isOpen
+      });
+      setAvatarFile(null);
+      setRemoveAvatar(false);
+      setError(null);
+      setSuccess(false);
+    }
+  }, [isOpen, user?.userId]);
 
   if (!user) return null;
 
@@ -96,6 +111,7 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
 
   const handleClose = () => {
     setAvatarFile(null);
+    setRemoveAvatar(false);
     setError(null);
     setSuccess(false);
     onClose();
@@ -109,6 +125,7 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
 
         <div className="flex flex-col items-center gap-4">
           <AvatarUpload
+            key={`${user.userId}-${isOpen}`} // Forzar re-render cuando cambia el usuario o se abre el modal
             currentAvatarUrl={removeAvatar ? null : (user.avatarUrl || null)}
             onFileSelect={handleFileSelect}
             size="lg"

@@ -14,6 +14,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 type IIntegrationContract interface {
@@ -39,7 +40,7 @@ type integrationCore struct {
 	logger       log.ILogger
 }
 
-func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig) IIntegrationCore {
+func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, s3 storage.IS3Service) IIntegrationCore {
 	// 1. Inicializar Servicio de Encriptación
 	encryptionService := encryption.New(config, logger)
 
@@ -48,7 +49,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	// 3. Inicializar Casos de Uso
 	IntegrationUseCase := usecaseintegrations.New(repo, encryptionService, logger)
-	integrationTypeUseCase := usecaseintegrationtype.New(repo, logger)
+	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, logger, config)
 
 	// 4. Inicializar Handlers
 	coreIntegration := &integrationCore{
@@ -57,8 +58,8 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 		logger:       logger.WithModule("integrations-core"),
 	}
 
-	handlerIntegrations := handlerintegrations.New(IntegrationUseCase, logger, coreIntegration)
-	handlerIntegrationType := handlerintegrationtype.New(integrationTypeUseCase, logger)
+	handlerIntegrations := handlerintegrations.New(IntegrationUseCase, logger, coreIntegration, config)
+	handlerIntegrationType := handlerintegrationtype.New(integrationTypeUseCase, logger, config)
 
 	// 5. Registrar Rutas
 	handlerIntegrations.RegisterRoutes(router, logger)

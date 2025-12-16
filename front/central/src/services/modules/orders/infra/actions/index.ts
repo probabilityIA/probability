@@ -74,7 +74,8 @@ export const getAIRecommendationAction = async (origin: string, destination: str
     try {
         return await (await getUseCases()).getAIRecommendation(origin, destination);
     } catch (error: any) {
-        console.error('Get AI Recommendation Action Error:', error.message);
-        throw new Error(error.message);
+        // No lanzar error, retornar null para que el componente maneje silenciosamente
+        console.warn('AI Recommendation no disponible:', error.message);
+        return null;
     }
 };

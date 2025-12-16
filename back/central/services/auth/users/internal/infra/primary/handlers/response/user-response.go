@@ -53,6 +53,9 @@ type UserResponse struct {
 	AvatarURL               string                           `json:"avatar_url"`
 	IsActive                bool                             `json:"is_active"`
 	IsSuperUser             bool                             `json:"is_super_user"`
+	ScopeID                 *uint                            `json:"scope_id,omitempty"`
+	ScopeCode               string                           `json:"scope_code,omitempty"` // "platform" o "business"
+	ScopeName               string                           `json:"scope_name,omitempty"`
 	LastLoginAt             *time.Time                       `json:"last_login_at"`
 	BusinessRoleAssignments []BusinessRoleAssignmentResponse `json:"business_role_assignments"`
 	CreatedAt               time.Time                        `json:"created_at"`

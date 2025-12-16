@@ -2,6 +2,8 @@ package domain
 
 import (
 	"context"
+	"io"
+	"mime/multipart"
 	"time"
 )
 
@@ -39,4 +41,15 @@ type IEncryptionService interface {
 type IOrderSyncService interface {
 	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
 	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
+}
+
+type IS3Service interface {
+	GetImageURL(filename string) string
+	DeleteImage(ctx context.Context, filename string) error
+	ImageExists(ctx context.Context, filename string) (bool, error)
+	UploadFile(ctx context.Context, file io.ReadSeeker, filename string) (string, error)
+	DownloadFile(ctx context.Context, filename string) (io.ReadSeeker, error)
+	FileExists(ctx context.Context, filename string) (bool, error)
+	GetFileURL(ctx context.Context, filename string) (string, error)
+	UploadImage(ctx context.Context, file *multipart.FileHeader, folder string) (string, error)
 }

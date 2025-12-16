@@ -2,6 +2,8 @@ package domain
 
 import (
 	"time"
+
+	"gorm.io/datatypes"
 )
 
 type Integration struct {
@@ -213,7 +215,7 @@ type ProbabilityShipmentDTO struct {
 
 type ProbabilityChannelMetadataDTO struct {
 	ChannelSource string
-	RawData       []byte
+	RawData       datatypes.JSON // Cambiado de []byte a datatypes.JSON para consistencia
 	Version       string
 	ReceivedAt    time.Time
 	ProcessedAt   *time.Time

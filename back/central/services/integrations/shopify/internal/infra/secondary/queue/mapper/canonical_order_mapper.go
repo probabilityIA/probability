@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/domain"
@@ -120,7 +121,7 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 		lastSyncedAt := formatTime(order.ChannelMetadata.LastSyncedAt)
 		channelMetadata = &request.SerializableChannelMetadataDTO{
 			ChannelSource: order.ChannelMetadata.ChannelSource,
-			RawData:       order.ChannelMetadata.RawData,
+			RawData:       json.RawMessage(order.ChannelMetadata.RawData), // Convertir []byte a json.RawMessage
 			Version:       order.ChannelMetadata.Version,
 			ReceivedAt:    order.ChannelMetadata.ReceivedAt.Format(time.RFC3339),
 			ProcessedAt:   processedAt,

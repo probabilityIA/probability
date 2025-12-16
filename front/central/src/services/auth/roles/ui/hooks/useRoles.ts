@@ -1,38 +1,54 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getRolesAction, deleteRoleAction } from '../../infra/actions';
-import { Role } from '../../domain/types';
+import { Role, GetRolesParams } from '../../domain/types';
 
 export const useRoles = () => {
-    const [roles, setRoles] = useState<Role[]>([]);
+    const [allRoles, setAllRoles] = useState<Role[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(20);
 
     // Filters
-    const [searchName, setSearchName] = useState('');
-    const [filterScope, setFilterScope] = useState<string>('');
-    const [filterBusinessType, setFilterBusinessType] = useState<string>('');
-    const [filterLevel, setFilterLevel] = useState<string>('');
-    const [filterIsSystem, setFilterIsSystem] = useState<string>('');
+    const [filters, setFilters] = useState<GetRolesParams>({
+        page: 1,
+        page_size: 20,
+    });
 
     const fetchRoles = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
             const response = await getRolesAction({
-                name: searchName || undefined,
-                scope_id: filterScope ? Number(filterScope) : undefined,
-                business_type_id: filterBusinessType ? Number(filterBusinessType) : undefined,
-                level: filterLevel ? Number(filterLevel) : undefined,
-                is_system: filterIsSystem === 'true' ? true : filterIsSystem === 'false' ? false : undefined,
+                name: filters.name,
+                scope_id: filters.scope_id,
+                business_type_id: filters.business_type_id,
+                level: filters.level,
+                is_system: filters.is_system,
             });
-            setRoles(response.data || []);
+            setAllRoles(response.data || []);
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Error fetching roles';
             setError(errorMessage);
         } finally {
             setLoading(false);
         }
-    }, [searchName, filterScope, filterBusinessType, filterLevel, filterIsSystem]);
+    }, [filters.name, filters.scope_id, filters.business_type_id, filters.level, filters.is_system]);
+
+    // Paginación del lado del cliente
+    const { roles, totalPages, total } = useMemo(() => {
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+        const paginatedRoles = allRoles.slice(startIndex, endIndex);
+        const total = allRoles.length;
+        const totalPages = Math.ceil(total / pageSize);
+
+        return {
+            roles: paginatedRoles,
+            totalPages,
+            total,
+        };
+    }, [allRoles, page, pageSize]);
 
     const deleteRole = async (id: number) => {
         try {
@@ -52,18 +68,17 @@ export const useRoles = () => {
 
     return {
         roles,
+        allRoles,
         loading,
         error,
-        searchName,
-        setSearchName,
-        filterScope,
-        setFilterScope,
-        filterBusinessType,
-        setFilterBusinessType,
-        filterLevel,
-        setFilterLevel,
-        filterIsSystem,
-        setFilterIsSystem,
+        page,
+        setPage,
+        pageSize,
+        setPageSize,
+        totalPages,
+        total,
+        filters,
+        setFilters,
         deleteRole,
         refresh: fetchRoles,
         setError

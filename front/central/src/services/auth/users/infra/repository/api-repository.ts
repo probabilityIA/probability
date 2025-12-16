@@ -84,6 +84,7 @@ export class UserApiRepository implements IUserRepository {
         if (data.phone) formData.append('phone', data.phone);
         if (data.is_active !== undefined) formData.append('is_active', String(data.is_active));
         if (data.avatarFile) formData.append('avatarFile', data.avatarFile);
+        if (data.scope_id !== undefined) formData.append('scope_id', String(data.scope_id));
         if (data.business_ids) formData.append('business_ids', data.business_ids.join(','));
 
         return this.fetch<SingleResponse<User>>('/users', {

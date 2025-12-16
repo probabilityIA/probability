@@ -17,20 +17,20 @@ interface ModalProps {
 }
 
 const sizeClasses = {
-  sm: 'max-w-sm',
-  md: 'max-w-md',
-  lg: 'max-w-lg',
-  xl: 'max-w-xl',
-  '2xl': 'max-w-2xl',
-  '4xl': 'max-w-4xl',
-  '5xl': 'max-w-5xl',
-  '6xl': 'max-w-6xl',
-  '7xl': 'max-w-7xl',
-  'full': 'max-w-[90vw] w-[90vw] max-h-[90vh] h-[90vh] mx-auto my-[5vh]',
+  sm: 'max-w-sm w-[95vw] sm:w-full',
+  md: 'max-w-md w-[95vw] sm:w-full',
+  lg: 'max-w-lg w-[95vw] sm:w-full',
+  xl: 'max-w-xl w-[95vw] sm:w-full',
+  '2xl': 'max-w-2xl w-[95vw] sm:w-full',
+  '4xl': 'max-w-4xl w-[95vw] sm:w-full',
+  '5xl': 'max-w-5xl w-[95vw] sm:w-full',
+  '6xl': 'max-w-6xl w-[95vw] sm:w-full',
+  '7xl': 'max-w-7xl w-[95vw] sm:w-full',
+  'full': 'max-w-[95vw] w-[95vw]',
 };
 
 export function Modal({ isOpen, onClose, title, children, size = 'md', glass = false }: ModalProps) {
-  console.log('🔧 Modal - isOpen:', isOpen, 'title:', title);
+  console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
 
   // Cerrar con ESC
   useEffect(() => {
@@ -63,7 +63,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
       <div className="modal-backdrop" onClick={onClose} />
 
       {/* Modal */}
-      <div className={size === 'full' ? 'fixed inset-0 z-50 flex items-center justify-center' : 'modal'}>
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
         {size === 'full' ? (
           <div
             className={`${glass ? 'bg-white/80 backdrop-blur-xl border border-white/20' : 'bg-white'} rounded-3xl shadow-2xl flex flex-col overflow-hidden`}
@@ -90,15 +90,31 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
             )}
 
             {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto px-8 py-6">
+            <div className="flex-1 overflow-y-auto px-6 sm:px-8 py-6">
               {children}
             </div>
           </div>
         ) : (
-          <div className={`${glass ? 'modal-glass' : 'modal-content'} ${sizeClasses[size]}`}>
+          <div 
+            className={`${size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white rounded-2xl shadow-2xl p-6 sm:p-8'} max-h-[90vh] overflow-hidden flex flex-col`}
+            style={
+              size === 'sm' || size === 'md' 
+                ? {
+                    maxWidth: size === 'sm' ? '28rem' : '32rem',
+                    width: '95vw'
+                  }
+                : size === '5xl' || size === '6xl' || size === '7xl'
+                ? {
+                    width: size === '5xl' ? '90vw' : size === '6xl' ? '95vw' : '98vw',
+                    maxWidth: size === '5xl' ? '90vw' : size === '6xl' ? '95vw' : '98vw',
+                    minWidth: 0
+                  }
+                : undefined
+            }
+          >
             {/* Header */}
             {title && (
-              <div className="relative mb-4">
+              <div className="relative mb-4 flex-shrink-0">
                 <h3 className="text-xl font-bold text-gray-900 text-center">{title}</h3>
                 <button
                   onClick={onClose}
@@ -111,8 +127,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
               </div>
             )}
 
-            {/* Content */}
-            <div>{children}</div>
+            {/* Content - Scrollable */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden pr-1 sm:pr-2 -mr-1 sm:-mr-2 w-full max-w-full">{children}</div>
           </div>
         )}
       </div>

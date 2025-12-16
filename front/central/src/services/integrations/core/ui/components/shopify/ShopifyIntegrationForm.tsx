@@ -41,12 +41,23 @@ export default function ShopifyIntegrationForm({
 }: ShopifyIntegrationFormProps) {
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
-        code: initialData?.code || '',
         store_name: initialData?.config?.store_name || '',
         api_version: initialData?.config?.api_version || '2024-01',
         access_token: initialData?.credentials?.access_token || '',
         business_id: initialData?.business_id || null,
     });
+
+    // Función para generar el código automáticamente desde el nombre
+    const generateCode = (name: string): string => {
+        if (!name) return '';
+        return name
+            .toLowerCase()
+            .trim()
+            .replace(/\s+/g, '_')
+            .replace(/[^a-z0-9_]/g, '')
+            .replace(/_+/g, '_')
+            .replace(/^_|_$/g, '');
+    };
 
     const [loading, setLoading] = useState(false);
     const [testing, setTesting] = useState(false);
@@ -62,7 +73,7 @@ export default function ShopifyIntegrationForm({
 
     const handleTestConnection = async () => {
         if (!formData.store_name || !formData.access_token) {
-            setError('Store Name y Access Token son requeridos para probar la conexión');
+            setError('Store Name y Access Token son requeridos para probar la conexi?n');
             return;
         }
 
@@ -91,7 +102,7 @@ export default function ShopifyIntegrationForm({
             }
         } catch (err: any) {
             console.error('Test connection error:', err);
-            setError(err.message || 'Error al probar la conexión');
+            setError(err.message || 'Error al probar la conexi?n');
         } finally {
             setTesting(false);
         }
@@ -112,23 +123,28 @@ export default function ShopifyIntegrationForm({
                 access_token: formData.access_token,
             };
 
+            // Generar código automáticamente desde el nombre (solo si no estamos editando o no hay código inicial)
+            const generatedCode = isEdit && initialData?.code 
+                ? initialData.code 
+                : generateCode(formData.name);
+
             await onSubmit({
                 name: formData.name,
-                code: formData.code,
+                code: generatedCode,
                 config,
                 credentials,
                 business_id: formData.business_id,
             });
         } catch (err: any) {
             console.error('Error saving Shopify integration:', err);
-            setError(err.message || 'Error al guardar la integración');
+            setError(err.message || 'Error al guardar la integraci?n');
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 w-full">
             {error && (
                 <Alert type="error" onClose={() => setError(null)}>
                     {error}
@@ -137,17 +153,16 @@ export default function ShopifyIntegrationForm({
 
             {testSuccess && (
                 <Alert type="success" onClose={() => setTestSuccess(false)}>
-                    ✓ Conexión exitosa con Shopify
+                    ? Conexi?n exitosa con Shopify
                 </Alert>
             )}
 
-            {/* Basic Info - 2 columns */}
-            <div className="p-6 bg-gray-50 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Información Básica</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+            {/* Formulario en una sola tarjeta - 2 columnas, 2 filas */}
+            <div className="p-6 rounded-lg border border-gray-200 bg-white">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Fila 1, Columna 1: Nombre de la Integración */}
+                    <div className="min-w-0">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             Nombre de la Integración *
                         </label>
                         <Input
@@ -156,35 +171,14 @@ export default function ShopifyIntegrationForm({
                             placeholder="Ej: Tienda Principal"
                             value={formData.name}
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                            className="w-full"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Nombre descriptivo para identificar esta integración</p>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Código Único *
-                        </label>
-                        <Input
-                            type="text"
-                            required
-                            placeholder="Ej: shopify_main"
-                            value={formData.code}
-                            onChange={(e) => setFormData({ ...formData, code: e.target.value.toLowerCase().replace(/\s+/g, '_') })}
-                            disabled={isEdit}
-                        />
-                        <p className="mt-1 text-xs text-gray-500">Identificador único (letras, números y guiones bajos)</p>
-                    </div>
-                </div>
-            </div>
-
-            {/* Shopify Configuration - 2 columns */}
-            <div className="p-6 bg-blue-50 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Configuración de Shopify</h3>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Store Name * (Nombre de la tienda)
+                    {/* Fila 1, Columna 2: Store Name */}
+                    <div className="min-w-0">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Store Name *
                         </label>
                         <Input
                             type="text"
@@ -192,31 +186,26 @@ export default function ShopifyIntegrationForm({
                             placeholder="mystore.myshopify.com"
                             value={formData.store_name}
                             onChange={(e) => setFormData({ ...formData, store_name: e.target.value })}
+                            className="w-full"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Nombre completo de tu tienda Shopify</p>
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {/* Fila 2, Columna 1: API Version */}
+                    <div className="min-w-0">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             API Version
                         </label>
                         <Select
                             value={formData.api_version}
                             onChange={(e) => setFormData({ ...formData, api_version: e.target.value })}
                             options={apiVersions}
+                            className="w-full"
                         />
-                        <p className="mt-1 text-xs text-gray-500">Versión de la API de Shopify a utilizar</p>
                     </div>
-                </div>
-            </div>
 
-            {/* Shopify Credentials - Full width */}
-            <div className="p-6 bg-yellow-50 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Credenciales de Shopify</h3>
-
-                <div className="max-w-2xl">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                    {/* Fila 2, Columna 2: Access Token */}
+                    <div className="min-w-0">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
                             Access Token *
                         </label>
                         <Input
@@ -225,28 +214,14 @@ export default function ShopifyIntegrationForm({
                             placeholder="shpat_xxxxxxxxxxxxx"
                             value={formData.access_token}
                             onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
-                        />
-                        <p className="mt-1 text-xs text-gray-500">Token de acceso de la API de Shopify Admin</p>
-                    </div>
-
-                    {/* Test Connection Button */}
-                    <div className="mt-4">
-                        <Button
-                            type="button"
-                            onClick={handleTestConnection}
-                            disabled={testing || !formData.store_name || !formData.access_token}
-                            loading={testing}
-                            variant="outline"
                             className="w-full"
-                        >
-                            {testing ? 'Probando conexión...' : '🔌 Probar Conexión'}
-                        </Button>
+                        />
                     </div>
                 </div>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex flex-row justify-end gap-3 pt-4 border-t">
                 {onCancel && (
                     <Button
                         type="button"
@@ -256,6 +231,15 @@ export default function ShopifyIntegrationForm({
                         Cancelar
                     </Button>
                 )}
+                <Button
+                    type="button"
+                    onClick={handleTestConnection}
+                    disabled={testing || !formData.store_name || !formData.access_token}
+                    loading={testing}
+                    variant="outline"
+                >
+                    {testing ? 'Probando conexión...' : '🔌 Probar Conexión'}
+                </Button>
                 <Button
                     type="submit"
                     disabled={loading}

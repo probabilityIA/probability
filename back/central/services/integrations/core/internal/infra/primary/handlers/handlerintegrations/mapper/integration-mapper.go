@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/request"
@@ -69,7 +70,8 @@ func ToUpdateIntegrationDTO(req request.UpdateIntegrationRequest, updatedByID ui
 }
 
 // ToIntegrationResponse convierte domain.Integration a IntegrationResponse
-func ToIntegrationResponse(integration *domain.Integration) response.IntegrationResponse {
+// imageURLBase es la URL base de S3 para construir URLs completas
+func ToIntegrationResponse(integration *domain.Integration, imageURLBase string) response.IntegrationResponse {
 	var config map[string]interface{}
 
 	// Parsear Config desde datatypes.JSON ([]byte) a map[string]interface{}
@@ -99,10 +101,20 @@ func ToIntegrationResponse(integration *domain.Integration) response.Integration
 
 	// Incluir información del tipo de integración si está cargado
 	if integration.IntegrationType != nil {
+		imageURL := ""
+		if integration.IntegrationType.ImageURL != "" {
+			// Construir URL completa si es path relativo
+			if imageURLBase != "" && !strings.HasPrefix(integration.IntegrationType.ImageURL, "http") {
+				imageURL = strings.TrimRight(imageURLBase, "/") + "/" + strings.TrimLeft(integration.IntegrationType.ImageURL, "/")
+			} else {
+				imageURL = integration.IntegrationType.ImageURL
+			}
+		}
 		resp.IntegrationType = &response.IntegrationTypeInfo{
-			ID:   integration.IntegrationType.ID,
-			Name: integration.IntegrationType.Name,
-			Code: integration.IntegrationType.Code,
+			ID:       integration.IntegrationType.ID,
+			Name:     integration.IntegrationType.Name,
+			Code:     integration.IntegrationType.Code,
+			ImageURL: imageURL,
 		}
 	}
 
@@ -110,10 +122,10 @@ func ToIntegrationResponse(integration *domain.Integration) response.Integration
 }
 
 // ToIntegrationListResponse convierte lista de integraciones a IntegrationListResponse
-func ToIntegrationListResponse(integrations []*domain.Integration, total int64, page, pageSize int) response.IntegrationListResponse {
+func ToIntegrationListResponse(integrations []*domain.Integration, total int64, page, pageSize int, imageURLBase string) response.IntegrationListResponse {
 	responses := make([]response.IntegrationResponse, len(integrations))
 	for i, integration := range integrations {
-		responses[i] = ToIntegrationResponse(integration)
+		responses[i] = ToIntegrationResponse(integration, imageURLBase)
 	}
 
 	totalPages := int(total) / pageSize

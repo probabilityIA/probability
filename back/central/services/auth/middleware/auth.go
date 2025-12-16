@@ -250,6 +250,29 @@ func IsSuperAdmin(c *gin.Context) bool {
 	return false
 }
 
+// GetScope retorna el scope del usuario autenticado ("platform" o "business")
+func GetScope(c *gin.Context) string {
+	// Primero intentar obtener del auth_info
+	authInfo, exists := GetAuthInfo(c)
+	if exists && authInfo.Scope != "" {
+		return authInfo.Scope
+	}
+
+	// Si no hay scope en auth_info, determinar por business_id
+	// Si business_id == 0, es scope platform (super admin)
+	// Si business_id > 0, es scope business
+	businessID, exists := GetBusinessID(c)
+	if exists {
+		if businessID == 0 {
+			return "platform"
+		}
+		return "business"
+	}
+
+	// Por defecto, retornar business
+	return "business"
+}
+
 // RequireRole and RequireAnyRole logic
 func RequireRole(requiredRole string) gin.HandlerFunc {
 	return func(c *gin.Context) {

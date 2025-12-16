@@ -9,7 +9,7 @@ export const useBusinessForm = (initialData?: Business, onSuccess?: () => void) 
     const [formData, setFormData] = useState<Partial<CreateBusinessDTO>>({
         name: '',
         code: '',
-        business_type_id: undefined,
+        business_type_id: 1, // Siempre es tipo de negocio 1
         timezone: '',
         address: '',
         description: '',

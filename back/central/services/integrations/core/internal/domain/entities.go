@@ -13,7 +13,8 @@ type IntegrationType struct {
 	Code              string         `json:"code"`
 	Description       string         `json:"description"`
 	Icon              string         `json:"icon"`
-	Category          string         `json:"category"` // "internal" | "external"
+	ImageURL          string         `json:"image_url"` // URL de la imagen del logo (path relativo en S3)
+	Category          string         `json:"category"`  // "internal" | "external"
 	IsActive          bool           `json:"is_active"`
 	ConfigSchema      datatypes.JSON `json:"config_schema"`      // JSON schema para campos de configuración requeridos
 	CredentialsSchema datatypes.JSON `json:"credentials_schema"` // JSON schema para credenciales requeridas

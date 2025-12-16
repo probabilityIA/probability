@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { loginAction } from '../../infra/actions';
+import { loginAction, getRolesPermissionsAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
 import { useRouter } from 'next/navigation';
 
@@ -20,6 +20,7 @@ export const LoginForm = () => {
             try {
                 const response = await loginAction({ email, password });
                 if (response.success) {
+                    // Guardar token y datos del usuario
                     TokenStorage.setSessionToken(response.data.token);
                     TokenStorage.setUser({
                         userId: response.data.user.id.toString(),
@@ -33,6 +34,34 @@ export const LoginForm = () => {
 
                     if (response.data.businesses) {
                         TokenStorage.setBusinessesData(response.data.businesses);
+                    }
+
+                    // Obtener roles y permisos
+                    try {
+                        const permissionsResponse = await getRolesPermissionsAction(response.data.token);
+                        if (permissionsResponse.success && permissionsResponse.data) {
+                            TokenStorage.setPermissions({
+                                is_super: permissionsResponse.data.is_super,
+                                business_id: permissionsResponse.data.business_id,
+                                business_name: permissionsResponse.data.business_name,
+                                role_id: permissionsResponse.data.role?.id || 0,
+                                role_name: permissionsResponse.data.role?.name || '',
+                                resources: permissionsResponse.data.resources || []
+                            });
+                        }
+                    } catch (permErr) {
+                        console.warn('No se pudieron obtener los permisos:', permErr);
+                        // Si es super admin, no necesita permisos del endpoint
+                        if (response.data.is_super_admin) {
+                            TokenStorage.setPermissions({
+                                is_super: true,
+                                business_id: 0,
+                                business_name: '',
+                                role_id: 0,
+                                role_name: 'Super Admin',
+                                resources: []
+                            });
+                        }
                     }
 
                     router.push('/home');

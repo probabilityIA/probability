@@ -69,7 +69,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 		}
 		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, nil, 0, "shopify")
 		shopifyOrder := &mapped
-		if err := h.useCase.CreateOrder(c.Request.Context(), headers.ShopDomain, shopifyOrder); err != nil {
+		if err := h.useCase.CreateOrder(c.Request.Context(), headers.ShopDomain, shopifyOrder, bodyBytes); err != nil {
 			h.logger.Error().
 				Err(err).
 				Str("topic", headers.Topic).

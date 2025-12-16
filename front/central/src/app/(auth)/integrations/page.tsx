@@ -8,6 +8,7 @@ import {
     IntegrationTypeForm
 } from '@/services/integrations/core/ui';
 import { Button, Modal } from '@/shared/ui';
+import { WideModal } from '@/shared/ui/wide-modal';
 import { IntegrationType, Integration } from '@/services/integrations/core/domain/types';
 import { getIntegrationByIdAction } from '@/services/integrations/core/infra/actions';
 
@@ -19,7 +20,7 @@ export default function IntegrationsPage() {
     const [selectedType, setSelectedType] = useState<IntegrationType | undefined>(undefined);
     const [selectedIntegration, setSelectedIntegration] = useState<Integration | undefined>(undefined);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [modalSize, setModalSize] = useState<'md' | '4xl' | 'full'>('md');
+    const [modalSize, setModalSize] = useState<'md' | '4xl' | '5xl' | '6xl' | 'full'>('5xl');
 
     const handleSuccess = () => {
         setShowCreateModal(false);
@@ -28,11 +29,11 @@ export default function IntegrationsPage() {
         setSelectedType(undefined);
         setSelectedIntegration(undefined);
         setRefreshKey(prev => prev + 1);
-        setModalSize('md'); // Reset to small when closing
+        setModalSize('5xl'); // Reset to large when closing
     };
 
     const handleTypeSelected = (hasTypeSelected: boolean) => {
-        setModalSize(hasTypeSelected ? '4xl' : 'md');
+        setModalSize(hasTypeSelected ? 'full' : 'md');
     };
 
     const handleModalClose = () => {
@@ -41,7 +42,7 @@ export default function IntegrationsPage() {
         setShowEditIntegrationModal(false);
         setSelectedType(undefined);
         setSelectedIntegration(undefined);
-        setModalSize('md'); // Reset to small when closing
+        setModalSize('5xl'); // Reset to large when closing
     };
 
     const handleEditType = (type: IntegrationType) => {
@@ -50,7 +51,7 @@ export default function IntegrationsPage() {
     };
 
     return (
-        <div className="w-full px-6 py-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex justify-between items-center mb-6">
                 <h1 className="text-3xl font-bold text-gray-900">Integraciones</h1>
                 <Button
@@ -118,25 +119,32 @@ export default function IntegrationsPage() {
             )}
 
             {/* Create Modal */}
-            <Modal
-                isOpen={showCreateModal}
-                onClose={handleModalClose}
-                title={activeTab === 'integrations' ? "Nueva Integración" : "Nuevo Tipo de Integración"}
-                size={activeTab === 'types' ? 'full' : modalSize}
-            >
-                {activeTab === 'integrations' ? (
+            {activeTab === 'integrations' ? (
+                <WideModal
+                    isOpen={showCreateModal}
+                    onClose={handleModalClose}
+                    title="Nueva Integración"
+                    width="90vw"
+                >
                     <IntegrationForm
                         onSuccess={handleSuccess}
                         onCancel={handleModalClose}
                         onTypeSelected={handleTypeSelected}
                     />
-                ) : (
+                </WideModal>
+            ) : (
+                <Modal
+                    isOpen={showCreateModal}
+                    onClose={handleModalClose}
+                    title="Nuevo Tipo de Integración"
+                    size="full"
+                >
                     <IntegrationTypeForm
                         onSuccess={handleSuccess}
                         onCancel={handleModalClose}
                     />
-                )}
-            </Modal>
+                </Modal>
+            )}
 
             {/* Edit Modal for Integration Types */}
             <Modal
@@ -157,7 +165,7 @@ export default function IntegrationsPage() {
                 isOpen={showEditIntegrationModal}
                 onClose={handleModalClose}
                 title="Editar Integración"
-                size="4xl"
+                size="full"
             >
                 <IntegrationForm
                     integration={selectedIntegration}

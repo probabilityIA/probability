@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,11 +35,13 @@ func (h *Handlers) GetOrderRaw(c *gin.Context) {
 	// Llamar al caso de uso
 	rawResponse, err := h.orderCRUD.GetOrderRaw(c.Request.Context(), id)
 	if err != nil {
-		if err.Error() == "raw data not found for this order" {
+		// Verificar si es un error de "no encontrado" (puede estar envuelto)
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "raw data not found for this order") {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
-				"message": "Datos crudos no encontrados",
-				"error":   err.Error(),
+				"message": "Esta orden no tiene datos crudos guardados. Los datos crudos solo están disponibles para órdenes creadas después de la implementación de esta funcionalidad.",
+				"error":   "raw data not found",
 			})
 			return
 		}

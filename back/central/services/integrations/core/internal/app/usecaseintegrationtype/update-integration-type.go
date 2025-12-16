@@ -68,6 +68,47 @@ func (uc *integrationTypeUseCase) UpdateIntegrationType(ctx context.Context, id 
 		existing.CredentialsSchema = *dto.CredentialsSchema
 	}
 
+	// Procesar imagen si se proporciona una nueva
+	if dto.ImageFile != nil {
+		uc.log.Info(ctx).Uint("id", id).Msg("Subiendo nueva imagen del tipo de integración a S3")
+
+		// Subir nueva imagen a S3 en la carpeta "integration-types"
+		// Retorna el path relativo (ej: "integration-types/1234567890_logo.jpg")
+		imagePath, err := uc.s3.UploadImage(ctx, dto.ImageFile, "integration-types")
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al subir nueva imagen del tipo de integración")
+			return nil, fmt.Errorf("%w: %v", domain.ErrIntegrationTypeImageUploadFailed, err)
+		}
+
+		// Guardar solo el path relativo en la base de datos
+		existing.ImageURL = imagePath
+		uc.log.Info(ctx).Uint("id", id).Str("image_path", imagePath).Msg("Nueva imagen del tipo de integración subida exitosamente")
+
+		// Eliminar imagen anterior si existe y es diferente
+		if existing.ImageURL != "" && existing.ImageURL != imagePath {
+			// Verificar si la imagen anterior es un path relativo (no URL completa)
+			if !strings.HasPrefix(existing.ImageURL, "http") {
+				uc.log.Info(ctx).Uint("id", id).Str("old_image", existing.ImageURL).Msg("Eliminando imagen anterior del tipo de integración")
+				if err := uc.s3.DeleteImage(ctx, existing.ImageURL); err != nil {
+					uc.log.Warn(ctx).Err(err).Str("old_image", existing.ImageURL).Msg("Error al eliminar imagen anterior (no crítico)")
+					// No fallar la actualización si no se puede eliminar la imagen anterior
+				}
+			}
+		}
+	} else if dto.RemoveImage {
+		// Eliminar imagen solo si el cliente lo solicita explícitamente
+		uc.log.Info(ctx).Uint("id", id).Str("old_image", existing.ImageURL).Msg("Eliminando imagen del tipo de integración")
+
+		// Verificar si la imagen anterior es un path relativo (no URL completa)
+		if !strings.HasPrefix(existing.ImageURL, "http") {
+			if err := uc.s3.DeleteImage(ctx, existing.ImageURL); err != nil {
+				uc.log.Warn(ctx).Err(err).Str("old_image", existing.ImageURL).Msg("Error al eliminar imagen anterior (no crítico)")
+				// No fallar la actualización si no se puede eliminar la imagen
+			}
+		}
+		existing.ImageURL = "" // Limpiar la URL
+	}
+
 	if err := uc.repo.UpdateIntegrationType(ctx, id, existing); err != nil {
 		uc.log.Error(ctx).Err(err).
 			Uint("id", id).

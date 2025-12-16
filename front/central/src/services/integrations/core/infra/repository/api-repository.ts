@@ -30,9 +30,12 @@ export class IntegrationApiRepository implements IIntegrationRepository {
             body: options.body
         });
 
+        // Si el body es FormData, no establecer Content-Type (el navegador lo hará automáticamente)
+        const isFormData = options.body instanceof FormData;
+        
         const headers: Record<string, string> = {
             'Accept': 'application/json',
-            'Content-Type': 'application/json',
+            ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
             ...(options.headers as Record<string, string> || {}),
         };
 
@@ -171,6 +174,27 @@ export class IntegrationApiRepository implements IIntegrationRepository {
     }
 
     async createIntegrationType(data: CreateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        // Si hay imagen, usar FormData, sino JSON
+        if (data.image_file) {
+            const formData = new FormData();
+            formData.append('name', data.name);
+            if (data.code) formData.append('code', data.code);
+            if (data.description) formData.append('description', data.description);
+            if (data.icon) formData.append('icon', data.icon);
+            formData.append('category', data.category);
+            if (data.is_active !== undefined) formData.append('is_active', String(data.is_active));
+            if (data.config_schema) formData.append('credentials_schema', JSON.stringify(data.config_schema));
+            if (data.credentials_schema) formData.append('credentials_schema', JSON.stringify(data.credentials_schema));
+            if (data.setup_instructions) formData.append('setup_instructions', data.setup_instructions);
+            formData.append('image_file', data.image_file);
+
+            return this.fetch<SingleResponse<IntegrationType>>('/integration-types', {
+                method: 'POST',
+                body: formData,
+                headers: {} // No establecer Content-Type, el navegador lo hará automáticamente con FormData
+            });
+        }
+
         return this.fetch<SingleResponse<IntegrationType>>('/integration-types', {
             method: 'POST',
             body: JSON.stringify(data),
@@ -178,6 +202,28 @@ export class IntegrationApiRepository implements IIntegrationRepository {
     }
 
     async updateIntegrationType(id: number, data: UpdateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>> {
+        // Si hay imagen o remove_image, usar FormData, sino JSON
+        if (data.image_file || data.remove_image !== undefined) {
+            const formData = new FormData();
+            if (data.name) formData.append('name', data.name);
+            if (data.code) formData.append('code', data.code);
+            if (data.description) formData.append('description', data.description);
+            if (data.icon) formData.append('icon', data.icon);
+            if (data.category) formData.append('category', data.category);
+            if (data.is_active !== undefined) formData.append('is_active', String(data.is_active));
+            if (data.config_schema) formData.append('credentials_schema', JSON.stringify(data.config_schema));
+            if (data.credentials_schema) formData.append('credentials_schema', JSON.stringify(data.credentials_schema));
+            if (data.setup_instructions) formData.append('setup_instructions', data.setup_instructions);
+            if (data.image_file) formData.append('image_file', data.image_file);
+            if (data.remove_image !== undefined) formData.append('remove_image', String(data.remove_image));
+
+            return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`, {
+                method: 'PUT',
+                body: formData,
+                headers: {} // No establecer Content-Type, el navegador lo hará automáticamente con FormData
+            });
+        }
+
         return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),

@@ -361,3 +361,4 @@ func (s *OrderSimulator) generateFulfillments(order *domain.Order) []domain.Fulf
 func int64Ptr(i int64) *int64 {
 	return &i
 }
+

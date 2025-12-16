@@ -38,3 +38,4 @@ func (s *ShopifyIntegration) GetAllOrders() []*domain.Order {
 func (s *ShopifyIntegration) GetOrderByNumber(orderNumber string) (*domain.Order, bool) {
 	return s.orderSimulator.GetOrderByNumber(orderNumber)
 }
+
