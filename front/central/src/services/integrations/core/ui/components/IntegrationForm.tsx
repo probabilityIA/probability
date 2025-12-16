@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction } from '../../infra/actions';
-import { Integration, IntegrationType } from '../../domain/types';
+import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction, getWebhookUrlAction } from '../../infra/actions';
+import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
 import { Alert } from '@/shared/ui';
 import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
@@ -69,6 +69,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
     const handleShopifySubmit = async (data: {
         name: string;
         code: string;
+        store_id: string;
         config: any;
         credentials: any;
         business_id?: number | null;
@@ -78,6 +79,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         const integrationData = {
             name: data.name,
             code: data.code,
+            store_id: data.store_id,
             integration_type_id: selectedType.id,
             category: selectedType.category,
             business_id: data.business_id || null,
@@ -123,6 +125,54 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         }
     };
 
+    const handleGetWebhook = async (): Promise<WebhookInfo | null> => {
+        if (!integration) return null;
+
+        try {
+            const result = await getWebhookUrlAction(integration.id);
+            if (result.success && result.data) {
+                return result.data;
+            }
+            return null;
+        } catch (error) {
+            console.error('Error getting webhook:', error);
+            return null;
+        }
+    };
+
+    const handleShopifyUpdate = async (data: {
+        name: string;
+        code: string;
+        store_id: string;
+        config: any;
+        credentials: any;
+        business_id?: number | null;
+    }) => {
+        if (!integration) return;
+
+        try {
+            const updateData: any = {
+                name: data.name,
+                code: data.code,
+                store_id: data.store_id,
+                config: data.config,
+            };
+            // Solo incluir credenciales si hay valores ingresados
+            if (data.credentials && Object.keys(data.credentials).some(k => data.credentials[k])) {
+                updateData.credentials = data.credentials;
+            }
+            const result = await updateIntegrationAction(integration.id, updateData);
+
+            if (result.success) {
+                onSuccess?.();
+            } else {
+                setError(result.message || 'Error al actualizar la integración');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Error al actualizar la integración');
+        }
+    };
+
     if (loadingTypes) {
         return <div className="text-center py-8">Cargando tipos de integración...</div>;
     }
@@ -152,6 +202,31 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         } else if (integration.config) {
             parsedConfig = integration.config;
             console.log('✅ Config ya es objeto en IntegrationForm:', parsedConfig);
+        }
+
+        // Show edit form for Shopify with webhook support
+        if (selectedType && selectedType.code.toLowerCase() === 'shopify') {
+            console.log('🛒 Editando Shopify - store_id:', integration.store_id);
+            console.log('🛒 Editando Shopify - config:', parsedConfig);
+            console.log('🛒 Editando Shopify - credentials:', integration.credentials);
+            return (
+                <ShopifyIntegrationForm
+                    onSubmit={handleShopifyUpdate}
+                    onCancel={onCancel}
+                    onTestConnection={handleTestConnection}
+                    onGetWebhook={handleGetWebhook}
+                    initialData={{
+                        name: integration.name,
+                        code: integration.code,
+                        store_id: integration.store_id,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    isEdit={true}
+                    integrationId={integration.id}
+                />
+            );
         }
 
         // Show edit form for WhatsApp and other dynamic types

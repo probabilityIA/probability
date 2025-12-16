@@ -198,3 +198,30 @@ export const deleteIntegrationTypeAction = async (id: number) => {
         throw new Error(error.message);
     }
 };
+
+export const getWebhookUrlAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).getWebhookUrl(id);
+    } catch (error: any) {
+        console.error('Get Webhook URL Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const listWebhooksAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).listWebhooks(id);
+    } catch (error: any) {
+        console.error('List Webhooks Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const deleteWebhookAction = async (id: number, webhookId: string) => {
+    try {
+        return await (await getUseCases()).deleteWebhook(id, webhookId);
+    } catch (error: any) {
+        console.error('Delete Webhook Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};

@@ -10,7 +10,10 @@ import {
     ActionResponse,
     IntegrationType,
     CreateIntegrationTypeDTO,
-    UpdateIntegrationTypeDTO
+    UpdateIntegrationTypeDTO,
+    ListWebhooksResponse,
+    DeleteWebhookResponse,
+    WebhookResponse
 } from '../../domain/types';
 
 export class IntegrationApiRepository implements IIntegrationRepository {
@@ -232,6 +235,20 @@ export class IntegrationApiRepository implements IIntegrationRepository {
 
     async deleteIntegrationType(id: number): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/integration-types/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async getWebhookUrl(id: number): Promise<WebhookResponse> {
+        return this.fetch<WebhookResponse>(`/integrations/${id}/webhook`);
+    }
+
+    async listWebhooks(id: number): Promise<ListWebhooksResponse> {
+        return this.fetch<ListWebhooksResponse>(`/integrations/${id}/webhooks`);
+    }
+
+    async deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse> {
+        return this.fetch<DeleteWebhookResponse>(`/integrations/${id}/webhooks/${webhookId}`, {
             method: 'DELETE',
         });
     }

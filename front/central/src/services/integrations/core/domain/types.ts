@@ -21,6 +21,7 @@ export interface Integration {
     type: 'whatsapp' | 'shopify' | 'mercado_libre' | string;
     category: 'internal' | 'external' | string;
     business_id: number | null;
+    store_id?: string; // Identificador externo (ej: shop domain para Shopify)
     is_active: boolean;
     is_default: boolean;
     config: IntegrationConfig;
@@ -40,6 +41,7 @@ export interface CreateIntegrationDTO {
     type?: string;
     category: string;
     business_id: number | null;
+    store_id?: string;
     is_active?: boolean;
     is_default?: boolean;
     config?: IntegrationConfig;
@@ -50,6 +52,7 @@ export interface CreateIntegrationDTO {
 export interface UpdateIntegrationDTO {
     name?: string;
     code?: string;
+    store_id?: string;
     is_active?: boolean;
     is_default?: boolean;
     config?: IntegrationConfig;
@@ -130,4 +133,39 @@ export interface UpdateIntegrationTypeDTO {
     setup_instructions?: string;
     image_file?: File; // Archivo de imagen para subir
     remove_image?: boolean; // Flag para eliminar la imagen existente
+}
+
+// Información del webhook para configurar en plataformas externas
+export interface WebhookInfo {
+    url: string;
+    method: string;
+    description: string;
+    events?: string[];
+}
+
+export interface WebhookResponse {
+    success: boolean;
+    data: WebhookInfo;
+}
+
+// Información de un webhook de Shopify (desde la API)
+export interface ShopifyWebhookInfo {
+    id: string;
+    address: string;
+    topic: string;
+    format: string;
+    created_at: string;
+    updated_at: string;
+}
+
+// Respuesta al listar webhooks
+export interface ListWebhooksResponse {
+    success: boolean;
+    data: ShopifyWebhookInfo[];
+}
+
+// Respuesta al eliminar webhook
+export interface DeleteWebhookResponse {
+    success: boolean;
+    message: string;
 }

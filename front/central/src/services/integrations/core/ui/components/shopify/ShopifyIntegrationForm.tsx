@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Input, Button, Alert, Select } from '@/shared/ui';
+import { WebhookInfo, ShopifyWebhookInfo } from '../../../domain/types';
+import { listWebhooksAction, deleteWebhookAction } from '../../../infra/actions';
 
 interface ShopifyConfig {
     store_name: string;
@@ -16,36 +18,51 @@ interface ShopifyIntegrationFormProps {
     onSubmit: (data: {
         name: string;
         code: string;
+        store_id: string;
         config: ShopifyConfig;
         credentials: ShopifyCredentials;
         business_id?: number | null;
     }) => Promise<void>;
     onCancel?: () => void;
     onTestConnection?: (config: ShopifyConfig, credentials: ShopifyCredentials) => Promise<boolean>;
+    onGetWebhook?: () => Promise<WebhookInfo | null>;
     initialData?: {
         name?: string;
         code?: string;
+        store_id?: string;
         config?: ShopifyConfig;
         credentials?: ShopifyCredentials;
         business_id?: number | null;
     };
     isEdit?: boolean;
+    integrationId?: number;
 }
 
 export default function ShopifyIntegrationForm({
     onSubmit,
     onCancel,
     onTestConnection,
+    onGetWebhook,
     initialData,
-    isEdit = false
+    isEdit = false,
+    integrationId
 }: ShopifyIntegrationFormProps) {
+    // Debug logs
+    console.log('🛒 ShopifyIntegrationForm initialData:', initialData);
+    console.log('🛒 ShopifyIntegrationForm store_id:', initialData?.store_id);
+    console.log('🛒 ShopifyIntegrationForm config:', initialData?.config);
+    console.log('🛒 ShopifyIntegrationForm credentials:', initialData?.credentials);
+    
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
-        store_name: initialData?.config?.store_name || '',
+        store_name: initialData?.store_id || initialData?.config?.store_name || '',
         api_version: initialData?.config?.api_version || '2024-01',
         access_token: initialData?.credentials?.access_token || '',
         business_id: initialData?.business_id || null,
     });
+    
+    // Flag para indicar si las credenciales originales están disponibles
+    const hasExistingCredentials = isEdit && !initialData?.credentials?.access_token;
 
     // Función para generar el código automáticamente desde el nombre
     const generateCode = (name: string): string => {
@@ -63,6 +80,14 @@ export default function ShopifyIntegrationForm({
     const [testing, setTesting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [testSuccess, setTestSuccess] = useState(false);
+    const [webhookInfo, setWebhookInfo] = useState<WebhookInfo | null>(null);
+    const [loadingWebhook, setLoadingWebhook] = useState(false);
+    const [showWebhook, setShowWebhook] = useState(false);
+    const [copied, setCopied] = useState(false);
+    const [webhooks, setWebhooks] = useState<ShopifyWebhookInfo[]>([]);
+    const [loadingWebhooks, setLoadingWebhooks] = useState(false);
+    const [webhookConfigured, setWebhookConfigured] = useState(false);
+    const [webhookUrl, setWebhookUrl] = useState<string>('');
 
     const apiVersions = [
         { value: '2024-01', label: '2024-01' },
@@ -70,6 +95,85 @@ export default function ShopifyIntegrationForm({
         { value: '2024-07', label: '2024-07' },
         { value: '2024-10', label: '2024-10' },
     ];
+
+    // Cargar webhooks y estado al montar el componente en modo edición
+    useEffect(() => {
+        if (isEdit && integrationId) {
+            loadWebhooks();
+            // Obtener estado del webhook desde el config
+            if (initialData?.config) {
+                const config = initialData.config;
+                setWebhookConfigured(config.webhook_configured === true);
+                setWebhookUrl(config.webhook_url || '');
+            }
+        }
+    }, [isEdit, integrationId]);
+
+    const loadWebhooks = async () => {
+        if (!integrationId) return;
+
+        setLoadingWebhooks(true);
+        try {
+            const response = await listWebhooksAction(integrationId);
+            if (response.success && response.data) {
+                setWebhooks(response.data);
+            }
+        } catch (err: any) {
+            console.error('Error loading webhooks:', err);
+            // No mostrar error si no hay webhooks, es normal
+        } finally {
+            setLoadingWebhooks(false);
+        }
+    };
+
+    const handleDeleteWebhook = async (webhookId: string) => {
+        if (!integrationId) return;
+        
+        if (!confirm('¿Estás seguro de que deseas eliminar este webhook?')) {
+            return;
+        }
+
+        try {
+            await deleteWebhookAction(integrationId, webhookId);
+            // Recargar la lista de webhooks
+            await loadWebhooks();
+        } catch (err: any) {
+            console.error('Error deleting webhook:', err);
+            setError(err.message || 'Error al eliminar el webhook');
+        }
+    };
+
+    const handleGetWebhook = async () => {
+        if (!onGetWebhook) return;
+        
+        setLoadingWebhook(true);
+        setError(null);
+        
+        try {
+            const info = await onGetWebhook();
+            if (info) {
+                setWebhookInfo(info);
+                setShowWebhook(true);
+            }
+        } catch (err: any) {
+            console.error('Error getting webhook:', err);
+            setError(err.message || 'Error al obtener el webhook');
+        } finally {
+            setLoadingWebhook(false);
+        }
+    };
+
+    const handleCopyWebhook = async () => {
+        if (webhookInfo?.url) {
+            try {
+                await navigator.clipboard.writeText(webhookInfo.url);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (err) {
+                console.error('Error copying to clipboard:', err);
+            }
+        }
+    };
 
     const handleTestConnection = async () => {
         if (!formData.store_name || !formData.access_token) {
@@ -131,6 +235,7 @@ export default function ShopifyIntegrationForm({
             await onSubmit({
                 name: formData.name,
                 code: generatedCode,
+                store_id: formData.store_name, // El store_name es el store_id para Shopify
                 config,
                 credentials,
                 business_id: formData.business_id,
@@ -206,19 +311,168 @@ export default function ShopifyIntegrationForm({
                     {/* Fila 2, Columna 2: Access Token */}
                     <div className="min-w-0">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Access Token *
+                            Access Token {!isEdit && '*'}
                         </label>
                         <Input
                             type="password"
-                            required
-                            placeholder="shpat_xxxxxxxxxxxxx"
+                            required={!isEdit}
+                            placeholder={hasExistingCredentials ? "Dejar vacío para mantener el actual" : "shpat_xxxxxxxxxxxxx"}
                             value={formData.access_token}
                             onChange={(e) => setFormData({ ...formData, access_token: e.target.value })}
                             className="w-full"
                         />
+                        {hasExistingCredentials && (
+                            <p className="text-xs text-gray-500 mt-1">
+                                🔒 El token actual está protegido. Solo ingresa un valor si deseas cambiarlo.
+                            </p>
+                        )}
                     </div>
                 </div>
             </div>
+
+            {/* Webhook Section - Solo visible en modo edición */}
+            {isEdit && integrationId && (
+                <div className="p-6 rounded-lg border border-gray-200 bg-white space-y-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h3 className="text-lg font-medium text-gray-900">🔗 Configuración de Webhooks</h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Estado de los webhooks configurados en Shopify
+                            </p>
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                type="button"
+                                onClick={handleGetWebhook}
+                                disabled={loadingWebhook}
+                                loading={loadingWebhook}
+                                variant="outline"
+                                size="sm"
+                            >
+                                {loadingWebhook ? 'Cargando...' : showWebhook ? '🔄 Actualizar URL' : '👁️ Ver URL'}
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={loadWebhooks}
+                                disabled={loadingWebhooks}
+                                loading={loadingWebhooks}
+                                variant="outline"
+                                size="sm"
+                            >
+                                🔄 Actualizar Lista
+                            </Button>
+                        </div>
+                    </div>
+
+                    {/* Estado del Webhook */}
+                    <div className="p-4 rounded-lg border-2" style={{
+                        backgroundColor: webhookConfigured ? '#f0fdf4' : '#fef2f2',
+                        borderColor: webhookConfigured ? '#86efac' : '#fca5a5'
+                    }}>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl">{webhookConfigured ? '✅' : '⚠️'}</span>
+                                <div>
+                                    <p className="font-medium text-gray-900">
+                                        {webhookConfigured ? 'Webhooks Configurados Correctamente' : 'Webhooks No Configurados'}
+                                    </p>
+                                    <p className="text-sm text-gray-600 mt-1">
+                                        {webhookConfigured 
+                                            ? 'Los webhooks están activos y funcionando en Shopify' 
+                                            : 'Los webhooks no se han configurado correctamente en Shopify'}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {webhookUrl && (
+                            <div className="mt-3 p-2 bg-white rounded border border-gray-200">
+                                <span className="text-xs font-medium text-gray-600">URL del Webhook:</span>
+                                <code className="block text-xs text-gray-800 break-all mt-1">{webhookUrl}</code>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Lista de Webhooks */}
+                    <div>
+                        <h4 className="text-md font-medium text-gray-900 mb-3">📋 Webhooks Registrados en Shopify</h4>
+                        {loadingWebhooks ? (
+                            <p className="text-sm text-gray-500">Cargando webhooks...</p>
+                        ) : webhooks.length > 0 ? (
+                            <div className="space-y-3">
+                                {webhooks.map((webhook) => (
+                                    <div key={webhook.id} className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                        <div className="flex items-start justify-between">
+                                            <div className="flex-1">
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <span className="text-sm font-medium text-gray-900">ID: {webhook.id}</span>
+                                                    <span className="text-xs px-2 py-1 bg-blue-100 text-blue-800 rounded">
+                                                        {webhook.topic}
+                                                    </span>
+                                                </div>
+                                                <div className="text-sm text-gray-600 mb-2">
+                                                    <span className="font-medium">URL:</span>
+                                                    <code className="ml-2 text-xs break-all">{webhook.address}</code>
+                                                </div>
+                                                <div className="flex gap-4 text-xs text-gray-500">
+                                                    <span>Creado: {new Date(webhook.created_at).toLocaleDateString()}</span>
+                                                    <span>Actualizado: {new Date(webhook.updated_at).toLocaleDateString()}</span>
+                                                </div>
+                                            </div>
+                                            <Button
+                                                type="button"
+                                                onClick={() => handleDeleteWebhook(webhook.id)}
+                                                variant="outline"
+                                                size="sm"
+                                                className="ml-4 text-red-600 hover:bg-red-50"
+                                            >
+                                                🗑️ Eliminar
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                <p className="text-sm text-yellow-800">
+                                    ⚠️ No se encontraron webhooks registrados en Shopify. Los webhooks se crean automáticamente al crear la integración.
+                                </p>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Información de URL del Webhook (opcional) */}
+                    {showWebhook && webhookInfo && (
+                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div className="flex items-center justify-between mb-2">
+                                <span className="text-sm font-medium text-blue-900">URL del Webhook para Configurar</span>
+                                <Button
+                                    type="button"
+                                    onClick={handleCopyWebhook}
+                                    variant="outline"
+                                    size="sm"
+                                >
+                                    {copied ? '✅ Copiado!' : '📋 Copiar'}
+                                </Button>
+                            </div>
+                            <code className="block p-3 bg-white border border-blue-300 rounded text-sm text-gray-800 break-all">
+                                {webhookInfo.url}
+                            </code>
+                            {webhookInfo.events && webhookInfo.events.length > 0 && (
+                                <div className="mt-3">
+                                    <span className="text-xs font-medium text-blue-900">Eventos:</span>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                        {webhookInfo.events.map((event, idx) => (
+                                            <span key={idx} className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
+                                                {event}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-row justify-end gap-3 pt-4 border-t">

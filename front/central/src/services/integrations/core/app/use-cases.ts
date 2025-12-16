@@ -9,7 +9,10 @@ import {
     ActionResponse,
     IntegrationType,
     CreateIntegrationTypeDTO,
-    UpdateIntegrationTypeDTO
+    UpdateIntegrationTypeDTO,
+    WebhookResponse,
+    ListWebhooksResponse,
+    DeleteWebhookResponse
 } from '../domain/types';
 
 export class IntegrationUseCases {
@@ -94,5 +97,17 @@ export class IntegrationUseCases {
 
     async deleteIntegrationType(id: number): Promise<ActionResponse> {
         return this.repository.deleteIntegrationType(id);
+    }
+
+    async getWebhookUrl(id: number): Promise<WebhookResponse> {
+        return this.repository.getWebhookUrl(id);
+    }
+
+    async listWebhooks(id: number): Promise<ListWebhooksResponse> {
+        return this.repository.listWebhooks(id);
+    }
+
+    async deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse> {
+        return this.repository.deleteWebhook(id, webhookId);
     }
 }

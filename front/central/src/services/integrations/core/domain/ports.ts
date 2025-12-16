@@ -8,7 +8,10 @@ import {
     ActionResponse,
     IntegrationType,
     CreateIntegrationTypeDTO,
-    UpdateIntegrationTypeDTO
+    UpdateIntegrationTypeDTO,
+    WebhookResponse,
+    ListWebhooksResponse,
+    DeleteWebhookResponse
 } from './types';
 
 export interface IIntegrationRepository {
@@ -26,6 +29,9 @@ export interface IIntegrationRepository {
     syncOrders(id: number): Promise<ActionResponse>;
     testIntegration(id: number): Promise<ActionResponse>;
     testConnectionRaw(typeCode: string, config: any, credentials: any): Promise<ActionResponse>;
+    getWebhookUrl(id: number): Promise<WebhookResponse>;
+    listWebhooks(id: number): Promise<ListWebhooksResponse>;
+    deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse>;
 
     // Integration Types
     getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>>;
