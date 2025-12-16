@@ -2,6 +2,8 @@ package shopify
 
 import (
 	"context"
+	"fmt"
+	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
@@ -56,8 +58,19 @@ func (a *integrationServiceAdapter) DecryptCredential(ctx context.Context, integ
 	return a.coreIntegration.DecryptCredential(ctx, integrationID, fieldName)
 }
 
+func (a *integrationServiceAdapter) UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error {
+	return a.coreIntegration.UpdateIntegrationConfig(ctx, integrationID, config)
+}
+
 func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue) {
 	shopifyClient := client.New()
+
+	// Habilitar debug del cliente HTTP si está configurado
+	debugMode := os.Getenv("SHOPIFY_DEBUG")
+	if debugMode == "true" || debugMode == "1" {
+		shopifyClient.SetDebug(true)
+		logger.Info(context.Background()).Msg("🔍 Shopify HTTP client debug mode ENABLED")
+	}
 
 	// Crear publisher solo si RabbitMQ está disponible
 	var orderPublisher domain.OrderPublisher
@@ -80,6 +93,31 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 	}
 
 	useCase := usecases.New(integrationService, shopifyClient, orderPublisher)
+
+	// Registrar observador para crear webhook automáticamente cuando se crea una integración de Shopify
+	baseURL := config.Get("URL_BASE_SWAGGER")
+	if baseURL != "" {
+		coreIntegration.RegisterObserverForType(core.IntegrationTypeShopify, func(obsCtx context.Context, integration *core.Integration) {
+			// Crear webhook de forma asíncrona para no bloquear la respuesta
+			go func() {
+				bgCtx := context.Background()
+				integrationID := fmt.Sprintf("%d", integration.ID)
+				if err := useCase.CreateWebhook(bgCtx, integrationID, baseURL); err != nil {
+					logger.Error(bgCtx).
+						Err(err).
+						Str("integration_id", integrationID).
+						Msg("Error al crear webhook automáticamente para integración de Shopify")
+				} else {
+					logger.Info(bgCtx).
+						Str("integration_id", integrationID).
+						Msg("Webhook creado automáticamente para integración de Shopify")
+				}
+			}()
+		})
+	} else {
+		logger.Warn(context.Background()).
+			Msg("URL_BASE_SWAGGER no está configurada, no se crearán webhooks automáticamente para Shopify")
+	}
 
 	shopifyHandler := handlers.New(useCase, logger, coreIntegration)
 	shopifyHandler.RegisterRoutes(router, logger)

@@ -115,6 +115,7 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		IntegrationTypeID: dto.IntegrationTypeID,
 		Category:          dto.Category,
 		BusinessID:        dto.BusinessID,
+		StoreID:           dto.StoreID,
 		IsActive:          dto.IsActive,
 		IsDefault:         dto.IsDefault,
 		Config:            configJSON,

@@ -24,6 +24,7 @@ func ToCreateIntegrationDTO(req request.CreateIntegrationRequest, createdByID ui
 		IntegrationTypeID: req.IntegrationTypeID,
 		Category:          req.Category,
 		BusinessID:        req.BusinessID,
+		StoreID:           req.StoreID,
 		IsActive:          req.IsActive,
 		IsDefault:         req.IsDefault,
 		Config:            configJSON,
@@ -47,6 +48,9 @@ func ToUpdateIntegrationDTO(req request.UpdateIntegrationRequest, updatedByID ui
 	}
 	if req.IntegrationTypeID != nil {
 		dto.IntegrationTypeID = req.IntegrationTypeID
+	}
+	if req.StoreID != nil {
+		dto.StoreID = req.StoreID
 	}
 	if req.IsActive != nil {
 		dto.IsActive = req.IsActive
@@ -89,6 +93,7 @@ func ToIntegrationResponse(integration *domain.Integration, imageURLBase string)
 		IntegrationTypeID: integration.IntegrationTypeID,
 		Category:          integration.Category,
 		BusinessID:        integration.BusinessID,
+		StoreID:           integration.StoreID,
 		IsActive:          integration.IsActive,
 		IsDefault:         integration.IsDefault,
 		Config:            config,

@@ -19,6 +19,7 @@ type IntegrationResponse struct {
 	IntegrationType   *IntegrationTypeInfo   `json:"integration_type,omitempty"` // Información del tipo si está cargado
 	Category          string                 `json:"category" example:"internal"`
 	BusinessID        *uint                  `json:"business_id" example:"16"`
+	StoreID           string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)
 	IsActive          bool                   `json:"is_active" example:"true"`
 	IsDefault         bool                   `json:"is_default" example:"true"`
 	Config            map[string]interface{} `json:"config"`
@@ -67,4 +68,41 @@ type IntegrationErrorResponse struct {
 type IntegrationMessageResponse struct {
 	Success bool   `json:"success" example:"true"`
 	Message string `json:"message" example:"Operación realizada exitosamente"`
+}
+
+// ErrorResponse representa la respuesta de error genérica
+type ErrorResponse struct {
+	Error string `json:"error" example:"Error al procesar la solicitud"`
+}
+
+// WebhookURLData contiene la información del webhook
+type WebhookURLData struct {
+	URL         string   `json:"url" example:"https://api.example.com/integrations/shopify/webhook"`
+	Method      string   `json:"method" example:"POST"`
+	Description string   `json:"description" example:"URL para configurar en Shopify para recibir eventos de órdenes"`
+	Events      []string `json:"events,omitempty" example:"orders/create,orders/updated"`
+}
+
+// WebhookURLResponse representa la respuesta con la URL del webhook
+//
+//	@Description	Respuesta con la información del webhook para configurar en la plataforma externa
+type WebhookURLResponse struct {
+	Success bool            `json:"success" example:"true"`
+	Data    *WebhookURLData `json:"data"`
+}
+
+// ListWebhooksResponse representa la respuesta con la lista de webhooks
+//
+//	@Description	Respuesta con la lista de webhooks configurados para una integración
+type ListWebhooksResponse struct {
+	Success bool        `json:"success" example:"true"`
+	Data    []interface{} `json:"data"`
+}
+
+// DeleteWebhookResponse representa la respuesta al eliminar un webhook
+//
+//	@Description	Respuesta de éxito al eliminar un webhook
+type DeleteWebhookResponse struct {
+	Success bool   `json:"success" example:"true"`
+	Message string `json:"message" example:"Webhook eliminado exitosamente"`
 }

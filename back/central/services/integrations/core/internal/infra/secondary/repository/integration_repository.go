@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/migration/shared/models"
@@ -38,6 +39,12 @@ func (r *Repository) CreateIntegration(ctx context.Context, integration *domain.
 
 	// Convertir domain.Integration a models.Integration
 	model := r.toModel(integration)
+
+	// Asegurar que el ID sea 0 para crear un nuevo registro (GORM generará el ID automáticamente)
+	// También resetear timestamps para que se generen automáticamente
+	model.ID = 0
+	model.CreatedAt = time.Time{}
+	model.UpdatedAt = time.Time{}
 
 	if err := r.db.Conn(ctx).Create(&model).Error; err != nil {
 		r.log.Error(ctx).Err(err).Msg("Error al crear integración")

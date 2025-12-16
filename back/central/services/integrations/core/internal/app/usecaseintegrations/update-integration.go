@@ -35,6 +35,9 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		}
 		existing.Code = *dto.Code
 	}
+	if dto.StoreID != nil {
+		existing.StoreID = *dto.StoreID
+	}
 	if dto.IsActive != nil {
 		existing.IsActive = *dto.IsActive
 	}

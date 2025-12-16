@@ -28,5 +28,8 @@ func (h *IntegrationHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 		integrationsGroup.PUT("/:id/activate", middleware.JWT(), h.ActivateIntegrationHandler)
 		integrationsGroup.PUT("/:id/deactivate", middleware.JWT(), h.DeactivateIntegrationHandler)
 		integrationsGroup.PUT("/:id/set-default", middleware.JWT(), h.SetAsDefaultHandler)
+		integrationsGroup.GET("/:id/webhook", middleware.JWT(), h.GetWebhookURLHandler)
+		integrationsGroup.GET("/:id/webhooks", middleware.JWT(), h.ListWebhooksHandler)
+		integrationsGroup.DELETE("/:id/webhooks/:webhook_id", middleware.JWT(), h.DeleteWebhookHandler)
 	}
 }

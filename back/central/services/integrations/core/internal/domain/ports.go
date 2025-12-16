@@ -38,9 +38,20 @@ type IEncryptionService interface {
 	DecryptValue(ctx context.Context, encryptedValue string) (string, error)
 }
 
+// WebhookInfo contiene la información del webhook para una integración
+type WebhookInfo struct {
+	URL         string   `json:"url"`
+	Method      string   `json:"method"`
+	Description string   `json:"description"`
+	Events      []string `json:"events,omitempty"`
+}
+
 type IOrderSyncService interface {
 	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
 	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
+	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
+	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
+	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 }
 
 type IS3Service interface {

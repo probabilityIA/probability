@@ -4,15 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
+	"gorm.io/datatypes"
 )
 
 const (
 	IntegrationTypeShopify      = 1
-	IntegrationTypeWhatsApp     = 2
+	IntegrationTypeWhatsApp     = 2 // Whastap en la BD
 	IntegrationTypeMercadoLibre = 3
+	IntegrationTypeWoocommerce  = 4
 )
 
 type IntegrationWithCredentials = domain.IntegrationWithCredentials
@@ -208,15 +212,19 @@ func (ic *integrationCore) RegisterObserverForType(integrationType int, observer
 }
 
 // getIntegrationTypeCodeAsInt convierte el código de tipo de integración a int
-// Esta función mapea los códigos antiguos (strings) a los nuevos (int)
+// Esta función mapea los códigos (strings) a los IDs de la tabla integration_types
 func getIntegrationTypeCodeAsInt(code string) int {
-	switch code {
+	// Convertir a minúsculas para comparación case-insensitive
+	lowerCode := strings.ToLower(code)
+	switch lowerCode {
 	case "shopify":
-		return IntegrationTypeShopify
-	case "whatsapp":
-		return IntegrationTypeWhatsApp
-	case "mercado_libre":
-		return IntegrationTypeMercadoLibre
+		return IntegrationTypeShopify // 1
+	case "whatsapp", "whatsap", "whastap":
+		return IntegrationTypeWhatsApp // 2
+	case "mercado_libre", "mercado libre":
+		return IntegrationTypeMercadoLibre // 3
+	case "woocommerce", "woocormerce":
+		return IntegrationTypeWoocommerce // 4
 	default:
 		return 0
 	}
@@ -228,4 +236,122 @@ type integrationAdapter struct {
 
 func (a *integrationAdapter) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
 	return a.integration.TestConnection(ctx, config, credentials)
+}
+
+// GetWebhookURL obtiene la URL del webhook para una integración específica
+func (ic *integrationCore) GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error) {
+	// Obtener la integración
+	integration, err := ic.GetIntegrationByID(ctx, fmt.Sprintf("%d", integrationID))
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener integración: %w", err)
+	}
+
+	// Obtener la implementación de la integración
+	integrationImpl, ok := ic.integrations[integration.IntegrationType]
+	if !ok {
+		return nil, fmt.Errorf("integración no registrada para tipo %d", integration.IntegrationType)
+	}
+
+	// Obtener la URL base del servidor
+	baseURL := ic.config.Get("URL_BASE_SWAGGER")
+	if baseURL == "" {
+		return nil, fmt.Errorf("URL_BASE_SWAGGER no está configurada")
+	}
+
+	// Delegar a la integración específica
+	return integrationImpl.GetWebhookURL(ctx, baseURL, integrationID)
+}
+
+// UpdateIntegrationConfig actualiza el config de una integración haciendo merge con el config existente
+func (ic *integrationCore) UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error {
+	// Obtener integración existente
+	id, err := strconv.ParseUint(integrationID, 10, 32)
+	if err != nil {
+		return fmt.Errorf("ID de integración inválido: %w", err)
+	}
+
+	existing, err := ic.useCase.GetPublicIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return fmt.Errorf("error al obtener integración: %w", err)
+	}
+
+	// Obtener config existente (ya viene como map desde GetPublicIntegrationByID)
+	existingConfig := existing.Config
+	if existingConfig == nil {
+		existingConfig = make(map[string]interface{})
+	}
+
+	// Hacer merge del config existente con el nuevo
+	for k, v := range newConfig {
+		existingConfig[k] = v
+	}
+
+	// Convertir a JSON
+	configBytes, err := json.Marshal(existingConfig)
+	if err != nil {
+		return fmt.Errorf("error al serializar config: %w", err)
+	}
+
+	// Actualizar usando el useCase
+	dto := domain.UpdateIntegrationDTO{
+		Config: func() *datatypes.JSON {
+			configJSON := datatypes.JSON(configBytes)
+			return &configJSON
+		}(),
+	}
+
+	_, err = ic.useCase.UpdateIntegration(ctx, uint(id), dto)
+	if err != nil {
+		return fmt.Errorf("error al actualizar integración: %w", err)
+	}
+
+	return nil
+}
+
+// ListWebhooks lista todos los webhooks de una integración (solo soportado para integraciones que implementan IWebhookOperations)
+func (ic *integrationCore) ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error) {
+	// Obtener la integración
+	integration, err := ic.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener integración: %w", err)
+	}
+
+	// Obtener la implementación de la integración
+	integrationImpl, ok := ic.integrations[integration.IntegrationType]
+	if !ok {
+		return nil, fmt.Errorf("integración no registrada para tipo %d", integration.IntegrationType)
+	}
+
+	// Verificar si implementa IWebhookOperations
+	webhookOps, ok := integrationImpl.(IWebhookOperations)
+	if !ok {
+		return nil, fmt.Errorf("esta integración no soporta operaciones de webhooks")
+	}
+
+	// Listar webhooks
+	return webhookOps.ListWebhooks(ctx, integrationID)
+}
+
+// DeleteWebhook elimina un webhook de una integración (solo soportado para integraciones que implementan IWebhookOperations)
+func (ic *integrationCore) DeleteWebhook(ctx context.Context, integrationID, webhookID string) error {
+	// Obtener la integración
+	integration, err := ic.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return fmt.Errorf("error al obtener integración: %w", err)
+	}
+
+	// Obtener la implementación de la integración
+	integrationImpl, ok := ic.integrations[integration.IntegrationType]
+	if !ok {
+		return fmt.Errorf("integración no registrada para tipo %d", integration.IntegrationType)
+	}
+
+	// Verificar si implementa IWebhookOperations
+	webhookOps, ok := integrationImpl.(IWebhookOperations)
+	if !ok {
+		return fmt.Errorf("esta integración no soporta operaciones de webhooks")
+	}
+
+	// Eliminar webhook
+	return webhookOps.DeleteWebhook(ctx, integrationID, webhookID)
 }

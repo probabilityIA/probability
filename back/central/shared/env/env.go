@@ -156,6 +156,12 @@ type Config struct {
 	S3SecretKey    string `env:"S3_SECRET,required"`
 	S3Endpoint     string `env:"S3_ENDPOINT"`
 
+	// Redis
+	RedisHost               string `env:"REDIS_HOST"`
+	RedisPort               string `env:"REDIS_PORT"`
+	RedisPassword           string `env:"REDIS_PASSWORD"`
+	RedisOrderEventsChannel string `env:"REDIS_ORDER_EVENTS_CHANNEL,required"`
+
 	// SMTP/Email
 	SMTPHost           string `env:"SMTP_HOST"`
 	SMTPPort           string `env:"SMTP_PORT"`
@@ -182,8 +188,6 @@ type Config struct {
 	RabbitMQPass        string `env:"RABBITMQ_PASS,required"`
 	RabbitMQVHost       string `env:"RABBITMQ_VHOST,required"`
 	RabbitMQOrdersQueue string `env:"RABBITMQ_ORDERS_CREATE,required"`
-
-	RedisOrderEventsChannel string `env:"REDIS_ORDER_EVENTS_CHANNEL,required"`
 }
 
 func splitTag(tag string) []string {
