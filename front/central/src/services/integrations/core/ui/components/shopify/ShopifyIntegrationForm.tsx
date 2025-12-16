@@ -8,6 +8,9 @@ import { listWebhooksAction, deleteWebhookAction } from '../../../infra/actions'
 interface ShopifyConfig {
     store_name: string;
     api_version?: string;
+    webhook_url?: string;
+    webhook_configured?: boolean;
+    webhook_ids?: string[];
 }
 
 interface ShopifyCredentials {
