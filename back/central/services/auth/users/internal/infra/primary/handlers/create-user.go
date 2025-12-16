@@ -73,7 +73,22 @@ func (h *handlers) Createhandlers(c *gin.Context) {
 		req.BusinessIDs = ids
 	}
 
-	h.logger.Info().Str("email", req.Email).Int("business_ids_count", len(req.BusinessIDs)).Any("business_ids", req.BusinessIDs).Msg("Iniciando solicitud para crear usuario")
+	// Parsear scope_id manualmente si viene como string desde form-data
+	if req.ScopeID == nil {
+		if scopeStr := c.PostForm("scope_id"); scopeStr != "" {
+			if scopeIDVal, err := strconv.ParseUint(scopeStr, 10, 32); err == nil {
+				scopeID := uint(scopeIDVal)
+				req.ScopeID = &scopeID
+			}
+		}
+	}
+
+	h.logger.Info().
+		Str("email", req.Email).
+		Int("business_ids_count", len(req.BusinessIDs)).
+		Any("business_ids", req.BusinessIDs).
+		Any("scope_id", req.ScopeID).
+		Msg("Iniciando solicitud para crear usuario")
 
 	// Log simple para confirmar recepción de archivo
 	if req.AvatarFile != nil {

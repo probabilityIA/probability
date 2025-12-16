@@ -45,3 +45,4 @@ func (l *logger) Warn() *zerolog.Event {
 func (l *logger) Fatal() *zerolog.Event {
 	return l.log.Fatal()
 }
+

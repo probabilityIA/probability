@@ -92,15 +92,22 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
     };
 
     const handleTestConnection = async (config: any, credentials: any) => {
-        // For now, we'll need to create the integration first, then test
-        // In a real scenario, you might want a separate test endpoint
+        if (!selectedType) {
+            console.error('No hay tipo de integración seleccionado');
+            return false;
+        }
+
         try {
-            // This would require a backend endpoint that tests without saving
-            // For now, return true as placeholder
-            console.log('Testing connection with:', { config, credentials });
-            return true;
-        } catch (error) {
-            console.error('Test connection error:', error);
+            const result = await testConnectionRawAction(selectedType.code, config, credentials);
+            if (result.success) {
+                console.log('✅ Conexión probada exitosamente:', result.message);
+                return true;
+            } else {
+                console.error('❌ Error al probar conexión:', result.message);
+                return false;
+            }
+        } catch (error: any) {
+            console.error('❌ Error al probar conexión:', error);
             return false;
         }
     };
@@ -275,51 +282,72 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
 
     // Creating new integration - show type selector first if no type selected
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 w-full max-w-full overflow-x-hidden">
             {/* Type Selector - Show when no type is selected */}
             {!selectedType && integrationTypes.length > 0 && (
-                <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="bg-white p-4 rounded-lg w-full">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
                         Selecciona el tipo de integración *
                     </label>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full max-w-full overflow-x-hidden">
                         {integrationTypes.map((type) => (
                             <button
                                 key={type.id}
                                 type="button"
                                 onClick={() => handleTypeChange(type.id)}
-                                className="p-4 border-2 rounded-lg text-left transition-all hover:border-blue-300 hover:shadow-md border-gray-200"
+                                className="p-4 border-2 rounded-lg text-center transition-all hover:border-blue-300 hover:shadow-lg border-gray-200 w-full h-full flex flex-col justify-center items-center min-h-[140px] shadow-md"
                             >
-                                <div className="flex items-start gap-3">
-                                    {/* Logo */}
-                                    {type.code.toLowerCase() === 'shopify' && (
-                                        <img
-                                            src="/integrations/shopify.png"
-                                            alt="Shopify"
-                                            className="w-10 h-10 object-contain"
-                                        />
-                                    )}
-                                    {(type.code.toLowerCase() === 'whatsapp') && (
-                                        <img
-                                            src="/integrations/whatsapp.png"
-                                            alt="WhatsApp"
-                                            className="w-10 h-10 object-contain"
-                                        />
-                                    )}
-
-                                    {/* Content */}
-                                    <div className="flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <h4 className="font-semibold text-gray-900">{type.name}</h4>
-                                            <span className={`px-2 py-1 text-xs rounded-full ${type.category === 'external'
-                                                ? 'bg-blue-100 text-blue-700'
-                                                : 'bg-purple-100 text-purple-700'
-                                                }`}>
-                                                {type.category === 'external' ? 'Externa' : 'Interna'}
-                                            </span>
-                                        </div>
-                                        <p className="text-sm text-gray-500 mt-1">{type.code}</p>
+                                {/* Logo centrado */}
+                                <div className="flex items-center justify-center mb-4">
+                                    <div className="flex-shrink-0">
+                                        {type.image_url ? (
+                                            <img
+                                                src={type.image_url}
+                                                alt={type.name}
+                                                className="w-14 h-14 object-contain rounded-lg shadow-md"
+                                                onError={(e) => {
+                                                    // Fallback a imágenes hardcodeadas si la imagen falla
+                                                    const target = e.target as HTMLImageElement;
+                                                    if (type.code.toLowerCase() === 'shopify') {
+                                                        target.src = '/integrations/shopify.png';
+                                                    } else if (type.code.toLowerCase() === 'whatsapp' || type.code.toLowerCase() === 'whatsap') {
+                                                        target.src = '/integrations/whatsapp.png';
+                                                    } else {
+                                                        target.style.display = 'none';
+                                                    }
+                                                }}
+                                            />
+                                        ) : (
+                                            // Fallback a imágenes hardcodeadas si no hay imagen_url
+                                            <>
+                                                {type.code.toLowerCase() === 'shopify' && (
+                                                    <img
+                                                        src="/integrations/shopify.png"
+                                                        alt="Shopify"
+                                                        className="w-14 h-14 object-contain rounded-lg shadow-md"
+                                                    />
+                                                )}
+                                                {(type.code.toLowerCase() === 'whatsapp' || type.code.toLowerCase() === 'whatsap') && (
+                                                    <img
+                                                        src="/integrations/whatsapp.png"
+                                                        alt="WhatsApp"
+                                                        className="w-14 h-14 object-contain rounded-lg shadow-md"
+                                                    />
+                                                )}
+                                                {type.code.toLowerCase() !== 'shopify' && type.code.toLowerCase() !== 'whatsapp' && type.code.toLowerCase() !== 'whatsap' && (
+                                                    <div className="w-14 h-14 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-base font-semibold shadow-md">
+                                                        {type.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                            </>
+                                        )}
                                     </div>
+                                </div>
+
+                                {/* Contenido de texto - Nombre y código centrados */}
+                                <div className="flex-1 flex flex-col justify-center items-center">
+                                    <h4 className="font-semibold text-gray-900 text-base break-words mb-1">{type.name}</h4>
+                                    <p className="text-sm text-gray-500 break-words">{type.code}</p>
                                 </div>
                             </button>
                         ))}

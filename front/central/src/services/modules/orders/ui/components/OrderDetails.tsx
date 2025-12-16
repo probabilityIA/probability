@@ -85,9 +85,24 @@ export default function OrderDetails({ initialOrder, onClose }: OrderDetailsProp
         if (fullOrder && fullOrder.shipping_city && fullOrder.shipping_state) {
             setLoadingAI(true);
             getAIRecommendationAction(fullOrder.shipping_city, fullOrder.shipping_state)
-                .then(data => setAIRecommendation(data))
-                .catch(err => console.error("Error fetching AI:", err))
+                .then(data => {
+                    // Solo establecer recomendación si hay datos válidos
+                    if (data && data.recommended_carrier) {
+                        setAIRecommendation(data);
+                    } else {
+                        setAIRecommendation(null);
+                    }
+                })
+                .catch(err => {
+                    // Error ya manejado en la acción, solo loguear si es necesario
+                    console.warn("Recomendación AI no disponible:", err);
+                    setAIRecommendation(null);
+                })
                 .finally(() => setLoadingAI(false));
+        } else {
+            // Si no hay dirección completa, no intentar cargar recomendación
+            setAIRecommendation(null);
+            setLoadingAI(false);
         }
     }, [fullOrder]); // Depend on fullOrder to ensure we have address
 
@@ -215,7 +230,16 @@ export default function OrderDetails({ initialOrder, onClose }: OrderDetailsProp
                     </div>
                     <div>
                         <p className="text-xs text-gray-500 uppercase">Plataforma</p>
-                        <p className="text-sm font-medium text-gray-900 capitalize">{order.platform}</p>
+                        {order.integration_logo_url ? (
+                            <img 
+                                src={order.integration_logo_url} 
+                                alt={order.platform}
+                                className="h-8 w-8 object-contain"
+                                title={order.platform}
+                            />
+                        ) : (
+                            <p className="text-sm font-medium text-gray-900 capitalize">{order.platform}</p>
+                        )}
                     </div>
                     <div>
                         <p className="text-xs text-gray-500 uppercase">Estado</p>

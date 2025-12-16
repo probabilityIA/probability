@@ -73,6 +73,8 @@ export interface GetRolesParams {
     is_system?: boolean;
     name?: string;
     level?: number;
+    page?: number;
+    page_size?: number;
 }
 
 export interface CreateRoleDTO {

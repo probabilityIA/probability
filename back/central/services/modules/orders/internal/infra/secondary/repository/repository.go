@@ -8,38 +8,45 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
 // Repository implementa el repositorio de órdenes
 type Repository struct {
-	db db.IDatabase
+	db           db.IDatabase
+	imageURLBase string
 }
 
 // New crea una nueva instancia del repositorio
-func New(database db.IDatabase) domain.IRepository {
+func New(database db.IDatabase, config env.IConfig) domain.IRepository {
+	imageURLBase := config.Get("URL_BASE_DOMAIN_S3")
 	return &Repository{
-		db: database,
+		db:           database,
+		imageURLBase: imageURLBase,
 	}
 }
 
 // CreateOrder crea una nueva orden en la base de datos
 func (r *Repository) CreateOrder(ctx context.Context, order *domain.ProbabilityOrder) error {
-	dbOrder := mappers.ToDBOrder(order)
-	if order.DeliveryProbability != nil {
-		fmt.Printf("[Repository.CreateOrder] Saving Order %s with DeliveryProbability: %.2f\n", order.OrderNumber, *order.DeliveryProbability)
-	} else {
-		fmt.Printf("[Repository.CreateOrder] WARNING: Order %s has nil DeliveryProbability!\n", order.OrderNumber)
+	// Validaciones críticas antes de insertar
+	if order.ExternalID == "" {
+		return fmt.Errorf("error: intentando insertar orden sin external_id - OrderNumber: %s", order.OrderNumber)
 	}
+	if order.IntegrationID == 0 {
+		return fmt.Errorf("error: intentando insertar orden sin integration_id - ExternalID: %s", order.ExternalID)
+	}
+	if order.BusinessID == nil || *order.BusinessID == 0 {
+		return fmt.Errorf("error: intentando insertar orden sin business_id - ExternalID: %s", order.ExternalID)
+	}
+
+	dbOrder := mappers.ToDBOrder(order)
 	if err := r.db.Conn(ctx).Create(dbOrder).Error; err != nil {
 		return err
 	}
 	// Actualizar el ID del modelo de dominio con el ID generado
 	order.ID = dbOrder.ID
-	if dbOrder.DeliveryProbability != nil {
-		fmt.Printf("[Repository.CreateOrder] Order %s saved successfully with DeliveryProbability: %.2f\n", order.OrderNumber, *dbOrder.DeliveryProbability)
-	}
 	return nil
 }
 
@@ -48,7 +55,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Proba
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Preload("Integration").
+		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("id = ?", id).
@@ -61,7 +68,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Proba
 		return nil, err
 	}
 
-	return mappers.ToDomainOrder(&order), nil
+	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
 // GetOrderByInternalNumber obtiene una orden por su número interno
@@ -69,7 +76,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Preload("Integration").
+		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("internal_number = ?", internalNumber).
@@ -82,7 +89,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		return nil, err
 	}
 
-	return mappers.ToDomainOrder(&order), nil
+	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
 // ListOrders obtiene una lista paginada de órdenes con filtros
@@ -169,7 +176,7 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	query = query.Offset(offset).Limit(pageSize)
 	// Precargar relaciones
 	query = query.Preload("Business").
-		Preload("Integration").
+		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
 		Preload("OrderItems.Product") // Precargar OrderItems con Product para obtener información del catálogo
 
@@ -182,7 +189,7 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	// Mapear a dominio
 	orders := make([]domain.ProbabilityOrder, len(dbOrders))
 	for i, dbOrder := range dbOrders {
-		orders[i] = *mappers.ToDomainOrder(&dbOrder)
+		orders[i] = *mappers.ToDomainOrder(&dbOrder, r.imageURLBase)
 	}
 
 	return orders, total, nil
@@ -192,6 +199,9 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*domain.ProbabilityOrderChannelMetadata, error) {
 	var dbMetadata models.OrderChannelMetadata
 	if err := r.db.Conn(ctx).Where("order_id = ?", id).First(&dbMetadata).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("raw data not found for this order")
+		}
 		return nil, err
 	}
 	return mappers.ToDomainChannelMetadata(&dbMetadata), nil
@@ -228,7 +238,7 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Preload("Integration").
+		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
 		Preload("OrderItems.Product").
 		Where("external_id = ? AND integration_id = ?", externalID, integrationID).
@@ -241,7 +251,7 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 		return nil, err
 	}
 
-	return mappers.ToDomainOrder(&order), nil
+	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
 // ───────────────────────────────────────────

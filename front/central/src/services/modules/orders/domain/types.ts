@@ -8,6 +8,7 @@ export interface Order {
     business_id?: number;
     integration_id: number;
     integration_type: string;
+    integration_logo_url?: string;
 
     // Identificadores de la orden
     platform: string;

@@ -1,6 +1,10 @@
 package domain
 
-import "gorm.io/datatypes"
+import (
+	"mime/multipart"
+
+	"gorm.io/datatypes"
+)
 
 // CreateIntegrationTypeDTO representa los datos para crear un tipo de integración
 type CreateIntegrationTypeDTO struct {
@@ -12,6 +16,7 @@ type CreateIntegrationTypeDTO struct {
 	IsActive          bool
 	ConfigSchema      datatypes.JSON
 	CredentialsSchema datatypes.JSON
+	ImageFile         *multipart.FileHeader // Archivo de imagen para subir a S3
 }
 
 // UpdateIntegrationTypeDTO representa los datos para actualizar un tipo de integración
@@ -24,6 +29,8 @@ type UpdateIntegrationTypeDTO struct {
 	IsActive          *bool
 	ConfigSchema      *datatypes.JSON
 	CredentialsSchema *datatypes.JSON
+	ImageFile         *multipart.FileHeader // Archivo de imagen para subir a S3
+	RemoveImage       bool                  // Flag para eliminar la imagen existente
 }
 
 // CreateIntegrationDTO representa los datos para crear una integración

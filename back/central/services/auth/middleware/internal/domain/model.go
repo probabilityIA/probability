@@ -16,6 +16,8 @@ type AuthInfo struct {
 	BusinessID          uint
 	BusinessTypeID      uint
 	RoleID              uint
+	Scope               string // "platform" o "business"
+	ScopeID             uint
 	APIKey              string
 	JWTClaims           *JWTClaims
 	BusinessTokenClaims *BusinessTokenClaims

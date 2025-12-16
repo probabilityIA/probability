@@ -57,7 +57,23 @@ func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *d
 			}
 		}()
 
-		// Publicar evento para recalcular score (porque los datos pueden haber cambiado)
+		// Recalcular score directamente cuando se actualiza (porque los datos pueden haber cambiado)
+		go func() {
+			fmt.Printf("[UpdateOrder] Recalculando score directamente para orden %s (actualizada)\n", existingOrder.ID)
+			if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, existingOrder.ID); err != nil {
+				uc.logger.Error(ctx).
+					Err(err).
+					Str("order_id", existingOrder.ID).
+					Msg("Error al recalcular score de la orden")
+			} else {
+				uc.logger.Info(ctx).
+					Str("order_id", existingOrder.ID).
+					Str("order_number", existingOrder.OrderNumber).
+					Msg("✅ Score recalculado exitosamente para la orden actualizada")
+			}
+		}()
+
+		// Publicar evento para recalcular score (mantener para otros consumidores)
 		scoreEventData := domain.OrderEventData{
 			OrderNumber:    existingOrder.OrderNumber,
 			InternalNumber: existingOrder.InternalNumber,
@@ -206,9 +222,10 @@ func (uc *UseCaseOrderMapping) mapOrderToResponse(order *domain.ProbabilityOrder
 		UpdatedAt: order.UpdatedAt,
 		DeletedAt: order.DeletedAt,
 
-		BusinessID:      order.BusinessID,
-		IntegrationID:   order.IntegrationID,
-		IntegrationType: order.IntegrationType,
+		BusinessID:         order.BusinessID,
+		IntegrationID:      order.IntegrationID,
+		IntegrationType:    order.IntegrationType,
+		IntegrationLogoURL: order.IntegrationLogoURL,
 
 		Platform:       order.Platform,
 		ExternalID:     order.ExternalID,

@@ -12,6 +12,7 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
         email: '',
         phone: '',
         is_active: true,
+        scope_id: 2, // Default: business
         business_ids: [],
     });
 
@@ -31,7 +32,7 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
         }
     }, [initialData]);
 
-    const handleChange = (field: keyof CreateUserDTO, value: string | number | boolean | number[] | null) => {
+    const handleChange = (field: keyof CreateUserDTO | 'scope_id', value: string | number | boolean | number[] | null) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
 

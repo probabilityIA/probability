@@ -161,11 +161,11 @@ export class BusinessApiRepository implements IBusinessRepository {
                 if (value !== undefined) searchParams.append(key, String(value));
             });
         }
-        return this.fetch<PaginatedResponse<BusinessConfiguredResources>>(`/businesses / configured-resources ${searchParams.toString()} `);
+        return this.fetch<PaginatedResponse<BusinessConfiguredResources>>(`/businesses/configured-resources?${searchParams.toString()}`);
     }
 
     async getBusinessConfiguredResources(id: number): Promise<SingleResponse<BusinessConfiguredResources>> {
-        return this.fetch<SingleResponse<BusinessConfiguredResources>>(`/businesses /${id}/configured-resources`);
+        return this.fetch<SingleResponse<BusinessConfiguredResources>>(`/businesses/${id}/configured-resources`);
     }
 
     async activateResource(resourceId: number, businessId?: number): Promise<ActionResponse> {

@@ -188,6 +188,11 @@ type User struct {
 	IsActive    bool   `gorm:"default:true"`
 	LastLoginAt *time.Time
 
+	// Scope del usuario: platform (super admin) o business (usuario de negocio)
+	// Si ScopeID es NULL, se asume "business" por defecto
+	ScopeID *uint  `gorm:"index"`
+	Scope   *Scope `gorm:"foreignKey:ScopeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
 	// Relación con negocios (un usuario puede estar en múltiples negocios)
 	Businesses []Business `gorm:"many2many:user_businesses;"`
 
@@ -285,6 +290,7 @@ type IntegrationType struct {
 	Code        string `gorm:"size:50;not null;unique"`  // "whatsapp", "shopify", "mercado_libre"
 	Description string `gorm:"size:500"`                 // Descripción del tipo de integración
 	Icon        string `gorm:"size:100"`                 // Icono para UI
+	ImageURL    string `gorm:"size:500"`                 // URL de la imagen del logo (path relativo en S3)
 	Category    string `gorm:"size:20;not null;index"`   // "internal" | "external"
 	IsActive    bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
 

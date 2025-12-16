@@ -155,9 +155,9 @@ export function Table<T = Record<string, unknown>>({
       )}
 
       {/* Tabla */}
-      <div className={`card overflow-hidden p-0 w-full ${filters ? 'rounded-t-none border-t-0' : ''}`}>
-        <div className="overflow-x-auto w-full">
-          <table className="table w-full">
+      <div className={`overflow-hidden w-full rounded-lg border border-gray-200 bg-white m-0 p-0 ${filters ? 'rounded-t-none border-t-0' : ''}`}>
+        <div className="overflow-x-auto w-full m-0 p-0">
+          <table className="table w-full m-0 p-0">
           {/* Header */}
           <thead>
             <tr>

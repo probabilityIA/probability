@@ -77,15 +77,15 @@ export class RoleApiRepository implements IRoleRepository {
     }
 
     async getRoleById(id: number): Promise<SingleResponse<Role>> {
-        return this.fetch<SingleResponse<Role>>(`/roles /${id} `);
+        return this.fetch<SingleResponse<Role>>(`/roles/${id}`);
     }
 
     async getRolesByScope(scopeId: number): Promise<PaginatedResponse<Role>> {
-        return this.fetch<PaginatedResponse<Role>>(`/roles /scope /${scopeId} `);
+        return this.fetch<PaginatedResponse<Role>>(`/roles/scope/${scopeId}`);
     }
 
     async getRolesByLevel(level: number): Promise<PaginatedResponse<Role>> {
-        return this.fetch<PaginatedResponse<Role>>(`/roles /level /${level} `);
+        return this.fetch<PaginatedResponse<Role>>(`/roles/level/${level}`);
     }
 
     async getSystemRoles(): Promise<PaginatedResponse<Role>> {
@@ -100,7 +100,7 @@ export class RoleApiRepository implements IRoleRepository {
     }
 
     async updateRole(id: number, data: UpdateRoleDTO): Promise<SingleResponse<Role>> {
-        return this.fetch<SingleResponse<Role>>(`/roles /${id} `, {
+        return this.fetch<SingleResponse<Role>>(`/roles/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
         });
@@ -108,13 +108,13 @@ export class RoleApiRepository implements IRoleRepository {
 
     // Assuming DELETE exists for consistency, though not in docs
     async deleteRole(id: number): Promise<ActionResponse> {
-        return this.fetch<ActionResponse>(`/roles /${id} `, {
+        return this.fetch<ActionResponse>(`/roles/${id}`, {
             method: 'DELETE',
         });
     }
 
     async assignPermissions(id: number, data: AssignPermissionsDTO): Promise<AssignPermissionsResponse> {
-        return this.fetch<AssignPermissionsResponse>(`/roles /${id}/permissions`, {
+        return this.fetch<AssignPermissionsResponse>(`/roles/${id}/permissions`, {
             method: 'POST',
             body: JSON.stringify(data),
         });

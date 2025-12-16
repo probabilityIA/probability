@@ -141,9 +141,14 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *domain.CreateOrder
 			event.IntegrationID = &integrationID
 		}
 		// Publicar de forma asíncrona (no bloquear si falla)
+		// Usar context.Background() para evitar que el contexto cancelado afecte la publicación
 		go func() {
-			if err := uc.eventPublisher.PublishOrderEvent(ctx, event); err != nil {
+			bgCtx := context.Background()
+			if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
 				// Log error pero no fallar la creación de la orden
+				fmt.Printf("[CreateOrder] Error al publicar evento order.created: %v\n", err)
+			} else {
+				fmt.Printf("[CreateOrder] Evento order.created publicado exitosamente para orden %s\n", order.ID)
 			}
 		}()
 	}

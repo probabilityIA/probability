@@ -39,9 +39,11 @@ func (h *IntegrationTypeHandler) ListIntegrationTypesHandler(c *gin.Context) {
 		return
 	}
 
+	// Obtener URL base de S3 para construir URLs completas
+	imageURLBase := h.getImageURLBase()
 	responses := make([]response.IntegrationTypeResponse, len(integrationTypes))
 	for i, it := range integrationTypes {
-		responses[i] = mapper.ToIntegrationTypeResponse(it)
+		responses[i] = mapper.ToIntegrationTypeResponse(it, imageURLBase)
 	}
 
 	c.JSON(http.StatusOK, response.IntegrationTypeListResponse{
@@ -80,9 +82,11 @@ func (h *IntegrationTypeHandler) ListActiveIntegrationTypesHandler(c *gin.Contex
 		return
 	}
 
+	// Obtener URL base de S3 para construir URLs completas
+	imageURLBase := h.getImageURLBase()
 	responses := make([]response.IntegrationTypeResponse, len(integrationTypes))
 	for i, it := range integrationTypes {
-		responses[i] = mapper.ToIntegrationTypeResponse(it)
+		responses[i] = mapper.ToIntegrationTypeResponse(it, imageURLBase)
 	}
 
 	c.JSON(http.StatusOK, response.IntegrationTypeListResponse{

@@ -102,6 +102,7 @@ func (uc *UserUseCase) CreateUser(ctx context.Context, userDTO domain.CreateUser
 		Phone:     userDTO.Phone,
 		AvatarURL: avatarURL, // URL relativa o completa según corresponda
 		IsActive:  userDTO.IsActive,
+		ScopeID:   userDTO.ScopeID, // Scope del usuario: platform (1) o business (2)
 	}
 
 	// Crear usuario y obtener el ID

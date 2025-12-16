@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
-import { getOrdersAction, deleteOrderAction } from '../../infra/actions';
+import { getOrdersAction, deleteOrderAction, getOrderByIdAction } from '../../infra/actions';
 import { Order, GetOrdersParams } from '../../domain/types';
 import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
@@ -18,7 +18,8 @@ const OrderRow = memo(({
     formatCurrency,
     formatDate,
     getStatusBadge,
-    getProbabilityColor
+    getProbabilityColor,
+    isNew
 }: {
     order: Order;
     onView?: (order: Order) => void;
@@ -29,9 +30,30 @@ const OrderRow = memo(({
     formatDate: (dateString: string) => string;
     getStatusBadge: (status: string) => React.ReactNode;
     getProbabilityColor: (probability: number) => string;
+    isNew?: boolean;
 }) => {
     return (
-        <tr className="hover:bg-gray-50 transition-colors">
+        <tr className={`hover:bg-gray-50 transition-all duration-300 ${isNew ? 'animate-slide-in bg-green-50/50' : ''}`}>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+                <div 
+                    className="h-10 w-10 rounded-full shadow-md border-2 border-gray-200 hover:shadow-lg transition-all cursor-pointer bg-white flex items-center justify-center overflow-hidden"
+                    title={`${order.platform} - Click para ver orden original`}
+                    onClick={() => onShowRaw(order.id)}
+                >
+                    {order.integration_logo_url ? (
+                        <img 
+                            src={order.integration_logo_url} 
+                            alt={order.platform}
+                            className="h-full w-full object-contain p-1.5"
+                            loading="lazy"
+                        />
+                    ) : (
+                        <span className="text-xs font-medium text-gray-600 uppercase">
+                            {order.platform.charAt(0)}
+                        </span>
+                    )}
+                </div>
+            </td>
             <td className="px-3 sm:px-6 py-4">
                 <div className="text-sm font-medium text-gray-900">
                     {order.order_number || order.external_id || order.id}
@@ -61,11 +83,6 @@ const OrderRow = memo(({
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                 {getStatusBadge(order.status)}
-            </td>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                <span className="text-sm text-gray-900 capitalize">
-                    {order.platform}
-                </span>
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
@@ -102,34 +119,41 @@ const OrderRow = memo(({
                 {formatDate(order.created_at)}
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                <div className="flex flex-col sm:flex-row justify-end gap-1 sm:gap-2">
+                <div className="flex flex-row justify-end gap-2">
                     {onView && (
                         <button
                             onClick={() => onView(order)}
-                            className="px-2 sm:px-3 py-1 sm:py-1.5 bg-blue-500 hover:bg-blue-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            title="Ver orden"
+                            aria-label="Ver orden"
                         >
-                            Ver
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
                         </button>
                     )}
                     {onEdit && (
                         <button
                             onClick={() => onEdit(order)}
-                            className="px-2 sm:px-3 py-1 sm:py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                            className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                            title="Editar orden"
+                            aria-label="Editar orden"
                         >
-                            Editar
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
                         </button>
                     )}
                     <button
-                        onClick={() => onShowRaw(order.id)}
-                        className="px-2 sm:px-3 py-1 sm:py-1.5 bg-gray-500 hover:bg-gray-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                    >
-                        Original
-                    </button>
-                    <button
                         onClick={() => onDelete(order.id)}
-                        className="px-2 sm:px-3 py-1 sm:py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                        title="Eliminar orden"
+                        aria-label="Eliminar orden"
                     >
-                        Eliminar
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
                     </button>
                 </div>
             </td>
@@ -154,9 +178,12 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
     const isFirstLoad = useRef(true);
+    const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
 
     // Raw Data Modal
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+    const [selectedOrderLogo, setSelectedOrderLogo] = useState<string | undefined>(undefined);
+    const [selectedOrderPlatform, setSelectedOrderPlatform] = useState<string | undefined>(undefined);
     const [isRawModalOpen, setIsRawModalOpen] = useState(false);
 
     // Filters
@@ -324,17 +351,56 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
         }));
     }, []);
 
-    // SSE Integration - Actualizar sin recargar toda la página
+    // SSE Integration - Agregar nueva orden sin recargar toda la tabla
     useSSE({
         eventTypes: ['order.created'],
-        onMessage: (event) => {
+        onMessage: async (event) => {
             try {
                 const data = JSON.parse(event.data);
-                if (data.type === 'order.created') {
-                    const orderNumber = data.data?.order_number || 'Desconocida';
-                    showToast(`Nueva orden recibida: #${orderNumber}`, 'success');
-                    // Actualizar solo la tabla sin recargar toda la página
-                    refreshTableOnly();
+                // El evento SSE tiene order_id en data.data o data.metadata
+                const orderId = data.data?.order_id || data.metadata?.order_id;
+                const orderNumber = data.data?.order_number || 'Desconocida';
+                
+                if (data.type === 'order.created' && orderId) {
+                    // Obtener la orden completa
+                    try {
+                        const response = await getOrderByIdAction(orderId);
+                        if (response.success && response.data) {
+                            const newOrder = response.data;
+                            
+                            // Verificar que la orden no esté ya en la lista
+                            setOrders(prevOrders => {
+                                if (prevOrders.some(o => o.id === newOrder.id)) {
+                                    return prevOrders; // Ya existe, no hacer nada
+                                }
+                                
+                                // Marcar como nueva para la animación
+                                setNewOrderIds(prev => new Set(prev).add(newOrder.id));
+                                
+                                // Remover el flag de "nueva" después de la animación
+                                setTimeout(() => {
+                                    setNewOrderIds(prev => {
+                                        const updated = new Set(prev);
+                                        updated.delete(newOrder.id);
+                                        return updated;
+                                    });
+                                }, 2000);
+                                
+                                // Agregar al principio de la lista
+                                return [newOrder, ...prevOrders];
+                            });
+                            
+                            // Actualizar el total solo si realmente agregamos una nueva orden
+                            setTotal(prev => prev + 1);
+                            
+                            // Mostrar toast
+                            showToast(`Nueva orden recibida: #${orderNumber}`, 'success');
+                        }
+                    } catch (err) {
+                        console.error('Error al obtener orden completa:', err);
+                        // Si falla, recargar la tabla como fallback
+                        refreshTableOnly();
+                    }
                 }
             } catch (e) {
                 console.error('Error processing SSE message:', e);
@@ -516,6 +582,9 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                     <table className={`min-w-full divide-y divide-gray-200 transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
                         <thead className="bg-gray-50">
                             <tr>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                    {/* Columna del logo - sin título */}
+                                </th>
                                 <th
                                     className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group"
                                     onClick={() => handleSortChange('order_number', filters.sort_order === 'asc' ? 'desc' : 'asc')}
@@ -538,9 +607,6 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Estado
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                                    Plataforma
-                                </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Probabilidad
                                 </th>
@@ -558,7 +624,7 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                         <tbody className="bg-white divide-y divide-gray-200">
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={9} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                                         No hay órdenes disponibles
                                     </td>
                                 </tr>
@@ -578,6 +644,7 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                                         formatDate={formatDate}
                                         getStatusBadge={getStatusBadge}
                                         getProbabilityColor={getProbabilityColor}
+                                        isNew={newOrderIds.has(order.id)}
                                     />
                                 ))
                             )}
@@ -693,7 +760,11 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                     onClose={() => {
                         setIsRawModalOpen(false);
                         setSelectedOrderId(null);
+                        setSelectedOrderLogo(undefined);
+                        setSelectedOrderPlatform(undefined);
                     }}
+                    integrationLogoUrl={selectedOrderLogo}
+                    platform={selectedOrderPlatform}
                 />
             )}
         </div>

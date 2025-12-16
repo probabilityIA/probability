@@ -30,9 +30,10 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		DeletedAt: order.DeletedAt,
 
 		// Identificadores de integración
-		BusinessID:      order.BusinessID,
-		IntegrationID:   order.IntegrationID,
-		IntegrationType: order.IntegrationType,
+		BusinessID:         order.BusinessID,
+		IntegrationID:      order.IntegrationID,
+		IntegrationType:    order.IntegrationType,
+		IntegrationLogoURL: order.IntegrationLogoURL,
 
 		// Identificadores de la orden
 		Platform:       order.Platform,
@@ -157,6 +158,7 @@ func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
 		BusinessID:          businessID,
 		IntegrationID:       order.IntegrationID,
 		IntegrationType:     order.IntegrationType,
+		IntegrationLogoURL:  order.IntegrationLogoURL,
 		Platform:            order.Platform,
 		ExternalID:          order.ExternalID,
 		OrderNumber:         order.OrderNumber,

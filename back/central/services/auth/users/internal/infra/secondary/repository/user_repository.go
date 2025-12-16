@@ -291,10 +291,26 @@ func (r *Repository) AssignRoleToUserBusiness(ctx context.Context, userID uint, 
 		return fmt.Errorf("no se proporcionaron asignaciones")
 	}
 
+	// Separar asignaciones globales (BusinessID = 0) de asignaciones a businesses específicos
+	var globalAssignments []domain.BusinessRoleAssignment
+	var businessAssignments []domain.BusinessRoleAssignment
+	for _, assignment := range assignments {
+		if assignment.BusinessID == 0 {
+			globalAssignments = append(globalAssignments, assignment)
+		} else {
+			businessAssignments = append(businessAssignments, assignment)
+		}
+	}
+
+	// Recolectar IDs únicos solo de asignaciones con business específico
 	businessSet := make(map[uint]struct{})
 	roleSet := make(map[uint]struct{})
-	for _, assignment := range assignments {
+	for _, assignment := range businessAssignments {
 		businessSet[assignment.BusinessID] = struct{}{}
+		roleSet[assignment.RoleID] = struct{}{}
+	}
+	// También agregar roles de asignaciones globales
+	for _, assignment := range globalAssignments {
 		roleSet[assignment.RoleID] = struct{}{}
 	}
 
@@ -308,18 +324,21 @@ func (r *Repository) AssignRoleToUserBusiness(ctx context.Context, userID uint, 
 		roleIDs = append(roleIDs, id)
 	}
 
-	var businesses []models.Business
-	if err := db.Preload("BusinessType").Where("id IN ?", businessIDs).Find(&businesses).Error; err != nil {
-		return fmt.Errorf("error al verificar businesses")
-	}
-
-	if len(businesses) != len(businessIDs) {
-		return fmt.Errorf("algunos businesses no existen")
-	}
-
+	// Validar businesses solo si hay asignaciones con business específico
 	businessMap := make(map[uint]models.Business)
-	for _, b := range businesses {
-		businessMap[b.ID] = b
+	if len(businessIDs) > 0 {
+		var businesses []models.Business
+		if err := db.Preload("BusinessType").Where("id IN ?", businessIDs).Find(&businesses).Error; err != nil {
+			return fmt.Errorf("error al verificar businesses")
+		}
+
+		if len(businesses) != len(businessIDs) {
+			return fmt.Errorf("algunos businesses no existen")
+		}
+
+		for _, b := range businesses {
+			businessMap[b.ID] = b
+		}
 	}
 
 	var roles []models.Role
@@ -336,7 +355,8 @@ func (r *Repository) AssignRoleToUserBusiness(ctx context.Context, userID uint, 
 		roleMap[role.ID] = role
 	}
 
-	for _, assignment := range assignments {
+	// Validar que cada rol corresponde al tipo de business (solo para asignaciones con business específico)
+	for _, assignment := range businessAssignments {
 		business, businessExists := businessMap[assignment.BusinessID]
 		if !businessExists {
 			return fmt.Errorf("business %d no encontrado", assignment.BusinessID)
@@ -352,8 +372,16 @@ func (r *Repository) AssignRoleToUserBusiness(ctx context.Context, userID uint, 
 		}
 	}
 
+	// Validar que los roles globales existen
+	for _, assignment := range globalAssignments {
+		if _, roleExists := roleMap[assignment.RoleID]; !roleExists {
+			return fmt.Errorf("rol %d no encontrado", assignment.RoleID)
+		}
+	}
+
 	return db.Transaction(func(tx *gorm.DB) error {
-		for _, assignment := range assignments {
+		// Procesar asignaciones con business específico
+		for _, assignment := range businessAssignments {
 			var existingBS models.BusinessStaff
 			if err := tx.Where("user_id = ? AND business_id = ?", userID, assignment.BusinessID).First(&existingBS).Error; err != nil {
 				if err == gorm.ErrRecordNotFound {
@@ -364,6 +392,32 @@ func (r *Repository) AssignRoleToUserBusiness(ctx context.Context, userID uint, 
 
 			if err := tx.Model(&existingBS).Update("role_id", assignment.RoleID).Error; err != nil {
 				return fmt.Errorf("error al asignar rol %d al business %d", assignment.RoleID, assignment.BusinessID)
+			}
+		}
+
+		// Procesar asignaciones globales (super admin - sin business específico)
+		for _, assignment := range globalAssignments {
+			var existingBS models.BusinessStaff
+			// Buscar registro existente sin business (global)
+			if err := tx.Where("user_id = ? AND business_id IS NULL", userID).First(&existingBS).Error; err != nil {
+				if err == gorm.ErrRecordNotFound {
+					// Crear nuevo registro global
+					newBS := models.BusinessStaff{
+						UserID:     userID,
+						BusinessID: nil,
+						RoleID:     &assignment.RoleID,
+					}
+					if err := tx.Create(&newBS).Error; err != nil {
+						return fmt.Errorf("error al crear asignación global de rol %d", assignment.RoleID)
+					}
+					continue
+				}
+				return fmt.Errorf("error al verificar relación usuario global")
+			}
+
+			// Actualizar registro existente
+			if err := tx.Model(&existingBS).Update("role_id", assignment.RoleID).Error; err != nil {
+				return fmt.Errorf("error al asignar rol global %d", assignment.RoleID)
 			}
 		}
 		return nil

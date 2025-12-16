@@ -71,6 +71,9 @@ type UserQueryDTO struct {
 	AvatarURL   string
 	IsActive    bool
 	LastLoginAt *time.Time
+	ScopeID     *uint
+	ScopeCode   string // "platform" o "business"
+	ScopeName   string
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
 	DeletedAt   *time.Time
@@ -97,6 +100,7 @@ type UsersEntity struct {
 	Phone       string
 	AvatarURL   string
 	IsActive    bool
+	ScopeID     *uint // Scope del usuario: platform (1) o business (2)
 	LastLoginAt *time.Time
 	CreatedAt   time.Time
 	UpdatedAt   time.Time
@@ -115,6 +119,12 @@ type UserFilters struct {
 	CreatedAt  string // formato: "2024-01-01" o "2024-01-01,2024-12-31"
 	SortBy     string // "id", "name", "email", "created_at", etc.
 	SortOrder  string // "asc" o "desc"
+
+	// Filtros de scope para control de acceso
+	ScopeID         *uint  // Filtrar usuarios por scope específico
+	ScopeCode       string // Filtrar por código de scope (platform, business)
+	RequesterScope  string // Scope del usuario que hace la solicitud
+	RequesterUserID uint   // ID del usuario que hace la solicitud
 }
 type UserListDTO struct {
 	Users      []UserDTO
@@ -131,6 +141,9 @@ type UserDTO struct {
 	AvatarURL               string
 	IsActive                bool
 	LastLoginAt             *time.Time
+	ScopeID                 *uint
+	ScopeCode               string // "platform" o "business"
+	ScopeName               string
 	IsSuperUser             bool                             // Indica si es super usuario (scope platform)
 	BusinessRoleAssignments []BusinessRoleAssignmentDetailed // Parejas business-rol con información completa
 	Roles                   []RoleDTO                        // Mantener por compatibilidad
@@ -184,7 +197,8 @@ type CreateUserDTO struct {
 	AvatarURL   string                // URL completa (para compatibilidad)
 	AvatarFile  *multipart.FileHeader // Archivo de imagen para subir a S3
 	IsActive    bool
-	BusinessIDs []uint // Businesses a relacionar con el usuario
+	ScopeID     *uint  // Scope del usuario (platform=1, business=2)
+	BusinessIDs []uint // Businesses a relacionar con el usuario (obligatorio si scope es business)
 }
 
 type UpdateUserDTO struct {

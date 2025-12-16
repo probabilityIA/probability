@@ -86,7 +86,8 @@ func (h *IntegrationHandler) GetIntegrationByTypeHandler(c *gin.Context) {
 	}
 
 	// Retornar sin credenciales desencriptadas (por seguridad)
-	integrationResp := mapper.ToIntegrationResponse(&integrationWithCreds.Integration)
+	imageURLBase := h.getImageURLBase()
+	integrationResp := mapper.ToIntegrationResponse(&integrationWithCreds.Integration, imageURLBase)
 	c.JSON(http.StatusOK, response.IntegrationSuccessResponse{
 		Success: true,
 		Message: "Integración obtenida exitosamente",

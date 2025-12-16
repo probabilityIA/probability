@@ -6,6 +6,13 @@ export interface IntegrationCredentials {
     [key: string]: any;
 }
 
+export interface IntegrationTypeInfo {
+    id: number;
+    name: string;
+    code: string;
+    image_url?: string; // URL completa de la imagen del logo
+}
+
 export interface Integration {
     id: number;
     name: string;
@@ -23,6 +30,7 @@ export interface Integration {
     updated_by_id: number | null;
     created_at: string;
     updated_at: string;
+    integration_type?: IntegrationTypeInfo; // Información del tipo de integración si está cargado
 }
 
 export interface CreateIntegrationDTO {
@@ -87,6 +95,7 @@ export interface IntegrationType {
     code: string;
     description?: string;
     icon?: string;
+    image_url?: string; // URL completa de la imagen del logo
     category: 'internal' | 'external' | string;
     is_active: boolean;
     config_schema?: any;
@@ -106,6 +115,7 @@ export interface CreateIntegrationTypeDTO {
     config_schema?: any;
     credentials_schema?: any;
     setup_instructions?: string;
+    image_file?: File; // Archivo de imagen para subir
 }
 
 export interface UpdateIntegrationTypeDTO {
@@ -118,4 +128,6 @@ export interface UpdateIntegrationTypeDTO {
     config_schema?: any;
     credentials_schema?: any;
     setup_instructions?: string;
+    image_file?: File; // Archivo de imagen para subir
+    remove_image?: boolean; // Flag para eliminar la imagen existente
 }

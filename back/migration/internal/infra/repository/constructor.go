@@ -73,42 +73,21 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return err
 	}
 
-	return r.seedInitialData(ctx)
+	return r.createDefaultUserIfNotExists(ctx)
 }
 
-func (r *Repository) seedInitialData(ctx context.Context) error {
+// createDefaultUserIfNotExists crea el usuario principal solo si no existe
+// Las migraciones solo deben crear la estructura de tablas, no datos adicionales
+func (r *Repository) createDefaultUserIfNotExists(ctx context.Context) error {
 	db := r.db.Conn(ctx)
 
-	// 1. Seed Scope "platform"
-	var platformScope models.Scope
-	if err := db.Where("code = ?", "platform").FirstOrCreate(&platformScope, models.Scope{
-		Name:        "Platform",
-		Code:        "platform",
-		Description: "Scope for platform-wide permissions",
-		IsSystem:    true,
-	}).Error; err != nil {
-		return fmt.Errorf("failed to seed platform scope: %w", err)
-	}
-
-	// 2. Seed Role "Super Admin"
-	var superAdminRole models.Role
-	if err := db.Where("name = ? AND scope_id = ?", "Super Admin", platformScope.ID).FirstOrCreate(&superAdminRole, models.Role{
-		Name:        "Super Admin",
-		Description: "Super Administrator with full access",
-		Level:       1,
-		IsSystem:    true,
-		ScopeID:     platformScope.ID,
-	}).Error; err != nil {
-		return fmt.Errorf("failed to seed super admin role: %w", err)
-	}
-
-	// 3. Seed Default User
-	var user models.User
+	// Verificar si el usuario principal ya existe
 	var count int64
 	if err := db.Model(&models.User{}).Where("id = ?", 1).Count(&count).Error; err != nil {
 		return fmt.Errorf("failed to check for existing user: %w", err)
 	}
 
+	// Solo crear el usuario si no existe
 	if count == 0 {
 		email := r.cfg.Get("EMAIL_USER_DEFAULT")
 		password := r.cfg.Get("USER_PASS_DEFAULT")
@@ -122,7 +101,7 @@ func (r *Repository) seedInitialData(ctx context.Context) error {
 			return fmt.Errorf("failed to hash password: %w", err)
 		}
 
-		user = models.User{
+		user := models.User{
 			Model:    gorm.Model{ID: 1},
 			Name:     "Admin",
 			Email:    email,
@@ -133,58 +112,6 @@ func (r *Repository) seedInitialData(ctx context.Context) error {
 		if err := db.Create(&user).Error; err != nil {
 			return fmt.Errorf("failed to create default user: %w", err)
 		}
-	} else {
-		// If user exists, fetch it to get the ID for association
-		if err := db.First(&user, 1).Error; err != nil {
-			return fmt.Errorf("failed to fetch existing user: %w", err)
-		}
-	}
-
-	// 4. Assign Super Admin Role to User (in BusinessStaff with BusinessID = nil)
-	var staffCount int64
-	if err := db.Model(&models.BusinessStaff{}).
-		Where("user_id = ? AND role_id = ? AND business_id IS NULL", user.ID, superAdminRole.ID).
-		Count(&staffCount).Error; err != nil {
-		return fmt.Errorf("failed to check for existing staff association: %w", err)
-	}
-
-	if staffCount == 0 {
-		staff := models.BusinessStaff{
-			UserID:     user.ID,
-			BusinessID: nil, // Platform level
-			RoleID:     &superAdminRole.ID,
-		}
-		if err := db.Create(&staff).Error; err != nil {
-			return fmt.Errorf("failed to assign super admin role to user: %w", err)
-		}
-	}
-
-	// 5. Seed Integration Type "Shopify"
-	var shopifyType models.IntegrationType
-	configSchema := `{
-		"type": "object",
-		"required": ["store_url", "access_token"],
-		"properties": {
-			"store_url": {
-				"type": "string",
-				"description": "Shopify store URL (e.g., mystore.myshopify.com)",
-				"pattern": ".+\\.myshopify\\.com$"
-			},
-			"access_token": {
-				"type": "string",
-				"description": "Shopify Admin API access token",
-				"minLength": 10
-			}
-		}
-	}`
-	if err := db.Where("code = ?", "shopify").FirstOrCreate(&shopifyType, models.IntegrationType{
-		Name:         "Shopify",
-		Code:         "shopify",
-		Description:  "Shopify e-commerce platform integration",
-		IsActive:     true,
-		ConfigSchema: []byte(configSchema),
-	}).Error; err != nil {
-		return fmt.Errorf("failed to seed shopify integration type: %w", err)
 	}
 
 	return nil

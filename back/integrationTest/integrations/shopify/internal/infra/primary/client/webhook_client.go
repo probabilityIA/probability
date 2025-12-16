@@ -95,3 +95,4 @@ func (c *WebhookClient) generateHMAC(payload []byte) string {
 	mac.Write(payload)
 	return base64.StdEncoding.EncodeToString(mac.Sum(nil))
 }
+

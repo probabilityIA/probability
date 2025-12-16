@@ -9,6 +9,7 @@ type IntegrationTypeResponse struct {
 	Code              string         `json:"code" example:"whatsapp"`
 	Description       string         `json:"description" example:"Integración con WhatsApp Cloud API"`
 	Icon              string         `json:"icon" example:"whatsapp-icon"`
+	ImageURL          string         `json:"image_url" example:"https://s3.amazonaws.com/bucket/integration-types/1234567890_logo.png"` // URL completa de la imagen
 	Category          string         `json:"category" example:"internal"`
 	IsActive          bool           `json:"is_active" example:"true"`
 	ConfigSchema      datatypes.JSON `json:"config_schema"`

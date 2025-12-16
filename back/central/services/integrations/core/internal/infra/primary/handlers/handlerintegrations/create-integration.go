@@ -94,7 +94,8 @@ func (h *IntegrationHandler) CreateIntegrationHandler(c *gin.Context) {
 		return
 	}
 
-	integrationResp := mapper.ToIntegrationResponse(integration)
+	imageURLBase := h.getImageURLBase()
+	integrationResp := mapper.ToIntegrationResponse(integration, imageURLBase)
 	c.JSON(http.StatusCreated, response.IntegrationSuccessResponse{
 		Success: true,
 		Message: "Integración creada exitosamente",

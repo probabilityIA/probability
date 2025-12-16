@@ -154,6 +154,7 @@ func (r *Repository) GetBusinessesWithConfiguredResourcesPaginated(ctx context.C
 }
 
 // GetBusinessByIDWithConfiguredResources obtiene un business por ID con sus recursos configurados
+// Si no existen recursos configurados para el business, los crea automáticamente con todos los recursos del sistema
 func (r *Repository) GetBusinessByIDWithConfiguredResources(ctx context.Context, businessID uint) (*domain.BusinessWithConfiguredResourcesResponse, error) {
 	// Obtener el business
 	var businessModel models.Business
@@ -178,6 +179,51 @@ func (r *Repository) GetBusinessByIDWithConfiguredResources(ctx context.Context,
 		r.logger.Error().Err(err).Uint("business_id", businessModel.ID).Msg("[business_resource_repository] Error al obtener recursos configurados del business")
 		// Continuar con array vacío en caso de error
 		configuredResourcesModel = []models.BusinessResourceConfigured{}
+	}
+
+	// Si no hay recursos configurados, crearlos automáticamente con todos los recursos del sistema
+	if len(configuredResourcesModel) == 0 {
+		r.logger.Info().Uint("business_id", businessID).Msg("[business_resource_repository] No hay recursos configurados, creando automáticamente...")
+
+		// Obtener todos los recursos del sistema
+		var allResources []models.Resource
+		if err := r.database.Conn(ctx).
+			Model(&models.Resource{}).
+			Order("id ASC").
+			Find(&allResources).Error; err != nil {
+			r.logger.Error().Err(err).Msg("[business_resource_repository] Error al obtener todos los recursos")
+			return nil, errors.New("error interno del servidor")
+		}
+
+		// Crear configuraciones para cada recurso (desactivados por defecto)
+		for _, resource := range allResources {
+			newConfig := models.BusinessResourceConfigured{
+				BusinessID: businessID,
+				ResourceID: resource.ID,
+				Active:     false, // Por defecto desactivados
+			}
+
+			if err := r.database.Conn(ctx).Create(&newConfig).Error; err != nil {
+				r.logger.Error().Err(err).
+					Uint("business_id", businessID).
+					Uint("resource_id", resource.ID).
+					Msg("[business_resource_repository] Error al crear configuración de recurso")
+				// Continuar con el siguiente recurso
+				continue
+			}
+		}
+
+		r.logger.Info().Uint("business_id", businessID).Int("resources_created", len(allResources)).Msg("[business_resource_repository] Recursos configurados creados automáticamente")
+
+		// Volver a cargar los recursos configurados
+		if err := r.database.Conn(ctx).
+			Model(&models.BusinessResourceConfigured{}).
+			Preload("Resource").
+			Where("business_id = ?", businessModel.ID).
+			Find(&configuredResourcesModel).Error; err != nil {
+			r.logger.Error().Err(err).Uint("business_id", businessModel.ID).Msg("[business_resource_repository] Error al recargar recursos configurados")
+			configuredResourcesModel = []models.BusinessResourceConfigured{}
+		}
 	}
 
 	// Convertir recursos configurados a respuesta de dominio

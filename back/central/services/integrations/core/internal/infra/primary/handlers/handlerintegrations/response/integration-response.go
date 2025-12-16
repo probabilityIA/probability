@@ -4,9 +4,10 @@ import "time"
 
 // IntegrationTypeInfo representa información básica del tipo de integración
 type IntegrationTypeInfo struct {
-	ID   uint   `json:"id" example:"1"`
-	Name string `json:"name" example:"WhatsApp"`
-	Code string `json:"code" example:"whatsapp"`
+	ID       uint   `json:"id" example:"1"`
+	Name     string `json:"name" example:"WhatsApp"`
+	Code     string `json:"code" example:"whatsapp"`
+	ImageURL string `json:"image_url" example:"https://s3.amazonaws.com/bucket/integration-types/1234567890_logo.png"` // URL completa de la imagen
 }
 
 // IntegrationResponse representa la respuesta de una integración (sin credenciales)

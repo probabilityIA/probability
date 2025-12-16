@@ -59,6 +59,8 @@ func (h *IntegrationHandler) GetIntegrationsHandler(c *gin.Context) {
 		return
 	}
 
-	response := mapper.ToIntegrationListResponse(integrations, total, filters.Page, filters.PageSize)
+	// Obtener URL base de S3 para construir URLs completas
+	imageURLBase := h.getImageURLBase()
+	response := mapper.ToIntegrationListResponse(integrations, total, filters.Page, filters.PageSize, imageURLBase)
 	c.JSON(http.StatusOK, response)
 }

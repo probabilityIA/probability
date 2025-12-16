@@ -102,7 +102,8 @@ func (h *IntegrationHandler) UpdateIntegrationHandler(c *gin.Context) {
 		return
 	}
 
-	integrationResp := mapper.ToIntegrationResponse(integration)
+	imageURLBase := h.getImageURLBase()
+	integrationResp := mapper.ToIntegrationResponse(integration, imageURLBase)
 	c.JSON(http.StatusOK, response.IntegrationSuccessResponse{
 		Success: true,
 		Message: "Integración actualizada exitosamente",

@@ -17,7 +17,7 @@ type IShopifyUseCase interface {
 	SyncOrders(ctx context.Context, integrationID string) error
 	GetOrders(ctx context.Context, integration *domain.Integration, storeDomain, accessToken string, params *domain.GetOrdersParams) error
 	GetOrder(ctx context.Context, integrationID string, orderID string) error
-	CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
+	CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte) error
 	ProcessOrderPaid(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
 	ProcessOrderUpdated(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
 	ProcessOrderCancelled(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error

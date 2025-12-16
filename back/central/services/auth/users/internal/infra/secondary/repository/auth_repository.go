@@ -226,12 +226,41 @@ func (r *Repository) ChangePassword(ctx context.Context, userID uint, newPasswor
 }
 
 func (r *Repository) GetUsers(ctx context.Context, filters domain.UserFilters) ([]domain.UserQueryDTO, int64, error) {
-	var users []domain.UserQueryDTO
 	var total int64
 
-	query := r.database.Conn(ctx).Model(&models.User{})
+	// Query base usando Model para que GORM determine el nombre de tabla automáticamente
+	query := r.database.Conn(ctx).
+		Model(&models.User{}).
+		Select(`"user".id, "user".name, "user".email, "user".phone, "user".avatar_url, 
+			"user".is_active, "user".last_login_at, "user".scope_id, 
+			"user".created_at, "user".updated_at, "user".deleted_at,
+			scope.code as scope_code, scope.name as scope_name`).
+		Joins("LEFT JOIN scope ON scope.id = \"user\".scope_id")
 
-	// Filtros
+	// FILTRO DE SEGURIDAD POR SCOPE
+	// Si el usuario que solicita es de scope "business", solo puede ver usuarios "business"
+	if filters.RequesterScope == "business" {
+		r.logger.Info().Str("requester_scope", filters.RequesterScope).Msg("Filtrando usuarios: solo scope business")
+		// Obtener el ID del scope "business"
+		var businessScope models.Scope
+		if err := r.database.Conn(ctx).Where("code = ?", "business").First(&businessScope).Error; err == nil {
+			query = query.Where("scope_id = ? OR scope_id IS NULL", businessScope.ID)
+		} else {
+			// Si no existe el scope "business", filtrar por scope_id NULL (comportamiento por defecto)
+			query = query.Where("scope_id IS NULL")
+		}
+
+		// Además, si tiene un business_id, solo mostrar usuarios de sus mismos negocios
+		if filters.BusinessID != nil {
+			subquery := r.database.Conn(ctx).
+				Table("user_businesses").
+				Select("user_id").
+				Where("business_id = ?", *filters.BusinessID)
+			query = query.Where("\"user\".id IN (?)", subquery)
+		}
+	}
+
+	// Filtros opcionales
 	if filters.Email != "" {
 		query = query.Where("email LIKE ?", "%"+filters.Email+"%")
 	}
@@ -242,38 +271,44 @@ func (r *Repository) GetUsers(ctx context.Context, filters domain.UserFilters) (
 		query = query.Where("phone LIKE ?", "%"+filters.Phone+"%")
 	}
 	if len(filters.UserIDs) > 0 {
-		query = query.Where("id IN ?", filters.UserIDs)
+		query = query.Where("\"user\".id IN ?", filters.UserIDs)
 	}
 	if filters.IsActive != nil {
 		query = query.Where("is_active = ?", *filters.IsActive)
 	}
 	if filters.RoleID != nil {
-		// Subquery para obtener IDs de usuarios con el rol especificado
 		subquery := r.database.Conn(ctx).
 			Table("user_roles").
 			Select("user_id").
 			Where("role_id = ?", *filters.RoleID)
-		query = query.Where("id IN (?)", subquery)
+		query = query.Where("\"user\".id IN (?)", subquery)
 	}
-	if filters.BusinessID != nil {
-		// Subquery para obtener IDs de usuarios con el business especificado
+	if filters.BusinessID != nil && filters.RequesterScope != "business" {
+		// Solo aplicar si no es usuario business (ya se aplicó arriba)
 		subquery := r.database.Conn(ctx).
 			Table("user_businesses").
 			Select("user_id").
 			Where("business_id = ?", *filters.BusinessID)
-		query = query.Where("id IN (?)", subquery)
+		query = query.Where("\"user\".id IN (?)", subquery)
+	}
+	// Filtro por scope específico
+	if filters.ScopeID != nil {
+		query = query.Where("scope_id = ?", *filters.ScopeID)
+	}
+	if filters.ScopeCode != "" {
+		query = query.Where("scope.code = ?", filters.ScopeCode)
 	}
 
 	// Ordenamiento
 	if filters.SortBy != "" && filters.SortOrder != "" {
-		orderClause := filters.SortBy + " " + filters.SortOrder
-		query = query.Order(orderClause)
+		query = query.Order(filters.SortBy + " " + filters.SortOrder)
 	} else {
-		query = query.Order("created_at desc") // Por defecto
+		query = query.Order("created_at desc")
 	}
 
 	// Contar total
-	if err := query.Count(&total).Error; err != nil {
+	countQuery := query.Session(&gorm.Session{})
+	if err := countQuery.Count(&total).Error; err != nil {
 		r.logger.Error().Err(err).Msg("Error al contar usuarios")
 		return nil, 0, err
 	}
@@ -282,9 +317,27 @@ func (r *Repository) GetUsers(ctx context.Context, filters domain.UserFilters) (
 	offset := (filters.Page - 1) * filters.PageSize
 	query = query.Offset(offset).Limit(filters.PageSize)
 
-	if err := query.Find(&users).Error; err != nil {
+	// Ejecutar query
+	rows, err := query.Rows()
+	if err != nil {
 		r.logger.Error().Err(err).Msg("Error al obtener usuarios")
 		return nil, 0, err
+	}
+	defer rows.Close()
+
+	var users []domain.UserQueryDTO
+	for rows.Next() {
+		var user domain.UserQueryDTO
+		if err := rows.Scan(
+			&user.ID, &user.Name, &user.Email, &user.Phone, &user.AvatarURL,
+			&user.IsActive, &user.LastLoginAt, &user.ScopeID,
+			&user.CreatedAt, &user.UpdatedAt, &user.DeletedAt,
+			&user.ScopeCode, &user.ScopeName,
+		); err != nil {
+			r.logger.Error().Err(err).Msg("Error al escanear usuario")
+			continue
+		}
+		users = append(users, user)
 	}
 
 	return users, total, nil

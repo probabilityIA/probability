@@ -179,19 +179,34 @@ func (uc *AuthUseCase) GetUserRolesPermissions(ctx context.Context, userID uint,
 		}
 	}
 
-	// Mapear permisos (eliminar duplicados) SOLO de recursos activos para el business
-	// Si el recurso no está activo, se excluye completamente del resultado
+	// Mapear permisos (eliminar duplicados)
+	// Si hay recursos configurados para el business, solo incluir permisos de esos recursos
+	// Si NO hay recursos configurados (mapa vacío), permitir todos los permisos del rol
 	permissionMap := make(map[string]domain.PermissionInfo)
-	for _, permission := range allPermissions {
-		// Verificar si el recurso está activo para el business
-		isActive := activeResourcesMap[permission.ResourceID]
+	hasConfiguredResources := len(activeResourcesMap) > 0
 
-		// Si hay un businessID (no es super admin sin business), filtrar por recursos activos
-		// Si el recurso no está activo, omitir el permiso completamente
+	uc.log.Info().
+		Uint("user_id", userID).
+		Int("active_resources_count", len(activeResourcesMap)).
+		Int("all_permissions_count", len(allPermissions)).
+		Bool("has_configured_resources", hasConfiguredResources).
+		Msg("Filtrando permisos por recursos activos")
+
+	for _, permission := range allPermissions {
+		var isActive bool
+
 		if bsRelation.BusinessID != nil {
-			if !isActive {
-				// Omitir permiso si el recurso no está activo para el business
-				continue
+			// Usuario con business asignado
+			if hasConfiguredResources {
+				// Filtrar solo si hay recursos configurados
+				isActive = activeResourcesMap[permission.ResourceID]
+				if !isActive {
+					// Omitir permiso si el recurso no está activo para el business
+					continue
+				}
+			} else {
+				// Si no hay recursos configurados, permitir todos los permisos del rol
+				isActive = true
 			}
 		} else {
 			// Super admin sin business: mostrar todos los permisos como activos

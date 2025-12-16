@@ -50,8 +50,12 @@ func (h *handlers) GetUsersHandler(c *gin.Context) {
 		return
 	}
 
-	// Si no es super admin, ignorar business_id del query y usar el del token
+	// Obtener información del usuario que hace la solicitud
 	isSuperAdmin := middleware.IsSuperAdmin(c)
+	requesterUserID, _ := middleware.GetUserID(c)
+	requesterScope := middleware.GetScope(c) // "platform" o "business"
+
+	// Si no es super admin (scope platform), restringir acceso
 	if !isSuperAdmin {
 		tokenBusinessID, ok := middleware.GetBusinessID(c)
 		if ok && tokenBusinessID > 0 {
@@ -69,8 +73,9 @@ func (h *handlers) GetUsersHandler(c *gin.Context) {
 	// Convertir request a filtros del dominio
 	filters := mapper.ToUserFilters(req)
 
-	// Las validaciones ya están manejadas por el binding automático
-	// Los valores por defecto y las validaciones están en las etiquetas del struct
+	// Agregar información del requester para filtrado de seguridad
+	filters.RequesterScope = requesterScope
+	filters.RequesterUserID = requesterUserID
 
 	h.logger.Info(ctx).
 		Int("page", filters.Page).
@@ -79,6 +84,8 @@ func (h *handlers) GetUsersHandler(c *gin.Context) {
 		Str("email", filters.Email).
 		Str("phone", filters.Phone).
 		Bool("is_super_admin", isSuperAdmin).
+		Str("requester_scope", requesterScope).
+		Uint("requester_user_id", requesterUserID).
 		Msg("Iniciando solicitud para obtener usuarios filtrados y paginados")
 
 	userListDTO, err := h.usecase.GetUsers(ctx, filters)

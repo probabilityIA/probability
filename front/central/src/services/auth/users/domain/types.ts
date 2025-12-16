@@ -13,6 +13,9 @@ export interface User {
     avatar_url?: string;
     is_active: boolean;
     is_super_user: boolean;
+    scope_id?: number;
+    scope_code?: string; // "platform" o "business"
+    scope_name?: string;
     last_login_at?: string;
     business_role_assignments: BusinessRoleAssignment[];
     created_at: string;
@@ -32,6 +35,7 @@ export interface PaginatedResponse<T> {
     success: boolean;
     data: T[];
     pagination: Pagination;
+    message?: string;
 }
 
 export interface SingleResponse<T> {
@@ -70,6 +74,7 @@ export interface CreateUserDTO {
     phone?: string;
     is_active?: boolean;
     avatarFile?: File;
+    scope_id?: number; // 1 = platform (super admin), 2 = business
     business_ids?: number[];
 }
 

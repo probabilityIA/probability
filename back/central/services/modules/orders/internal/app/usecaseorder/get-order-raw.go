@@ -16,6 +16,10 @@ func (uc *UseCaseOrder) GetOrderRaw(ctx context.Context, id string) (*domain.Ord
 
 	metadata, err := uc.repo.GetOrderRaw(ctx, id)
 	if err != nil {
+		// Preservar el mensaje de error específico para "not found"
+		if err.Error() == "raw data not found for this order" {
+			return nil, errors.New("raw data not found for this order")
+		}
 		return nil, fmt.Errorf("error getting raw order data: %w", err)
 	}
 

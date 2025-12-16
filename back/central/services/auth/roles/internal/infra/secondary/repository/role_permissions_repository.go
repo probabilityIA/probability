@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/auth/roles/internal/domain"
 	"github.com/secamc93/probability/back/migration/shared/models"
@@ -9,29 +10,59 @@ import (
 
 // AssignPermissionsToRole asigna permisos a un rol
 func (r *Repository) AssignPermissionsToRole(ctx context.Context, roleID uint, permissionIDs []uint) error {
+	db := r.database.Conn(ctx)
+
 	// Verificar que el rol existe
 	var role models.Role
-	if err := r.database.Conn(ctx).First(&role, roleID).Error; err != nil {
+	if err := db.First(&role, roleID).Error; err != nil {
 		r.logger.Error().Err(err).Uint("role_id", roleID).Msg("Error al buscar rol para asignar permisos")
 		return err
 	}
 
-	// Buscar los permisos
-	var permissions []models.Permission
-	if err := r.database.Conn(ctx).Where("id IN ?", permissionIDs).Find(&permissions).Error; err != nil {
-		r.logger.Error().Err(err).Msg("Error al buscar permisos para asignar")
+	// Verificar que los permisos existen
+	if len(permissionIDs) > 0 {
+		var count int64
+		if err := db.Model(&models.Permission{}).Where("id IN ?", permissionIDs).Count(&count).Error; err != nil {
+			r.logger.Error().Err(err).Msg("Error al verificar permisos")
+			return err
+		}
+		if count != int64(len(permissionIDs)) {
+			r.logger.Error().Msg("Algunos permisos no existen")
+			return fmt.Errorf("algunos permisos no existen")
+		}
+	}
+
+	// Iniciar transacción
+	tx := db.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	// Eliminar todas las asociaciones existentes directamente en la tabla role_permissions
+	if err := tx.Exec("DELETE FROM role_permissions WHERE role_id = ?", roleID).Error; err != nil {
+		tx.Rollback()
+		r.logger.Error().Err(err).Uint("role_id", roleID).Msg("Error al eliminar permisos existentes del rol")
 		return err
 	}
 
-	// Reemplazar los permisos del rol
-	if err := r.database.Conn(ctx).Model(&role).Association("Permissions").Replace(permissions); err != nil {
-		r.logger.Error().Err(err).Uint("role_id", roleID).Msg("Error al asignar permisos al rol")
+	// Insertar las nuevas asociaciones
+	for _, permissionID := range permissionIDs {
+		if err := tx.Exec("INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)", roleID, permissionID).Error; err != nil {
+			tx.Rollback()
+			r.logger.Error().Err(err).Uint("role_id", roleID).Uint("permission_id", permissionID).Msg("Error al insertar permiso al rol")
+			return err
+		}
+	}
+
+	// Commit de la transacción
+	if err := tx.Commit().Error; err != nil {
+		r.logger.Error().Err(err).Msg("Error al hacer commit de la transacción")
 		return err
 	}
 
 	r.logger.Info().
 		Uint("role_id", roleID).
-		Int("permissions_count", len(permissions)).
+		Int("permissions_count", len(permissionIDs)).
 		Msg("Permisos asignados al rol exitosamente")
 
 	return nil

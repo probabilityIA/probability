@@ -34,10 +34,32 @@ func (h *Handlers) MapAndSaveOrder(c *gin.Context) {
 		return
 	}
 
+	// Validaciones adicionales para prevenir órdenes mal formadas
+	if req.ExternalID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "external_id es requerido",
+		})
+		return
+	}
+	if req.IntegrationID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "integration_id es requerido",
+		})
+		return
+	}
+	if req.BusinessID == nil || *req.BusinessID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"message": "business_id es requerido",
+		})
+		return
+	}
+
 	// Llamar al caso de uso de mapeo
 	order, err := h.orderMapping.MapAndSaveOrder(c.Request.Context(), &req)
 	if err != nil {
-		// Verificar si es un error de duplicado
 		// Verificar si es un error de duplicado
 		if errors.Is(err, domain.ErrOrderAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{

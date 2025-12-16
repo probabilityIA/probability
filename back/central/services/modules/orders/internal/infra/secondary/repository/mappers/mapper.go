@@ -1,6 +1,7 @@
 package mappers
 
 import (
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
@@ -96,9 +97,21 @@ func ToDBOrder(o *domain.ProbabilityOrder) *models.Order {
 }
 
 // ToDomainOrder convierte una orden de base de datos a dominio
-func ToDomainOrder(o *models.Order) *domain.ProbabilityOrder {
+// imageURLBase es la URL base de S3 para construir URLs completas del logo
+func ToDomainOrder(o *models.Order, imageURLBase string) *domain.ProbabilityOrder {
 	if o == nil {
 		return nil
+	}
+
+	// Obtener el logo de la integración si está disponible
+	var integrationLogoURL *string
+	if o.Integration.IntegrationType.ID > 0 && o.Integration.IntegrationType.ImageURL != "" {
+		logoURL := o.Integration.IntegrationType.ImageURL
+		// Si no es una URL completa, construirla con la base
+		if imageURLBase != "" && !strings.HasPrefix(logoURL, "http") {
+			logoURL = strings.TrimRight(imageURLBase, "/") + "/" + strings.TrimLeft(logoURL, "/")
+		}
+		integrationLogoURL = &logoURL
 	}
 
 	return &domain.ProbabilityOrder{
@@ -109,6 +122,7 @@ func ToDomainOrder(o *models.Order) *domain.ProbabilityOrder {
 		BusinessID:          o.BusinessID,
 		IntegrationID:       o.IntegrationID,
 		IntegrationType:     o.IntegrationType,
+		IntegrationLogoURL:  integrationLogoURL,
 		Platform:            o.Platform,
 		ExternalID:          o.ExternalID,
 		OrderNumber:         o.OrderNumber,

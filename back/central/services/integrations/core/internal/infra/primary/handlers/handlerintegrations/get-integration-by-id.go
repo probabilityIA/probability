@@ -66,7 +66,8 @@ func (h *IntegrationHandler) GetIntegrationByIDHandler(c *gin.Context) {
 		}
 
 		// Convertir a respuesta con credenciales desencriptadas
-		integrationResp := mapper.ToIntegrationResponse(&integrationWithCreds.Integration)
+		imageURLBase := h.getImageURLBase()
+		integrationResp := mapper.ToIntegrationResponse(&integrationWithCreds.Integration, imageURLBase)
 		integrationResp.Credentials = integrationWithCreds.DecryptedCredentials
 
 		c.JSON(http.StatusOK, response.IntegrationSuccessResponse{
@@ -101,7 +102,8 @@ func (h *IntegrationHandler) GetIntegrationByIDHandler(c *gin.Context) {
 		return
 	}
 
-	integrationResp := mapper.ToIntegrationResponse(integration)
+	imageURLBase := h.getImageURLBase()
+	integrationResp := mapper.ToIntegrationResponse(integration, imageURLBase)
 	c.JSON(http.StatusOK, response.IntegrationSuccessResponse{
 		Success: true,
 		Message: "Integración obtenida exitosamente",

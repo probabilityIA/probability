@@ -49,3 +49,4 @@ Simula órdenes de Shopify y las envía como webhooks a:
 - `orders/cancelled` - Orden cancelada
 - `orders/fulfilled` - Orden cumplida
 - `orders/partially_fulfilled` - Orden parcialmente cumplida
+

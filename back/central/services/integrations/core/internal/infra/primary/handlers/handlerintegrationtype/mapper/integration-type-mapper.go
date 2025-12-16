@@ -2,6 +2,7 @@ package mapper
 
 import (
 	"encoding/json"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrationtype/request"
@@ -10,7 +11,17 @@ import (
 )
 
 // ToIntegrationTypeResponse convierte domain.IntegrationType a IntegrationTypeResponse
-func ToIntegrationTypeResponse(integrationType *domain.IntegrationType) response.IntegrationTypeResponse {
+// imageURLBase es la URL base de S3 para construir URLs completas
+func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURLBase string) response.IntegrationTypeResponse {
+	imageURL := ""
+	if integrationType.ImageURL != "" {
+		// Si ya es una URL completa, usarla directamente
+		if imageURLBase != "" && !strings.HasPrefix(integrationType.ImageURL, "http") {
+			imageURL = strings.TrimRight(imageURLBase, "/") + "/" + strings.TrimLeft(integrationType.ImageURL, "/")
+		} else {
+			imageURL = integrationType.ImageURL
+		}
+	}
 
 	return response.IntegrationTypeResponse{
 		ID:                integrationType.ID,
@@ -18,6 +29,7 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType) response
 		Code:              integrationType.Code,
 		Description:       integrationType.Description,
 		Icon:              integrationType.Icon,
+		ImageURL:          imageURL,
 		Category:          integrationType.Category,
 		IsActive:          integrationType.IsActive,
 		ConfigSchema:      integrationType.ConfigSchema,
@@ -45,6 +57,7 @@ func ToCreateIntegrationTypeDTO(req request.CreateIntegrationTypeRequest) domain
 		IsActive:          req.IsActive,
 		ConfigSchema:      configSchema,
 		CredentialsSchema: credentialsSchema,
+		ImageFile:         req.ImageFile,
 	}
 }
 
@@ -74,6 +87,12 @@ func ToUpdateIntegrationTypeDTO(req request.UpdateIntegrationTypeRequest) domain
 		configBytes, _ := json.Marshal(*req.ConfigSchema)
 		configJSON := datatypes.JSON(configBytes)
 		dto.ConfigSchema = &configJSON
+	}
+	if req.ImageFile != nil {
+		dto.ImageFile = req.ImageFile
+	}
+	if req.RemoveImage != nil {
+		dto.RemoveImage = *req.RemoveImage
 	}
 
 	return dto

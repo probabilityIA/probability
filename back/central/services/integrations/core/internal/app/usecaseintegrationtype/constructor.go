@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -19,16 +20,22 @@ type IIntegrationTypeUseCase interface {
 
 type integrationTypeUseCase struct {
 	repo domain.IRepository
+	s3   domain.IS3Service
 	log  log.ILogger
+	env  env.IConfig
 }
 
 // New crea una nueva instancia del caso de uso de tipos de integración
 func New(
 	repo domain.IRepository,
+	s3 domain.IS3Service,
 	logger log.ILogger,
+	env env.IConfig,
 ) IIntegrationTypeUseCase {
 	return &integrationTypeUseCase{
 		repo: repo,
+		s3:   s3,
 		log:  logger,
+		env:  env,
 	}
 }
