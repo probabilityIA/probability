@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,27 +18,20 @@ func (c *shopifyClient) GetOrder(ctx context.Context, storeName, accessToken str
 
 	url := fmt.Sprintf("https://%s/admin/api/2024-10/orders/%s.json", storeName, orderID)
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("X-Shopify-Access-Token", accessToken)
-	req.Header.Set("Content-Type", "application/json")
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to fetch order, status: %d", resp.StatusCode)
-	}
-
 	var orderResp response.OrderResponse
-	if err := json.NewDecoder(resp.Body).Decode(&orderResp); err != nil {
-		return nil, fmt.Errorf("failed to decode order response: %w", err)
+	resp, err := c.client.R().
+		SetContext(ctx).
+		SetHeader("X-Shopify-Access-Token", accessToken).
+		SetHeader("Content-Type", "application/json").
+		SetResult(&orderResp).
+		Get(url)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("error al obtener orden de Shopify (código %d)", resp.StatusCode())
 	}
 
 	order := mappers.MapOrderResponseToShopifyOrder(orderResp.Order, nil, 0, "")

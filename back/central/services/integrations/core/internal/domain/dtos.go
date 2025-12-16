@@ -40,6 +40,7 @@ type CreateIntegrationDTO struct {
 	IntegrationTypeID uint // ID del tipo de integración (obligatorio)
 	Category          string
 	BusinessID        *uint
+	StoreID           string // Identificador externo (ej: shop domain para Shopify)
 	IsActive          bool
 	IsDefault         bool
 	Config            datatypes.JSON
@@ -52,7 +53,8 @@ type CreateIntegrationDTO struct {
 type UpdateIntegrationDTO struct {
 	Name              *string
 	Code              *string
-	IntegrationTypeID *uint // ID del tipo de integración (opcional en update)
+	IntegrationTypeID *uint   // ID del tipo de integración (opcional en update)
+	StoreID           *string // Identificador externo (ej: shop domain para Shopify)
 	IsActive          *bool
 	IsDefault         *bool
 	Config            *datatypes.JSON

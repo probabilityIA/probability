@@ -6,7 +6,8 @@ type CreateIntegrationRequest struct {
 	Code              string                 `json:"code" binding:"required" example:"whatsapp_platform"`
 	IntegrationTypeID uint                   `json:"integration_type_id" binding:"required" example:"1"` // ID del tipo de integración
 	Category          string                 `json:"category" binding:"omitempty" example:"internal"`
-	BusinessID        *uint                  `json:"business_id" example:"16"` // NULL para integraciones globales
+	BusinessID        *uint                  `json:"business_id" example:"16"`                 // NULL para integraciones globales
+	StoreID           string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)
 	IsActive          bool                   `json:"is_active" example:"true"`
 	IsDefault         bool                   `json:"is_default" example:"true"`
 	Config            map[string]interface{} `json:"config"`      // Configuración flexible
@@ -18,7 +19,8 @@ type CreateIntegrationRequest struct {
 type UpdateIntegrationRequest struct {
 	Name              *string                 `json:"name" example:"WhatsApp Actualizado"`
 	Code              *string                 `json:"code" example:"whatsapp_platform"`
-	IntegrationTypeID *uint                   `json:"integration_type_id" example:"1"` // ID del tipo de integración (opcional)
+	IntegrationTypeID *uint                   `json:"integration_type_id" example:"1"`          // ID del tipo de integración (opcional)
+	StoreID           *string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)
 	IsActive          *bool                   `json:"is_active" example:"true"`
 	IsDefault         *bool                   `json:"is_default" example:"true"`
 	Config            *map[string]interface{} `json:"config"`      // Configuración flexible

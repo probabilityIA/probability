@@ -68,3 +68,8 @@ func (b *bundle) SyncOrdersByIntegrationID(ctx context.Context, integrationID st
 func (b *bundle) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {
 	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
 }
+
+// GetWebhookURL no está soportado para WhatsApp (no usa webhooks entrantes)
+func (b *bundle) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*core.WebhookInfo, error) {
+	return nil, fmt.Errorf("webhook configuration is not supported for WhatsApp integration")
+}

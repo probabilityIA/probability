@@ -22,6 +22,9 @@ type IIntegrationHandler interface {
 	ActivateIntegrationHandler(c *gin.Context)
 	DeactivateIntegrationHandler(c *gin.Context)
 	SetAsDefaultHandler(c *gin.Context)
+	GetWebhookURLHandler(c *gin.Context)
+	ListWebhooksHandler(c *gin.Context)
+	DeleteWebhookHandler(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, logger log.ILogger)
 }
 type IntegrationHandler struct {

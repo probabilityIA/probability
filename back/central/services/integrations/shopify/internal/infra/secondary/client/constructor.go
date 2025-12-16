@@ -1,23 +1,27 @@
 package client
 
 import (
-	"net/http"
 	"time"
 
+	"github.com/go-resty/resty/v2"
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/domain"
-	"github.com/secamc93/probability/back/central/shared/httpclient"
 )
 
 type shopifyClient struct {
-	httpClient *http.Client
+	client *resty.Client
 }
 
 func New() domain.ShopifyClient {
+	client := resty.New().
+		SetTimeout(30 * time.Second).
+		SetRetryCount(0)
+
 	return &shopifyClient{
-		httpClient: httpclient.NewHTTPClient(httpclient.HTTPClientConfig{
-			Timeout:         30 * time.Second,
-			MaxIdleConns:    100,
-			IdleConnTimeout: 90 * time.Second,
-		}),
+		client: client,
 	}
+}
+
+// SetDebug habilita o deshabilita el modo debug de Resty (muestra request/response completo)
+func (c *shopifyClient) SetDebug(enabled bool) {
+	c.client.SetDebug(enabled)
 }

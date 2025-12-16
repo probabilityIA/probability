@@ -11,7 +11,7 @@ require (
 	github.com/aws/smithy-go v1.24.0
 	github.com/gin-gonic/gin v1.11.0
 	github.com/go-playground/validator/v10 v10.27.0
-	github.com/go-resty/resty/v2 v2.17.0
+	github.com/go-resty/resty/v2 v2.17.1
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/rabbitmq/amqp091-go v1.10.0

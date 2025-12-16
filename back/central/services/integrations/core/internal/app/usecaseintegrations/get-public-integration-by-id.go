@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -114,32 +115,33 @@ func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integra
 		_ = json.Unmarshal(integration.Config, &config)
 	}
 
-	// Obtener el código del tipo de integración y convertirlo a int
-	integrationTypeCode := 0
-	if integration.IntegrationType != nil {
-		integrationTypeCode = getIntegrationTypeCodeAsInt(integration.IntegrationType.Code)
-	}
+	// Usar directamente el IntegrationTypeID (es el ID de la tabla integration_types)
+	integrationTypeID := int(integration.IntegrationTypeID)
 
 	return &PublicIntegration{
 		ID:              integration.ID,
 		BusinessID:      integration.BusinessID,
 		Name:            integration.Name,
 		StoreID:         integration.StoreID,
-		IntegrationType: integrationTypeCode,
+		IntegrationType: integrationTypeID,
 		Config:          config,
 	}
 }
 
 // getIntegrationTypeCodeAsInt convierte el código de tipo de integración a int
-// Esta función mapea los códigos antiguos (strings) a los nuevos (int)
+// Esta función mapea los códigos (strings) a los IDs de la tabla integration_types
 func getIntegrationTypeCodeAsInt(code string) int {
-	switch code {
+	// Convertir a minúsculas para comparación case-insensitive
+	lowerCode := strings.ToLower(code)
+	switch lowerCode {
 	case "shopify":
 		return 1 // IntegrationTypeShopify
-	case "whatsapp":
+	case "whatsapp", "whatsap", "whastap":
 		return 2 // IntegrationTypeWhatsApp
-	case "mercado_libre":
+	case "mercado_libre", "mercado libre":
 		return 3 // IntegrationTypeMercadoLibre
+	case "woocommerce", "woocormerce":
+		return 4 // IntegrationTypeWoocommerce
 	default:
 		return 0
 	}
