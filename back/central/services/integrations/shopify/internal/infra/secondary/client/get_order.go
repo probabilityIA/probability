@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -18,12 +19,12 @@ func (c *shopifyClient) GetOrder(ctx context.Context, storeName, accessToken str
 
 	url := fmt.Sprintf("https://%s/admin/api/2024-10/orders/%s.json", storeName, orderID)
 
+	// 1. Perform Request
 	var orderResp response.OrderResponse
 	resp, err := c.client.R().
 		SetContext(ctx).
 		SetHeader("X-Shopify-Access-Token", accessToken).
 		SetHeader("Content-Type", "application/json").
-		SetResult(&orderResp).
 		Get(url)
 
 	if err != nil {
@@ -34,7 +35,23 @@ func (c *shopifyClient) GetOrder(ctx context.Context, storeName, accessToken str
 		return nil, fmt.Errorf("error al obtener orden de Shopify (código %d)", resp.StatusCode())
 	}
 
-	order := mappers.MapOrderResponseToShopifyOrder(orderResp.Order, nil, 0, "")
+	// 2. Unmarshal into typed response
+	if err := json.Unmarshal(resp.Body(), &orderResp); err != nil {
+		return nil, fmt.Errorf("error unmarshalling order response: %w", err)
+	}
+
+	// 2. Unmarshal into raw response to get original JSON
+	var rawResp struct {
+		Order json.RawMessage `json:"order"`
+	}
+	var rawOrder []byte
+	if err := json.Unmarshal(resp.Body(), &rawResp); err != nil {
+		fmt.Printf("Warning: failed to unmarshal raw order: %v\n", err)
+	} else {
+		rawOrder = []byte(rawResp.Order)
+	}
+
+	order := mappers.MapOrderResponseToShopifyOrder(orderResp.Order, rawOrder, nil, 0, "")
 
 	return &order, nil
 }

@@ -181,48 +181,55 @@ func (r *Repository) GetBusinessByIDWithConfiguredResources(ctx context.Context,
 		configuredResourcesModel = []models.BusinessResourceConfigured{}
 	}
 
-	// Si no hay recursos configurados, crearlos automáticamente con todos los recursos del sistema
-	if len(configuredResourcesModel) == 0 {
-		r.logger.Info().Uint("business_id", businessID).Msg("[business_resource_repository] No hay recursos configurados, creando automáticamente...")
-
-		// Obtener todos los recursos del sistema
-		var allResources []models.Resource
-		if err := r.database.Conn(ctx).
-			Model(&models.Resource{}).
-			Order("id ASC").
-			Find(&allResources).Error; err != nil {
-			r.logger.Error().Err(err).Msg("[business_resource_repository] Error al obtener todos los recursos")
-			return nil, errors.New("error interno del servidor")
+	// Verificar si faltan recursos por configurar (sincronización)
+	// Obtener todos los recursos del sistema para este tipo de negocio o globales
+	var allResources []models.Resource
+	if err := r.database.Conn(ctx).
+		Model(&models.Resource{}).
+		Where("business_type_id = ? OR business_type_id IS NULL", businessModel.BusinessTypeID).
+		Order("id ASC").
+		Find(&allResources).Error; err != nil {
+		r.logger.Error().Err(err).Msg("[business_resource_repository] Error al obtener todos los recursos para sincronización")
+		// No fallamos fatalmente, solo logueamos y retornamos lo que hay
+	} else {
+		// Crear mapa de recursos ya configurados
+		configuredMap := make(map[uint]bool)
+		for _, cr := range configuredResourcesModel {
+			configuredMap[cr.ResourceID] = true
 		}
 
-		// Crear configuraciones para cada recurso (desactivados por defecto)
+		// Identificar y crear faltantes
+		resourcesCreated := 0
 		for _, resource := range allResources {
-			newConfig := models.BusinessResourceConfigured{
-				BusinessID: businessID,
-				ResourceID: resource.ID,
-				Active:     false, // Por defecto desactivados
-			}
+			if !configuredMap[resource.ID] {
+				newConfig := models.BusinessResourceConfigured{
+					BusinessID: businessID,
+					ResourceID: resource.ID,
+					Active:     false, // Por defecto desactivados
+				}
 
-			if err := r.database.Conn(ctx).Create(&newConfig).Error; err != nil {
-				r.logger.Error().Err(err).
-					Uint("business_id", businessID).
-					Uint("resource_id", resource.ID).
-					Msg("[business_resource_repository] Error al crear configuración de recurso")
-				// Continuar con el siguiente recurso
-				continue
+				if err := r.database.Conn(ctx).Create(&newConfig).Error; err != nil {
+					r.logger.Error().Err(err).
+						Uint("business_id", businessID).
+						Uint("resource_id", resource.ID).
+						Msg("[business_resource_repository] Error al crear configuración de recurso faltante")
+					continue
+				}
+				resourcesCreated++
 			}
 		}
 
-		r.logger.Info().Uint("business_id", businessID).Int("resources_created", len(allResources)).Msg("[business_resource_repository] Recursos configurados creados automáticamente")
+		if resourcesCreated > 0 {
+			r.logger.Info().Uint("business_id", businessID).Int("resources_created", resourcesCreated).Msg("[business_resource_repository] Nuevos recursos sincronizados automáticamente")
 
-		// Volver a cargar los recursos configurados
-		if err := r.database.Conn(ctx).
-			Model(&models.BusinessResourceConfigured{}).
-			Preload("Resource").
-			Where("business_id = ?", businessModel.ID).
-			Find(&configuredResourcesModel).Error; err != nil {
-			r.logger.Error().Err(err).Uint("business_id", businessModel.ID).Msg("[business_resource_repository] Error al recargar recursos configurados")
-			configuredResourcesModel = []models.BusinessResourceConfigured{}
+			// Recargar la lista para incluir los nuevos
+			if err := r.database.Conn(ctx).
+				Model(&models.BusinessResourceConfigured{}).
+				Preload("Resource").
+				Where("business_id = ?", businessModel.ID).
+				Find(&configuredResourcesModel).Error; err != nil {
+				r.logger.Error().Err(err).Uint("business_id", businessModel.ID).Msg("[business_resource_repository] Error al recargar recursos configurados tras sync")
+			}
 		}
 	}
 

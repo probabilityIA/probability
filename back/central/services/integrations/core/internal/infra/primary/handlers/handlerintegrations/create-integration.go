@@ -28,12 +28,21 @@ import (
 //	@Failure		500		{object}	map[string]interface{}
 //	@Router			/integrations [post]
 func (h *IntegrationHandler) CreateIntegrationHandler(c *gin.Context) {
-	// Solo super admins pueden crear integraciones
-	if !middleware.IsSuperAdmin(c) {
-		h.logger.Error().Str("endpoint", "/integrations").Str("method", "POST").Msg("Intento de crear integración sin permisos de super admin")
+	// Verificar permisos: Super Admin O rol de Administrador (ID 4)
+	isSuper := middleware.IsSuperAdmin(c)
+	roleID, _ := middleware.GetRoleID(c)
+
+	// TODO: Implementar validación granular de permisos (ej: "integrations:create")
+	// Por ahora permitimos explícitamente al rol 4 (Administrador)
+	if !isSuper && roleID != 4 {
+		h.logger.Error().
+			Str("endpoint", "/integrations").
+			Str("method", "POST").
+			Uint("role_id", roleID).
+			Msg("Intento de crear integración sin permisos suficientes")
 		c.JSON(http.StatusForbidden, response.IntegrationErrorResponse{
 			Success: false,
-			Message: "Solo los super usuarios pueden crear integraciones",
+			Message: "No tienes permisos para crear integraciones",
 			Error:   "permisos insuficientes",
 		})
 		return
@@ -62,7 +71,23 @@ func (h *IntegrationHandler) CreateIntegrationHandler(c *gin.Context) {
 		return
 	}
 
-	dto := mapper.ToCreateIntegrationDTO(req, userID)
+	businessID := c.GetUint("business_id")
+
+	dto := mapper.ToCreateIntegrationDTO(req, userID, businessID)
+
+	// Validar que se haya asignado un BusinessID (crítico para la sincronización)
+	if dto.BusinessID == nil || *dto.BusinessID == 0 {
+		h.logger.Error().
+			Uint("user_id", userID).
+			Msg("Intento de crear integración sin BusinessID asignado (Super Admin debe especificar business_id)")
+		c.JSON(http.StatusBadRequest, response.IntegrationErrorResponse{
+			Success: false,
+			Message: "BusinessID es requerido",
+			Error:   "Como super admin, debes especificar el business_id en el cuerpo de la solicitud",
+		})
+		return
+	}
+
 	integration, err := h.usecase.CreateIntegration(c.Request.Context(), dto)
 	if err != nil {
 		statusCode := http.StatusInternalServerError

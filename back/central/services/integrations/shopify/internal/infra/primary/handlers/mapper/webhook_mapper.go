@@ -36,7 +36,12 @@ func MapWebhookPayloadToShopifyOrder(payload map[string]interface{}, businessID 
 	}
 
 	// Usar el mapper existente
-	shopifyOrder := mappers.MapOrderResponseToShopifyOrder(orderResp, businessID, integrationID, integrationType)
+
+	// Marshal payload again to get raw bytes for storage
+	rawOrder, _ := json.Marshal(payload)
+
+	// Usar el mapper existente
+	shopifyOrder := mappers.MapOrderResponseToShopifyOrder(orderResp, rawOrder, businessID, integrationID, integrationType)
 
 	return shopifyOrder, nil
 }

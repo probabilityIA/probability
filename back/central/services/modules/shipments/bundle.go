@@ -2,8 +2,10 @@ package shipments
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecaseenvioclick"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/envioclick"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -18,10 +20,13 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 2. Init Use Cases
 	uc := usecases.New(repo)
 
+	// EnvioClick Integration
+	envioClickClient := envioclick.New(logger)
+	envioClickUC := usecaseenvioclick.New(logger, envioClickClient)
+
 	// 3. Init Handlers
-	h := handlers.New(uc)
+	h := handlers.New(uc, envioClickUC)
 
 	// 4. Register Routes
 	h.RegisterRoutes(router)
 }
-

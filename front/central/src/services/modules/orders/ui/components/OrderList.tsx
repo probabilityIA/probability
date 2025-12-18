@@ -13,6 +13,7 @@ const OrderRow = memo(({
     order,
     onView,
     onEdit,
+    onViewRecommendation, // NEW prop
     onDelete,
     onShowRaw,
     formatCurrency,
@@ -24,6 +25,7 @@ const OrderRow = memo(({
     order: Order;
     onView?: (order: Order) => void;
     onEdit?: (order: Order) => void;
+    onViewRecommendation?: (order: Order) => void; // NEW prop definition
     onDelete: (id: string) => void;
     onShowRaw: (id: string) => void;
     formatCurrency: (amount: number, currency?: string) => string;
@@ -120,6 +122,36 @@ const OrderRow = memo(({
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex flex-row justify-end gap-2">
+                    {/* Botón de Recomendación Inteligente (Robot) */}
+                    {onViewRecommendation && (
+                        <button
+                            onClick={() => onViewRecommendation(order)}
+                            className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-md transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center shadow-sm"
+                            title="Recomendación Inteligente IA"
+                            aria-label="Ver recomendación IA"
+                        >
+                            <svg 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                width="16" 
+                                height="16" 
+                                viewBox="0 0 24 24" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                strokeWidth="2" 
+                                strokeLinecap="round" 
+                                strokeLinejoin="round" 
+                                className="lucide lucide-bot"
+                            >
+                                <path d="M12 8V4H8"/>
+                                <rect width="16" height="12" x="4" y="8" rx="2"/>
+                                <path d="M2 14h2"/>
+                                <path d="M20 14h2"/>
+                                <path d="M15 13v2"/>
+                                <path d="M9 13v2"/>
+                            </svg>
+                        </button>
+                    )}
+
                     {onView && (
                         <button
                             onClick={() => onView(order)}
@@ -166,10 +198,11 @@ OrderRow.displayName = 'OrderRow';
 interface OrderListProps {
     onView?: (order: Order) => void;
     onEdit?: (order: Order) => void;
+    onViewRecommendation?: (order: Order) => void;
     refreshKey?: number;
 }
 
-export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps) {
+export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey }: OrderListProps) {
     const [orders, setOrders] = useState<Order[]>([]);
     const [initialLoading, setInitialLoading] = useState(true);
     const [tableLoading, setTableLoading] = useState(false);
@@ -635,6 +668,8 @@ export default function OrderList({ onView, onEdit, refreshKey }: OrderListProps
                                         order={order}
                                         onView={onView}
                                         onEdit={onEdit}
+                                        onViewRecommendation={onViewRecommendation}
+                                        onDelete={handleDelete}
                                         onDelete={handleDelete}
                                         onShowRaw={(id) => {
                                             setSelectedOrderId(id);
