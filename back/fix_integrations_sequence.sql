@@ -21,3 +21,4 @@ SELECT
     currval(pg_get_serial_sequence('integrations', 'id')) as current_value,
     (SELECT MAX(id) FROM integrations) as max_id;
 
+

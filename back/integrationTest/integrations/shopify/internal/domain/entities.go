@@ -366,3 +366,4 @@ type ShippingLine struct {
 	DiscountAllocations           []DiscountAllocation `json:"discount_allocations"`
 }
 
+

@@ -46,3 +46,4 @@ func (l *logger) Fatal() *zerolog.Event {
 	return l.log.Fatal()
 }
 
+
