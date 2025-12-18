@@ -8,20 +8,25 @@ import (
 // ToBusinessEntity convierte models.Business a entities.Business
 func ToBusinessEntity(model models.Business) domain.Business {
 	business := domain.Business{
-		ID:                 model.Model.ID,
-		Name:               model.Name,
-		Code:               model.Code,
-		BusinessTypeID:     model.BusinessTypeID,
-		Timezone:           model.Timezone,
-		Address:            model.Address,
-		Description:        model.Description,
-		LogoURL:            model.LogoURL,
-		PrimaryColor:       model.PrimaryColor,
-		SecondaryColor:     model.SecondaryColor,
-		TertiaryColor:      model.TertiaryColor,
-		QuaternaryColor:    model.QuaternaryColor,
-		NavbarImageURL:     model.NavbarImageURL,
-		CustomDomain:       model.CustomDomain,
+		ID:              model.Model.ID,
+		Name:            model.Name,
+		Code:            model.Code,
+		BusinessTypeID:  model.BusinessTypeID,
+		Timezone:        model.Timezone,
+		Address:         model.Address,
+		Description:     model.Description,
+		LogoURL:         model.LogoURL,
+		PrimaryColor:    model.PrimaryColor,
+		SecondaryColor:  model.SecondaryColor,
+		TertiaryColor:   model.TertiaryColor,
+		QuaternaryColor: model.QuaternaryColor,
+		NavbarImageURL:  model.NavbarImageURL,
+		CustomDomain: func() string {
+			if model.CustomDomain != nil {
+				return *model.CustomDomain
+			}
+			return ""
+		}(),
 		IsActive:           model.IsActive,
 		EnableDelivery:     model.EnableDelivery,
 		EnablePickup:       model.EnablePickup,
@@ -65,19 +70,24 @@ func ToBusinessEntitySlice(models []models.Business) []domain.Business {
 // ToBusinessModel convierte entities.Business a models.Business
 func ToBusinessModel(entity domain.Business) models.Business {
 	return models.Business{
-		Name:               entity.Name,
-		Code:               entity.Code,
-		BusinessTypeID:     entity.BusinessTypeID,
-		Timezone:           entity.Timezone,
-		Address:            entity.Address,
-		Description:        entity.Description,
-		LogoURL:            entity.LogoURL,
-		PrimaryColor:       entity.PrimaryColor,
-		SecondaryColor:     entity.SecondaryColor,
-		TertiaryColor:      entity.TertiaryColor,
-		QuaternaryColor:    entity.QuaternaryColor,
-		NavbarImageURL:     entity.NavbarImageURL,
-		CustomDomain:       entity.CustomDomain,
+		Name:            entity.Name,
+		Code:            entity.Code,
+		BusinessTypeID:  entity.BusinessTypeID,
+		Timezone:        entity.Timezone,
+		Address:         entity.Address,
+		Description:     entity.Description,
+		LogoURL:         entity.LogoURL,
+		PrimaryColor:    entity.PrimaryColor,
+		SecondaryColor:  entity.SecondaryColor,
+		TertiaryColor:   entity.TertiaryColor,
+		QuaternaryColor: entity.QuaternaryColor,
+		NavbarImageURL:  entity.NavbarImageURL,
+		CustomDomain: func() *string {
+			if entity.CustomDomain != "" {
+				return &entity.CustomDomain
+			}
+			return nil
+		}(),
 		IsActive:           entity.IsActive,
 		EnableDelivery:     entity.EnableDelivery,
 		EnablePickup:       entity.EnablePickup,

@@ -18,6 +18,10 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		// Rutas adicionales
 		shipments.GET("/order/:order_id", h.GetShipmentsByOrderID)
 		shipments.GET("/tracking/:tracking_number", h.GetShipmentByTrackingNumber)
-	}
-}
 
+		// EnvioClick Integration
+		shipments.POST("/quote", h.QuoteShipment)
+		shipments.POST("/generate", h.GenerateGuide)
+	}
+
+}

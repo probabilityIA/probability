@@ -145,6 +145,9 @@ type Order struct {
 	Items    datatypes.JSON `gorm:"type:jsonb"` // Items de la orden
 	Metadata datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional de la plataforma
 
+	// Factores Negativos (Calculados)
+	NegativeFactors datatypes.JSON `gorm:"type:jsonb"` // lista de factores negativos que afectan el score
+
 	// Detalles financieros adicionales (descuentos por item, promociones, etc.)
 	FinancialDetails datatypes.JSON `gorm:"type:jsonb"`
 

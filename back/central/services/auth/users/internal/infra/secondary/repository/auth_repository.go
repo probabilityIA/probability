@@ -363,20 +363,25 @@ func (r *Repository) GetUserBusinesses(ctx context.Context, userID uint) ([]doma
 		}
 
 		businessInfo := domain.BusinessInfoEntity{
-			ID:                 bs.Business.ID,
-			Name:               bs.Business.Name,
-			Code:               bs.Business.Code,
-			BusinessTypeID:     bs.Business.BusinessTypeID,
-			Timezone:           bs.Business.Timezone,
-			Address:            bs.Business.Address,
-			Description:        bs.Business.Description,
-			LogoURL:            bs.Business.LogoURL,
-			PrimaryColor:       bs.Business.PrimaryColor,
-			SecondaryColor:     bs.Business.SecondaryColor,
-			TertiaryColor:      bs.Business.TertiaryColor,
-			QuaternaryColor:    bs.Business.QuaternaryColor,
-			NavbarImageURL:     bs.Business.NavbarImageURL,
-			CustomDomain:       bs.Business.CustomDomain,
+			ID:              bs.Business.ID,
+			Name:            bs.Business.Name,
+			Code:            bs.Business.Code,
+			BusinessTypeID:  bs.Business.BusinessTypeID,
+			Timezone:        bs.Business.Timezone,
+			Address:         bs.Business.Address,
+			Description:     bs.Business.Description,
+			LogoURL:         bs.Business.LogoURL,
+			PrimaryColor:    bs.Business.PrimaryColor,
+			SecondaryColor:  bs.Business.SecondaryColor,
+			TertiaryColor:   bs.Business.TertiaryColor,
+			QuaternaryColor: bs.Business.QuaternaryColor,
+			NavbarImageURL:  bs.Business.NavbarImageURL,
+			CustomDomain: func() string {
+				if bs.Business.CustomDomain != nil {
+					return *bs.Business.CustomDomain
+				}
+				return ""
+			}(),
 			IsActive:           bs.Business.IsActive,
 			EnableDelivery:     bs.Business.EnableDelivery,
 			EnablePickup:       bs.Business.EnablePickup,
@@ -813,20 +818,25 @@ func (r *Repository) GetBusinessStaffRelation(ctx context.Context, userID uint, 
 	// Si hay business, mapear la información
 	if bs.BusinessID != nil && bs.Business.ID != 0 {
 		businessInfo := domain.BusinessInfoEntity{
-			ID:                 bs.Business.ID,
-			Name:               bs.Business.Name,
-			Code:               bs.Business.Code,
-			BusinessTypeID:     bs.Business.BusinessTypeID,
-			Timezone:           bs.Business.Timezone,
-			Address:            bs.Business.Address,
-			Description:        bs.Business.Description,
-			LogoURL:            bs.Business.LogoURL,
-			PrimaryColor:       bs.Business.PrimaryColor,
-			SecondaryColor:     bs.Business.SecondaryColor,
-			TertiaryColor:      bs.Business.TertiaryColor,
-			QuaternaryColor:    bs.Business.QuaternaryColor,
-			NavbarImageURL:     bs.Business.NavbarImageURL,
-			CustomDomain:       bs.Business.CustomDomain,
+			ID:              bs.Business.ID,
+			Name:            bs.Business.Name,
+			Code:            bs.Business.Code,
+			BusinessTypeID:  bs.Business.BusinessTypeID,
+			Timezone:        bs.Business.Timezone,
+			Address:         bs.Business.Address,
+			Description:     bs.Business.Description,
+			LogoURL:         bs.Business.LogoURL,
+			PrimaryColor:    bs.Business.PrimaryColor,
+			SecondaryColor:  bs.Business.SecondaryColor,
+			TertiaryColor:   bs.Business.TertiaryColor,
+			QuaternaryColor: bs.Business.QuaternaryColor,
+			NavbarImageURL:  bs.Business.NavbarImageURL,
+			CustomDomain: func() string {
+				if bs.Business.CustomDomain != nil {
+					return *bs.Business.CustomDomain
+				}
+				return ""
+			}(),
 			IsActive:           bs.Business.IsActive,
 			EnableDelivery:     bs.Business.EnableDelivery,
 			EnablePickup:       bs.Business.EnablePickup,

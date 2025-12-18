@@ -2,8 +2,10 @@ package mapper
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/domain"
+	"gorm.io/datatypes"
 )
 
 func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrderDTO {
@@ -68,6 +70,17 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		OrderItems:      orderItems,
 		Addresses:       addresses,
 		OrderStatusURL:  s.OrderStatusURL,
+	}
+
+	if len(s.RawData) > 0 {
+		probabilityOrder.ChannelMetadata = &domain.ProbabilityChannelMetadataDTO{
+			ChannelSource: "shopify",
+			RawData:       datatypes.JSON(s.RawData),
+			Version:       "1.0",
+			ReceivedAt:    time.Now(),
+			IsLatest:      true,
+			SyncStatus:    "synced",
+		}
 	}
 
 	return probabilityOrder

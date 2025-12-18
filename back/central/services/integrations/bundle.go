@@ -24,6 +24,6 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	integrationCore.RegisterIntegration(core.IntegrationTypeWhatsApp, whatsappBundle)
 
-	shopify.New(router, logger, config, integrationCore, rabbitMQ)
+	shopify.New(router, logger, config, integrationCore, rabbitMQ, db)
 
 }
