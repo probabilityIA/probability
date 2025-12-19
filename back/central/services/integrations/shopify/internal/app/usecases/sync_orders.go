@@ -30,12 +30,12 @@ func (uc *SyncOrdersUseCase) SyncOrders(ctx context.Context, integrationID strin
 		return err
 	}
 
-	fifteenDaysAgo := time.Now().AddDate(0, 0, -15)
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
 	params := &domain.GetOrdersParams{
 		Status:          "any",
 		Limit:           250,
-		CreatedAtMin:    &fifteenDaysAgo,
-		FinancialStatus: "paid",
+		CreatedAtMin:    &thirtyDaysAgo,
+		FinancialStatus: "any",
 	}
 
 	fmt.Printf("[SyncOrders] Starting sync for integration %s. Params: CreatedAtMin=%v, Status=%s, Limit=%d\n",

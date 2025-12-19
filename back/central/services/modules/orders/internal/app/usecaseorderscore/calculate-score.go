@@ -1,6 +1,7 @@
 package usecaseorderscore
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -19,7 +20,7 @@ func (uc *UseCaseOrderScore) CalculateOrderScore(order *domain.ProbabilityOrder)
 	// Get Static Negative Factors
 	staticFactors := uc.GetStaticNegativeFactors(order)
 	fmt.Printf("[CalculateOrderScore] Order %s - Email: '%s', Name: '%s', Phone: '%s', Street: '%s', Street2: '%s', Count: %d, Platform: '%s', Factors: %v\n",
-		order.OrderNumber, order.CustomerEmail, order.CustomerName, order.CustomerPhone, order.ShippingStreet, order.ShippingStreet2, order.CustomerOrderCount, order.Platform, staticFactors)
+		order.OrderNumber, order.CustomerEmail, order.CustomerName, order.CustomerPhone, order.ShippingStreet, order.Address2, order.CustomerOrderCount, order.Platform, staticFactors)
 
 	// Apply penalties for static factors
 	// Each factor reduces score by 10 (example weight)
@@ -93,7 +94,7 @@ func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *domain.ProbabilityO
 	}
 
 	// 6. Complemento de dirección
-	if order.ShippingStreet2 == "" || len(order.ShippingStreet2) <= 5 {
+	if order.Address2 == "" || len(order.Address2) <= 5 {
 		factors = append(factors, "Complemento de dirección")
 	}
 
@@ -118,23 +119,55 @@ func (uc *UseCaseOrderScore) isValidEmail(email string) bool {
 func (uc *UseCaseOrderScore) IsCODPayment(order *domain.ProbabilityOrder) bool {
 	// 1. Check PaymentMethodID if we have a mapping (Placeholder)
 	// 2. Check Financial Details (Shopify)
-	// "financial_status": "pending" AND gateway is often "manual" or "cash_on_delivery"
 
-	// Simplificación basada en metadata o gateway
-	// Si no tenemos acceso fácil a Gateway string (está en Payment struct), revisamos si podemos inferirlo.
-	// El struct Order tiene PaymentMethodID.
+	keywords := []string{"cod", "cash", "contra", "manual"}
 
-	// Si tenemos Payments en el struct Order:
-	for _, payment := range order.Payments {
-		if payment.Gateway != nil {
-			gw := strings.ToLower(*payment.Gateway)
-			if strings.Contains(gw, "cod") || strings.Contains(gw, "cash") || strings.Contains(gw, "contra") || gw == "manual" {
-				return true
+	// Check Payments slice first
+	if len(order.Payments) > 0 {
+		for _, payment := range order.Payments {
+			if payment.Gateway != nil {
+				gw := strings.ToLower(*payment.Gateway)
+				for _, kw := range keywords {
+					if strings.Contains(gw, kw) {
+						return true
+					}
+				}
 			}
 		}
 	}
 
-	// Si payment_method_id es específico (asumiendo 2=COD por ejemplo) - NO HARDCÓDIAR IDs sin saber.
+	// 3. Fallback: Check PaymentDetails JSONB (crucial for Shopify if Payments slice is empty)
+	if order.PaymentDetails != nil {
+		var details struct {
+			Gateway             string   `json:"gateway"`
+			PaymentGatewayNames []string `json:"payment_gateway_names"`
+		}
+
+		// Unmarshal only what we need
+		bytes, err := order.PaymentDetails.MarshalJSON()
+		if err == nil {
+			if err := json.Unmarshal(bytes, &details); err == nil {
+				// Check single gateway
+				if details.Gateway != "" {
+					gw := strings.ToLower(details.Gateway)
+					for _, kw := range keywords {
+						if strings.Contains(gw, kw) {
+							return true
+						}
+					}
+				}
+				// Check gateway names array
+				for _, name := range details.PaymentGatewayNames {
+					gw := strings.ToLower(name)
+					for _, kw := range keywords {
+						if strings.Contains(gw, kw) {
+							return true
+						}
+					}
+				}
+			}
+		}
+	}
 
 	return false
 }

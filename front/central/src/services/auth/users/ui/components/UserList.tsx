@@ -86,6 +86,15 @@ export const UserList: React.FC = () => {
             type: 'text',
             placeholder: 'Filtrar por ID de negocio...',
         },
+        {
+            key: 'include_deleted',
+            label: 'Mostrar Eliminados',
+            type: 'select',
+            options: [
+                { value: 'true', label: 'Sí' },
+                { value: 'false', label: 'No' },
+            ],
+        },
     ];
 
     // Convertir filtros a ActiveFilter[]
@@ -146,6 +155,15 @@ export const UserList: React.FC = () => {
             });
         }
 
+        if (filters.include_deleted !== undefined) {
+            active.push({
+                key: 'include_deleted',
+                label: 'Mostrar Eliminados',
+                value: filters.include_deleted ? 'Sí' : 'No',
+                type: 'select',
+            });
+        }
+
         return active;
     }, [filters]);
 
@@ -160,6 +178,8 @@ export const UserList: React.FC = () => {
                 newFilters.role_id = value ? Number(value) : undefined;
             } else if (filterKey === 'business_id') {
                 newFilters.business_id = value ? Number(value) : undefined;
+            } else if (filterKey === 'include_deleted') {
+                newFilters.include_deleted = value === 'true' || value === true;
             } else {
                 (newFilters as any)[filterKey] = value;
             }
@@ -360,235 +380,233 @@ export const UserList: React.FC = () => {
                 {/* Tabla */}
                 <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden -mt-px">
                     <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    ID
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Avatar
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Nombre
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Email
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Teléfono
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Scope
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Rol
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Activo
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {loading ? (
+                        <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
                                 <tr>
-                                    <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500">
-                                        Cargando usuarios...
-                                    </td>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        ID
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Avatar
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Nombre
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Email
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Teléfono
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Scope
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Rol
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Activo
+                                    </th>
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Acciones
+                                    </th>
                                 </tr>
-                            ) : users.length === 0 ? (
-                                <tr>
-                                    <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500">
-                                        No hay usuarios disponibles
-                                    </td>
-                                </tr>
-                            ) : (
-                                users.map((user) => (
-                                    <tr key={user.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                            {user.id}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {user.avatar_url ? (
-                                                <img
-                                                    src={user.avatar_url}
-                                                    alt={user.name}
-                                                    className="w-10 h-10 rounded-full object-cover"
-                                                />
-                                            ) : (
-                                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                    <span className="text-sm font-medium text-gray-600">
-                                                        {user.name.charAt(0).toUpperCase()}
-                                                    </span>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                                            {user.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {user.email}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {user.phone || '-'}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            {user.scope_code ? (
-                                                <span
-                                                    className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                        user.scope_code === 'platform'
-                                                            ? 'bg-purple-100 text-purple-800'
-                                                            : 'bg-blue-100 text-blue-800'
-                                                    }`}
-                                                >
-                                                    {user.scope_code === 'platform' ? 'Platform' : 'Business'}
-                                                </span>
-                                            ) : (
-                                                <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
-                                                    Sin scope
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {user.business_role_assignments && user.business_role_assignments.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {user.business_role_assignments.map((assignment, idx) => (
-                                                        <span
-                                                            key={idx}
-                                                            className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded"
-                                                            title={`Negocio: ${assignment.business_name || assignment.business_id}`}
-                                                        >
-                                                            {assignment.role_name || `Rol ${assignment.role_id}`}
-                                                        </span>
-                                                    ))}
-                                                </div>
-                                            ) : (
-                                                <span className="text-gray-400">-</span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`px-2 py-1 text-xs font-medium rounded-full ${
-                                                    user.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
-                                                }`}
-                                            >
-                                                {user.is_active ? 'Sí' : 'No'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenAssignRole(user)}
-                                                    className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-                                                    title="Asignar rol"
-                                                    aria-label="Asignar rol"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                                    </svg>
-                                                </button>
-                                                <button
-                                                    onClick={() => handleEdit(user)}
-                                                    className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
-                                                    title="Editar usuario"
-                                                    aria-label="Editar usuario"
-                                                    disabled={loadingUser}
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
-                                                </button>
-                                                <button
-                                                    onClick={() => setDeleteId(user.id)}
-                                                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                                                    title="Eliminar usuario"
-                                                    aria-label="Eliminar usuario"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
-                                                </button>
-                                            </div>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                                {loading ? (
+                                    <tr>
+                                        <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500">
+                                            Cargando usuarios...
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                ) : users.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500">
+                                            No hay usuarios disponibles
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    users.map((user) => (
+                                        <tr key={user.id} className="hover:bg-gray-50">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                                {user.id}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {user.avatar_url ? (
+                                                    <img
+                                                        src={user.avatar_url}
+                                                        alt={user.name}
+                                                        className="w-10 h-10 rounded-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                        <span className="text-sm font-medium text-gray-600">
+                                                            {user.name.charAt(0).toUpperCase()}
+                                                        </span>
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                                {user.name}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {user.email}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {user.phone || '-'}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                {user.scope_code ? (
+                                                    <span
+                                                        className={`px-2 py-1 text-xs font-medium rounded-full ${user.scope_code === 'platform'
+                                                                ? 'bg-purple-100 text-purple-800'
+                                                                : 'bg-blue-100 text-blue-800'
+                                                            }`}
+                                                    >
+                                                        {user.scope_code === 'platform' ? 'Platform' : 'Business'}
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                                                        Sin scope
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                                {user.business_role_assignments && user.business_role_assignments.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {user.business_role_assignments.map((assignment, idx) => (
+                                                            <span
+                                                                key={idx}
+                                                                className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded"
+                                                                title={`Negocio: ${assignment.business_name || assignment.business_id}`}
+                                                            >
+                                                                {assignment.role_name || `Rol ${assignment.role_id}`}
+                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-gray-400">-</span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
+                                                <span
+                                                    className={`px-2 py-1 text-xs font-medium rounded-full ${user.is_active
+                                                            ? 'bg-green-100 text-green-800'
+                                                            : 'bg-red-100 text-red-800'
+                                                        }`}
+                                                >
+                                                    {user.is_active ? 'Sí' : 'No'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                                <div className="flex justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleOpenAssignRole(user)}
+                                                        className="p-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                                                        title="Asignar rol"
+                                                        aria-label="Asignar rol"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleEdit(user)}
+                                                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                                                        title="Editar usuario"
+                                                        aria-label="Editar usuario"
+                                                        disabled={loadingUser}
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                                        </svg>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setDeleteId(user.id)}
+                                                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                        title="Eliminar usuario"
+                                                        aria-label="Eliminar usuario"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
-                {/* Paginación */}
-                {!loading && users.length > 0 && (
-                    <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
-                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                            {/* Desktop: Full pagination */}
-                            <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-700">
-                                        Mostrando{' '}
-                                        <span className="font-medium">
-                                            {(page - 1) * pageSize + 1}
-                                        </span>{' '}
-                                        a{' '}
-                                        <span className="font-medium">
-                                            {Math.min(page * pageSize, total)}
-                                        </span>{' '}
-                                        de <span className="font-medium">{total}</span> resultados
+                    {/* Paginación */}
+                    {!loading && users.length > 0 && (
+                        <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                {/* Desktop: Full pagination */}
+                                <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                                    <div>
+                                        <p className="text-sm text-gray-700">
+                                            Mostrando{' '}
+                                            <span className="font-medium">
+                                                {(page - 1) * pageSize + 1}
+                                            </span>{' '}
+                                            a{' '}
+                                            <span className="font-medium">
+                                                {Math.min(page * pageSize, total)}
+                                            </span>{' '}
+                                            de <span className="font-medium">{total}</span> resultados
+                                        </p>
+                                    </div>
+                                    <nav className="flex items-center gap-2">
+                                        <button
+                                            onClick={() => setFilters({ ...filters, page: page - 1 })}
+                                            disabled={page === 1}
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        >
+                                            Anterior
+                                        </button>
+                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                                            Página {page} de {totalPages}
+                                        </span>
+                                        <button
+                                            onClick={() => setFilters({ ...filters, page: page + 1 })}
+                                            disabled={page === totalPages}
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        >
+                                            Siguiente
+                                        </button>
+                                    </nav>
+                                </div>
+
+                                {/* Mobile: Page size selector */}
+                                <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
+                                    <div className="flex items-center gap-2">
+                                        <label className="text-xs text-gray-700 whitespace-nowrap">
+                                            Mostrar:
+                                        </label>
+                                        <select
+                                            value={pageSize}
+                                            onChange={(e) => {
+                                                const newPageSize = parseInt(e.target.value);
+                                                setFilters({ ...filters, page_size: newPageSize, page: 1 });
+                                            }}
+                                            className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                        >
+                                            <option value="10">10</option>
+                                            <option value="20">20</option>
+                                            <option value="50">50</option>
+                                            <option value="100">100</option>
+                                        </select>
+                                    </div>
+                                    <p className="text-xs text-gray-500">
+                                        Página {page} de {totalPages}
                                     </p>
                                 </div>
-                                <nav className="flex items-center gap-2">
-                                    <button
-                                        onClick={() => setFilters({ ...filters, page: page - 1 })}
-                                        disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Anterior
-                                    </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
-                                        Página {page} de {totalPages}
-                                    </span>
-                                    <button
-                                        onClick={() => setFilters({ ...filters, page: page + 1 })}
-                                        disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Siguiente
-                                    </button>
-                                </nav>
-                            </div>
-
-                            {/* Mobile: Page size selector */}
-                            <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
-                                <div className="flex items-center gap-2">
-                                    <label className="text-xs text-gray-700 whitespace-nowrap">
-                                        Mostrar:
-                                    </label>
-                                    <select
-                                        value={pageSize}
-                                        onChange={(e) => {
-                                            const newPageSize = parseInt(e.target.value);
-                                            setFilters({ ...filters, page_size: newPageSize, page: 1 });
-                                        }}
-                                        className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                                    >
-                                        <option value="10">10</option>
-                                        <option value="20">20</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                </div>
-                                <p className="text-xs text-gray-500">
-                                    Página {page} de {totalPages}
-                                </p>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
                 </div>
             </div>
 
@@ -672,8 +690,8 @@ export const UserList: React.FC = () => {
                             options={[
                                 { value: '', label: 'Seleccionar rol...' },
                                 ...roles
-                                    .filter(r => assigningRoleUser?.scope_code === 'platform' 
-                                        ? r.scope_code === 'platform' 
+                                    .filter(r => assigningRoleUser?.scope_code === 'platform'
+                                        ? r.scope_code === 'platform'
                                         : r.scope_code === 'business')
                                     .map(r => ({ value: String(r.id), label: r.name }))
                             ]}

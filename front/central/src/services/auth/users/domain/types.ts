@@ -66,6 +66,7 @@ export interface GetUsersParams {
     created_at?: string;
     sort_by?: string;
     sort_order?: 'asc' | 'desc';
+    include_deleted?: boolean;
 }
 
 export interface CreateUserDTO {

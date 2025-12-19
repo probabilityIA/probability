@@ -158,7 +158,7 @@ func validateAndUpdateShipping(existingOrder *domain.ProbabilityOrder, dto *doma
 					changed = true
 				}
 				if addr.Street2 != "" {
-					existingOrder.ShippingStreet2 = addr.Street2
+					existingOrder.Address2 = addr.Street2
 					changed = true
 				}
 				if addr.City != "" && existingOrder.ShippingCity != addr.City {
