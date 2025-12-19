@@ -6,7 +6,9 @@ import { AvatarUpload } from './avatar-upload';
 import { Button } from './button';
 import { Spinner } from './spinner';
 import { Alert } from './alert';
+import { ConfirmModal } from './confirm-modal';
 import { updateUserAction } from '@/services/auth/users/infra/actions';
+import { ChangePasswordForm } from '@/services/auth/login/ui';
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -27,6 +29,10 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showUpdateConfirm, setShowUpdateConfirm] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   // Resetear estado cuando el modal se abre o cambia el usuario
   useEffect(() => {
@@ -40,32 +46,21 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
       setRemoveAvatar(false);
       setError(null);
       setSuccess(false);
+      setShowChangePassword(false);
+      setShowDeleteConfirm(false);
+      setShowUpdateConfirm(false);
+      setPendingFile(null);
     }
   }, [isOpen, user?.userId]);
 
   if (!user) return null;
 
-  const handleFileSelect = (file: File | null) => {
-    setAvatarFile(file);
-    // Si se selecciona un archivo, no eliminar el avatar
-    if (file) {
-      setRemoveAvatar(false);
-    }
-    setError(null);
-    setSuccess(false);
-  };
+  const handleSaveAvatar = async (file?: File | null, shouldRemove?: boolean) => {
+    const fileToSave = file !== undefined ? file : avatarFile;
+    const shouldRemoveAvatar = shouldRemove !== undefined ? shouldRemove : removeAvatar;
 
-  const handleRemoveAvatar = () => {
-    setAvatarFile(null);
-    setRemoveAvatar(true);
-    setError(null);
-    setSuccess(false);
-  };
-
-  const handleSave = async () => {
     // Validar que haya algo que hacer
-    if (!avatarFile && !removeAvatar) {
-      setError('Por favor selecciona una imagen o elimina la actual');
+    if (!fileToSave && !shouldRemoveAvatar) {
       return;
     }
 
@@ -77,14 +72,15 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
       const userId = parseInt(user.userId, 10);
       if (isNaN(userId)) {
         setError('ID de usuario inválido');
+        setLoading(false);
         return;
       }
 
       const updateData: { avatarFile?: File; remove_avatar?: boolean } = {};
-      if (avatarFile) {
-        updateData.avatarFile = avatarFile;
+      if (fileToSave) {
+        updateData.avatarFile = fileToSave;
       }
-      if (removeAvatar && user.avatarUrl) {
+      if (shouldRemoveAvatar && user.avatarUrl) {
         updateData.remove_avatar = true;
       }
 
@@ -109,53 +105,178 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
     }
   };
 
+  const handleEditClick = () => {
+    // Crear input file temporal para abrir selector
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.style.display = 'none';
+    
+    const cleanup = () => {
+      if (document.body.contains(input)) {
+        document.body.removeChild(input);
+      }
+    };
+
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0] || null;
+      if (file) {
+        setPendingFile(file);
+        setShowUpdateConfirm(true);
+      }
+      cleanup();
+    };
+
+    // Limpiar si el usuario cancela (cuando el input pierde el foco)
+    input.oncancel = cleanup;
+    
+    // También limpiar después de un tiempo por si acaso
+    setTimeout(cleanup, 1000);
+
+    document.body.appendChild(input);
+    input.click();
+  };
+
+  const handleFileSelect = (file: File | null) => {
+    // Esta función ya no se usa directamente, pero la mantenemos por compatibilidad
+    if (file) {
+      setPendingFile(file);
+      setShowUpdateConfirm(true);
+    }
+  };
+
+  const handleConfirmUpdate = async () => {
+    if (!pendingFile) return;
+    
+    setShowUpdateConfirm(false);
+    setAvatarFile(pendingFile);
+    setRemoveAvatar(false);
+    setError(null);
+    setSuccess(false);
+    // Guardar automáticamente cuando se confirma la actualización
+    await handleSaveAvatar(pendingFile, false);
+    setPendingFile(null);
+  };
+
+  const handleRemoveClick = () => {
+    // Mostrar modal de confirmación
+    setShowDeleteConfirm(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setShowDeleteConfirm(false);
+    setAvatarFile(null);
+    setRemoveAvatar(true);
+    setError(null);
+    setSuccess(false);
+    // Guardar automáticamente cuando se confirma la eliminación
+    await handleSaveAvatar(null, true);
+  };
+
   const handleClose = () => {
     setAvatarFile(null);
     setRemoveAvatar(false);
     setError(null);
     setSuccess(false);
+    setShowChangePassword(false);
+    setShowDeleteConfirm(false);
     onClose();
   };
 
-  return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Cambiar Foto de Perfil">
-      <div className="space-y-6">
-        {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
-        {success && <Alert type="success">Foto de perfil actualizada exitosamente</Alert>}
+  const handlePasswordChangeSuccess = () => {
+    setShowChangePassword(false);
+    // Opcional: mostrar mensaje de éxito o recargar
+  };
 
-        <div className="flex flex-col items-center gap-4">
-          <AvatarUpload
-            key={`${user.userId}-${isOpen}`} // Forzar re-render cuando cambia el usuario o se abre el modal
-            currentAvatarUrl={removeAvatar ? null : (user.avatarUrl || null)}
-            onFileSelect={handleFileSelect}
-            size="lg"
-          />
-          
-          {user.avatarUrl && !removeAvatar && (
-            <Button
-              type="button"
-              variant="danger"
-              size="sm"
-              onClick={handleRemoveAvatar}
-            >
-              Eliminar foto actual
-            </Button>
+  return (
+    <>
+      <Modal isOpen={isOpen} onClose={handleClose} title={showChangePassword ? "Cambiar Contraseña" : "Cambiar Foto de Perfil"}>
+        <div className="space-y-6">
+          {/* Vista de cambio de contraseña */}
+          {showChangePassword ? (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowChangePassword(false)}
+                className="mb-4 flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+                <span>Volver a foto de perfil</span>
+              </button>
+              <ChangePasswordForm
+                onSuccess={handlePasswordChangeSuccess}
+                onCancel={() => setShowChangePassword(false)}
+              />
+            </div>
+          ) : (
+            /* Vista de foto de perfil */
+            <>
+              {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
+              {success && <Alert type="success">Foto de perfil actualizada exitosamente</Alert>}
+              {loading && (
+                <div className="flex justify-center">
+                  <Spinner size="md" />
+                </div>
+              )}
+
+              <div className="flex flex-col items-center gap-4">
+                <AvatarUpload
+                  key={`${user.userId}-${isOpen}`} // Forzar re-render cuando cambia el usuario o se abre el modal
+                  currentAvatarUrl={removeAvatar ? null : (user.avatarUrl || null)}
+                  onFileSelect={handleFileSelect}
+                  onRemoveClick={handleRemoveClick}
+                  onEditClick={handleEditClick}
+                  disableClick={true}
+                  size="lg"
+                />
+
+                {/* Botón para cambiar contraseña debajo de la foto */}
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowChangePassword(true)}
+                  className="flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                  </svg>
+                  Cambiar contraseña
+                </Button>
+              </div>
+            </>
           )}
         </div>
+      </Modal>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button type="button" variant="secondary" onClick={handleClose}>
-            Cancelar
-          </Button>
-          <Button
-            type="button"
-            onClick={handleSave}
-            disabled={loading || (!avatarFile && !removeAvatar)}
-          >
-            {loading ? <Spinner size="sm" /> : 'Guardar'}
-          </Button>
-        </div>
-      </div>
-    </Modal>
+      {/* Modal de confirmación para eliminar foto */}
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar foto de perfil"
+        message="¿Estás seguro de que deseas eliminar tu foto de perfil? Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        type="danger"
+      />
+
+      {/* Modal de confirmación para actualizar foto */}
+      <ConfirmModal
+        isOpen={showUpdateConfirm}
+        onClose={() => {
+          setShowUpdateConfirm(false);
+          setPendingFile(null);
+        }}
+        onConfirm={handleConfirmUpdate}
+        title="Actualizar foto de perfil"
+        message="¿Deseas actualizar tu foto de perfil con la imagen seleccionada?"
+        confirmText="Actualizar"
+        cancelText="Cancelar"
+        type="info"
+      />
+    </>
   );
 }

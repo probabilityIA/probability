@@ -40,7 +40,7 @@ export function ConfirmModal({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm" zIndex={60}>
       <div className="space-y-6">
         {/* Mensaje */}
         <p className="text-gray-700">{message}</p>

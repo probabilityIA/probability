@@ -15,6 +15,7 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
   glass?: boolean; // Efecto glassmorphism
   transparent?: boolean; // NEW: Fondo transparente sin sombra
+  zIndex?: number; // Z-index personalizado para el modal y backdrop
 }
 
 const sizeClasses = {
@@ -30,7 +31,7 @@ const sizeClasses = {
   'full': 'max-w-[95vw] w-[95vw]',
 };
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', glass = false, transparent = false }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', glass = false, transparent = false, zIndex = 50 }: ModalProps) {
   console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
 
   // Cerrar con ESC
@@ -58,13 +59,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
 
   if (!isOpen) return null;
 
+  const backdropZIndex = zIndex - 10;
+  const modalZIndex = zIndex;
+
   return (
     <>
       {/* Backdrop */}
-      <div className="modal-backdrop" onClick={onClose} />
+      <div className="modal-backdrop" style={{ zIndex: backdropZIndex }} onClick={onClose} />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: modalZIndex }}>
         {size === 'full' ? (
           <div
             className={`${transparent ? 'bg-transparent shadow-none border-none' : (glass ? 'bg-white/80 backdrop-blur-xl border border-white/20' : 'bg-white shadow-2xl rounded-3xl')} flex flex-col overflow-hidden`}
