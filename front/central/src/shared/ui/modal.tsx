@@ -14,6 +14,7 @@ interface ModalProps {
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
   glass?: boolean; // Efecto glassmorphism
+  transparent?: boolean; // NEW: Fondo transparente sin sombra
 }
 
 const sizeClasses = {
@@ -29,7 +30,7 @@ const sizeClasses = {
   'full': 'max-w-[95vw] w-[95vw]',
 };
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', glass = false }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', glass = false, transparent = false }: ModalProps) {
   console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
 
   // Cerrar con ESC
@@ -66,7 +67,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         {size === 'full' ? (
           <div
-            className={`${glass ? 'bg-white/80 backdrop-blur-xl border border-white/20' : 'bg-white'} rounded-3xl shadow-2xl flex flex-col overflow-hidden`}
+            className={`${transparent ? 'bg-transparent shadow-none border-none' : (glass ? 'bg-white/80 backdrop-blur-xl border border-white/20' : 'bg-white shadow-2xl rounded-3xl')} flex flex-col overflow-hidden`}
             style={{
               width: '90vw',
               height: '90vh',
@@ -95,21 +96,21 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
             </div>
           </div>
         ) : (
-          <div 
-            className={`${size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white rounded-2xl shadow-2xl p-6 sm:p-8'} max-h-[90vh] overflow-hidden flex flex-col`}
+          <div
+            className={`${transparent ? 'bg-transparent shadow-none border-none' : (size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white rounded-2xl shadow-2xl p-6 sm:p-8')} max-h-[90vh] overflow-hidden flex flex-col`}
             style={
-              size === 'sm' || size === 'md' 
+              size === 'sm' || size === 'md'
                 ? {
-                    maxWidth: size === 'sm' ? '28rem' : '32rem',
-                    width: '95vw'
-                  }
+                  maxWidth: size === 'sm' ? '28rem' : '32rem',
+                  width: '95vw'
+                }
                 : size === '5xl' || size === '6xl' || size === '7xl'
-                ? {
+                  ? {
                     width: size === '5xl' ? '90vw' : size === '6xl' ? '95vw' : '98vw',
                     maxWidth: size === '5xl' ? '90vw' : size === '6xl' ? '95vw' : '98vw',
                     minWidth: 0
                   }
-                : undefined
+                  : undefined
             }
           >
             {/* Header */}

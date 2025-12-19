@@ -42,11 +42,11 @@ func (uc *UseCaseOrderScore) CalculateOrderScore(order *domain.ProbabilityOrder)
 		}
 	}
 
-	// COD Logic (placeholder) that might add another factor?
-	// If IS COD, usually we reduce score further or add a factor?
-	// Reference Python: if payment_method == 'cod': probability *= 0.8
+	// COD Logic
 	if uc.IsCODPayment(order) {
 		score = score * 0.8 // Apply 20% reduction
+		// Add to factors so user knows why it's not 100%
+		staticFactors = append(staticFactors, "Pago Contra Entrega")
 	}
 
 	// Ensure limits

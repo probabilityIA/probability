@@ -223,13 +223,17 @@ func (uc *AuthUseCase) Login(ctx context.Context, request domain.LoginRequest) (
 		return nil, fmt.Errorf("error interno del servidor")
 	}
 
-	// Log del token generado
+	// Log del token generado y BusinessID Verificación
 	uc.log.Info().
 		Uint("user_id", userAuth.ID).
-		Uint("token_business_id", businessID).
+		Uint("token_business_id", businessID). // Critical line for user verification
 		Str("user_email", userAuth.Email).
 		Strs("user_roles", roleNames).
 		Msg("Token JWT generado exitosamente")
+
+	// Explicit print for user debugging
+	fmt.Printf("[LOGIN DEBUG] User: %s (ID: %d) | Assigned BusinessID for Session: %d | IsSuperAdmin: %v\n",
+		userAuth.Email, userAuth.ID, businessID, isSuperAdminUser)
 
 	// Verificar si es el primer login (LastLoginAt es nil)
 	isFirstLogin := userAuth.LastLoginAt == nil

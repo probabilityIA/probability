@@ -17,7 +17,7 @@ import (
 const (
 	APIKey = "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"
 	APIURL = "https://openrouter.ai/api/v1/chat/completions"
-	Model  = "amazon/nova-2-lite-v1:free"
+	Model  = "nvidia/nemotron-3-nano-30b-a3b:free"
 )
 
 type Client struct {
@@ -158,11 +158,13 @@ func (c *Client) GetRecommendation(req domain.RecommendationRequest) (*domain.AI
 	}
 
 	if err := json.Unmarshal(body, &openRouterResp); err != nil {
+		c.logger.Error().Err(err).Str("body", string(body)).Msg("Failed to parse OpenRouter response")
 		return nil, err
 	}
 
 	if len(openRouterResp.Choices) == 0 {
-		return nil, fmt.Errorf("no choices returned from AI")
+		c.logger.Error().Str("body", string(body)).Msg("No choices returned from AI")
+		return nil, fmt.Errorf("no choices returned from AI: %s", string(body))
 	}
 
 	content := openRouterResp.Choices[0].Message.Content

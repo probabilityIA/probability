@@ -9,7 +9,7 @@ import (
 )
 
 // MapOrderResponseToShopifyOrder mapea una Order de respuesta de Shopify a ShopifyOrder del dominio
-func MapOrderResponseToShopifyOrder(orderResp response.Order, businessID *uint, integrationID uint, integrationType string) domain.ShopifyOrder {
+func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, businessID *uint, integrationID uint, integrationType string) domain.ShopifyOrder {
 	// Convertir precios de string a float64
 	totalAmount, _ := strconv.ParseFloat(orderResp.TotalPrice, 64)
 
@@ -125,14 +125,19 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, businessID *uint, 
 		OccurredAt:      orderResp.CreatedAt,
 		ImportedAt:      time.Now(),
 		OrderStatusURL:  orderStatusURL,
+		RawData:         rawOrder,
 	}
 }
 
 // MapOrdersResponseToShopifyOrders mapea múltiples órdenes de respuesta a ShopifyOrder del dominio
-func MapOrdersResponseToShopifyOrders(ordersResp []response.Order, businessID *uint, integrationID uint, integrationType string) []domain.ShopifyOrder {
+func MapOrdersResponseToShopifyOrders(ordersResp []response.Order, rawOrders [][]byte, businessID *uint, integrationID uint, integrationType string) []domain.ShopifyOrder {
 	orders := make([]domain.ShopifyOrder, len(ordersResp))
 	for i, orderResp := range ordersResp {
-		orders[i] = MapOrderResponseToShopifyOrder(orderResp, businessID, integrationID, integrationType)
+		var rawOrder []byte
+		if i < len(rawOrders) {
+			rawOrder = rawOrders[i]
+		}
+		orders[i] = MapOrderResponseToShopifyOrder(orderResp, rawOrder, businessID, integrationID, integrationType)
 	}
 	return orders
 }

@@ -315,9 +315,9 @@ type RefundLineItem struct {
 	LineItemID  int64     `json:"line_item_id"`
 	LineItem    LineItem  `json:"line_item"`
 	Quantity    int       `json:"quantity"`
-	Subtotal    string    `json:"subtotal"`
+	Subtotal    float64   `json:"subtotal"`
 	SubtotalSet *MoneySet `json:"subtotal_set"`
-	TotalTax    string    `json:"total_tax"`
+	TotalTax    float64   `json:"total_tax"`
 	TotalTaxSet *MoneySet `json:"total_tax_set"`
 	RestockType string    `json:"restock_type"`
 }

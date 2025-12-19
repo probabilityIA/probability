@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/infra/secondary/client"
 	shopifycore "github.com/secamc93/probability/back/central/services/integrations/shopify/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/infra/secondary/queue"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -62,7 +63,7 @@ func (a *integrationServiceAdapter) UpdateIntegrationConfig(ctx context.Context,
 	return a.coreIntegration.UpdateIntegrationConfig(ctx, integrationID, config)
 }
 
-func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue) {
+func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue, database db.IDatabase) {
 	shopifyClient := client.New()
 
 	// Habilitar debug del cliente HTTP si está configurado
@@ -85,14 +86,14 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 		orderPublisher = queue.NewNoOpPublisher(logger)
 	}
 
-	shopifyCore := shopifycore.New(coreIntegration, shopifyClient, orderPublisher)
+	shopifyCore := shopifycore.New(coreIntegration, shopifyClient, orderPublisher, database)
 	coreIntegration.RegisterIntegration(core.IntegrationTypeShopify, shopifyCore)
 
 	integrationService := &integrationServiceAdapter{
 		coreIntegration: coreIntegration,
 	}
 
-	useCase := usecases.New(integrationService, shopifyClient, orderPublisher)
+	useCase := usecases.New(integrationService, shopifyClient, orderPublisher, database)
 
 	// Registrar observador para crear webhook automáticamente cuando se crea una integración de Shopify
 	baseURL := config.Get("URL_BASE_SWAGGER")

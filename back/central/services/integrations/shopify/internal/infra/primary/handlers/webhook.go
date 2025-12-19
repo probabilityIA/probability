@@ -67,7 +67,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 			})
 			return
 		}
-		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, nil, 0, "shopify")
+		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, bodyBytes, nil, 0, "shopify")
 		shopifyOrder := &mapped
 		if err := h.useCase.CreateOrder(c.Request.Context(), headers.ShopDomain, shopifyOrder, bodyBytes); err != nil {
 			h.logger.Error().
@@ -91,7 +91,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 			})
 			return
 		}
-		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, nil, 0, "shopify")
+		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, bodyBytes, nil, 0, "shopify")
 		shopifyOrder := &mapped
 		if err := h.useCase.ProcessOrderPaid(c.Request.Context(), headers.ShopDomain, shopifyOrder); err != nil {
 			h.logger.Error().
@@ -115,7 +115,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 			})
 			return
 		}
-		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, nil, 0, "shopify")
+		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, bodyBytes, nil, 0, "shopify")
 		shopifyOrder := &mapped
 		if err := h.useCase.ProcessOrderUpdated(c.Request.Context(), headers.ShopDomain, shopifyOrder); err != nil {
 			h.logger.Error().
@@ -139,7 +139,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 			})
 			return
 		}
-		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, nil, 0, "shopify")
+		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, bodyBytes, nil, 0, "shopify")
 		shopifyOrder := &mapped
 		if err := h.useCase.ProcessOrderCancelled(c.Request.Context(), headers.ShopDomain, shopifyOrder); err != nil {
 			h.logger.Error().
@@ -163,7 +163,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 			})
 			return
 		}
-		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, nil, 0, "shopify")
+		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, bodyBytes, nil, 0, "shopify")
 		shopifyOrder := &mapped
 		if err := h.useCase.ProcessOrderFulfilled(c.Request.Context(), headers.ShopDomain, shopifyOrder); err != nil {
 			h.logger.Error().
@@ -187,7 +187,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 			})
 			return
 		}
-		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, nil, 0, "shopify")
+		mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, bodyBytes, nil, 0, "shopify")
 		shopifyOrder := &mapped
 		if err := h.useCase.ProcessOrderPartiallyFulfilled(c.Request.Context(), headers.ShopDomain, shopifyOrder); err != nil {
 			h.logger.Error().
