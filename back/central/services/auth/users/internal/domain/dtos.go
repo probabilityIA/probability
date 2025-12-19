@@ -125,6 +125,7 @@ type UserFilters struct {
 	ScopeCode       string // Filtrar por código de scope (platform, business)
 	RequesterScope  string // Scope del usuario que hace la solicitud
 	RequesterUserID uint   // ID del usuario que hace la solicitud
+	IncludeDeleted  bool   // Incluir usuarios eliminados (soft deleted)
 }
 type UserListDTO struct {
 	Users      []UserDTO

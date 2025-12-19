@@ -33,11 +33,11 @@ func (uc *UseCaseOrderScore) CalculateAndUpdateOrderScore(ctx context.Context, o
 	}
 
 	// 2.2. Obtener ShippingStreet2 desde Addresses si no está en el campo plano
-	if order.ShippingStreet2 == "" && len(order.Addresses) > 0 {
+	if order.Address2 == "" && len(order.Addresses) > 0 {
 		for _, addr := range order.Addresses {
 			if addr.Type == "shipping" && addr.Street2 != "" {
-				order.ShippingStreet2 = addr.Street2
-				fmt.Printf("[CalculateAndUpdateOrderScore] Orden %s - ShippingStreet2 obtenido de Addresses: %s\n", orderID, order.ShippingStreet2)
+				order.Address2 = addr.Street2
+				fmt.Printf("[CalculateAndUpdateOrderScore] Orden %s - Address2 obtenido de Addresses: %s\n", orderID, order.Address2)
 				break
 			}
 		}

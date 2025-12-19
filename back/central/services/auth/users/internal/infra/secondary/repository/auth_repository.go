@@ -237,6 +237,11 @@ func (r *Repository) GetUsers(ctx context.Context, filters domain.UserFilters) (
 			scope.code as scope_code, scope.name as scope_name`).
 		Joins("LEFT JOIN scope ON scope.id = \"user\".scope_id")
 
+	// Incluir usuarios eliminados si se solicita
+	if filters.IncludeDeleted {
+		query = query.Unscoped()
+	}
+
 	// FILTRO DE SEGURIDAD POR SCOPE
 	// Si el usuario que solicita es de scope "business", solo puede ver usuarios "business"
 	if filters.RequesterScope == "business" {
@@ -419,7 +424,7 @@ func (r *Repository) CreateUser(ctx context.Context, user domain.UsersEntity) (u
 }
 
 func (r *Repository) UpdateUser(ctx context.Context, id uint, user domain.UsersEntity) (string, error) {
-	if err := r.database.Conn(ctx).Model(&models.User{}).Where("id = ?", id).Updates(&user).Error; err != nil {
+	if err := r.database.Conn(ctx).Unscoped().Model(&models.User{}).Where("id = ?", id).Updates(&user).Error; err != nil {
 		r.logger.Error().Uint("id", id).Err(err).Msg("Error al actualizar usuario")
 		return "", err
 	}

@@ -27,18 +27,19 @@ func ToUserFilters(req request.GetUsersRequest) domain.UserFilters {
 	}
 
 	return domain.UserFilters{
-		Page:       req.Page,
-		PageSize:   req.PageSize,
-		Name:       req.Name,
-		Email:      req.Email,
-		Phone:      req.Phone,
-		UserIDs:    userIDs,
-		IsActive:   req.IsActive,
-		RoleID:     req.RoleID,
-		BusinessID: req.BusinessID,
-		CreatedAt:  req.CreatedAt,
-		SortBy:     req.SortBy,
-		SortOrder:  req.SortOrder,
+		Page:           req.Page,
+		PageSize:       req.PageSize,
+		Name:           req.Name,
+		Email:          req.Email,
+		Phone:          req.Phone,
+		UserIDs:        userIDs,
+		IsActive:       req.IsActive,
+		RoleID:         req.RoleID,
+		BusinessID:     req.BusinessID,
+		CreatedAt:      req.CreatedAt,
+		SortBy:         req.SortBy,
+		SortOrder:      req.SortOrder,
+		IncludeDeleted: req.IncludeDeleted,
 	}
 }
 
