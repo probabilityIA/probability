@@ -42,6 +42,23 @@ func (h *IntegrationHandler) GetIntegrationsHandler(c *gin.Context) {
 		return
 	}
 
+	// Seguridad: Filtrar por business_id si no es super admin o platform
+	if businessID, exists := c.Get("business_id"); exists {
+		if bID, ok := businessID.(uint); ok && bID > 0 {
+			// Si es un usuario de negocio, forzar el filtrado por su business_id
+			req.BusinessID = &bID
+		}
+	} else {
+		// Fallback: intentar ver si es super admin por el flag explícito
+		if isSuperAdmin, exists := c.Get("is_super_admin"); exists {
+			if isSuper, ok := isSuperAdmin.(bool); ok && !isSuper {
+				// Si NO es super admin y no se pudo obtener business_id (caso raro),
+				// podríamos loguear error o negar acceso, pero por ahora confiamos en el middleware.
+				// Ojo: si business_id no está seteado en contexto, asume 0/nil en req solo si así vino.
+			}
+		}
+	}
+
 	filters := mapper.ToIntegrationFilters(req)
 	integrations, total, err := h.usecase.ListIntegrations(c.Request.Context(), filters)
 	if err != nil {

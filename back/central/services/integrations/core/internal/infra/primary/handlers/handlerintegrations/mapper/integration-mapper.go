@@ -11,14 +11,14 @@ import (
 )
 
 // ToCreateIntegrationDTO convierte CreateIntegrationRequest a CreateIntegrationDTO
-func ToCreateIntegrationDTO(req request.CreateIntegrationRequest, createdByID uint) domain.CreateIntegrationDTO {
+func ToCreateIntegrationDTO(req request.CreateIntegrationRequest, createdByID uint, businessID uint) domain.CreateIntegrationDTO {
 	var configJSON datatypes.JSON
 	if req.Config != nil {
 		configBytes, _ := json.Marshal(req.Config)
 		configJSON = configBytes
 	}
 
-	return domain.CreateIntegrationDTO{
+	dto := domain.CreateIntegrationDTO{
 		Name:              req.Name,
 		Code:              req.Code,
 		IntegrationTypeID: req.IntegrationTypeID,
@@ -32,6 +32,13 @@ func ToCreateIntegrationDTO(req request.CreateIntegrationRequest, createdByID ui
 		Description:       req.Description,
 		CreatedByID:       createdByID,
 	}
+
+	// Always override/set BusinessID from context if available
+	if businessID > 0 {
+		dto.BusinessID = &businessID
+	}
+
+	return dto
 }
 
 // ToUpdateIntegrationDTO convierte UpdateIntegrationRequest a UpdateIntegrationDTO

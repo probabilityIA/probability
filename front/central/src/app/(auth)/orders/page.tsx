@@ -11,10 +11,18 @@ export default function OrdersPage() {
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+    const [viewMode, setViewMode] = useState<'details' | 'recommendation'>('details'); // NEW state
     const [refreshKey, setRefreshKey] = useState(0);
 
     const handleView = (order: Order) => {
         setSelectedOrder(order);
+        setViewMode('details'); // Set mode to details
+        setShowViewModal(true);
+    };
+
+    const handleViewRecommendation = (order: Order) => { // NEW handler
+        setSelectedOrder(order);
+        setViewMode('recommendation'); // Set mode to recommendation
         setShowViewModal(true);
     };
 
@@ -54,6 +62,7 @@ export default function OrdersPage() {
             <OrderList
                 refreshKey={refreshKey}
                 onView={handleView}
+                onViewRecommendation={handleViewRecommendation} // Pass new handler
                 onEdit={handleEdit}
             />
 
@@ -70,14 +79,21 @@ export default function OrdersPage() {
                 />
             </Modal>
 
-            {/* View Modal */}
+            {/* View Modal - Dynamic Title based on mode */}
             <Modal
                 isOpen={showViewModal}
                 onClose={handleCancel}
-                title="Detalles de la Orden"
+                title={viewMode === 'recommendation' ? undefined : 'Detalles de la Orden'} // Remove title for recommendation
+                transparent={viewMode === 'recommendation'} // Enable transparent mode
                 size="full"
             >
-                {selectedOrder && <OrderDetails initialOrder={selectedOrder} onClose={handleCancel} />}
+                {selectedOrder && (
+                    <OrderDetails
+                        initialOrder={selectedOrder}
+                        onClose={handleCancel}
+                        mode={viewMode} // Pass mode prop
+                    />
+                )}
             </Modal>
 
             {/* Edit Modal */}

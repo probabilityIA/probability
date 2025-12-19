@@ -53,6 +53,7 @@ type ShopifyOrder struct {
 	OccurredAt      time.Time
 	ImportedAt      time.Time
 	OrderStatusURL  string
+	RawData         []byte
 }
 
 type ShopifyCustomer struct {

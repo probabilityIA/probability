@@ -29,30 +29,41 @@ export function Sidebar({ user }: SidebarProps) {
   const { primaryExpanded, requestExpand, requestCollapse } = useSidebar();
   const [showUserModal, setShowUserModal] = useState(false);
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
-  
+
   // Determinar si hay sidebar secundario basado en la ruta actual
   const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
   const ordersRoutes = ['/products', '/orders', '/shipments', '/order-status', '/notification-config'];
-  const hasSecondarySidebar = iamRoutes.some(route => pathname.startsWith(route)) || 
-                               ordersRoutes.some(route => pathname.startsWith(route));
+  const hasSecondarySidebar = iamRoutes.some(route => pathname.startsWith(route)) ||
+    ordersRoutes.some(route => pathname.startsWith(route));
 
   // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
-  const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
+  // Si está cargando, esperamos (no mostramos nada o mostramos skeleton si se implementara)
+  // const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
 
   // Verificar permisos para cada módulo
-  const canViewBusinesses = permissionsNotLoaded || isSuperAdmin || hasPermission('Empresas', 'Read');
-  const canViewUsers = permissionsNotLoaded || isSuperAdmin || hasPermission('Usuarios', 'Read');
-  const canViewRoles = permissionsNotLoaded || isSuperAdmin || hasPermission('Roles', 'Read');
-  const canViewPermissions = permissionsNotLoaded || isSuperAdmin || hasPermission('Permisos', 'Read');
-  const canViewResources = permissionsNotLoaded || isSuperAdmin || hasPermission('Recursos', 'Read');
-  
-  const canViewProducts = permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read');
-  const canViewOrders = permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read');
-  const canViewShipments = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
-  const canViewOrderStatus = permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read');
-  const canViewNotifications = permissionsNotLoaded || isSuperAdmin || hasPermission('Configuración de Notificaciones', 'Read');
-  
-  const canViewIntegrations = permissionsNotLoaded || isSuperAdmin || hasPermission('Integraciones', 'Read');
+
+  // Empresas y Recursos: Solo para super admins (Roles de Sistema/Plataforma)
+  const canViewBusinesses = isSuperAdmin;
+  const canViewResources = isSuperAdmin;
+
+  // IAM Core: Visible para super admins Y administradores de negocio
+  // Agregamos variantes de nombres de recursos para robustez
+  const canViewUsers = isSuperAdmin || hasPermission('Usuarios', 'Read') || hasPermission('Users', 'Read') || hasPermission('Empleados', 'Read');
+  const canViewRoles = isSuperAdmin || hasPermission('Roles', 'Read') || hasPermission('Roles y Permisos', 'Read');
+  const canViewPermissions = isSuperAdmin || hasPermission('Permisos', 'Read') || hasPermission('Permissions', 'Read');
+
+  // Orders Module
+  const canViewProducts = isSuperAdmin || hasPermission('Productos', 'Read') || hasPermission('Products', 'Read');
+  const canViewOrders = isSuperAdmin || hasPermission('Ordenes', 'Read') || hasPermission('Orders', 'Read');
+  const canViewShipments = isSuperAdmin || hasPermission('Envios', 'Read') || hasPermission('Shipments', 'Read');
+
+  // Configuración de Ordenes: Solo para super admins (Plataforma)
+  const canViewOrderStatus = isSuperAdmin;
+  const canViewNotifications = isSuperAdmin;
+
+  // Integraciones: Visible para negocio (para crear integraciones)
+  // Integraciones: Visible para negocio (para crear integraciones)
+  const canViewIntegrations = isSuperAdmin || user?.role === 'Administrador' || hasPermission('Integraciones', 'Read') || hasPermission('Integrations', 'Read');
 
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;

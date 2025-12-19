@@ -114,8 +114,17 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		filters["sort_by"] = sortBy
 	}
 
+	// Filtros existentes ...
 	if sortOrder := c.Query("sort_order"); sortOrder != "" {
 		filters["sort_order"] = sortOrder
+	}
+
+	// Seguridad: Filtrar por business_id si no es super admin o platform
+	if businessIDCtx, exists := c.Get("business_id"); exists {
+		if bID, ok := businessIDCtx.(uint); ok && bID > 0 {
+			// Si es un usuario de negocio, forzar el filtrado por su business_id
+			filters["business_id"] = bID
+		}
 	}
 
 	// Llamar al caso de uso

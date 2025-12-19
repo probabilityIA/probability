@@ -35,7 +35,7 @@ export class IntegrationApiRepository implements IIntegrationRepository {
 
         // Si el body es FormData, no establecer Content-Type (el navegador lo hará automáticamente)
         const isFormData = options.body instanceof FormData;
-        
+
         const headers: Record<string, string> = {
             'Accept': 'application/json',
             ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
@@ -137,7 +137,7 @@ export class IntegrationApiRepository implements IIntegrationRepository {
     }
 
     async syncOrders(id: number): Promise<ActionResponse> {
-        return this.fetch<ActionResponse>(`/shopify/sync/${id}`, {
+        return this.fetch<ActionResponse>(`/integrations/${id}/sync`, {
             method: 'POST',
         });
     }
