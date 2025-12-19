@@ -144,7 +144,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 			// Por ahora, solo mapeamos lo que cabe.
 			if addr.Street2 != "" {
 				order.ShippingStreet = fmt.Sprintf("%s %s", order.ShippingStreet, addr.Street2)
-				order.ShippingStreet2 = addr.Street2 // Populate for scoring
+				order.Address2 = addr.Street2 // Populate for scoring
 			}
 			break
 		}
