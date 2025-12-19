@@ -22,3 +22,4 @@ SELECT
     (SELECT MAX(id) FROM integrations) as max_id;
 
 
+

@@ -670,7 +670,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         onEdit={onEdit}
                                         onViewRecommendation={onViewRecommendation}
                                         onDelete={handleDelete}
-                                        onDelete={handleDelete}
                                         onShowRaw={(id) => {
                                             setSelectedOrderId(id);
                                             setIsRawModalOpen(true);
