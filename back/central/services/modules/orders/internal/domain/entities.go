@@ -129,7 +129,7 @@ type ProbabilityOrder struct {
 
 	// Campos auxiliares para cálculo de score (No persistir)
 	CustomerOrderCount int    `json:"-" gorm:"-"`
-	ShippingStreet2    string `json:"-" gorm:"-"`
+	Address2           string `json:"-" gorm:"-"`
 }
 
 // ProbabilityOrderItem representa un item de la orden que se guarda en la base de datos

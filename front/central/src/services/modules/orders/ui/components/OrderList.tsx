@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { getOrdersAction, deleteOrderAction, getOrderByIdAction } from '../../infra/actions';
+import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import { Order, GetOrdersParams } from '../../domain/types';
 import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
@@ -37,14 +38,14 @@ const OrderRow = memo(({
     return (
         <tr className={`hover:bg-gray-50 transition-all duration-300 ${isNew ? 'animate-slide-in bg-green-50/50' : ''}`}>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                <div 
+                <div
                     className="h-10 w-10 rounded-full shadow-md border-2 border-gray-200 hover:shadow-lg transition-all cursor-pointer bg-white flex items-center justify-center overflow-hidden"
                     title={`${order.platform} - Click para ver orden original`}
                     onClick={() => onShowRaw(order.id)}
                 >
                     {order.integration_logo_url ? (
-                        <img 
-                            src={order.integration_logo_url} 
+                        <img
+                            src={order.integration_logo_url}
                             alt={order.platform}
                             className="h-full w-full object-contain p-1.5"
                             loading="lazy"
@@ -130,24 +131,24 @@ const OrderRow = memo(({
                             title="Recomendación Inteligente IA"
                             aria-label="Ver recomendación IA"
                         >
-                            <svg 
-                                xmlns="http://www.w3.org/2000/svg" 
-                                width="16" 
-                                height="16" 
-                                viewBox="0 0 24 24" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                strokeWidth="2" 
-                                strokeLinecap="round" 
-                                strokeLinejoin="round" 
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                                 className="lucide lucide-bot"
                             >
-                                <path d="M12 8V4H8"/>
-                                <rect width="16" height="12" x="4" y="8" rx="2"/>
-                                <path d="M2 14h2"/>
-                                <path d="M20 14h2"/>
-                                <path d="M15 13v2"/>
-                                <path d="M9 13v2"/>
+                                <path d="M12 8V4H8" />
+                                <rect width="16" height="12" x="4" y="8" rx="2" />
+                                <path d="M2 14h2" />
+                                <path d="M20 14h2" />
+                                <path d="M15 13v2" />
+                                <path d="M9 13v2" />
                             </svg>
                         </button>
                     )}
@@ -219,6 +220,27 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const [selectedOrderPlatform, setSelectedOrderPlatform] = useState<string | undefined>(undefined);
     const [isRawModalOpen, setIsRawModalOpen] = useState(false);
 
+    // Integrations for filter
+    const [integrationsList, setIntegrationsList] = useState<{ value: string; label: string }[]>([]);
+
+    useEffect(() => {
+        const fetchIntegrations = async () => {
+            try {
+                const response = await getIntegrationsAction({ page: 1, page_size: 50 });
+                if (response.success && response.data) {
+                    const options = response.data.map((integration: any) => ({
+                        value: String(integration.id),
+                        label: integration.name,
+                    }));
+                    setIntegrationsList(options);
+                }
+            } catch (error) {
+                console.error('Error fetching integrations for filter:', error);
+            }
+        };
+        fetchIntegrations();
+    }, []);
+
     // Filters
     const [filters, setFilters] = useState<GetOrdersParams>({
         page: 1,
@@ -262,6 +284,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 { value: 'woocommerce', label: 'WooCommerce' },
                 { value: 'manual', label: 'Manual' },
             ],
+        },
+        {
+            key: 'integration_id',
+            label: 'Integración',
+            type: 'select',
+            options: integrationsList,
         },
         {
             key: 'is_paid',
@@ -316,6 +344,16 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             });
         }
 
+        if (filters.integration_id) {
+            const integration = integrationsList.find(i => i.value === String(filters.integration_id));
+            active.push({
+                key: 'integration_id',
+                label: 'Integración',
+                value: integration ? integration.label : String(filters.integration_id),
+                type: 'select',
+            });
+        }
+
         if (filters.is_paid !== undefined) {
             active.push({
                 key: 'is_paid',
@@ -350,6 +388,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 newFilters.end_date = value.end;
             } else if (filterKey === 'is_paid') {
                 newFilters.is_paid = value === true;
+            } else if (filterKey === 'integration_id') {
+                newFilters.integration_id = Number(value);
             } else {
                 (newFilters as any)[filterKey] = value;
             }
@@ -393,23 +433,23 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 // El evento SSE tiene order_id en data.data o data.metadata
                 const orderId = data.data?.order_id || data.metadata?.order_id;
                 const orderNumber = data.data?.order_number || 'Desconocida';
-                
+
                 if (data.type === 'order.created' && orderId) {
                     // Obtener la orden completa
                     try {
                         const response = await getOrderByIdAction(orderId);
                         if (response.success && response.data) {
                             const newOrder = response.data;
-                            
+
                             // Verificar que la orden no esté ya en la lista
                             setOrders(prevOrders => {
                                 if (prevOrders.some(o => o.id === newOrder.id)) {
                                     return prevOrders; // Ya existe, no hacer nada
                                 }
-                                
+
                                 // Marcar como nueva para la animación
                                 setNewOrderIds(prev => new Set(prev).add(newOrder.id));
-                                
+
                                 // Remover el flag de "nueva" después de la animación
                                 setTimeout(() => {
                                     setNewOrderIds(prev => {
@@ -418,14 +458,14 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         return updated;
                                     });
                                 }, 2000);
-                                
+
                                 // Agregar al principio de la lista
                                 return [newOrder, ...prevOrders];
                             });
-                            
+
                             // Actualizar el total solo si realmente agregamos una nueva orden
                             setTotal(prev => prev + 1);
-                            
+
                             // Mostrar toast
                             showToast(`Nueva orden recibida: #${orderNumber}`, 'success');
                         }

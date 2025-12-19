@@ -28,6 +28,7 @@ func (r *Repository) GetUserByEmail(ctx context.Context, email string) (*domain.
 func (r *Repository) GetUserByID(ctx context.Context, userID uint) (*domain.UserAuthInfo, error) {
 	var user domain.UserAuthInfo
 	if err := r.database.Conn(ctx).
+		Unscoped().
 		Model(&models.User{}).
 		Select("id, name, email, password, phone, avatar_url, is_active, last_login_at, created_at, updated_at, deleted_at").
 		Where("id = ?", userID).
