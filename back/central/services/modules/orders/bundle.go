@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/queue"
 	redisevents "github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository"
+	orderstatusrepo "github.com/secamc93/probability/back/central/services/modules/orderstatus/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -41,7 +42,10 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// 3. Init Use Cases
 	orderCRUD := usecaseorder.New(repo, eventPublisher)
-	orderMapping := usecaseordermapping.New(repo, logger, eventPublisher)
+
+	// 3.0. Init OrderStatus Repository (para mapeo de estados)
+	orderStatusRepo := orderstatusrepo.New(database, logger)
+	orderMapping := usecaseordermapping.New(repo, logger, eventPublisher, orderStatusRepo)
 
 	// 3.1. Init Score Use Case
 	scoreUseCase := usecaseorderscore.New(repo)
@@ -66,7 +70,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// 6. Init RabbitMQ Consumer (si RabbitMQ está disponible)
 	if rabbitMQ != nil {
-		orderConsumer := queue.New(rabbitMQ, logger, orderMapping)
+		orderConsumer := queue.New(rabbitMQ, logger, orderMapping, repo)
 		go func() {
 			if err := orderConsumer.Start(context.Background()); err != nil {
 				logger.Error().

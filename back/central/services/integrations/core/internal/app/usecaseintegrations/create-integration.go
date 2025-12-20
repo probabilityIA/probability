@@ -101,6 +101,15 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	// Convertir Credentials a []byte (se encriptará en el repository)
 	var credentialsJSON datatypes.JSON
 	if len(dto.Credentials) > 0 {
+		// DEBUG: Log credential keys being saved
+		credKeys := make([]string, 0, len(dto.Credentials))
+		for k := range dto.Credentials {
+			credKeys = append(credKeys, k)
+		}
+		uc.log.Debug(ctx).
+			Strs("credential_keys", credKeys).
+			Msg("Credentials keys being saved to integration")
+
 		credentialsBytes, err := json.Marshal(dto.Credentials)
 		if err != nil {
 			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationCredentialsSerialize, err)

@@ -52,6 +52,8 @@ type IOrderSyncService interface {
 	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+	VerifyWebhooksByURL(ctx context.Context, integrationID string) ([]interface{}, error)
+	CreateWebhook(ctx context.Context, integrationID string) (interface{}, error)
 }
 
 type IS3Service interface {

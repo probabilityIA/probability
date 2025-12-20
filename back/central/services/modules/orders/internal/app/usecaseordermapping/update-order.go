@@ -10,7 +10,7 @@ import (
 func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) (*domain.OrderResponse, error) {
 	hasChanges := false
 
-	if validateAndUpdateStatus(existingOrder, dto) {
+	if uc.validateAndUpdateStatus(ctx, existingOrder, dto) {
 		hasChanges = true
 	}
 
@@ -101,7 +101,7 @@ func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *d
 	return uc.mapOrderToResponse(existingOrder), nil
 }
 
-func validateAndUpdateStatus(existingOrder *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) validateAndUpdateStatus(ctx context.Context, existingOrder *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
 	changed := false
 
 	if dto.Status != "" && existingOrder.Status != dto.Status {
@@ -112,6 +112,29 @@ func validateAndUpdateStatus(existingOrder *domain.ProbabilityOrder, dto *domain
 	if dto.OriginalStatus != "" && existingOrder.OriginalStatus != dto.OriginalStatus {
 		existingOrder.OriginalStatus = dto.OriginalStatus
 		changed = true
+
+		// Buscar mapeo de estado cuando cambia el OriginalStatus
+		if dto.IntegrationType != "" {
+			integrationTypeID := getIntegrationTypeID(dto.IntegrationType)
+			if integrationTypeID > 0 {
+				mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
+				if err != nil {
+					// Log error pero no fallar la actualización
+					uc.logger.Warn().
+						Uint("integration_type_id", integrationTypeID).
+						Str("original_status", dto.OriginalStatus).
+						Err(err).
+						Msg("Error al buscar mapeo de estado en actualización, continuando sin actualizar status_id")
+				} else if mappedStatusID != nil {
+					existingOrder.StatusID = mappedStatusID
+					changed = true
+				} else {
+					// Si no se encuentra mapeo, dejar StatusID como nil
+					existingOrder.StatusID = nil
+					changed = true
+				}
+			}
+		}
 	}
 
 	return changed

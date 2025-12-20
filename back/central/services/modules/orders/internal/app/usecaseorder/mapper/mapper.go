@@ -99,6 +99,8 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		OrderTypeName:  order.OrderTypeName,
 		Status:         order.Status,
 		OriginalStatus: order.OriginalStatus,
+		StatusID:       order.StatusID,
+		OrderStatus:    order.OrderStatus,
 
 		// Información adicional
 		Notes:    order.Notes,
@@ -171,5 +173,6 @@ func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
 		ItemsCount:          len(order.Items),
 		DeliveryProbability: order.DeliveryProbability,
 		NegativeFactors:     UnmarshalNegativeFactors(order.NegativeFactors),
+		OrderStatus:         order.OrderStatus, // Incluir información del estado de Probability
 	}
 }

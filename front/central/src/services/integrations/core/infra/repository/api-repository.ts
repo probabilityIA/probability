@@ -13,7 +13,10 @@ import {
     UpdateIntegrationTypeDTO,
     ListWebhooksResponse,
     DeleteWebhookResponse,
-    WebhookResponse
+    WebhookResponse,
+    VerifyWebhooksResponse,
+    CreateWebhookResponse,
+    SyncOrdersParams
 } from '../../domain/types';
 
 export class IntegrationApiRepository implements IIntegrationRepository {
@@ -136,9 +139,10 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
-    async syncOrders(id: number): Promise<ActionResponse> {
+    async syncOrders(id: number, params?: SyncOrdersParams): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/integrations/${id}/sync`, {
             method: 'POST',
+            body: params ? JSON.stringify(params) : undefined,
         });
     }
 
@@ -250,6 +254,16 @@ export class IntegrationApiRepository implements IIntegrationRepository {
     async deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse> {
         return this.fetch<DeleteWebhookResponse>(`/integrations/${id}/webhooks/${webhookId}`, {
             method: 'DELETE',
+        });
+    }
+
+    async verifyWebhooks(id: number): Promise<VerifyWebhooksResponse> {
+        return this.fetch<VerifyWebhooksResponse>(`/integrations/${id}/webhooks/verify`);
+    }
+
+    async createWebhook(id: number): Promise<CreateWebhookResponse> {
+        return this.fetch<CreateWebhookResponse>(`/integrations/${id}/webhooks/create`, {
+            method: 'POST',
         });
     }
 }

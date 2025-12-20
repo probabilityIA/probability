@@ -37,9 +37,14 @@ export default function OrderStatusMappingDetails({ mapping }: OrderStatusMappin
                     <label className="block text-sm font-medium text-gray-500 mb-1">
                         Tipo de Integración
                     </label>
-                    <p className="text-base font-medium text-gray-900 capitalize">
-                        {mapping.integration_type}
+                    <p className="text-base font-medium text-gray-900">
+                        {mapping.integration_type?.name || `ID: ${mapping.integration_type_id}`}
                     </p>
+                    {mapping.integration_type && (
+                        <p className="text-xs text-gray-500 mt-1">
+                            Código: {mapping.integration_type.code}
+                        </p>
+                    )}
                 </div>
 
                 {/* Priority */}
@@ -55,21 +60,33 @@ export default function OrderStatusMappingDetails({ mapping }: OrderStatusMappin
                 {/* Original Status */}
                 <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1">
-                        Estado Original
+                        Estado Original (de la Integración)
                     </label>
-                    <p className="text-base text-gray-900">
+                    <p className="text-base text-gray-900 font-mono">
                         {mapping.original_status}
                     </p>
                 </div>
 
-                {/* Mapped Status */}
+                {/* Order Status (Mapeado) */}
                 <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1">
-                        Estado Mapeado
+                        Estado de Probability
                     </label>
                     <p className="text-base font-medium text-gray-900">
-                        {mapping.mapped_status}
+                        {mapping.order_status?.name || `ID: ${mapping.order_status_id}`}
                     </p>
+                    {mapping.order_status && (
+                        <>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Código: {mapping.order_status.code}
+                            </p>
+                            {mapping.order_status.description && (
+                                <p className="text-xs text-gray-400 mt-1">
+                                    {mapping.order_status.description}
+                                </p>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 {/* Created At */}

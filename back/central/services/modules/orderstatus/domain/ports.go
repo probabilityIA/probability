@@ -14,5 +14,7 @@ type IRepository interface {
 	Update(ctx context.Context, mapping *models.OrderStatusMapping) error
 	Delete(ctx context.Context, id uint) error
 	ToggleActive(ctx context.Context, id uint) (*models.OrderStatusMapping, error)
-	Exists(ctx context.Context, integrationType, originalStatus string) (bool, error)
+	Exists(ctx context.Context, integrationTypeID uint, originalStatus string) (bool, error)
+	GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error)
+	ListOrderStatuses(ctx context.Context, isActive *bool) ([]models.OrderStatus, error)
 }

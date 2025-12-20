@@ -1,7 +1,6 @@
 'use client';
 
 import { Order } from '../../domain/types';
-import { AccordionItem } from '@/shared/ui/accordion';
 import MapComponent from '@/shared/ui/MapComponent';
 import { getAIRecommendationAction, getOrderByIdAction } from '../../infra/actions';
 import { useState, useEffect } from 'react';
@@ -21,9 +20,9 @@ interface AIRecommendation {
 }
 
 interface OrderDetailsProps {
-    initialOrder: Order; // Renamed from order to match usage in page.tsx
-    onClose?: () => void; // Added onClose prop
-    mode?: 'details' | 'recommendation'; // NEW prop
+    initialOrder: Order;
+    onClose?: () => void;
+    mode?: 'details' | 'recommendation';
 }
 
 export default function OrderDetails({ initialOrder, onClose, mode = 'details' }: OrderDetailsProps) {
@@ -47,10 +46,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     if (response.success && response.data) {
                         setFullOrder(response.data);
                     } else if (!response.success) {
-                        // Only log specifics if it's an actual failure flag
                         console.error("Failed to load order details:", response.message);
                     }
-                    // If success=true but data is missing (rare after backend fix), we silently fallback to initialOrder
                 }
             } catch (error) {
                 console.error("Error loading order details:", error);
@@ -67,29 +64,12 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     // Derived order object (prefer full, fallback to initial)
     const order = fullOrder || initialOrder;
 
-    // DEBUG: Log the order data to the console as requested
-    useEffect(() => {
-        console.log("📦 [DEBUG] Order Data (Initial):", initialOrder);
-        if (fullOrder) {
-            console.log("📦 [DEBUG] Order Data (Full Fetched):", fullOrder);
-            console.log("📍 [DEBUG] Address Info:", {
-                street: fullOrder.shipping_street,
-                city: fullOrder.shipping_city,
-                state: fullOrder.shipping_state,
-                items: fullOrder.items,
-                itemsType: typeof fullOrder.items,
-                isArray: Array.isArray(fullOrder.items)
-            });
-        }
-    }, [initialOrder, fullOrder]);
-
     // AI Logic - Triggers when fullOrder (with address) is available
     useEffect(() => {
         if (fullOrder && fullOrder.shipping_city && fullOrder.shipping_state) {
             setLoadingAI(true);
             getAIRecommendationAction(fullOrder.shipping_city, fullOrder.shipping_state)
                 .then(data => {
-                    // Solo establecer recomendación si hay datos válidos
                     if (data && data.recommended_carrier) {
                         setAIRecommendation(data);
                     } else {
@@ -97,17 +77,15 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     }
                 })
                 .catch(err => {
-                    // Error ya manejado en la acción, solo loguear si es necesario
                     console.warn("Recomendación AI no disponible:", err);
                     setAIRecommendation(null);
                 })
                 .finally(() => setLoadingAI(false));
         } else {
-            // Si no hay dirección completa, no intentar cargar recomendación
             setAIRecommendation(null);
             setLoadingAI(false);
         }
-    }, [fullOrder]); // Depend on fullOrder to ensure we have address
+    }, [fullOrder]);
 
     const formatCurrency = (amount: number | string, currency: string = 'USD') => {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
@@ -119,19 +97,21 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     };
 
     const formatDate = (dateString: string) => {
-        if (!order) return null;
-
-        console.log('[OrderDetails] Order Data:', {
-            id: order.id,
-            delivery_probability: order.delivery_probability,
-            negative_factors: order.negative_factors
-        });
         if (!dateString) return '-';
         return new Date(dateString).toLocaleString('es-CO');
     };
 
+    // Helper para calcular color del texto basado en luminosidad
+    const getTextColor = (bgColor: string): string => {
+        const hex = bgColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+        return luminance > 0.5 ? '#000000' : '#FFFFFF';
+    };
+
     // Parse items if they are JSON string or access directly
-    // Ensure we handle both scenarios (array of objects or potentially JSON string from some backends)
     const items = Array.isArray(order.items) ? order.items : [];
 
     // Address for Map
@@ -143,16 +123,13 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
     return (
         <div className="space-y-4 max-h-[80vh] overflow-y-auto p-1">
-
             {/* AI Recommendation Section - Only shown in recommendation mode */}
             {mode === 'recommendation' && (
                 <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border border-blue-100 shadow-sm relative overflow-hidden transition-all hover:shadow-md">
-                    {/* ... (keep existing close button and header) ... */}
                     <div className="absolute top-0 right-0 p-2 opacity-5 pointer-events-none">
                         <svg className="w-32 h-32" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z" /></svg>
                     </div>
 
-                    {/* Close Button for Transparent Mode */}
                     {onClose && (
                         <button
                             onClick={onClose}
@@ -179,7 +156,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     </div>
                                 ) : aiRecommendation ? (
                                     <div className="flex flex-col gap-6">
-                                        {/* Main Recommendation */}
                                         <div className="flex-1 space-y-4">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                 <div>
@@ -204,7 +180,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             </div>
                                         </div>
 
-                                        {/* Quotations / Alternatives - Now below or wider grid */}
                                         {aiRecommendation.quotations && aiRecommendation.quotations.length > 0 && (
                                             <div className="border-t border-blue-200 pt-6 mt-2">
                                                 <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide mb-4 flex items-center gap-2">
@@ -258,7 +233,6 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                             <div className="text-sm text-blue-400 mt-1 animate-pulse">Cargando datos de orden...</div>
                         )}
 
-                        {/* GUIDE GENERATION MODAL */}
                         {showGuideModal && order && (
                             <ShipmentGuideModal
                                 isOpen={showGuideModal}
@@ -271,67 +245,96 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                 </div>
             )}
 
-
             {/* Order Details Sections - Only shown in details mode */}
             {mode === 'details' && (
                 <>
-                    {/* Order Information */}
-                    <AccordionItem title="Información de la Orden" defaultOpen={true}>
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Número de Orden</p>
-                                <p className="text-sm font-medium text-gray-900">{order.order_number}</p>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Plataforma</p>
-                                {order.integration_logo_url ? (
-                                    <img
-                                        src={order.integration_logo_url}
-                                        alt={order.platform}
-                                        className="h-8 w-8 object-contain"
-                                        title={order.platform}
-                                    />
-                                ) : (
-                                    <p className="text-sm font-medium text-gray-900 capitalize">{order.platform}</p>
+                    {/* Información General */}
+                    <div className="bg-gray-50 rounded-lg p-5">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Información General</h3>
+                        {loadingDetails ? (
+                            <div className="py-4 text-center text-sm text-gray-500">Cargando información...</div>
+                        ) : (
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Número de Orden</p>
+                                    <p className="text-sm font-medium text-gray-900">{order.order_number || '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Número Interno</p>
+                                    <p className="text-sm font-medium text-gray-900 break-all">{order.internal_number || '-'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Plataforma</p>
+                                    {order.integration_logo_url ? (
+                                        <img
+                                            src={order.integration_logo_url}
+                                            alt={order.platform}
+                                            className="h-8 w-8 object-contain mt-1"
+                                            title={order.platform}
+                                        />
+                                    ) : (
+                                        <p className="text-sm font-medium text-gray-900 capitalize mt-1">{order.platform || '-'}</p>
+                                    )}
+                                </div>
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Estado (Probability)</p>
+                                    {order.order_status?.color ? (
+                                        <span
+                                            className="inline-block px-2 py-0.5 text-xs font-medium rounded-full mt-1"
+                                            style={{
+                                                backgroundColor: order.order_status.color,
+                                                color: getTextColor(order.order_status.color)
+                                            }}
+                                        >
+                                            {order.order_status.name || order.status}
+                                        </span>
+                                    ) : (
+                                        <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 mt-1">
+                                            {order.order_status?.name || order.status || '-'}
+                                        </span>
+                                    )}
+                                </div>
+                                {order.original_status && (
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase">Estado Original (Shopify)</p>
+                                        <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-800 mt-1">
+                                            {order.original_status}
+                                        </span>
+                                    </div>
                                 )}
+                                <div>
+                                    <p className="text-xs text-gray-500 uppercase">Fecha</p>
+                                    <p className="text-sm font-medium text-gray-900">{formatDate(order.occurred_at || order.created_at)}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Estado</p>
-                                <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 mt-1">
-                                    {order.status}
-                                </span>
-                            </div>
-                            <div>
-                                <p className="text-xs text-gray-500 uppercase">Fecha</p>
-                                <p className="text-sm text-gray-900">{formatDate(order.occurred_at || order.created_at)}</p>
-                            </div>
-                        </div>
-                    </AccordionItem>
+                        )}
+                    </div>
 
-                    {/* Order Items */}
-                    <AccordionItem title="Productos del Pedido">
+                    {/* Productos del Pedido */}
+                    <div className="bg-gray-50 rounded-lg p-5">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Productos del Pedido</h3>
                         {loadingDetails ? (
                             <div className="py-4 text-center text-sm text-gray-500">Cargando productos...</div>
                         ) : items.length > 0 ? (
                             <div className="overflow-x-auto">
-                                <table className="min-w-full divide-y divide-gray-200">
-                                    <thead className="bg-gray-50">
+                                <table className="w-full divide-y divide-gray-200">
+                                    <thead className="bg-gray-100">
                                         <tr>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Producto</th>
-                                            <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
-                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Cant.</th>
-                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Precio</th>
-                                            <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Producto</th>
+                                            <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">SKU</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Cantidad</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Precio</th>
+                                            <th className="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
                                         {items.map((item: any, idx: number) => (
-                                            <tr key={idx}>
-                                                <td className="px-3 py-2 text-sm text-gray-900">{item.name || item.title || item.product_name}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-500">{item.sku || item.product_sku || '-'}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-900 text-right">{item.quantity}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-900 text-right">{formatCurrency(item.price || item.unit_price, order.currency)}</td>
-                                                <td className="px-3 py-2 text-sm text-gray-900 text-right">{formatCurrency((parseFloat(item.price || item.unit_price) * item.quantity), order.currency)}</td>
+                                            <tr key={idx} className="hover:bg-gray-50">
+                                                <td className="px-4 py-3 text-sm text-gray-900">{item.name || item.title || item.product_name || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-600">{item.sku || item.product_sku || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.quantity || 0}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.price || item.unit_price, order.currency)}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency((parseFloat(item.price || item.unit_price || 0) * (item.quantity || 0)), order.currency)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -340,19 +343,20 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         ) : (
                             <p className="text-sm text-gray-500 text-center py-2">No hay información de productos.</p>
                         )}
-                    </AccordionItem>
+                    </div>
 
-                    {/* Customer Information */}
-                    <AccordionItem title="Información del Cliente">
+                    {/* Información del Cliente */}
+                    <div className="bg-gray-50 rounded-lg p-5">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">Información del Cliente</h3>
                         {loadingDetails ? (
                             <div className="py-4 text-center text-sm text-gray-500">Cargando cliente...</div>
                         ) : (
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-x-4 gap-y-3">
-                                <div className="col-span-2 sm:col-span-1">
+                            <div className="grid grid-cols-3 gap-4">
+                                <div>
                                     <p className="text-xs text-gray-500 uppercase">Nombre</p>
                                     <p className="text-sm font-medium text-gray-900">{order.customer_name || '-'}</p>
                                 </div>
-                                <div className="col-span-2 sm:col-span-1">
+                                <div>
                                     <p className="text-xs text-gray-500 uppercase">Email</p>
                                     <p className="text-sm font-medium text-gray-900 break-all">{order.customer_email || '-'}</p>
                                 </div>
@@ -360,133 +364,114 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     <p className="text-xs text-gray-500 uppercase">Teléfono</p>
                                     <p className="text-sm font-medium text-gray-900">{order.customer_phone || '-'}</p>
                                 </div>
-
-                            </div>
-                        )}
-                    </AccordionItem>
-                    {/* Shipping Address */}
-                    <div className="bg-purple-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-3">Dirección de Envío</h3>
-                        <div className="space-y-2">
-                            <p className="text-sm text-gray-900">{order.shipping_street}</p>
-                            <p className="text-sm text-gray-900">
-                                {order.shipping_city}, {order.shipping_state} {order.shipping_postal_code}
-                            </p>
-                            <p className="text-sm text-gray-900">{order.shipping_country}</p>
-                            {order.delivery_probability !== undefined && order.delivery_probability !== null && (
-                                <div className="mt-4 pt-4 border-t border-purple-200">
-                                    <div className="flex flex-col sm:flex-row gap-6">
-                                        {/* Left Column: Probability Bar */}
-                                        <div className="flex-1">
-                                            <p className="text-xs text-gray-500 uppercase mb-2 font-semibold tracking-wider">Probabilidad</p>
-                                            <div className="flex items-center gap-3">
-                                                <div className="flex-1 bg-gray-100 rounded-full h-4 border border-gray-200 shadow-inner overflow-hidden">
-                                                    <div
-                                                        className={`h-full rounded-full transition-all duration-500 ${order.delivery_probability < 30 ? 'bg-red-500' :
-                                                            order.delivery_probability < 70 ? 'bg-yellow-500' : 'bg-green-500'
-                                                            }`}
-                                                        style={{ width: `${order.delivery_probability}%` }}
-                                                    ></div>
-                                                </div>
-                                                <span className="text-lg font-bold text-gray-800 min-w-[3ch] text-right">{order.delivery_probability}%</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Right Column: Negative Factors (Missing Data) */}
-                                        <div className="flex-1 border-l border-purple-100 pl-0 sm:pl-6">
-                                            <p className="text-xs text-gray-500 uppercase mb-2 font-semibold tracking-wider">Datos Faltantes</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {order.negative_factors && order.negative_factors.length > 0 ? (
-                                                    order.negative_factors.map((factor, idx) => (
-                                                        <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
-                                                            {factor}
-                                                        </span>
-                                                    ))
-                                                ) : (
-                                                    <span className="text-sm text-gray-400 italic flex items-center gap-1">
-                                                        <svg className="w-4 h-4 text-green-500/50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                                                        -
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </div>
+                                {order.customer_dni && (
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase">DNI</p>
+                                        <p className="text-sm font-medium text-gray-900">{order.customer_dni}</p>
                                     </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    {/* Shipping Address & Map */}
-                    <AccordionItem title="Dirección de Envío y Mapa">
-                        {loadingDetails ? (
-                            <div className="py-4 text-center text-sm text-gray-500">Cargando dirección...</div>
-                        ) : (
-                            <div className="space-y-4">
-                                <div className="bg-gray-50 p-3 rounded border border-gray-100">
-                                    <p className="text-sm font-medium text-gray-900">{order.shipping_street}</p>
-                                    <p className="text-sm text-gray-600">
-                                        {order.shipping_city}, {order.shipping_state} {order.shipping_postal_code}
-                                    </p>
-                                    <p className="text-sm text-gray-600 uppercase mt-1">{order.shipping_country}</p>
-                                </div>
-
-                                {order.shipping_street || order.shipping_city ? (
-                                    <div className="w-full rounded-lg border border-gray-200 overflow-hidden">
-                                        <MapComponent
-                                            address={fullAddress}
-                                            city={city}
-                                            height="300px"
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="text-sm text-gray-500 italic">No hay dirección para mostrar mapa.</div>
                                 )}
                             </div>
                         )}
-                    </AccordionItem>
+                    </div>
 
-                    {/* Financial Summary */}
-                    <AccordionItem title="Resumen Financiero">
-                        <div className="space-y-2">
-                            <div className="flex justify-between">
-                                <span className="text-sm text-gray-600">Subtotal</span>
-                                <span className="text-sm font-medium text-gray-900">
-                                    {formatCurrency(order.subtotal, order.currency)}
-                                </span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-sm text-gray-600">Impuestos</span>
-                                <span className="text-sm font-medium text-gray-900">
-                                    {formatCurrency(order.tax, order.currency)}
-                                </span>
-                            </div>
-                            {/* Only show discount if > 0 */}
-                            {order.discount > 0 && (
-                                <div className="flex justify-between">
-                                    <span className="text-sm text-gray-600">Descuento</span>
-                                    <span className="text-sm font-medium text-gray-900 text-green-600">
-                                        -{formatCurrency(order.discount, order.currency)}
-                                    </span>
+                    {/* Dirección de Envío, Resumen Financiero y Detalles de Pago - 3 Columnas */}
+                    <div className="grid grid-cols-3 gap-4">
+                        {/* Dirección de Envío */}
+                        <div className="bg-gray-50 rounded-lg p-5">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Dirección de Envío</h3>
+                            {loadingDetails ? (
+                                <div className="py-4 text-center text-sm text-gray-500">Cargando dirección...</div>
+                            ) : (
+                                <div className="space-y-3">
+                                    <div className="text-sm text-gray-900">
+                                        <p className="font-medium">{order.shipping_street || '-'}</p>
+                                        <p>
+                                            {order.shipping_city || ''}, {order.shipping_state || ''} {order.shipping_postal_code || ''}
+                                        </p>
+                                        <p className="uppercase">{order.shipping_country || '-'}</p>
+                                    </div>
+                                    
+                                    {/* Probabilidad y Datos Faltantes */}
+                                    {order.delivery_probability !== undefined && order.delivery_probability !== null && (
+                                        <div className="mt-4 pt-4 border-t border-gray-200">
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <p className="text-xs text-gray-500 uppercase mb-2 font-semibold tracking-wider">Probabilidad de Entrega</p>
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="flex-1 bg-gray-100 rounded-full h-4 border border-gray-200 shadow-inner overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full transition-all duration-500 ${order.delivery_probability < 30 ? 'bg-red-500' :
+                                                                    order.delivery_probability < 70 ? 'bg-yellow-500' : 'bg-green-500'
+                                                                    }`}
+                                                                style={{ width: `${order.delivery_probability}%` }}
+                                                            ></div>
+                                                        </div>
+                                                        <span className="text-lg font-bold text-gray-800 min-w-[3ch] text-right">{order.delivery_probability}%</span>
+                                                    </div>
+                                                </div>
+                                                
+                                                {order.negative_factors && order.negative_factors.length > 0 && (
+                                                    <div>
+                                                        <p className="text-xs text-gray-500 uppercase mb-2 font-semibold tracking-wider">Datos Faltantes</p>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {order.negative_factors.map((factor, idx) => (
+                                                                <span key={idx} className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-700 border border-red-100">
+                                                                    {factor}
+                                                                </span>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )}
-                            <div className="flex justify-between">
-                                <span className="text-sm text-gray-600">Envío</span>
-                                <span className="text-sm font-medium text-gray-900">
-                                    {formatCurrency(order.shipping_cost, order.currency)}
-                                </span>
-                            </div>
-                            <div className="flex justify-between pt-3 border-t border-gray-100 mt-2">
-                                <span className="text-base font-semibold text-gray-900">Total</span>
-                                <span className="text-base font-bold text-blue-600">
-                                    {formatCurrency(order.total_amount, order.currency)}
-                                </span>
+                        </div>
+
+                        {/* Resumen Financiero */}
+                        <div className="bg-gray-50 rounded-lg p-5">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Resumen Financiero</h3>
+                            <div className="space-y-2">
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-600">Subtotal</span>
+                                    <span className="text-sm font-medium text-gray-900">
+                                        {formatCurrency(order.subtotal, order.currency)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-600">Impuestos</span>
+                                    <span className="text-sm font-medium text-gray-900">
+                                        {formatCurrency(order.tax, order.currency)}
+                                    </span>
+                                </div>
+                                {order.discount > 0 && (
+                                    <div className="flex justify-between">
+                                        <span className="text-sm text-gray-600">Descuento</span>
+                                        <span className="text-sm font-medium text-gray-900 text-green-600">
+                                            -{formatCurrency(order.discount, order.currency)}
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="flex justify-between">
+                                    <span className="text-sm text-gray-600">Envío</span>
+                                    <span className="text-sm font-medium text-gray-900">
+                                        {formatCurrency(order.shipping_cost, order.currency)}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between pt-3 border-t border-gray-300 mt-2">
+                                    <span className="text-base font-semibold text-gray-900">Total</span>
+                                    <span className="text-base font-bold text-blue-600">
+                                        {formatCurrency(order.total_amount, order.currency)}
+                                    </span>
+                                </div>
                             </div>
                         </div>
-                    </AccordionItem>
 
-                    {/* Payment & Dates Group */}
-                    <div className="grid grid-cols-1 gap-4">
-                        <AccordionItem title="Detalles de Pago">
-                            <div className="flex items-center justify-between">
+                        {/* Detalles de Pago */}
+                        <div className="bg-gray-50 rounded-lg p-5">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Detalles de Pago</h3>
+                            <div className="space-y-4">
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase">Estado Financiero</p>
                                     <span className={`inline-block px-2 py-1 text-xs font-medium rounded-full mt-1 ${(order.payment_details?.financial_status === 'paid' || order.is_paid) ? 'bg-green-100 text-green-800' :
@@ -497,29 +482,56 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     </span>
                                 </div>
                                 {order.paid_at && (
-                                    <div className="text-right">
+                                    <div>
                                         <p className="text-xs text-gray-500 uppercase">Fecha de Pago</p>
-                                        <p className="text-sm font-medium text-gray-900">{formatDate(order.paid_at)}</p>
+                                        <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(order.paid_at)}</p>
                                     </div>
                                 )}
                             </div>
-                        </AccordionItem>
+                        </div>
+                    </div>
 
-                        <AccordionItem title="Cronología">
-                            <div className="grid grid-cols-2 gap-4">
+                    {/* Mapa y Cronología - 2 Columnas (el mapa necesita más espacio) */}
+                    <div className="grid grid-cols-3 gap-4">
+                        {/* Mapa - Ocupa 2 columnas */}
+                        {order.shipping_street || order.shipping_city ? (
+                            <div className="bg-gray-50 rounded-lg p-5 col-span-2">
+                                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ubicación</h3>
+                                <div className="w-full rounded-lg border border-gray-200 overflow-hidden">
+                                    <MapComponent
+                                        address={fullAddress}
+                                        city={city}
+                                        height="300px"
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="col-span-2"></div>
+                        )}
+
+                        {/* Cronología - Ocupa 1 columna */}
+                        <div className="bg-gray-50 rounded-lg p-5">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Cronología</h3>
+                            <div className="space-y-4">
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase">Creado (DB)</p>
-                                    <p className="text-sm text-gray-700">{formatDate(order.created_at)}</p>
+                                    <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(order.created_at)}</p>
                                 </div>
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase">Importado</p>
-                                    <p className="text-sm text-gray-700">{formatDate(order.imported_at)}</p>
+                                    <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(order.imported_at)}</p>
                                 </div>
+                                {order.updated_at && (
+                                    <div>
+                                        <p className="text-xs text-gray-500 uppercase">Actualizado</p>
+                                        <p className="text-sm font-medium text-gray-900 mt-1">{formatDate(order.updated_at)}</p>
+                                    </div>
+                                )}
                             </div>
-                        </AccordionItem>
+                        </div>
                     </div>
                 </>
             )}
-        </div >
+        </div>
     );
 }

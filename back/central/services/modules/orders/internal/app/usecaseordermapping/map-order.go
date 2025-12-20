@@ -45,6 +45,25 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		clientID = &client.ID
 	}
 
+	// 1.6. Buscar mapeo de estado si tenemos OriginalStatus e IntegrationType
+	var statusID *uint
+	if dto.OriginalStatus != "" && dto.IntegrationType != "" {
+		integrationTypeID := getIntegrationTypeID(dto.IntegrationType)
+		if integrationTypeID > 0 {
+			mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
+			if err != nil {
+				// Log error pero no fallar la creación de la orden
+				uc.logger.Warn().
+					Uint("integration_type_id", integrationTypeID).
+					Str("original_status", dto.OriginalStatus).
+					Err(err).
+					Msg("Error al buscar mapeo de estado, continuando sin status_id")
+			} else if mappedStatusID != nil {
+				statusID = mappedStatusID
+			}
+		}
+	}
+
 	// 2. Crear la entidad de dominio ProbabilityOrder
 	order := &domain.ProbabilityOrder{
 		// Identificadores de integración
@@ -79,6 +98,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		OrderTypeName:  dto.OrderTypeName,
 		Status:         dto.Status,
 		OriginalStatus: dto.OriginalStatus,
+		StatusID:       statusID, // ID del estado mapeado en Probability
 
 		// Información adicional
 		Notes:    dto.Notes,
@@ -162,14 +182,20 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		orderItems := make([]*domain.ProbabilityOrderItem, len(dto.OrderItems))
 		for i, itemDTO := range dto.OrderItems {
 			// Validar/Crear Producto
-			_, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
+			product, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
 			if err != nil {
 				return nil, fmt.Errorf("error processing product for item %s: %w", itemDTO.ProductSKU, err)
 			}
 
+			// Usar el ID del producto de la BD, no el ID externo
+			var productID *string
+			if product != nil {
+				productID = &product.ID
+			}
+
 			orderItems[i] = &domain.ProbabilityOrderItem{
 				OrderID:          order.ID,
-				ProductID:        itemDTO.ProductID,
+				ProductID:        productID,
 				ProductSKU:       itemDTO.ProductSKU,
 				ProductName:      itemDTO.ProductName,
 				ProductTitle:     itemDTO.ProductTitle,

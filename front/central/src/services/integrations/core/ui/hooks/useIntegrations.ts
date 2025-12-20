@@ -10,7 +10,7 @@ import {
     testConnectionAction,
     syncOrdersAction
 } from '../../infra/actions';
-import { Integration } from '../../domain/types';
+import { Integration, SyncOrdersParams } from '../../domain/types';
 
 export const useIntegrations = () => {
     const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -95,9 +95,9 @@ export const useIntegrations = () => {
         }
     };
 
-    const syncOrders = async (id: number) => {
+    const syncOrders = async (id: number, params?: SyncOrdersParams) => {
         try {
-            const res = await syncOrdersAction(id);
+            const res = await syncOrdersAction(id, params);
             return res;
         } catch (err: any) {
             console.error('Error syncing orders:', err);

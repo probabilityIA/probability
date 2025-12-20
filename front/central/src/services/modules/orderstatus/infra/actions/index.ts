@@ -25,6 +25,15 @@ export const getOrderStatusMappingsAction = async (params?: GetOrderStatusMappin
     }
 };
 
+export const getOrderStatusesAction = async (isActive?: boolean): Promise<{ success: boolean; data: OrderStatusInfo[]; message?: string }> => {
+    try {
+        return await (await getUseCases()).getOrderStatuses(isActive);
+    } catch (error: any) {
+        console.error('Get Order Statuses Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
 export const getOrderStatusMappingByIdAction = async (id: number) => {
     try {
         return await (await getUseCases()).getOrderStatusMappingById(id);

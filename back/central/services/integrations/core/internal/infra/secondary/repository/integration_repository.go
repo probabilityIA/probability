@@ -20,6 +20,13 @@ func (r *Repository) CreateIntegration(ctx context.Context, integration *domain.
 		var credentialsMap map[string]interface{}
 		credentialsBytes := []byte(integration.Credentials)
 		if err := json.Unmarshal(credentialsBytes, &credentialsMap); err == nil {
+			// VALIDACIÓN: Rechazar credenciales que parezcan ser el wrapper encriptado
+			// Esto previene el bug de doble-encriptación
+			if _, hasEncrypted := credentialsMap["encrypted"]; hasEncrypted && len(credentialsMap) == 1 {
+				r.log.Error(ctx).Msg("Las credenciales parecen ser el wrapper encriptado, no las credenciales reales")
+				return fmt.Errorf("credenciales inválidas: no envíe el wrapper encriptado como credenciales")
+			}
+
 			encrypted, err := r.encryptionService.EncryptCredentials(ctx, credentialsMap)
 			if err != nil {
 				r.log.Error(ctx).Err(err).Msg("Error al encriptar credenciales")
@@ -66,6 +73,13 @@ func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration
 		var credentialsMap map[string]interface{}
 		credentialsBytes := []byte(integration.Credentials)
 		if err := json.Unmarshal(credentialsBytes, &credentialsMap); err == nil {
+			// VALIDACIÓN: Rechazar credenciales que parezcan ser el wrapper encriptado
+			// Esto previene el bug de doble-encriptación
+			if _, hasEncrypted := credentialsMap["encrypted"]; hasEncrypted && len(credentialsMap) == 1 {
+				r.log.Error(ctx).Uint("id", id).Msg("Las credenciales parecen ser el wrapper encriptado, no las credenciales reales")
+				return fmt.Errorf("credenciales inválidas: no envíe el wrapper encriptado como credenciales")
+			}
+
 			encrypted, err := r.encryptionService.EncryptCredentials(ctx, credentialsMap)
 			if err != nil {
 				r.log.Error(ctx).Err(err).Msg("Error al encriptar credenciales")

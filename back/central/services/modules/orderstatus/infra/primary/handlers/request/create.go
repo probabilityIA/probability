@@ -2,9 +2,9 @@ package request
 
 // CreateOrderStatusMappingRequest representa la solicitud para crear un mapeo de estado
 type CreateOrderStatusMappingRequest struct {
-	IntegrationType string `json:"integration_type" binding:"required,oneof=shopify whatsapp mercadolibre"`
-	OriginalStatus  string `json:"original_status" binding:"required,max=128"`
-	MappedStatus    string `json:"mapped_status" binding:"required,max=64"`
-	Priority        int    `json:"priority"`
-	Description     string `json:"description"`
+	IntegrationTypeID uint   `json:"integration_type_id" binding:"required"`
+	OriginalStatus    string `json:"original_status" binding:"required,max=128"`
+	OrderStatusID     uint   `json:"order_status_id" binding:"required"`
+	Priority          int    `json:"priority"`
+	Description       string `json:"description"`
 }

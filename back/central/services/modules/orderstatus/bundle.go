@@ -22,7 +22,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	uc := app.New(repo, logger)
 
 	// 3. Handlers
-	h := handlers.New(uc, logger)
+	h := handlers.New(uc, logger, environment)
 
 	// 4. Rutas
 	h.RegisterRoutes(router)

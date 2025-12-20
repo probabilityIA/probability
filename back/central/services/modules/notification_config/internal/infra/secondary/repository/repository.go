@@ -76,7 +76,8 @@ func (r *GormRepository) Delete(ctx context.Context, id uint) error {
 
 func (r *GormRepository) List(ctx context.Context, filter domain.ConfigFilter) ([]*domain.NotificationConfig, error) {
 	var modelsList []models.BusinessNotificationConfig
-	query := r.db.WithContext(ctx)
+	query := r.db.WithContext(ctx).
+		Preload("OrderStatuses") // Precargar estados de orden asociados
 
 	if filter.BusinessID != nil {
 		query = query.Where("business_id = ?", *filter.BusinessID)

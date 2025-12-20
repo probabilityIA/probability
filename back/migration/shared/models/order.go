@@ -116,6 +116,7 @@ type Order struct {
 	OrderTypeName  string `gorm:"size:64"`                                  // Nombre del tipo (desnormalizado)
 	Status         string `gorm:"size:64;not null;index;default:'pending'"` // Estado interno
 	OriginalStatus string `gorm:"size:64"`                                  // Estado original de la plataforma
+	StatusID       *uint  `gorm:"index"`                                    // ID del estado mapeado en Probability (FK a order_statuses)
 
 	// ============================================
 	// INFORMACIÓN ADICIONAL
@@ -172,6 +173,7 @@ type Order struct {
 	Business      *Business     `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 	Integration   Integration   `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	PaymentMethod PaymentMethod `gorm:"foreignKey:PaymentMethodID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	OrderStatus   OrderStatus   `gorm:"foreignKey:StatusID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Relaciones con tablas relacionadas (Modelo Canónico)
 	OrderItems      []OrderItem            `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
@@ -187,6 +189,7 @@ func (Order) TableName() string {
 }
 
 // BeforeCreate genera el ID UUID y número interno antes de crear
+// También establece CreatedAt desde OccurredAt si CreatedAt está vacío, para preservar la fecha original de la plataforma
 func (o *Order) BeforeCreate(tx *gorm.DB) error {
 	// Generar UUID para el ID si no existe
 	if o.ID == "" {
@@ -198,6 +201,12 @@ func (o *Order) BeforeCreate(tx *gorm.DB) error {
 		o.InternalNumber = fmt.Sprintf("ORD-%d-%s",
 			time.Now().Unix(),
 			generateRandomString(6))
+	}
+
+	// Si CreatedAt está vacío pero tenemos OccurredAt, usar OccurredAt para CreatedAt
+	// Esto preserva la fecha original de creación de la orden en la plataforma externa
+	if o.CreatedAt.IsZero() && !o.OccurredAt.IsZero() {
+		o.CreatedAt = o.OccurredAt
 	}
 
 	return nil

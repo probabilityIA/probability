@@ -148,3 +148,29 @@ func (s *ShopifyCore) ListWebhooks(ctx context.Context, integrationID string) ([
 func (s *ShopifyCore) DeleteWebhook(ctx context.Context, integrationID, webhookID string) error {
 	return s.useCase.DeleteWebhook(ctx, integrationID, webhookID)
 }
+
+// VerifyWebhooksByURL verifica webhooks existentes que coincidan con nuestra URL
+func (s *ShopifyCore) VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]interface{}, error) {
+	webhooks, err := s.useCase.VerifyWebhooksByURL(ctx, integrationID, baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convertir a []interface{} para la interfaz
+	result := make([]interface{}, len(webhooks))
+	for i, wh := range webhooks {
+		result[i] = wh
+	}
+
+	return result, nil
+}
+
+// CreateWebhook crea webhooks en Shopify después de verificar y eliminar duplicados
+func (s *ShopifyCore) CreateWebhook(ctx context.Context, integrationID string, baseURL string) (interface{}, error) {
+	result, err := s.useCase.CreateWebhook(ctx, integrationID, baseURL)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}

@@ -118,3 +118,19 @@ type FetchOrdersParams struct {
 	Fields       []string
 	SinceID      *int64
 }
+
+type WebhookInfo struct {
+	ID        string
+	Address   string
+	Topic     string
+	Format    string
+	CreatedAt string
+	UpdatedAt string
+}
+
+type CreateWebhookResult struct {
+	ExistingWebhooks []WebhookInfo
+	DeletedWebhooks  []WebhookInfo
+	CreatedWebhooks  []string
+	WebhookURL       string
+}

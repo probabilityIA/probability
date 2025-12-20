@@ -11,7 +11,10 @@ import {
     UpdateIntegrationTypeDTO,
     WebhookResponse,
     ListWebhooksResponse,
-    DeleteWebhookResponse
+    DeleteWebhookResponse,
+    VerifyWebhooksResponse,
+    CreateWebhookResponse,
+    SyncOrdersParams
 } from './types';
 
 export interface IIntegrationRepository {
@@ -26,12 +29,14 @@ export interface IIntegrationRepository {
     activateIntegration(id: number): Promise<SingleResponse<Integration>>;
     deactivateIntegration(id: number): Promise<SingleResponse<Integration>>;
     setAsDefault(id: number): Promise<SingleResponse<Integration>>;
-    syncOrders(id: number): Promise<ActionResponse>;
+    syncOrders(id: number, params?: SyncOrdersParams): Promise<ActionResponse>;
     testIntegration(id: number): Promise<ActionResponse>;
     testConnectionRaw(typeCode: string, config: any, credentials: any): Promise<ActionResponse>;
     getWebhookUrl(id: number): Promise<WebhookResponse>;
     listWebhooks(id: number): Promise<ListWebhooksResponse>;
     deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse>;
+    verifyWebhooks(id: number): Promise<VerifyWebhooksResponse>;
+    createWebhook(id: number): Promise<CreateWebhookResponse>;
 
     // Integration Types
     getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>>;

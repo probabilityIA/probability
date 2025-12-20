@@ -1,13 +1,20 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import {
+    PencilIcon,
+    PowerIcon,
+    TrashIcon
+} from '@heroicons/react/24/outline';
 import {
     getOrderStatusMappingsAction,
     deleteOrderStatusMappingAction,
     toggleOrderStatusMappingActiveAction
 } from '../../infra/actions';
+import { getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
 import { OrderStatusMapping, GetOrderStatusMappingsParams } from '../../domain/types';
-import { Button, Alert, Badge } from '@/shared/ui';
+import { Alert, Badge, Table, Spinner } from '@/shared/ui';
+import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui/dynamic-filters';
 
 interface OrderStatusMappingListProps {
     onView?: (mapping: OrderStatusMapping) => void;
@@ -19,24 +26,62 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [total, setTotal] = useState(0);
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
 
     // Filters
     const [filters, setFilters] = useState<GetOrderStatusMappingsParams>({});
+    const [integrationTypes, setIntegrationTypes] = useState<Array<{ value: string; label: string }>>([]);
+
+    // Cargar tipos de integración para el filtro
+    useEffect(() => {
+        const fetchIntegrationTypes = async () => {
+            try {
+                const response = await getActiveIntegrationTypesAction();
+                if (response.success && response.data) {
+                    const options = response.data.map((type) => ({
+                        value: String(type.id),
+                        label: type.name,
+                    }));
+                    setIntegrationTypes(options);
+                }
+            } catch (err) {
+                console.error('Error fetching integration types:', err);
+            }
+        };
+        fetchIntegrationTypes();
+    }, []);
 
     useEffect(() => {
         fetchMappings();
-    }, [filters]);
+    }, [page, pageSize, filters]);
 
     const fetchMappings = async () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await getOrderStatusMappingsAction(filters);
-            if (response.success && response.data) {
-                setMappings(response.data);
-                setTotal(response.total || 0);
+            const params: GetOrderStatusMappingsParams = {
+                page,
+                page_size: pageSize,
+                ...filters
+            };
+            const response = await getOrderStatusMappingsAction(params);
+            // El backend devuelve { data: [...], total: number, page, page_size, total_pages }
+            const mappingsData = (response as any).data || response.data || [];
+            const totalCount = (response as any).total || response.total || 0;
+            const currentPage = (response as any).page || page;
+            const currentPageSize = (response as any).page_size || pageSize;
+            const pagesTotal = (response as any).total_pages || Math.ceil(totalCount / currentPageSize) || 1;
+            
+            if (mappingsData && mappingsData.length >= 0) {
+                setMappings(mappingsData);
+                setTotal(totalCount);
+                setPage(currentPage);
+                setPageSize(currentPageSize);
+                setTotalPages(pagesTotal);
             } else {
-                setError(response.message || 'Error al cargar los mappings');
+                setError('Error al cargar los mappings');
             }
         } catch (err: any) {
             setError(err.message || 'Error al cargar los mappings');
@@ -73,18 +118,176 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
         }
     };
 
-    const formatDate = (dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-CO', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit',
-        });
-    };
+    // Definir filtros disponibles
+    const availableFilters: FilterOption[] = useMemo(() => [
+        {
+            key: 'integration_type_id',
+            label: 'Tipo de Integración',
+            type: 'select',
+            options: integrationTypes,
+        },
+        {
+            key: 'is_active',
+            label: 'Estado',
+            type: 'select',
+            options: [
+                { value: 'true', label: 'Activo' },
+                { value: 'false', label: 'Inactivo' },
+            ],
+        },
+    ], [integrationTypes]);
 
-    if (loading) {
-        return <div className="text-center py-8">Cargando mappings...</div>;
+    // Convertir filtros a ActiveFilter[]
+    const activeFilters: ActiveFilter[] = useMemo(() => {
+        const active: ActiveFilter[] = [];
+
+        if (filters.integration_type_id) {
+            const type = integrationTypes.find(t => t.value === String(filters.integration_type_id));
+            active.push({
+                key: 'integration_type_id',
+                label: 'Tipo de Integración',
+                value: type?.label || String(filters.integration_type_id),
+                type: 'select',
+            });
+        }
+
+        if (filters.is_active !== undefined) {
+            active.push({
+                key: 'is_active',
+                label: 'Estado',
+                value: filters.is_active ? 'Activo' : 'Inactivo',
+                type: 'select',
+            });
+        }
+
+        return active;
+    }, [filters, integrationTypes]);
+
+    // Manejar agregar filtro
+    const handleAddFilter = useCallback((filterKey: string, value: any) => {
+        setFilters((prev) => {
+            const newFilters = { ...prev };
+            if (filterKey === 'integration_type_id') {
+                newFilters.integration_type_id = value ? parseInt(value) : undefined;
+            } else if (filterKey === 'is_active') {
+                newFilters.is_active = value === 'true' ? true : value === 'false' ? false : undefined;
+            }
+            return newFilters;
+        });
+        setPage(1);
+    }, []);
+
+    // Manejar eliminar filtro
+    const handleRemoveFilter = useCallback((filterKey: string) => {
+        setFilters((prev) => {
+            const newFilters = { ...prev };
+            if (filterKey === 'integration_type_id') {
+                delete (newFilters as any).integration_type_id;
+            } else if (filterKey === 'is_active') {
+                delete (newFilters as any).is_active;
+            }
+            return newFilters;
+        });
+        setPage(1);
+    }, []);
+
+    // Definir columnas de la tabla
+    const columns = [
+        { key: 'integration_type', label: 'Tipo de Integración' },
+        { key: 'original_status', label: 'Estado Original' },
+        { key: 'order_status', label: 'Estado de Probability' },
+        { key: 'priority', label: 'Prioridad', align: 'center' as const },
+        { key: 'is_active', label: 'Estado', align: 'center' as const },
+        { key: 'actions', label: 'Acciones', align: 'right' as const },
+    ];
+
+    // Renderizar filas
+    const renderRow = (mapping: OrderStatusMapping) => ({
+        integration_type: (
+            <div className="flex items-center justify-center">
+                {mapping.integration_type?.image_url ? (
+                    <img
+                        src={mapping.integration_type.image_url}
+                        alt={mapping.integration_type.name || `ID: ${mapping.integration_type_id}`}
+                        className="h-10 w-10 object-contain border border-gray-200 rounded-lg p-1 bg-white"
+                        onError={(e) => {
+                            // Si la imagen falla al cargar, mostrar un placeholder
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            const parent = (e.target as HTMLImageElement).parentElement;
+                            if (parent) {
+                                parent.innerHTML = `<span class="text-xs font-medium text-gray-600 uppercase">${(mapping.integration_type?.name || `ID: ${mapping.integration_type_id}`).charAt(0)}</span>`;
+                            }
+                        }}
+                    />
+                ) : (
+                    <div className="h-10 w-10 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-xs">
+                        {(mapping.integration_type?.name || `ID: ${mapping.integration_type_id}`).charAt(0).toUpperCase()}
+                    </div>
+                )}
+            </div>
+        ),
+        original_status: (
+            <span className="text-sm text-gray-900 font-mono">
+                {mapping.original_status}
+            </span>
+        ),
+        order_status: (
+            <span className="text-sm font-medium text-gray-900">
+                {mapping.order_status?.name || `ID: ${mapping.order_status_id}`}
+            </span>
+        ),
+        priority: (
+            <span className="text-sm text-gray-900">
+                {mapping.priority}
+            </span>
+        ),
+        is_active: (
+            <Badge type={mapping.is_active ? 'success' : 'secondary'}>
+                {mapping.is_active ? 'Activo' : 'Inactivo'}
+            </Badge>
+        ),
+        actions: (
+            <div className="flex justify-end gap-2">
+                {onEdit && (
+                    <button
+                        onClick={() => onEdit(mapping)}
+                        className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                        title="Editar mapping"
+                        aria-label="Editar mapping"
+                    >
+                        <PencilIcon className="w-4 h-4" />
+                    </button>
+                )}
+                <button
+                    onClick={() => handleToggleActive(mapping.id)}
+                    className={`p-2 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2 ${
+                        mapping.is_active
+                            ? 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500'
+                            : 'bg-gray-500 hover:bg-gray-600 text-white focus:ring-gray-500'
+                    }`}
+                    title={mapping.is_active ? 'Desactivar mapping' : 'Activar mapping'}
+                    aria-label={mapping.is_active ? 'Desactivar mapping' : 'Activar mapping'}
+                >
+                    <PowerIcon className="w-4 h-4" />
+                </button>
+                <button
+                    onClick={() => handleDelete(mapping.id)}
+                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                    title="Eliminar mapping"
+                    aria-label="Eliminar mapping"
+                >
+                    <TrashIcon className="w-4 h-4" />
+                </button>
+            </div>
+        ),
+    });
+
+    if (loading && mappings.length === 0) {
+        return (
+            <div className="flex justify-center items-center p-8">
+                <Spinner size="lg" />
+            </div>
+        );
     }
 
     if (error) {
@@ -97,146 +300,38 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
 
     return (
         <div className="space-y-4">
-            {/* Filters */}
-            <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        onChange={(e) => setFilters({ ...filters, integration_type: e.target.value || undefined })}
-                    >
-                        <option value="">Todos los tipos de integración</option>
-                        <option value="shopify">Shopify</option>
-                        <option value="whatsapp">WhatsApp</option>
-                        <option value="woocommerce">WooCommerce</option>
-                    </select>
-                    <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        onChange={(e) => setFilters({ ...filters, is_active: e.target.value === '' ? undefined : e.target.value === 'true' })}
-                    >
-                        <option value="">Todos los estados</option>
-                        <option value="true">Activos</option>
-                        <option value="false">Inactivos</option>
-                    </select>
-                    <Button variant="outline" onClick={fetchMappings}>
-                        🔄 Actualizar
-                    </Button>
-                </div>
-            </div>
+            <DynamicFilters
+                availableFilters={availableFilters}
+                activeFilters={activeFilters}
+                onAddFilter={handleAddFilter}
+                onRemoveFilter={handleRemoveFilter}
+            />
 
-            {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tipo de Integración
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Estado Original
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Estado Mapeado
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Prioridad
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Estado
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Fecha Creación
-                                </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {mappings.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
-                                        No hay mappings disponibles
-                                    </td>
-                                </tr>
-                            ) : (
-                                mappings.map((mapping) => (
-                                    <tr key={mapping.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-sm font-medium text-gray-900 capitalize">
-                                                {mapping.integration_type}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-sm text-gray-900">
-                                                {mapping.original_status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-sm font-medium text-gray-900">
-                                                {mapping.mapped_status}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <span className="text-sm text-gray-900">
-                                                {mapping.priority}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <Badge type={mapping.is_active ? 'success' : 'secondary'}>
-                                                {mapping.is_active ? 'Activo' : 'Inactivo'}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {formatDate(mapping.created_at)}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                            <div className="flex justify-end gap-2">
-                                                {onView && (
-                                                    <button
-                                                        onClick={() => onView(mapping)}
-                                                        className="text-blue-600 hover:text-blue-900"
-                                                    >
-                                                        Ver
-                                                    </button>
-                                                )}
-                                                {onEdit && (
-                                                    <button
-                                                        onClick={() => onEdit(mapping)}
-                                                        className="text-indigo-600 hover:text-indigo-900"
-                                                    >
-                                                        Editar
-                                                    </button>
-                                                )}
-                                                <button
-                                                    onClick={() => handleToggleActive(mapping.id)}
-                                                    className="text-yellow-600 hover:text-yellow-900"
-                                                >
-                                                    {mapping.is_active ? 'Desactivar' : 'Activar'}
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDelete(mapping.id)}
-                                                    className="text-red-600 hover:text-red-900"
-                                                >
-                                                    Eliminar
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+            {error && (
+                <Alert type="error" onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
 
-                {/* Summary */}
-                {total > 0 && (
-                    <div className="bg-white px-4 py-3 border-t border-gray-200">
-                        <p className="text-sm text-gray-700">
-                            Total de mappings: <span className="font-medium">{total}</span>
-                        </p>
-                    </div>
-                )}
+            <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden">
+                <Table
+                    columns={columns}
+                    data={mappings.map(renderRow)}
+                    keyExtractor={(_, index) => String(mappings[index]?.id || index)}
+                    emptyMessage="No hay mappings disponibles"
+                    loading={loading}
+                    pagination={{
+                        currentPage: page,
+                        totalPages: totalPages,
+                        totalItems: total,
+                        itemsPerPage: pageSize,
+                        onPageChange: (newPage) => setPage(newPage),
+                        onItemsPerPageChange: (newPageSize) => {
+                            setPageSize(newPageSize);
+                            setPage(1);
+                        },
+                    }}
+                />
             </div>
         </div>
     );

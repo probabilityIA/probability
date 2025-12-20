@@ -138,11 +138,20 @@ func (s *OrderSimulator) generateRandomOrder(orderNumber string) *domain.Order {
 
 	taxRate := 0.19
 	tax := subtotal * taxRate
-	total := subtotal + tax
+
+	// Generar shipping lines para calcular el costo de envío
+	shippingLines := s.generateShippingLines(currency)
+	var shippingCost float64
+	if len(shippingLines) > 0 {
+		fmt.Sscanf(shippingLines[0].Price, "%f", &shippingCost)
+	}
+
+	total := subtotal + tax + shippingCost
 
 	subtotalStr := fmt.Sprintf("%.2f", subtotal)
 	taxStr := fmt.Sprintf("%.2f", tax)
 	totalStr := fmt.Sprintf("%.2f", total)
+	shippingCostStr := fmt.Sprintf("%.2f", shippingCost)
 
 	order := &domain.Order{
 		ID:                       orderID,
@@ -214,7 +223,7 @@ func (s *OrderSimulator) generateRandomOrder(orderNumber string) *domain.Order {
 		TotalPrice:               totalStr,
 		TotalPriceSet:            s.generateMoneySet(totalStr, currency),
 		TotalPriceUSD:            fmt.Sprintf("%.2f", total*0.00025), // Aproximación
-		TotalShippingPriceSet:    s.generateMoneySet("0.00", currency),
+		TotalShippingPriceSet:    s.generateMoneySet(shippingCostStr, currency),
 		TotalTax:                 taxStr,
 		TotalTaxSet:              s.generateMoneySet(taxStr, currency),
 		TotalTipReceived:         "0.00",
@@ -229,7 +238,7 @@ func (s *OrderSimulator) generateRandomOrder(orderNumber string) *domain.Order {
 		PaymentTerms:             nil,
 		Refunds:                  []domain.Refund{},
 		ShippingAddress:          s.dataGenerator.GenerateAddress(),
-		ShippingLines:            []domain.ShippingLine{},
+		ShippingLines:            shippingLines,
 	}
 
 	return order
@@ -331,6 +340,7 @@ func (s *OrderSimulator) generateTaxLines(taxAmount, currency string, rate float
 func (s *OrderSimulator) generateFulfillments(order *domain.Order) []domain.Fulfillment {
 	now := time.Now()
 	trackingNumber := fmt.Sprintf("%d", rand.Intn(9999999999)+1000000000)
+	shipmentStatus := "confirmed"
 
 	return []domain.Fulfillment{
 		{
@@ -341,7 +351,7 @@ func (s *OrderSimulator) generateFulfillments(order *domain.Order) []domain.Fulf
 			Service:           s.dataGenerator.stringPtr("manual"),
 			UpdatedAt:         now,
 			TrackingCompany:   s.dataGenerator.stringPtr(s.dataGenerator.randomChoice([]string{"FedEx", "DHL", "Servientrega", "Coordinadora", "TCC"})),
-			ShipmentStatus:    nil,
+			ShipmentStatus:    &shipmentStatus,
 			LocationID:        int64Ptr(int64(rand.Intn(99999999) + 10000000)),
 			OriginAddress:     nil,
 			Receipt:           nil,
@@ -352,7 +362,43 @@ func (s *OrderSimulator) generateFulfillments(order *domain.Order) []domain.Fulf
 			TrackingNumber:    s.dataGenerator.stringPtr(trackingNumber),
 			TrackingURL:       s.dataGenerator.stringPtr(fmt.Sprintf("https://tracking.example.com/%s", trackingNumber)),
 			UpdatedAtCustom:   nil,
-			LineItems:         []domain.LineItem{},
+			LineItems:         order.LineItems, // Incluir los line items en el fulfillment
+		},
+	}
+}
+
+// generateShippingLines genera líneas de envío para la orden
+func (s *OrderSimulator) generateShippingLines(currency string) []domain.ShippingLine {
+	shippingMethods := []struct {
+		title string
+		code  string
+		price float64
+	}{
+		{"Entrega Estándar CUNDINAMARCA (3 a 6 días hábiles municipios principales en Cundinamarca - 3 o más días a otros municipios)", "standard_cundinamarca", 3.15},
+		{"Envío Express", "express", 5.00},
+		{"Envío Gratis", "free_shipping", 0.00},
+		{"Recogida en Tienda", "pickup", 0.00},
+	}
+
+	method := shippingMethods[rand.Intn(len(shippingMethods))]
+	priceStr := fmt.Sprintf("%.2f", method.price)
+
+	return []domain.ShippingLine{
+		{
+			ID:                            int64(rand.Intn(999999999) + 100000000),
+			Title:                         method.title,
+			Code:                          &method.code,
+			Price:                         priceStr,
+			PriceSet:                      s.generateMoneySet(priceStr, currency),
+			DiscountedPrice:               priceStr,
+			DiscountedPriceSet:            s.generateMoneySet(priceStr, currency),
+			Source:                        s.dataGenerator.stringPtr("shopify"),
+			CarrierIdentifier:             nil,
+			DeliveryCategory:              nil,
+			Phone:                         nil,
+			RequestedFulfillmentServiceID: nil,
+			TaxLines:                      []domain.TaxLine{},
+			DiscountAllocations:           []domain.DiscountAllocation{},
 		},
 	}
 }
@@ -361,7 +407,3 @@ func (s *OrderSimulator) generateFulfillments(order *domain.Order) []domain.Fulf
 func int64Ptr(i int64) *int64 {
 	return &i
 }
-
-
-
-

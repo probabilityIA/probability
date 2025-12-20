@@ -103,7 +103,8 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 			go func() {
 				bgCtx := context.Background()
 				integrationID := fmt.Sprintf("%d", integration.ID)
-				if err := useCase.CreateWebhook(bgCtx, integrationID, baseURL); err != nil {
+				_, err := useCase.CreateWebhook(bgCtx, integrationID, baseURL)
+				if err != nil {
 					logger.Error(bgCtx).
 						Err(err).
 						Str("integration_id", integrationID).

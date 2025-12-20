@@ -68,12 +68,38 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 	items := make([]domain.ShopifyOrderItem, len(orderResp.LineItems))
 	for i, item := range orderResp.LineItems {
 		unitPrice, _ := strconv.ParseFloat(item.Price, 64)
+		totalDiscount, _ := strconv.ParseFloat(item.TotalDiscount, 64)
+
+		// Calcular impuesto total de tax_lines
+		var totalTax float64
+		for _, taxLine := range item.TaxLines {
+			taxPrice, _ := strconv.ParseFloat(taxLine.Price, 64)
+			totalTax += taxPrice
+		}
+
+		// Convertir gramos a float64 para peso
+		var weight *float64
+		if item.Grams > 0 {
+			weightVal := float64(item.Grams) / 1000.0 // Convertir a kg
+			weight = &weightVal
+		}
+
+		productID := item.ProductID
+		variantID := item.VariantID
+
 		items[i] = domain.ShopifyOrderItem{
-			ExternalID: strconv.FormatInt(item.VariantID, 10),
-			Name:       item.Name,
-			SKU:        item.SKU,
-			Quantity:   item.Quantity,
-			UnitPrice:  unitPrice,
+			ExternalID:   strconv.FormatInt(item.VariantID, 10),
+			Name:         item.Name,
+			SKU:          item.SKU,
+			Quantity:     item.Quantity,
+			UnitPrice:    unitPrice,
+			ProductID:    &productID,
+			VariantID:    &variantID,
+			Title:        item.Title,
+			VariantTitle: item.VariantTitle,
+			Discount:     totalDiscount,
+			Tax:          totalTax,
+			Weight:       weight,
 		}
 	}
 

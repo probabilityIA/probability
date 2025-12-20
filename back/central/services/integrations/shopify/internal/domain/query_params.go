@@ -6,6 +6,15 @@ import (
 	"time"
 )
 
+// SyncOrdersParams representa los parámetros para sincronizar órdenes
+type SyncOrdersParams struct {
+	CreatedAtMin      *time.Time
+	CreatedAtMax      *time.Time
+	Status            string
+	FinancialStatus   string
+	FulfillmentStatus string
+}
+
 type GetOrdersParams struct {
 	Status            string
 	Limit             int

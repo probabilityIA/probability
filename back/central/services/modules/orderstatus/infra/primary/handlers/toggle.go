@@ -30,5 +30,5 @@ func (h *OrderStatusMappingHandlers) Toggle(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, toResponse(result))
+	c.JSON(http.StatusOK, toResponse(result, h.getImageURLBase()))
 }

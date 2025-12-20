@@ -48,6 +48,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.PaymentMethod{},
 		&models.PaymentMethodMapping{},
 		&models.OrderStatusMapping{},
+		&models.OrderStatus{}, // Debe estar antes de BusinessNotificationConfigOrderStatus
+
+		// Business Notification Config Order Status (tabla intermedia)
+		// Debe ir después de BusinessNotificationConfig y OrderStatus
+		&models.BusinessNotificationConfigOrderStatus{},
+
 		&models.Product{},
 
 		// Orders

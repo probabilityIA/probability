@@ -51,7 +51,7 @@ export function NotificationConfigList({ onEdit, onCreate }: NotificationConfigL
     return (
         <div className="space-y-4">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">Configuración de Notificaciones</h2>
+                <h2 className="text-2xl font-bold text-gray-900">Configuración de Notificaciones</h2>
                 <Button onClick={onCreate}>
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -82,10 +82,10 @@ export function NotificationConfigList({ onEdit, onCreate }: NotificationConfigL
                         ) : (
                             configs.map((config) => (
                                 <tr key={config.id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-6 py-4">{config.id}</td>
-                                    <td className="px-6 py-4">{config.business_id}</td>
-                                    <td className="px-6 py-4 font-medium">{config.event_type}</td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-gray-900">{config.id}</td>
+                                    <td className="px-6 py-4 text-gray-900">{config.business_id}</td>
+                                    <td className="px-6 py-4 font-medium text-gray-900">{config.event_type}</td>
+                                    <td className="px-6 py-4 text-gray-900">
                                         <div className="flex gap-1 flex-wrap">
                                             {config.channels.map((channel) => (
                                                 <Badge key={channel} type="secondary">
@@ -94,12 +94,12 @@ export function NotificationConfigList({ onEdit, onCreate }: NotificationConfigL
                                             ))}
                                         </div>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-gray-900">
                                         <Badge type={config.enabled ? "success" : "secondary"}>
                                             {config.enabled ? "Activo" : "Inactivo"}
                                         </Badge>
                                     </td>
-                                    <td className="px-6 py-4">
+                                    <td className="px-6 py-4 text-gray-900">
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" onClick={() => onEdit(config)}>
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

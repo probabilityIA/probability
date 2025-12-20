@@ -113,7 +113,36 @@ func (c *OrderEventConsumer) shouldNotifyEvent(ctx context.Context, event *domai
 	}
 
 	// Verificar si está habilitado
-	return config.Enabled
+	if !config.Enabled {
+		return false
+	}
+
+	// Para eventos de cambio de estado, verificar si el estado actual está en la lista permitida
+	if event.Type == domain.OrderEventTypeStatusChanged {
+		// Si no hay estados específicos configurados, notificar todos
+		if len(config.OrderStatusCodes) == 0 {
+			return true
+		}
+
+		// Verificar si el estado actual está en la lista de estados permitidos
+		currentStatus := event.Data.CurrentStatus
+		for _, allowedStatus := range config.OrderStatusCodes {
+			if allowedStatus == currentStatus {
+				return true
+			}
+		}
+
+		// El estado no está en la lista permitida
+		c.logger.Debug(ctx).
+			Str("event_id", event.ID).
+			Str("current_status", currentStatus).
+			Interface("allowed_statuses", config.OrderStatusCodes).
+			Msg("Evento filtrado: estado no está en la lista permitida")
+		return false
+	}
+
+	// Para otros tipos de eventos, solo verificar si está habilitado
+	return true
 }
 
 // publishOrderEvent publica un evento de orden al sistema de eventos

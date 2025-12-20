@@ -23,6 +23,12 @@ func (uc *IntegrationUseCase) GetIntegrationByIDWithCredentials(ctx context.Cont
 	// Desencriptar credenciales
 	var decryptedCredentials domain.DecryptedCredentials
 	if len(integration.Credentials) > 0 {
+		// DEBUG: Log raw credentials from DB
+		uc.log.Debug(ctx).
+			Uint("id", integration.ID).
+			Str("raw_credentials", string(integration.Credentials)).
+			Msg("Raw credentials from database")
+
 		// Las credenciales están codificadas en base64 dentro de un JSON
 		encryptedBytes, err := decodeEncryptedCredentials([]byte(integration.Credentials))
 		if err != nil {
@@ -38,6 +44,17 @@ func (uc *IntegrationUseCase) GetIntegrationByIDWithCredentials(ctx context.Cont
 				Msg("Error al desencriptar credenciales")
 			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationCredentialsDecrypt, err)
 		}
+
+		// DEBUG: Log decrypted credential keys
+		keys := make([]string, 0, len(decrypted))
+		for k := range decrypted {
+			keys = append(keys, k)
+		}
+		uc.log.Debug(ctx).
+			Uint("id", integration.ID).
+			Strs("decrypted_keys", keys).
+			Msg("Decrypted credential keys")
+
 		decryptedCredentials = decrypted
 	}
 

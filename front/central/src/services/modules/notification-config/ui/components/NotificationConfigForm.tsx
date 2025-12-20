@@ -20,7 +20,7 @@ export function NotificationConfigForm({ config, onSuccess, onCancel }: Notifica
     const { showToast } = useToast();
 
     const [formData, setFormData] = useState<CreateConfigDTO>({
-        business_id: 0,
+        business_id: 1, // Valor por defecto, se puede ajustar según el contexto
         event_type: "",
         enabled: true,
         channels: ["sse"],

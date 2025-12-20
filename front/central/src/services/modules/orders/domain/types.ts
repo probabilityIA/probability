@@ -1,3 +1,12 @@
+export interface OrderStatusInfo {
+    id: number;
+    code: string;
+    name: string;
+    description?: string;
+    category?: string;
+    color?: string;
+}
+
 export interface Order {
     id: string;
     created_at: string;
@@ -74,6 +83,8 @@ export interface Order {
     order_type_name: string;
     status: string;
     original_status: string;
+    status_id?: number;
+    order_status?: OrderStatusInfo;
 
     // Información adicional
     notes?: string;

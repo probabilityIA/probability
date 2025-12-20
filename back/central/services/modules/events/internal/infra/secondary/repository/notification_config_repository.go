@@ -56,6 +56,7 @@ func (r *NotificationConfigRepository) GetByBusinessAndEventType(ctx context.Con
 	var config models.BusinessNotificationConfig
 	err := r.db.Conn(ctx).
 		Preload("Business").
+		Preload("OrderStatuses"). // Precargar estados de orden asociados
 		Where("business_id = ? AND event_type = ?", businessID, eventType).
 		First(&config).Error
 
@@ -74,6 +75,7 @@ func (r *NotificationConfigRepository) GetByBusinessID(ctx context.Context, busi
 	var configs []models.BusinessNotificationConfig
 	err := r.db.Conn(ctx).
 		Preload("Business").
+		Preload("OrderStatuses").
 		Where("business_id = ?", businessID).
 		Order("event_type ASC").
 		Find(&configs).Error
@@ -120,7 +122,7 @@ func (r *NotificationConfigRepository) List(ctx context.Context, page, pageSize 
 	query = query.Offset(offset).Limit(pageSize)
 
 	// Precargar relaciones
-	query = query.Preload("Business")
+	query = query.Preload("Business").Preload("OrderStatuses")
 
 	// Ejecutar query
 	if err := query.Find(&configs).Error; err != nil {

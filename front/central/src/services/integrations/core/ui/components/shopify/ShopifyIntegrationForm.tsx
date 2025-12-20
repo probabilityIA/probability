@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Input, Button, Alert, Select } from '@/shared/ui';
 import { WebhookInfo, ShopifyWebhookInfo } from '../../../domain/types';
-import { listWebhooksAction, deleteWebhookAction } from '../../../infra/actions';
+import { listWebhooksAction, deleteWebhookAction, verifyWebhooksAction, createWebhookAction } from '../../../infra/actions';
 
 interface ShopifyConfig {
     store_name: string;
@@ -91,6 +91,10 @@ export default function ShopifyIntegrationForm({
     const [loadingWebhooks, setLoadingWebhooks] = useState(false);
     const [webhookConfigured, setWebhookConfigured] = useState(false);
     const [webhookUrl, setWebhookUrl] = useState<string>('');
+    const [showCreateWebhookModal, setShowCreateWebhookModal] = useState(false);
+    const [webhookUrlToCreate, setWebhookUrlToCreate] = useState<string>('');
+    const [creatingWebhook, setCreatingWebhook] = useState(false);
+    const [verifyingWebhooks, setVerifyingWebhooks] = useState(false);
 
     const apiVersions = [
         { value: '2024-01', label: '2024-01' },
@@ -175,6 +179,71 @@ export default function ShopifyIntegrationForm({
             } catch (err) {
                 console.error('Error copying to clipboard:', err);
             }
+        }
+    };
+
+    const handleVerifyAndShowCreateModal = async () => {
+        if (!integrationId) return;
+
+        setVerifyingWebhooks(true);
+        setError(null);
+
+        try {
+            // Primero obtener la URL del webhook
+            if (onGetWebhook) {
+                const info = await onGetWebhook();
+                if (info && info.url) {
+                    setWebhookUrlToCreate(info.url);
+                    // Verificar si existen webhooks con esta URL
+                    const verifyResponse = await verifyWebhooksAction(integrationId);
+                    if (verifyResponse.success && verifyResponse.data && verifyResponse.data.length > 0) {
+                        // Si ya existen webhooks, mostrar mensaje
+                        setError(`Ya existen ${verifyResponse.data.length} webhook(s) con esta URL. Se eliminarán antes de crear nuevos.`);
+                    }
+                    setShowCreateWebhookModal(true);
+                } else {
+                    setError('No se pudo obtener la URL del webhook');
+                }
+            }
+        } catch (err: any) {
+            console.error('Error verifying webhooks:', err);
+            setError(err.message || 'Error al verificar webhooks');
+        } finally {
+            setVerifyingWebhooks(false);
+        }
+    };
+
+    const handleCreateWebhook = async () => {
+        if (!integrationId) return;
+
+        setCreatingWebhook(true);
+        setError(null);
+
+        try {
+            const response = await createWebhookAction(integrationId);
+            if (response.success) {
+                setWebhookConfigured(true);
+                setWebhookUrl(response.data.webhook_url);
+                setShowCreateWebhookModal(false);
+                // Recargar webhooks
+                await loadWebhooks();
+                setError(null);
+                setTestSuccess(true);
+                setTimeout(() => setTestSuccess(false), 5000);
+            } else {
+                setError('No se pudo crear el webhook');
+            }
+        } catch (err: any) {
+            console.error('Error creating webhook:', err);
+            const errorMessage = err.message || 'Error al crear el webhook';
+            // Si el error menciona localhost, mostrar mensaje más claro
+            if (errorMessage.toLowerCase().includes('localhost') || errorMessage.toLowerCase().includes('pruebas')) {
+                setError('⚠️ No se pueden crear webhooks en entorno de pruebas (localhost). Los webhooks solo se pueden crear en producción.');
+            } else {
+                setError(errorMessage);
+            }
+        } finally {
+            setCreatingWebhook(false);
         }
     };
 
@@ -344,6 +413,18 @@ export default function ShopifyIntegrationForm({
                             </p>
                         </div>
                         <div className="flex gap-2">
+                            {!webhookConfigured && (
+                                <Button
+                                    type="button"
+                                    onClick={handleVerifyAndShowCreateModal}
+                                    disabled={verifyingWebhooks}
+                                    loading={verifyingWebhooks}
+                                    variant="primary"
+                                    size="sm"
+                                >
+                                    {verifyingWebhooks ? 'Verificando...' : '➕ Crear Webhook'}
+                                </Button>
+                            )}
                             <Button
                                 type="button"
                                 onClick={handleGetWebhook}
@@ -474,6 +555,70 @@ export default function ShopifyIntegrationForm({
                             )}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Modal de Confirmación para Crear Webhook */}
+            {showCreateWebhookModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                            ⚠️ Confirmar Creación de Webhook
+                        </h3>
+                        <div className="space-y-4">
+                            <div>
+                                <p className="text-sm text-gray-700 mb-2">
+                                    Se creará un webhook en Shopify con la siguiente URL:
+                                </p>
+                                <div className="p-3 bg-gray-50 rounded border border-gray-200">
+                                    <code className="text-sm text-gray-800 break-all">
+                                        {webhookUrlToCreate}
+                                    </code>
+                                </div>
+                            </div>
+                            <div className="p-3 bg-blue-50 rounded border border-blue-200">
+                                <p className="text-sm text-blue-800">
+                                    <strong>Eventos que se registrarán:</strong>
+                                </p>
+                                <ul className="text-xs text-blue-700 mt-2 list-disc list-inside space-y-1">
+                                    <li>orders/create</li>
+                                    <li>orders/updated</li>
+                                    <li>orders/paid</li>
+                                    <li>orders/cancelled</li>
+                                    <li>orders/fulfilled</li>
+                                    <li>orders/partially_fulfilled</li>
+                                </ul>
+                            </div>
+                            {error && (
+                                <Alert type="error" onClose={() => setError(null)}>
+                                    {error}
+                                </Alert>
+                            )}
+                        </div>
+                        <div className="flex gap-3 mt-6 justify-end">
+                            <Button
+                                type="button"
+                                onClick={() => {
+                                    setShowCreateWebhookModal(false);
+                                    setWebhookUrlToCreate('');
+                                    setError(null);
+                                }}
+                                variant="outline"
+                                disabled={creatingWebhook}
+                            >
+                                Cancelar
+                            </Button>
+                            <Button
+                                type="button"
+                                onClick={handleCreateWebhook}
+                                loading={creatingWebhook}
+                                disabled={creatingWebhook}
+                                variant="primary"
+                            >
+                                {creatingWebhook ? 'Creando...' : '✅ Confirmar y Crear'}
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
 

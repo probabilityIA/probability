@@ -17,6 +17,7 @@ type IUseCase interface {
 	UpdateOrderStatusMapping(ctx context.Context, id uint, mapping *domain.OrderStatusMapping) (*domain.OrderStatusMapping, error)
 	DeleteOrderStatusMapping(ctx context.Context, id uint) error
 	ToggleOrderStatusMappingActive(ctx context.Context, id uint) (*domain.OrderStatusMapping, error)
+	ListOrderStatuses(ctx context.Context, isActive *bool) ([]domain.OrderStatusInfo, error)
 }
 
 type UseCase struct {
@@ -33,7 +34,7 @@ func New(repo domain.IRepository, logger log.ILogger) IUseCase {
 
 func (uc *UseCase) CreateOrderStatusMapping(ctx context.Context, mapping *domain.OrderStatusMapping) (*domain.OrderStatusMapping, error) {
 	// Verificar si ya existe
-	exists, err := uc.repo.Exists(ctx, mapping.IntegrationType, mapping.OriginalStatus)
+	exists, err := uc.repo.Exists(ctx, mapping.IntegrationTypeID, mapping.OriginalStatus)
 	if err != nil {
 		return nil, err
 	}
@@ -42,16 +43,12 @@ func (uc *UseCase) CreateOrderStatusMapping(ctx context.Context, mapping *domain
 	}
 
 	model := &models.OrderStatusMapping{
-		IntegrationType: mapping.IntegrationType,
-		OriginalStatus:  mapping.OriginalStatus,
-		MappedStatus:    mapping.MappedStatus,
-		Priority:        mapping.Priority,
-		Description:     mapping.Description,
-		IsActive:        true,
-	}
-
-	if !model.IsValidMappedStatus() {
-		return nil, errors.New("invalid mapped status")
+		IntegrationTypeID: mapping.IntegrationTypeID,
+		OriginalStatus:    mapping.OriginalStatus,
+		OrderStatusID:     mapping.OrderStatusID,
+		Priority:          mapping.Priority,
+		Description:       mapping.Description,
+		IsActive:          true,
 	}
 
 	if err := uc.repo.Create(ctx, model); err != nil {
@@ -90,13 +87,9 @@ func (uc *UseCase) UpdateOrderStatusMapping(ctx context.Context, id uint, mappin
 	}
 
 	model.OriginalStatus = mapping.OriginalStatus
-	model.MappedStatus = mapping.MappedStatus
+	model.OrderStatusID = mapping.OrderStatusID
 	model.Priority = mapping.Priority
 	model.Description = mapping.Description
-
-	if !model.IsValidMappedStatus() {
-		return nil, errors.New("invalid mapped status")
-	}
 
 	if err := uc.repo.Update(ctx, model); err != nil {
 		return nil, err
@@ -118,15 +111,61 @@ func (uc *UseCase) ToggleOrderStatusMappingActive(ctx context.Context, id uint) 
 }
 
 func toDomain(m *models.OrderStatusMapping) *domain.OrderStatusMapping {
-	return &domain.OrderStatusMapping{
-		ID:              m.ID,
-		IntegrationType: m.IntegrationType,
-		OriginalStatus:  m.OriginalStatus,
-		MappedStatus:    m.MappedStatus,
-		IsActive:        m.IsActive,
-		Priority:        m.Priority,
-		Description:     m.Description,
-		CreatedAt:       m.CreatedAt,
-		UpdatedAt:       m.UpdatedAt,
+	result := &domain.OrderStatusMapping{
+		ID:                m.ID,
+		IntegrationTypeID: m.IntegrationTypeID,
+		OriginalStatus:    m.OriginalStatus,
+		OrderStatusID:     m.OrderStatusID,
+		IsActive:          m.IsActive,
+		Priority:          m.Priority,
+		Description:       m.Description,
+		CreatedAt:         m.CreatedAt,
+		UpdatedAt:         m.UpdatedAt,
 	}
+
+	// Incluir información del IntegrationType si está cargado
+	if m.IntegrationType.ID != 0 {
+		result.IntegrationType = &domain.IntegrationTypeInfo{
+			ID:       m.IntegrationType.ID,
+			Code:     m.IntegrationType.Code,
+			Name:     m.IntegrationType.Name,
+			ImageURL: m.IntegrationType.ImageURL,
+		}
+	}
+
+	// Incluir información del OrderStatus si está cargado
+	if m.OrderStatus.ID != 0 {
+		result.OrderStatus = &domain.OrderStatusInfo{
+			ID:          m.OrderStatus.ID,
+			Code:        m.OrderStatus.Code,
+			Name:        m.OrderStatus.Name,
+			Description: m.OrderStatus.Description,
+			Category:    m.OrderStatus.Category,
+			Color:       m.OrderStatus.Color,
+		}
+	}
+
+	return result
+}
+
+// ListOrderStatuses lista todos los estados de órdenes de Probability
+func (uc *UseCase) ListOrderStatuses(ctx context.Context, isActive *bool) ([]domain.OrderStatusInfo, error) {
+	statuses, err := uc.repo.ListOrderStatuses(ctx, isActive)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]domain.OrderStatusInfo, len(statuses))
+	for i, status := range statuses {
+		result[i] = domain.OrderStatusInfo{
+			ID:          status.ID,
+			Code:        status.Code,
+			Name:        status.Name,
+			Description: status.Description,
+			Category:    status.Category,
+			Color:       status.Color,
+		}
+	}
+
+	return result, nil
 }

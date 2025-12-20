@@ -3,6 +3,7 @@ package modules
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
+	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
@@ -46,5 +47,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	}
 	// Inicializar módulo de AI
 	ai.New(router, logger)
+
+	// Inicializar módulo de dashboard
+	dashboard.New(router, database, logger)
 
 }

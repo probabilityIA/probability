@@ -25,7 +25,8 @@ type IShopifyUseCase interface {
 	ProcessOrderCancelled(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
 	ProcessOrderFulfilled(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
 	ProcessOrderPartiallyFulfilled(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
-	CreateWebhook(ctx context.Context, integrationID string, baseURL string) error
+	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]domain.WebhookInfo, error)
+	CreateWebhook(ctx context.Context, integrationID string, baseURL string) (*domain.CreateWebhookResult, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookInfo, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 }
