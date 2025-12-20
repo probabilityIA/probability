@@ -7,6 +7,24 @@ export interface OrderStatusInfo {
     color?: string;
 }
 
+export interface PaymentStatusInfo {
+    id: number;
+    code: string;
+    name: string;
+    description?: string;
+    category?: string;
+    color?: string;
+}
+
+export interface FulfillmentStatusInfo {
+    id: number;
+    code: string;
+    name: string;
+    description?: string;
+    category?: string;
+    color?: string;
+}
+
 export interface Order {
     id: string;
     created_at: string;
@@ -85,6 +103,12 @@ export interface Order {
     original_status: string;
     status_id?: number;
     order_status?: OrderStatusInfo;
+    
+    // Estados independientes
+    payment_status_id?: number;
+    fulfillment_status_id?: number;
+    payment_status?: PaymentStatusInfo;
+    fulfillment_status?: FulfillmentStatusInfo;
 
     // Información adicional
     notes?: string;
@@ -150,6 +174,8 @@ export interface GetOrdersParams {
     internal_number?: string;
     platform?: string;
     is_paid?: boolean;
+    payment_status_id?: number;
+    fulfillment_status_id?: number;
     warehouse_id?: number;
     driver_id?: number;
     start_date?: string;

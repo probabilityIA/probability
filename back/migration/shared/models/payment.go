@@ -132,3 +132,67 @@ type OrderStatusMapping struct {
 func (OrderStatusMapping) TableName() string {
 	return "order_status_mappings"
 }
+
+// ───────────────────────────────────────────
+//
+//	PAYMENT STATUSES - Estados de pago del sistema
+//
+// ───────────────────────────────────────────
+
+// PaymentStatus representa un estado de pago en Probability
+type PaymentStatus struct {
+	gorm.Model
+
+	// Identificación
+	Code        string `gorm:"size:64;unique;not null;index"` // "pending", "authorized", "paid", "refunded"
+	Name        string `gorm:"size:128;not null"`             // "Pendiente", "Autorizado", "Pagado", "Reembolsado"
+	Description string `gorm:"type:text"`                     // Descripción detallada del estado
+
+	// Categorización
+	Category string `gorm:"size:64;index"` // "pending", "completed", "refunded", "failed"
+
+	// Configuración
+	IsActive bool `gorm:"default:true;index"` // Si está activo
+
+	// UI/UX
+	Icon     string         `gorm:"size:255"`   // URL del ícono
+	Color    string         `gorm:"size:32"`    // Color hex para UI
+	Metadata datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional
+}
+
+// TableName especifica el nombre de la tabla
+func (PaymentStatus) TableName() string {
+	return "payment_statuses"
+}
+
+// ───────────────────────────────────────────
+//
+//	FULFILLMENT STATUSES - Estados de fulfillment del sistema
+//
+// ───────────────────────────────────────────
+
+// FulfillmentStatus representa un estado de fulfillment en Probability
+type FulfillmentStatus struct {
+	gorm.Model
+
+	// Identificación
+	Code        string `gorm:"size:64;unique;not null;index"` // "unfulfilled", "partial", "fulfilled", "shipped"
+	Name        string `gorm:"size:128;not null"`             // "No Cumplida", "Parcial", "Cumplida", "Enviada"
+	Description string `gorm:"type:text"`                     // Descripción detallada del estado
+
+	// Categorización
+	Category string `gorm:"size:64;index"` // "pending", "in_progress", "completed", "cancelled"
+
+	// Configuración
+	IsActive bool `gorm:"default:true;index"` // Si está activo
+
+	// UI/UX
+	Icon     string         `gorm:"size:255"`   // URL del ícono
+	Color    string         `gorm:"size:32"`    // Color hex para UI
+	Metadata datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional
+}
+
+// TableName especifica el nombre de la tabla
+func (FulfillmentStatus) TableName() string {
+	return "fulfillment_statuses"
+}

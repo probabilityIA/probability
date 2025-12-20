@@ -6,7 +6,8 @@ import { OrderStatusMappingUseCases } from '../../app/use-cases';
 import {
     GetOrderStatusMappingsParams,
     CreateOrderStatusMappingDTO,
-    UpdateOrderStatusMappingDTO
+    UpdateOrderStatusMappingDTO,
+    OrderStatusInfo
 } from '../../domain/types';
 
 async function getUseCases() {

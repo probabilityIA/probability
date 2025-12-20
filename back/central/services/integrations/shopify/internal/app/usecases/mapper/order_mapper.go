@@ -250,3 +250,31 @@ func getStringPtr(m map[string]interface{}, key string) *string {
 	}
 	return nil
 }
+
+// EnrichOrderWithDetails extrae y agrega PaymentDetails y FulfillmentDetails al ProbabilityOrderDTO
+// desde el rawPayload (JSON original de Shopify)
+func EnrichOrderWithDetails(probabilityOrder *domain.ProbabilityOrderDTO, rawPayload []byte) {
+	if rawPayload == nil || len(rawPayload) == 0 {
+		return
+	}
+
+	// Extraer FinancialDetails
+	if financialDetails, err := ExtractFinancialDetails(rawPayload); err == nil {
+		probabilityOrder.FinancialDetails = financialDetails
+	}
+
+	// Extraer ShippingDetails
+	if shippingDetails, err := ExtractShippingDetails(rawPayload); err == nil {
+		probabilityOrder.ShippingDetails = shippingDetails
+	}
+
+	// Extraer PaymentDetails (incluye financial_status)
+	if paymentDetails, err := ExtractPaymentDetails(rawPayload); err == nil {
+		probabilityOrder.PaymentDetails = paymentDetails
+	}
+
+	// Extraer FulfillmentDetails (incluye fulfillment_status)
+	if fulfillmentDetails, err := ExtractFulfillmentDetails(rawPayload); err == nil {
+		probabilityOrder.FulfillmentDetails = fulfillmentDetails
+	}
+}

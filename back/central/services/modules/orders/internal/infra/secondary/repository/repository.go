@@ -65,6 +65,8 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Proba
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
 		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").      // Precargar PaymentStatus
+		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("id = ?", id).
 		First(&order).Error
@@ -87,6 +89,8 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
 		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").      // Precargar PaymentStatus
+		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("internal_number = ?", internalNumber).
 		First(&order).Error
@@ -150,6 +154,14 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("is_paid = ?", isPaid)
 	}
 
+	if paymentStatusID, ok := filters["payment_status_id"].(uint); ok && paymentStatusID > 0 {
+		query = query.Where("payment_status_id = ?", paymentStatusID)
+	}
+
+	if fulfillmentStatusID, ok := filters["fulfillment_status_id"].(uint); ok && fulfillmentStatusID > 0 {
+		query = query.Where("fulfillment_status_id = ?", fulfillmentStatusID)
+	}
+
 	if warehouseID, ok := filters["warehouse_id"].(uint); ok && warehouseID > 0 {
 		query = query.Where("warehouse_id = ?", warehouseID)
 	}
@@ -193,6 +205,8 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
 		Preload("OrderStatus").       // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").     // Precargar PaymentStatus
+		Preload("FulfillmentStatus"). // Precargar FulfillmentStatus
 		Preload("OrderItems.Product") // Precargar OrderItems con Product para obtener información del catálogo
 
 	// Paginación
@@ -255,7 +269,9 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 		Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
-		Preload("OrderStatus"). // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("OrderStatus").       // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").     // Precargar PaymentStatus
+		Preload("FulfillmentStatus"). // Precargar FulfillmentStatus
 		Preload("OrderItems.Product").
 		Where("external_id = ? AND integration_id = ?", externalID, integrationID).
 		First(&order).Error

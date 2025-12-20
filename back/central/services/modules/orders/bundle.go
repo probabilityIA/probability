@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/gin-gonic/gin"
+	fulfillmentstatusrepo "github.com/secamc93/probability/back/central/services/modules/fulfillmentstatus/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseordermapping"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorderscore"
@@ -14,6 +15,7 @@ import (
 	redisevents "github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository"
 	orderstatusrepo "github.com/secamc93/probability/back/central/services/modules/orderstatus/infra/secondary/repository"
+	paymentstatusrepo "github.com/secamc93/probability/back/central/services/modules/paymentstatus/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -43,9 +45,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 3. Init Use Cases
 	orderCRUD := usecaseorder.New(repo, eventPublisher)
 
-	// 3.0. Init OrderStatus Repository (para mapeo de estados)
+	// 3.0. Init Status Repositories (para mapeo de estados)
 	orderStatusRepo := orderstatusrepo.New(database, logger)
-	orderMapping := usecaseordermapping.New(repo, logger, eventPublisher, orderStatusRepo)
+	paymentStatusRepo := paymentstatusrepo.New(database, logger)
+	fulfillmentStatusRepo := fulfillmentstatusrepo.New(database, logger)
+	orderMapping := usecaseordermapping.New(repo, logger, eventPublisher, orderStatusRepo, paymentStatusRepo, fulfillmentStatusRepo)
 
 	// 3.1. Init Score Use Case
 	scoreUseCase := usecaseorderscore.New(repo)

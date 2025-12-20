@@ -26,29 +26,11 @@ func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string,
 
 	probabilityOrder := mapper.MapShopifyOrderToProbability(order)
 
-	// Procesar y extraer datos adicionales del JSON original
+	// Enriquecer la orden con detalles extraídos del JSON original (PaymentDetails, FulfillmentDetails, etc.)
+	mapper.EnrichOrderWithDetails(probabilityOrder, rawPayload)
+
+	// Agregar channel metadata con el payload original si está disponible
 	if rawPayload != nil && len(rawPayload) > 0 {
-		// Extraer FinancialDetails
-		if financialDetails, err := mapper.ExtractFinancialDetails(rawPayload); err == nil {
-			probabilityOrder.FinancialDetails = financialDetails
-		}
-
-		// Extraer ShippingDetails
-		if shippingDetails, err := mapper.ExtractShippingDetails(rawPayload); err == nil {
-			probabilityOrder.ShippingDetails = shippingDetails
-		}
-
-		// Extraer PaymentDetails
-		if paymentDetails, err := mapper.ExtractPaymentDetails(rawPayload); err == nil {
-			probabilityOrder.PaymentDetails = paymentDetails
-		}
-
-		// Extraer FulfillmentDetails
-		if fulfillmentDetails, err := mapper.ExtractFulfillmentDetails(rawPayload); err == nil {
-			probabilityOrder.FulfillmentDetails = fulfillmentDetails
-		}
-
-		// Agregar channel metadata con el payload original
 		now := time.Now()
 		probabilityOrder.ChannelMetadata = &domain.ProbabilityChannelMetadataDTO{
 			ChannelSource: "shopify",

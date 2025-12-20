@@ -97,6 +97,18 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		}
 	}
 
+	if paymentStatusID := c.Query("payment_status_id"); paymentStatusID != "" {
+		if id, err := strconv.ParseUint(paymentStatusID, 10, 32); err == nil {
+			filters["payment_status_id"] = uint(id)
+		}
+	}
+
+	if fulfillmentStatusID := c.Query("fulfillment_status_id"); fulfillmentStatusID != "" {
+		if id, err := strconv.ParseUint(fulfillmentStatusID, 10, 32); err == nil {
+			filters["fulfillment_status_id"] = uint(id)
+		}
+	}
+
 	if warehouseID := c.Query("warehouse_id"); warehouseID != "" {
 		if id, err := strconv.ParseUint(warehouseID, 10, 32); err == nil {
 			filters["warehouse_id"] = uint(id)
