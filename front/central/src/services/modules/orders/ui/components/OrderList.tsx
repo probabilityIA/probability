@@ -4,10 +4,14 @@ import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { getOrdersAction, deleteOrderAction, getOrderByIdAction } from '../../infra/actions';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import { getOrderStatusesAction } from '@/services/modules/orderstatus/infra/actions';
+import { getPaymentStatusesAction } from '@/services/modules/paymentstatus/infra/actions';
+import { getFulfillmentStatusesAction } from '@/services/modules/fulfillmentstatus/infra/actions';
+import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import { Order, GetOrdersParams } from '../../domain/types';
 import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 import RawOrderModal from './RawOrderModal';
 
 // Componente memoizado para las filas de la tabla
@@ -22,7 +26,9 @@ const OrderRow = memo(({
     formatDate,
     getStatusBadge,
     getProbabilityColor,
-    isNew
+    isNew,
+    businessesMap,
+    isSuperAdmin
 }: {
     order: Order;
     onView?: (order: Order) => void;
@@ -35,6 +41,8 @@ const OrderRow = memo(({
     getStatusBadge: (status: string, color?: string) => React.ReactNode;
     getProbabilityColor: (probability: number) => string;
     isNew?: boolean;
+    businessesMap: Map<number, string>;
+    isSuperAdmin: boolean;
 }) => {
     return (
         <tr className={`hover:bg-gray-50 transition-all duration-300 ${isNew ? 'animate-slide-in bg-green-50/50' : ''}`}>
@@ -86,7 +94,23 @@ const OrderRow = memo(({
                 </div>
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                {getStatusBadge(order.order_status?.name || order.status, order.order_status?.color)}
+                {getStatusBadge(order.order_status?.name || order.status, order.order_status?.color) || (
+                    <span className="text-xs text-gray-400">-</span>
+                )}
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                {order.payment_status?.name ? (
+                    getStatusBadge(order.payment_status.name, order.payment_status.color)
+                ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                )}
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                {order.fulfillment_status?.name ? (
+                    getStatusBadge(order.fulfillment_status.name, order.fulfillment_status.color)
+                ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                )}
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
@@ -125,6 +149,18 @@ const OrderRow = memo(({
                     <div className="text-gray-500">{formatDate(order.created_at).time}</div>
                 </div>
             </td>
+            {isSuperAdmin && (
+                <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
+                    <div className="text-sm text-gray-900">
+                        {order.business_id && businessesMap.get(order.business_id) 
+                            ? businessesMap.get(order.business_id)
+                            : order.business_id 
+                            ? `ID: ${order.business_id}`
+                            : '-'
+                        }
+                    </div>
+                </td>
+            )}
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex flex-row justify-end gap-2">
                     {/* Botón de Recomendación Inteligente (Robot) */}
@@ -208,6 +244,7 @@ interface OrderListProps {
 }
 
 export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey }: OrderListProps) {
+    const { isSuperAdmin } = usePermissions();
     const [orders, setOrders] = useState<Order[]>([]);
     const [initialLoading, setInitialLoading] = useState(true);
     const [tableLoading, setTableLoading] = useState(false);
@@ -228,11 +265,26 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const [integrationsList, setIntegrationsList] = useState<{ value: string; label: string }[]>([]);
     // Order statuses for filter
     const [orderStatusesList, setOrderStatusesList] = useState<{ value: string; label: string }[]>([]);
+    // Payment statuses for filter
+    const [paymentStatusesList, setPaymentStatusesList] = useState<{ value: string; label: string }[]>([]);
+    // Fulfillment statuses for filter
+    const [fulfillmentStatusesList, setFulfillmentStatusesList] = useState<{ value: string; label: string }[]>([]);
+    // Businesses for mapping (only load if super admin)
+    const [businessesList, setBusinessesList] = useState<{ id: number; name: string }[]>([]);
+    
+    // Business map for quick lookup (memoized)
+    const businessesMap = useMemo(() => {
+        const map = new Map<number, string>();
+        businessesList.forEach(business => {
+            map.set(business.id, business.name);
+        });
+        return map;
+    }, [businessesList]);
 
     useEffect(() => {
         const fetchIntegrations = async () => {
             try {
-                const response = await getIntegrationsAction({ page: 1, page_size: 50 });
+                const response = await getIntegrationsAction({ page: 1, page_size: 100 });
                 if (response.success && response.data) {
                     const options = response.data.map((integration: any) => ({
                         value: String(integration.id),
@@ -246,6 +298,27 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         };
         fetchIntegrations();
     }, []);
+
+    useEffect(() => {
+        // Solo cargar businesses si el usuario es super admin
+        if (!isSuperAdmin) return;
+
+        const fetchBusinesses = async () => {
+            try {
+                const response = await getBusinessesAction({ page: 1, per_page: 100 });
+                if (response.success && response.data) {
+                    const businesses = response.data.map((business: any) => ({
+                        id: business.id,
+                        name: business.name,
+                    }));
+                    setBusinessesList(businesses);
+                }
+            } catch (error) {
+                console.error('Error fetching businesses:', error);
+            }
+        };
+        fetchBusinesses();
+    }, [isSuperAdmin]);
 
     useEffect(() => {
         const fetchOrderStatuses = async () => {
@@ -265,6 +338,44 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             }
         };
         fetchOrderStatuses();
+    }, []);
+
+    useEffect(() => {
+        const fetchPaymentStatuses = async () => {
+            try {
+                const response = await getPaymentStatusesAction(true); // Solo estados activos
+                if (response.success && response.data) {
+                    const options = response.data.map((status) => ({
+                        value: String(status.id),
+                        label: status.name,
+                    }));
+                    options.sort((a, b) => a.label.localeCompare(b.label));
+                    setPaymentStatusesList(options);
+                }
+            } catch (error) {
+                console.error('Error fetching payment statuses for filter:', error);
+            }
+        };
+        fetchPaymentStatuses();
+    }, []);
+
+    useEffect(() => {
+        const fetchFulfillmentStatuses = async () => {
+            try {
+                const response = await getFulfillmentStatusesAction(true); // Solo estados activos
+                if (response.success && response.data) {
+                    const options = response.data.map((status) => ({
+                        value: String(status.id),
+                        label: status.name,
+                    }));
+                    options.sort((a, b) => a.label.localeCompare(b.label));
+                    setFulfillmentStatusesList(options);
+                }
+            } catch (error) {
+                console.error('Error fetching fulfillment statuses for filter:', error);
+            }
+        };
+        fetchFulfillmentStatuses();
     }, []);
 
     // Filters
@@ -290,7 +401,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             placeholder: 'Buscar por número interno...',
         },
         {
-            key: 'status_id',
+            key: 'status',
             label: 'Estado',
             type: 'select',
             options: orderStatusesList,
@@ -313,15 +424,27 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
         {
             key: 'is_paid',
-            label: 'Estado de pago',
+            label: 'Estado de pago (boolean)',
             type: 'boolean',
+        },
+        {
+            key: 'payment_status_id',
+            label: 'Estado de pago',
+            type: 'select',
+            options: paymentStatusesList,
+        },
+        {
+            key: 'fulfillment_status_id',
+            label: 'Estado de fulfillment',
+            type: 'select',
+            options: fulfillmentStatusesList,
         },
         {
             key: 'start_date',
             label: 'Rango de fechas',
             type: 'date-range',
         },
-    ], [orderStatusesList, integrationsList]);
+    ], [orderStatusesList, integrationsList, paymentStatusesList, fulfillmentStatusesList]);
 
     // Convertir filtros a ActiveFilter[]
     const activeFilters: ActiveFilter[] = useMemo(() => {
@@ -346,13 +469,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
 
 
-        if (filters.status_id) {
+        if (filters.status) {
             // Buscar el label del estado seleccionado
-            const statusOption = orderStatusesList.find(opt => opt.value === String(filters.status_id));
+            const statusOption = orderStatusesList.find(opt => opt.value === String(filters.status));
             active.push({
-                key: 'status_id',
+                key: 'status',
                 label: 'Estado',
-                value: statusOption?.label || String(filters.status_id),
+                value: statusOption?.label || String(filters.status),
                 type: 'select',
             });
         }
@@ -379,9 +502,29 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         if (filters.is_paid !== undefined) {
             active.push({
                 key: 'is_paid',
-                label: 'Estado de pago',
+                label: 'Estado de pago (boolean)',
                 value: filters.is_paid,
                 type: 'boolean',
+            });
+        }
+
+        if (filters.payment_status_id) {
+            const paymentStatus = paymentStatusesList.find(s => s.value === String(filters.payment_status_id));
+            active.push({
+                key: 'payment_status_id',
+                label: 'Estado de pago',
+                value: paymentStatus ? paymentStatus.label : String(filters.payment_status_id),
+                type: 'select',
+            });
+        }
+
+        if (filters.fulfillment_status_id) {
+            const fulfillmentStatus = fulfillmentStatusesList.find(s => s.value === String(filters.fulfillment_status_id));
+            active.push({
+                key: 'fulfillment_status_id',
+                label: 'Estado de fulfillment',
+                value: fulfillmentStatus ? fulfillmentStatus.label : String(filters.fulfillment_status_id),
+                type: 'select',
             });
         }
 
@@ -398,7 +541,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
 
         return active;
-    }, [filters]);
+    }, [filters, orderStatusesList, integrationsList, paymentStatusesList, fulfillmentStatusesList]);
 
     // Manejar adición de filtro
     const handleAddFilter = useCallback((filterKey: string, value: any) => {
@@ -412,6 +555,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 newFilters.is_paid = value === true;
             } else if (filterKey === 'integration_id') {
                 newFilters.integration_id = Number(value);
+            } else if (filterKey === 'payment_status_id') {
+                newFilters.payment_status_id = Number(value);
+            } else if (filterKey === 'fulfillment_status_id') {
+                newFilters.fulfillment_status_id = Number(value);
             } else {
                 (newFilters as any)[filterKey] = value;
             }
@@ -609,7 +756,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         return { date: dateStr, time: timeStr };
     }, []);
 
-    const getStatusBadge = useCallback((status: string, color?: string) => {
+    const getStatusBadge = useCallback((status: string | undefined | null, color?: string) => {
+        // Si no hay status o no es un string válido, retornar null
+        if (!status || typeof status !== 'string' || status.trim() === '') {
+            return null;
+        }
+
         // Si hay color configurado en la BD, usarlo
         if (color) {
             // Convertir hex a RGB para calcular si es claro u oscuro
@@ -735,6 +887,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Estado
                                 </th>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                    Estado de Pago
+                                </th>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                    Estado de Fulfillment
+                                </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Probabilidad
                                 </th>
@@ -744,6 +902,11 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Fecha
                                 </th>
+                                {isSuperAdmin && (
+                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                        Business
+                                    </th>
+                                )}
                                 <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Acciones
                                 </th>
@@ -752,7 +915,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         <tbody className="bg-white divide-y divide-gray-200">
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={9} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={isSuperAdmin ? 12 : 11} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                                         No hay órdenes disponibles
                                     </td>
                                 </tr>
@@ -774,6 +937,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         getStatusBadge={getStatusBadge}
                                         getProbabilityColor={getProbabilityColor}
                                         isNew={newOrderIds.has(order.id)}
+                                        businessesMap={businessesMap}
+                                        isSuperAdmin={isSuperAdmin}
                                     />
                                 ))
                             )}

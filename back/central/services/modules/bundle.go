@@ -5,10 +5,12 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
+	"github.com/secamc93/probability/back/central/services/modules/fulfillmentstatus"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
+	"github.com/secamc93/probability/back/central/services/modules/paymentstatus"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -25,6 +27,12 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de order status mappings
 	orderstatus.New(router, database, logger, environment)
+
+	// Inicializar módulo de payment statuses
+	paymentstatus.New(router, database, logger, environment)
+
+	// Inicializar módulo de fulfillment statuses
+	fulfillmentstatus.New(router, database, logger, environment)
 
 	// Inicializar módulo de orders
 	orders.New(router, database, logger, environment, rabbitMQ, redisClient)

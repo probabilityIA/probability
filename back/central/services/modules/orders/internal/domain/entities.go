@@ -93,6 +93,12 @@ type ProbabilityOrder struct {
 	StatusID       *uint            `json:"status_id"`              // ID del estado mapeado en Probability (FK a order_statuses)
 	OrderStatus    *OrderStatusInfo `json:"order_status,omitempty"` // Información del estado de Probability si está cargado
 
+	// Estados independientes
+	PaymentStatusID     *uint                  `json:"payment_status_id"`     // FK a payment_statuses
+	FulfillmentStatusID *uint                  `json:"fulfillment_status_id"` // FK a fulfillment_statuses
+	PaymentStatus       *PaymentStatusInfo     `json:"payment_status,omitempty"`
+	FulfillmentStatus   *FulfillmentStatusInfo `json:"fulfillment_status,omitempty"`
+
 	// Información adicional
 	Notes    *string `json:"notes"`
 	Coupon   *string `json:"coupon"`

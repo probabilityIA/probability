@@ -41,6 +41,11 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 
 			fmt.Printf("[GetOrders] Processing order ID: %s\n", order.ExternalID)
 			probabilityOrder := mapper.MapShopifyOrderToProbability(&order)
+
+			// Enriquecer la orden con detalles extraídos del JSON original (PaymentDetails, FulfillmentDetails, etc.)
+			// Estos detalles incluyen financial_status y fulfillment_status que se mapearán a PaymentStatusID y FulfillmentStatusID
+			mapper.EnrichOrderWithDetails(probabilityOrder, order.RawData)
+
 			if err := uc.orderPublisher.Publish(ctx, probabilityOrder); err != nil {
 				fmt.Printf("[GetOrders] Error publishing order: %v. \n", err)
 				// User requested NO fallback. Strict RabbitMQ usage.

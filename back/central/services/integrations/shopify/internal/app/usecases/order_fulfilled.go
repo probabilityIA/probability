@@ -23,6 +23,11 @@ func (uc *SyncOrdersUseCase) ProcessOrderFulfilled(ctx context.Context, shopDoma
 	order.IntegrationType = "shopify"
 
 	probabilityOrder := mapper.MapShopifyOrderToProbability(order)
+
+	// Enriquecer la orden con detalles extraídos del JSON original (PaymentDetails, FulfillmentDetails, etc.)
+	// Estos detalles incluyen financial_status y fulfillment_status que se mapearán a PaymentStatusID y FulfillmentStatusID
+	mapper.EnrichOrderWithDetails(probabilityOrder, order.RawData)
+
 	if err := uc.orderPublisher.Publish(ctx, probabilityOrder); err != nil {
 		return fmt.Errorf("failed to publish order: %w", err)
 	}

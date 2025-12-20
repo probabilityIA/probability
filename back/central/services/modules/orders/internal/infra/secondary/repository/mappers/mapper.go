@@ -78,6 +78,8 @@ func ToDBOrder(o *domain.ProbabilityOrder) *models.Order {
 		Status:              o.Status,
 		OriginalStatus:      o.OriginalStatus,
 		StatusID:            o.StatusID,
+		PaymentStatusID:     o.PaymentStatusID,
+		FulfillmentStatusID: o.FulfillmentStatusID,
 		Notes:               o.Notes,
 		Coupon:              o.Coupon,
 		Approved:            o.Approved,
@@ -180,6 +182,8 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *domain.ProbabilityOrde
 		Status:              o.Status,
 		OriginalStatus:      o.OriginalStatus,
 		StatusID:            o.StatusID,
+		PaymentStatusID:     o.PaymentStatusID,
+		FulfillmentStatusID: o.FulfillmentStatusID,
 		Notes:               o.Notes,
 		Coupon:              o.Coupon,
 		Approved:            o.Approved,
@@ -215,6 +219,32 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *domain.ProbabilityOrde
 			Description: o.OrderStatus.Description,
 			Category:    o.OrderStatus.Category,
 			Color:       o.OrderStatus.Color,
+		}
+	}
+
+	// Incluir información del PaymentStatus si está cargado
+	// Verificar que tanto el ID de la orden como el ID del PaymentStatus sean válidos
+	if o.PaymentStatusID != nil && *o.PaymentStatusID > 0 && o.PaymentStatus.ID > 0 {
+		result.PaymentStatus = &domain.PaymentStatusInfo{
+			ID:          o.PaymentStatus.ID,
+			Code:        o.PaymentStatus.Code,
+			Name:        o.PaymentStatus.Name,
+			Description: o.PaymentStatus.Description,
+			Category:    o.PaymentStatus.Category,
+			Color:       o.PaymentStatus.Color,
+		}
+	}
+
+	// Incluir información del FulfillmentStatus si está cargado
+	// Verificar que tanto el ID de la orden como el ID del FulfillmentStatus sean válidos
+	if o.FulfillmentStatusID != nil && *o.FulfillmentStatusID > 0 && o.FulfillmentStatus.ID > 0 {
+		result.FulfillmentStatus = &domain.FulfillmentStatusInfo{
+			ID:          o.FulfillmentStatus.ID,
+			Code:        o.FulfillmentStatus.Code,
+			Name:        o.FulfillmentStatus.Name,
+			Description: o.FulfillmentStatus.Description,
+			Category:    o.FulfillmentStatus.Category,
+			Color:       o.FulfillmentStatus.Color,
 		}
 	}
 

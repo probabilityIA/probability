@@ -45,27 +45,188 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		clientID = &client.ID
 	}
 
-	// 1.6. Buscar mapeo de estado si tenemos OriginalStatus e IntegrationType
-	var statusID *uint
-	if dto.OriginalStatus != "" && dto.IntegrationType != "" {
-		integrationTypeID := getIntegrationTypeID(dto.IntegrationType)
-		if integrationTypeID > 0 {
-			mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
-			if err != nil {
-				// Log error pero no fallar la creación de la orden
-				uc.logger.Warn().
-					Uint("integration_type_id", integrationTypeID).
-					Str("original_status", dto.OriginalStatus).
-					Err(err).
-					Msg("Error al buscar mapeo de estado, continuando sin status_id")
-			} else if mappedStatusID != nil {
-				statusID = mappedStatusID
-			}
-		}
-	}
+	// 1.6. Mapear estados de la orden
+	statusMapping := uc.mapOrderStatuses(ctx, dto)
 
 	// 2. Crear la entidad de dominio ProbabilityOrder
-	order := &domain.ProbabilityOrder{
+	order := uc.buildOrderEntity(dto, clientID, statusMapping)
+
+	// 2.1. Asignar PaymentMethodID desde el primer pago
+	uc.assignPaymentMethodID(order, dto)
+
+	// 2.1.1. Mantener IsPaid actualizado según PaymentStatusID
+	uc.syncIsPaidFromPaymentStatus(ctx, order, statusMapping.PaymentStatusID)
+
+	// 2.3. Popular campos JSONB y planos de dirección
+	uc.populateOrderFields(order, dto)
+
+	// 3. Guardar la orden principal (sin score por ahora, se calculará mediante evento)
+	if err := uc.repo.CreateOrder(ctx, order); err != nil {
+		return nil, fmt.Errorf("error creating order: %w", err)
+	}
+
+	fmt.Printf("[MapAndSaveOrder] Orden %s guardada exitosamente. Publicando evento para calcular score...\n", order.ID)
+
+	// 4-8. Guardar entidades relacionadas
+	if err := uc.saveRelatedEntities(ctx, order, dto); err != nil {
+		return nil, err
+	}
+
+	// 9. Publicar eventos
+	uc.publishOrderEvents(ctx, order)
+
+	// 10. Retornar la respuesta mapeada
+	return uc.mapOrderToResponse(order), nil
+}
+
+// ───────────────────────────────────────────
+//
+//	FUNCIONES DE MAPEO DE ESTADOS
+//
+// ───────────────────────────────────────────
+
+// orderStatusMapping contiene los IDs de los estados mapeados
+type orderStatusMapping struct {
+	OrderStatusID       *uint
+	PaymentStatusID     *uint
+	FulfillmentStatusID *uint
+}
+
+// mapOrderStatuses mapea todos los estados de la orden (OrderStatus, PaymentStatus, FulfillmentStatus)
+func (uc *UseCaseOrderMapping) mapOrderStatuses(ctx context.Context, dto *domain.ProbabilityOrderDTO) orderStatusMapping {
+	mapping := orderStatusMapping{}
+
+	// Mapear OrderStatusID
+	mapping.OrderStatusID = uc.mapOrderStatusID(ctx, dto)
+
+	// Mapear PaymentStatusID
+	mapping.PaymentStatusID = uc.mapPaymentStatusID(ctx, dto)
+
+	// Mapear FulfillmentStatusID
+	mapping.FulfillmentStatusID = uc.mapFulfillmentStatusID(ctx, dto)
+
+	return mapping
+}
+
+// mapOrderStatusID mapea el estado general de la orden
+func (uc *UseCaseOrderMapping) mapOrderStatusID(ctx context.Context, dto *domain.ProbabilityOrderDTO) *uint {
+	if dto.OriginalStatus == "" || dto.IntegrationType == "" {
+		return nil
+	}
+
+	integrationTypeID := getIntegrationTypeID(dto.IntegrationType)
+	if integrationTypeID == 0 {
+		return nil
+	}
+
+	mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
+	if err != nil {
+		uc.logger.Warn().
+			Uint("integration_type_id", integrationTypeID).
+			Str("original_status", dto.OriginalStatus).
+			Err(err).
+			Msg("Error al buscar mapeo de estado, continuando sin status_id")
+		return nil
+	}
+
+	return mappedStatusID
+}
+
+// mapPaymentStatusID mapea el estado de pago desde el DTO o desde PaymentDetails si es Shopify
+func (uc *UseCaseOrderMapping) mapPaymentStatusID(ctx context.Context, dto *domain.ProbabilityOrderDTO) *uint {
+	// Si el DTO ya tiene PaymentStatusID, usarlo directamente
+	if dto.PaymentStatusID != nil && *dto.PaymentStatusID > 0 {
+		return dto.PaymentStatusID
+	}
+
+	// Para Shopify, extraer desde PaymentDetails
+	if dto.IntegrationType == "shopify" && len(dto.PaymentDetails) > 0 {
+		var paymentDetails map[string]interface{}
+		if err := json.Unmarshal(dto.PaymentDetails, &paymentDetails); err != nil {
+			return nil
+		}
+
+		financialStatus, ok := paymentDetails["financial_status"].(string)
+		if !ok || financialStatus == "" {
+			return nil
+		}
+
+		paymentStatusCode := mapShopifyFinancialStatusToPaymentStatus(financialStatus)
+		mappedID, err := uc.paymentStatusRepository.GetPaymentStatusIDByCode(ctx, paymentStatusCode)
+		if err != nil || mappedID == nil {
+			return nil
+		}
+
+		return mappedID
+	}
+
+	return nil
+}
+
+// mapFulfillmentStatusID mapea el estado de fulfillment desde el DTO o desde FulfillmentDetails si es Shopify
+func (uc *UseCaseOrderMapping) mapFulfillmentStatusID(ctx context.Context, dto *domain.ProbabilityOrderDTO) *uint {
+	// Si el DTO ya tiene FulfillmentStatusID, usarlo directamente
+	if dto.FulfillmentStatusID != nil && *dto.FulfillmentStatusID > 0 {
+		return dto.FulfillmentStatusID
+	}
+
+	// Para Shopify, extraer desde FulfillmentDetails
+	if dto.IntegrationType == "shopify" && len(dto.FulfillmentDetails) > 0 {
+		var fulfillmentDetails map[string]interface{}
+		if err := json.Unmarshal(dto.FulfillmentDetails, &fulfillmentDetails); err != nil {
+			// Si no se puede parsear, usar "unfulfilled" por defecto
+			return uc.getFulfillmentStatusIDByCode(ctx, "unfulfilled")
+		}
+
+		fulfillmentStatus, ok := fulfillmentDetails["fulfillment_status"].(string)
+		if !ok || fulfillmentStatus == "" {
+			// Si fulfillment_status es null o vacío, usar "unfulfilled"
+			return uc.getFulfillmentStatusIDByCode(ctx, "unfulfilled")
+		}
+
+		fulfillmentStatusCode := mapShopifyFulfillmentStatusToFulfillmentStatus(&fulfillmentStatus)
+		return uc.getFulfillmentStatusIDByCode(ctx, fulfillmentStatusCode)
+	}
+
+	return nil
+}
+
+// getFulfillmentStatusIDByCode obtiene el ID de un estado de fulfillment por su código
+func (uc *UseCaseOrderMapping) getFulfillmentStatusIDByCode(ctx context.Context, code string) *uint {
+	mappedID, err := uc.fulfillmentStatusRepository.GetFulfillmentStatusIDByCode(ctx, code)
+	if err != nil || mappedID == nil {
+		return nil
+	}
+	return mappedID
+}
+
+// syncIsPaidFromPaymentStatus sincroniza IsPaid basado en PaymentStatusID
+func (uc *UseCaseOrderMapping) syncIsPaidFromPaymentStatus(ctx context.Context, order *domain.ProbabilityOrder, paymentStatusID *uint) {
+	if paymentStatusID == nil {
+		return
+	}
+
+	paidStatusID, err := uc.paymentStatusRepository.GetPaymentStatusIDByCode(ctx, "paid")
+	if err != nil || paidStatusID == nil || *paidStatusID != *paymentStatusID {
+		return
+	}
+
+	order.IsPaid = true
+	if order.PaidAt == nil {
+		now := time.Now()
+		order.PaidAt = &now
+	}
+}
+
+// ───────────────────────────────────────────
+//
+//	FUNCIONES DE CONSTRUCCIÓN DE ENTIDADES
+//
+// ───────────────────────────────────────────
+
+// buildOrderEntity construye la entidad ProbabilityOrder desde el DTO
+func (uc *UseCaseOrderMapping) buildOrderEntity(dto *domain.ProbabilityOrderDTO, clientID *uint, statusMapping orderStatusMapping) *domain.ProbabilityOrder {
+	return &domain.ProbabilityOrder{
 		// Identificadores de integración
 		BusinessID:      dto.BusinessID,
 		IntegrationID:   dto.IntegrationID,
@@ -87,18 +248,20 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		CodTotal:     dto.CodTotal,
 
 		// Información del cliente
-		CustomerID:    clientID, // Usar el ID del cliente validado/creado
+		CustomerID:    clientID,
 		CustomerName:  dto.CustomerName,
 		CustomerEmail: dto.CustomerEmail,
 		CustomerPhone: dto.CustomerPhone,
 		CustomerDNI:   dto.CustomerDNI,
 
 		// Tipo y estado
-		OrderTypeID:    dto.OrderTypeID,
-		OrderTypeName:  dto.OrderTypeName,
-		Status:         dto.Status,
-		OriginalStatus: dto.OriginalStatus,
-		StatusID:       statusID, // ID del estado mapeado en Probability
+		OrderTypeID:         dto.OrderTypeID,
+		OrderTypeName:       dto.OrderTypeName,
+		Status:              dto.Status,
+		OriginalStatus:      dto.OriginalStatus,
+		StatusID:            statusMapping.OrderStatusID,
+		PaymentStatusID:     statusMapping.PaymentStatusID,
+		FulfillmentStatusID: statusMapping.FulfillmentStatusID,
 
 		// Información adicional
 		Notes:    dto.Notes,
@@ -126,19 +289,29 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		OccurredAt: dto.OccurredAt,
 		ImportedAt: dto.ImportedAt,
 	}
+}
 
-	// 2.1. Asignar PaymentMethodID desde el primer pago
+// assignPaymentMethodID asigna el PaymentMethodID desde el primer pago
+func (uc *UseCaseOrderMapping) assignPaymentMethodID(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) {
 	order.PaymentMethodID = 1 // Valor por defecto
-	if len(dto.Payments) > 0 && dto.Payments[0].PaymentMethodID > 0 {
-		order.PaymentMethodID = dto.Payments[0].PaymentMethodID
-		if dto.Payments[0].Status == "completed" && dto.Payments[0].PaidAt != nil {
-			order.IsPaid = true
-			order.PaidAt = dto.Payments[0].PaidAt
-		}
+
+	if len(dto.Payments) == 0 {
+		return
 	}
 
-	// 2.3 POPULAR CAMPOS JSONB ITEMS SI ESTÁN VACÍOS (BACKWARD COMPATIBILITY)
-	// Si items (JSONB) está vacío pero tenemos OrderItems (Relación), serializamos para llenar el campo JSONB
+	payment := dto.Payments[0]
+	if payment.PaymentMethodID > 0 {
+		order.PaymentMethodID = payment.PaymentMethodID
+		if payment.Status == "completed" && payment.PaidAt != nil {
+			order.IsPaid = true
+			order.PaidAt = payment.PaidAt
+		}
+	}
+}
+
+// populateOrderFields popula campos JSONB y campos planos de dirección
+func (uc *UseCaseOrderMapping) populateOrderFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) {
+	// Popular campos JSONB Items si están vacíos (backward compatibility)
 	if len(dto.OrderItems) > 0 && (dto.Items == nil || len(dto.Items) <= 4) {
 		itemsJSON, err := json.Marshal(dto.OrderItems)
 		if err == nil {
@@ -146,9 +319,7 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 		}
 	}
 
-	// 2.2 POPULAR CAMPOS PLANOS DE DIRECCIÓN (FLAT FIELDS)
-	// Iterar sobre addresses para encontrar la de shipping y llenar los campos del modelo Order
-	// Esto es crucial para compatibilidad con frontend que usa shipping_street, shipping_city, etc.
+	// Popular campos planos de dirección (flat fields)
 	for _, addr := range dto.Addresses {
 		if addr.Type == "shipping" {
 			order.ShippingStreet = addr.Street
@@ -159,9 +330,6 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 			order.ShippingLat = addr.Latitude
 			order.ShippingLng = addr.Longitude
 
-			// Si hay complemento (Street2), lo concatenamos o guardamos en shipping_details si el modelo no tiene campo
-			// El modelo actual no parece tener ShippingStreet2 plano, así que concatenamos o dependemos de la tabla addresses.
-			// Por ahora, solo mapeamos lo que cabe.
 			if addr.Street2 != "" {
 				order.ShippingStreet = fmt.Sprintf("%s %s", order.ShippingStreet, addr.Street2)
 				order.Address2 = addr.Street2 // Populate for scoring
@@ -169,266 +337,337 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 			break
 		}
 	}
+}
 
-	// 3. Guardar la orden principal (sin score por ahora, se calculará mediante evento)
-	if err := uc.repo.CreateOrder(ctx, order); err != nil {
-		return nil, fmt.Errorf("error creating order: %w", err)
+// ───────────────────────────────────────────
+//
+//	FUNCIONES DE PERSISTENCIA
+//
+// ───────────────────────────────────────────
+
+// saveRelatedEntities guarda todas las entidades relacionadas (items, addresses, payments, shipments, metadata)
+func (uc *UseCaseOrderMapping) saveRelatedEntities(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+	if err := uc.saveOrderItems(ctx, order, dto); err != nil {
+		return err
 	}
 
-	fmt.Printf("[MapAndSaveOrder] Orden %s guardada exitosamente. Publicando evento para calcular score...\n", order.ID)
-
-	// 4. Guardar OrderItems
-	if len(dto.OrderItems) > 0 {
-		orderItems := make([]*domain.ProbabilityOrderItem, len(dto.OrderItems))
-		for i, itemDTO := range dto.OrderItems {
-			// Validar/Crear Producto
-			product, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
-			if err != nil {
-				return nil, fmt.Errorf("error processing product for item %s: %w", itemDTO.ProductSKU, err)
-			}
-
-			// Usar el ID del producto de la BD, no el ID externo
-			var productID *string
-			if product != nil {
-				productID = &product.ID
-			}
-
-			orderItems[i] = &domain.ProbabilityOrderItem{
-				OrderID:          order.ID,
-				ProductID:        productID,
-				ProductSKU:       itemDTO.ProductSKU,
-				ProductName:      itemDTO.ProductName,
-				ProductTitle:     itemDTO.ProductTitle,
-				VariantID:        itemDTO.VariantID,
-				Quantity:         itemDTO.Quantity,
-				UnitPrice:        itemDTO.UnitPrice,
-				TotalPrice:       itemDTO.TotalPrice,
-				Currency:         itemDTO.Currency,
-				Discount:         itemDTO.Discount,
-				Tax:              itemDTO.Tax,
-				TaxRate:          itemDTO.TaxRate,
-				ImageURL:         itemDTO.ImageURL,
-				ProductURL:       itemDTO.ProductURL,
-				Weight:           itemDTO.Weight,
-				RequiresShipping: true,
-				IsGiftCard:       false,
-				Metadata:         itemDTO.Metadata,
-			}
-		}
-		if err := uc.repo.CreateOrderItems(ctx, orderItems); err != nil {
-			return nil, fmt.Errorf("error creating order items: %w", err)
-		}
+	if err := uc.saveAddresses(ctx, order, dto); err != nil {
+		return err
 	}
 
-	// 5. Guardar Addresses
-	if len(dto.Addresses) > 0 {
-		addresses := make([]*domain.ProbabilityAddress, len(dto.Addresses))
-		for i, addrDTO := range dto.Addresses {
-			addresses[i] = &domain.ProbabilityAddress{
-				Type:         addrDTO.Type,
-				OrderID:      order.ID,
-				FirstName:    addrDTO.FirstName,
-				LastName:     addrDTO.LastName,
-				Company:      addrDTO.Company,
-				Phone:        addrDTO.Phone,
-				Street:       addrDTO.Street,
-				Street2:      addrDTO.Street2,
-				City:         addrDTO.City,
-				State:        addrDTO.State,
-				Country:      addrDTO.Country,
-				PostalCode:   addrDTO.PostalCode,
-				Latitude:     addrDTO.Latitude,
-				Longitude:    addrDTO.Longitude,
-				Instructions: addrDTO.Instructions,
-				IsDefault:    false,
-				Metadata:     addrDTO.Metadata,
-			}
+	if err := uc.savePayments(ctx, order, dto); err != nil {
+		return err
+	}
+
+	if err := uc.saveShipments(ctx, order, dto); err != nil {
+		return err
+	}
+
+	if err := uc.saveChannelMetadata(ctx, order, dto); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// saveOrderItems guarda los items de la orden
+func (uc *UseCaseOrderMapping) saveOrderItems(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+	if len(dto.OrderItems) == 0 {
+		return nil
+	}
+
+	orderItems := make([]*domain.ProbabilityOrderItem, len(dto.OrderItems))
+	for i, itemDTO := range dto.OrderItems {
+		// Validar/Crear Producto
+		product, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
+		if err != nil {
+			return fmt.Errorf("error processing product for item %s: %w", itemDTO.ProductSKU, err)
 		}
-		if err := uc.repo.CreateAddresses(ctx, addresses); err != nil {
-			return nil, fmt.Errorf("error creating addresses: %w", err)
+
+		var productID *string
+		if product != nil {
+			productID = &product.ID
+		}
+
+		orderItems[i] = &domain.ProbabilityOrderItem{
+			OrderID:          order.ID,
+			ProductID:        productID,
+			ProductSKU:       itemDTO.ProductSKU,
+			ProductName:      itemDTO.ProductName,
+			ProductTitle:     itemDTO.ProductTitle,
+			VariantID:        itemDTO.VariantID,
+			Quantity:         itemDTO.Quantity,
+			UnitPrice:        itemDTO.UnitPrice,
+			TotalPrice:       itemDTO.TotalPrice,
+			Currency:         itemDTO.Currency,
+			Discount:         itemDTO.Discount,
+			Tax:              itemDTO.Tax,
+			TaxRate:          itemDTO.TaxRate,
+			ImageURL:         itemDTO.ImageURL,
+			ProductURL:       itemDTO.ProductURL,
+			Weight:           itemDTO.Weight,
+			RequiresShipping: true,
+			IsGiftCard:       false,
+			Metadata:         itemDTO.Metadata,
 		}
 	}
 
-	// 6. Guardar Payments
-	if len(dto.Payments) > 0 {
-		payments := make([]*domain.ProbabilityPayment, len(dto.Payments))
-		for i, payDTO := range dto.Payments {
-			payments[i] = &domain.ProbabilityPayment{
-				OrderID:          order.ID,
-				PaymentMethodID:  payDTO.PaymentMethodID,
-				Amount:           payDTO.Amount,
-				Currency:         payDTO.Currency,
-				ExchangeRate:     payDTO.ExchangeRate,
-				Status:           payDTO.Status,
-				PaidAt:           payDTO.PaidAt,
-				ProcessedAt:      payDTO.ProcessedAt,
-				TransactionID:    payDTO.TransactionID,
-				PaymentReference: payDTO.PaymentReference,
-				Gateway:          payDTO.Gateway,
-				RefundAmount:     payDTO.RefundAmount,
-				RefundedAt:       payDTO.RefundedAt,
-				FailureReason:    payDTO.FailureReason,
-				Metadata:         payDTO.Metadata,
-			}
-		}
-		if err := uc.repo.CreatePayments(ctx, payments); err != nil {
-			return nil, fmt.Errorf("error creating payments: %w", err)
+	return uc.repo.CreateOrderItems(ctx, orderItems)
+}
+
+// saveAddresses guarda las direcciones de la orden
+func (uc *UseCaseOrderMapping) saveAddresses(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+	if len(dto.Addresses) == 0 {
+		return nil
+	}
+
+	addresses := make([]*domain.ProbabilityAddress, len(dto.Addresses))
+	for i, addrDTO := range dto.Addresses {
+		addresses[i] = &domain.ProbabilityAddress{
+			Type:         addrDTO.Type,
+			OrderID:      order.ID,
+			FirstName:    addrDTO.FirstName,
+			LastName:     addrDTO.LastName,
+			Company:      addrDTO.Company,
+			Phone:        addrDTO.Phone,
+			Street:       addrDTO.Street,
+			Street2:      addrDTO.Street2,
+			City:         addrDTO.City,
+			State:        addrDTO.State,
+			Country:      addrDTO.Country,
+			PostalCode:   addrDTO.PostalCode,
+			Latitude:     addrDTO.Latitude,
+			Longitude:    addrDTO.Longitude,
+			Instructions: addrDTO.Instructions,
+			IsDefault:    false,
+			Metadata:     addrDTO.Metadata,
 		}
 	}
 
-	// 7. Guardar Shipments
-	if len(dto.Shipments) > 0 {
-		shipments := make([]*domain.ProbabilityShipment, len(dto.Shipments))
-		for i, shipDTO := range dto.Shipments {
-			shipments[i] = &domain.ProbabilityShipment{
-				OrderID:           order.ID,
-				TrackingNumber:    shipDTO.TrackingNumber,
-				TrackingURL:       shipDTO.TrackingURL,
-				Carrier:           shipDTO.Carrier,
-				CarrierCode:       shipDTO.CarrierCode,
-				GuideID:           shipDTO.GuideID,
-				GuideURL:          shipDTO.GuideURL,
-				Status:            shipDTO.Status,
-				ShippedAt:         shipDTO.ShippedAt,
-				DeliveredAt:       shipDTO.DeliveredAt,
-				ShippingAddressID: shipDTO.ShippingAddressID,
-				ShippingCost:      shipDTO.ShippingCost,
-				InsuranceCost:     shipDTO.InsuranceCost,
-				TotalCost:         shipDTO.TotalCost,
-				Weight:            shipDTO.Weight,
-				Height:            shipDTO.Height,
-				Width:             shipDTO.Width,
-				Length:            shipDTO.Length,
-				WarehouseID:       shipDTO.WarehouseID,
-				WarehouseName:     shipDTO.WarehouseName,
-				DriverID:          shipDTO.DriverID,
-				DriverName:        shipDTO.DriverName,
-				IsLastMile:        shipDTO.IsLastMile,
-				EstimatedDelivery: shipDTO.EstimatedDelivery,
-				DeliveryNotes:     shipDTO.DeliveryNotes,
-				Metadata:          shipDTO.Metadata,
-			}
-		}
-		if err := uc.repo.CreateShipments(ctx, shipments); err != nil {
-			return nil, fmt.Errorf("error creating shipments: %w", err)
+	return uc.repo.CreateAddresses(ctx, addresses)
+}
+
+// savePayments guarda los pagos de la orden
+func (uc *UseCaseOrderMapping) savePayments(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+	if len(dto.Payments) == 0 {
+		return nil
+	}
+
+	payments := make([]*domain.ProbabilityPayment, len(dto.Payments))
+	for i, payDTO := range dto.Payments {
+		payments[i] = &domain.ProbabilityPayment{
+			OrderID:          order.ID,
+			PaymentMethodID:  payDTO.PaymentMethodID,
+			Amount:           payDTO.Amount,
+			Currency:         payDTO.Currency,
+			ExchangeRate:     payDTO.ExchangeRate,
+			Status:           payDTO.Status,
+			PaidAt:           payDTO.PaidAt,
+			ProcessedAt:      payDTO.ProcessedAt,
+			TransactionID:    payDTO.TransactionID,
+			PaymentReference: payDTO.PaymentReference,
+			Gateway:          payDTO.Gateway,
+			RefundAmount:     payDTO.RefundAmount,
+			RefundedAt:       payDTO.RefundedAt,
+			FailureReason:    payDTO.FailureReason,
+			Metadata:         payDTO.Metadata,
 		}
 	}
 
-	// 8. Guardar ChannelMetadata (datos crudos)
-	if dto.ChannelMetadata != nil {
-		metadata := &domain.ProbabilityOrderChannelMetadata{
-			OrderID:       order.ID,
-			ChannelSource: dto.ChannelMetadata.ChannelSource,
-			IntegrationID: dto.IntegrationID,
-			RawData:       dto.ChannelMetadata.RawData,
-			Version:       dto.ChannelMetadata.Version,
-			ReceivedAt:    dto.ChannelMetadata.ReceivedAt,
-			ProcessedAt:   dto.ChannelMetadata.ProcessedAt,
-			IsLatest:      dto.ChannelMetadata.IsLatest,
-			LastSyncedAt:  dto.ChannelMetadata.LastSyncedAt,
-			SyncStatus:    dto.ChannelMetadata.SyncStatus,
-		}
-		if metadata.ReceivedAt.IsZero() {
-			metadata.ReceivedAt = time.Now()
-		}
-		if metadata.SyncStatus == "" {
-			metadata.SyncStatus = "pending"
-		}
-		if err := uc.repo.CreateChannelMetadata(ctx, metadata); err != nil {
-			return nil, fmt.Errorf("error creating channel metadata: %w", err)
+	return uc.repo.CreatePayments(ctx, payments)
+}
+
+// saveShipments guarda los envíos de la orden
+func (uc *UseCaseOrderMapping) saveShipments(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+	if len(dto.Shipments) == 0 {
+		return nil
+	}
+
+	shipments := make([]*domain.ProbabilityShipment, len(dto.Shipments))
+	for i, shipDTO := range dto.Shipments {
+		shipments[i] = &domain.ProbabilityShipment{
+			OrderID:           order.ID,
+			TrackingNumber:    shipDTO.TrackingNumber,
+			TrackingURL:       shipDTO.TrackingURL,
+			Carrier:           shipDTO.Carrier,
+			CarrierCode:       shipDTO.CarrierCode,
+			GuideID:           shipDTO.GuideID,
+			GuideURL:          shipDTO.GuideURL,
+			Status:            shipDTO.Status,
+			ShippedAt:         shipDTO.ShippedAt,
+			DeliveredAt:       shipDTO.DeliveredAt,
+			ShippingAddressID: shipDTO.ShippingAddressID,
+			ShippingCost:      shipDTO.ShippingCost,
+			InsuranceCost:     shipDTO.InsuranceCost,
+			TotalCost:         shipDTO.TotalCost,
+			Weight:            shipDTO.Weight,
+			Height:            shipDTO.Height,
+			Width:             shipDTO.Width,
+			Length:            shipDTO.Length,
+			WarehouseID:       shipDTO.WarehouseID,
+			WarehouseName:     shipDTO.WarehouseName,
+			DriverID:          shipDTO.DriverID,
+			DriverName:        shipDTO.DriverName,
+			IsLastMile:        shipDTO.IsLastMile,
+			EstimatedDelivery: shipDTO.EstimatedDelivery,
+			DeliveryNotes:     shipDTO.DeliveryNotes,
+			Metadata:          shipDTO.Metadata,
 		}
 	}
 
-	// 9. Publicar eventos
-	if uc.eventPublisher != nil {
-		// 9.1. Publicar evento de orden creada
-		eventData := domain.OrderEventData{
-			OrderNumber:    order.OrderNumber,
-			InternalNumber: order.InternalNumber,
-			ExternalID:     order.ExternalID,
-			CurrentStatus:  order.Status,
-			CustomerEmail:  order.CustomerEmail,
-			TotalAmount:    &order.TotalAmount,
-			Currency:       order.Currency,
-			Platform:       order.Platform,
-		}
-		event := domain.NewOrderEvent(domain.OrderEventTypeCreated, order.ID, eventData)
-		event.BusinessID = order.BusinessID
-		if order.IntegrationID > 0 {
-			integrationID := order.IntegrationID
-			event.IntegrationID = &integrationID
-		}
-		go func() {
-			// Usar context.Background() para evitar que el contexto cancelado afecte la publicación
-			bgCtx := context.Background()
+	return uc.repo.CreateShipments(ctx, shipments)
+}
+
+// saveChannelMetadata guarda los metadatos del canal
+func (uc *UseCaseOrderMapping) saveChannelMetadata(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+	if dto.ChannelMetadata == nil {
+		return nil
+	}
+
+	metadata := &domain.ProbabilityOrderChannelMetadata{
+		OrderID:       order.ID,
+		ChannelSource: dto.ChannelMetadata.ChannelSource,
+		IntegrationID: dto.IntegrationID,
+		RawData:       dto.ChannelMetadata.RawData,
+		Version:       dto.ChannelMetadata.Version,
+		ReceivedAt:    dto.ChannelMetadata.ReceivedAt,
+		ProcessedAt:   dto.ChannelMetadata.ProcessedAt,
+		IsLatest:      dto.ChannelMetadata.IsLatest,
+		LastSyncedAt:  dto.ChannelMetadata.LastSyncedAt,
+		SyncStatus:    dto.ChannelMetadata.SyncStatus,
+	}
+
+	if metadata.ReceivedAt.IsZero() {
+		metadata.ReceivedAt = time.Now()
+	}
+	if metadata.SyncStatus == "" {
+		metadata.SyncStatus = "pending"
+	}
+
+	return uc.repo.CreateChannelMetadata(ctx, metadata)
+}
+
+// ───────────────────────────────────────────
+//
+//	FUNCIONES DE EVENTOS
+//
+// ───────────────────────────────────────────
+
+// publishOrderEvents publica los eventos relacionados con la orden creada
+func (uc *UseCaseOrderMapping) publishOrderEvents(ctx context.Context, order *domain.ProbabilityOrder) {
+	if uc.eventPublisher == nil {
+		return
+	}
+
+	// Publicar evento de orden creada
+	uc.publishOrderCreatedEvent(ctx, order)
+
+	// Calcular score directamente
+	uc.calculateOrderScore(ctx, order)
+
+	// Publicar evento para calcular score (para otros consumidores)
+	uc.publishScoreCalculationEvent(ctx, order)
+}
+
+// publishOrderCreatedEvent publica el evento de orden creada
+func (uc *UseCaseOrderMapping) publishOrderCreatedEvent(ctx context.Context, order *domain.ProbabilityOrder) {
+	eventData := domain.OrderEventData{
+		OrderNumber:    order.OrderNumber,
+		InternalNumber: order.InternalNumber,
+		ExternalID:     order.ExternalID,
+		CurrentStatus:  order.Status,
+		CustomerEmail:  order.CustomerEmail,
+		TotalAmount:    &order.TotalAmount,
+		Currency:       order.Currency,
+		Platform:       order.Platform,
+	}
+
+	event := domain.NewOrderEvent(domain.OrderEventTypeCreated, order.ID, eventData)
+	event.BusinessID = order.BusinessID
+	if order.IntegrationID > 0 {
+		integrationID := order.IntegrationID
+		event.IntegrationID = &integrationID
+	}
+
+	go func() {
+		bgCtx := context.Background()
+		uc.logger.Info(bgCtx).
+			Str("order_id", order.ID).
+			Str("event_type", string(event.Type)).
+			Interface("business_id", event.BusinessID).
+			Interface("integration_id", event.IntegrationID).
+			Str("order_number", order.OrderNumber).
+			Msg("📤 Publicando evento order.created a Redis...")
+
+		if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
+			uc.logger.Error(bgCtx).
+				Err(err).
+				Str("order_id", order.ID).
+				Str("event_type", string(event.Type)).
+				Msg("❌ Error al publicar evento de orden creada")
+		} else {
 			uc.logger.Info(bgCtx).
 				Str("order_id", order.ID).
 				Str("event_type", string(event.Type)).
-				Interface("business_id", event.BusinessID).
-				Interface("integration_id", event.IntegrationID).
-				Str("order_number", order.OrderNumber).
-				Msg("📤 Publicando evento order.created a Redis...")
-			if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
-				uc.logger.Error(bgCtx).
-					Err(err).
-					Str("order_id", order.ID).
-					Str("event_type", string(event.Type)).
-					Msg("❌ Error al publicar evento de orden creada")
-			} else {
-				uc.logger.Info(bgCtx).
-					Str("order_id", order.ID).
-					Str("event_type", string(event.Type)).
-					Msg("✅ Evento order.created publicado exitosamente a Redis")
-			}
-		}()
-
-		// 9.2. Calcular score directamente cuando llega por RabbitMQ
-		go func() {
-			fmt.Printf("[MapAndSaveOrder] Calculando score directamente para orden %s\n", order.ID)
-			if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
-				uc.logger.Error(ctx).
-					Err(err).
-					Str("order_id", order.ID).
-					Msg("Error al calcular score de la orden")
-			} else {
-				uc.logger.Info(ctx).
-					Str("order_id", order.ID).
-					Str("order_number", order.OrderNumber).
-					Msg("✅ Score calculado exitosamente para la orden")
-			}
-		}()
-
-		// 9.3. Publicar evento para calcular score (mantener para otros consumidores)
-		scoreEventData := domain.OrderEventData{
-			OrderNumber:    order.OrderNumber,
-			InternalNumber: order.InternalNumber,
-			ExternalID:     order.ExternalID,
+				Msg("✅ Evento order.created publicado exitosamente a Redis")
 		}
-		scoreEvent := domain.NewOrderEvent(domain.OrderEventTypeScoreCalculationRequested, order.ID, scoreEventData)
-		scoreEvent.BusinessID = order.BusinessID
-		if order.IntegrationID > 0 {
-			integrationID := order.IntegrationID
-			scoreEvent.IntegrationID = &integrationID
-		}
-		go func() {
-			fmt.Printf("[MapAndSaveOrder] Publicando evento order.score_calculation_requested para orden %s\n", order.ID)
-			if err := uc.eventPublisher.PublishOrderEvent(ctx, scoreEvent); err != nil {
-				uc.logger.Error(ctx).
-					Err(err).
-					Str("order_id", order.ID).
-					Msg("Error al publicar evento de cálculo de score")
-			} else {
-				fmt.Printf("[MapAndSaveOrder] Evento order.score_calculation_requested publicado exitosamente para orden %s\n", order.ID)
-			}
-		}()
-	}
-
-	// 10. Retornar la respuesta mapeada
-	return mapOrderToResponse(order), nil
+	}()
 }
 
+// calculateOrderScore calcula el score de la orden directamente
+func (uc *UseCaseOrderMapping) calculateOrderScore(ctx context.Context, order *domain.ProbabilityOrder) {
+	go func() {
+		fmt.Printf("[MapAndSaveOrder] Calculando score directamente para orden %s\n", order.ID)
+		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
+			uc.logger.Error(ctx).
+				Err(err).
+				Str("order_id", order.ID).
+				Msg("Error al calcular score de la orden")
+		} else {
+			uc.logger.Info(ctx).
+				Str("order_id", order.ID).
+				Str("order_number", order.OrderNumber).
+				Msg("✅ Score calculado exitosamente para la orden")
+		}
+	}()
+}
+
+// publishScoreCalculationEvent publica el evento para calcular score
+func (uc *UseCaseOrderMapping) publishScoreCalculationEvent(ctx context.Context, order *domain.ProbabilityOrder) {
+	scoreEventData := domain.OrderEventData{
+		OrderNumber:    order.OrderNumber,
+		InternalNumber: order.InternalNumber,
+		ExternalID:     order.ExternalID,
+	}
+
+	scoreEvent := domain.NewOrderEvent(domain.OrderEventTypeScoreCalculationRequested, order.ID, scoreEventData)
+	scoreEvent.BusinessID = order.BusinessID
+	if order.IntegrationID > 0 {
+		integrationID := order.IntegrationID
+		scoreEvent.IntegrationID = &integrationID
+	}
+
+	go func() {
+		fmt.Printf("[MapAndSaveOrder] Publicando evento order.score_calculation_requested para orden %s\n", order.ID)
+		if err := uc.eventPublisher.PublishOrderEvent(ctx, scoreEvent); err != nil {
+			uc.logger.Error(ctx).
+				Err(err).
+				Str("order_id", order.ID).
+				Msg("Error al publicar evento de cálculo de score")
+		} else {
+			fmt.Printf("[MapAndSaveOrder] Evento order.score_calculation_requested publicado exitosamente para orden %s\n", order.ID)
+		}
+	}()
+}
+
+// ───────────────────────────────────────────
+//
+//	FUNCIONES DE MAPEO DE RESPUESTA
+//
+// ───────────────────────────────────────────
+
 // mapOrderToResponse convierte un modelo Order a OrderResponse
-func mapOrderToResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
+func (uc *UseCaseOrderMapping) mapOrderToResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 	return &domain.OrderResponse{
 		ID:        order.ID,
 		CreatedAt: order.CreatedAt,
@@ -501,10 +740,16 @@ func mapOrderToResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		Boxes:  order.Boxes,
 
 		// Tipo y estado
-		OrderTypeID:    order.OrderTypeID,
-		OrderTypeName:  order.OrderTypeName,
-		Status:         order.Status,
-		OriginalStatus: order.OriginalStatus,
+		OrderTypeID:         order.OrderTypeID,
+		OrderTypeName:       order.OrderTypeName,
+		Status:              order.Status,
+		OriginalStatus:      order.OriginalStatus,
+		StatusID:            order.StatusID,
+		PaymentStatusID:     order.PaymentStatusID,
+		FulfillmentStatusID: order.FulfillmentStatusID,
+		OrderStatus:         order.OrderStatus,
+		PaymentStatus:       order.PaymentStatus,
+		FulfillmentStatus:   order.FulfillmentStatus,
 
 		// Información adicional
 		Notes:    order.Notes,

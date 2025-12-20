@@ -118,6 +118,10 @@ type Order struct {
 	OriginalStatus string `gorm:"size:64"`                                  // Estado original de la plataforma
 	StatusID       *uint  `gorm:"index"`                                    // ID del estado mapeado en Probability (FK a order_statuses)
 
+	// Estados independientes
+	PaymentStatusID     *uint `gorm:"index"` // FK a payment_statuses
+	FulfillmentStatusID *uint `gorm:"index"` // FK a fulfillment_statuses
+
 	// ============================================
 	// INFORMACIÓN ADICIONAL
 	// ============================================
@@ -170,10 +174,12 @@ type Order struct {
 	// ============================================
 	// RELACIONES (Solo para integridad referencial)
 	// ============================================
-	Business      *Business     `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
-	Integration   Integration   `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	PaymentMethod PaymentMethod `gorm:"foreignKey:PaymentMethodID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
-	OrderStatus   OrderStatus   `gorm:"foreignKey:StatusID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	Business          *Business         `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	Integration       Integration       `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	PaymentMethod     PaymentMethod     `gorm:"foreignKey:PaymentMethodID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	OrderStatus       OrderStatus       `gorm:"foreignKey:StatusID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	PaymentStatus     PaymentStatus     `gorm:"foreignKey:PaymentStatusID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
+	FulfillmentStatus FulfillmentStatus `gorm:"foreignKey:FulfillmentStatusID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 
 	// Relaciones con tablas relacionadas (Modelo Canónico)
 	OrderItems      []OrderItem            `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`

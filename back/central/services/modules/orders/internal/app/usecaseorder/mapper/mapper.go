@@ -95,12 +95,16 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		Boxes:  order.Boxes,
 
 		// Tipo y estado
-		OrderTypeID:    order.OrderTypeID,
-		OrderTypeName:  order.OrderTypeName,
-		Status:         order.Status,
-		OriginalStatus: order.OriginalStatus,
-		StatusID:       order.StatusID,
-		OrderStatus:    order.OrderStatus,
+		OrderTypeID:         order.OrderTypeID,
+		OrderTypeName:       order.OrderTypeName,
+		Status:              order.Status,
+		OriginalStatus:      order.OriginalStatus,
+		StatusID:            order.StatusID,
+		OrderStatus:         order.OrderStatus,
+		PaymentStatusID:     order.PaymentStatusID,
+		FulfillmentStatusID: order.FulfillmentStatusID,
+		PaymentStatus:       order.PaymentStatus,
+		FulfillmentStatus:   order.FulfillmentStatus,
 
 		// Información adicional
 		Notes:    order.Notes,
@@ -144,11 +148,6 @@ func UnmarshalNegativeFactors(jsonData datatypes.JSON) []string {
 
 // ToOrderSummary convierte un modelo Order a OrderSummary
 func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
-	paymentStatus := "unpaid"
-	if order.IsPaid {
-		paymentStatus = "paid"
-	}
-
 	var businessID uint
 	if order.BusinessID != nil {
 		businessID = *order.BusinessID
@@ -169,10 +168,11 @@ func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
 		CustomerName:        order.CustomerName,
 		CustomerEmail:       order.CustomerEmail,
 		Status:              order.Status,
-		PaymentStatus:       paymentStatus,
 		ItemsCount:          len(order.Items),
 		DeliveryProbability: order.DeliveryProbability,
 		NegativeFactors:     UnmarshalNegativeFactors(order.NegativeFactors),
-		OrderStatus:         order.OrderStatus, // Incluir información del estado de Probability
+		OrderStatus:         order.OrderStatus,       // Información del estado de Probability
+		PaymentStatus:       order.PaymentStatus,     // Información completa del estado de pago
+		FulfillmentStatus:   order.FulfillmentStatus, // Información completa del estado de fulfillment
 	}
 }
