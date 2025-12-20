@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { getOrdersAction, deleteOrderAction, getOrderByIdAction } from '../../infra/actions';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
+import { getOrderStatusesAction } from '@/services/modules/orderstatus/infra/actions';
 import { Order, GetOrdersParams } from '../../domain/types';
 import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
@@ -30,8 +31,8 @@ const OrderRow = memo(({
     onDelete: (id: string) => void;
     onShowRaw: (id: string) => void;
     formatCurrency: (amount: number, currency?: string) => string;
-    formatDate: (dateString: string) => string;
-    getStatusBadge: (status: string) => React.ReactNode;
+    formatDate: (dateString: string) => { date: string; time: string };
+    getStatusBadge: (status: string, color?: string) => React.ReactNode;
     getProbabilityColor: (probability: number) => string;
     isNew?: boolean;
 }) => {
@@ -85,7 +86,7 @@ const OrderRow = memo(({
                 </div>
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                {getStatusBadge(order.status)}
+                {getStatusBadge(order.order_status?.name || order.status, order.order_status?.color)}
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
@@ -118,8 +119,11 @@ const OrderRow = memo(({
                     )}
                 </div>
             </td>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                {formatDate(order.created_at)}
+            <td className="px-3 sm:px-6 py-4 text-xs text-gray-500 hidden md:table-cell">
+                <div className="leading-tight">
+                    <div className="text-gray-900">{formatDate(order.created_at).date}</div>
+                    <div className="text-gray-500">{formatDate(order.created_at).time}</div>
+                </div>
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex flex-row justify-end gap-2">
@@ -222,6 +226,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     // Integrations for filter
     const [integrationsList, setIntegrationsList] = useState<{ value: string; label: string }[]>([]);
+    // Order statuses for filter
+    const [orderStatusesList, setOrderStatusesList] = useState<{ value: string; label: string }[]>([]);
 
     useEffect(() => {
         const fetchIntegrations = async () => {
@@ -241,6 +247,26 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         fetchIntegrations();
     }, []);
 
+    useEffect(() => {
+        const fetchOrderStatuses = async () => {
+            try {
+                const response = await getOrderStatusesAction(true); // Solo estados activos
+                if (response.success && response.data) {
+                    const options = response.data.map((status) => ({
+                        value: String(status.id),
+                        label: status.name,
+                    }));
+                    // Ordenar por nombre
+                    options.sort((a, b) => a.label.localeCompare(b.label));
+                    setOrderStatusesList(options);
+                }
+            } catch (error) {
+                console.error('Error fetching order statuses for filter:', error);
+            }
+        };
+        fetchOrderStatuses();
+    }, []);
+
     // Filters
     const [filters, setFilters] = useState<GetOrdersParams>({
         page: 1,
@@ -249,8 +275,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     const { showToast } = useToast();
 
-    // Definir filtros disponibles
-    const availableFilters: FilterOption[] = [
+    // Definir filtros disponibles (usar useMemo para actualizar cuando cambian las listas)
+    const availableFilters: FilterOption[] = useMemo(() => [
         {
             key: 'order_number',
             label: 'ID de orden',
@@ -264,16 +290,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             placeholder: 'Buscar por número interno...',
         },
         {
-            key: 'status',
+            key: 'status_id',
             label: 'Estado',
             type: 'select',
-            options: [
-                { value: 'pending', label: 'Pendiente' },
-                { value: 'processing', label: 'Procesando' },
-                { value: 'shipped', label: 'Enviado' },
-                { value: 'delivered', label: 'Entregado' },
-                { value: 'cancelled', label: 'Cancelado' },
-            ],
+            options: orderStatusesList,
         },
         {
             key: 'platform',
@@ -301,7 +321,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             label: 'Rango de fechas',
             type: 'date-range',
         },
-    ];
+    ], [orderStatusesList, integrationsList]);
 
     // Convertir filtros a ActiveFilter[]
     const activeFilters: ActiveFilter[] = useMemo(() => {
@@ -326,11 +346,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
 
 
-        if (filters.status) {
+        if (filters.status_id) {
+            // Buscar el label del estado seleccionado
+            const statusOption = orderStatusesList.find(opt => opt.value === String(filters.status_id));
             active.push({
-                key: 'status',
+                key: 'status_id',
                 label: 'Estado',
-                value: filters.status,
+                value: statusOption?.label || String(filters.status_id),
                 type: 'select',
             });
         }
@@ -569,17 +591,50 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }).format(amount);
     }, []);
 
-    const formatDate = useCallback((dateString: string) => {
-        return new Date(dateString).toLocaleDateString('es-CO', {
-            year: 'numeric',
-            month: 'short',
+    const formatDate = useCallback((dateString: string): { date: string; time: string } => {
+        const date = new Date(dateString);
+        // Formato compacto: "20 dic 2025" (sin "de")
+        const parts = date.toLocaleDateString('es-CO', {
             day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        }).split(' ');
+        const dateStr = `${parts[0]} ${parts[2]} ${parts[parts.length - 1]}`; // "20 dic 2025"
+        // Hora compacta: "12:07 a.m."
+        const timeStr = date.toLocaleTimeString('es-CO', {
             hour: '2-digit',
             minute: '2-digit',
-        });
+            hour12: true,
+        }).replace(/\s/g, '');
+        return { date: dateStr, time: timeStr };
     }, []);
 
-    const getStatusBadge = useCallback((status: string) => {
+    const getStatusBadge = useCallback((status: string, color?: string) => {
+        // Si hay color configurado en la BD, usarlo
+        if (color) {
+            // Convertir hex a RGB para calcular si es claro u oscuro
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substr(0, 2), 16);
+            const g = parseInt(hex.substr(2, 2), 16);
+            const b = parseInt(hex.substr(4, 2), 16);
+            // Calcular luminosidad
+            const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+            const textColor = luminance > 0.5 ? '#000000' : '#FFFFFF';
+            
+            return (
+                <span 
+                    className="px-2 py-1 text-xs font-medium rounded-full"
+                    style={{ 
+                        backgroundColor: color, 
+                        color: textColor 
+                    }}
+                >
+                    {status}
+                </span>
+            );
+        }
+
+        // Fallback a colores por defecto si no hay color configurado
         const statusColors: Record<string, string> = {
             pending: 'bg-yellow-100 text-yellow-800',
             processing: 'bg-blue-100 text-blue-800',
@@ -588,10 +643,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             cancelled: 'bg-red-100 text-red-800',
         };
 
-        const color = statusColors[status.toLowerCase()] || 'bg-gray-100 text-gray-800';
+        const colorClass = statusColors[status.toLowerCase()] || 'bg-gray-100 text-gray-800';
 
         return (
-            <span className={`px-2 py-1 text-xs font-medium rounded-full ${color}`}>
+            <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
                 {status}
             </span>
         );

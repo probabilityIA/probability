@@ -60,6 +60,13 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		filters["integration_type"] = integrationType
 	}
 
+	// Filtro por status_id (estado de Probability)
+	if statusIDStr := c.Query("status_id"); statusIDStr != "" {
+		if statusID, err := strconv.ParseUint(statusIDStr, 10, 32); err == nil {
+			filters["status_id"] = uint(statusID)
+		}
+	}
+	// Mantener compatibilidad con filtro antiguo por status (string) si se necesita
 	if status := c.Query("status"); status != "" {
 		filters["status"] = status
 	}

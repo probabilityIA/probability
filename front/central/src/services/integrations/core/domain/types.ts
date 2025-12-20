@@ -169,3 +169,34 @@ export interface DeleteWebhookResponse {
     success: boolean;
     message: string;
 }
+
+// Respuesta al verificar webhooks existentes
+export interface VerifyWebhooksResponse {
+    success: boolean;
+    data: ShopifyWebhookInfo[];
+    message: string;
+}
+
+// Datos del resultado de crear webhooks
+export interface CreateWebhookResponseData {
+    existing_webhooks: ShopifyWebhookInfo[];
+    deleted_webhooks: ShopifyWebhookInfo[];
+    created_webhooks: string[];
+    webhook_url: string;
+}
+
+// Respuesta al crear webhooks
+export interface CreateWebhookResponse {
+    success: boolean;
+    data: CreateWebhookResponseData;
+    message: string;
+}
+
+// Parámetros para sincronización de órdenes
+export interface SyncOrdersParams {
+    created_at_min?: string;  // Formato: YYYY-MM-DD o RFC3339
+    created_at_max?: string;  // Formato: YYYY-MM-DD o RFC3339
+    status?: string;          // any, open, closed, cancelled
+    financial_status?: string; // any, paid, pending, refunded, etc.
+    fulfillment_status?: string; // any, shipped, partial, unshipped, etc.
+}

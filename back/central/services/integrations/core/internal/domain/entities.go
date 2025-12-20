@@ -6,46 +6,42 @@ import (
 	"gorm.io/datatypes"
 )
 
-// IntegrationType representa un tipo de integración disponible
 type IntegrationType struct {
-	ID                uint           `json:"id"`
-	Name              string         `json:"name"`
-	Code              string         `json:"code"`
-	Description       string         `json:"description"`
-	Icon              string         `json:"icon"`
-	ImageURL          string         `json:"image_url"` // URL de la imagen del logo (path relativo en S3)
-	Category          string         `json:"category"`  // "internal" | "external"
-	IsActive          bool           `json:"is_active"`
-	ConfigSchema      datatypes.JSON `json:"config_schema"`      // JSON schema para campos de configuración requeridos
-	CredentialsSchema datatypes.JSON `json:"credentials_schema"` // JSON schema para credenciales requeridas
-	SetupInstructions string         `json:"setup_instructions"` // Instrucciones paso a paso para configurar la integración
-	CreatedAt         time.Time      `json:"created_at"`
-	UpdatedAt         time.Time      `json:"updated_at"`
+	ID                uint
+	Name              string
+	Code              string
+	Description       string
+	Icon              string
+	ImageURL          string
+	Category          string
+	IsActive          bool
+	ConfigSchema      datatypes.JSON
+	CredentialsSchema datatypes.JSON
+	SetupInstructions string
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
-// Integration representa una integración del sistema
 type Integration struct {
-	ID                uint             `json:"id"`
-	Name              string           `json:"name"`
-	Code              string           `json:"code"`
-	IntegrationTypeID uint             `json:"integration_type_id"`        // Relación con IntegrationType
-	IntegrationType   *IntegrationType `json:"integration_type,omitempty"` // Relación cargada
-	Category          string           `json:"category"`                   // "internal" | "external" (redundante pero útil para queries)
-	BusinessID        *uint            `json:"business_id"`                // NULL = global (como WhatsApp)
-	StoreID           string           `json:"store_id"`                   // Identificador externo (p.e. shop domain)
-	IsActive          bool             `json:"is_active"`
-	IsDefault         bool             `json:"is_default"`
-	Config            datatypes.JSON   `json:"config"` // Configuración en JSON (no sensible)
-	Credentials       datatypes.JSON   `json:"-"`      // Credenciales encriptadas (no se expone)
-	Description       string           `json:"description"`
-	CreatedByID       uint             `json:"created_by_id"`
-	UpdatedByID       *uint            `json:"updated_by_id"`
-	CreatedAt         time.Time        `json:"created_at"`
-	UpdatedAt         time.Time        `json:"updated_at"`
+	ID                uint
+	Name              string
+	Code              string
+	IntegrationTypeID uint
+	IntegrationType   *IntegrationType
+	Category          string
+	BusinessID        *uint
+	StoreID           string
+	IsActive          bool
+	IsDefault         bool
+	Config            datatypes.JSON
+	Credentials       datatypes.JSON
+	Description       string
+	CreatedByID       uint
+	UpdatedByID       *uint
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
-// DecryptedCredentials representa las credenciales desencriptadas (solo en memoria)
 type DecryptedCredentials map[string]interface{}
 
-// IntegrationConfig representa la configuración de una integración (estructura flexible)
 type IntegrationConfig map[string]interface{}

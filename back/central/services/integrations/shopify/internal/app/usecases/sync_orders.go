@@ -9,7 +9,20 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/domain"
 )
 
+// SyncOrders sincroniza órdenes con parámetros por defecto (últimos 30 días)
 func (uc *SyncOrdersUseCase) SyncOrders(ctx context.Context, integrationID string) error {
+	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	params := &domain.SyncOrdersParams{
+		CreatedAtMin:      &thirtyDaysAgo,
+		Status:            domain.OrderStatusAny,
+		FinancialStatus:   domain.FinancialStatusAny,
+		FulfillmentStatus: domain.FulfillmentStatusAny,
+	}
+	return uc.SyncOrdersWithParams(ctx, integrationID, params)
+}
+
+// SyncOrdersWithParams sincroniza órdenes con parámetros personalizados
+func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrationID string, syncParams *domain.SyncOrdersParams) error {
 	integration, err := uc.integrationService.GetIntegrationByID(ctx, integrationID)
 	if err != nil {
 		return fmt.Errorf("failed to get integration: %w", err)
@@ -30,16 +43,38 @@ func (uc *SyncOrdersUseCase) SyncOrders(ctx context.Context, integrationID strin
 		return err
 	}
 
-	thirtyDaysAgo := time.Now().AddDate(0, 0, -30)
+	// Construir parámetros para la API de Shopify
 	params := &domain.GetOrdersParams{
-		Status:          "any",
-		Limit:           250,
-		CreatedAtMin:    &thirtyDaysAgo,
-		FinancialStatus: "any",
+		Limit: 250,
 	}
 
-	fmt.Printf("[SyncOrders] Starting sync for integration %s. Params: CreatedAtMin=%v, Status=%s, Limit=%d\n",
-		integrationID, params.CreatedAtMin, params.Status, params.Limit)
+	// Aplicar filtros de fecha
+	if syncParams.CreatedAtMin != nil {
+		params.CreatedAtMin = syncParams.CreatedAtMin
+	}
+	if syncParams.CreatedAtMax != nil {
+		params.CreatedAtMax = syncParams.CreatedAtMax
+	}
+
+	// Aplicar filtros de estado
+	if syncParams.Status != "" {
+		params.Status = syncParams.Status
+	} else {
+		params.Status = domain.OrderStatusAny
+	}
+
+	if syncParams.FinancialStatus != "" {
+		params.FinancialStatus = syncParams.FinancialStatus
+	} else {
+		params.FinancialStatus = domain.FinancialStatusAny
+	}
+
+	if syncParams.FulfillmentStatus != "" {
+		params.FulfillmentStatus = syncParams.FulfillmentStatus
+	}
+
+	fmt.Printf("[SyncOrders] Starting sync for integration %s. Params: CreatedAtMin=%v, CreatedAtMax=%v, Status=%s, FinancialStatus=%s, FulfillmentStatus=%s\n",
+		integrationID, params.CreatedAtMin, params.CreatedAtMax, params.Status, params.FinancialStatus, params.FulfillmentStatus)
 
 	go func() {
 		ctx := context.Background()

@@ -31,4 +31,8 @@ export class OrderStatusMappingUseCases {
     async toggleOrderStatusMappingActive(id: number) {
         return this.repository.toggleOrderStatusMappingActive(id);
     }
+
+    async getOrderStatuses(isActive?: boolean) {
+        return this.repository.getOrderStatuses(isActive);
+    }
 }

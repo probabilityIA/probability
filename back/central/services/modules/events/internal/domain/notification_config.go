@@ -14,16 +14,21 @@ import (
 
 // NotificationConfig representa la configuración de notificaciones en el dominio
 type NotificationConfig struct {
-	ID          uint       `json:"id"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	DeletedAt  *time.Time `json:"deleted_at,omitempty"`
-	BusinessID  uint       `json:"business_id"`
-	EventType   string     `json:"event_type"`
-	Enabled     bool       `json:"enabled"`
+	ID          uint           `json:"id"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   *time.Time     `json:"deleted_at,omitempty"`
+	BusinessID  uint           `json:"business_id"`
+	EventType   string         `json:"event_type"`
+	Enabled     bool           `json:"enabled"`
 	Channels    datatypes.JSON `json:"channels"`
 	Filters     datatypes.JSON `json:"filters,omitempty"`
-	Description string     `json:"description,omitempty"`
+	Description string         `json:"description,omitempty"`
+
+	// Códigos de estado de orden asociados (solo para event_type = "order.status_changed")
+	// Si está vacío, se notifican TODOS los estados
+	// Si tiene valores, solo se notifican esos estados específicos
+	OrderStatusCodes []string `json:"order_status_codes,omitempty"`
 }
 
 // ───────────────────────────────────────────
@@ -52,15 +57,15 @@ type UpdateNotificationConfigRequest struct {
 
 // NotificationConfigResponse representa la respuesta de una configuración
 type NotificationConfigResponse struct {
-	ID          uint       `json:"id"`
-	CreatedAt  time.Time  `json:"created_at"`
-	UpdatedAt  time.Time  `json:"updated_at"`
-	BusinessID  uint       `json:"business_id"`
-	EventType   string     `json:"event_type"`
-	Enabled     bool       `json:"enabled"`
+	ID          uint           `json:"id"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	BusinessID  uint           `json:"business_id"`
+	EventType   string         `json:"event_type"`
+	Enabled     bool           `json:"enabled"`
 	Channels    datatypes.JSON `json:"channels"`
 	Filters     datatypes.JSON `json:"filters,omitempty"`
-	Description string     `json:"description,omitempty"`
+	Description string         `json:"description,omitempty"`
 }
 
 // NotificationConfigsListResponse representa la respuesta paginada
@@ -94,5 +99,3 @@ func (nc *NotificationConfig) HasChannel(channel string) bool {
 	// Si no hay channels configurados, SSE está habilitado por defecto
 	return true // Por defecto SSE está habilitado si enabled=true
 }
-
-

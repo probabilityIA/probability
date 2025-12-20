@@ -15,9 +15,16 @@ func ToDBOrder(o *domain.ProbabilityOrder) *models.Order {
 		return nil
 	}
 
+	// Si CreatedAt está vacío pero tenemos OccurredAt, usar OccurredAt para CreatedAt
+	// Esto asegura que created_at en la BD sea la fecha original de la plataforma
+	createdAt := o.CreatedAt
+	if createdAt.IsZero() && !o.OccurredAt.IsZero() {
+		createdAt = o.OccurredAt
+	}
+
 	return &models.Order{
 		ID:                  o.ID,
-		CreatedAt:           o.CreatedAt,
+		CreatedAt:           createdAt,
 		UpdatedAt:           o.UpdatedAt,
 		DeletedAt:           o.DeletedAt,
 		BusinessID:          o.BusinessID,
@@ -70,6 +77,7 @@ func ToDBOrder(o *domain.ProbabilityOrder) *models.Order {
 		OrderTypeName:       o.OrderTypeName,
 		Status:              o.Status,
 		OriginalStatus:      o.OriginalStatus,
+		StatusID:            o.StatusID,
 		Notes:               o.Notes,
 		Coupon:              o.Coupon,
 		Approved:            o.Approved,
@@ -115,7 +123,7 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *domain.ProbabilityOrde
 		integrationLogoURL = &logoURL
 	}
 
-	return &domain.ProbabilityOrder{
+	result := &domain.ProbabilityOrder{
 		ID:                  o.ID,
 		CreatedAt:           o.CreatedAt,
 		UpdatedAt:           o.UpdatedAt,
@@ -171,6 +179,7 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *domain.ProbabilityOrde
 		OrderTypeName:       o.OrderTypeName,
 		Status:              o.Status,
 		OriginalStatus:      o.OriginalStatus,
+		StatusID:            o.StatusID,
 		Notes:               o.Notes,
 		Coupon:              o.Coupon,
 		Approved:            o.Approved,
@@ -196,6 +205,20 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *domain.ProbabilityOrde
 		Shipments:           ToDomainShipments(o.Shipments),
 		ChannelMetadata:     ToDomainChannelMetadataList(o.ChannelMetadata),
 	}
+
+	// Incluir información del OrderStatus si está cargado
+	if o.OrderStatus.ID > 0 {
+		result.OrderStatus = &domain.OrderStatusInfo{
+			ID:          o.OrderStatus.ID,
+			Code:        o.OrderStatus.Code,
+			Name:        o.OrderStatus.Name,
+			Description: o.OrderStatus.Description,
+			Category:    o.OrderStatus.Category,
+			Color:       o.OrderStatus.Color,
+		}
+	}
+
+	return result
 }
 
 // ToDBOrderItems convierte una lista de items de dominio a base de datos

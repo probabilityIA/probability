@@ -12,7 +12,10 @@ import {
     UpdateIntegrationTypeDTO,
     WebhookResponse,
     ListWebhooksResponse,
-    DeleteWebhookResponse
+    DeleteWebhookResponse,
+    VerifyWebhooksResponse,
+    CreateWebhookResponse,
+    SyncOrdersParams
 } from '../domain/types';
 
 export class IntegrationUseCases {
@@ -58,8 +61,8 @@ export class IntegrationUseCases {
         return this.repository.setAsDefault(id);
     }
 
-    async syncOrders(id: number): Promise<ActionResponse> {
-        return this.repository.syncOrders(id);
+    async syncOrders(id: number, params?: SyncOrdersParams): Promise<ActionResponse> {
+        return this.repository.syncOrders(id, params);
     }
 
     async testIntegration(id: number): Promise<ActionResponse> {
@@ -109,5 +112,13 @@ export class IntegrationUseCases {
 
     async deleteWebhook(id: number, webhookId: string): Promise<DeleteWebhookResponse> {
         return this.repository.deleteWebhook(id, webhookId);
+    }
+
+    async verifyWebhooks(id: number): Promise<VerifyWebhooksResponse> {
+        return this.repository.verifyWebhooks(id);
+    }
+
+    async createWebhook(id: number): Promise<CreateWebhookResponse> {
+        return this.repository.createWebhook(id);
     }
 }

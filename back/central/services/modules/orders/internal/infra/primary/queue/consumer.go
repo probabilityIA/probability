@@ -10,6 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"gorm.io/datatypes"
 )
 
 const (
@@ -23,6 +24,7 @@ type OrderConsumer struct {
 	queue          rabbitmq.IQueue
 	logger         log.ILogger
 	orderMappingUC domain.IOrderMappingUseCase
+	repo           domain.IRepository
 }
 
 // New crea una nueva instancia del consumidor de órdenes
@@ -30,11 +32,13 @@ func New(
 	queue rabbitmq.IQueue,
 	logger log.ILogger,
 	orderMappingUC domain.IOrderMappingUseCase,
+	repo domain.IRepository,
 ) domain.IOrderConsumer {
 	return &OrderConsumer{
 		queue:          queue,
 		logger:         logger,
 		orderMappingUC: orderMappingUC,
+		repo:           repo,
 	}
 }
 
@@ -82,23 +86,30 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Str("queue", OrdersCanonicalQueueName).
 			Str("message_body", string(messageBody)).
 			Msg("Failed to unmarshal order message")
+
+		// Guardar error con JSON original
+		c.saveOrderError(ctx, nil, err, "unmarshal_error", messageBody)
 		return fmt.Errorf("failed to unmarshal order message: %w", err)
 	}
 
 	// Validar que la orden tenga los campos mínimos requeridos
 	if orderDTO.ExternalID == "" {
+		err := fmt.Errorf("order message missing external_id")
 		c.logger.Error().
 			Str("queue", OrdersCanonicalQueueName).
 			Msg("Order message missing external_id")
-		return fmt.Errorf("order message missing external_id")
+		c.saveOrderError(ctx, &orderDTO, err, "validation_error", messageBody)
+		return err
 	}
 
 	if orderDTO.IntegrationID == 0 {
+		err := fmt.Errorf("order message missing integration_id")
 		c.logger.Error().
 			Str("queue", OrdersCanonicalQueueName).
 			Str("external_id", orderDTO.ExternalID).
 			Msg("Order message missing integration_id")
-		return fmt.Errorf("order message missing integration_id")
+		c.saveOrderError(ctx, &orderDTO, err, "validation_error", messageBody)
+		return err
 	}
 
 	// Llamar al caso de uso para mapear y guardar la orden
@@ -133,6 +144,17 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			return nil
 		}
 
+		// If error is a duplicate key violation for external_id (race condition), discard message
+		if contains(errStr, "duplicate key value violates unique constraint") &&
+			(contains(errStr, "idx_integration_external_id") || contains(errStr, "SQLSTATE 23505")) {
+			c.logger.Info().
+				Str("queue", OrdersCanonicalQueueName).
+				Str("external_id", orderDTO.ExternalID).
+				Uint("integration_id", orderDTO.IntegrationID).
+				Msg("Order already exists (race condition detected), skipping duplicate message")
+			return nil
+		}
+
 		c.logger.Error().
 			Err(err).
 			Str("queue", OrdersCanonicalQueueName).
@@ -140,6 +162,9 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Uint("integration_id", orderDTO.IntegrationID).
 			Str("platform", orderDTO.Platform).
 			Msg("Failed to map and save order")
+
+		// Guardar error con JSON original
+		c.saveOrderError(ctx, &orderDTO, err, "processing_error", messageBody)
 		return fmt.Errorf("failed to map and save order: %w", err)
 	}
 
@@ -156,6 +181,81 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		Msg("Order processed and saved successfully from queue")
 
 	return nil
+}
+
+// saveOrderError guarda un error en la tabla order_errors con el JSON original
+func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *domain.ProbabilityOrderDTO, err error, errorType string, messageBody []byte) {
+	if c.repo == nil {
+		c.logger.Warn().Msg("Repository not available, cannot save order error")
+		return
+	}
+
+	// Determinar el tipo de error basado en el mensaje
+	if errorType == "" {
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "validation") || strings.Contains(errMsg, "required") {
+			errorType = "validation_error"
+		} else if strings.Contains(errMsg, "database") || strings.Contains(errMsg, "constraint") {
+			errorType = "database_error"
+		} else {
+			errorType = "processing_error"
+		}
+	}
+
+	// Extraer información del DTO si está disponible
+	var externalID string
+	var integrationID uint
+	var businessID *uint
+	var integrationType string
+	var platform string
+
+	if orderDTO != nil {
+		externalID = orderDTO.ExternalID
+		integrationID = orderDTO.IntegrationID
+		businessID = orderDTO.BusinessID
+		integrationType = orderDTO.IntegrationType
+		platform = orderDTO.Platform
+	} else {
+		// Intentar extraer del JSON si el DTO no está disponible
+		var rawMap map[string]interface{}
+		if json.Unmarshal(messageBody, &rawMap) == nil {
+			if extID, ok := rawMap["external_id"].(string); ok {
+				externalID = extID
+			}
+			if intID, ok := rawMap["integration_id"].(float64); ok {
+				integrationID = uint(intID)
+			}
+			if busID, ok := rawMap["business_id"].(float64); ok {
+				bid := uint(busID)
+				businessID = &bid
+			}
+			if intType, ok := rawMap["integration_type"].(string); ok {
+				integrationType = intType
+			}
+			if plat, ok := rawMap["platform"].(string); ok {
+				platform = plat
+			}
+		}
+	}
+
+	orderError := &domain.OrderError{
+		ExternalID:      externalID,
+		IntegrationID:   integrationID,
+		BusinessID:      businessID,
+		IntegrationType: integrationType,
+		Platform:        platform,
+		ErrorType:       errorType,
+		ErrorMessage:    err.Error(),
+		RawData:         datatypes.JSON(messageBody), // JSON original
+		Status:          "new",
+	}
+
+	// Intentar guardar el error (no bloqueamos si falla)
+	if saveErr := c.repo.CreateOrderError(ctx, orderError); saveErr != nil {
+		c.logger.Error().
+			Err(saveErr).
+			Msg("Failed to save order error to database")
+	}
 }
 
 func contains(s, substr string) bool {

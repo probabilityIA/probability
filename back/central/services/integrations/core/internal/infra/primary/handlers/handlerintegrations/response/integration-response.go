@@ -95,7 +95,7 @@ type WebhookURLResponse struct {
 //
 //	@Description	Respuesta con la lista de webhooks configurados para una integración
 type ListWebhooksResponse struct {
-	Success bool        `json:"success" example:"true"`
+	Success bool          `json:"success" example:"true"`
 	Data    []interface{} `json:"data"`
 }
 
@@ -105,4 +105,30 @@ type ListWebhooksResponse struct {
 type DeleteWebhookResponse struct {
 	Success bool   `json:"success" example:"true"`
 	Message string `json:"message" example:"Webhook eliminado exitosamente"`
+}
+
+// VerifyWebhooksResponse representa la respuesta al verificar webhooks existentes
+//
+//	@Description	Respuesta con la lista de webhooks que coinciden con nuestra URL
+type VerifyWebhooksResponse struct {
+	Success bool          `json:"success" example:"true"`
+	Data    []interface{} `json:"data"` // Lista de webhooks que coinciden
+	Message string        `json:"message" example:"Webhooks verificados exitosamente"`
+}
+
+// CreateWebhookResponseData contiene los datos del resultado de crear webhooks
+type CreateWebhookResponseData struct {
+	ExistingWebhooks []interface{} `json:"existing_webhooks"` // Webhooks encontrados que coinciden
+	DeletedWebhooks  []interface{} `json:"deleted_webhooks"`  // Webhooks eliminados
+	CreatedWebhooks  []string      `json:"created_webhooks"`  // IDs de webhooks creados
+	WebhookURL       string        `json:"webhook_url"`       // URL del webhook
+}
+
+// CreateWebhookResponse representa la respuesta al crear webhooks
+//
+//	@Description	Respuesta con información sobre webhooks encontrados, eliminados y creados
+type CreateWebhookResponse struct {
+	Success bool                      `json:"success" example:"true"`
+	Data    CreateWebhookResponseData `json:"data"`
+	Message string                    `json:"message" example:"Webhooks creados exitosamente"`
 }

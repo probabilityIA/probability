@@ -7,7 +7,8 @@ import {
     SingleResponse,
     CreateOrderStatusMappingDTO,
     UpdateOrderStatusMappingDTO,
-    ActionResponse
+    ActionResponse,
+    OrderStatusInfo
 } from '../../domain/types';
 
 export class OrderStatusMappingApiRepository implements IOrderStatusMappingRepository {
@@ -91,6 +92,15 @@ export class OrderStatusMappingApiRepository implements IOrderStatusMappingRepos
         return this.fetch<ActionResponse>(`/order-status-mappings/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    async getOrderStatuses(isActive?: boolean): Promise<{ success: boolean; data: OrderStatusInfo[]; message?: string }> {
+        const params = new URLSearchParams();
+        if (isActive !== undefined) {
+            params.append('is_active', String(isActive));
+        }
+        const url = `/order-statuses${params.toString() ? `?${params.toString()}` : ''}`;
+        return this.fetch<{ success: boolean; data: OrderStatusInfo[]; message?: string }>(url);
     }
 
     async toggleOrderStatusMappingActive(id: number): Promise<SingleResponse<OrderStatusMapping>> {

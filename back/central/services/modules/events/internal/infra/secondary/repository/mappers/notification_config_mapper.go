@@ -42,17 +42,24 @@ func ToDomainNotificationConfig(nc *models.BusinessNotificationConfig) *domain.N
 	if nc.DeletedAt.Valid {
 		deletedAt = &nc.DeletedAt.Time
 	}
+
+	// Extraer códigos de estado de la relación OrderStatuses
+	statusCodes := make([]string, 0, len(nc.OrderStatuses))
+	for _, status := range nc.OrderStatuses {
+		statusCodes = append(statusCodes, status.Code)
+	}
+
 	return &domain.NotificationConfig{
-		ID:          nc.ID,
-		CreatedAt:   nc.CreatedAt,
-		UpdatedAt:   nc.UpdatedAt,
-		DeletedAt:   deletedAt,
-		BusinessID:  nc.BusinessID,
-		EventType:   nc.EventType,
-		Enabled:     nc.Enabled,
-		Channels:    nc.Channels,
-		Filters:     nc.Filters,
-		Description: nc.Description,
+		ID:               nc.ID,
+		CreatedAt:        nc.CreatedAt,
+		UpdatedAt:        nc.UpdatedAt,
+		DeletedAt:        deletedAt,
+		BusinessID:       nc.BusinessID,
+		EventType:        nc.EventType,
+		Enabled:          nc.Enabled,
+		Channels:         nc.Channels,
+		Filters:          nc.Filters,
+		Description:      nc.Description,
+		OrderStatusCodes: statusCodes,
 	}
 }
-

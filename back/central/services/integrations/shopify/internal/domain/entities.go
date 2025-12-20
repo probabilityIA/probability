@@ -76,11 +76,18 @@ type ShopifyAddress struct {
 }
 
 type ShopifyOrderItem struct {
-	ExternalID string
-	Name       string
-	SKU        string
-	Quantity   int
-	UnitPrice  float64
+	ExternalID   string
+	Name         string
+	SKU          string
+	Quantity     int
+	UnitPrice    float64
+	ProductID    *int64   // ID del producto en Shopify
+	VariantID    *int64   // ID de la variante en Shopify
+	Title        string   // Título del producto
+	VariantTitle *string  // Título de la variante
+	Discount     float64  // Descuento aplicado
+	Tax          float64  // Impuesto
+	Weight       *float64 // Peso en gramos
 }
 
 type ProbabilityOrderDTO struct {

@@ -8,7 +8,8 @@ import {
     CreateIntegrationDTO,
     UpdateIntegrationDTO,
     CreateIntegrationTypeDTO,
-    UpdateIntegrationTypeDTO
+    UpdateIntegrationTypeDTO,
+    SyncOrdersParams
 } from '../../domain/types';
 
 async function getUseCases() {
@@ -108,9 +109,9 @@ export const setAsDefaultAction = async (id: number) => {
     }
 };
 
-export const syncOrdersAction = async (id: number) => {
+export const syncOrdersAction = async (id: number, params?: SyncOrdersParams) => {
     try {
-        return await (await getUseCases()).syncOrders(id);
+        return await (await getUseCases()).syncOrders(id, params);
     } catch (error: any) {
         console.error('Sync Orders Action Error:', error.message);
         throw new Error(error.message);
@@ -222,6 +223,24 @@ export const deleteWebhookAction = async (id: number, webhookId: string) => {
         return await (await getUseCases()).deleteWebhook(id, webhookId);
     } catch (error: any) {
         console.error('Delete Webhook Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const verifyWebhooksAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).verifyWebhooks(id);
+    } catch (error: any) {
+        console.error('Verify Webhooks Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const createWebhookAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).createWebhook(id);
+    } catch (error: any) {
+        console.error('Create Webhook Action Error:', error.message);
         throw new Error(error.message);
     }
 };

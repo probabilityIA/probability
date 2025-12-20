@@ -54,6 +54,16 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		existing.Config = *dto.Config
 	}
 	if dto.Credentials != nil {
+		// DEBUG: Log credential keys being updated
+		credKeys := make([]string, 0, len(*dto.Credentials))
+		for k := range *dto.Credentials {
+			credKeys = append(credKeys, k)
+		}
+		uc.log.Debug(ctx).
+			Strs("credential_keys", credKeys).
+			Uint("id", id).
+			Msg("Credentials keys being updated in integration")
+
 		// Serializar credenciales (se encriptarán en el repository)
 		credentialsBytes, err := json.Marshal(*dto.Credentials)
 		if err != nil {

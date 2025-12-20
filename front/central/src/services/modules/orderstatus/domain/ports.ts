@@ -5,7 +5,8 @@ import {
     SingleResponse,
     CreateOrderStatusMappingDTO,
     UpdateOrderStatusMappingDTO,
-    ActionResponse
+    ActionResponse,
+    OrderStatusInfo
 } from './types';
 
 export interface IOrderStatusMappingRepository {
@@ -15,4 +16,5 @@ export interface IOrderStatusMappingRepository {
     updateOrderStatusMapping(id: number, data: UpdateOrderStatusMappingDTO): Promise<SingleResponse<OrderStatusMapping>>;
     deleteOrderStatusMapping(id: number): Promise<ActionResponse>;
     toggleOrderStatusMappingActive(id: number): Promise<SingleResponse<OrderStatusMapping>>;
+    getOrderStatuses(isActive?: boolean): Promise<{ success: boolean; data: OrderStatusInfo[]; message?: string }>;
 }

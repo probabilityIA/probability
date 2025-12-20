@@ -31,5 +31,5 @@ func (h *OrderStatusMappingHandlers) Create(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusCreated, toResponse(result))
+	c.JSON(http.StatusCreated, toResponse(result, h.getImageURLBase()))
 }

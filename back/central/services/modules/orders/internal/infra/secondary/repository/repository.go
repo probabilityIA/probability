@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository/mappers"
@@ -43,6 +44,12 @@ func (r *Repository) CreateOrder(ctx context.Context, order *domain.ProbabilityO
 
 	dbOrder := mappers.ToDBOrder(order)
 	if err := r.db.Conn(ctx).Create(dbOrder).Error; err != nil {
+		// Detectar error de clave duplicada para external_id + integration_id
+		errMsg := err.Error()
+		if strings.Contains(errMsg, "duplicate key value violates unique constraint") &&
+			(strings.Contains(errMsg, "idx_integration_external_id") || strings.Contains(errMsg, "SQLSTATE 23505")) {
+			return domain.ErrOrderAlreadyExists
+		}
 		return err
 	}
 	// Actualizar el ID del modelo de dominio con el ID generado
@@ -57,6 +64,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Proba
 		Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
+		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("id = ?", id).
 		First(&order).Error
@@ -78,6 +86,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
+		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Where("internal_number = ?", internalNumber).
 		First(&order).Error
@@ -124,6 +133,11 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("internal_number ILIKE ?", "%"+internalNumber+"%")
 	}
 
+	// Filtro por status_id (estado de Probability)
+	if statusID, ok := filters["status_id"].(uint); ok && statusID > 0 {
+		query = query.Where("status_id = ?", statusID)
+	}
+	// Mantener compatibilidad con filtro antiguo por status (string) si se necesita
 	if status, ok := filters["status"].(string); ok && status != "" {
 		query = query.Where("status = ?", status)
 	}
@@ -178,6 +192,7 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	query = query.Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
+		Preload("OrderStatus").       // Precargar OrderStatus para obtener información del estado de Probability
 		Preload("OrderItems.Product") // Precargar OrderItems con Product para obtener información del catálogo
 
 	// Paginación
@@ -240,6 +255,7 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 		Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
+		Preload("OrderStatus"). // Precargar OrderStatus para obtener información del estado de Probability
 		Preload("OrderItems.Product").
 		Where("external_id = ? AND integration_id = ?", externalID, integrationID).
 		First(&order).Error
@@ -512,4 +528,33 @@ func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (
 		Where("customer_id = ?", clientID).
 		Count(&count).Error
 	return count, err
+}
+
+// CreateOrderError guarda un error ocurrido durante el procesamiento de una orden
+func (r *Repository) CreateOrderError(ctx context.Context, orderError *domain.OrderError) error {
+	if orderError == nil {
+		return fmt.Errorf("orderError cannot be nil")
+	}
+
+	dbError := &models.OrderError{
+		ExternalID:      orderError.ExternalID,
+		IntegrationID:   orderError.IntegrationID,
+		BusinessID:      orderError.BusinessID,
+		IntegrationType: orderError.IntegrationType,
+		Platform:        orderError.Platform,
+		ErrorType:       orderError.ErrorType,
+		ErrorMessage:    orderError.ErrorMessage,
+		ErrorStack:      orderError.ErrorStack,
+		RawData:         orderError.RawData,
+		Status:          orderError.Status,
+		ResolvedAt:      orderError.ResolvedAt,
+		ResolvedBy:      orderError.ResolvedBy,
+		Resolution:      orderError.Resolution,
+	}
+
+	if orderError.Status == "" {
+		dbError.Status = "new"
+	}
+
+	return r.db.Conn(ctx).Create(dbError).Error
 }

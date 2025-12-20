@@ -2,6 +2,8 @@ package mapper
 
 import (
 	"encoding/json"
+	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/domain"
@@ -11,13 +13,50 @@ import (
 func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrderDTO {
 	orderItems := make([]domain.ProbabilityOrderItemDTO, len(s.Items))
 	for i, item := range s.Items {
+		// Convertir ProductID y VariantID a string si están disponibles
+		var productIDStr *string
+		if item.ProductID != nil {
+			idStr := strconv.FormatInt(*item.ProductID, 10)
+			productIDStr = &idStr
+		}
+
+		var variantIDStr *string
+		if item.VariantID != nil {
+			idStr := strconv.FormatInt(*item.VariantID, 10)
+			variantIDStr = &idStr
+		}
+
+		// Calcular precio total (precio unitario * cantidad - descuento)
+		totalPrice := (item.UnitPrice * float64(item.Quantity)) - item.Discount
+		if totalPrice < 0 {
+			totalPrice = 0
+		}
+
+		// Si el SKU está vacío, generar uno usando ProductID y VariantID
+		sku := item.SKU
+		if sku == "" {
+			if item.VariantID != nil {
+				sku = fmt.Sprintf("VAR-%d", *item.VariantID)
+			} else if item.ProductID != nil {
+				sku = fmt.Sprintf("PROD-%d", *item.ProductID)
+			} else {
+				sku = fmt.Sprintf("ITEM-%d", i) // Fallback usando índice
+			}
+		}
+
 		orderItems[i] = domain.ProbabilityOrderItemDTO{
-			ProductSKU:  item.SKU,
-			ProductName: item.Name,
-			Quantity:    item.Quantity,
-			UnitPrice:   item.UnitPrice,
-			TotalPrice:  item.UnitPrice * float64(item.Quantity),
-			Currency:    s.Currency,
+			ProductID:    productIDStr,
+			ProductSKU:   sku,
+			ProductName:  item.Name,
+			ProductTitle: item.Title,
+			VariantID:    variantIDStr,
+			Quantity:     item.Quantity,
+			UnitPrice:    item.UnitPrice,
+			TotalPrice:   totalPrice,
+			Currency:     s.Currency,
+			Discount:     item.Discount,
+			Tax:          item.Tax,
+			Weight:       item.Weight,
 		}
 	}
 
@@ -46,6 +85,9 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		metadataJSON, _ = json.Marshal(s.Metadata)
 	}
 
+	// Extraer y mapear shipments desde fulfillments del raw_data
+	shipments := extractShipmentsFromRawData(s.RawData)
+
 	subtotal := s.TotalAmount
 
 	probabilityOrder := &domain.ProbabilityOrderDTO{
@@ -69,6 +111,7 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		Metadata:        metadataJSON,
 		OrderItems:      orderItems,
 		Addresses:       addresses,
+		Shipments:       shipments,
 		OrderStatusURL:  s.OrderStatusURL,
 	}
 
@@ -84,4 +127,126 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 	}
 
 	return probabilityOrder
+}
+
+// extractShipmentsFromRawData extrae los shipments desde los fulfillments del JSON raw_data
+func extractShipmentsFromRawData(rawData []byte) []domain.ProbabilityShipmentDTO {
+	if len(rawData) == 0 {
+		return nil
+	}
+
+	var orderMap map[string]interface{}
+	if err := json.Unmarshal(rawData, &orderMap); err != nil {
+		return nil
+	}
+
+	fulfillments, ok := orderMap["fulfillments"].([]interface{})
+	if !ok || len(fulfillments) == 0 {
+		return nil
+	}
+
+	shipments := make([]domain.ProbabilityShipmentDTO, 0, len(fulfillments))
+
+	for _, fulfillmentRaw := range fulfillments {
+		fulfillment, ok := fulfillmentRaw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Mapear campos básicos del fulfillment
+		trackingNumber := getStringPtr(fulfillment, "tracking_number")
+		trackingURL := getStringPtr(fulfillment, "tracking_url")
+		trackingCompany := getStringPtr(fulfillment, "tracking_company")
+		shipmentStatus := getStringPtr(fulfillment, "shipment_status")
+		service := getStringPtr(fulfillment, "service")
+
+		// Si no hay tracking_number pero hay tracking_numbers array, usar el primero
+		if trackingNumber == nil {
+			if trackingNumbers, ok := fulfillment["tracking_numbers"].([]interface{}); ok && len(trackingNumbers) > 0 {
+				if firstNum, ok := trackingNumbers[0].(string); ok {
+					trackingNumber = &firstNum
+				}
+			}
+		}
+
+		// Si no hay tracking_url pero hay tracking_urls array, usar el primero
+		if trackingURL == nil {
+			if trackingURLs, ok := fulfillment["tracking_urls"].([]interface{}); ok && len(trackingURLs) > 0 {
+				if firstURL, ok := trackingURLs[0].(string); ok {
+					trackingURL = &firstURL
+				}
+			}
+		}
+
+		// Determinar status del shipment
+		status := "pending"
+		if shipmentStatus != nil {
+			switch *shipmentStatus {
+			case "confirmed", "success":
+				status = "in_transit"
+			case "delivered":
+				status = "delivered"
+			case "failure", "cancelled":
+				status = "failed"
+			default:
+				status = "pending"
+			}
+		} else if fulfillmentStatus, ok := fulfillment["status"].(string); ok {
+			switch fulfillmentStatus {
+			case "success", "confirmed":
+				status = "in_transit"
+			case "failure", "cancelled":
+				status = "failed"
+			default:
+				status = "pending"
+			}
+		}
+
+		// Parsear fechas
+		var shippedAt *time.Time
+		if createdAtStr, ok := fulfillment["created_at"].(string); ok {
+			if parsed, err := time.Parse(time.RFC3339, createdAtStr); err == nil {
+				shippedAt = &parsed
+			}
+		}
+
+		var deliveredAt *time.Time
+		if updatedAtStr, ok := fulfillment["updated_at"].(string); ok && status == "delivered" {
+			if parsed, err := time.Parse(time.RFC3339, updatedAtStr); err == nil {
+				deliveredAt = &parsed
+			}
+		}
+
+		// Serializar metadata del fulfillment
+		metadataJSON, _ := json.Marshal(fulfillment)
+
+		shipment := domain.ProbabilityShipmentDTO{
+			TrackingNumber: trackingNumber,
+			TrackingURL:    trackingURL,
+			Carrier:        trackingCompany,
+			Status:         status,
+			ShippedAt:      shippedAt,
+			DeliveredAt:    deliveredAt,
+			Metadata:       metadataJSON,
+		}
+
+		// Si hay service, usarlo como carrier si no hay tracking_company
+		if shipment.Carrier == nil && service != nil {
+			shipment.Carrier = service
+		}
+
+		shipments = append(shipments, shipment)
+	}
+
+	return shipments
+}
+
+// getStringPtr obtiene un puntero a string desde un map, retorna nil si no existe
+func getStringPtr(m map[string]interface{}, key string) *string {
+	if val, ok := m[key]; ok {
+		if str, ok := val.(string); ok && str != "" {
+			return &str
+		}
+	}
+	return nil
 }

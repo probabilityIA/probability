@@ -29,10 +29,12 @@ type IIntegrationContract interface {
 }
 
 // IWebhookOperations es una interfaz opcional que las integraciones pueden implementar
-// para soportar operaciones de webhooks (listar, eliminar)
+// para soportar operaciones de webhooks (listar, eliminar, verificar, crear)
 type IWebhookOperations interface {
 	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]interface{}, error)
+	CreateWebhook(ctx context.Context, integrationID string, baseURL string) (interface{}, error)
 }
 
 // WebhookInfo es un alias del tipo de domain

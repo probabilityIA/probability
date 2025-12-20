@@ -81,16 +81,34 @@ func (uc *IntegrationUseCase) DecryptCredentialField(ctx context.Context, integr
 	}
 
 	// Validar que existan credenciales
-	if integration.DecryptedCredentials == nil {
+	if integration.DecryptedCredentials == nil || len(integration.DecryptedCredentials) == 0 {
 		uc.log.Error(ctx).Uint("id", id).Msg("No credentials found for integration")
-		return "", fmt.Errorf("no credentials found for integration")
+		return "", fmt.Errorf("no credentials found for integration %d. Please update the integration with credentials", id)
 	}
+
+	// Log de debug: mostrar qué campos están disponibles
+	availableFields := make([]string, 0, len(integration.DecryptedCredentials))
+	for k := range integration.DecryptedCredentials {
+		availableFields = append(availableFields, k)
+	}
+	uc.log.Debug(ctx).
+		Str("field", fieldName).
+		Uint("id", id).
+		Strs("available_fields", availableFields).
+		Msg("Attempting to get credential field")
 
 	// Obtener el campo
 	value, ok := integration.DecryptedCredentials[fieldName]
 	if !ok {
-		uc.log.Error(ctx).Str("field", fieldName).Uint("id", id).Msg("Field not found in credentials")
-		return "", fmt.Errorf("field %s not found in credentials", fieldName)
+		uc.log.Error(ctx).
+			Str("field", fieldName).
+			Uint("id", id).
+			Strs("available_fields", availableFields).
+			Msg("Field not found in credentials")
+		if len(availableFields) > 0 {
+			return "", fmt.Errorf("field '%s' not found in credentials for integration %d. Available fields: %v. Please update the integration with the correct credentials", fieldName, id, availableFields)
+		}
+		return "", fmt.Errorf("field '%s' not found in credentials for integration %d. Credentials are empty. Please update the integration with credentials", fieldName, id)
 	}
 
 	// Validar que sea string

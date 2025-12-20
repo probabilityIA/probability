@@ -86,10 +86,12 @@ type ProbabilityOrder struct {
 	Boxes  *string  `json:"boxes"`
 
 	// Tipo y estado
-	OrderTypeID    *uint  `json:"order_type_id"`
-	OrderTypeName  string `json:"order_type_name"`
-	Status         string `json:"status"`
-	OriginalStatus string `json:"original_status"`
+	OrderTypeID    *uint            `json:"order_type_id"`
+	OrderTypeName  string           `json:"order_type_name"`
+	Status         string           `json:"status"`
+	OriginalStatus string           `json:"original_status"`
+	StatusID       *uint            `json:"status_id"`              // ID del estado mapeado en Probability (FK a order_statuses)
+	OrderStatus    *OrderStatusInfo `json:"order_status,omitempty"` // Información del estado de Probability si está cargado
 
 	// Información adicional
 	Notes    *string `json:"notes"`
@@ -510,4 +512,30 @@ func randomString(length int) string {
 		b[i] = charset[b[i]%byte(len(charset))]
 	}
 	return string(b)
+}
+
+// ───────────────────────────────────────────
+//
+//	ORDER ERROR ENTITY
+//
+// ───────────────────────────────────────────
+
+// OrderError representa un error ocurrido durante el procesamiento de una orden
+type OrderError struct {
+	ID              uint
+	ExternalID      string
+	IntegrationID   uint
+	BusinessID      *uint
+	IntegrationType string
+	Platform        string
+	ErrorType       string
+	ErrorMessage    string
+	ErrorStack      *string
+	RawData         datatypes.JSON
+	Status          string
+	ResolvedAt      *time.Time
+	ResolvedBy      *uint
+	Resolution      *string
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }

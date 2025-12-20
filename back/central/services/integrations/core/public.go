@@ -355,3 +355,63 @@ func (ic *integrationCore) DeleteWebhook(ctx context.Context, integrationID, web
 	// Eliminar webhook
 	return webhookOps.DeleteWebhook(ctx, integrationID, webhookID)
 }
+
+// VerifyWebhooksByURL verifica webhooks existentes que coincidan con nuestra URL
+func (ic *integrationCore) VerifyWebhooksByURL(ctx context.Context, integrationID string) ([]interface{}, error) {
+	// Obtener la integración
+	integration, err := ic.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener integración: %w", err)
+	}
+
+	// Obtener la implementación de la integración
+	integrationImpl, ok := ic.integrations[integration.IntegrationType]
+	if !ok {
+		return nil, fmt.Errorf("integración no registrada para tipo %d", integration.IntegrationType)
+	}
+
+	// Verificar si implementa IWebhookOperations
+	webhookOps, ok := integrationImpl.(IWebhookOperations)
+	if !ok {
+		return nil, fmt.Errorf("esta integración no soporta operaciones de webhooks")
+	}
+
+	// Obtener baseURL desde configuración
+	baseURL := ic.config.Get("URL_BASE_SWAGGER")
+	if baseURL == "" {
+		return nil, fmt.Errorf("URL_BASE_SWAGGER no está configurada")
+	}
+
+	// Verificar webhooks
+	return webhookOps.VerifyWebhooksByURL(ctx, integrationID, baseURL)
+}
+
+// CreateWebhook crea webhooks en la plataforma externa después de verificar y eliminar duplicados
+func (ic *integrationCore) CreateWebhook(ctx context.Context, integrationID string) (interface{}, error) {
+	// Obtener la integración
+	integration, err := ic.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return nil, fmt.Errorf("error al obtener integración: %w", err)
+	}
+
+	// Obtener la implementación de la integración
+	integrationImpl, ok := ic.integrations[integration.IntegrationType]
+	if !ok {
+		return nil, fmt.Errorf("integración no registrada para tipo %d", integration.IntegrationType)
+	}
+
+	// Verificar si implementa IWebhookOperations
+	webhookOps, ok := integrationImpl.(IWebhookOperations)
+	if !ok {
+		return nil, fmt.Errorf("esta integración no soporta operaciones de webhooks")
+	}
+
+	// Obtener baseURL desde configuración
+	baseURL := ic.config.Get("URL_BASE_SWAGGER")
+	if baseURL == "" {
+		return nil, fmt.Errorf("URL_BASE_SWAGGER no está configurada")
+	}
+
+	// Crear webhooks
+	return webhookOps.CreateWebhook(ctx, integrationID, baseURL)
+}

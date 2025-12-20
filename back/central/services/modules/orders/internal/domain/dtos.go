@@ -82,6 +82,7 @@ type CreateOrderRequest struct {
 	OrderTypeName  string `json:"order_type_name" binding:"max=64"`
 	Status         string `json:"status" binding:"max=64"`
 	OriginalStatus string `json:"original_status" binding:"max=64"`
+	StatusID       *uint  `json:"status_id"` // ID del estado mapeado en Probability (FK a order_statuses)
 
 	// Información adicional
 	Notes    *string `json:"notes"`
@@ -269,10 +270,12 @@ type OrderResponse struct {
 	Boxes  *string  `json:"boxes,omitempty"`
 
 	// Tipo y estado
-	OrderTypeID    *uint  `json:"order_type_id,omitempty"`
-	OrderTypeName  string `json:"order_type_name"`
-	Status         string `json:"status"`
-	OriginalStatus string `json:"original_status"`
+	OrderTypeID    *uint            `json:"order_type_id,omitempty"`
+	OrderTypeName  string           `json:"order_type_name"`
+	Status         string           `json:"status"`
+	OriginalStatus string           `json:"original_status"`
+	StatusID       *uint            `json:"status_id,omitempty"`
+	OrderStatus    *OrderStatusInfo `json:"order_status,omitempty"` // Información del estado de Probability si está cargado
 
 	// Información adicional
 	Notes    *string `json:"notes,omitempty"`
@@ -304,26 +307,37 @@ type OrderResponse struct {
 	ImportedAt time.Time `json:"imported_at"`
 }
 
+// OrderStatusInfo contiene información básica del estado de orden de Probability
+type OrderStatusInfo struct {
+	ID          uint   `json:"id"`
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Color       string `json:"color"`
+}
+
 // OrderSummary representa un resumen de la orden para listados
 type OrderSummary struct {
-	ID                  string    `json:"id"`
-	CreatedAt           time.Time `json:"created_at"`
-	BusinessID          uint      `json:"business_id"`
-	IntegrationID       uint      `json:"integration_id"`
-	IntegrationType     string    `json:"integration_type"`
-	IntegrationLogoURL  *string   `json:"integration_logo_url,omitempty"` // URL del logo del tipo de integración
-	Platform            string    `json:"platform"`
-	ExternalID          string    `json:"external_id"`
-	OrderNumber         string    `json:"order_number"`
-	TotalAmount         float64   `json:"total_amount"`
-	Currency            string    `json:"currency"`
-	CustomerName        string    `json:"customer_name"`
-	CustomerEmail       string    `json:"customer_email"`
-	Status              string    `json:"status"`
-	PaymentStatus       string    `json:"payment_status"` // derived from IsPaid
-	ItemsCount          int       `json:"items_count"`    // derived from len(Items)
-	DeliveryProbability *float64  `json:"delivery_probability"`
-	NegativeFactors     []string  `json:"negative_factors"`
+	ID                  string           `json:"id"`
+	CreatedAt           time.Time        `json:"created_at"`
+	BusinessID          uint             `json:"business_id"`
+	IntegrationID       uint             `json:"integration_id"`
+	IntegrationType     string           `json:"integration_type"`
+	IntegrationLogoURL  *string          `json:"integration_logo_url,omitempty"` // URL del logo del tipo de integración
+	Platform            string           `json:"platform"`
+	ExternalID          string           `json:"external_id"`
+	OrderNumber         string           `json:"order_number"`
+	TotalAmount         float64          `json:"total_amount"`
+	Currency            string           `json:"currency"`
+	CustomerName        string           `json:"customer_name"`
+	CustomerEmail       string           `json:"customer_email"`
+	Status              string           `json:"status"`
+	PaymentStatus       string           `json:"payment_status"` // derived from IsPaid
+	ItemsCount          int              `json:"items_count"`    // derived from len(Items)
+	DeliveryProbability *float64         `json:"delivery_probability"`
+	NegativeFactors     []string         `json:"negative_factors"`
+	OrderStatus         *OrderStatusInfo `json:"order_status,omitempty"` // Información del estado de Probability
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos
@@ -383,6 +397,7 @@ type ProbabilityOrderDTO struct {
 	OrderTypeName  string `json:"order_type_name" binding:"max=64"`
 	Status         string `json:"status" binding:"max=64"`
 	OriginalStatus string `json:"original_status" binding:"max=64"`
+	StatusID       *uint  `json:"status_id"` // ID del estado mapeado en Probability (FK a order_statuses)
 
 	// Información adicional
 	Notes    *string `json:"notes"`

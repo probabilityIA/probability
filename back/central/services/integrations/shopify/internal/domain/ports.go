@@ -18,16 +18,6 @@ type ShopifyClient interface {
 	SetDebug(enabled bool)                                                                               // Habilita logging de peticiones HTTP
 }
 
-// WebhookInfo representa la información de un webhook de Shopify
-type WebhookInfo struct {
-	ID        string `json:"id"`
-	Address   string `json:"address"`
-	Topic     string `json:"topic"`
-	Format    string `json:"format"`
-	CreatedAt string `json:"created_at"`
-	UpdatedAt string `json:"updated_at"`
-}
-
 type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
 	GetIntegrationByStoreID(ctx context.Context, storeID string) (*Integration, error)
