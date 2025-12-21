@@ -12,6 +12,7 @@ import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/sha
 import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { playNotificationSound } from '@/shared/utils';
 import RawOrderModal from './RawOrderModal';
 
 // Componente memoizado para las filas de la tabla
@@ -36,7 +37,7 @@ const OrderRow = memo(({
     onViewRecommendation?: (order: Order) => void; // NEW prop definition
     onDelete: (id: string) => void;
     onShowRaw: (id: string) => void;
-    formatCurrency: (amount: number, currency?: string) => string;
+    formatCurrency: (amount: number, currency?: string, amountPresentment?: number, currencyPresentment?: string) => string;
     formatDate: (dateString: string) => { date: string; time: string };
     getStatusBadge: (status: string, color?: string) => React.ReactNode;
     getProbabilityColor: (probability: number) => string;
@@ -47,22 +48,39 @@ const OrderRow = memo(({
     return (
         <tr className={`hover:bg-gray-50 transition-all duration-300 ${isNew ? 'animate-slide-in bg-green-50/50' : ''}`}>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                <div
-                    className="h-10 w-10 rounded-full shadow-md border-2 border-gray-200 hover:shadow-lg transition-all cursor-pointer bg-white flex items-center justify-center overflow-hidden"
-                    title={`${order.platform} - Click para ver orden original`}
-                    onClick={() => onShowRaw(order.id)}
-                >
-                    {order.integration_logo_url ? (
-                        <img
-                            src={order.integration_logo_url}
-                            alt={order.platform}
-                            className="h-full w-full object-contain p-1.5"
-                            loading="lazy"
-                        />
-                    ) : (
-                        <span className="text-xs font-medium text-gray-600 uppercase">
-                            {order.platform.charAt(0)}
-                        </span>
+                <div className="flex items-center gap-2">
+                    <div
+                        className="h-10 w-10 rounded-full shadow-md border-2 border-gray-200 hover:shadow-lg transition-all cursor-pointer bg-white flex items-center justify-center overflow-hidden"
+                        title={`${order.platform} - Click para ver JSON crudo`}
+                        onClick={() => onShowRaw(order.id)}
+                    >
+                        {order.integration_logo_url ? (
+                            <img
+                                src={order.integration_logo_url}
+                                alt={order.platform}
+                                className="h-full w-full object-contain p-1.5"
+                                loading="lazy"
+                            />
+                        ) : (
+                            <span className="text-xs font-medium text-gray-600 uppercase">
+                                {order.platform.charAt(0)}
+                            </span>
+                        )}
+                    </div>
+                    {order.order_status_url && (
+                        <a
+                            href={order.order_status_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            title="Ver orden en Shopify"
+                            aria-label="Ver orden en Shopify"
+                            onClick={(e) => e.stopPropagation()}
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                        </a>
                     )}
                 </div>
             </td>
@@ -90,7 +108,7 @@ const OrderRow = memo(({
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-semibold text-gray-900">
-                    {formatCurrency(order.total_amount, order.currency)}
+                    {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
                 </div>
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
@@ -635,6 +653,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                             // Actualizar el total solo si realmente agregamos una nueva orden
                             setTotal(prev => prev + 1);
 
+                            // Reproducir sonido de notificación
+                            playNotificationSound();
+
                             // Mostrar toast
                             showToast(`Nueva orden recibida: #${orderNumber}`, 'success');
                         }
@@ -731,7 +752,15 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
     };
 
-    const formatCurrency = useCallback((amount: number, currency: string = 'USD') => {
+    const formatCurrency = useCallback((amount: number, currency: string = 'USD', amountPresentment?: number, currencyPresentment?: string) => {
+        // Priorizar moneda local (presentment) si está disponible
+        if (amountPresentment && amountPresentment > 0 && currencyPresentment) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: currencyPresentment,
+            }).format(amountPresentment);
+        }
+        // Fallback a USD si no hay moneda local
         return new Intl.NumberFormat('es-CO', {
             style: 'currency',
             currency: currency,

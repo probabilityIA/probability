@@ -50,8 +50,16 @@ type Order struct {
 	Discount     float64  `gorm:"type:decimal(12,2);not null;default:0"` // Descuentos
 	ShippingCost float64  `gorm:"type:decimal(12,2);not null;default:0"` // Costo de envío
 	TotalAmount  float64  `gorm:"type:decimal(12,2);not null"`           // Total final
-	Currency     string   `gorm:"size:10;default:'USD'"`                 // Moneda
+	Currency     string   `gorm:"size:10;default:'USD'"`                 // Moneda (shop_money - generalmente USD)
 	CodTotal     *float64 `gorm:"type:decimal(12,2)"`                    // Total para pago contra entrega
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	SubtotalPresentment     float64 `gorm:"column:subtotal_presentment;type:decimal(12,2);not null;default:0"`      // Subtotal en moneda local
+	TaxPresentment          float64 `gorm:"column:tax_presentment;type:decimal(12,2);not null;default:0"`           // Impuestos en moneda local
+	DiscountPresentment     float64 `gorm:"column:discount_presentment;type:decimal(12,2);not null;default:0"`      // Descuentos en moneda local
+	ShippingCostPresentment float64 `gorm:"column:shipping_cost_presentment;type:decimal(12,2);not null;default:0"` // Costo de envío en moneda local
+	TotalAmountPresentment  float64 `gorm:"column:total_amount_presentment;type:decimal(12,2);not null;default:0"`  // Total final en moneda local
+	CurrencyPresentment     string  `gorm:"size:10"`                                                                // Moneda presentment (moneda local, puede ser COP, EUR, etc.)
 
 	// ============================================
 	// INFORMACIÓN DEL CLIENTE (Desnormalizado)
@@ -302,12 +310,18 @@ type OrderItem struct {
 	Quantity   int     `gorm:"not null;default:1"`          // Cantidad comprada
 	UnitPrice  float64 `gorm:"type:decimal(12,2);not null"` // Precio unitario al momento de la venta
 	TotalPrice float64 `gorm:"type:decimal(12,2);not null"` // Precio total (quantity * unit_price)
-	Currency   string  `gorm:"size:10;default:'USD'"`       // Moneda de la venta
+	Currency   string  `gorm:"size:10;default:'USD'"`       // Moneda de la venta (shop_money - generalmente USD)
 
 	// Descuentos y ajustes aplicados en esta orden
 	Discount float64  `gorm:"type:decimal(12,2);default:0"` // Descuento aplicado en esta orden
 	Tax      float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto de esta orden
 	TaxRate  *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto aplicada (ej: 0.19 para 19%)
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	UnitPricePresentment  float64 `gorm:"column:unit_price_presentment;type:decimal(12,2);not null;default:0"`  // Precio unitario en moneda local
+	TotalPricePresentment float64 `gorm:"column:total_price_presentment;type:decimal(12,2);not null;default:0"` // Precio total en moneda local
+	DiscountPresentment   float64 `gorm:"column:discount_presentment;type:decimal(12,2);default:0"`             // Descuento en moneda local
+	TaxPresentment        float64 `gorm:"column:tax_presentment;type:decimal(12,2);default:0"`                  // Impuesto en moneda local
 
 	// ============================================
 	// INFORMACIÓN ESPECÍFICA DEL CONTEXTO

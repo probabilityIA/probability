@@ -239,13 +239,19 @@ func (uc *UseCaseOrderMapping) buildOrderEntity(dto *domain.ProbabilityOrderDTO,
 		InternalNumber: dto.InternalNumber,
 
 		// Información financiera
-		Subtotal:     dto.Subtotal,
-		Tax:          dto.Tax,
-		Discount:     dto.Discount,
-		ShippingCost: dto.ShippingCost,
-		TotalAmount:  dto.TotalAmount,
-		Currency:     dto.Currency,
-		CodTotal:     dto.CodTotal,
+		Subtotal:                dto.Subtotal,
+		Tax:                     dto.Tax,
+		Discount:                dto.Discount,
+		ShippingCost:            dto.ShippingCost,
+		TotalAmount:             dto.TotalAmount,
+		Currency:                dto.Currency,
+		CodTotal:                dto.CodTotal,
+		SubtotalPresentment:     dto.SubtotalPresentment,
+		TaxPresentment:          dto.TaxPresentment,
+		DiscountPresentment:     dto.DiscountPresentment,
+		ShippingCostPresentment: dto.ShippingCostPresentment,
+		TotalAmountPresentment:  dto.TotalAmountPresentment,
+		CurrencyPresentment:     dto.CurrencyPresentment,
 
 		// Información del cliente
 		CustomerID:    clientID,
@@ -409,6 +415,11 @@ func (uc *UseCaseOrderMapping) saveOrderItems(ctx context.Context, order *domain
 			RequiresShipping: true,
 			IsGiftCard:       false,
 			Metadata:         itemDTO.Metadata,
+			// Precios en moneda local
+			UnitPricePresentment:  itemDTO.UnitPricePresentment,
+			TotalPricePresentment: itemDTO.TotalPricePresentment,
+			DiscountPresentment:   itemDTO.DiscountPresentment,
+			TaxPresentment:        itemDTO.TaxPresentment,
 		}
 	}
 
@@ -687,13 +698,19 @@ func (uc *UseCaseOrderMapping) mapOrderToResponse(order *domain.ProbabilityOrder
 		InternalNumber: order.InternalNumber,
 
 		// Información financiera
-		Subtotal:     order.Subtotal,
-		Tax:          order.Tax,
-		Discount:     order.Discount,
-		ShippingCost: order.ShippingCost,
-		TotalAmount:  order.TotalAmount,
-		Currency:     order.Currency,
-		CodTotal:     order.CodTotal,
+		Subtotal:                order.Subtotal,
+		Tax:                     order.Tax,
+		Discount:                order.Discount,
+		ShippingCost:            order.ShippingCost,
+		TotalAmount:             order.TotalAmount,
+		Currency:                order.Currency,
+		CodTotal:                order.CodTotal,
+		SubtotalPresentment:     order.SubtotalPresentment,
+		TaxPresentment:          order.TaxPresentment,
+		DiscountPresentment:     order.DiscountPresentment,
+		ShippingCostPresentment: order.ShippingCostPresentment,
+		TotalAmountPresentment:  order.TotalAmountPresentment,
+		CurrencyPresentment:     order.CurrencyPresentment,
 
 		// Información del cliente
 		CustomerID:    order.CustomerID,

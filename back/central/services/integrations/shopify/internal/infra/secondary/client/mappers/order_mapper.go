@@ -10,8 +10,42 @@ import (
 
 // MapOrderResponseToShopifyOrder mapea una Order de respuesta de Shopify a ShopifyOrder del dominio
 func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, businessID *uint, integrationID uint, integrationType string) domain.ShopifyOrder {
-	// Convertir precios de string a float64
+	// Convertir precios de string a float64 (shop_money - USD)
 	totalAmount, _ := strconv.ParseFloat(orderResp.TotalPrice, 64)
+
+	// Extraer precios en presentment_money (moneda local) si están disponibles
+	var totalAmountPresentment float64
+	var currencyPresentment string
+	var subtotalPresentment, taxPresentment, discountPresentment, shippingCostPresentment float64
+
+	if orderResp.TotalPriceSet != nil && orderResp.TotalPriceSet.PresentmentMoney.Amount != "" {
+		totalAmountPresentment, _ = strconv.ParseFloat(orderResp.TotalPriceSet.PresentmentMoney.Amount, 64)
+		currencyPresentment = orderResp.TotalPriceSet.PresentmentMoney.CurrencyCode
+	}
+
+	if orderResp.PresentmentCurrency != "" {
+		currencyPresentment = orderResp.PresentmentCurrency
+	}
+
+	// Extraer subtotal en moneda local
+	if orderResp.SubtotalPriceSet != nil && orderResp.SubtotalPriceSet.PresentmentMoney.Amount != "" {
+		subtotalPresentment, _ = strconv.ParseFloat(orderResp.SubtotalPriceSet.PresentmentMoney.Amount, 64)
+	}
+
+	// Extraer tax en moneda local
+	if orderResp.TotalTaxSet != nil && orderResp.TotalTaxSet.PresentmentMoney.Amount != "" {
+		taxPresentment, _ = strconv.ParseFloat(orderResp.TotalTaxSet.PresentmentMoney.Amount, 64)
+	}
+
+	// Extraer discount en moneda local
+	if orderResp.TotalDiscountsSet != nil && orderResp.TotalDiscountsSet.PresentmentMoney.Amount != "" {
+		discountPresentment, _ = strconv.ParseFloat(orderResp.TotalDiscountsSet.PresentmentMoney.Amount, 64)
+	}
+
+	// Extraer shipping cost en moneda local (sumar todos los shipping lines)
+	if orderResp.TotalShippingPriceSet != nil && orderResp.TotalShippingPriceSet.PresentmentMoney.Amount != "" {
+		shippingCostPresentment, _ = strconv.ParseFloat(orderResp.TotalShippingPriceSet.PresentmentMoney.Amount, 64)
+	}
 
 	// Mapear customer
 	customer := domain.ShopifyCustomer{
@@ -77,6 +111,22 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			totalTax += taxPrice
 		}
 
+		// Extraer precios en moneda local del item (presentment_money)
+		var unitPricePresentment, discountPresentment, taxPresentment float64
+		if item.PriceSet != nil && item.PriceSet.PresentmentMoney.Amount != "" {
+			unitPricePresentment, _ = strconv.ParseFloat(item.PriceSet.PresentmentMoney.Amount, 64)
+		}
+		if item.TotalDiscountSet != nil && item.TotalDiscountSet.PresentmentMoney.Amount != "" {
+			discountPresentment, _ = strconv.ParseFloat(item.TotalDiscountSet.PresentmentMoney.Amount, 64)
+		}
+		// Calcular tax en moneda local sumando las tax_lines
+		for _, taxLine := range item.TaxLines {
+			if taxLine.PriceSet != nil && taxLine.PriceSet.PresentmentMoney.Amount != "" {
+				taxPricePresentment, _ := strconv.ParseFloat(taxLine.PriceSet.PresentmentMoney.Amount, 64)
+				taxPresentment += taxPricePresentment
+			}
+		}
+
 		// Convertir gramos a float64 para peso
 		var weight *float64
 		if item.Grams > 0 {
@@ -100,6 +150,10 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			Discount:     totalDiscount,
 			Tax:          totalTax,
 			Weight:       weight,
+			// Precios en moneda local
+			UnitPricePresentment: unitPricePresentment,
+			DiscountPresentment:  discountPresentment,
+			TaxPresentment:       taxPresentment,
 		}
 	}
 
@@ -152,6 +206,13 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		ImportedAt:      time.Now(),
 		OrderStatusURL:  orderStatusURL,
 		RawData:         rawOrder,
+		// Precios en moneda local
+		SubtotalPresentment:     subtotalPresentment,
+		TaxPresentment:          taxPresentment,
+		DiscountPresentment:     discountPresentment,
+		ShippingCostPresentment: shippingCostPresentment,
+		TotalAmountPresentment:  totalAmountPresentment,
+		CurrencyPresentment:     currencyPresentment,
 	}
 }
 

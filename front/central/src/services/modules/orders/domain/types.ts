@@ -52,6 +52,14 @@ export interface Order {
     currency: string;
     cod_total?: number;
 
+    // Precios en moneda presentment (presentment_money - moneda local)
+    subtotal_presentment?: number;
+    tax_presentment?: number;
+    discount_presentment?: number;
+    shipping_cost_presentment?: number;
+    total_amount_presentment?: number;
+    currency_presentment?: string;
+
     // Información del cliente
     customer_id?: number;
     customer_name: string;
@@ -122,6 +130,9 @@ export interface Order {
     invoice_url?: string;
     invoice_id?: string;
     invoice_provider?: string;
+
+    // Enlaces externos
+    order_status_url?: string;
 
     // Datos estructurados (JSONB)
     items?: any;

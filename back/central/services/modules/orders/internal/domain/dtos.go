@@ -234,6 +234,14 @@ type OrderResponse struct {
 	Currency     string   `json:"currency"`
 	CodTotal     *float64 `json:"cod_total,omitempty"`
 
+	// Precios en moneda presentment (presentment_money - moneda local)
+	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`
+	TaxPresentment          float64 `json:"tax_presentment,omitempty"`
+	DiscountPresentment     float64 `json:"discount_presentment,omitempty"`
+	ShippingCostPresentment float64 `json:"shipping_cost_presentment,omitempty"`
+	TotalAmountPresentment  float64 `json:"total_amount_presentment,omitempty"`
+	CurrencyPresentment     string  `json:"currency_presentment,omitempty"`
+
 	// Información del cliente
 	CustomerID    *uint  `json:"customer_id,omitempty"`
 	CustomerName  string `json:"customer_name"`
@@ -352,26 +360,28 @@ type FulfillmentStatusInfo struct {
 
 // OrderSummary representa un resumen de la orden para listados
 type OrderSummary struct {
-	ID                  string                 `json:"id"`
-	CreatedAt           time.Time              `json:"created_at"`
-	BusinessID          uint                   `json:"business_id"`
-	IntegrationID       uint                   `json:"integration_id"`
-	IntegrationType     string                 `json:"integration_type"`
-	IntegrationLogoURL  *string                `json:"integration_logo_url,omitempty"` // URL del logo del tipo de integración
-	Platform            string                 `json:"platform"`
-	ExternalID          string                 `json:"external_id"`
-	OrderNumber         string                 `json:"order_number"`
-	TotalAmount         float64                `json:"total_amount"`
-	Currency            string                 `json:"currency"`
-	CustomerName        string                 `json:"customer_name"`
-	CustomerEmail       string                 `json:"customer_email"`
-	Status              string                 `json:"status"`
-	ItemsCount          int                    `json:"items_count"` // derived from len(Items)
-	DeliveryProbability *float64               `json:"delivery_probability"`
-	NegativeFactors     []string               `json:"negative_factors"`
-	OrderStatus         *OrderStatusInfo       `json:"order_status,omitempty"`       // Información del estado de Probability
-	PaymentStatus       *PaymentStatusInfo     `json:"payment_status,omitempty"`     // Información completa del estado de pago
-	FulfillmentStatus   *FulfillmentStatusInfo `json:"fulfillment_status,omitempty"` // Información completa del estado de fulfillment
+	ID                     string                 `json:"id"`
+	CreatedAt              time.Time              `json:"created_at"`
+	BusinessID             uint                   `json:"business_id"`
+	IntegrationID          uint                   `json:"integration_id"`
+	IntegrationType        string                 `json:"integration_type"`
+	IntegrationLogoURL     *string                `json:"integration_logo_url,omitempty"` // URL del logo del tipo de integración
+	Platform               string                 `json:"platform"`
+	ExternalID             string                 `json:"external_id"`
+	OrderNumber            string                 `json:"order_number"`
+	TotalAmount            float64                `json:"total_amount"`
+	Currency               string                 `json:"currency"`
+	TotalAmountPresentment float64                `json:"total_amount_presentment,omitempty"`
+	CurrencyPresentment    string                 `json:"currency_presentment,omitempty"`
+	CustomerName           string                 `json:"customer_name"`
+	CustomerEmail          string                 `json:"customer_email"`
+	Status                 string                 `json:"status"`
+	ItemsCount             int                    `json:"items_count"` // derived from len(Items)
+	DeliveryProbability    *float64               `json:"delivery_probability"`
+	NegativeFactors        []string               `json:"negative_factors"`
+	OrderStatus            *OrderStatusInfo       `json:"order_status,omitempty"`       // Información del estado de Probability
+	PaymentStatus          *PaymentStatusInfo     `json:"payment_status,omitempty"`     // Información completa del estado de pago
+	FulfillmentStatus      *FulfillmentStatusInfo `json:"fulfillment_status,omitempty"` // Información completa del estado de fulfillment
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos
@@ -418,6 +428,14 @@ type ProbabilityOrderDTO struct {
 	TotalAmount  float64  `json:"total_amount" binding:"required,min=0"`
 	Currency     string   `json:"currency" binding:"max=10"`
 	CodTotal     *float64 `json:"cod_total"`
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	SubtotalPresentment     float64 `json:"subtotal_presentment,omitempty"`
+	TaxPresentment          float64 `json:"tax_presentment,omitempty"`
+	DiscountPresentment     float64 `json:"discount_presentment,omitempty"`
+	ShippingCostPresentment float64 `json:"shipping_cost_presentment,omitempty"`
+	TotalAmountPresentment  float64 `json:"total_amount_presentment,omitempty"`
+	CurrencyPresentment     string  `json:"currency_presentment,omitempty"`
 
 	// Información del cliente
 	CustomerID    *uint  `json:"customer_id"`
@@ -487,22 +505,28 @@ type ProbabilityOrderDTO struct {
 
 // ProbabilityOrderItemDTO representa un item/producto de la orden
 type ProbabilityOrderItemDTO struct {
-	ProductID    *string        `json:"product_id"`
-	ProductSKU   string         `json:"product_sku" binding:"required,max=128"`
-	ProductName  string         `json:"product_name" binding:"required,max=255"`
-	ProductTitle string         `json:"product_title" binding:"max=255"`
-	VariantID    *string        `json:"variant_id"`
-	Quantity     int            `json:"quantity" binding:"required,min=1"`
-	UnitPrice    float64        `json:"unit_price" binding:"required,min=0"`
-	TotalPrice   float64        `json:"total_price" binding:"required,min=0"`
-	Currency     string         `json:"currency" binding:"max=10"`
-	Discount     float64        `json:"discount" binding:"min=0"`
-	Tax          float64        `json:"tax" binding:"min=0"`
-	TaxRate      *float64       `json:"tax_rate"`
-	ImageURL     *string        `json:"image_url"`
-	ProductURL   *string        `json:"product_url"`
-	Weight       *float64       `json:"weight"`
-	Metadata     datatypes.JSON `json:"metadata,omitempty"`
+	ProductID    *string  `json:"product_id"`
+	ProductSKU   string   `json:"product_sku" binding:"required,max=128"`
+	ProductName  string   `json:"product_name" binding:"required,max=255"`
+	ProductTitle string   `json:"product_title" binding:"max=255"`
+	VariantID    *string  `json:"variant_id"`
+	Quantity     int      `json:"quantity" binding:"required,min=1"`
+	UnitPrice    float64  `json:"unit_price" binding:"required,min=0"`
+	TotalPrice   float64  `json:"total_price" binding:"required,min=0"`
+	Currency     string   `json:"currency" binding:"max=10"`
+	Discount     float64  `json:"discount" binding:"min=0"`
+	Tax          float64  `json:"tax" binding:"min=0"`
+	TaxRate      *float64 `json:"tax_rate"`
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	UnitPricePresentment  float64        `json:"unit_price_presentment,omitempty"`
+	TotalPricePresentment float64        `json:"total_price_presentment,omitempty"`
+	DiscountPresentment   float64        `json:"discount_presentment,omitempty"`
+	TaxPresentment        float64        `json:"tax_presentment,omitempty"`
+	ImageURL              *string        `json:"image_url"`
+	ProductURL            *string        `json:"product_url"`
+	Weight                *float64       `json:"weight"`
+	Metadata              datatypes.JSON `json:"metadata,omitempty"`
 }
 
 // ProbabilityAddressDTO representa una dirección (envío o facturación)

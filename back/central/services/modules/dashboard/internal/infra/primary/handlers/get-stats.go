@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard/internal/domain"
@@ -9,10 +10,11 @@ import (
 
 // GetStats obtiene las estadísticas del dashboard
 // @Summary      Obtener estadísticas del dashboard
-// @Description  Retorna estadísticas agregadas de órdenes (total, por tipo de integración, top clientes, por ubicación)
+// @Description  Retorna estadísticas agregadas de órdenes, transportadores, productos, envíos y businesses (si es super admin)
 // @Tags         Dashboard
 // @Accept       json
 // @Produce      json
+// @Param        business_id  query    int     false  "ID del business para filtrar (solo super admin)"
 // @Success      200  {object}  domain.DashboardStatsResponse
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /dashboard/stats [get]
@@ -27,6 +29,17 @@ func (h *DashboardHandlers) GetStats(c *gin.Context) {
 				businessID = &bID
 			}
 			// Si bID == 0, businessID queda nil (super user ve todo)
+		}
+	}
+
+	// Si es super admin (businessID == nil), permitir filtrar por business_id opcional del query parameter
+	// Esto debe estar FUERA del bloque anterior para que funcione cuando no hay business_id en contexto
+	if businessID == nil {
+		if businessIDParam := c.Query("business_id"); businessIDParam != "" {
+			if parsedID, err := strconv.ParseUint(businessIDParam, 10, 32); err == nil && parsedID > 0 {
+				filteredID := uint(parsedID)
+				businessID = &filteredID
+			}
 		}
 	}
 
