@@ -41,6 +41,14 @@ type ProbabilityOrder struct {
 	Currency     string   `json:"currency"`
 	CodTotal     *float64 `json:"cod_total"`
 
+	// Precios en moneda presentment (presentment_money - moneda local)
+	SubtotalPresentment     float64 `json:"subtotal_presentment"`
+	TaxPresentment          float64 `json:"tax_presentment"`
+	DiscountPresentment     float64 `json:"discount_presentment"`
+	ShippingCostPresentment float64 `json:"shipping_cost_presentment"`
+	TotalAmountPresentment  float64 `json:"total_amount_presentment"`
+	CurrencyPresentment     string  `json:"currency_presentment"`
+
 	// Información del cliente
 	CustomerID    *uint  `json:"customer_id"`
 	CustomerName  string `json:"customer_name"`
@@ -163,6 +171,12 @@ type ProbabilityOrderItem struct {
 	Discount float64  `json:"discount"`
 	Tax      float64  `json:"tax"`
 	TaxRate  *float64 `json:"tax_rate"`
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	UnitPricePresentment  float64 `json:"unit_price_presentment"`
+	TotalPricePresentment float64 `json:"total_price_presentment"`
+	DiscountPresentment   float64 `json:"discount_presentment"`
+	TaxPresentment        float64 `json:"tax_presentment"`
 
 	ImageURL          *string        `json:"image_url"`
 	ProductURL        *string        `json:"product_url"`

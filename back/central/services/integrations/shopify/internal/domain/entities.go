@@ -54,6 +54,14 @@ type ShopifyOrder struct {
 	ImportedAt      time.Time
 	OrderStatusURL  string
 	RawData         []byte
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	SubtotalPresentment     float64
+	TaxPresentment          float64
+	DiscountPresentment     float64
+	ShippingCostPresentment float64
+	TotalAmountPresentment  float64
+	CurrencyPresentment     string
 }
 
 type ShopifyCustomer struct {
@@ -88,23 +96,37 @@ type ShopifyOrderItem struct {
 	Discount     float64  // Descuento aplicado
 	Tax          float64  // Impuesto
 	Weight       *float64 // Peso en gramos
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	UnitPricePresentment float64
+	DiscountPresentment  float64
+	TaxPresentment       float64
 }
 
 type ProbabilityOrderDTO struct {
-	BusinessID         *uint
-	IntegrationID      uint
-	IntegrationType    string
-	Platform           string
-	ExternalID         string
-	OrderNumber        string
-	InternalNumber     string
-	Subtotal           float64
-	Tax                float64
-	Discount           float64
-	ShippingCost       float64
-	TotalAmount        float64
-	Currency           string
-	CodTotal           *float64
+	BusinessID      *uint
+	IntegrationID   uint
+	IntegrationType string
+	Platform        string
+	ExternalID      string
+	OrderNumber     string
+	InternalNumber  string
+	Subtotal        float64
+	Tax             float64
+	Discount        float64
+	ShippingCost    float64
+	TotalAmount     float64
+	Currency        string
+	CodTotal        *float64
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	SubtotalPresentment     float64
+	TaxPresentment          float64
+	DiscountPresentment     float64
+	ShippingCostPresentment float64
+	TotalAmountPresentment  float64
+	CurrencyPresentment     string
+
 	CustomerID         *uint
 	CustomerName       string
 	CustomerEmail      string
@@ -156,6 +178,12 @@ type ProbabilityOrderItemDTO struct {
 	ProductURL   *string
 	Weight       *float64
 	Metadata     []byte
+
+	// Precios en moneda presentment (presentment_money - moneda local)
+	UnitPricePresentment  float64
+	TotalPricePresentment float64
+	DiscountPresentment   float64
+	TaxPresentment        float64
 }
 
 type ProbabilityAddressDTO struct {

@@ -87,12 +87,22 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         }
     }, [fullOrder]);
 
-    const formatCurrency = (amount: number | string, currency: string = 'USD') => {
+    const formatCurrency = (amount: number | string, currency: string = 'USD', amountPresentment?: number, currencyPresentment?: string) => {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
         if (isNaN(num) || num === undefined) return '-';
+        
+        // Priorizar moneda local (presentment) si está disponible
+        if (amountPresentment && amountPresentment > 0 && currencyPresentment) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: currencyPresentment,
+            }).format(amountPresentment);
+        }
+        
+        // Fallback a USD si no hay moneda local
         return new Intl.NumberFormat('es-CO', {
             style: 'currency',
-            currency: currency || 'COP',
+            currency: currency || 'USD',
         }).format(num);
     };
 
@@ -333,8 +343,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 <td className="px-4 py-3 text-sm text-gray-900">{item.name || item.title || item.product_name || '-'}</td>
                                                 <td className="px-4 py-3 text-sm text-gray-600">{item.sku || item.product_sku || '-'}</td>
                                                 <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.quantity || 0}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.price || item.unit_price, order.currency)}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency((parseFloat(item.price || item.unit_price || 0) * (item.quantity || 0)), order.currency)}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.price || item.unit_price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency((parseFloat(item.price || item.unit_price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -436,33 +446,33 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-600">Subtotal</span>
                                     <span className="text-sm font-medium text-gray-900">
-                                        {formatCurrency(order.subtotal, order.currency)}
+                                        {formatCurrency(order.subtotal, order.currency, order.subtotal_presentment, order.currency_presentment)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-600">Impuestos</span>
                                     <span className="text-sm font-medium text-gray-900">
-                                        {formatCurrency(order.tax, order.currency)}
+                                        {formatCurrency(order.tax, order.currency, order.tax_presentment, order.currency_presentment)}
                                     </span>
                                 </div>
-                                {order.discount > 0 && (
+                                {(order.discount > 0 || (order.discount_presentment && order.discount_presentment > 0)) && (
                                     <div className="flex justify-between">
                                         <span className="text-sm text-gray-600">Descuento</span>
                                         <span className="text-sm font-medium text-gray-900 text-green-600">
-                                            -{formatCurrency(order.discount, order.currency)}
+                                            -{formatCurrency(order.discount, order.currency, order.discount_presentment, order.currency_presentment)}
                                         </span>
                                     </div>
                                 )}
                                 <div className="flex justify-between">
                                     <span className="text-sm text-gray-600">Envío</span>
                                     <span className="text-sm font-medium text-gray-900">
-                                        {formatCurrency(order.shipping_cost, order.currency)}
+                                        {formatCurrency(order.shipping_cost, order.currency, order.shipping_cost_presentment, order.currency_presentment)}
                                     </span>
                                 </div>
                                 <div className="flex justify-between pt-3 border-t border-gray-300 mt-2">
                                     <span className="text-base font-semibold text-gray-900">Total</span>
                                     <span className="text-base font-bold text-blue-600">
-                                        {formatCurrency(order.total_amount, order.currency)}
+                                        {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
                                     </span>
                                 </div>
                             </div>

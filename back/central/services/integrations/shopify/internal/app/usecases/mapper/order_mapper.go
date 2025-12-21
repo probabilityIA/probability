@@ -32,6 +32,12 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			totalPrice = 0
 		}
 
+		// Calcular precio total en moneda local (precio unitario * cantidad - descuento)
+		totalPricePresentment := (item.UnitPricePresentment * float64(item.Quantity)) - item.DiscountPresentment
+		if totalPricePresentment < 0 {
+			totalPricePresentment = 0
+		}
+
 		// Si el SKU está vacío, generar uno usando ProductID y VariantID
 		sku := item.SKU
 		if sku == "" {
@@ -57,6 +63,11 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			Discount:     item.Discount,
 			Tax:          item.Tax,
 			Weight:       item.Weight,
+			// Precios en moneda local
+			UnitPricePresentment:  item.UnitPricePresentment,
+			TotalPricePresentment: totalPricePresentment,
+			DiscountPresentment:   item.DiscountPresentment,
+			TaxPresentment:        item.TaxPresentment,
 		}
 	}
 
@@ -113,6 +124,13 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		Addresses:       addresses,
 		Shipments:       shipments,
 		OrderStatusURL:  s.OrderStatusURL,
+		// Precios en moneda local
+		SubtotalPresentment:     s.SubtotalPresentment,
+		TaxPresentment:          s.TaxPresentment,
+		DiscountPresentment:     s.DiscountPresentment,
+		ShippingCostPresentment: s.ShippingCostPresentment,
+		TotalAmountPresentment:  s.TotalAmountPresentment,
+		CurrencyPresentment:     s.CurrencyPresentment,
 	}
 
 	if len(s.RawData) > 0 {

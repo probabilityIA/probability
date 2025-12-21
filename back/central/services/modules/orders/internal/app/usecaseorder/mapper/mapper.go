@@ -42,13 +42,19 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		InternalNumber: order.InternalNumber,
 
 		// Información financiera
-		Subtotal:     order.Subtotal,
-		Tax:          order.Tax,
-		Discount:     order.Discount,
-		ShippingCost: order.ShippingCost,
-		TotalAmount:  order.TotalAmount,
-		Currency:     order.Currency,
-		CodTotal:     order.CodTotal,
+		Subtotal:                order.Subtotal,
+		Tax:                     order.Tax,
+		Discount:                order.Discount,
+		ShippingCost:            order.ShippingCost,
+		TotalAmount:             order.TotalAmount,
+		Currency:                order.Currency,
+		CodTotal:                order.CodTotal,
+		SubtotalPresentment:     order.SubtotalPresentment,
+		TaxPresentment:          order.TaxPresentment,
+		DiscountPresentment:     order.DiscountPresentment,
+		ShippingCostPresentment: order.ShippingCostPresentment,
+		TotalAmountPresentment:  order.TotalAmountPresentment,
+		CurrencyPresentment:     order.CurrencyPresentment,
 
 		// Información del cliente
 		CustomerID:    order.CustomerID,
@@ -154,25 +160,27 @@ func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
 	}
 
 	return domain.OrderSummary{
-		ID:                  order.ID,
-		CreatedAt:           order.CreatedAt,
-		BusinessID:          businessID,
-		IntegrationID:       order.IntegrationID,
-		IntegrationType:     order.IntegrationType,
-		IntegrationLogoURL:  order.IntegrationLogoURL,
-		Platform:            order.Platform,
-		ExternalID:          order.ExternalID,
-		OrderNumber:         order.OrderNumber,
-		TotalAmount:         order.TotalAmount,
-		Currency:            order.Currency,
-		CustomerName:        order.CustomerName,
-		CustomerEmail:       order.CustomerEmail,
-		Status:              order.Status,
-		ItemsCount:          len(order.Items),
-		DeliveryProbability: order.DeliveryProbability,
-		NegativeFactors:     UnmarshalNegativeFactors(order.NegativeFactors),
-		OrderStatus:         order.OrderStatus,       // Información del estado de Probability
-		PaymentStatus:       order.PaymentStatus,     // Información completa del estado de pago
-		FulfillmentStatus:   order.FulfillmentStatus, // Información completa del estado de fulfillment
+		ID:                     order.ID,
+		CreatedAt:              order.CreatedAt,
+		BusinessID:             businessID,
+		IntegrationID:          order.IntegrationID,
+		IntegrationType:        order.IntegrationType,
+		IntegrationLogoURL:     order.IntegrationLogoURL,
+		Platform:               order.Platform,
+		ExternalID:             order.ExternalID,
+		OrderNumber:            order.OrderNumber,
+		TotalAmount:            order.TotalAmount,
+		Currency:               order.Currency,
+		TotalAmountPresentment: order.TotalAmountPresentment,
+		CurrencyPresentment:    order.CurrencyPresentment,
+		CustomerName:           order.CustomerName,
+		CustomerEmail:          order.CustomerEmail,
+		Status:                 order.Status,
+		ItemsCount:             len(order.Items),
+		DeliveryProbability:    order.DeliveryProbability,
+		NegativeFactors:        UnmarshalNegativeFactors(order.NegativeFactors),
+		OrderStatus:            order.OrderStatus,       // Información del estado de Probability
+		PaymentStatus:          order.PaymentStatus,     // Información completa del estado de pago
+		FulfillmentStatus:      order.FulfillmentStatus, // Información completa del estado de fulfillment
 	}
 }
