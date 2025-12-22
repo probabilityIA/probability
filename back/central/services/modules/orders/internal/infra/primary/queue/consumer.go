@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"strings"
+	"time"
 
+	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -112,6 +115,26 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		return err
 	}
 
+	// #region agent log
+	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		logData, _ := json.Marshal(map[string]interface{}{
+			"sessionId":    "debug-session",
+			"runId":        "run1",
+			"hypothesisId": "C",
+			"location":     "consumer.go:116",
+			"message":      "Consumer - Processing order from queue",
+			"data": map[string]interface{}{
+				"external_id":    orderDTO.ExternalID,
+				"order_number":   orderDTO.OrderNumber,
+				"integration_id": orderDTO.IntegrationID,
+			},
+			"timestamp": time.Now().UnixMilli(),
+		})
+		f.WriteString(string(logData) + "\n")
+		f.Close()
+	}
+	// #endregion
+
 	// Llamar al caso de uso para mapear y guardar la orden
 	orderResponse, err := c.orderMappingUC.MapAndSaveOrder(ctx, &orderDTO)
 	if err != nil {
@@ -122,6 +145,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Order already exists, skipping")
+			// No publicar evento de rechazo para órdenes duplicadas (es comportamiento esperado)
 			return nil
 		}
 
@@ -131,6 +155,18 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Discarding invalid message: missing required fields (drain queue)")
+			// Publicar evento de orden rechazada
+			integrationevents.PublishSyncOrderRejected(
+				ctx,
+				orderDTO.IntegrationID,
+				orderDTO.BusinessID,
+				"", // orderID no existe aún
+				orderDTO.OrderNumber,
+				orderDTO.ExternalID,
+				orderDTO.Platform,
+				"Campos requeridos faltantes",
+				errStr,
+			)
 			return nil
 		}
 
@@ -141,6 +177,18 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Order failed with data integrity error (FK violation), discarding message")
+			// Publicar evento de orden rechazada
+			integrationevents.PublishSyncOrderRejected(
+				ctx,
+				orderDTO.IntegrationID,
+				orderDTO.BusinessID,
+				"", // orderID no existe aún
+				orderDTO.OrderNumber,
+				orderDTO.ExternalID,
+				orderDTO.Platform,
+				"Error de integridad de datos (FK violation)",
+				errStr,
+			)
 			return nil
 		}
 
@@ -162,6 +210,19 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Uint("integration_id", orderDTO.IntegrationID).
 			Str("platform", orderDTO.Platform).
 			Msg("Failed to map and save order")
+
+		// Publicar evento de orden rechazada
+		integrationevents.PublishSyncOrderRejected(
+			ctx,
+			orderDTO.IntegrationID,
+			orderDTO.BusinessID,
+			"", // orderID no existe aún
+			orderDTO.OrderNumber,
+			orderDTO.ExternalID,
+			orderDTO.Platform,
+			"Error al procesar orden",
+			errStr,
+		)
 
 		// Guardar error con JSON original
 		c.saveOrderError(ctx, &orderDTO, err, "processing_error", messageBody)

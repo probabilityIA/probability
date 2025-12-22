@@ -48,6 +48,7 @@ type WebhookInfo struct {
 
 type IOrderSyncService interface {
 	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
+	SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error
 	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
 	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)

@@ -64,6 +64,11 @@ func (b *bundle) SyncOrdersByIntegrationID(ctx context.Context, integrationID st
 	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
 }
 
+// SyncOrdersByIntegrationIDWithParams no está soportado para WhatsApp
+func (b *bundle) SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error {
+	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
+}
+
 // SyncOrdersByBusiness no está soportado para WhatsApp
 func (b *bundle) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {
 	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")

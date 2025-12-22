@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
+	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"gorm.io/datatypes"
 )
@@ -23,21 +25,110 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 	}
 
 	// 1. Verificar si existe una orden con el mismo external_id para la misma integración
+	// #region agent log
+	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		logData, _ := json.Marshal(map[string]interface{}{
+			"sessionId":    "debug-session",
+			"runId":        "run1",
+			"hypothesisId": "D",
+			"location":     "map-order.go:26",
+			"message":      "MapAndSaveOrder - Checking if order exists",
+			"data": map[string]interface{}{
+				"external_id":    dto.ExternalID,
+				"order_number":   dto.OrderNumber,
+				"integration_id": dto.IntegrationID,
+			},
+			"timestamp": time.Now().UnixMilli(),
+		})
+		f.WriteString(string(logData) + "\n")
+		f.Close()
+	}
+	// #endregion
 	exists, err := uc.repo.OrderExists(ctx, dto.ExternalID, dto.IntegrationID)
 	if err != nil {
 		return nil, fmt.Errorf("error checking if order exists: %w", err)
 	}
+	// #region agent log
+	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		logData, _ := json.Marshal(map[string]interface{}{
+			"sessionId":    "debug-session",
+			"runId":        "run1",
+			"hypothesisId": "D",
+			"location":     "map-order.go:30",
+			"message":      "MapAndSaveOrder - OrderExists result",
+			"data": map[string]interface{}{
+				"external_id":    dto.ExternalID,
+				"order_number":   dto.OrderNumber,
+				"integration_id": dto.IntegrationID,
+				"exists":         exists,
+			},
+			"timestamp": time.Now().UnixMilli(),
+		})
+		f.WriteString(string(logData) + "\n")
+		f.Close()
+	}
+	// #endregion
 	if exists {
+		// #region agent log
+		if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			logData, _ := json.Marshal(map[string]interface{}{
+				"sessionId":    "debug-session",
+				"runId":        "run1",
+				"hypothesisId": "D",
+				"location":     "map-order.go:35",
+				"message":      "MapAndSaveOrder - Order exists, UPDATING instead of creating",
+				"data": map[string]interface{}{
+					"external_id":    dto.ExternalID,
+					"order_number":   dto.OrderNumber,
+					"integration_id": dto.IntegrationID,
+				},
+				"timestamp": time.Now().UnixMilli(),
+			})
+			f.WriteString(string(logData) + "\n")
+			f.Close()
+		}
+		// #endregion
 		existingOrder, err := uc.repo.GetOrderByExternalID(ctx, dto.ExternalID, dto.IntegrationID)
 		if err != nil {
 			return nil, fmt.Errorf("error getting existing order: %w", err)
 		}
 		return uc.UpdateOrder(ctx, existingOrder, dto)
 	}
+	// #region agent log
+	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		logData, _ := json.Marshal(map[string]interface{}{
+			"sessionId":    "debug-session",
+			"runId":        "run1",
+			"hypothesisId": "D",
+			"location":     "map-order.go:37",
+			"message":      "MapAndSaveOrder - Order does NOT exist, will CREATE new",
+			"data": map[string]interface{}{
+				"external_id":    dto.ExternalID,
+				"order_number":   dto.OrderNumber,
+				"integration_id": dto.IntegrationID,
+			},
+			"timestamp": time.Now().UnixMilli(),
+		})
+		f.WriteString(string(logData) + "\n")
+		f.Close()
+	}
+	// #endregion
 
 	// 1.5. Validar/Crear Cliente
 	client, err := uc.GetOrCreateCustomer(ctx, *dto.BusinessID, dto)
 	if err != nil {
+		// Publicar evento de orden rechazada por error en cliente
+		integrationevents.PublishSyncOrderRejected(
+			ctx,
+			dto.IntegrationID,
+			dto.BusinessID,
+			"", // orderID aún no existe
+			dto.OrderNumber,
+			dto.ExternalID,
+			dto.Platform,
+			"Error al procesar cliente",
+			err.Error(),
+		)
 		return nil, fmt.Errorf("error processing customer: %w", err)
 	}
 	var clientID *uint
@@ -61,11 +152,100 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.
 	uc.populateOrderFields(order, dto)
 
 	// 3. Guardar la orden principal (sin score por ahora, se calculará mediante evento)
+	// #region agent log
+	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		logData, _ := json.Marshal(map[string]interface{}{
+			"sessionId":    "debug-session",
+			"runId":        "run1",
+			"hypothesisId": "E",
+			"location":     "map-order.go:64",
+			"message":      "MapAndSaveOrder - Attempting to CREATE order in database",
+			"data": map[string]interface{}{
+				"external_id":    dto.ExternalID,
+				"order_number":   dto.OrderNumber,
+				"integration_id": dto.IntegrationID,
+			},
+			"timestamp": time.Now().UnixMilli(),
+		})
+		f.WriteString(string(logData) + "\n")
+		f.Close()
+	}
+	// #endregion
 	if err := uc.repo.CreateOrder(ctx, order); err != nil {
+		// #region agent log
+		if f, err2 := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err2 == nil {
+			logData, _ := json.Marshal(map[string]interface{}{
+				"sessionId":    "debug-session",
+				"runId":        "run1",
+				"hypothesisId": "E",
+				"location":     "map-order.go:66",
+				"message":      "MapAndSaveOrder - ERROR creating order in database",
+				"data": map[string]interface{}{
+					"external_id":    dto.ExternalID,
+					"order_number":   dto.OrderNumber,
+					"integration_id": dto.IntegrationID,
+					"error":          err.Error(),
+				},
+				"timestamp": time.Now().UnixMilli(),
+			})
+			f.WriteString(string(logData) + "\n")
+			f.Close()
+		}
+		// #endregion
+
+		// Publicar evento de orden rechazada
+		integrationevents.PublishSyncOrderRejected(
+			ctx,
+			dto.IntegrationID,
+			dto.BusinessID,
+			"", // orderID aún no existe
+			dto.OrderNumber,
+			dto.ExternalID,
+			dto.Platform,
+			"Error al guardar en base de datos",
+			err.Error(),
+		)
+
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
+	// #region agent log
+	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		logData, _ := json.Marshal(map[string]interface{}{
+			"sessionId":    "debug-session",
+			"runId":        "run1",
+			"hypothesisId": "E",
+			"location":     "map-order.go:68",
+			"message":      "MapAndSaveOrder - Order CREATED successfully in database",
+			"data": map[string]interface{}{
+				"order_id":       order.ID,
+				"external_id":    dto.ExternalID,
+				"order_number":   dto.OrderNumber,
+				"integration_id": dto.IntegrationID,
+			},
+			"timestamp": time.Now().UnixMilli(),
+		})
+		f.WriteString(string(logData) + "\n")
+		f.Close()
+	}
+	// #endregion
 
 	fmt.Printf("[MapAndSaveOrder] Orden %s guardada exitosamente. Publicando evento para calcular score...\n", order.ID)
+
+	// Publicar evento de orden creada exitosamente
+	integrationevents.PublishSyncOrderCreated(
+		ctx,
+		dto.IntegrationID,
+		dto.BusinessID,
+		order.ID,
+		dto.OrderNumber,
+		dto.ExternalID,
+		dto.Platform,
+		dto.CustomerEmail,
+		dto.Currency,
+		order.Status,
+		order.CreatedAt,
+		&order.TotalAmount,
+	)
 
 	// 4-8. Guardar entidades relacionadas
 	if err := uc.saveRelatedEntities(ctx, order, dto); err != nil {

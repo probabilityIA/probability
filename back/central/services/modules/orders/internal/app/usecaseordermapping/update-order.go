@@ -5,12 +5,16 @@ import (
 	"encoding/json"
 	"fmt"
 
+	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
 	"gorm.io/datatypes"
 )
 
 // UpdateOrder actualiza una orden existente con los datos del DTO
 func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) (*domain.OrderResponse, error) {
+	// Guardar el estado anterior antes de actualizar (para detectar cambios de estado)
+	previousStatus := existingOrder.Status
+
 	// 1. Validar y actualizar todos los campos de la orden
 	hasChanges := uc.updateOrderFields(ctx, existingOrder, dto)
 
@@ -25,9 +29,27 @@ func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *d
 	}
 
 	// 4. Publicar eventos relacionados con la actualización
-	uc.publishUpdateEvents(ctx, existingOrder)
+	uc.publishUpdateEvents(ctx, existingOrder, previousStatus)
 
-	// 5. Retornar la respuesta actualizada
+	// 5. Publicar evento de sincronización si la orden viene de una integración
+	if existingOrder.IntegrationID > 0 {
+		integrationevents.PublishSyncOrderUpdated(
+			ctx,
+			existingOrder.IntegrationID,
+			existingOrder.BusinessID,
+			existingOrder.ID,
+			existingOrder.OrderNumber,
+			existingOrder.ExternalID,
+			existingOrder.Platform,
+			existingOrder.CustomerEmail,
+			existingOrder.Currency,
+			existingOrder.Status,
+			existingOrder.CreatedAt,
+			&existingOrder.TotalAmount,
+		)
+	}
+
+	// 6. Retornar la respuesta actualizada
 	return uc.mapOrderToResponse(existingOrder), nil
 }
 
@@ -616,13 +638,18 @@ func equalJSON(a, b datatypes.JSON) bool {
 // ───────────────────────────────────────────
 
 // publishUpdateEvents publica los eventos relacionados con la actualización de la orden
-func (uc *UseCaseOrderMapping) publishUpdateEvents(ctx context.Context, order *domain.ProbabilityOrder) {
+func (uc *UseCaseOrderMapping) publishUpdateEvents(ctx context.Context, order *domain.ProbabilityOrder, previousStatus string) {
 	if uc.eventPublisher == nil {
 		return
 	}
 
 	// Publicar evento de orden actualizada
 	uc.publishOrderUpdatedEvent(ctx, order)
+
+	// Si cambió el estado, publicar evento de cambio de estado
+	if previousStatus != order.Status {
+		uc.publishOrderStatusChangedEvent(ctx, order, previousStatus)
+	}
 
 	// Recalcular score directamente
 	uc.recalculateOrderScore(ctx, order)
@@ -657,6 +684,56 @@ func (uc *UseCaseOrderMapping) publishOrderUpdatedEvent(ctx context.Context, ord
 				Err(err).
 				Str("order_id", order.ID).
 				Msg("Error al publicar evento de orden actualizada")
+		}
+	}()
+}
+
+// publishOrderStatusChangedEvent publica el evento de cambio de estado de la orden
+func (uc *UseCaseOrderMapping) publishOrderStatusChangedEvent(ctx context.Context, order *domain.ProbabilityOrder, previousStatus string) {
+	eventData := domain.OrderEventData{
+		OrderNumber:    order.OrderNumber,
+		InternalNumber: order.InternalNumber,
+		ExternalID:     order.ExternalID,
+		PreviousStatus: previousStatus,
+		CurrentStatus:  order.Status,
+		CustomerEmail:  order.CustomerEmail,
+		TotalAmount:    &order.TotalAmount,
+		Currency:       order.Currency,
+		Platform:       order.Platform,
+	}
+
+	event := domain.NewOrderEvent(domain.OrderEventTypeStatusChanged, order.ID, eventData)
+	event.BusinessID = order.BusinessID
+	if order.IntegrationID > 0 {
+		integrationID := order.IntegrationID
+		event.IntegrationID = &integrationID
+	}
+
+	go func() {
+		bgCtx := context.Background()
+		uc.logger.Info(bgCtx).
+			Str("order_id", order.ID).
+			Str("event_type", string(event.Type)).
+			Str("previous_status", previousStatus).
+			Str("current_status", order.Status).
+			Interface("business_id", event.BusinessID).
+			Interface("integration_id", event.IntegrationID).
+			Str("order_number", order.OrderNumber).
+			Msg("📤 Publicando evento order.status_changed a Redis...")
+
+		if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
+			uc.logger.Error(bgCtx).
+				Err(err).
+				Str("order_id", order.ID).
+				Str("event_type", string(event.Type)).
+				Msg("❌ Error al publicar evento de cambio de estado")
+		} else {
+			uc.logger.Info(bgCtx).
+				Str("order_id", order.ID).
+				Str("event_type", string(event.Type)).
+				Str("previous_status", previousStatus).
+				Str("current_status", order.Status).
+				Msg("✅ Evento order.status_changed publicado exitosamente a Redis")
 		}
 	}()
 }

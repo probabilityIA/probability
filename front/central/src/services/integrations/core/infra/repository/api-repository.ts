@@ -139,6 +139,13 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
+    async getSyncStatus(id: number, businessId?: number): Promise<{ success: boolean; in_progress: boolean; sync_state?: any }> {
+        const businessIdParam = businessId ? `?business_id=${businessId}` : '';
+        return this.fetch<{ success: boolean; in_progress: boolean; sync_state?: any }>(
+            `/integrations/events/sync-status/${id}${businessIdParam}`
+        );
+    }
+
     async syncOrders(id: number, params?: SyncOrdersParams): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/integrations/${id}/sync`, {
             method: 'POST',

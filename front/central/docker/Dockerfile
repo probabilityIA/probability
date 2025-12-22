@@ -14,13 +14,15 @@ WORKDIR /app
 COPY package.json package-lock.json* pnpm-lock.yaml* ./
 
 # Instalar dependencias basado en el lock file disponible
+# Los overrides en package.json forzarán styled-jsx@5.1.7 (compatible con React 19.2.3)
+# --legacy-peer-deps permite resolver conflictos de peer dependencies (styled-jsx con React 19)
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
     corepack enable pnpm && pnpm install --frozen-lockfile; \
   elif [ -f package-lock.json ]; then \
-    npm ci; \
+    npm ci --legacy-peer-deps; \
   else \
-    npm install; \
+    npm install --legacy-peer-deps; \
   fi
 
 # ============================================

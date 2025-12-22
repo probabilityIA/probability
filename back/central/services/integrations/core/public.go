@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
@@ -18,6 +19,15 @@ const (
 	IntegrationTypeMercadoLibre = 3
 	IntegrationTypeWoocommerce  = 4
 )
+
+// SyncOrdersParams contiene los parámetros opcionales para sincronizar órdenes
+type SyncOrdersParams struct {
+	CreatedAtMin      *time.Time
+	CreatedAtMax      *time.Time
+	Status            string
+	FinancialStatus   string
+	FulfillmentStatus string
+}
 
 type IntegrationWithCredentials = domain.IntegrationWithCredentials
 
@@ -148,6 +158,26 @@ func (ic *integrationCore) TestConnection(ctx context.Context, config map[string
 		return fmt.Errorf("integration no registrada para tipo %d", integrationType)
 	}
 	return integration.TestConnection(ctx, config, credentials)
+}
+
+func (ic *integrationCore) SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error {
+	integration, err := ic.GetIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return err
+	}
+
+	integrationImpl, ok := ic.integrations[integration.IntegrationType]
+	if !ok {
+		return fmt.Errorf("integration type %d not registered", integration.IntegrationType)
+	}
+
+	// Intentar usar el método con parámetros si está disponible
+	if syncSvc, ok := integrationImpl.(domain.IOrderSyncService); ok {
+		return syncSvc.SyncOrdersByIntegrationIDWithParams(ctx, integrationID, params)
+	}
+
+	// Fallback al método sin parámetros
+	return integrationImpl.SyncOrdersByIntegrationID(ctx, integrationID)
 }
 
 func (ic *integrationCore) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {

@@ -9,6 +9,7 @@ import {
     TrashIcon 
 } from '@heroicons/react/24/outline';
 import { useIntegrations } from '../hooks/useIntegrations';
+import { useIntegrationEvents } from '../hooks/useIntegrationEvents';
 import { getActiveIntegrationTypesAction } from '../../infra/actions';
 import {
     Integration,
@@ -18,6 +19,9 @@ import { getOrderStatusMappingsAction } from '@/services/modules/orderstatus/inf
 import { OrderStatusMapping } from '@/services/modules/orderstatus/domain/types';
 import { Input, Button, Badge, Spinner, Table, Alert, ConfirmModal, Select, DateRangePicker } from '@/shared/ui';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui/dynamic-filters';
+import { useToast } from '@/shared/providers/toast-provider';
+import { TokenStorage } from '@/shared/utils/token-storage';
+import { playNotificationSound } from '@/shared/utils';
 
 interface IntegrationListProps {
     onEdit?: (integration: Integration) => void;
@@ -89,11 +93,381 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
     const [syncFilters, setSyncFilters] = useState<SyncOrdersParams>(initialSyncFilters);
     const [syncing, setSyncing] = useState(false);
     
+    // Estados para el progreso de sincronización en tiempo real
+    const [syncProgress, setSyncProgress] = useState<{
+        total: number;
+        created: number;
+        rejected: number;
+        updated: number;
+        orders: Array<{
+            orderNumber: string;
+            status: 'created' | 'rejected' | 'updated';
+            reason?: string;
+            createdAt?: string;
+            orderStatus?: string;
+            timestamp: Date;
+        }>;
+    } | null>(null);
+    
     // Estados para las opciones de filtros dinámicos desde la BD
     const [orderStatusOptions, setOrderStatusOptions] = useState<Array<{ value: string; label: string; mappedStatus?: string }>>([]);
     const [financialStatusOptions, setFinancialStatusOptions] = useState<Array<{ value: string; label: string; mappedStatus?: string }>>([]);
     const [fulfillmentStatusOptions, setFulfillmentStatusOptions] = useState<Array<{ value: string; label: string; mappedStatus?: string }>>([]);
     const [loadingMappings, setLoadingMappings] = useState(false);
+
+    // Toast para notificaciones
+    const { showToast } = useToast();
+
+    // Obtener businessId del usuario actual
+    const [currentBusinessId, setCurrentBusinessId] = useState<number | undefined>(undefined);
+    
+    useEffect(() => {
+        const businessesData = TokenStorage.getBusinessesData();
+        if (businessesData && businessesData.length > 0) {
+            // Usar el primer business o el activo si existe
+            const activeBusinessId = localStorage.getItem('active_business_id');
+            const businessId = activeBusinessId 
+                ? parseInt(activeBusinessId, 10)
+                : businessesData[0].id;
+            setCurrentBusinessId(businessId);
+        }
+    }, []);
+
+    // Hook para escuchar eventos de sincronización en tiempo real
+    // Solo escuchar cuando el modal está abierto y hay una integración seleccionada
+    const { isConnected } = useIntegrationEvents({
+        businessId: currentBusinessId,
+        integrationId: syncModal.show && syncModal.id ? syncModal.id : undefined, // Filtrar por la integración actual si hay modal abierto
+        eventTypes: syncModal.show ? [
+            'integration.sync.order.created',
+            'integration.sync.order.updated',
+            'integration.sync.order.rejected',
+            'integration.sync.started',
+            'integration.sync.completed',
+            'integration.sync.failed'
+        ] : [], // No escuchar eventos si el modal no está abierto
+        onOrderCreated: (event) => {
+            console.log('✅ [IntegrationList] Evento order.created recibido:', event);
+            // Solo procesar si es de la integración que está sincronizando
+            if (syncModal.id && event.integration_id !== syncModal.id) {
+                console.log('✅ [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
+                return;
+            }
+            
+            // El evento puede tener los datos en event.data directamente o en event.data.data
+            const eventData = event.data?.data || event.data || {};
+            const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
+            const orderId = eventData.order_id || event.metadata?.order_id;
+            const createdAt = eventData.created_at || eventData.synced_at || event.metadata?.created_at || null;
+            const orderStatus = eventData.status || event.metadata?.status || null;
+            
+            console.log('✅ [IntegrationList] Actualizando progreso para orden creada:', orderNumber);
+            
+            // Actualizar progreso
+            setSyncProgress(prev => {
+                console.log('✅ [IntegrationList] Estado anterior del progreso:', prev);
+                if (!prev) {
+                    const newState = {
+                        total: 1,
+                        created: 1,
+                        rejected: 0,
+                        updated: 0,
+                        orders: [{
+                            orderNumber,
+                            status: 'created' as const,
+                            createdAt: createdAt || undefined,
+                            orderStatus: orderStatus || undefined,
+                            timestamp: new Date()
+                        }]
+                    };
+                    console.log('✅ [IntegrationList] Nuevo estado (sin prev):', newState);
+                    return newState;
+                }
+                const newState = {
+                    ...prev,
+                    created: prev.created + 1,
+                    total: prev.total + 1,
+                    orders: [{
+                        orderNumber,
+                        status: 'created' as const,
+                        createdAt: createdAt || undefined,
+                        orderStatus: orderStatus || undefined,
+                        timestamp: new Date()
+                    }, ...prev.orders]
+                };
+                console.log('✅ [IntegrationList] Nuevo estado (con prev):', newState);
+                return newState;
+            });
+            
+            // Reproducir sonido de notificación
+            playNotificationSound();
+            
+            // Mostrar toast de éxito
+            showToast(
+                `✅ Orden creada: #${orderNumber}`,
+                'success'
+            );
+        },
+        onOrderUpdated: (event) => {
+            // #region agent log
+            fetch('http://127.0.0.1:7246/ingest/75c49945-688b-42a7-9abc-0a24de34a930', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    location: 'IntegrationList.tsx:onOrderUpdated',
+                    message: 'onOrderUpdated callback invoked',
+                    data: { event, syncModalId: syncModal.id, eventIntegrationId: event.integration_id },
+                    timestamp: Date.now(),
+                    sessionId: 'debug-session',
+                    runId: 'run1',
+                    hypothesisId: 'G'
+                })
+            }).catch(() => {});
+            // #endregion
+            console.log('🔄 [IntegrationList] Evento order.updated recibido:', event);
+            // Solo procesar si es de la integración que está sincronizando
+            if (syncModal.id && event.integration_id !== syncModal.id) {
+                // #region agent log
+                fetch('http://127.0.0.1:7246/ingest/75c49945-688b-42a7-9abc-0a24de34a930', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        location: 'IntegrationList.tsx:onOrderUpdated',
+                        message: 'Event filtered out - integration_id mismatch',
+                        data: { eventIntegrationId: event.integration_id, syncModalId: syncModal.id },
+                        timestamp: Date.now(),
+                        sessionId: 'debug-session',
+                        runId: 'run1',
+                        hypothesisId: 'G'
+                    })
+                }).catch(() => {});
+                // #endregion
+                console.log('🔄 [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
+                return;
+            }
+            
+            // El evento puede tener los datos en event.data directamente o en event.data.data
+            const eventData = event.data?.data || event.data || {};
+            const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
+            const orderId = eventData.order_id || event.metadata?.order_id;
+            const createdAt = eventData.created_at || eventData.updated_at || event.metadata?.created_at || null;
+            const orderStatus = eventData.status || event.metadata?.status || null;
+            
+            console.log('🔄 [IntegrationList] Actualizando progreso para orden actualizada:', orderNumber);
+            
+            // Actualizar progreso
+            setSyncProgress(prev => {
+                console.log('🔄 [IntegrationList] Estado anterior del progreso:', prev);
+                if (!prev) {
+                    const newState = {
+                        total: 1,
+                        created: 0,
+                        rejected: 0,
+                        updated: 1,
+                        orders: [{
+                            orderNumber,
+                            status: 'updated' as const,
+                            createdAt: createdAt || undefined,
+                            orderStatus: orderStatus || undefined,
+                            timestamp: new Date()
+                        }]
+                    };
+                    console.log('🔄 [IntegrationList] Nuevo estado (sin prev):', newState);
+                    return newState;
+                }
+                const newState = {
+                    ...prev,
+                    updated: prev.updated + 1,
+                    total: prev.total + 1,
+                    orders: [{
+                        orderNumber,
+                        status: 'updated' as const,
+                        createdAt: createdAt || undefined,
+                        orderStatus: orderStatus || undefined,
+                        timestamp: new Date()
+                    }, ...prev.orders]
+                };
+                console.log('🔄 [IntegrationList] Nuevo estado (con prev):', newState);
+                return newState;
+            });
+            
+            // Reproducir sonido de notificación
+            playNotificationSound();
+            
+            // Mostrar toast de éxito
+            showToast(
+                `🔄 Orden actualizada: #${orderNumber}`,
+                'info'
+            );
+        },
+        onOrderRejected: (event) => {
+            console.log('❌ [IntegrationList] Evento order.rejected recibido:', event);
+            // Solo procesar si es de la integración que está sincronizando
+            if (syncModal.id && event.integration_id !== syncModal.id) {
+                console.log('❌ [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
+                return;
+            }
+            
+            // El evento puede tener los datos en event.data directamente o en event.data.data
+            const eventData = event.data?.data || event.data || {};
+            const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
+            const reason = eventData.reason || event.metadata?.reason || 'Error desconocido';
+            const error = eventData.error || event.metadata?.error || '';
+            const createdAt = eventData.created_at || eventData.rejected_at || event.metadata?.created_at || null;
+            const orderStatus = eventData.status || event.metadata?.status || null;
+            
+            console.log('❌ [IntegrationList] Actualizando progreso para orden rechazada:', orderNumber);
+            
+            // Actualizar progreso
+            setSyncProgress(prev => {
+                console.log('❌ [IntegrationList] Estado anterior del progreso:', prev);
+                if (!prev) {
+                    const newState = {
+                        total: 1,
+                        created: 0,
+                        rejected: 1,
+                        updated: 0,
+                        orders: [{
+                            orderNumber,
+                            status: 'rejected' as const,
+                            reason: reason + (error ? `: ${error}` : ''),
+                            createdAt: createdAt || undefined,
+                            orderStatus: orderStatus || undefined,
+                            timestamp: new Date()
+                        }]
+                    };
+                    console.log('❌ [IntegrationList] Nuevo estado (sin prev):', newState);
+                    return newState;
+                }
+                const newState = {
+                    ...prev,
+                    rejected: prev.rejected + 1,
+                    total: prev.total + 1,
+                    orders: [{
+                        orderNumber,
+                        status: 'rejected' as const,
+                        reason: reason + (error ? `: ${error}` : ''),
+                        createdAt: createdAt || undefined,
+                        orderStatus: orderStatus || undefined,
+                        timestamp: new Date()
+                    }, ...prev.orders]
+                };
+                console.log('❌ [IntegrationList] Nuevo estado (con prev):', newState);
+                return newState;
+            });
+            
+            // Reproducir sonido de notificación
+            playNotificationSound();
+            
+            // Mostrar toast de error
+            showToast(
+                `❌ Orden rechazada: #${orderNumber} - ${reason}${error ? `: ${error}` : ''}`,
+                'error'
+            );
+        },
+        onSyncStarted: (event) => {
+            console.log('🔄 [IntegrationList] Evento sync.started recibido:', event);
+            // Solo procesar si es de la integración que está sincronizando
+            if (syncModal.id && event.integration_id !== syncModal.id) {
+                console.log('🔄 [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
+                return;
+            }
+            
+            const integrationId = event.integration_id;
+            const integration = integrations.find(i => i.id === integrationId);
+            const integrationName = integration?.name || `Integración ${integrationId}`;
+            
+            console.log('🔄 [IntegrationList] Inicializando progreso para sincronización:', integrationName);
+            
+            // Inicializar progreso
+            setSyncProgress({
+                total: 0,
+                created: 0,
+                rejected: 0,
+                updated: 0,
+                orders: []
+            });
+            
+            showToast(
+                `🔄 Sincronización iniciada: ${integrationName}`,
+                'info'
+            );
+        },
+        onSyncCompleted: (event) => {
+            // Solo procesar si es de la integración que está sincronizando
+            if (syncModal.id && event.integration_id !== syncModal.id) return;
+            
+            const integrationId = event.integration_id;
+            const integration = integrations.find(i => i.id === integrationId);
+            const integrationName = integration?.name || `Integración ${integrationId}`;
+            // El evento puede tener los datos en event.data directamente o en event.data.data
+            const eventData = event.data?.data || event.data || {};
+            const totalOrders = Number(eventData.total_orders) || 0;
+            const createdOrders = Number(eventData.created_orders) || 0;
+            const updatedOrders = Number(eventData.updated_orders) || 0;
+            const rejectedOrders = Number(eventData.rejected_orders) || 0;
+            
+            // Actualizar progreso final
+            setSyncProgress(prev => {
+                if (!prev) {
+                    return {
+                        total: totalOrders,
+                        created: createdOrders,
+                        rejected: rejectedOrders,
+                        updated: updatedOrders,
+                        orders: []
+                    };
+                }
+                return {
+                    ...prev,
+                    total: totalOrders,
+                    created: createdOrders,
+                    rejected: rejectedOrders,
+                    updated: updatedOrders,
+                    orders: prev.orders
+                };
+            });
+            
+            // Marcar como completado (pero no cerrar el modal automáticamente)
+            setSyncing(false);
+            
+            // Reproducir sonido de notificación
+            playNotificationSound();
+            
+            showToast(
+                `✅ Sincronización completada: ${integrationName} - Total: ${totalOrders}, Creadas: ${createdOrders}, Actualizadas: ${updatedOrders}, Rechazadas: ${rejectedOrders}`,
+                'success'
+            );
+        },
+        onSyncFailed: (event) => {
+            // Solo procesar si es de la integración que está sincronizando
+            if (syncModal.id && event.integration_id !== syncModal.id) return;
+            
+            const integrationId = event.integration_id;
+            const integration = integrations.find(i => i.id === integrationId);
+            const integrationName = integration?.name || `Integración ${integrationId}`;
+            // El evento puede tener los datos en event.data directamente o en event.data.data
+            const eventData = event.data?.data || event.data || {};
+            const error = eventData.error || event.metadata?.error || 'Error desconocido';
+            
+            // Limpiar progreso
+            setSyncProgress(null);
+            
+            // Reproducir sonido de notificación
+            playNotificationSound();
+            
+            showToast(
+                `❌ Sincronización fallida: ${integrationName} - ${error}`,
+                'error'
+            );
+        },
+        onError: (error) => {
+            console.error('Error en conexión SSE de eventos de integraciones:', error);
+        },
+        onOpen: () => {
+            console.log('Conexión SSE de eventos de integraciones establecida');
+        },
+    });
 
     // Filtros dinámicos - sincronizar con el hook
     const [filters, setFilters] = useState<{
@@ -329,6 +703,27 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
         // Cargar mapeos de estados
         await loadStatusMappings(integrationTypeId);
         
+        // Consultar si hay una sincronización en curso
+        try {
+            const { getSyncStatusAction } = await import('../../infra/actions');
+            const syncStatus = await getSyncStatusAction(id, currentBusinessId);
+            if (syncStatus.success && syncStatus.in_progress && syncStatus.sync_state) {
+                // Hay una sincronización en curso, mostrar el estado actual
+                setSyncing(true);
+                setSyncProgress({
+                    total: 0,
+                    created: 0,
+                    rejected: 0,
+                    updated: 0,
+                    orders: []
+                });
+                showToast('🔄 Hay una sincronización en curso. Mostrando progreso actual...', 'info');
+            }
+        } catch (error: any) {
+            console.error('Error al consultar estado de sincronización:', error);
+            // Continuar normalmente si hay error
+        }
+        
         // Establecer fecha mínima por defecto a 30 días atrás
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -342,6 +737,14 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
     const handleSyncConfirm = async () => {
         if (syncModal.id) {
             setSyncing(true);
+            // Inicializar progreso
+            setSyncProgress({
+                total: 0,
+                created: 0,
+                rejected: 0,
+                updated: 0,
+                orders: []
+            });
             try {
                 // Preparar parámetros (solo enviar los que tienen valor)
                 const params: SyncOrdersParams = {};
@@ -353,14 +756,17 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
 
                 const result = await syncOrders(syncModal.id, Object.keys(params).length > 0 ? params : undefined);
                 if (result.success) {
-                    alert('✅ Sincronización iniciada correctamente');
+                    // No mostrar alert, el evento SSE mostrará la notificación en tiempo real
+                    showToast('🔄 Sincronización iniciada. Recibirás notificaciones en tiempo real.', 'info');
                 } else {
-                    alert(`❌ Error al iniciar sincronización: ${result.message}`);
+                    showToast(`❌ Error al iniciar sincronización: ${result.message}`, 'error');
+                    setSyncProgress(null);
+                    setSyncing(false);
                 }
-            } finally {
+            } catch (error: any) {
+                showToast(`❌ Error al iniciar sincronización: ${error.message}`, 'error');
+                setSyncProgress(null);
                 setSyncing(false);
-                setSyncModal({ show: false, id: null, name: '' });
-                setSyncFilters(initialSyncFilters);
             }
         }
     };
@@ -369,6 +775,8 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
     const handleSyncCancel = () => {
         setSyncModal({ show: false, id: null, name: '' });
         setSyncFilters(initialSyncFilters);
+        setSyncProgress(null);
+        setSyncing(false);
         // Limpiar opciones
         setOrderStatusOptions([]);
         setFinancialStatusOptions([]);
@@ -555,18 +963,37 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
 
             {/* Modal de Sincronización con Filtros */}
             {syncModal.show && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
-                        <div className="px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">
-                                ↻ Sincronizar Órdenes
-                            </h3>
-                            <p className="text-sm text-gray-500 mt-1">
-                                Integración: <strong>{syncModal.name}</strong>
-                            </p>
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
+                        {/* Header fijo */}
+                        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+                            <div className="flex items-start justify-between">
+                                <div className="flex-1">
+                                    <h3 className="text-lg font-semibold text-gray-900">
+                                        ↻ Sincronizar Órdenes
+                                    </h3>
+                                    <p className="text-sm text-gray-500 mt-1">
+                                        Integración: <strong>{syncModal.name}</strong>
+                                    </p>
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        setSyncModal({ show: false, id: null, name: '' });
+                                        setSyncProgress(null);
+                                        setSyncing(false);
+                                    }}
+                                    className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
+                                    aria-label="Cerrar modal"
+                                >
+                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
 
-                        <div className="px-6 py-4 space-y-4">
+                        {/* Contenido scrolleable */}
+                        <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">
                                     Rango de Fechas
@@ -653,29 +1080,197 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
                                     💡 Los estados mostrados están mapeados a estados de Probability. Si no especificas filtros, se sincronizarán las órdenes de los últimos 30 días.
                                 </p>
                             </div>
+
+                            {/* Barra de Progreso en Tiempo Real */}
+                            {syncProgress && (
+                                <div className="space-y-4 pt-4 border-t border-gray-200">
+                                    <div>
+                                        <div className="flex justify-between items-center mb-2">
+                                            <h4 className="text-sm font-semibold text-gray-700">Progreso de Sincronización</h4>
+                                            <span className="text-xs text-gray-500">
+                                                {syncProgress.total > 0 
+                                                    ? `${syncProgress.created + syncProgress.rejected + syncProgress.updated} / ${syncProgress.total}`
+                                                    : 'Iniciando...'}
+                                            </span>
+                                        </div>
+                                        
+                                        {/* Barra de progreso total con colores */}
+                                        <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden flex">
+                                            {syncProgress.total > 0 && (
+                                                <>
+                                                    {/* Porción verde (creadas) */}
+                                                    {syncProgress.created > 0 && (
+                                                        <div 
+                                                            className="h-full bg-green-500 transition-all duration-300"
+                                                            style={{ 
+                                                                width: `${(syncProgress.created / syncProgress.total) * 100}%`
+                                                            }}
+                                                            title={`${syncProgress.created} órdenes creadas`}
+                                                        ></div>
+                                                    )}
+                                                    {/* Porción roja (rechazadas) */}
+                                                    {syncProgress.rejected > 0 && (
+                                                        <div 
+                                                            className="h-full bg-red-500 transition-all duration-300"
+                                                            style={{ 
+                                                                width: `${(syncProgress.rejected / syncProgress.total) * 100}%`
+                                                            }}
+                                                            title={`${syncProgress.rejected} órdenes rechazadas`}
+                                                        ></div>
+                                                    )}
+                                                    {/* Porción amarilla (actualizadas) */}
+                                                    {syncProgress.updated > 0 && (
+                                                        <div 
+                                                            className="h-full bg-yellow-500 transition-all duration-300"
+                                                            style={{ 
+                                                                width: `${(syncProgress.updated / syncProgress.total) * 100}%`
+                                                            }}
+                                                            title={`${syncProgress.updated} órdenes actualizadas`}
+                                                        ></div>
+                                                    )}
+                                                </>
+                                            )}
+                                            {syncProgress.total === 0 && (
+                                                <div 
+                                                    className="h-full bg-blue-500 animate-pulse"
+                                                    style={{ width: '10%' }}
+                                                ></div>
+                                            )}
+                                        </div>
+
+                                        {/* Estadísticas */}
+                                        <div className="flex gap-4 mt-3 text-xs">
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                                <span className="text-gray-600">Creadas: <strong>{syncProgress.created}</strong></span>
+                                            </div>
+                                            <div className="flex items-center gap-1">
+                                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                                <span className="text-gray-600">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
+                                            </div>
+                                            {syncProgress.updated > 0 && (
+                                                <div className="flex items-center gap-1">
+                                                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                                    <span className="text-gray-600">Actualizadas: <strong>{syncProgress.updated}</strong></span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Lista de órdenes procesadas */}
+                                    {syncProgress.orders.length > 0 && (
+                                        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
+                                            <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0">
+                                                <p className="text-xs font-semibold text-gray-700">Órdenes Procesadas</p>
+                                            </div>
+                                            <div className="divide-y divide-gray-100">
+                                                {syncProgress.orders.slice(0, 50).map((order, index) => (
+                                                    <div 
+                                                        key={index}
+                                                        className={`p-3 text-xs ${
+                                                            order.status === 'created' 
+                                                                ? 'bg-green-50 hover:bg-green-100' 
+                                                                : order.status === 'updated'
+                                                                ? 'bg-blue-50 hover:bg-blue-100'
+                                                                : 'bg-red-50 hover:bg-red-100'
+                                                        } transition-colors`}
+                                                    >
+                                                        <div className="flex items-start justify-between gap-2">
+                                                            <div className="flex-1 min-w-0">
+                                                                <div className="flex items-center gap-2 mb-1">
+                                                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                                                                        order.status === 'created' ? 'bg-green-500' 
+                                                                        : order.status === 'updated' ? 'bg-blue-500'
+                                                                        : 'bg-red-500'
+                                                                    }`}></div>
+                                                                    <span className="font-medium text-gray-800">
+                                                                        #{order.orderNumber}
+                                                                    </span>
+                                                                    {order.orderStatus && (
+                                                                        <span className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs font-medium">
+                                                                            {order.orderStatus}
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                                {order.createdAt && (
+                                                                    <div className="text-gray-600 text-xs ml-4">
+                                                                        Creada: {(() => {
+                                                                            try {
+                                                                                const date = new Date(order.createdAt);
+                                                                                return isNaN(date.getTime()) 
+                                                                                    ? order.createdAt 
+                                                                                    : date.toLocaleString('es-ES', {
+                                                                                        year: 'numeric',
+                                                                                        month: '2-digit',
+                                                                                        day: '2-digit',
+                                                                                        hour: '2-digit',
+                                                                                        minute: '2-digit'
+                                                                                    });
+                                                                            } catch {
+                                                                                return order.createdAt;
+                                                                            }
+                                                                        })()}
+                                                                    </div>
+                                                                )}
+                                                                {order.status === 'rejected' && order.reason && (
+                                                                    <div className="text-red-600 text-xs ml-4 mt-1">
+                                                                        {order.reason}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <span className="text-gray-400 text-xs flex-shrink-0">
+                                                                {order.timestamp.toLocaleTimeString()}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                            {syncProgress.orders.length > 50 && (
+                                                <div className="p-2 bg-gray-50 text-xs text-gray-500 text-center">
+                                                    Y {syncProgress.orders.length - 50} órdenes más...
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
 
-                        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3">
-                            <Button
-                                variant="outline"
-                                onClick={handleSyncCancel}
-                                disabled={syncing}
-                            >
-                                Cancelar
-                            </Button>
-                            <Button
-                                variant="primary"
-                                onClick={handleSyncConfirm}
-                                disabled={syncing}
-                            >
-                                {syncing ? (
-                                    <>
-                                        <Spinner size="sm" /> Sincronizando...
-                                    </>
-                                ) : (
-                                    '↻ Iniciar Sincronización'
-                                )}
-                            </Button>
+                        {/* Footer fijo */}
+                        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0 bg-white">
+                            {!syncing && syncProgress && syncProgress.total > 0 && (
+                                <Button
+                                    variant="primary"
+                                    onClick={handleSyncCancel}
+                                >
+                                    Cerrar
+                                </Button>
+                            )}
+                            {!syncing && (!syncProgress || syncProgress.total === 0) && (
+                                <>
+                                    <Button
+                                        variant="outline"
+                                        onClick={handleSyncCancel}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                    <Button
+                                        variant="primary"
+                                        onClick={handleSyncConfirm}
+                                    >
+                                        ↻ Iniciar Sincronización
+                                    </Button>
+                                </>
+                            )}
+                            {syncing && (
+                                <Button
+                                    variant="outline"
+                                    onClick={handleSyncCancel}
+                                    disabled={true}
+                                >
+                                    Sincronizando... (No cerrar)
+                                </Button>
+                            )}
                         </div>
                     </div>
                 </div>

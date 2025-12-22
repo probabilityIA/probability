@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import { es } from 'date-fns/locale';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 // Los estilos se aplican inline con styled-jsx
 
 interface DateRangePickerProps {
@@ -12,6 +12,19 @@ interface DateRangePickerProps {
     onChange: (startDate: string | undefined, endDate: string | undefined) => void;
     placeholder?: string;
     className?: string;
+}
+
+// Función helper para parsear fechas sin problemas de zona horaria
+function parseDate(dateString: string | undefined): Date | undefined {
+    if (!dateString) return undefined;
+    // Si viene en formato YYYY-MM-DD, parsearlo directamente para evitar problemas de zona horaria
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+        const [year, month, day] = dateString.split('-').map(Number);
+        return new Date(year, month - 1, day);
+    }
+    // Si viene en otro formato, intentar parsearlo
+    const parsed = new Date(dateString);
+    return isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
 export function DateRangePicker({ 
@@ -23,23 +36,19 @@ export function DateRangePicker({
 }: DateRangePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
     // Estado temporal para la selección (no se aplica hasta hacer clic en "Aplicar")
-    const [tempRange, setTempRange] = useState<DateRange | undefined>({
-        from: startDate ? new Date(startDate) : undefined,
-        to: endDate ? new Date(endDate) : undefined,
+    const [tempRange, setTempRange] = useState<DateRange | undefined>(() => {
+        const from = parseDate(startDate);
+        const to = parseDate(endDate);
+        return (from || to) ? { from, to } : undefined;
     });
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Sincronizar el estado temporal con las props cuando se abre el calendario
+    // Sincronizar el estado temporal con las props cuando se abre el calendario o cambian las props
     useEffect(() => {
         if (isOpen) {
-            setTempRange(
-                startDate || endDate
-                    ? {
-                          from: startDate ? new Date(startDate) : undefined,
-                          to: endDate ? new Date(endDate) : undefined,
-                      }
-                    : undefined
-            );
+            const from = parseDate(startDate);
+            const to = parseDate(endDate);
+            setTempRange((from || to) ? { from, to } : undefined);
         }
     }, [isOpen, startDate, endDate]);
 
@@ -61,31 +70,78 @@ export function DateRangePicker({
 
     const handleSelect = (range: DateRange | undefined) => {
         // Solo actualizar el estado temporal, NO aplicar los cambios aún
+        // Asegurarse de que las fechas estén en hora local (sin zona horaria)
+        if (range?.from) {
+            const year = range.from.getFullYear();
+            const month = range.from.getMonth();
+            const day = range.from.getDate();
+            range.from = new Date(year, month, day);
+        }
+        if (range?.to) {
+            const year = range.to.getFullYear();
+            const month = range.to.getMonth();
+            const day = range.to.getDate();
+            range.to = new Date(year, month, day);
+        }
         setTempRange(range);
         // NO cerrar el calendario, esperar a que el usuario haga clic en "Aplicar"
     };
 
     const handleApply = () => {
         // Aplicar los cambios solo cuando se hace clic en "Aplicar"
-        const fromString = tempRange?.from ? format(tempRange.from, 'yyyy-MM-dd') : undefined;
-        const toString = tempRange?.to ? format(tempRange.to, 'yyyy-MM-dd') : undefined;
+        // Usar getFullYear, getMonth, getDate para evitar problemas de zona horaria
+        let fromString: string | undefined = undefined;
+        let toString: string | undefined = undefined;
+        
+        if (tempRange?.from) {
+            const year = tempRange.from.getFullYear();
+            const month = String(tempRange.from.getMonth() + 1).padStart(2, '0');
+            const day = String(tempRange.from.getDate()).padStart(2, '0');
+            fromString = `${year}-${month}-${day}`;
+        }
+        
+        if (tempRange?.to) {
+            const year = tempRange.to.getFullYear();
+            const month = String(tempRange.to.getMonth() + 1).padStart(2, '0');
+            const day = String(tempRange.to.getDate()).padStart(2, '0');
+            toString = `${year}-${month}-${day}`;
+        }
+        
         onChange(fromString, toString);
         setIsOpen(false);
     };
 
     const getDisplayText = () => {
-        if (startDate && endDate) {
-            const from = new Date(startDate);
-            const to = new Date(endDate);
-            return `${format(from, 'dd/MM/yyyy', { locale: es })} - ${format(to, 'dd/MM/yyyy', { locale: es })}`;
-        } else if (startDate) {
-            const from = new Date(startDate);
-            return `Desde: ${format(from, 'dd/MM/yyyy', { locale: es })}`;
-        } else if (endDate) {
-            const to = new Date(endDate);
-            return `Hasta: ${format(to, 'dd/MM/yyyy', { locale: es })}`;
+        const from = parseDate(startDate);
+        const to = parseDate(endDate);
+        
+        if (from && to) {
+            // Formato compacto: "21/11/2025 → 12/12/2025"
+            const fromStr = format(from, 'dd/MM/yyyy', { locale: es });
+            const toStr = format(to, 'dd/MM/yyyy', { locale: es });
+            return `${fromStr} → ${toStr}`;
+        } else if (from) {
+            const fromStr = format(from, 'dd/MM/yyyy', { locale: es });
+            return `Desde: ${fromStr}`;
+        } else if (to) {
+            const toStr = format(to, 'dd/MM/yyyy', { locale: es });
+            return `Hasta: ${toStr}`;
         }
         return '';
+    };
+    
+    const getFullDisplayText = () => {
+        const from = parseDate(startDate);
+        const to = parseDate(endDate);
+        
+        if (from && to) {
+            return `Rango: ${format(from, 'dd/MM/yyyy', { locale: es })} hasta ${format(to, 'dd/MM/yyyy', { locale: es })}`;
+        } else if (from) {
+            return `Fecha inicio: ${format(from, 'dd/MM/yyyy', { locale: es })} - Selecciona fecha fin`;
+        } else if (to) {
+            return `Fecha fin: ${format(to, 'dd/MM/yyyy', { locale: es })} - Selecciona fecha inicio`;
+        }
+        return placeholder;
     };
 
     const clearDates = () => {
@@ -95,14 +151,28 @@ export function DateRangePicker({
 
     return (
         <div ref={containerRef} className={`relative ${className}`}>
-            <input
-                type="text"
-                readOnly
-                value={getDisplayText()}
-                placeholder={placeholder}
-                onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white cursor-pointer"
-            />
+            <div className="relative">
+                <input
+                    type="text"
+                    readOnly
+                    value={getDisplayText()}
+                    placeholder={placeholder}
+                    onClick={() => setIsOpen(!isOpen)}
+                    title={getFullDisplayText()}
+                    className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white cursor-pointer text-sm"
+                    style={{ 
+                        textOverflow: 'ellipsis',
+                        overflow: 'hidden',
+                        whiteSpace: 'nowrap'
+                    }}
+                />
+                {/* Icono de calendario */}
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                </div>
+            </div>
             
             {isOpen && (
                 <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-auto">
