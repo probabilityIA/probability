@@ -30,6 +30,7 @@ export interface IIntegrationRepository {
     deactivateIntegration(id: number): Promise<SingleResponse<Integration>>;
     setAsDefault(id: number): Promise<SingleResponse<Integration>>;
     syncOrders(id: number, params?: SyncOrdersParams): Promise<ActionResponse>;
+    getSyncStatus(id: number, businessId?: number): Promise<{ success: boolean; in_progress: boolean; sync_state?: any }>;
     testIntegration(id: number): Promise<ActionResponse>;
     testConnectionRaw(typeCode: string, config: any, credentials: any): Promise<ActionResponse>;
     getWebhookUrl(id: number): Promise<WebhookResponse>;

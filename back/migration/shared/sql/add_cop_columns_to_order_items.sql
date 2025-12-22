@@ -27,3 +27,5 @@ ADD COLUMN IF NOT EXISTS tax_presentment DECIMAL(12,2) NOT NULL DEFAULT 0;
 
 
 
+
+

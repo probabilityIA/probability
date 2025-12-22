@@ -19,7 +19,8 @@
     "react-day-picker": "^9.12.0",
     "react-dom": "19.2.3",
     "react-leaflet": "^5.0.0",
-    "recharts": "^3.6.0"
+    "recharts": "^3.6.0",
+    "styled-jsx": "^5.1.7"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
@@ -30,5 +31,13 @@
     "eslint-config-next": "16.1.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "styled-jsx": "^5.1.7"
+  },
+  "pnpm": {
+    "overrides": {
+      "styled-jsx": "^5.1.7"
+    }
   }
 }

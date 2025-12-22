@@ -118,6 +118,15 @@ export const syncOrdersAction = async (id: number, params?: SyncOrdersParams) =>
     }
 };
 
+export const getSyncStatusAction = async (id: number, businessId?: number) => {
+    try {
+        return await (await getUseCases()).getSyncStatus(id, businessId);
+    } catch (error: any) {
+        console.error('Get Sync Status Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
 export const testIntegrationAction = async (id: number) => {
     try {
         return await (await getUseCases()).testIntegration(id);

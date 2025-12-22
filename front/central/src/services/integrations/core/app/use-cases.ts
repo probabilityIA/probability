@@ -65,6 +65,10 @@ export class IntegrationUseCases {
         return this.repository.syncOrders(id, params);
     }
 
+    async getSyncStatus(id: number, businessId?: number): Promise<{ success: boolean; in_progress: boolean; sync_state?: any }> {
+        return this.repository.getSyncStatus(id, businessId);
+    }
+
     async testIntegration(id: number): Promise<ActionResponse> {
         return this.repository.testIntegration(id);
     }

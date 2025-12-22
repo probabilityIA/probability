@@ -51,17 +51,17 @@ fi
 
 echo -e "${GREEN}✅ Verificaciones completadas${NC}"
 
-# Limpiar dependencias
-echo -e "${YELLOW}📦 Limpiando dependencias de Node.js...${NC}"
+# Verificar que el lockfile existe
+# El Dockerfile usará --frozen-lockfile para garantizar versiones exactas (React 19.2.3, styled-jsx 5.1.7)
+echo -e "${YELLOW}📦 Verificando lockfile de dependencias...${NC}"
 if [ -f "pnpm-lock.yaml" ]; then
-    echo -e "${BLUE}   Usando pnpm...${NC}"
-    pnpm install
+    echo -e "${GREEN}   ✅ pnpm-lock.yaml encontrado${NC}"
+    echo -e "${BLUE}   Docker usará --frozen-lockfile para respetar versiones exactas${NC}"
 elif [ -f "package-lock.json" ]; then
-    echo -e "${BLUE}   Usando npm...${NC}"
-    npm ci
+    echo -e "${GREEN}   ✅ package-lock.json encontrado${NC}"
+    echo -e "${BLUE}   Docker usará npm ci --legacy-peer-deps para respetar versiones exactas${NC}"
 else
-    echo -e "${BLUE}   Instalando dependencias...${NC}"
-    npm install
+    echo -e "${YELLOW}   ⚠️  No se encontró lockfile. Docker generará uno nuevo durante el build${NC}"
 fi
 
 # Crear builder multi-arquitectura si no existe
