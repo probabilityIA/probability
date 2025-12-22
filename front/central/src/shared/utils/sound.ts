@@ -102,3 +102,4 @@ export function playShortNotificationSound(): void {
         console.warn('No se pudo reproducir el sonido de notificación:', error);
     }
 }
+

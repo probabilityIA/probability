@@ -86,3 +86,5 @@ export function WideModal({ isOpen, onClose, title, children, width = '90vw' }: 
 
 
 
+
+
