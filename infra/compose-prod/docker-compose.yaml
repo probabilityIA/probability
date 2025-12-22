@@ -66,10 +66,8 @@ services:
     image: public.ecr.aws/c1l9h7c9/probability:backend-latest
     container_name: central_reserve_prod
     ports:
-      - "3050:3050"
+      - "127.0.0.1:3050:3050"
     environment:
-      # Nota: DB_HOST debe apuntar a tu base de datos PostgreSQL externa
-      # Si usas una BD externa, cambia "postgres" por el hostname real
       DB_HOST:             "${DB_HOST:-postgres}"
       DB_PORT:             "5432"
       DB_NAME:             "${DB_NAME}"
@@ -95,7 +93,6 @@ services:
       S3_KEY:              "${S3_KEY}"
       S3_SECRET:           "${S3_SECRET}"
       URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
-      # WhatsApp
       WHATSAPP_URL:        "${WHATSAPP_URL}"
       WHATSAPP_TOKEN:      "${WHATSAPP_TOKEN}"
       WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
@@ -106,7 +103,6 @@ services:
       REDIS_PORT:         "6379"
       REDIS_PASSWORD:     "${REDIS_PASSWORD:-}"
       REDIS_ORDER_EVENTS_CHANNEL: "${REDIS_ORDER_EVENTS_CHANNEL:-probability:orders:events}"
-      # RabbitMQ (usar nombre del servicio en la red Docker)
       RABBITMQ_HOST:      "rabbitmq"
       RABBITMQ_PORT:      "5672"
       RABBITMQ_USER:      "${RABBITMQ_USER:-admin}"
@@ -142,19 +138,21 @@ services:
           memory: 256M
 
 
-  # Redis Cache
   redis:
     image: redis:7-alpine
     container_name: redis_prod
-    ports:
-      - "6379:6379"
-    command: redis-server --appendonly yes
+    command: >
+      redis-server 
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
     volumes:
       - redis_data:/data
     networks:
       - app-network
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -162,17 +160,13 @@ services:
 
 
 
-  # RabbitMQ Message Queue
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: rabbitmq_prod
-    ports:
-      - "5672:5672"   # AMQP port
-      - "15672:15672" # Management UI
     environment:
-      RABBITMQ_DEFAULT_USER: admin
-      RABBITMQ_DEFAULT_PASS: admin
-      RABBITMQ_DEFAULT_VHOST: /
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-admin}"
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_VHOST:-/}"
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     networks:

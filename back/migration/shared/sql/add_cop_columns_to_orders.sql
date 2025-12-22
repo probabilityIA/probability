@@ -30,3 +30,5 @@ ADD COLUMN IF NOT EXISTS currency_presentment VARCHAR(10);
 --    como fallback para mantener compatibilidad
 -- ============================================
 
+
+
