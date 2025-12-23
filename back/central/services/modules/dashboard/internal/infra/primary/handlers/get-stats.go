@@ -19,32 +19,64 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /dashboard/stats [get]
 func (h *DashboardHandlers) GetStats(c *gin.Context) {
-	// Obtener business_id del contexto
+	// Inicializar variables
 	var businessID *uint
-	if businessIDCtx, exists := c.Get("business_id"); exists {
-		if bID, ok := businessIDCtx.(uint); ok {
-			// Si business_id == 0, es super user (ver todo)
-			// Si business_id > 0, filtrar por ese negocio
-			if bID > 0 {
-				businessID = &bID
-			}
-			// Si bID == 0, businessID queda nil (super user ve todo)
+	isSuperAdmin := false
+
+	// Verificar si es super admin
+	if isSuperAdminCtx, exists := c.Get("is_super_admin"); exists {
+		if isSuper, ok := isSuperAdminCtx.(bool); ok {
+			isSuperAdmin = isSuper
 		}
 	}
 
-	// Si es super admin (businessID == nil), permitir filtrar por business_id opcional del query parameter
-	// Esto debe estar FUERA del bloque anterior para que funcione cuando no hay business_id en contexto
-	if businessID == nil {
+	// 1. Intentar obtener business_id del contexto (para usuarios normales)
+	if businessIDCtx, exists := c.Get("business_id"); exists {
+		// Log para debug
+		h.logger.Info().Interface("raw_context_val", businessIDCtx).Msg("Debug: Checking business_id in context")
+
+		if bID, ok := businessIDCtx.(uint); ok && bID > 0 {
+			businessID = &bID
+		} else if bIDFloat, ok := businessIDCtx.(float64); ok && bIDFloat > 0 {
+			// Handle float64 case just in case
+			uID := uint(bIDFloat)
+			businessID = &uID
+		}
+	}
+
+	h.logger.Info().
+		Bool("is_super_admin", isSuperAdmin).
+		Interface("final_business_id", businessID).
+		Msg("Debug: GetStats Filtering Decision")
+
+	// 2. Si es super admin, permitir override por query param o ver todo (nil)
+	if isSuperAdmin {
 		if businessIDParam := c.Query("business_id"); businessIDParam != "" {
 			if parsedID, err := strconv.ParseUint(businessIDParam, 10, 32); err == nil && parsedID > 0 {
 				filteredID := uint(parsedID)
 				businessID = &filteredID
 			}
 		}
+		// Si no hay query param, businessID sigue siendo nil o lo que tenga el contexto
+	} else {
+		// 3. Si NO es super admin, businessID DEBE estar seteado.
+		if businessID == nil {
+			h.logger.Error().Msg("Intento de acceso a estadísticas sin business_id en contexto para usuario no admin")
+			c.JSON(http.StatusForbidden, gin.H{"error": "Acceso denegado"})
+			return
+		}
+	}
+
+	var integrationID *uint
+	if integrationIDParam := c.Query("integration_id"); integrationIDParam != "" {
+		if parsedID, err := strconv.ParseUint(integrationIDParam, 10, 32); err == nil && parsedID > 0 {
+			filteredID := uint(parsedID)
+			integrationID = &filteredID
+		}
 	}
 
 	// Obtener estadísticas del caso de uso
-	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID)
+	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID, integrationID)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Error al obtener estadísticas del dashboard")
 		c.JSON(http.StatusInternalServerError, gin.H{

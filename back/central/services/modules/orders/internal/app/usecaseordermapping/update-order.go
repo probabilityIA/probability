@@ -413,7 +413,7 @@ func (uc *UseCaseOrderMapping) updateShippingAddress(order *domain.ProbabilityOr
 // ───────────────────────────────────────────
 
 // updatePaymentFields actualiza los campos relacionados con el pago
-func (uc *UseCaseOrderMapping) updatePaymentFields(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updatePaymentFields(_ context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
 	changed := false
 
 	if len(dto.Payments) > 0 {
@@ -689,7 +689,7 @@ func (uc *UseCaseOrderMapping) publishOrderUpdatedEvent(ctx context.Context, ord
 }
 
 // publishOrderStatusChangedEvent publica el evento de cambio de estado de la orden
-func (uc *UseCaseOrderMapping) publishOrderStatusChangedEvent(ctx context.Context, order *domain.ProbabilityOrder, previousStatus string) {
+func (uc *UseCaseOrderMapping) publishOrderStatusChangedEvent(_ context.Context, order *domain.ProbabilityOrder, previousStatus string) {
 	eventData := domain.OrderEventData{
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,

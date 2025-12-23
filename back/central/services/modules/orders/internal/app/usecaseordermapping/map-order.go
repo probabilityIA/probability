@@ -498,7 +498,7 @@ func (uc *UseCaseOrderMapping) assignPaymentMethodID(order *domain.ProbabilityOr
 // populateOrderFields popula campos JSONB y campos planos de dirección
 func (uc *UseCaseOrderMapping) populateOrderFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) {
 	// Popular campos JSONB Items si están vacíos (backward compatibility)
-	if len(dto.OrderItems) > 0 && (dto.Items == nil || len(dto.Items) <= 4) {
+	if len(dto.OrderItems) > 0 && len(dto.Items) <= 4 {
 		itemsJSON, err := json.Marshal(dto.OrderItems)
 		if err == nil {
 			order.Items = datatypes.JSON(itemsJSON)
@@ -517,8 +517,11 @@ func (uc *UseCaseOrderMapping) populateOrderFields(order *domain.ProbabilityOrde
 			order.ShippingLng = addr.Longitude
 
 			if addr.Street2 != "" {
+				fmt.Printf("[DEBUG ADDRESS] Found Street2: '%s' for Order %s. Appending to ShippingStreet.\n", addr.Street2, order.OrderNumber)
 				order.ShippingStreet = fmt.Sprintf("%s %s", order.ShippingStreet, addr.Street2)
 				order.Address2 = addr.Street2 // Populate for scoring
+			} else {
+				fmt.Printf("[DEBUG ADDRESS] Street2 is EMPTY for Order %s. Address2 will optionally be empty.\n", order.OrderNumber)
 			}
 			break
 		}
@@ -761,7 +764,7 @@ func (uc *UseCaseOrderMapping) publishOrderEvents(ctx context.Context, order *do
 }
 
 // publishOrderCreatedEvent publica el evento de orden creada
-func (uc *UseCaseOrderMapping) publishOrderCreatedEvent(ctx context.Context, order *domain.ProbabilityOrder) {
+func (uc *UseCaseOrderMapping) publishOrderCreatedEvent(_ context.Context, order *domain.ProbabilityOrder) {
 	eventData := domain.OrderEventData{
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,

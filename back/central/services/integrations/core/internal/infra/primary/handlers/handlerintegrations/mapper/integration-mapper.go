@@ -140,6 +140,10 @@ func ToIntegrationListResponse(integrations []*domain.Integration, total int64, 
 		responses[i] = ToIntegrationResponse(integration, imageURLBase)
 	}
 
+	if pageSize <= 0 {
+		pageSize = 10 // Safe default
+	}
+
 	totalPages := int(total) / pageSize
 	if int(total)%pageSize > 0 {
 		totalPages++
@@ -158,9 +162,17 @@ func ToIntegrationListResponse(integrations []*domain.Integration, total int64, 
 
 // ToIntegrationFilters convierte GetIntegrationsRequest a IntegrationFilters
 func ToIntegrationFilters(req request.GetIntegrationsRequest) domain.IntegrationFilters {
+	pageSize := req.PageSize
+	if pageSize <= 0 && req.PerPage > 0 {
+		pageSize = req.PerPage
+	}
+	if pageSize <= 0 {
+		pageSize = 10
+	}
+
 	return domain.IntegrationFilters{
 		Page:                req.Page,
-		PageSize:            req.PageSize,
+		PageSize:            pageSize,
 		IntegrationTypeID:   req.IntegrationTypeID,
 		IntegrationTypeCode: req.IntegrationTypeCode,
 		Category:            req.Category,
