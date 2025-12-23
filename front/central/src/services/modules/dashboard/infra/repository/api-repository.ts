@@ -44,8 +44,17 @@ export class DashboardApiRepository implements IDashboardRepository {
         }
     }
 
-    async getStats(businessId?: number): Promise<DashboardStatsResponse> {
-        const params = businessId ? `?business_id=${businessId}` : '';
+    async getStats(businessId?: number, integrationId?: number): Promise<DashboardStatsResponse> {
+        let params = '';
+        const queryParams = [];
+
+        if (businessId) queryParams.push(`business_id=${businessId}`);
+        if (integrationId) queryParams.push(`integration_id=${integrationId}`);
+
+        if (queryParams.length > 0) {
+            params = `?${queryParams.join('&')}`;
+        }
+
         return this.fetch<DashboardStatsResponse>(`/dashboard/stats${params}`);
     }
 }

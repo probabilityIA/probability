@@ -32,6 +32,9 @@ func (s *AuthService) ValidateToken(token string) (*domain.AuthInfo, error) {
 		return nil, &domain.AuthError{Message: fmt.Sprintf("Token inválido: %v", err)}
 	}
 
+	// Debug log
+	fmt.Printf("[DEBUG JWT] UserID: %d, BusinessID: %d, RoleID: %d\n", claims.UserID, claims.BusinessID, claims.RoleID)
+
 	businessTokenClaims := &domain.BusinessTokenClaims{
 		UserID:         claims.UserID,
 		BusinessID:     claims.BusinessID,
