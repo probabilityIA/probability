@@ -111,7 +111,7 @@ export interface Order {
     original_status: string;
     status_id?: number;
     order_status?: OrderStatusInfo;
-    
+
     // Estados independientes
     payment_status_id?: number;
     fulfillment_status_id?: number;
@@ -125,6 +125,10 @@ export interface Order {
     user_id?: number;
     user_name: string;
 
+    // Novedades
+    is_confirmed?: boolean;
+    novelty?: string;
+
     // Facturación
     invoiceable: boolean;
     invoice_url?: string;
@@ -136,6 +140,7 @@ export interface Order {
 
     // Datos estructurados (JSONB)
     items?: any;
+    order_items?: any;
     metadata?: any;
     financial_details?: any;
     shipping_details?: any;
@@ -185,6 +190,7 @@ export interface GetOrdersParams {
     internal_number?: string;
     platform?: string;
     is_paid?: boolean;
+    is_cod?: boolean;
     payment_status_id?: number;
     fulfillment_status_id?: number;
     warehouse_id?: number;
@@ -355,6 +361,10 @@ export interface UpdateOrderDTO {
     approved?: boolean;
     user_id?: number;
     user_name?: string;
+
+    // Novedades
+    is_confirmed?: boolean;
+    novelty?: string;
 
     // Facturación
     invoiceable?: boolean;
