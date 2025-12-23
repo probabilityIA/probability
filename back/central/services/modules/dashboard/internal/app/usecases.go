@@ -9,7 +9,7 @@ import (
 
 // IUseCase define la interfaz del caso de uso
 type IUseCase interface {
-	GetDashboardStats(ctx context.Context, businessID *uint) (*domain.DashboardStats, error)
+	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint) (*domain.DashboardStats, error)
 }
 
 // UseCase implementa la lógica de negocio para el dashboard
@@ -27,86 +27,86 @@ func New(repo domain.IRepository, logger log.ILogger) IUseCase {
 }
 
 // GetDashboardStats obtiene todas las estadísticas del dashboard
-func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint) (*domain.DashboardStats, error) {
+func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint) (*domain.DashboardStats, error) {
 	// Obtener total de órdenes
-	totalOrders, err := uc.repo.GetTotalOrders(ctx, businessID)
+	totalOrders, err := uc.repo.GetTotalOrders(ctx, businessID, integrationID)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener total de órdenes")
 		return nil, err
 	}
 
 	// Obtener órdenes por tipo de integración
-	ordersByIntegrationType, err := uc.repo.GetOrdersByIntegrationType(ctx, businessID)
+	ordersByIntegrationType, err := uc.repo.GetOrdersByIntegrationType(ctx, businessID, integrationID)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener órdenes por tipo de integración")
 		return nil, err
 	}
 
 	// Obtener top clientes (top 10)
-	topCustomers, err := uc.repo.GetTopCustomers(ctx, businessID, 10)
+	topCustomers, err := uc.repo.GetTopCustomers(ctx, businessID, integrationID, 10)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener top clientes")
 		return nil, err
 	}
 
 	// Obtener órdenes por ubicación (top 10 ciudades)
-	ordersByLocation, err := uc.repo.GetOrdersByLocation(ctx, businessID, 10)
+	ordersByLocation, err := uc.repo.GetOrdersByLocation(ctx, businessID, integrationID, 10)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener órdenes por ubicación")
 		return nil, err
 	}
 
 	// Obtener top transportadores (top 10)
-	topDrivers, err := uc.repo.GetTopDrivers(ctx, businessID, 10)
+	topDrivers, err := uc.repo.GetTopDrivers(ctx, businessID, integrationID, 10)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener top transportadores")
 		return nil, err
 	}
 
 	// Obtener transportadores por ubicación (top 10)
-	driversByLocation, err := uc.repo.GetDriversByLocation(ctx, businessID, 10)
+	driversByLocation, err := uc.repo.GetDriversByLocation(ctx, businessID, integrationID, 10)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener transportadores por ubicación")
 		return nil, err
 	}
 
 	// Obtener top productos (top 10)
-	topProducts, err := uc.repo.GetTopProducts(ctx, businessID, 10)
+	topProducts, err := uc.repo.GetTopProducts(ctx, businessID, integrationID, 10)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener top productos")
 		return nil, err
 	}
 
 	// Obtener productos por categoría
-	productsByCategory, err := uc.repo.GetProductsByCategory(ctx, businessID)
+	productsByCategory, err := uc.repo.GetProductsByCategory(ctx, businessID, integrationID)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener productos por categoría")
 		return nil, err
 	}
 
 	// Obtener productos por marca
-	productsByBrand, err := uc.repo.GetProductsByBrand(ctx, businessID)
+	productsByBrand, err := uc.repo.GetProductsByBrand(ctx, businessID, integrationID)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener productos por marca")
 		return nil, err
 	}
 
 	// Obtener envíos por estado
-	shipmentsByStatus, err := uc.repo.GetShipmentsByStatus(ctx, businessID)
+	shipmentsByStatus, err := uc.repo.GetShipmentsByStatus(ctx, businessID, integrationID)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener envíos por estado")
 		return nil, err
 	}
 
 	// Obtener envíos por transportista
-	shipmentsByCarrier, err := uc.repo.GetShipmentsByCarrier(ctx, businessID)
+	shipmentsByCarrier, err := uc.repo.GetShipmentsByCarrier(ctx, businessID, integrationID)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener envíos por transportista")
 		return nil, err
 	}
 
 	// Obtener envíos por almacén (top 10)
-	shipmentsByWarehouse, err := uc.repo.GetShipmentsByWarehouse(ctx, businessID, 10)
+	shipmentsByWarehouse, err := uc.repo.GetShipmentsByWarehouse(ctx, businessID, integrationID, 10)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener envíos por almacén")
 		return nil, err

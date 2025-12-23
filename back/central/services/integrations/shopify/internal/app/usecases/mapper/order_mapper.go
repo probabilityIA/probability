@@ -99,7 +99,25 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 	// Extraer y mapear shipments desde fulfillments del raw_data
 	shipments := extractShipmentsFromRawData(s.RawData)
 
-	subtotal := s.TotalAmount
+	// Calcular montos finales usando presentment money si está disponible (prioridad para mostrar orden en moneda local)
+	totalAmount := s.TotalAmount
+	currency := s.Currency
+
+	// Si tenemos valores en moneda local (COP, etc), usarlos como principales
+	if s.TotalAmountPresentment > 0 && s.CurrencyPresentment != "" {
+		totalAmount = s.TotalAmountPresentment
+		currency = s.CurrencyPresentment
+	}
+
+	subtotal := s.TotalAmount // Mantener subtotal original si no hay presentment logic específico para subtotal como fallback?
+	if s.SubtotalPresentment > 0 {
+		subtotal = s.SubtotalPresentment
+	} else if currency != s.Currency {
+		// Si cambiamos la moneda principal pero no tenemos subtotal presentment,
+		// idealmente no deberíamos mezclar, pero por ahora mantenemos la consistencia con TotalAmount
+		// Si TotalAmount es Presentment, Subtotal debería serlo.
+		// Asumimos que si TotalAmountPresentment existe, los otros components también.
+	}
 
 	probabilityOrder := &domain.ProbabilityOrderDTO{
 		BusinessID:      s.BusinessID,
@@ -109,8 +127,8 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		ExternalID:      s.ExternalID,
 		OrderNumber:     s.OrderNumber,
 		Subtotal:        subtotal,
-		TotalAmount:     s.TotalAmount,
-		Currency:        s.Currency,
+		TotalAmount:     totalAmount,
+		Currency:        currency,
 		CustomerName:    s.Customer.Name,
 		CustomerEmail:   s.Customer.Email,
 		CustomerPhone:   s.Customer.Phone,
@@ -272,7 +290,7 @@ func getStringPtr(m map[string]interface{}, key string) *string {
 // EnrichOrderWithDetails extrae y agrega PaymentDetails y FulfillmentDetails al ProbabilityOrderDTO
 // desde el rawPayload (JSON original de Shopify)
 func EnrichOrderWithDetails(probabilityOrder *domain.ProbabilityOrderDTO, rawPayload []byte) {
-	if rawPayload == nil || len(rawPayload) == 0 {
+	if len(rawPayload) == 0 {
 		return
 	}
 

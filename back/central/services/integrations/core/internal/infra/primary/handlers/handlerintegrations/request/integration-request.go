@@ -31,7 +31,8 @@ type UpdateIntegrationRequest struct {
 // GetIntegrationsRequest representa los parámetros de consulta para obtener integraciones
 type GetIntegrationsRequest struct {
 	Page                int     `form:"page" example:"1"`
-	PageSize            int     `form:"page_size" example:"10"`
+	PageSize            int     `form:"page_size"`
+	PerPage             int     `form:"per_page"`
 	IntegrationTypeID   *uint   `form:"integration_type_id" example:"1"`          // Filtrar por ID del tipo de integración
 	IntegrationTypeCode *string `form:"integration_type_code" example:"whatsapp"` // Filtrar por código del tipo de integración
 	Category            *string `form:"category" example:"internal"`
