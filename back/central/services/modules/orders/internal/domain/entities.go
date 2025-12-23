@@ -114,6 +114,10 @@ type ProbabilityOrder struct {
 	UserID   *uint   `json:"user_id"`
 	UserName string  `json:"user_name"`
 
+	// Novedades
+	IsConfirmed bool    `json:"is_confirmed"`
+	Novelty     *string `json:"novelty"`
+
 	// Facturación
 	Invoiceable     bool    `json:"invoiceable"`
 	InvoiceURL      *string `json:"invoice_url"`

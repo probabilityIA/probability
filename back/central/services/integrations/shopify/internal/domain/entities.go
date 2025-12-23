@@ -43,6 +43,10 @@ type ShopifyOrder struct {
 	ExternalID      string
 	OrderNumber     string
 	TotalAmount     float64
+	Subtotal        float64
+	Tax             float64
+	Discount        float64
+	ShippingCost    float64
 	Currency        string
 	Customer        ShopifyCustomer
 	ShippingAddress ShopifyAddress
@@ -65,9 +69,10 @@ type ShopifyOrder struct {
 }
 
 type ShopifyCustomer struct {
-	Name  string
-	Email string
-	Phone string
+	Name           string
+	Email          string
+	Phone          string
+	DefaultAddress *ShopifyAddress
 }
 
 type ShopifyAddress struct {
@@ -148,12 +153,12 @@ type ProbabilityOrderDTO struct {
 	OrderStatusURL     string
 	OccurredAt         time.Time
 	ImportedAt         time.Time
-	Items              []byte
-	Metadata           []byte
-	FinancialDetails   []byte
-	ShippingDetails    []byte
-	PaymentDetails     []byte
-	FulfillmentDetails []byte
+	Items              datatypes.JSON
+	Metadata           datatypes.JSON
+	FinancialDetails   datatypes.JSON
+	ShippingDetails    datatypes.JSON
+	PaymentDetails     datatypes.JSON
+	FulfillmentDetails datatypes.JSON
 	OrderItems         []ProbabilityOrderItemDTO
 	Addresses          []ProbabilityAddressDTO
 	Payments           []ProbabilityPaymentDTO
@@ -218,7 +223,7 @@ type ProbabilityPaymentDTO struct {
 	RefundAmount     *float64
 	RefundedAt       *time.Time
 	FailureReason    *string
-	Metadata         []byte
+	Metadata         datatypes.JSON
 }
 
 type ProbabilityShipmentDTO struct {
@@ -246,7 +251,7 @@ type ProbabilityShipmentDTO struct {
 	IsLastMile        bool
 	EstimatedDelivery *time.Time
 	DeliveryNotes     *string
-	Metadata          []byte
+	Metadata          datatypes.JSON
 }
 
 type ProbabilityChannelMetadataDTO struct {

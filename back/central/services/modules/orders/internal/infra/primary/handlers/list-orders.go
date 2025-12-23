@@ -97,6 +97,12 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		}
 	}
 
+	if isCOD := c.Query("is_cod"); isCOD != "" {
+		if cod, err := strconv.ParseBool(isCOD); err == nil {
+			filters["is_cod"] = cod
+		}
+	}
+
 	if paymentStatusID := c.Query("payment_status_id"); paymentStatusID != "" {
 		if id, err := strconv.ParseUint(paymentStatusID, 10, 32); err == nil {
 			filters["payment_status_id"] = uint(id)
