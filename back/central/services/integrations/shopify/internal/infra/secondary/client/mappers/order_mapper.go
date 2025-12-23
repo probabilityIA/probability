@@ -61,6 +61,30 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		if orderResp.Customer.Phone != nil {
 			customer.Phone = *orderResp.Customer.Phone
 		}
+		// Map Default Address
+		if orderResp.Customer.DefaultAddress != nil {
+			da := orderResp.Customer.DefaultAddress
+			defaultAddress := domain.ShopifyAddress{
+				Street:     da.Address1,
+				City:       da.City,
+				State:      da.Province,
+				Country:    da.Country,
+				PostalCode: da.Zip,
+			}
+			if da.Address2 != nil {
+				defaultAddress.Address2 = *da.Address2
+			}
+			if da.Latitude != nil && da.Longitude != nil {
+				defaultAddress.Coordinates = &struct {
+					Lat float64
+					Lng float64
+				}{
+					Lat: *da.Latitude,
+					Lng: *da.Longitude,
+				}
+			}
+			customer.DefaultAddress = &defaultAddress
+		}
 	} else {
 		// Si no hay customer, usar email de la orden
 		customer.Name = orderResp.Email
@@ -187,6 +211,17 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		orderNumber = strconv.Itoa(orderResp.OrderNumber)
 	}
 
+	// Calcular shipping cost total en moneda de la tienda
+	var shippingCost float64
+	for _, line := range orderResp.ShippingLines {
+		price, _ := strconv.ParseFloat(line.Price, 64)
+		shippingCost += price
+	}
+
+	subtotal, _ := strconv.ParseFloat(orderResp.SubtotalPrice, 64)
+	totalTax, _ := strconv.ParseFloat(orderResp.TotalTax, 64)
+	totalDiscounts, _ := strconv.ParseFloat(orderResp.TotalDiscounts, 64)
+
 	return domain.ShopifyOrder{
 		BusinessID:      businessID,
 		IntegrationID:   integrationID,
@@ -195,6 +230,10 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		ExternalID:      strconv.FormatInt(orderResp.ID, 10),
 		OrderNumber:     orderNumber,
 		TotalAmount:     totalAmount,
+		Subtotal:        subtotal,
+		Tax:             totalTax,
+		Discount:        totalDiscounts,
+		ShippingCost:    shippingCost,
 		Currency:        orderResp.Currency,
 		Customer:        customer,
 		ShippingAddress: shippingAddress,

@@ -75,7 +75,7 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 			RefundAmount:     pay.RefundAmount,
 			RefundedAt:       refundedAt,
 			FailureReason:    pay.FailureReason,
-			Metadata:         pay.Metadata,
+			Metadata:         json.RawMessage(pay.Metadata),
 		}
 	}
 
@@ -110,7 +110,7 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 			IsLastMile:        ship.IsLastMile,
 			EstimatedDelivery: estimatedDelivery,
 			DeliveryNotes:     ship.DeliveryNotes,
-			Metadata:          ship.Metadata,
+			Metadata:          json.RawMessage(ship.Metadata),
 		}
 	}
 
@@ -167,12 +167,12 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 		OrderStatusURL:     order.OrderStatusURL,
 		OccurredAt:         order.OccurredAt.Format(time.RFC3339),
 		ImportedAt:         order.ImportedAt.Format(time.RFC3339),
-		Items:              order.Items,
-		Metadata:           order.Metadata,
-		FinancialDetails:   order.FinancialDetails,
-		ShippingDetails:    order.ShippingDetails,
-		PaymentDetails:     order.PaymentDetails,
-		FulfillmentDetails: order.FulfillmentDetails,
+		Items:              json.RawMessage(order.Items),
+		Metadata:           json.RawMessage(order.Metadata),
+		FinancialDetails:   json.RawMessage(order.FinancialDetails),
+		ShippingDetails:    json.RawMessage(order.ShippingDetails),
+		PaymentDetails:     json.RawMessage(order.PaymentDetails),
+		FulfillmentDetails: json.RawMessage(order.FulfillmentDetails),
 		OrderItems:         orderItems,
 		Addresses:          addresses,
 		Payments:           payments,

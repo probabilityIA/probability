@@ -139,6 +139,10 @@ type Order struct {
 	UserID   *uint   `gorm:"index"`    // Usuario que procesó
 	UserName string  `gorm:"size:255"` // Nombre del usuario (desnormalizado)
 
+	// Novedades
+	IsConfirmed bool    `gorm:"default:false"` // Pedido Confirmado
+	Novelty     *string `gorm:"type:text"`     // Novedades
+
 	// ============================================
 	// FACTURACIÓN
 	// ============================================

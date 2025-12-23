@@ -185,6 +185,10 @@ type UpdateOrderRequest struct {
 	UserID   *uint   `json:"user_id"`
 	UserName *string `json:"user_name" binding:"omitempty,max=255"`
 
+	// Novedades
+	IsConfirmed *bool   `json:"is_confirmed"`
+	Novelty     *string `json:"novelty"`
+
 	// Facturación
 	Invoiceable     *bool   `json:"invoiceable"`
 	InvoiceURL      *string `json:"invoice_url"`
@@ -306,6 +310,10 @@ type OrderResponse struct {
 	Approved *bool   `json:"approved,omitempty"`
 	UserID   *uint   `json:"user_id,omitempty"`
 	UserName string  `json:"user_name"`
+
+	// Novedades
+	IsConfirmed bool    `json:"is_confirmed"`
+	Novelty     *string `json:"novelty"`
 
 	// Facturación
 	Invoiceable     bool    `json:"invoiceable"`
