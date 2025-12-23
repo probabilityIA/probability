@@ -170,11 +170,11 @@ const OrderRow = memo(({
             {isSuperAdmin && (
                 <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
                     <div className="text-sm text-gray-900">
-                        {order.business_id && businessesMap.get(order.business_id) 
+                        {order.business_id && businessesMap.get(order.business_id)
                             ? businessesMap.get(order.business_id)
-                            : order.business_id 
-                            ? `ID: ${order.business_id}`
-                            : '-'
+                            : order.business_id
+                                ? `ID: ${order.business_id}`
+                                : '-'
                         }
                     </div>
                 </td>
@@ -262,7 +262,7 @@ interface OrderListProps {
 }
 
 export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey }: OrderListProps) {
-    const { isSuperAdmin } = usePermissions();
+    const { isSuperAdmin, permissions } = usePermissions();
     const [orders, setOrders] = useState<Order[]>([]);
     const [initialLoading, setInitialLoading] = useState(true);
     const [tableLoading, setTableLoading] = useState(false);
@@ -289,7 +289,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const [fulfillmentStatusesList, setFulfillmentStatusesList] = useState<{ value: string; label: string }[]>([]);
     // Businesses for mapping (only load if super admin)
     const [businessesList, setBusinessesList] = useState<{ id: number; name: string }[]>([]);
-    
+
     // Business map for quick lookup (memoized)
     const businessesMap = useMemo(() => {
         const map = new Map<number, string>();
@@ -628,6 +628,16 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         if (response.success && response.data) {
                             const newOrder = response.data;
 
+                            // Security Filter: Ignore orders from other businesses for non-super admins
+                            if (!isSuperAdmin && permissions?.business_id && newOrder.business_id !== permissions.business_id) {
+                                return;
+                            }
+
+                            // Optional: Filter for Super Admin if business filter is active (assuming filters.business_id exists)
+                            // if (isSuperAdmin && filters.business_id && newOrder.business_id !== Number(filters.business_id)) {
+                            //    return;
+                            // }
+
                             // Verificar que la orden no esté ya en la lista
                             setOrders(prevOrders => {
                                 if (prevOrders.some(o => o.id === newOrder.id)) {
@@ -801,13 +811,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             // Calcular luminosidad
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
             const textColor = luminance > 0.5 ? '#000000' : '#FFFFFF';
-            
+
             return (
-                <span 
+                <span
                     className="px-2 py-1 text-xs font-medium rounded-full"
-                    style={{ 
-                        backgroundColor: color, 
-                        color: textColor 
+                    style={{
+                        backgroundColor: color,
+                        color: textColor
                     }}
                 >
                     {status}

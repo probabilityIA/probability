@@ -11,9 +11,9 @@ async function getUseCases() {
     return new DashboardUseCases(repository);
 }
 
-export const getDashboardStatsAction = async (businessId?: number) => {
+export const getDashboardStatsAction = async (businessId?: number, integrationId?: number) => {
     try {
-        return await (await getUseCases()).getStats(businessId);
+        return await (await getUseCases()).getStats(businessId, integrationId);
     } catch (error: any) {
         console.error('Get Dashboard Stats Action Error:', error.message);
         throw new Error(error.message);

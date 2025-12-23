@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/gorm"
 )
 
 // Repository implementa domain.IRepository
@@ -25,13 +26,18 @@ func New(database db.IDatabase, logger log.ILogger) domain.IRepository {
 }
 
 // GetTotalOrders obtiene el total de órdenes
-func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint) (int64, error) {
+func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint, integrationID *uint) (int64, error) {
 	var count int64
 	query := r.db.Conn(ctx).Model(&models.Order{})
 
 	// Aplicar filtro por business_id si está especificado y no es super user
 	if businessID != nil && *businessID > 0 {
 		query = query.Where("business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("integration_id = ?", *integrationID)
 	}
 
 	if err := query.Count(&count).Error; err != nil {
@@ -42,7 +48,7 @@ func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint) (int6
 }
 
 // GetOrdersByIntegrationType obtiene el conteo de órdenes agrupado por tipo de integración
-func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID *uint) ([]domain.OrderCountByIntegrationType, error) {
+func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.OrderCountByIntegrationType, error) {
 	type Result struct {
 		IntegrationType string `gorm:"column:integration_type"`
 		Count           int64  `gorm:"column:count"`
@@ -58,6 +64,11 @@ func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID 
 	// Aplicar filtro por business_id si está especificado y no es super user
 	if businessID != nil && *businessID > 0 {
 		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -77,7 +88,7 @@ func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID 
 }
 
 // GetTopCustomers obtiene los top N clientes por número de órdenes
-func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, limit int) ([]domain.TopCustomer, error) {
+func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopCustomer, error) {
 	type Result struct {
 		CustomerName  string `gorm:"column:customer_name"`
 		CustomerEmail string `gorm:"column:customer_email"`
@@ -98,6 +109,11 @@ func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, limi
 		query = query.Where("orders.business_id = ?", *businessID)
 	}
 
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -116,7 +132,7 @@ func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, limi
 }
 
 // GetOrdersByLocation obtiene el conteo de órdenes agrupado por ubicación
-func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, limit int) ([]domain.OrderCountByLocation, error) {
+func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.OrderCountByLocation, error) {
 	type Result struct {
 		City       string `gorm:"column:city"`
 		State      string `gorm:"column:state"`
@@ -137,6 +153,11 @@ func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, 
 		query = query.Where("orders.business_id = ?", *businessID)
 	}
 
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -155,7 +176,7 @@ func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, 
 }
 
 // GetTopDrivers obtiene los top N transportadores por número de órdenes
-func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, limit int) ([]domain.TopDriver, error) {
+func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopDriver, error) {
 	type Result struct {
 		DriverName string `gorm:"column:driver_name"`
 		DriverID   *uint  `gorm:"column:driver_id"`
@@ -176,6 +197,11 @@ func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, limit 
 		query = query.Where("orders.business_id = ?", *businessID)
 	}
 
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -194,7 +220,7 @@ func (r *Repository) GetTopDrivers(ctx context.Context, businessID *uint, limit 
 }
 
 // GetDriversByLocation obtiene transportadores agrupados por ubicación
-func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint, limit int) ([]domain.DriverByLocation, error) {
+func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.DriverByLocation, error) {
 	type Result struct {
 		DriverName string `gorm:"column:driver_name"`
 		City       string `gorm:"column:city"`
@@ -216,6 +242,11 @@ func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint,
 		query = query.Where("orders.business_id = ?", *businessID)
 	}
 
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -235,7 +266,7 @@ func (r *Repository) GetDriversByLocation(ctx context.Context, businessID *uint,
 }
 
 // GetTopProducts obtiene los top N productos por número de órdenes
-func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, limit int) ([]domain.TopProduct, error) {
+func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.TopProduct, error) {
 	type Result struct {
 		ProductName string  `gorm:"column:product_name"`
 		ProductID   string  `gorm:"column:product_id"`
@@ -260,6 +291,11 @@ func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, limit
 		query = query.Where("orders.business_id = ?", *businessID)
 	}
 
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
 	if err := query.Scan(&results).Error; err != nil {
 		return nil, err
 	}
@@ -280,19 +316,36 @@ func (r *Repository) GetTopProducts(ctx context.Context, businessID *uint, limit
 }
 
 // GetProductsByCategory obtiene productos agrupados por categoría
-func (r *Repository) GetProductsByCategory(ctx context.Context, businessID *uint) ([]domain.ProductByCategory, error) {
+func (r *Repository) GetProductsByCategory(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ProductByCategory, error) {
 	type Result struct {
 		Category string `gorm:"column:category"`
 		Count    int64  `gorm:"column:count"`
 	}
 
 	var results []Result
-	query := r.db.Conn(ctx).
-		Model(&models.Product{}).
-		Select("products.category, COUNT(DISTINCT products.id) as count").
-		Where("products.category != ''").
-		Group("products.category").
-		Order("count DESC")
+	var query *gorm.DB
+
+	// Si hay filtro de integración, debemos obtener productos DE LAS ÓRDENES de esa integración (ventas)
+	// Si NO hay filtro de integración, obtenemos del catálogo (inventario/existencia)
+	if integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).
+			Model(&models.OrderItem{}).
+			Select("products.category, COUNT(DISTINCT order_items.product_id) as count").
+			Joins("JOIN orders ON orders.id = order_items.order_id").
+			Joins("LEFT JOIN products ON products.id = order_items.product_id").
+			Where("order_items.product_id IS NOT NULL AND products.id IS NOT NULL AND products.category != ''").
+			Group("products.category").
+			Order("count DESC")
+
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	} else {
+		query = r.db.Conn(ctx).
+			Model(&models.Product{}).
+			Select("products.category, COUNT(DISTINCT products.id) as count").
+			Where("products.category != ''").
+			Group("products.category").
+			Order("count DESC")
+	}
 
 	// Aplicar filtro por business_id si está especificado y no es super user
 	if businessID != nil && *businessID > 0 {
@@ -316,19 +369,35 @@ func (r *Repository) GetProductsByCategory(ctx context.Context, businessID *uint
 }
 
 // GetProductsByBrand obtiene productos agrupados por marca
-func (r *Repository) GetProductsByBrand(ctx context.Context, businessID *uint) ([]domain.ProductByBrand, error) {
+func (r *Repository) GetProductsByBrand(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ProductByBrand, error) {
 	type Result struct {
 		Brand string `gorm:"column:brand"`
 		Count int64  `gorm:"column:count"`
 	}
 
 	var results []Result
-	query := r.db.Conn(ctx).
-		Model(&models.Product{}).
-		Select("products.brand, COUNT(DISTINCT products.id) as count").
-		Where("products.brand != ''").
-		Group("products.brand").
-		Order("count DESC")
+	var query *gorm.DB
+
+	// Misma lógica que Category: Si hay integrationID, filtrar por ventas. Si no, catálogo.
+	if integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).
+			Model(&models.OrderItem{}).
+			Select("products.brand, COUNT(DISTINCT order_items.product_id) as count").
+			Joins("JOIN orders ON orders.id = order_items.order_id").
+			Joins("LEFT JOIN products ON products.id = order_items.product_id").
+			Where("order_items.product_id IS NOT NULL AND products.id IS NOT NULL AND products.brand != ''").
+			Group("products.brand").
+			Order("count DESC")
+
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	} else {
+		query = r.db.Conn(ctx).
+			Model(&models.Product{}).
+			Select("products.brand, COUNT(DISTINCT products.id) as count").
+			Where("products.brand != ''").
+			Group("products.brand").
+			Order("count DESC")
+	}
 
 	// Aplicar filtro por business_id si está especificado y no es super user
 	if businessID != nil && *businessID > 0 {
@@ -352,7 +421,7 @@ func (r *Repository) GetProductsByBrand(ctx context.Context, businessID *uint) (
 }
 
 // GetShipmentsByStatus obtiene envíos agrupados por estado
-func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint) ([]domain.ShipmentsByStatus, error) {
+func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByStatus, error) {
 	type Result struct {
 		Status string `gorm:"column:status"`
 		Count  int64  `gorm:"column:count"`
@@ -369,6 +438,11 @@ func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint)
 	// Aplicar filtro por business_id si está especificado y no es super user
 	if businessID != nil && *businessID > 0 {
 		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -388,7 +462,7 @@ func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint)
 }
 
 // GetShipmentsByCarrier obtiene envíos agrupados por transportista
-func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint) ([]domain.ShipmentsByCarrier, error) {
+func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByCarrier, error) {
 	type Result struct {
 		Carrier string `gorm:"column:carrier"`
 		Count   int64  `gorm:"column:count"`
@@ -405,6 +479,11 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 	// Aplicar filtro por business_id si está especificado y no es super user
 	if businessID != nil && *businessID > 0 {
 		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -424,7 +503,7 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 }
 
 // GetShipmentsByWarehouse obtiene envíos agrupados por almacén
-func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *uint, limit int) ([]domain.ShipmentsByWarehouse, error) {
+func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.ShipmentsByWarehouse, error) {
 	type Result struct {
 		WarehouseName string `gorm:"column:warehouse_name"`
 		WarehouseID   *uint  `gorm:"column:warehouse_id"`

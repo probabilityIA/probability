@@ -55,7 +55,14 @@ export class IntegrationApiRepository implements IIntegrationRepository {
                 headers,
             });
 
-            const data = await res.json();
+            const text = await res.text();
+            let data;
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch (e) {
+                console.error(`[API JSON Parse Error] ${url}`, text);
+                throw new Error(`Invalid JSON response from server: ${text.substring(0, 100)}...`);
+            }
 
             console.log(`[API Response] ${res.status} ${url}`, data);
 
