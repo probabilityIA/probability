@@ -120,7 +120,7 @@ func (uc *UseCaseOrderScore) IsCODPayment(order *domain.ProbabilityOrder) bool {
 	// 1. Check PaymentMethodID if we have a mapping (Placeholder)
 	// 2. Check Financial Details (Shopify)
 
-	keywords := []string{"cod", "cash", "contra", "manual"}
+	keywords := []string{"cod", "cash", "contra"}
 
 	// Check Payments slice first
 	if len(order.Payments) > 0 {
@@ -136,7 +136,12 @@ func (uc *UseCaseOrderScore) IsCODPayment(order *domain.ProbabilityOrder) bool {
 		}
 	}
 
-	// 3. Fallback: Check PaymentDetails JSONB (crucial for Shopify if Payments slice is empty)
+	// 3. Fallback: Check COD Total if already calculated
+	if order.CodTotal != nil && *order.CodTotal > 0 {
+		return true
+	}
+
+	// 4. Fallback: Check PaymentDetails JSONB (crucial for Shopify if Payments slice is empty)
 	if order.PaymentDetails != nil {
 		var details struct {
 			Gateway             string   `json:"gateway"`
@@ -163,6 +168,24 @@ func (uc *UseCaseOrderScore) IsCODPayment(order *domain.ProbabilityOrder) bool {
 						if strings.Contains(gw, kw) {
 							return true
 						}
+					}
+				}
+			}
+		}
+	}
+
+	// 5. Fallback: Check Tags in Metadata
+	if order.Metadata != nil {
+		var metadata struct {
+			Tags interface{} `json:"tags"` // Can be string or array in some cases, usually string in Shopify
+		}
+		bytes, err := order.Metadata.MarshalJSON()
+		if err == nil {
+			if err := json.Unmarshal(bytes, &metadata); err == nil {
+				if tagsStr, ok := metadata.Tags.(string); ok && tagsStr != "" {
+					lower := strings.ToLower(tagsStr)
+					if strings.Contains(lower, "cod") || strings.Contains(lower, "contra") {
+						return true
 					}
 				}
 			}

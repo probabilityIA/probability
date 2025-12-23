@@ -161,6 +161,24 @@ const OrderRow = memo(({
                     )}
                 </div>
             </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
+                {order.is_confirmed ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Sí
+                    </span>
+                ) : (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        No
+                    </span>
+                )}
+            </td>
+            <td className="px-3 sm:px-6 py-4 whitespace-nowrap max-w-[200px] truncate" title={order.novelty || ''}>
+                {order.novelty ? (
+                    <span className="text-sm text-gray-900">{order.novelty}</span>
+                ) : (
+                    <span className="text-xs text-gray-400">-</span>
+                )}
+            </td>
             <td className="px-3 sm:px-6 py-4 text-xs text-gray-500 hidden md:table-cell">
                 <div className="leading-tight">
                     <div className="text-gray-900">{formatDate(order.created_at).date}</div>
@@ -446,6 +464,11 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             type: 'boolean',
         },
         {
+            key: 'is_cod',
+            label: 'Contra Entrega',
+            type: 'boolean',
+        },
+        {
             key: 'payment_status_id',
             label: 'Estado de pago',
             type: 'select',
@@ -526,6 +549,15 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             });
         }
 
+        if (filters.is_cod !== undefined) {
+            active.push({
+                key: 'is_cod',
+                label: 'Contra Entrega',
+                value: filters.is_cod,
+                type: 'boolean',
+            });
+        }
+
         if (filters.payment_status_id) {
             const paymentStatus = paymentStatusesList.find(s => s.value === String(filters.payment_status_id));
             active.push({
@@ -571,6 +603,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 newFilters.end_date = value.end;
             } else if (filterKey === 'is_paid') {
                 newFilters.is_paid = value === true;
+            } else if (filterKey === 'is_cod') {
+                newFilters.is_cod = value === true;
             } else if (filterKey === 'integration_id') {
                 newFilters.integration_id = Number(value);
             } else if (filterKey === 'payment_status_id') {
@@ -937,6 +971,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                                     Datos Faltantes
+                                </th>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Confirmado
+                                </th>
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Novedades
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Fecha

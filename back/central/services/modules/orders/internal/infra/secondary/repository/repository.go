@@ -154,6 +154,34 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("is_paid = ?", isPaid)
 	}
 
+	if isCOD, ok := filters["is_cod"].(bool); ok {
+		if isCOD {
+			query = query.Where(`
+				cod_total > 0 OR 
+				payment_details->>'gateway' ILIKE '%cod%' OR 
+				payment_details->>'gateway' ILIKE '%cash%' OR 
+				payment_details->>'gateway' ILIKE '%contra%' OR
+				EXISTS (
+					SELECT 1 FROM json_array_elements_text(CAST(payment_details->'payment_gateway_names' AS json)) as gateway
+					WHERE gateway ILIKE '%cod%' OR gateway ILIKE '%cash%' OR gateway ILIKE '%contra%'
+				)
+			`)
+		} else {
+			query = query.Where(`
+				(cod_total IS NULL OR cod_total = 0) AND 
+				(payment_details->>'gateway' IS NULL OR (
+					payment_details->>'gateway' NOT ILIKE '%cod%' AND 
+					payment_details->>'gateway' NOT ILIKE '%cash%' AND 
+					payment_details->>'gateway' NOT ILIKE '%contra%'
+				)) AND
+				NOT EXISTS (
+					SELECT 1 FROM json_array_elements_text(CAST(payment_details->'payment_gateway_names' AS json)) as gateway
+					WHERE gateway ILIKE '%cod%' OR gateway ILIKE '%cash%' OR gateway ILIKE '%contra%'
+				)
+			`)
+		}
+	}
+
 	if paymentStatusID, ok := filters["payment_status_id"].(uint); ok && paymentStatusID > 0 {
 		query = query.Where("payment_status_id = ?", paymentStatusID)
 	}

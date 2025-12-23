@@ -2,7 +2,7 @@
 
 import { Order } from '../../domain/types';
 import MapComponent from '@/shared/ui/MapComponent';
-import { getAIRecommendationAction, getOrderByIdAction } from '../../infra/actions';
+import { getAIRecommendationAction, getOrderByIdAction, updateOrderAction } from '../../infra/actions';
 import { useState, useEffect } from 'react';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 
@@ -87,10 +87,63 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         }
     }, [fullOrder]);
 
+    // Management State
+    const [isConfirmed, setIsConfirmed] = useState(false);
+    const [novelty, setNovelty] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
+
+    // Initialize management state
+    useEffect(() => {
+        if (order) {
+            setIsConfirmed(order.is_confirmed || false);
+            setNovelty(order.novelty || '');
+        }
+    }, [order]);
+
+    const handleSaveManagement = async () => {
+        if (!order.id) return;
+        setIsSaving(true);
+        try {
+            const result = await updateOrderAction(order.id, {
+                is_confirmed: isConfirmed,
+                novelty: novelty
+            });
+
+            if (result.success) {
+                // Update local state if needed or show success
+                // Usually we'd want to refresh the OrderList too, but onClose might trigger refresh
+                // For now, update the fullOrder locally so UI reflects change without fetch
+                if (fullOrder) {
+                    setFullOrder({
+                        ...fullOrder,
+                        is_confirmed: isConfirmed,
+                        novelty: novelty
+                    });
+                } else {
+                    // If we are working with initialOrder (props), we can't mutate props.
+                    // But we can set fullOrder to initialOrder + changes to switch to full mode
+                    setFullOrder({
+                        ...initialOrder,
+                        is_confirmed: isConfirmed,
+                        novelty: novelty
+                    });
+                }
+                alert('Cambios guardados correctamente'); // Simple feedback
+            } else {
+                alert('Error al guardar cambios');
+            }
+        } catch (error) {
+            console.error('Error saving management:', error);
+            alert('Error al guardar cambios');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const formatCurrency = (amount: number | string, currency: string = 'USD', amountPresentment?: number, currencyPresentment?: string) => {
         const num = typeof amount === 'string' ? parseFloat(amount) : amount;
         if (isNaN(num) || num === undefined) return '-';
-        
+
         // Priorizar moneda local (presentment) si está disponible
         if (amountPresentment && amountPresentment > 0 && currencyPresentment) {
             return new Intl.NumberFormat('es-CO', {
@@ -98,7 +151,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                 currency: currencyPresentment,
             }).format(amountPresentment);
         }
-        
+
         // Fallback a USD si no hay moneda local
         return new Intl.NumberFormat('es-CO', {
             style: 'currency',
@@ -320,12 +373,52 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         )}
                     </div>
 
+                    {/* Gestión de Pedido (Novedades) */}
+                    <div className="bg-gray-50 rounded-lg p-5 mt-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                            Gestión y Novedades
+                        </h3>
+                        <div className="flex flex-col sm:flex-row gap-6">
+                            <div className="flex items-center gap-3">
+                                <label className="flex items-center cursor-pointer relative">
+                                    <input
+                                        type="checkbox"
+                                        className="sr-only peer"
+                                        checked={isConfirmed}
+                                        onChange={(e) => setIsConfirmed(e.target.checked)}
+                                    />
+                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                                    <span className="ml-3 text-sm font-medium text-gray-900">Pedido Confirmado</span>
+                                </label>
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Novedades / Notas</label>
+                                <textarea
+                                    rows={2}
+                                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                                    placeholder="Escribe aquí novedades (ej: cambio de dirección, cliente contactado, etc.)"
+                                    value={novelty}
+                                    onChange={(e) => setNovelty(e.target.value)}
+                                />
+                            </div>
+                            <div className="flex items-end">
+                                <button
+                                    onClick={handleSaveManagement}
+                                    disabled={isSaving}
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                >
+                                    {isSaving ? 'Guardando...' : 'Guardar'}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Productos del Pedido */}
                     <div className="bg-gray-50 rounded-lg p-5">
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">Productos del Pedido</h3>
                         {loadingDetails ? (
                             <div className="py-4 text-center text-sm text-gray-500">Cargando productos...</div>
-                        ) : items.length > 0 ? (
+                        ) : (order.order_items || items).length > 0 ? (
                             <div className="overflow-x-auto">
                                 <table className="w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-100">
@@ -338,13 +431,13 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         </tr>
                                     </thead>
                                     <tbody className="bg-white divide-y divide-gray-200">
-                                        {items.map((item: any, idx: number) => (
+                                        {(order.order_items || items).map((item: any, idx: number) => (
                                             <tr key={idx} className="hover:bg-gray-50">
-                                                <td className="px-4 py-3 text-sm text-gray-900">{item.name || item.title || item.product_name || '-'}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-600">{item.sku || item.product_sku || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900">{item.product_name || item.name || item.title || '-'}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-600">{item.product_sku || item.sku || '-'}</td>
                                                 <td className="px-4 py-3 text-sm text-gray-900 text-right">{item.quantity || 0}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.price || item.unit_price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
-                                                <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency((parseFloat(item.price || item.unit_price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900 text-right">{formatCurrency(item.unit_price || item.price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
+                                                <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">{formatCurrency(item.total_price || (parseFloat(item.unit_price || item.price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
                                             </tr>
                                         ))}
                                     </tbody>
@@ -400,7 +493,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         </p>
                                         <p className="uppercase">{order.shipping_country || '-'}</p>
                                     </div>
-                                    
+
                                     {/* Probabilidad y Datos Faltantes */}
                                     {order.delivery_probability !== undefined && order.delivery_probability !== null && (
                                         <div className="mt-4 pt-4 border-t border-gray-200">
@@ -419,7 +512,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         <span className="text-lg font-bold text-gray-800 min-w-[3ch] text-right">{order.delivery_probability}%</span>
                                                     </div>
                                                 </div>
-                                                
+
                                                 {order.negative_factors && order.negative_factors.length > 0 && (
                                                     <div>
                                                         <p className="text-xs text-gray-500 uppercase mb-2 font-semibold tracking-wider">Datos Faltantes</p>

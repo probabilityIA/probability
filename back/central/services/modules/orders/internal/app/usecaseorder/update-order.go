@@ -180,6 +180,14 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *domain.
 		order.UserName = *req.UserName
 	}
 
+	// Novedades
+	if req.IsConfirmed != nil {
+		order.IsConfirmed = *req.IsConfirmed
+	}
+	if req.Novelty != nil {
+		order.Novelty = req.Novelty
+	}
+
 	// Facturación
 	if req.Invoiceable != nil {
 		order.Invoiceable = *req.Invoiceable

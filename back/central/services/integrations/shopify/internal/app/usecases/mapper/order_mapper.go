@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/domain"
@@ -82,6 +83,12 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			Country:    s.ShippingAddress.Country,
 			PostalCode: s.ShippingAddress.PostalCode,
 		}
+
+		// Fallback: Si Address2 está vacío, intentar usar DefaultAddress del cliente
+		if address.Street2 == "" && s.Customer.DefaultAddress != nil && s.Customer.DefaultAddress.Address2 != "" {
+			fmt.Printf("[Mapper] Usando DefaultAddress.Address2 como fallback para orden %s: %s\n", s.OrderNumber, s.Customer.DefaultAddress.Address2)
+			address.Street2 = s.Customer.DefaultAddress.Address2
+		}
 		if s.ShippingAddress.Coordinates != nil {
 			address.Latitude = &s.ShippingAddress.Coordinates.Lat
 			address.Longitude = &s.ShippingAddress.Coordinates.Lng
@@ -109,14 +116,58 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		currency = s.CurrencyPresentment
 	}
 
-	subtotal := s.TotalAmount // Mantener subtotal original si no hay presentment logic específico para subtotal como fallback?
+	subtotal := s.Subtotal
 	if s.SubtotalPresentment > 0 {
 		subtotal = s.SubtotalPresentment
-	} else if currency != s.Currency {
-		// Si cambiamos la moneda principal pero no tenemos subtotal presentment,
-		// idealmente no deberíamos mezclar, pero por ahora mantenemos la consistencia con TotalAmount
-		// Si TotalAmount es Presentment, Subtotal debería serlo.
-		// Asumimos que si TotalAmountPresentment existe, los otros components también.
+	}
+
+	tax := s.Tax
+	if s.TaxPresentment > 0 {
+		tax = s.TaxPresentment
+	}
+
+	discount := s.Discount
+	if s.DiscountPresentment > 0 {
+		discount = s.DiscountPresentment
+	}
+
+	shippingCost := s.ShippingCost
+	if s.ShippingCostPresentment > 0 {
+		shippingCost = s.ShippingCostPresentment
+	}
+
+	// Determine COD Total
+	var codTotal *float64
+	isCOD := false
+
+	// Check metadata for gateway names
+	if val, ok := s.Metadata["payment_gateway_names"]; ok {
+		if gateways, ok := val.([]string); ok {
+			for _, g := range gateways {
+				lower := strings.ToLower(g)
+				if strings.Contains(lower, "cod") || strings.Contains(lower, "cash") || strings.Contains(lower, "contra") {
+					isCOD = true
+					break
+				}
+			}
+		}
+	}
+
+	// Check tags
+	if !isCOD {
+		if val, ok := s.Metadata["tags"]; ok {
+			if tags, ok := val.(string); ok && tags != "" {
+				lower := strings.ToLower(tags)
+				if strings.Contains(lower, "cod") || strings.Contains(lower, "contra") {
+					isCOD = true
+				}
+			}
+		}
+	}
+
+	if isCOD {
+		amount := totalAmount
+		codTotal = &amount
 	}
 
 	probabilityOrder := &domain.ProbabilityOrderDTO{
@@ -127,8 +178,12 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		ExternalID:      s.ExternalID,
 		OrderNumber:     s.OrderNumber,
 		Subtotal:        subtotal,
+		Tax:             tax,
+		Discount:        discount,
+		ShippingCost:    shippingCost,
 		TotalAmount:     totalAmount,
 		Currency:        currency,
+		CodTotal:        codTotal,
 		CustomerName:    s.Customer.Name,
 		CustomerEmail:   s.Customer.Email,
 		CustomerPhone:   s.Customer.Phone,
@@ -136,8 +191,8 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		OriginalStatus:  s.OriginalStatus,
 		OccurredAt:      s.OccurredAt,
 		ImportedAt:      s.ImportedAt,
-		Items:           itemsJSON,
-		Metadata:        metadataJSON,
+		Items:           datatypes.JSON(itemsJSON),
+		Metadata:        datatypes.JSON(metadataJSON),
 		OrderItems:      orderItems,
 		Addresses:       addresses,
 		Shipments:       shipments,
