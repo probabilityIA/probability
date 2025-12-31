@@ -16,37 +16,25 @@ function LoginContent() {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen flex bg-white">
+    <div className="min-h-screen flex bg-white dark:bg-navy-900">
       {/* Left Side - Login Form */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center px-6 sm:px-12 lg:px-24 xl:px-32 relative">
         <div className="w-full max-w-md mx-auto">
-          {/* Mobile Logo (Visible only on small screens) */}
-          <div className="lg:hidden flex items-center gap-2 mb-10">
-            <div className="w-8 h-8 bg-blue-900 rounded-lg flex items-center justify-center text-white font-bold text-lg">P</div>
-            <h1 className="text-2xl font-bold text-blue-900">Probability</h1>
-          </div>
-
-          {errorMessage && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
-              {errorMessage}
-            </div>
-          )}
-
           <LoginForm />
 
-          {/* Footer Links */}
-          <div className="mt-12 flex flex-wrap gap-4 sm:gap-6 text-sm font-medium text-green-500 justify-center sm:justify-start">
-            <a href="#" className="hover:underline">Términos</a>
-            <a href="#" className="hover:underline">Planes</a>
-            <a href="#" className="hover:underline">Contáctanos</a>
+          {/* Footer Links (restored) */}
+          <div className="mt-12 flex flex-wrap gap-4 sm:gap-6 text-sm font-medium text-navy-700 dark:text-gray-400 justify-center sm:justify-start">
+            <a href="#" className="text-[#7c3aed] hover:text-[#6d28d9]">Términos</a>
+            <a href="#" className="text-[#7c3aed] hover:text-[#6d28d9]">Planes</a>
+            <a href="#" className="text-[#7c3aed] hover:text-[#6d28d9]">Contáctanos</a>
           </div>
         </div>
       </div>
 
       {/* Right Side - Dashboard Preview */}
-      <div className="hidden lg:flex lg:w-1/2 bg-[#1e3a8a] flex-col justify-center px-12 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 flex-col justify-center px-12 relative overflow-hidden rounded-l-3xl">
         {/* Background Pattern/Gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-blue-900 to-blue-800"></div>
+  <div className="absolute inset-0 bg-linear-to-br from-navy-900 to-navy-800" style={{background: 'linear-gradient(135deg,#0b1530 0%,#1e3a8a 100%)'}} />
 
         <div className="relative z-10 max-w-lg mx-auto w-full space-y-8">
           {/* Logo */}
@@ -62,11 +50,11 @@ function LoginContent() {
               <h3 className="text-gray-800 font-semibold text-sm mb-4">Estadísticas por Departamento</h3>
               <div className="space-y-3">
                 <div className="flex justify-between items-center">
-                  <span className="text-green-500 font-bold text-lg">$8,035</span>
+                  <span className="text-[#7c3aed] font-bold text-lg">$8,035</span>
                   <span className="text-gray-400 text-xs">Ventas</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-green-500 font-bold text-lg">$4,684</span>
+                  <span className="text-[#7c3aed] font-bold text-lg">$4,684</span>
                   <span className="text-gray-400 text-xs">Marketing</span>
                 </div>
               </div>
@@ -85,11 +73,11 @@ function LoginContent() {
             <div className="col-span-2 bg-white rounded-xl p-5 shadow-lg">
               <h3 className="text-gray-800 font-semibold text-sm mb-4">Resultados del Mes</h3>
               <div className="flex justify-between items-end mb-2">
-                <span className="text-green-500 font-bold text-2xl">$69,700</span>
-                <span className="text-green-500 text-xs font-medium bg-green-50 px-2 py-1 rounded">+2.2%</span>
+                <span className="text-[#7c3aed] font-bold text-2xl">$69,700</span>
+                <span className="text-[#7c3aed] text-xs font-medium bg-[#f3e8ff] px-2 py-1 rounded">+2.2%</span>
               </div>
               <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
-                <div className="bg-green-500 h-1.5 rounded-full w-3/4"></div>
+                <div className="bg-[#7c3aed] h-1.5 rounded-full w-3/4"></div>
               </div>
             </div>
           </div>
