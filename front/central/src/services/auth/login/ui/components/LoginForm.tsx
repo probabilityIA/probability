@@ -77,8 +77,8 @@ export const LoginForm = () => {
         return (
         <div className="mb-10 mt-1 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start text-gray-900 dark:text-white">
             <div className="mt-[1vh] w-full max-w-full flex-col items-center md:pl-4 lg:pl-0 xl:max-w-[420px]">
-                <h3 className="mb-2.5 text-5xl font-bold text-navy-700 dark:text-black">Iniciar Sesión</h3>
-                <p className="mb-9 ml-1 text-base text-gray-600">Introduzca su correo y contraseña</p>
+                <h1 className="mb-2.5 text-5xl font-bold text-navy-700 dark:text-black">¡Bienvenido!</h1>
+                <p className="mb-9 ml-1 text-base text-gray-600">Inicia sesión con tu correo electrónico y contraseña.</p>
 
               
 
