@@ -3,20 +3,21 @@ services:
     image: probability-front-central:latest
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: docker/Dockerfile
     container_name: probability-frontend
     ports:
-      - "3000:3000"
+      - "3000:80"  # Puerto host:puerto contenedor (el contenedor expone 80 según Dockerfile)
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL:-http://localhost:8080/api/v1}
+      - API_BASE_URL=${API_BASE_URL:-http://back-central:3050/api/v1}
     env_file:
       - .env
     restart: unless-stopped
     networks:
       - probability-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:80/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
