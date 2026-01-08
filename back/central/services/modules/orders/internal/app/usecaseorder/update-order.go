@@ -181,9 +181,21 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *domain.
 	}
 
 	// Novedades
-	if req.IsConfirmed != nil {
-		order.IsConfirmed = *req.IsConfirmed
+	if req.ConfirmationStatus != nil {
+		switch *req.ConfirmationStatus {
+		case "yes":
+			t := true
+			order.IsConfirmed = &t
+		case "no":
+			f := false
+			order.IsConfirmed = &f
+		case "pending":
+			order.IsConfirmed = nil
+		}
+	} else if req.IsConfirmed != nil {
+		order.IsConfirmed = req.IsConfirmed
 	}
+
 	if req.Novelty != nil {
 		order.Novelty = req.Novelty
 	}
@@ -225,6 +237,20 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *domain.
 	// Guardar cambios
 	if err := uc.repo.UpdateOrder(ctx, order); err != nil {
 		return nil, fmt.Errorf("error updating order: %w", err)
+	}
+
+	// Recalcular score (Esto actualiza la orden en BD otra vez con el nuevo score)
+	// No bloqueamos si falla, solo logueamos (o podríamos retornar error)
+	if uc.scoreUseCase != nil {
+		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
+			fmt.Printf("Error recalculating score for order %s: %v\n", order.ID, err)
+		} else {
+			// Si el cálculo fue exitoso, recargar la orden para devolver el score actualizado y los factores actualizados
+			// Esto es crucial para que el frontend vea reflejado el cambio inmediato (ej: desaparece el warning de dirección)
+			if refreshedOrder, err := uc.repo.GetOrderByID(ctx, id); err == nil {
+				order = refreshedOrder
+			}
+		}
 	}
 
 	// Publicar eventos si hay publicador disponible

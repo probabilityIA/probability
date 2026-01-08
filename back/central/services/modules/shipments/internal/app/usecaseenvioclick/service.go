@@ -26,7 +26,7 @@ func (uc *UseCaseEnvioClick) QuoteShipment(ctx context.Context, req domain.Envio
 	return uc.envioclickClient.Quote(req)
 }
 
-func (uc *UseCaseEnvioClick) GenerateGuide(ctx context.Context, req interface{}) (*domain.EnvioClickGenerateResponse, error) {
+func (uc *UseCaseEnvioClick) GenerateGuide(ctx context.Context, req domain.EnvioClickQuoteRequest) (*domain.EnvioClickGenerateResponse, error) {
 	uc.logger.Info().Msg("Generating guide with EnvioClick")
 	// Here we could add logic to save the guide info to the database (update the order)
 	// For now we just pass through to the client

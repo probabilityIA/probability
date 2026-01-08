@@ -94,7 +94,46 @@ func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *domain.ProbabilityO
 	}
 
 	// 6. Complemento de dirección
-	if order.Address2 == "" || len(order.Address2) <= 5 {
+	address2 := order.Address2
+
+	// Fallback 1: Si el campo transitorio está vacío, buscar en las direcciones relacionadas
+	if address2 == "" && len(order.Addresses) > 0 {
+		for _, addr := range order.Addresses {
+			// Priorizar dirección de envío o usar la primera disponible si no tiene tipo
+			if (addr.Type == "shipping" || addr.Type == "") && addr.Street2 != "" {
+				address2 = addr.Street2
+				break
+			}
+		}
+	}
+
+	// Fallback 2: Check ChannelMetadata RawData (Crucial for Shopify legacy/unmapped orders)
+	if (address2 == "" || len(address2) < 2) && len(order.ChannelMetadata) > 0 {
+		for _, meta := range order.ChannelMetadata {
+			// Try to parse RawData as Shopify order structure
+			if len(meta.RawData) > 0 {
+				var rawData struct {
+					ShippingAddress struct {
+						Address2 string `json:"address2"`
+					} `json:"shipping_address"`
+				}
+				// We need to marshal/unmarshal because RawData is datatypes.JSON (byte array)
+				bytes, err := meta.RawData.MarshalJSON()
+				if err == nil {
+					if err := json.Unmarshal(bytes, &rawData); err == nil {
+						if rawData.ShippingAddress.Address2 != "" {
+							fmt.Printf("[CalculateOrderScore] Found Address2 in ChannelMetadata: '%s'\n", rawData.ShippingAddress.Address2)
+							address2 = rawData.ShippingAddress.Address2
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Validar solo si realmente está vacío o es muy corto (ajustado a < 2 para evitar falsos positivos con "Int 2")
+	if address2 == "" || len(address2) < 2 {
 		factors = append(factors, "Complemento de dirección")
 	}
 
