@@ -289,8 +289,10 @@ func (uc *UseCaseOrderMapping) mapOrderStatuses(ctx context.Context, dto *domain
 }
 
 // mapOrderStatusID mapea el estado general de la orden
+// Prioridad 1: Intentar mapear usando Status (que será shipment_status cuando existe)
+// Prioridad 2: Si no encuentra con Status, intentar con OriginalStatus (financial_status) como fallback
 func (uc *UseCaseOrderMapping) mapOrderStatusID(ctx context.Context, dto *domain.ProbabilityOrderDTO) *uint {
-	if dto.OriginalStatus == "" || dto.IntegrationType == "" {
+	if dto.IntegrationType == "" {
 		return nil
 	}
 
@@ -299,17 +301,30 @@ func (uc *UseCaseOrderMapping) mapOrderStatusID(ctx context.Context, dto *domain
 		return nil
 	}
 
-	mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
-	if err != nil {
-		uc.logger.Warn().
-			Uint("integration_type_id", integrationTypeID).
-			Str("original_status", dto.OriginalStatus).
-			Err(err).
-			Msg("Error al buscar mapeo de estado, continuando sin status_id")
-		return nil
+	// Prioridad 1: Intentar mapear usando Status (puede ser shipment_status, fulfillment_status, o financial_status)
+	if dto.Status != "" {
+		mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.Status)
+		if err == nil && mappedStatusID != nil {
+			return mappedStatusID
+		}
 	}
 
-	return mappedStatusID
+	// Prioridad 2: Si no encontró con Status, intentar con OriginalStatus (financial_status)
+	if dto.OriginalStatus != "" {
+		mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
+		if err != nil {
+			uc.logger.Warn().
+				Uint("integration_type_id", integrationTypeID).
+				Str("status", dto.Status).
+				Str("original_status", dto.OriginalStatus).
+				Err(err).
+				Msg("Error al buscar mapeo de estado, continuando sin status_id")
+			return nil
+		}
+		return mappedStatusID
+	}
+
+	return nil
 }
 
 // mapPaymentStatusID mapea el estado de pago desde el DTO o desde PaymentDetails si es Shopify
