@@ -8,6 +8,46 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/shopify/internal/infra/secondary/client/response"
 )
 
+// extractShipmentStatusFromFulfillments extrae el shipment_status de fulfillments
+// Prioridad: "delivered" > más reciente por UpdatedAt
+// Si no hay fulfillments con shipment_status, retorna fallback: fulfillment_status > financial_status
+func extractShipmentStatusFromFulfillments(fulfillments []response.Fulfillment, fulfillmentStatus *string, financialStatus string) string {
+	// Prioridad 1: Buscar shipment_status en fulfillments
+	if len(fulfillments) > 0 {
+		// Buscar el fulfillment más reciente con shipment_status
+		var latestShipmentStatus *string
+		var latestUpdatedAt time.Time
+		var foundDelivered bool
+		
+		for _, fulfillment := range fulfillments {
+			if fulfillment.ShipmentStatus != nil {
+				// Priorizar "delivered" sobre otros estados
+				if *fulfillment.ShipmentStatus == "delivered" {
+					return *fulfillment.ShipmentStatus
+				}
+				// Si no hay delivered, tomar el más reciente
+				if !foundDelivered && (latestShipmentStatus == nil || fulfillment.UpdatedAt.After(latestUpdatedAt)) {
+					latestShipmentStatus = fulfillment.ShipmentStatus
+					latestUpdatedAt = fulfillment.UpdatedAt
+				}
+			}
+		}
+		
+		// Si encontramos shipment_status, retornarlo
+		if latestShipmentStatus != nil {
+			return *latestShipmentStatus
+		}
+	}
+	
+	// Prioridad 2: Usar fulfillment_status si existe
+	if fulfillmentStatus != nil && *fulfillmentStatus != "" {
+		return *fulfillmentStatus
+	}
+	
+	// Prioridad 3: Fallback a financial_status
+	return financialStatus
+}
+
 // MapOrderResponseToShopifyOrder mapea una Order de respuesta de Shopify a ShopifyOrder del dominio
 func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, businessID *uint, integrationID uint, integrationType string) domain.ShopifyOrder {
 	// Convertir precios de string a float64 (shop_money - USD)
@@ -181,11 +221,8 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		}
 	}
 
-	// Determinar status
-	status := orderResp.FinancialStatus
-	if orderResp.FulfillmentStatus != nil {
-		status = *orderResp.FulfillmentStatus
-	}
+	// Determinar status: Prioridad shipment_status > fulfillment_status > financial_status
+	status := extractShipmentStatusFromFulfillments(orderResp.Fulfillments, orderResp.FulfillmentStatus, orderResp.FinancialStatus)
 
 	// Mapear metadata
 	metadata := make(map[string]interface{})
