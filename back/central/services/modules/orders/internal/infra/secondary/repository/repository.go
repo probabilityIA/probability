@@ -68,6 +68,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Proba
 		Preload("PaymentStatus").      // Precargar PaymentStatus
 		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
 		Where("id = ?", id).
 		First(&order).Error
 
@@ -92,6 +93,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		Preload("PaymentStatus").      // Precargar PaymentStatus
 		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
 		Where("internal_number = ?", internalNumber).
 		First(&order).Error
 

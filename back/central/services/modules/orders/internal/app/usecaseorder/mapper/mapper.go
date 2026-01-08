@@ -15,11 +15,16 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 
 	// 1. Backward Compatibility: Populate Items (JSONB) from OrderItems (Relation) if Items (JSONB) is empty
 	// This ensures that legacy orders or orders where JSONB wasn't populated still show products
+	// 1. Prioritize OrderItems relation: Populate Items (JSONB) from OrderItems (Relation) if available
+	// This ensures we serve the most up-to-date structured data from the order_items table
 	items := order.Items
-	if (len(items) == 0 || string(items) == "null") && len(order.OrderItems) > 0 {
+	if len(order.OrderItems) > 0 {
 		if itemsJSON, err := json.Marshal(order.OrderItems); err == nil {
 			items = datatypes.JSON(itemsJSON)
 		}
+	} else if len(items) == 0 || string(items) == "null" {
+		// Fallback: If no OrderItems relation and no Items JSONB, ensure we return empty array, not null
+		items = datatypes.JSON("[]")
 	}
 
 	// Checking imports first...
@@ -119,6 +124,10 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		UserID:   order.UserID,
 		UserName: order.UserName,
 
+		// Novedades
+		IsConfirmed: order.IsConfirmed,
+		Novelty:     order.Novelty,
+
 		// Facturación
 		Invoiceable:     order.Invoiceable,
 		InvoiceURL:      order.InvoiceURL,
@@ -127,7 +136,7 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 		OrderStatusURL:  order.OrderStatusURL,
 
 		// Datos estructurados
-		Items:              order.Items,
+		Items:              items,
 		Metadata:           order.Metadata,
 		FinancialDetails:   order.FinancialDetails,
 		ShippingDetails:    order.ShippingDetails,
@@ -182,5 +191,7 @@ func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
 		OrderStatus:            order.OrderStatus,       // Información del estado de Probability
 		PaymentStatus:          order.PaymentStatus,     // Información completa del estado de pago
 		FulfillmentStatus:      order.FulfillmentStatus, // Información completa del estado de fulfillment
+		IsConfirmed:            order.IsConfirmed,
+		Novelty:                order.Novelty,
 	}
 }

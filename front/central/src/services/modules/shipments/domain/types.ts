@@ -52,3 +52,67 @@ export interface PaginatedResponse<T> {
     page_size: number;
     total_pages: number;
 }
+
+export interface EnvioClickAddress {
+    company: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    suburb: string;
+    crossStreet: string;
+    reference: string;
+    daneCode: string;
+}
+
+export interface EnvioClickPackage {
+    weight: number;
+    height: number;
+    width: number;
+    length: number;
+}
+
+export interface EnvioClickQuoteRequest {
+    idRate: number;
+    myShipmentReference: string;
+    external_order_id: string;
+    requestPickup: boolean;
+    pickupDate: string;
+    insurance: boolean;
+    description: string;
+    contentValue: number;
+    codValue: number;
+    includeGuideCost: boolean;
+    codPaymentMethod: string;
+    packages: EnvioClickPackage[];
+    origin: EnvioClickAddress;
+    destination: EnvioClickAddress;
+}
+
+export interface EnvioClickGenerateResponse {
+    status: string;
+    data: {
+        trackingNumber: string;
+        labelUrl: string;
+        myGuideReference: string;
+    };
+}
+
+export interface EnvioClickRate {
+    idRate: number;
+    idProduct: number;
+    product: string;
+    idCarrier: number;
+    carrier: string;
+    flete: number;
+    deliveryDays: number;
+    quotationType: string;
+}
+
+export interface EnvioClickQuoteResponse {
+    status: string;
+    data: {
+        rates: EnvioClickRate[];
+    };
+}
