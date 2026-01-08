@@ -123,13 +123,7 @@ const OrderRow = memo(({
                     <span className="text-xs text-gray-400">-</span>
                 )}
             </td>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                {order.fulfillment_status?.name ? (
-                    getStatusBadge(order.fulfillment_status.name, order.fulfillment_status.color)
-                ) : (
-                    <span className="text-xs text-gray-400">-</span>
-                )}
-            </td>
+
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
                     <div className="flex items-center gap-2 min-w-[120px]">
@@ -968,9 +962,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
                                     Estado de Pago
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                                    Estado de Fulfillment
-                                </th>
+
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
                                     Probabilidad
                                 </th>
@@ -997,7 +989,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         <tbody className="bg-white divide-y divide-gray-200">
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={isSuperAdmin ? 12 : 11} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={isSuperAdmin ? 11 : 10} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                                         No hay órdenes disponibles
                                     </td>
                                 </tr>
