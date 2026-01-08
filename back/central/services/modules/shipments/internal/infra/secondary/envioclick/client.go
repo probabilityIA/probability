@@ -35,7 +35,7 @@ func (c *Client) Quote(req domain.EnvioClickQuoteRequest) (*domain.EnvioClickQuo
 	return c.doRequest(url, req)
 }
 
-func (c *Client) Generate(req interface{}) (*domain.EnvioClickGenerateResponse, error) {
+func (c *Client) Generate(req domain.EnvioClickQuoteRequest) (*domain.EnvioClickGenerateResponse, error) {
 	// Generate guide usually takes the idRate selected
 	url := fmt.Sprintf("%s/shipment", BaseURL)
 
@@ -85,6 +85,12 @@ func (c *Client) doRequest(url string, payload interface{}) (*domain.EnvioClickQ
 	return &resp, nil
 }
 
+type EnvioClickErrorResponse struct {
+	StatusMessages []struct {
+		Error []string `json:"error"`
+	} `json:"status_messages"`
+}
+
 func (c *Client) doRawRequest(method, url string, body []byte) ([]byte, error) {
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
 	if err != nil {
@@ -93,6 +99,8 @@ func (c *Client) doRawRequest(method, url string, body []byte) ([]byte, error) {
 
 	req.Header.Set("Authorization", APIKey)
 	req.Header.Set("Content-Type", "application/json")
+
+	fmt.Printf("DEBUG ENVIOCLICK BODY: %s\n", string(body)) // Temporary log
 
 	resp, err := c.client.Do(req)
 	if err != nil {
@@ -107,7 +115,22 @@ func (c *Client) doRawRequest(method, url string, body []byte) ([]byte, error) {
 
 	if resp.StatusCode >= 400 {
 		c.logger.Error().Str("body", string(respBody)).Int("status", resp.StatusCode).Msg("EnvioClick API Error")
-		return nil, fmt.Errorf("envioclick api error: %d", resp.StatusCode)
+
+		var errorResp EnvioClickErrorResponse
+		if err := json.Unmarshal(respBody, &errorResp); err == nil && len(errorResp.StatusMessages) > 0 {
+			for _, msg := range errorResp.StatusMessages {
+				if len(msg.Error) > 0 {
+					// Join all error messages found
+					fullError := ""
+					for _, e := range msg.Error {
+						fullError += e + " "
+					}
+					return nil, fmt.Errorf("%s", fullError)
+				}
+			}
+		}
+
+		return nil, fmt.Errorf("envioclick api error: %d - %s", resp.StatusCode, string(respBody))
 	}
 
 	return respBody, nil

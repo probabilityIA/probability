@@ -115,7 +115,7 @@ type ProbabilityOrder struct {
 	UserName string  `json:"user_name"`
 
 	// Novedades
-	IsConfirmed bool    `json:"is_confirmed"`
+	IsConfirmed *bool   `json:"is_confirmed"`
 	Novelty     *string `json:"novelty"`
 
 	// Facturación
