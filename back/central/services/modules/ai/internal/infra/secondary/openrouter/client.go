@@ -17,7 +17,7 @@ import (
 const (
 	APIKey = "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"
 	APIURL = "https://openrouter.ai/api/v1/chat/completions"
-	Model  = "nvidia/nemotron-3-nano-30b-a3b:free"
+	Model  = "xiaomi/mimo-v2-flash:free"
 )
 
 type Client struct {

@@ -3,14 +3,20 @@ package domain
 // EnvioClick Models
 
 type EnvioClickQuoteRequest struct {
-	Packages         []EnvioClickPackage `json:"packages"`
-	Description      string              `json:"description"`
-	ContentValue     float64             `json:"contentValue"`
-	CODValue         float64             `json:"codValue,omitempty"`
-	IncludeGuideCost bool                `json:"includeGuideCost"`
-	CODPaymentMethod string              `json:"codPaymentMethod,omitempty"` // "cash" or "data_phone"
-	Origin           EnvioClickAddress   `json:"origin"`
-	Destination      EnvioClickAddress   `json:"destination"`
+	IDRate              int64               `json:"idRate"`
+	MyShipmentReference string              `json:"myShipmentReference"`
+	ExternalOrderID     string              `json:"external_order_id"`
+	RequestPickup       bool                `json:"requestPickup"`
+	PickupDate          string              `json:"pickupDate"`
+	Insurance           bool                `json:"insurance"`
+	Description         string              `json:"description"`
+	ContentValue        float64             `json:"contentValue"`
+	CODValue            float64             `json:"codValue"`
+	IncludeGuideCost    bool                `json:"includeGuideCost"`
+	CODPaymentMethod    string              `json:"codPaymentMethod"` // "cash" or "data_phone"
+	Packages            []EnvioClickPackage `json:"packages"`
+	Origin              EnvioClickAddress   `json:"origin"`
+	Destination         EnvioClickAddress   `json:"destination"`
 }
 
 type EnvioClickPackage struct {
@@ -21,8 +27,16 @@ type EnvioClickPackage struct {
 }
 
 type EnvioClickAddress struct {
-	DaneCode string `json:"daneCode"`
-	Address  string `json:"address"`
+	Company     string `json:"company"`
+	FirstName   string `json:"firstName"`
+	LastName    string `json:"lastName"`
+	Email       string `json:"email"`
+	Phone       string `json:"phone"`
+	Address     string `json:"address"`
+	Suburb      string `json:"suburb"`
+	CrossStreet string `json:"crossStreet"`
+	Reference   string `json:"reference"`
+	DaneCode    string `json:"daneCode"`
 }
 
 type EnvioClickQuoteResponse struct {

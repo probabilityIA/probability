@@ -42,17 +42,17 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 			Msg("Order event publisher initialized")
 	}
 
+	// 3.1. Init Score Use Case
+	scoreUseCase := usecaseorderscore.New(repo)
+
 	// 3. Init Use Cases
-	orderCRUD := usecaseorder.New(repo, eventPublisher)
+	orderCRUD := usecaseorder.New(repo, eventPublisher, scoreUseCase)
 
 	// 3.0. Init Status Repositories (para mapeo de estados)
 	orderStatusRepo := orderstatusrepo.New(database, logger)
 	paymentStatusRepo := paymentstatusrepo.New(database, logger)
 	fulfillmentStatusRepo := fulfillmentstatusrepo.New(database, logger)
 	orderMapping := usecaseordermapping.New(repo, logger, eventPublisher, orderStatusRepo, paymentStatusRepo, fulfillmentStatusRepo)
-
-	// 3.1. Init Score Use Case
-	scoreUseCase := usecaseorderscore.New(repo)
 
 	// 3.2. Init Event Consumer (si Redis está disponible)
 	if redisClient != nil && eventPublisher != nil {

@@ -65,8 +65,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const order = fullOrder || initialOrder;
 
     // AI Logic - Triggers when fullOrder (with address) is available
+    // AI Logic - Triggers when fullOrder (with address) is available AND mode is 'recommendation'
     useEffect(() => {
-        if (fullOrder && fullOrder.shipping_city && fullOrder.shipping_state) {
+        if (mode === 'recommendation' && fullOrder && fullOrder.shipping_city && fullOrder.shipping_state) {
             setLoadingAI(true);
             getAIRecommendationAction(fullOrder.shipping_city, fullOrder.shipping_state)
                 .then(data => {
@@ -81,21 +82,22 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     setAIRecommendation(null);
                 })
                 .finally(() => setLoadingAI(false));
-        } else {
+        } else if (mode !== 'recommendation') {
+            // Reset AI state if leaving recommendation mode (opt)
             setAIRecommendation(null);
             setLoadingAI(false);
         }
-    }, [fullOrder]);
+    }, [fullOrder, mode]);
 
     // Management State
-    const [isConfirmed, setIsConfirmed] = useState(false);
+    const [isConfirmed, setIsConfirmed] = useState<boolean | null>(false);
     const [novelty, setNovelty] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
     // Initialize management state
     useEffect(() => {
         if (order) {
-            setIsConfirmed(order.is_confirmed || false);
+            setIsConfirmed(order.is_confirmed ?? null);
             setNovelty(order.novelty || '');
         }
     }, [order]);
@@ -104,31 +106,18 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
         if (!order.id) return;
         setIsSaving(true);
         try {
+            const status = isConfirmed === true ? 'yes' : isConfirmed === false ? 'no' : 'pending';
             const result = await updateOrderAction(order.id, {
-                is_confirmed: isConfirmed,
+                confirmation_status: status,
                 novelty: novelty
             });
 
-            if (result.success) {
-                // Update local state if needed or show success
-                // Usually we'd want to refresh the OrderList too, but onClose might trigger refresh
-                // For now, update the fullOrder locally so UI reflects change without fetch
-                if (fullOrder) {
-                    setFullOrder({
-                        ...fullOrder,
-                        is_confirmed: isConfirmed,
-                        novelty: novelty
-                    });
-                } else {
-                    // If we are working with initialOrder (props), we can't mutate props.
-                    // But we can set fullOrder to initialOrder + changes to switch to full mode
-                    setFullOrder({
-                        ...initialOrder,
-                        is_confirmed: isConfirmed,
-                        novelty: novelty
-                    });
-                }
-                alert('Cambios guardados correctamente'); // Simple feedback
+            if (result.success && result.data) {
+                // Update local state with the FULL updated order returned by backend
+                // This ensures calculated fields like delivery_probability and negative_factors are updated
+                setFullOrder(result.data);
+
+                alert('Cambios guardados correctamente');
             } else {
                 alert('Error al guardar cambios');
             }
@@ -380,22 +369,32 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         </h3>
                         <div className="flex flex-col sm:flex-row gap-6">
                             <div className="flex items-center gap-3">
-                                <label className="flex items-center cursor-pointer relative">
-                                    <input
-                                        type="checkbox"
-                                        className="sr-only peer"
-                                        checked={isConfirmed}
-                                        onChange={(e) => setIsConfirmed(e.target.checked)}
-                                    />
-                                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                                    <span className="ml-3 text-sm font-medium text-gray-900">Pedido Confirmado</span>
-                                </label>
+                                <div className="flex flex-col">
+                                    <label className="text-sm font-medium text-gray-700 mb-1">Confirmación de Pedido</label>
+                                    <select
+                                        className={`block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md ${isConfirmed === true
+                                            ? 'bg-green-50 text-green-700 border-green-500'
+                                            : isConfirmed === false
+                                                ? 'bg-red-50 text-red-700 border-red-500'
+                                                : 'bg-yellow-50 text-yellow-700 border-yellow-500'
+                                            }`}
+                                        value={isConfirmed === null ? 'pending' : (isConfirmed ? 'yes' : 'no')}
+                                        onChange={(e) => {
+                                            const val = e.target.value;
+                                            setIsConfirmed(val === 'pending' ? null : val === 'yes');
+                                        }}
+                                    >
+                                        <option value="yes">Sí, Confirmado</option>
+                                        <option value="no">No, Rechazado/Cancelado</option>
+                                        <option value="pending">Pendiente confirmación</option>
+                                    </select>
+                                </div>
                             </div>
                             <div className="flex-1">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Novedades / Notas</label>
                                 <textarea
                                     rows={2}
-                                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border"
+                                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border text-gray-900"
                                     placeholder="Escribe aquí novedades (ej: cambio de dirección, cliente contactado, etc.)"
                                     value={novelty}
                                     onChange={(e) => setNovelty(e.target.value)}

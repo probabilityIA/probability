@@ -186,8 +186,9 @@ type UpdateOrderRequest struct {
 	UserName *string `json:"user_name" binding:"omitempty,max=255"`
 
 	// Novedades
-	IsConfirmed *bool   `json:"is_confirmed"`
-	Novelty     *string `json:"novelty"`
+	IsConfirmed        *bool   `json:"is_confirmed"`
+	ConfirmationStatus *string `json:"confirmation_status"` // "yes", "no", "pending"
+	Novelty            *string `json:"novelty"`
 
 	// Facturación
 	Invoiceable     *bool   `json:"invoiceable"`
@@ -312,7 +313,7 @@ type OrderResponse struct {
 	UserName string  `json:"user_name"`
 
 	// Novedades
-	IsConfirmed bool    `json:"is_confirmed"`
+	IsConfirmed *bool   `json:"is_confirmed"`
 	Novelty     *string `json:"novelty"`
 
 	// Facturación
@@ -390,6 +391,8 @@ type OrderSummary struct {
 	OrderStatus            *OrderStatusInfo       `json:"order_status,omitempty"`       // Información del estado de Probability
 	PaymentStatus          *PaymentStatusInfo     `json:"payment_status,omitempty"`     // Información completa del estado de pago
 	FulfillmentStatus      *FulfillmentStatusInfo `json:"fulfillment_status,omitempty"` // Información completa del estado de fulfillment
+	IsConfirmed            *bool                  `json:"is_confirmed"`
+	Novelty                *string                `json:"novelty"`
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos

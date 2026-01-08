@@ -8,12 +8,14 @@ import (
 type UseCaseOrder struct {
 	repo           domain.IRepository
 	eventPublisher domain.IOrderEventPublisher
+	scoreUseCase   domain.IOrderScoreUseCase
 }
 
 // New crea una nueva instancia de UseCaseOrder
-func New(repo domain.IRepository, eventPublisher domain.IOrderEventPublisher) *UseCaseOrder {
+func New(repo domain.IRepository, eventPublisher domain.IOrderEventPublisher, scoreUseCase domain.IOrderScoreUseCase) *UseCaseOrder {
 	return &UseCaseOrder{
 		repo:           repo,
 		eventPublisher: eventPublisher,
+		scoreUseCase:   scoreUseCase,
 	}
 }

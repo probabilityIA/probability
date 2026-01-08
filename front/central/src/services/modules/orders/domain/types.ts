@@ -126,7 +126,7 @@ export interface Order {
     user_name: string;
 
     // Novedades
-    is_confirmed?: boolean;
+    is_confirmed?: boolean | null;
     novelty?: string;
 
     // Facturación
@@ -363,7 +363,8 @@ export interface UpdateOrderDTO {
     user_name?: string;
 
     // Novedades
-    is_confirmed?: boolean;
+    is_confirmed?: boolean | null;
+    confirmation_status?: 'yes' | 'no' | 'pending';
     novelty?: string;
 
     // Facturación
