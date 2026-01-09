@@ -61,6 +61,10 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		if orderResp.Customer.Phone != nil {
 			customer.Phone = *orderResp.Customer.Phone
 		}
+		// Map Orders Count and Total Spent
+		customer.OrdersCount = orderResp.Customer.OrdersCount
+		customer.TotalSpent = orderResp.Customer.TotalSpent
+
 		// Map Default Address
 		if orderResp.Customer.DefaultAddress != nil {
 			da := orderResp.Customer.DefaultAddress
