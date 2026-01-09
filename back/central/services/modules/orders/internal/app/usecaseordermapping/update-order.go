@@ -281,6 +281,16 @@ func (uc *UseCaseOrderMapping) updateCustomerFields(order *domain.ProbabilityOrd
 		changed = true
 	}
 
+	if dto.CustomerOrderCount != nil && order.CustomerOrderCount != *dto.CustomerOrderCount {
+		order.CustomerOrderCount = *dto.CustomerOrderCount
+		changed = true
+	}
+
+	if dto.CustomerTotalSpent != nil && order.CustomerTotalSpent != *dto.CustomerTotalSpent {
+		order.CustomerTotalSpent = *dto.CustomerTotalSpent
+		changed = true
+	}
+
 	return changed
 }
 
