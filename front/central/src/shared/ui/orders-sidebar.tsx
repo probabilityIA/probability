@@ -1,58 +1,58 @@
 'use client';
 
+import React, { memo, useMemo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
-export function OrdersSidebar() {
+export const OrdersSidebar = memo(function OrdersSidebar() {
     const pathname = usePathname();
     const { 
         primaryExpanded, 
-        secondaryExpanded,
+        // keep secondaryExpanded available but we'll default expanded for UX
         requestSecondaryExpand,
         requestSecondaryCollapse
     } = useSidebar();
     const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
     
-    const isActive = (path: string) => pathname === path || pathname.startsWith(path);
+    const isActive = useCallback((path: string) => pathname === path || pathname.startsWith(path), [pathname]);
     
     // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
-    const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
+    const permissionsNotLoaded = useMemo(() => isLoading || !permissions || !permissions.resources || permissions.resources.length === 0, [isLoading, permissions]);
     
     // Calcular la posición izquierda basada en el estado del sidebar primario
     const leftPosition = primaryExpanded ? '250px' : '80px';
     
-    // El sidebar secundario puede expandirse independientemente
-    const isExpanded = secondaryExpanded || primaryExpanded;
+    // Mostrar el secundario desplegado por defecto para mejorar discoverability
+    const isExpanded = true;
     const width = isExpanded ? '240px' : '60px';
 
-    const handleMouseEnter = () => {
+    const handleMouseEnter = useCallback(() => {
         // Solo expandir el secundario, NO tocar el principal
         requestSecondaryExpand();
-    };
+    }, [requestSecondaryExpand]);
 
-    const handleMouseLeave = () => {
+    const handleMouseLeave = useCallback(() => {
         // Solo colapsar el secundario
         requestSecondaryCollapse();
-    };
+    }, [requestSecondaryCollapse]);
 
     // Verificar permisos para cada recurso (al menos Read)
-    const canViewProducts = permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read');
-    const canViewOrders = permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read');
-    const canViewShipments = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
-    const canViewOrderStatus = permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read');
-    const canViewNotifications = permissionsNotLoaded || isSuperAdmin || hasPermission('Configuración de Notificaciones', 'Read');
+    const canViewProducts = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
+    const canViewOrders = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
+    const canViewShipments = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
+    const canViewOrderStatus = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
+    const canViewNotifications = useMemo(() => permissionsNotLoaded || isSuperAdmin || hasPermission('Configuración de Notificaciones', 'Read'), [permissionsNotLoaded, isSuperAdmin, hasPermission]);
 
-    // Si no tiene ningún permiso, no mostrar el sidebar
-    const hasAnyPermission = canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications;
+    const hasAnyPermission = useMemo(() => canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications, [canViewProducts, canViewOrders, canViewShipments, canViewOrderStatus, canViewNotifications]);
     if (!hasAnyPermission) {
         return null;
     }
 
     return (
         <aside
-            className="fixed top-0 h-full bg-white border-r border-gray-200 z-20 overflow-y-auto transition-all duration-300 shadow-sm"
+            className="fixed top-0 h-full bg-white border-r border-gray-200 z-20 overflow-y-auto transition-all duration-300 shadow-sm rounded-tr-lg rounded-br-lg"
             style={{ 
                 left: leftPosition,
                 width: width
@@ -89,7 +89,7 @@ export function OrdersSidebar() {
                                         href="/products" 
                                         className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                             isActive('/products') 
-                                                ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600' 
+                                                ? 'bg-gray-100 text-gray-900 border-l-2 border-gray-300' 
                                                 : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                         }`}
                                     >
@@ -118,7 +118,7 @@ export function OrdersSidebar() {
                                             href="/orders" 
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                                 isActive('/orders') 
-                                                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600' 
+                                                    ? 'bg-gray-100 text-gray-900 border-l-2 border-gray-300' 
                                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         >
@@ -135,7 +135,7 @@ export function OrdersSidebar() {
                                             href="/shipments" 
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                                 isActive('/shipments') 
-                                                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600' 
+                                                    ? 'bg-gray-100 text-gray-900 border-l-2 border-gray-300' 
                                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         >
@@ -165,7 +165,7 @@ export function OrdersSidebar() {
                                             href="/order-status" 
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                                 isActive('/order-status') 
-                                                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600' 
+                                                    ? 'bg-gray-100 text-gray-900 border-l-2 border-gray-300' 
                                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         >
@@ -182,7 +182,7 @@ export function OrdersSidebar() {
                                             href="/notification-config" 
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                                 isActive('/notification-config') 
-                                                    ? 'bg-blue-50 text-blue-700 border-l-2 border-blue-600' 
+                                                    ? 'bg-gray-100 text-gray-900 border-l-2 border-gray-300' 
                                                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                                             }`}
                                         >
@@ -200,4 +200,4 @@ export function OrdersSidebar() {
             </div>
         </aside>
     );
-}
+});

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Sidebar, Spinner, IAMSidebar, OrdersSidebar } from '@/shared/ui';
+import { Sidebar, Spinner } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 
 interface LayoutContentProps {
@@ -37,7 +37,8 @@ function LayoutContent({ user, children }: LayoutContentProps) {
   const ordersRoutes = ['/products', '/orders', '/shipments', '/order-status', '/notification-config'];
   const showOrdersSidebar = ordersRoutes.some(route => pathname.startsWith(route));
 
-  const showSecondarySidebar = showIAMSidebar || showOrdersSidebar;
+  // No usamos sidebars secundarios separados: todo está integrado en el `Sidebar` principal.
+  const showSecondarySidebar = false;
 
   // Actualizar el contexto cuando cambia el estado del sidebar secundario
   React.useEffect(() => {
@@ -60,11 +61,9 @@ function LayoutContent({ user, children }: LayoutContentProps) {
       {/* Sidebar Principal */}
       <Sidebar user={user} />
 
-      {/* Sidebar Secundario (IAM) */}
-      {showIAMSidebar && <IAMSidebar />}
+      {/* Sidebar Secundario (IAM) eliminado: contenido integrado en Sidebar principal */}
 
-      {/* Sidebar Secundario (Ordenes) */}
-      {showOrdersSidebar && <OrdersSidebar />}
+      {/* Sidebar Secundario (Ordenes) ya está integrado en Sidebar principal */}
 
       {/* Contenido principal */}
       <main

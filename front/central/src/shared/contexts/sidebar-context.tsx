@@ -19,7 +19,7 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [primaryExpanded, setPrimaryExpanded] = useState(false);
+  const [primaryExpanded, setPrimaryExpanded] = useState(true);
   const [secondaryExpanded, setSecondaryExpanded] = useState(false);
   const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const secondaryCollapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
