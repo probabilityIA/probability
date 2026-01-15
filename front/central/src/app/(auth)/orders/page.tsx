@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
 import { Order } from '@/services/modules/orders/domain/types';
-import { Button, Modal } from '@/shared/ui';
+import { Modal } from '@/shared/ui';
 
 
 export default function OrdersPage() {
@@ -50,20 +50,14 @@ export default function OrdersPage() {
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Órdenes</h1>
-                <Button
-                    variant="primary"
-                    onClick={() => setShowCreateModal(true)}
-                    className="w-full sm:w-auto"
-                >
-                    + Crear Orden
-                </Button>
             </div>
 
             <OrderList
                 refreshKey={refreshKey}
                 onView={handleView}
-                onViewRecommendation={handleViewRecommendation} // Pass new handler
+                onViewRecommendation={handleViewRecommendation}
                 onEdit={handleEdit}
+                onCreate={() => setShowCreateModal(true)}
             />
 
             {/* Create Modal */}

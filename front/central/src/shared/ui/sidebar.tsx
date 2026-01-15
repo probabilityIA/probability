@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { TokenStorage } from '@/shared/config';
@@ -28,7 +28,17 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const { primaryExpanded, requestExpand, requestCollapse } = useSidebar();
   const [showUserModal, setShowUserModal] = useState(false);
+  const [ordersOpen, setOrdersOpen] = useState(false);
+  const [iamOpen, setIamOpen] = useState(false);
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
+
+  useEffect(() => {
+    // When primary sidebar collapses, ensure submenus collapse too
+    if (!primaryExpanded) {
+      setOrdersOpen(false);
+      setIamOpen(false);
+    }
+  }, [primaryExpanded]);
 
   // Determinar si hay sidebar secundario basado en la ruta actual
   const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
@@ -69,6 +79,8 @@ export function Sidebar({ user }: SidebarProps) {
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
   const canAccessOrders = canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications;
 
+  
+
   // Determinar la ruta de entrada para cada módulo (primera disponible)
   const getIAMEntryRoute = () => {
     if (canViewUsers) return '/users';
@@ -102,10 +114,9 @@ export function Sidebar({ user }: SidebarProps) {
     <>
       {/* Sidebar - Menú lateral expandible */}
       <aside
-        className="fixed left-0 top-0 h-full transition-all duration-300 z-30"
+        className="fixed left-0 top-0 h-full transition-all duration-300 z-30 border-r border-gray-200 bg-white rounded-tr-lg rounded-br-lg"
         style={{
           width: primaryExpanded ? '250px' : '80px',
-          backgroundColor: 'var(--color-primary)'
         }}
         onMouseEnter={requestExpand}
         onMouseLeave={() => requestCollapse(hasSecondarySidebar)}
@@ -113,7 +124,7 @@ export function Sidebar({ user }: SidebarProps) {
         <div className="flex flex-col h-full">
           {/* Tarjeta de usuario arriba */}
           <div
-            className="p-4 border-b border-white/10 cursor-pointer hover:bg-white/5 transition-colors"
+            className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() => setShowUserModal(true)}
             title="Haz clic para cambiar tu foto de perfil"
           >
@@ -144,10 +155,10 @@ export function Sidebar({ user }: SidebarProps) {
               </div>
 
               {/* Nombre (solo visible cuando está expandido) */}
-              {primaryExpanded && (
-                <div className="text-white overflow-hidden">
+                {primaryExpanded && (
+                <div className="text-gray-800 overflow-hidden">
                   <p className="font-semibold text-sm truncate">{user.name}</p>
-                  <p className="text-xs text-white/70 truncate">{user.email}</p>
+                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
                 </div>
               )}
             </div>
@@ -163,8 +174,8 @@ export function Sidebar({ user }: SidebarProps) {
                   className={`
                     flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                     ${isActive('/home')
-                      ? 'bg-white/20 text-white shadow-lg scale-105'
-                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                      ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
                     }
                   `}
                 >
@@ -179,11 +190,11 @@ export function Sidebar({ user }: SidebarProps) {
                   <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
-                  {primaryExpanded && (
-                    <span className="text-sm font-medium transition-opacity duration-300">
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">
                       Inicio
                     </span>
-                  )}
+                    )}
                 </Link>
               </li>
 
@@ -195,8 +206,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${isActive('/integrations') || pathname.startsWith('/integrations')
-                        ? 'bg-white/20 text-white shadow-lg scale-105'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
                       }
                     `}
                   >
@@ -223,72 +234,308 @@ export function Sidebar({ user }: SidebarProps) {
               {/* Item Ordenes (Gestión de Ordenes) - Solo si tiene permiso */}
               {canAccessOrders && (
                 <li>
-                  <Link
-                    href={getOrdersEntryRoute()}
-                    className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')
-                        ? 'bg-white/20 text-white shadow-lg scale-105'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
-                      }
-                    `}
-                  >
-                    {(isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')) && (
-                      <div
-                        className="absolute left-0 w-1 h-8 rounded-r-full"
-                        style={{ backgroundColor: 'var(--color-tertiary)' }}
-                      />
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setOrdersOpen(v => {
+                          const nv = !v;
+                          if (nv) setIamOpen(false);
+                          return nv;
+                        })}
+                        aria-expanded={ordersOpen}
+                        aria-controls="orders-submenu"
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 text-left w-full
+                          ${isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')
+                            ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                          }
+                        `}
+                      >
+                        {(isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')) && (
+                          <div
+                            className="absolute left-0 w-1 h-8 rounded-r-full"
+                            style={{ backgroundColor: 'var(--color-tertiary)' }}
+                          />
+                        )}
+
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                        </svg>
+                        {primaryExpanded && (
+                          <>
+                            <span className="text-sm font-medium transition-opacity duration-300">Ordenes</span>
+                            <svg
+                              className={`w-4 h-4 transform transition-transform duration-150 ml-auto select-none ${ordersOpen ? '-rotate-90' : 'rotate-90'}`}
+                              viewBox="0 0 20 20"
+                              fill="none"
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l6 4-6 4" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+
+                      {primaryExpanded && (
+                        <Link
+                          href={getOrdersEntryRoute()}
+                          className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                          title="Ir a Ordenes"
+                        >
+                         
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Submenu: mostrar solo cuando se haga click para expandir */}
+                    {primaryExpanded && ordersOpen && (
+                      <div id="orders-submenu" className="mt-2 pl-8 pr-2">
+                        {/* CATÁLOGO */}
+                        {canViewProducts && (
+                          <div className="mb-3">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CATÁLOGO</h4>
+                            <ul className="space-y-1">
+                              <li>
+                                <Link
+                                  href="/products"
+                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/products') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                  </svg>
+                                  <span>Productos</span>
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* OPERACIONES */}
+                        {(canViewOrders || canViewShipments) && (
+                          <div className="mb-3">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">OPERACIONES</h4>
+                            <ul className="space-y-1">
+                              {canViewOrders && (
+                                <li>
+                                  <Link href="/orders" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/orders') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                                    </svg>
+                                    <span>Ordenes</span>
+                                  </Link>
+                                </li>
+                              )}
+                              {canViewShipments && (
+                                <li>
+                                  <Link href="/shipments" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/shipments') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                                    </svg>
+                                    <span>Envíos</span>
+                                  </Link>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* CONFIGURACIÓN */}
+                        {(canViewOrderStatus || canViewNotifications) && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CONFIGURACIÓN</h4>
+                            <ul className="space-y-1">
+                              {canViewOrderStatus && (
+                                <li>
+                                  <Link href="/order-status" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/order-status') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    <span>Estados de Orden</span>
+                                  </Link>
+                                </li>
+                              )}
+                              {canViewNotifications && (
+                                <li>
+                                        <Link href="/notification-config" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/notification-config') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                    </svg>
+                                    <span>Notificaciones</span>
+                                  </Link>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     )}
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                    </svg>
-                    {primaryExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">
-                        Ordenes
-                      </span>
-                    )}
-                  </Link>
+                  </div>
                 </li>
               )}
 
               {/* Item IAM (Gestión de Identidad) - Solo si tiene permiso */}
               {canAccessIAM && (
                 <li>
-                  <Link
-                    href={getIAMEntryRoute()}
-                    className={`
-                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/resources')
-                        ? 'bg-white/20 text-white shadow-lg scale-105'
-                        : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
-                      }
-                    `}
-                  >
-                    {(isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/resources')) && (
-                      <div
-                        className="absolute left-0 w-1 h-8 rounded-r-full"
-                        style={{ backgroundColor: 'var(--color-tertiary)' }}
-                      />
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => setIamOpen(v => {
+                            const nv = !v;
+                            if (nv) setOrdersOpen(false);
+                            return nv;
+                          })}
+                          aria-expanded={iamOpen}
+                          aria-controls="iam-submenu"
+                          className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 text-left w-full
+                            ${isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/resources')
+                              ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                            }
+                          `}
+                        >
+                          {(isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/resources')) && (
+                            <div
+                              className="absolute left-0 w-1 h-8 rounded-r-full"
+                              style={{ backgroundColor: 'var(--color-tertiary)' }}
+                            />
+                          )}
+
+                          <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                          {primaryExpanded && (
+                            <>
+                              <span className="text-sm font-medium transition-opacity duration-300">IAM</span>
+                              <svg
+                                className={`w-4 h-4 transform transition-transform duration-150 ml-auto select-none ${iamOpen ? '-rotate-90' : 'rotate-90'}`}
+                                viewBox="0 0 20 20"
+                                fill="none"
+                                stroke="currentColor"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l6 4-6 4" />
+                              </svg>
+                            </>
+                          )}
+                        </button>
+
+                        {primaryExpanded && (
+                          <Link
+                            href={getIAMEntryRoute()}
+                            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                            title="Ir a IAM"
+                          >
+                           
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Submenu IAM: mostrar solo cuando se haga click para expandir */}
+                    {primaryExpanded && iamOpen && (
+                      <div id="iam-submenu" className="mt-2 pl-8 pr-2">
+                        {/* ORGANIZACIÓN */}
+                        {canViewBusinesses && (
+                          <div className="mb-3">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">ORGANIZACIÓN</h4>
+                            <ul className="space-y-1">
+                              <li>
+                                <Link
+                                  href="/businesses"
+                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/businesses') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                  </svg>
+                                  <span>Empresas</span>
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* CONTROL DE ACCESO */}
+                        {(canViewUsers || canViewRoles || canViewPermissions) && (
+                          <div className="mb-3">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CONTROL DE ACCESO</h4>
+                            <ul className="space-y-1">
+                              {canViewUsers && (
+                                <li>
+                                  <Link
+                                    href="/users"
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/users') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                  >
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                    </svg>
+                                    <span>Usuarios</span>
+                                  </Link>
+                                </li>
+                              )}
+                              {canViewRoles && (
+                                <li>
+                                  <Link
+                                    href="/roles"
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/roles') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                  >
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                    </svg>
+                                    <span>Roles</span>
+                                  </Link>
+                                </li>
+                              )}
+                              {canViewPermissions && (
+                                <li>
+                                  <Link
+                                    href="/permissions"
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/permissions') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                  >
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                                    </svg>
+                                    <span>Permisos</span>
+                                  </Link>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* SISTEMA - Solo super admin */}
+                        {canViewResources && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">SISTEMA</h4>
+                            <ul className="space-y-0.5">
+                              <li>
+                                <Link
+                                  href="/resources"
+                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/resources') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                                  </svg>
+                                  <span>Recursos</span>
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+                        )}
+                      </div>
                     )}
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
-                    {primaryExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">
-                        IAM
-                      </span>
-                    )}
-                  </Link>
+                  </div>
                 </li>
               )}
             </ul>
           </nav>
 
           {/* Botón logout abajo */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-gray-100">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 text-white hover:bg-white/10 p-3 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-50 p-3 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
