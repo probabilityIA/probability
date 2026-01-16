@@ -6,6 +6,7 @@ output "ecr_repositories" {
     frontend = aws_ecr_repository.frontend.repository_url
     backend  = aws_ecr_repository.backend.repository_url
     nginx    = aws_ecr_repository.nginx.repository_url
+    website  = aws_ecr_repository.website.repository_url
   }
 }
 

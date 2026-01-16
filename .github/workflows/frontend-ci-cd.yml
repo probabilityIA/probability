@@ -18,7 +18,8 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPO: public.ecr.aws/c1l9h7c9/probability
+  AWS_ACCOUNT_ID: 476702565908
+  ECR_REPO: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend
   IMAGE_NAME: frontend
 
 jobs:
@@ -49,10 +50,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Login to ECR Public
+      - name: Login to ECR
         run: |
-          aws ecr-public get-login-password --region ${{ env.AWS_REGION }} | \
-            podman login --username AWS --password-stdin public.ecr.aws
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            podman login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
       - name: Build image with Podman (ARM64)
         working-directory: ./front/central
@@ -65,14 +66,12 @@ jobs:
             --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
             --build-arg API_BASE_URL=${API_BASE_URL} \
             -f docker/Dockerfile \
-            -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
-            -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-${{ github.sha }} \
+            -t ${{ env.ECR_REPO }}:latest \
             .
 
       - name: Push image to ECR
         run: |
-          podman push ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest
-          podman push ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-${{ github.sha }}
+          podman push ${{ env.ECR_REPO }}:latest
 
   deploy:
     name: Deploy to Server
@@ -124,12 +123,12 @@ jobs:
             # Asegurar que AWS CLI esté en PATH
             export PATH="/usr/local/bin:$PATH"
 
-            # Login a ECR publico
-            /usr/local/bin/aws ecr-public get-login-password --region us-east-1 | \
-              podman login --username AWS --password-stdin public.ecr.aws
+            # Login a ECR privado
+            /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
+              podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             # Pull latest image
-            podman pull public.ecr.aws/c1l9h7c9/probability:frontend-latest
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
 
             # Restart service
             podman-compose -f podman-compose.yaml up -d front-central

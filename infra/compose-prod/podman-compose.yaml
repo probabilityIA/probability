@@ -4,7 +4,7 @@
 services:
 
   front-central:
-    image: public.ecr.aws/c1l9h7c9/probability:frontend-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
     container_name: frontend_prod
     ports:
       - "8080:3000"
@@ -23,7 +23,7 @@ services:
       - back-central
 
   front-website:
-    image: public.ecr.aws/c1l9h7c9/probability:website-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
     container_name: website_prod
     ports:
       - "8081:80"
@@ -38,7 +38,7 @@ services:
       - app-network
 
   back-central:
-    image: public.ecr.aws/c1l9h7c9/probability:backend-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
     container_name: backend_prod
     ports:
       - "127.0.0.1:3050:3050"
@@ -146,7 +146,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: public.ecr.aws/c1l9h7c9/probability:nginx-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
     container_name: nginx_prod
     ports:
       - "80:80"

@@ -66,7 +66,7 @@ resource "aws_ecr_repository" "nginx" {
   )
 }
 
-# Lifecycle Policy para frontend - Mantener ultimas N imagenes
+# Lifecycle Policy para frontend - Mantener solo 1 imagen (la última)
 resource "aws_ecr_lifecycle_policy" "frontend_lifecycle" {
   repository = aws_ecr_repository.frontend.name
 
@@ -74,11 +74,11 @@ resource "aws_ecr_lifecycle_policy" "frontend_lifecycle" {
     rules = [
       {
         rulePriority = 1
-        description  = "Mantener solo ${var.ecr_image_retention_count} imagenes, eliminar las demas"
+        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = var.ecr_image_retention_count
+          countNumber = 1
         }
         action = {
           type = "expire"
@@ -88,7 +88,7 @@ resource "aws_ecr_lifecycle_policy" "frontend_lifecycle" {
   })
 }
 
-# Lifecycle Policy para backend - Mantener ultimas N imagenes
+# Lifecycle Policy para backend - Mantener solo 1 imagen (la última)
 resource "aws_ecr_lifecycle_policy" "backend_lifecycle" {
   repository = aws_ecr_repository.backend.name
 
@@ -96,11 +96,11 @@ resource "aws_ecr_lifecycle_policy" "backend_lifecycle" {
     rules = [
       {
         rulePriority = 1
-        description  = "Mantener solo ${var.ecr_image_retention_count} imagenes, eliminar las demas"
+        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = var.ecr_image_retention_count
+          countNumber = 1
         }
         action = {
           type = "expire"
@@ -110,7 +110,7 @@ resource "aws_ecr_lifecycle_policy" "backend_lifecycle" {
   })
 }
 
-# Lifecycle Policy para nginx - Mantener ultimas N imagenes
+# Lifecycle Policy para nginx - Mantener solo 1 imagen (la última)
 resource "aws_ecr_lifecycle_policy" "nginx_lifecycle" {
   repository = aws_ecr_repository.nginx.name
 
@@ -118,11 +118,55 @@ resource "aws_ecr_lifecycle_policy" "nginx_lifecycle" {
     rules = [
       {
         rulePriority = 1
-        description  = "Mantener solo ${var.ecr_image_retention_count} imagenes, eliminar las demas"
+        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
         selection = {
           tagStatus   = "any"
           countType   = "imageCountMoreThan"
-          countNumber = var.ecr_image_retention_count
+          countNumber = 1
+        }
+        action = {
+          type = "expire"
+        }
+      }
+    ]
+  })
+}
+
+# Repositorio para el website (probability-website)
+resource "aws_ecr_repository" "website" {
+  name                 = "probability-website"
+  image_tag_mutability = "MUTABLE"
+
+  image_scanning_configuration {
+    scan_on_push = true
+  }
+
+  encryption_configuration {
+    encryption_type = "AES256"
+  }
+
+  tags = merge(
+    var.tags,
+    {
+      Name    = "probability-website"
+      Service = "website"
+    }
+  )
+}
+
+# Lifecycle Policy para website - Mantener solo 1 imagen (la última)
+resource "aws_ecr_lifecycle_policy" "website_lifecycle" {
+  repository = aws_ecr_repository.website.name
+
+  policy = jsonencode({
+    rules = [
+      {
+        rulePriority = 1
+        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
+        selection = {
+          tagStatus   = "any"
+          countType   = "imageCountMoreThan"
+          countNumber = 1
         }
         action = {
           type = "expire"
@@ -146,4 +190,9 @@ output "ecr_repository_backend_url" {
 output "ecr_repository_nginx_url" {
   description = "URL del repositorio ECR para nginx"
   value       = aws_ecr_repository.nginx.repository_url
+}
+
+output "ecr_repository_website_url" {
+  description = "URL del repositorio ECR para website"
+  value       = aws_ecr_repository.website.repository_url
 }

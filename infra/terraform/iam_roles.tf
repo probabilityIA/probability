@@ -88,7 +88,8 @@ resource "aws_iam_role_policy" "ec2_ecr_auth" {
         Resource = [
           aws_ecr_repository.frontend.arn,
           aws_ecr_repository.backend.arn,
-          aws_ecr_repository.nginx.arn
+          aws_ecr_repository.nginx.arn,
+          aws_ecr_repository.website.arn
         ]
       },
       {
@@ -110,11 +111,6 @@ resource "aws_iam_role_policy" "ec2_ecr_auth" {
           "sts:GetServiceBearerToken"
         ]
         Resource = "*"
-        Condition = {
-          StringEquals = {
-            "sts:AWSServiceName" = "ecr-public.amazonaws.com"
-          }
-        }
       }
     ]
   })
