@@ -147,8 +147,10 @@ type ProbabilityOrder struct {
 	ChannelMetadata []ProbabilityOrderChannelMetadata `json:"channel_metadata"`
 	NegativeFactors datatypes.JSON                    `json:"negative_factors"`
 
-	// Campos auxiliares para cálculo de score (No persistir)
-	CustomerOrderCount int    `json:"-" gorm:"-"`
+	// Campos auxiliares para cálculo de score
+	// Nota: CustomerOrderCount se persiste para historial, Address2 es auxiliar
+	CustomerOrderCount int    `json:"customer_order_count"`
+	CustomerTotalSpent string `json:"customer_total_spent"`
 	Address2           string `json:"-" gorm:"-"`
 }
 

@@ -73,6 +73,8 @@ type ShopifyCustomer struct {
 	Email          string
 	Phone          string
 	DefaultAddress *ShopifyAddress
+	OrdersCount    int
+	TotalSpent     string
 }
 
 type ShopifyAddress struct {
@@ -137,6 +139,8 @@ type ProbabilityOrderDTO struct {
 	CustomerEmail      string
 	CustomerPhone      string
 	CustomerDNI        string
+	CustomerOrderCount *int
+	CustomerTotalSpent *string
 	OrderTypeID        *uint
 	OrderTypeName      string
 	Status             string

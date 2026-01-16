@@ -187,6 +187,8 @@ type Customer struct {
 	MarketingOptInLevel       *string    `json:"marketing_opt_in_level"`
 	AdminGraphQLAPIID         string     `json:"admin_graphql_api_id"`
 	DefaultAddress            *Address   `json:"default_address"`
+	OrdersCount               int        `json:"orders_count"`
+	TotalSpent                string     `json:"total_spent"`
 }
 
 // DiscountApplication representa una aplicación de descuento
