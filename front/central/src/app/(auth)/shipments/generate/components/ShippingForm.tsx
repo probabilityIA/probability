@@ -195,8 +195,9 @@ export const ShippingForm = () => {
             } else {
                 setError("No se encontraron cotizaciones.");
             }
-        } catch (err: any) {
-            setError(err.message || "Error consultando cotizaciones");
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Error consultando cotizaciones";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -218,8 +219,9 @@ export const ShippingForm = () => {
             const res = await repo.generateGuide(payload);
             setSuccess(`Guía generada exitosamente! Tracking: ${res.data.trackingNumber}`);
             // Reset logic if needed
-        } catch (err: any) {
-            setError(err.message || "Error generando guía");
+        } catch (err) {
+            const errorMessage = err instanceof Error ? err.message : "Error generando guía";
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
