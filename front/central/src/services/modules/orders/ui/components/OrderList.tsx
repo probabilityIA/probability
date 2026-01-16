@@ -992,7 +992,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         <tbody className="bg-white divide-y divide-gray-200">
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={isSuperAdmin ? 12 : 11} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={isSuperAdmin ? 11 : 10} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                                         No hay órdenes disponibles
                                     </td>
                                 </tr>
