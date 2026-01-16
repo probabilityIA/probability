@@ -206,7 +206,7 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
             return () => URL.revokeObjectURL(url);
         } else if (initialData?.logo_url) {
             setTimeout(() => {
-                setLogoPreview(initialData.logo_url);
+                setLogoPreview(initialData.logo_url ?? null);
             }, 0);
         } else {
             setTimeout(() => {
@@ -225,7 +225,7 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
             return () => URL.revokeObjectURL(url);
         } else if (initialData?.navbar_image_url) {
             setTimeout(() => {
-                setNavbarPreview(initialData.navbar_image_url);
+                setNavbarPreview(initialData.navbar_image_url ?? null);
             }, 0);
         } else {
             setTimeout(() => {
