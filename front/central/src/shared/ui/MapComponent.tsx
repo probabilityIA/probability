@@ -7,7 +7,7 @@ import L from 'leaflet';
 import iconImg from 'leaflet/dist/images/marker-icon.png';
 import iconShadowImg from 'leaflet/dist/images/marker-shadow.png';
 
-let DefaultIcon = L.icon({
+const DefaultIcon = L.icon({
     iconUrl: typeof iconImg === 'string' ? iconImg : iconImg.src,
     shadowUrl: typeof iconShadowImg === 'string' ? iconShadowImg : iconShadowImg.src,
     iconSize: [25, 41],

@@ -1,6 +1,6 @@
 'use client';
 
-import { InputHTMLAttributes, ReactNode, useRef } from 'react';
+import { InputHTMLAttributes, ReactNode, useRef, useState } from 'react';
 import { Button } from './button';
 
 interface FileInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onChange'> {
@@ -25,6 +25,7 @@ export function FileInput({
   ...props
 }: FileInputProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
 
   const handleButtonClick = () => {
     fileInputRef.current?.click();
@@ -32,17 +33,10 @@ export function FileInput({
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
+    setFileName(file?.name || null);
     if (onChange) {
       onChange(file);
     }
-  };
-
-  const getFileName = () => {
-    const files = fileInputRef.current?.files;
-    if (files && files.length > 0) {
-      return files[0].name;
-    }
-    return null;
   };
 
   return (
@@ -74,9 +68,9 @@ export function FileInput({
           {buttonText}
         </Button>
         
-        {getFileName() && (
+        {fileName && (
           <span className="text-sm text-gray-600 truncate max-w-xs">
-            {getFileName()}
+            {fileName}
           </span>
         )}
       </div>
