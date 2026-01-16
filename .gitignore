@@ -36,3 +36,11 @@ go.work.sum
 back/central/main
 back/central/central_reserve
 back/central/probability-back-central
+
+# Terraform
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+.terraform.tfstate.lock.info
+terraform-provider-*

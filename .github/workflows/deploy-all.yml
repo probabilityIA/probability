@@ -1,0 +1,116 @@
+name: Deploy All Services
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'infra/compose-prod/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  deploy:
+    name: Deploy All Services
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get ECR Registry
+        id: ecr
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "registry=${ACCOUNT_ID}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Deploy all services
+        run: |
+          # Upload docker-compose.yaml
+          scp -o StrictHostKeyChecking=no \
+            infra/compose-prod/docker-compose.yaml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/ || echo "Could not upload docker-compose.yaml"
+
+          # Execute deployment
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            set -e
+
+            export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin
+
+            # Verify podman-compose is available
+            if ! command -v podman-compose &> /dev/null; then
+              echo "podman-compose not available"
+              exit 1
+            fi
+
+            cd ~/probability/infra/compose-prod || exit 1
+
+            # Verify .env exists
+            if [ ! -f .env ]; then
+              echo "Error: .env file not found in ~/probability/infra/compose-prod/.env"
+              echo "Create the .env file manually before running this workflow"
+              exit 1
+            fi
+            echo ".env file found"
+
+            # Configure Podman registries for public images
+            sudo mkdir -p /etc/containers
+            if [ ! -f /etc/containers/registries.conf ] || ! grep -q "docker.io" /etc/containers/registries.conf 2>/dev/null; then
+              echo 'unqualified-search-registries = ["docker.io", "quay.io"]' | sudo tee /etc/containers/registries.conf > /dev/null
+              echo 'short-name-mode = "permissive"' | sudo tee -a /etc/containers/registries.conf > /dev/null
+            fi
+
+            # Login to ECR
+            echo "Logging in to ECR..."
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+              podman login --username AWS --password-stdin ${{ steps.ecr.outputs.registry }} || {
+              echo "Error logging in to ECR"
+              aws sts get-caller-identity || echo "Cannot authenticate with AWS"
+              exit 1
+            }
+
+            # Pull latest images
+            echo "Pulling latest images from ECR..."
+            podman-compose -f docker-compose.yaml pull 2>&1 | grep -v "manifest unknown" || true
+
+            # Start all services
+            echo "Starting services..."
+            podman-compose -f docker-compose.yaml up -d 2>&1 || {
+              echo "Some services could not start"
+              echo "This may be normal if images don't exist yet"
+            }
+
+            # Wait for services to start
+            sleep 5
+
+            # Show status
+            echo "Service status:"
+            podman-compose -f docker-compose.yaml ps || echo "Could not get full status"
+
+            # Show recent logs
+            echo "Recent logs:"
+            podman-compose -f docker-compose.yaml logs --tail=20 2>&1 || echo "Could not get logs"
+
+            # Show running containers
+            echo "Active containers:"
+            podman ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || echo "Could not list containers"
+
+            # Clean up old images
+            podman image prune -f || true
+
+            echo "Deployment process completed"
+          EOF

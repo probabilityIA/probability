@@ -126,10 +126,12 @@ type UpdateOrderRequest struct {
 	CodTotal     *float64 `json:"cod_total"`
 
 	// Información del cliente
-	CustomerName  *string `json:"customer_name" binding:"omitempty,max=255"`
-	CustomerEmail *string `json:"customer_email" binding:"omitempty,max=255"`
-	CustomerPhone *string `json:"customer_phone" binding:"omitempty,max=32"`
-	CustomerDNI   *string `json:"customer_dni" binding:"omitempty,max=64"`
+	CustomerName       *string `json:"customer_name" binding:"omitempty,max=255"`
+	CustomerEmail      *string `json:"customer_email" binding:"omitempty,max=255"`
+	CustomerPhone      *string `json:"customer_phone" binding:"omitempty,max=32"`
+	CustomerDNI        *string `json:"customer_dni" binding:"omitempty,max=64"`
+	CustomerOrderCount *int    `json:"customer_order_count"`
+	CustomerTotalSpent *string `json:"customer_total_spent"`
 
 	// Dirección de envío
 	ShippingStreet     *string  `json:"shipping_street" binding:"omitempty,max=255"`
@@ -449,11 +451,13 @@ type ProbabilityOrderDTO struct {
 	CurrencyPresentment     string  `json:"currency_presentment,omitempty"`
 
 	// Información del cliente
-	CustomerID    *uint  `json:"customer_id"`
-	CustomerName  string `json:"customer_name" binding:"max=255"`
-	CustomerEmail string `json:"customer_email" binding:"max=255"`
-	CustomerPhone string `json:"customer_phone" binding:"max=32"`
-	CustomerDNI   string `json:"customer_dni" binding:"max=64"`
+	CustomerID         *uint   `json:"customer_id"`
+	CustomerName       string  `json:"customer_name" binding:"max=255"`
+	CustomerEmail      string  `json:"customer_email" binding:"max=255"`
+	CustomerPhone      string  `json:"customer_phone" binding:"max=32"`
+	CustomerDNI        string  `json:"customer_dni" binding:"max=64"`
+	CustomerOrderCount *int    `json:"customer_order_count"`
+	CustomerTotalSpent *string `json:"customer_total_spent"`
 
 	// Tipo y estado
 	OrderTypeID    *uint  `json:"order_type_id"`

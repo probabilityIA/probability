@@ -1,13 +1,15 @@
+# Podman Compose - Probability Production
+# Usar: podman-compose up -d
+
 services:
 
   font-central:
-    platform: linux/arm64
     image: public.ecr.aws/c1l9h7c9/probability:frontend-latest
     container_name: frontend_prod
     ports:
       - "8080:80"
     env_file:
-    - .env 
+      - .env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
@@ -18,22 +20,8 @@ services:
       - app-network
     depends_on:
       - back-central
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.50"
-          memory: 256M
-        reservations:
-          cpus: "0.25"
-          memory: 128M
 
   font-website:
-    platform: linux/arm64
     image: public.ecr.aws/c1l9h7c9/probability:website-latest
     container_name: website_prod
     ports:
@@ -47,22 +35,8 @@ services:
       start_period: 10s
     networks:
       - app-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: 128M
-        reservations:
-          cpus: "0.10"
-          memory: 64M
 
   back-central:
-    platform: linux/arm64
     image: public.ecr.aws/c1l9h7c9/probability:backend-latest
     container_name: central_reserve_prod
     ports:
@@ -98,7 +72,7 @@ services:
       WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
       # Encryption
       ENCRYPTION_KEY:      "${ENCRYPTION_KEY}"
-      # Redis (usar nombre del servicio en la red Docker)
+      # Redis (usar nombre del servicio en la red Podman)
       REDIS_HOST:         "redis"
       REDIS_PORT:         "6379"
       REDIS_PASSWORD:     "${REDIS_PASSWORD:-}"
@@ -123,19 +97,6 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "20m"
-        max-file: "5"
-    deploy:
-      resources:
-        limits:
-          cpus: "1.00"
-          memory: 512M
-        reservations:
-          cpus: "0.50"
-          memory: 256M
 
 
   redis:

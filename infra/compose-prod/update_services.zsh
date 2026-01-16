@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-# Script para actualizar servicios de Docker Compose desde ECR
+# Script para actualizar servicios de Podman Compose desde ECR
 # Actualiza solo: font-central, font-website y back-central
 # NO actualiza: redis, rabbitmq, nginx
 set -e
@@ -27,18 +27,18 @@ SERVICES_TO_UPDATE=("font-central" "font-website" "back-central")
 echo -e "${BLUE}📥 Descargando imágenes más recientes desde ECR...${NC}"
 for service in "${SERVICES_TO_UPDATE[@]}"; do
   echo -e "${YELLOW}  → Descargando imagen para: ${service}${NC}"
-  docker compose pull "$service"
+  podman-compose pull "$service"
 done
 
 # Limpiar imágenes antiguas no utilizadas (dangling images) ANTES de actualizar
 echo -e "${YELLOW}🧹 Limpiando imágenes antiguas no utilizadas...${NC}"
-docker image prune -f
+podman image prune -f
 
-# Usar docker compose up -d para actualizar los servicios (igual que antes)
+# Usar podman-compose up -d para actualizar los servicios
 # Esto maneja mejor las dependencias y el orden de inicio
 echo -e "${YELLOW}🚀 Actualizando servicios con las nuevas imágenes...${NC}"
 echo -e "${YELLOW}   (esto recreará los contenedores con las nuevas imágenes)${NC}"
-docker compose up -d --no-deps "${SERVICES_TO_UPDATE[@]}"
+podman-compose up -d --no-deps "${SERVICES_TO_UPDATE[@]}"
 
 # Esperar a que los servicios estén listos
 echo -e "${YELLOW}⏳ Esperando a que los servicios estén listos...${NC}"
@@ -46,12 +46,12 @@ sleep 5
 
 # Verificar estado de los servicios
 echo -e "${YELLOW}📊 Verificando estado de los servicios...${NC}"
-docker compose ps
+podman-compose ps
 
 # Verificar que los servicios estén saludables
 echo -e "${YELLOW}🏥 Verificando salud de los servicios...${NC}"
 for service in "${SERVICES_TO_UPDATE[@]}"; do
-  if docker compose ps "$service" | grep -q "Up"; then
+  if podman-compose ps "$service" | grep -q "Up"; then
     echo -e "${GREEN}  ✅ $service está corriendo${NC}"
   else
     echo -e "${RED}  ❌ $service NO está corriendo${NC}"
@@ -60,7 +60,7 @@ done
 
 # Recargar nginx para que detecte los servicios actualizados
 echo -e "${YELLOW}🔄 Recargando nginx para detectar servicios actualizados...${NC}"
-if docker compose exec -T nginx nginx -s reload > /dev/null 2>&1; then
+if podman-compose exec -T nginx nginx -s reload > /dev/null 2>&1; then
   echo -e "${GREEN}  ✅ Nginx recargado exitosamente${NC}"
 else
   echo -e "${YELLOW}  ⚠️  Nginx no pudo recargarse (puede que no esté corriendo o no sea necesario)${NC}"
@@ -76,4 +76,3 @@ echo -e "   • redis (Redis Cache)"
 echo -e "   • rabbitmq (RabbitMQ Message Queue)"
 echo -e "${YELLOW}🌐 Frontend disponible en: http://localhost/ (puerto 80)${NC}"
 echo -e "${YELLOW}🔧 Backend disponible en: http://localhost:3050${NC}"
-

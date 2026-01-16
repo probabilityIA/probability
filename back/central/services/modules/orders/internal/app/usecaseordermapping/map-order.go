@@ -454,6 +454,18 @@ func (uc *UseCaseOrderMapping) buildOrderEntity(dto *domain.ProbabilityOrderDTO,
 		CustomerEmail: dto.CustomerEmail,
 		CustomerPhone: dto.CustomerPhone,
 		CustomerDNI:   dto.CustomerDNI,
+		CustomerOrderCount: func() int {
+			if dto.CustomerOrderCount != nil {
+				return *dto.CustomerOrderCount
+			}
+			return 0
+		}(),
+		CustomerTotalSpent: func() string {
+			if dto.CustomerTotalSpent != nil {
+				return *dto.CustomerTotalSpent
+			}
+			return ""
+		}(),
 
 		// Tipo y estado
 		OrderTypeID:         dto.OrderTypeID,
