@@ -51,12 +51,12 @@ COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
 # Crear usuario no-root para nginx (ya existe en nginx:alpine)
 # nginx:alpine ya usa un usuario no-root por defecto
 
-# Exponer puerto
-EXPOSE 80
+# Exponer puerto (8080 para evitar problemas de permisos en rootless)
+EXPOSE 8080
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost/ || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
 
 # Comando de inicio
 CMD ["nginx", "-g", "daemon off;"]
