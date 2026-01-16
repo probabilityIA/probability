@@ -89,6 +89,16 @@ jobs:
 
             # Crear directorio si no existe
             mkdir -p ~/probability/infra/compose-prod
+            
+            # Copiar certificados SSL a directorio accesible para Podman rootless
+            echo "📜 Copiando certificados SSL..."
+            mkdir -p ~/certs
+            sudo cp /etc/letsencrypt/live/app.probabilityia.com.co/fullchain.pem ~/certs/
+            sudo cp /etc/letsencrypt/live/app.probabilityia.com.co/privkey.pem ~/certs/
+            sudo chown ubuntu:ubuntu ~/certs/*.pem
+            chmod 644 ~/certs/fullchain.pem
+            chmod 600 ~/certs/privkey.pem
+            echo "✅ Certificados copiados a ~/certs/"
 
             # Instalar/reinstalar AWS CLI para ARM64
             # Verificar si AWS CLI está instalado y funciona correctamente
