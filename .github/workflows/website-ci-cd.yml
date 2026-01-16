@@ -4,16 +4,9 @@ on:
   push:
     branches:
       - main
-      - develop
     paths:
       - 'front/website/**'
       - '.github/workflows/website-ci-cd.yml'
-  pull_request:
-    branches:
-      - main
-      - develop
-    paths:
-      - 'front/website/**'
   workflow_dispatch:
 
 env:
