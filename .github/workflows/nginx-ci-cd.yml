@@ -24,11 +24,16 @@ env:
 jobs:
   build-and-push:
     name: Build and Push to ECR
-    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo - más rápido y barato
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up QEMU for ARM64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Install Podman
         run: |
@@ -50,8 +55,12 @@ jobs:
       - name: Build image with Podman (ARM64)
         working-directory: ./infra/nginx
         run: |
+          # Pull previous image for cache (si existe)
+          podman pull ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest || true
+          
           podman build \
             --platform linux/arm64 \
+            --cache-from ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
             -f Dockerfile \
             -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
             -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-${{ github.sha }} \
