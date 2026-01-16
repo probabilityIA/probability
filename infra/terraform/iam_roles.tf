@@ -128,6 +128,12 @@ resource "null_resource" "associate_iam_profile" {
   # Desasociar rol anterior si existe
   provisioner "local-exec" {
     command = <<-EOT
+      set -e
+      
+      # Esperar un momento para que el instance profile se propague
+      echo "Esperando propagación del instance profile..."
+      sleep 5
+      
       # Obtener association ID actual si existe
       ASSOC_ID=$(aws ec2 describe-iam-instance-profile-associations \
         --filters "Name=instance-id,Values=${local.instance_id}" \
@@ -138,15 +144,19 @@ resource "null_resource" "associate_iam_profile" {
       if [ "$ASSOC_ID" != "None" ] && [ -n "$ASSOC_ID" ]; then
         echo "Desasociando rol anterior: $ASSOC_ID"
         aws ec2 disassociate-iam-instance-profile --association-id "$ASSOC_ID" || true
-        sleep 2
+        sleep 3
       fi
       
-      # Asociar nuevo rol
-      echo "Asociando nuevo rol: ${aws_iam_instance_profile.ec2_ecr_profile.name}"
+      # Asociar nuevo rol usando el ARN
+      PROFILE_ARN="${aws_iam_instance_profile.ec2_ecr_profile.arn}"
+      echo "Asociando nuevo rol: $PROFILE_ARN"
       aws ec2 associate-iam-instance-profile \
         --instance-id ${local.instance_id} \
-        --iam-instance-profile Name=${aws_iam_instance_profile.ec2_ecr_profile.name}
+        --iam-instance-profile Arn="$PROFILE_ARN"
+      
+      echo "✅ Rol asociado correctamente"
     EOT
+    interpreter = ["bash", "-c"]
   }
 
   # Trigger cuando cambie el instance profile
