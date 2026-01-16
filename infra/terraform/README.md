@@ -16,22 +16,38 @@ terraform/
 
 ## 🚀 Inicio Rápido
 
-### 1. Inicializar Terraform
+### 1. Configurar perfil de AWS
+
+**IMPORTANTE:** Este proyecto usa el perfil `probability` que apunta a la cuenta `476702565908`.
+
+```bash
+export AWS_PROFILE=probability
+```
+
+O agregar al inicio de cada comando:
+```bash
+AWS_PROFILE=probability terraform <comando>
+```
+
+### 2. Inicializar Terraform
 
 ```bash
 cd infra/terraform
+export AWS_PROFILE=probability
 terraform init
 ```
 
-### 2. Revisar el plan
+### 3. Revisar el plan
 
 ```bash
+export AWS_PROFILE=probability
 terraform plan
 ```
 
-### 3. Aplicar los cambios
+### 4. Aplicar los cambios
 
 ```bash
+export AWS_PROFILE=probability
 terraform apply
 ```
 

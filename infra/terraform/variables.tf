@@ -6,10 +6,22 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
+variable "aws_profile" {
+  description = "Perfil de AWS a usar (para seleccionar la cuenta correcta)"
+  type        = string
+  default     = "probability"
+}
+
 variable "ec2_instance_name" {
   description = "Nombre (tag) de la instancia EC2 existente"
   type        = string
-  default     = "probability"
+  default     = "Probability"
+}
+
+variable "ec2_instance_id" {
+  description = "ID de la instancia EC2 (opcional, si se proporciona se usa en lugar del nombre)"
+  type        = string
+  default     = ""
 }
 
 variable "environment" {
