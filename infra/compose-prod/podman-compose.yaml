@@ -1,0 +1,175 @@
+# Podman Compose - Probability Production
+# Uso: podman-compose -f podman-compose.yaml up -d
+
+services:
+
+  front-central:
+    image: public.ecr.aws/c1l9h7c9/probability:frontend-latest
+    container_name: frontend_prod
+    ports:
+      - "8080:3000"
+    env_file:
+      - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    networks:
+      - app-network
+    depends_on:
+      - back-central
+
+  front-website:
+    image: public.ecr.aws/c1l9h7c9/probability:website-latest
+    container_name: website_prod
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+
+  back-central:
+    image: public.ecr.aws/c1l9h7c9/probability:backend-latest
+    container_name: backend_prod
+    ports:
+      - "127.0.0.1:3050:3050"
+    environment:
+      # Database
+      DB_HOST: "${DB_HOST:-postgres}"
+      DB_PORT: "5432"
+      DB_NAME: "${DB_NAME}"
+      DB_USER: "${DB_USER}"
+      DB_PASS: "${DB_PASSWORD}"
+      DB_LOG_LEVEL: "${DB_LOG_LEVEL:-warn}"
+      PGSSLMODE: "${DB_SSLMODE:-require}"
+      # App
+      APP_ENV: "${APP_ENV:-production}"
+      HTTP_PORT: "3050"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+      JWT_SECRET: "${JWT_SECRET}"
+      URL_BASE_SWAGGER: "${URL_BASE_SWAGGER}"
+      # SMTP
+      SMTP_HOST: "${SMTP_HOST}"
+      SMTP_PORT: "${SMTP_PORT}"
+      SMTP_USER: "${SMTP_USER}"
+      SMTP_PASS: "${SMTP_PASS}"
+      FROM_EMAIL: "${FROM_EMAIL:-}"
+      SMTP_USE_STARTTLS: "${SMTP_USE_STARTTLS:-true}"
+      SMTP_USE_TLS: "${SMTP_USE_TLS:-false}"
+      # S3 y media
+      S3_BUCKET: "${S3_BUCKET}"
+      S3_REGION: "${S3_REGION}"
+      S3_KEY: "${S3_KEY}"
+      S3_SECRET: "${S3_SECRET}"
+      URL_BASE_DOMAIN_S3: "${URL_BASE_DOMAIN_S3}"
+      # WhatsApp
+      WHATSAPP_URL: "${WHATSAPP_URL}"
+      WHATSAPP_TOKEN: "${WHATSAPP_TOKEN}"
+      WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
+      # Encryption
+      ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+      # Redis
+      REDIS_HOST: "redis"
+      REDIS_PORT: "6379"
+      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
+      REDIS_ORDER_EVENTS_CHANNEL: "${REDIS_ORDER_EVENTS_CHANNEL:-probability:orders:events}"
+      # RabbitMQ
+      RABBITMQ_HOST: "rabbitmq"
+      RABBITMQ_PORT: "5672"
+      RABBITMQ_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_PASS: "${RABBITMQ_PASS:-admin}"
+      RABBITMQ_VHOST: "${RABBITMQ_VHOST:-/}"
+      RABBITMQ_ORDERS_CREATE: "${RABBITMQ_ORDERS_CREATE:-orders.create}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    networks:
+      - app-network
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
+  redis:
+    image: docker.io/library/redis:7-alpine
+    container_name: redis_prod
+    command: >
+      redis-server
+      --appendonly yes
+      --requirepass ${REDIS_PASSWORD}
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  rabbitmq:
+    image: docker.io/library/rabbitmq:3-management-alpine
+    container_name: rabbitmq_prod
+    environment:
+      RABBITMQ_DEFAULT_USER: "${RABBITMQ_USER:-admin}"
+      RABBITMQ_DEFAULT_PASS: "${RABBITMQ_PASS:-admin}"
+      RABBITMQ_DEFAULT_VHOST: "${RABBITMQ_VHOST:-/}"
+    ports:
+      - "127.0.0.1:15672:15672"  # Management UI (solo localhost)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  nginx:
+    image: public.ecr.aws/c1l9h7c9/probability:nginx-latest
+    container_name: nginx_prod
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: "${DOMAIN}"
+      SSL_CERT_PATH: "${SSL_CERT_PATH}"
+      SSL_KEY_PATH: "${SSL_KEY_PATH}"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+    depends_on:
+      - back-central
+      - front-central
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local
+  rabbitmq_data:
+    driver: local
