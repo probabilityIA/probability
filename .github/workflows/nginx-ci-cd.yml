@@ -88,6 +88,21 @@ jobs:
             set -e
             export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
 
+            # Crear directorio si no existe
+            mkdir -p ~/probability/infra/compose-prod
+
+            # Instalar AWS CLI si no está instalado
+            if ! command -v aws &> /dev/null; then
+              echo "📦 Instalando AWS CLI..."
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip
+              sudo ./aws/install
+              rm -rf aws awscliv2.zip
+              echo "✅ AWS CLI instalado"
+            else
+              echo "✅ AWS CLI ya está instalado"
+            fi
+
             # Configurar puertos privilegiados para Podman rootless
             if ! grep -q "net.ipv4.ip_unprivileged_port_start=80" /etc/sysctl.conf 2>/dev/null; then
               echo "net.ipv4.ip_unprivileged_port_start=80" | sudo tee -a /etc/sysctl.conf > /dev/null
