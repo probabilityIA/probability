@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - develop
     paths:
       - 'front/rupu-central/**'
       - 'back/central-reserve/**'
