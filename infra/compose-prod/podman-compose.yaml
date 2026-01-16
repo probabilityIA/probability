@@ -22,21 +22,20 @@ services:
     depends_on:
       - back-central
 
-  # TODO: Descomentar cuando exista la imagen en ECR (ejecutar workflow website-ci-cd.yml)
-  # front-website:
-  #   image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
-  #   container_name: website_prod
-  #   ports:
-  #     - "8081:80"
-  #   restart: unless-stopped
-  #   healthcheck:
-  #     test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 10s
-  #   networks:
-  #     - app-network
+  front-website:
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
+    container_name: website_prod
+    ports:
+      - "8081:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
 
   back-central:
     image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
