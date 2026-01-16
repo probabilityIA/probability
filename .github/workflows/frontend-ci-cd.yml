@@ -24,26 +24,26 @@ env:
 jobs:
   build-and-push:
     name: Build and Push to ECR
-    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Set up QEMU for ARM64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v2
-        with:
-          version: 9
-
       - name: Install Podman
         run: |
           sudo apt-get update
-          sudo apt-get install -y podman podman-compose
+          sudo apt-get install -y podman
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -57,21 +57,7 @@ jobs:
           aws ecr-public get-login-password --region ${{ env.AWS_REGION }} | \
             podman login --username AWS --password-stdin public.ecr.aws
 
-      - name: Install dependencies
-        working-directory: ./front/central
-        run: |
-          if [ -f "pnpm-lock.yaml" ]; then
-            echo "Usando pnpm..."
-            pnpm install --frozen-lockfile || pnpm install
-          elif [ -f "package-lock.json" ]; then
-            echo "Usando npm..."
-            npm ci || npm install
-          else
-            echo "No se encontro lockfile, instalando dependencias..."
-            pnpm install || npm install
-          fi
-
-      - name: Build image with Podman
+      - name: Build image with Podman (ARM64)
         working-directory: ./front/central
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1' }}
@@ -83,13 +69,13 @@ jobs:
             --build-arg API_BASE_URL=${API_BASE_URL} \
             -f docker/Dockerfile \
             -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
-            -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-$(date +%Y%m%d-%H%M%S) \
+            -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-${{ github.sha }} \
             .
 
       - name: Push image to ECR
         run: |
           podman push ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest
-          podman push ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-$(date +%Y%m%d-%H%M%S) || true
+          podman push ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-${{ github.sha }}
 
   deploy:
     name: Deploy to Server
@@ -112,19 +98,18 @@ jobs:
             set -e
             cd ~/probability/infra/compose-prod || exit 1
 
-            # Login a ECR público
+            # Login a ECR publico
             aws ecr-public get-login-password --region us-east-1 | \
               podman login --username AWS --password-stdin public.ecr.aws
 
-            # Pull latest images
+            # Pull latest image
             podman pull public.ecr.aws/c1l9h7c9/probability:frontend-latest
 
-            # Update and restart services
-            podman-compose -f podman-compose.yaml pull front-central
+            # Restart service
             podman-compose -f podman-compose.yaml up -d front-central
 
-            # Clean up old images
+            # Clean up
             podman image prune -f
 
-            echo "Frontend desplegado exitosamente"
+            echo "Frontend deployed successfully"
           EOF
