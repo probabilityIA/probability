@@ -65,12 +65,8 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1' }}
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://back-central:3050/api/v1' }}
         run: |
-          # Pull previous image for cache (si existe)
-          podman pull ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest || true
-          
           podman build \
             --platform linux/arm64 \
-            --cache-from ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
             --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
             --build-arg API_BASE_URL=${API_BASE_URL} \
             -f docker/Dockerfile \
