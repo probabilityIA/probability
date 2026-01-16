@@ -22,7 +22,8 @@
     "react-hook-form": "^7.69.0",
     "react-leaflet": "^5.0.0",
     "recharts": "^3.6.0",
-    "styled-jsx": "^5.1.7"
+    "styled-jsx": "^5.1.7",
+    "zod": "^4.3.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
