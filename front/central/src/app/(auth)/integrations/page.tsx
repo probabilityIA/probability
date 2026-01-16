@@ -20,6 +20,7 @@ export default function IntegrationsPage() {
     const [selectedType, setSelectedType] = useState<IntegrationType | undefined>(undefined);
     const [selectedIntegration, setSelectedIntegration] = useState<Integration | undefined>(undefined);
     const [refreshKey, setRefreshKey] = useState(0);
+    const [modalSize, setModalSize] = useState<'md' | '4xl' | '5xl' | '6xl' | 'full'>('5xl');
 
     const handleSuccess = () => {
         setShowCreateModal(false);
