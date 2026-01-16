@@ -1,0 +1,151 @@
+name: Nginx CI/CD - Probability
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'infra/nginx/**'
+      - '.github/workflows/nginx-ci-cd.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'infra/nginx/**'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  ECR_REPO: public.ecr.aws/c1l9h7c9/probability
+  IMAGE_NAME: nginx
+
+jobs:
+  build-and-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR Public
+        run: |
+          aws ecr-public get-login-password --region ${{ env.AWS_REGION }} | \
+            podman login --username AWS --password-stdin public.ecr.aws
+
+      - name: Build image with Podman
+        working-directory: ./infra/nginx
+        run: |
+          podman build \
+            --platform linux/arm64 \
+            -f Dockerfile \
+            -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
+            -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-$(date +%Y%m%d-%H%M%S) \
+            .
+
+      - name: Push image to ECR
+        run: |
+          podman push ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest
+          podman push ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-$(date +%Y%m%d-%H%M%S) || true
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+
+            # Actualizar PATH
+            export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
+
+            # Configurar Podman rootless para puertos privilegiados (80, 443)
+            echo "Configurando Podman rootless para puertos privilegiados..."
+            if ! grep -q "net.ipv4.ip_unprivileged_port_start=80" /etc/sysctl.conf 2>/dev/null; then
+              echo "Agregando configuracion de puertos no privilegiados..."
+              echo "net.ipv4.ip_unprivileged_port_start=80" | sudo tee -a /etc/sysctl.conf > /dev/null
+              sudo sysctl -p /etc/sysctl.conf || sudo sysctl net.ipv4.ip_unprivileged_port_start=80 || true
+            else
+              sudo sysctl -p /etc/sysctl.conf || sudo sysctl net.ipv4.ip_unprivileged_port_start=80 || true
+            fi
+
+            cd ~/probability/infra/compose-prod || exit 1
+
+            # Verificar que existe .env
+            if [ ! -f .env ]; then
+              echo "Error: Archivo .env no encontrado"
+              exit 1
+            fi
+
+            # Configurar permisos de /etc/letsencrypt para Podman rootless
+            echo "Configurando permisos de certificados SSL..."
+            if [ -d "/etc/letsencrypt" ]; then
+              if [ -d "/etc/letsencrypt/archive" ]; then
+                sudo chmod -R 755 /etc/letsencrypt/archive 2>/dev/null || true
+                sudo find /etc/letsencrypt/archive -type f -exec chmod 644 {} \; 2>/dev/null || true
+                sudo find /etc/letsencrypt/archive -type d -exec chmod 755 {} \; 2>/dev/null || true
+              fi
+
+              if [ -d "/etc/letsencrypt/live" ]; then
+                sudo chmod -R 755 /etc/letsencrypt/live 2>/dev/null || true
+                sudo find /etc/letsencrypt/live -type f -exec chmod 644 {} \; 2>/dev/null || true
+                sudo find /etc/letsencrypt/live -type d -exec chmod 755 {} \; 2>/dev/null || true
+              fi
+            fi
+
+            # Login a ECR público
+            aws ecr-public get-login-password --region us-east-1 | \
+              podman login --username AWS --password-stdin public.ecr.aws
+
+            # Pull latest image
+            echo "Pulling latest nginx image..."
+            podman pull public.ecr.aws/c1l9h7c9/probability:nginx-latest
+
+            # Update and restart nginx service
+            echo "Actualizando servicio nginx..."
+            podman-compose -f podman-compose.yaml pull nginx
+            podman-compose -f podman-compose.yaml up -d nginx
+
+            # Verificar que el contenedor esta corriendo
+            sleep 3
+            echo "Estado del servicio nginx:"
+            podman ps --filter "name=nginx" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || podman ps -a
+
+            # Clean up old images
+            podman image prune -f || true
+
+            echo "Nginx desplegado exitosamente"
+          EOF
