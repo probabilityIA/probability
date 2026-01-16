@@ -26,10 +26,10 @@ services:
     image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
     container_name: website_prod
     ports:
-      - "8081:80"
+      - "8081:8080"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
       interval: 30s
       timeout: 10s
       retries: 3
