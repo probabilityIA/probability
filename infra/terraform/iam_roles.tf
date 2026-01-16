@@ -41,7 +41,7 @@ resource "aws_iam_role_policy_attachment" "ec2_ecr_readonly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
 
-# Politica adicional para permitir autenticacion en ECR
+# Politica adicional para permitir autenticacion en ECR (privado y publico)
 resource "aws_iam_role_policy" "ec2_ecr_auth" {
   name = "probability-ec2-ecr-auth-policy"
   role = aws_iam_role.ec2_ecr_role.id
@@ -71,6 +71,19 @@ resource "aws_iam_role_policy" "ec2_ecr_auth" {
           aws_ecr_repository.backend.arn,
           aws_ecr_repository.nginx.arn
         ]
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ecr-public:GetAuthorizationToken",
+          "ecr-public:BatchCheckLayerAvailability",
+          "ecr-public:GetDownloadUrlForLayer",
+          "ecr-public:BatchGetImage",
+          "ecr-public:DescribeRepositories",
+          "ecr-public:DescribeImages",
+          "ecr-public:ListImages"
+        ]
+        Resource = "*"
       }
     ]
   })
