@@ -71,15 +71,16 @@ jobs:
 
             echo "Levantando todos los servicios..."
 
-            # Login a ECR publico
-            aws ecr-public get-login-password --region us-east-1 | \
-              podman login --username AWS --password-stdin public.ecr.aws
+            # Login a ECR privado
+            aws ecr get-login-password --region us-east-1 | \
+              podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             # Pull latest images
             echo "Pulling latest images..."
-            podman pull public.ecr.aws/c1l9h7c9/probability:backend-latest || true
-            podman pull public.ecr.aws/c1l9h7c9/probability:frontend-latest || true
-            podman pull public.ecr.aws/c1l9h7c9/probability:nginx-latest || true
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest || true
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest || true
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest || true
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest || true
 
             # Levantar todos los servicios
             echo "Levantando servicios..."
