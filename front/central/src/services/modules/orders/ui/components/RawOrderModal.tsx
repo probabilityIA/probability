@@ -315,22 +315,22 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                                 <div className="bg-gray-50 rounded-lg p-5">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Dirección de Envío</h3>
                                     <div className="text-sm text-gray-900">
-                                    <p className="font-medium">
-                                        {shopifyOrder.shipping_address.first_name || ''} {shopifyOrder.shipping_address.last_name || ''}
-                                    </p>
-                                    <p>{shopifyOrder.shipping_address.address1 || ''}</p>
-                                    {shopifyOrder.shipping_address.address2 && (
-                                        <p>{shopifyOrder.shipping_address.address2}</p>
-                                    )}
-                                    <p>
-                                        {shopifyOrder.shipping_address.city || ''}, {shopifyOrder.shipping_address.province || ''}
-                                    </p>
-                                    <p>
-                                        {shopifyOrder.shipping_address.country || ''} {shopifyOrder.shipping_address.zip || ''}
-                                    </p>
-                                    {shopifyOrder.shipping_address.phone && (
-                                        <p className="mt-2 text-gray-600">Tel: {shopifyOrder.shipping_address.phone}</p>
-                                    )}
+                                        <p className="font-medium">
+                                            {shopifyOrder.shipping_address.first_name || ''} {shopifyOrder.shipping_address.last_name || ''}
+                                        </p>
+                                        <p>{shopifyOrder.shipping_address.address1 || ''}</p>
+                                        {shopifyOrder.shipping_address.address2 && (
+                                            <p>{shopifyOrder.shipping_address.address2}</p>
+                                        )}
+                                        <p>
+                                            {shopifyOrder.shipping_address.city || ''}, {shopifyOrder.shipping_address.province || ''}
+                                        </p>
+                                        <p>
+                                            {shopifyOrder.shipping_address.country || ''} {shopifyOrder.shipping_address.zip || ''}
+                                        </p>
+                                        {shopifyOrder.shipping_address.phone && (
+                                            <p className="mt-2 text-gray-600">Tel: {shopifyOrder.shipping_address.phone}</p>
+                                        )}
                                     </div>
                                 </div>
                             )}
@@ -340,22 +340,22 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                                 <div className="bg-gray-50 rounded-lg p-5">
                                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Dirección de Facturación</h3>
                                     <div className="text-sm text-gray-900">
-                                    <p className="font-medium">
-                                        {shopifyOrder.billing_address.first_name || ''} {shopifyOrder.billing_address.last_name || ''}
-                                    </p>
-                                    <p>{shopifyOrder.billing_address.address1 || ''}</p>
-                                    {shopifyOrder.billing_address.address2 && (
-                                        <p>{shopifyOrder.billing_address.address2}</p>
-                                    )}
-                                    <p>
-                                        {shopifyOrder.billing_address.city || ''}, {shopifyOrder.billing_address.province || ''}
-                                    </p>
-                                    <p>
-                                        {shopifyOrder.billing_address.country || ''} {shopifyOrder.billing_address.zip || ''}
-                                    </p>
-                                    {shopifyOrder.billing_address.phone && (
-                                        <p className="mt-2 text-gray-600">Tel: {shopifyOrder.billing_address.phone}</p>
-                                    )}
+                                        <p className="font-medium">
+                                            {shopifyOrder.billing_address.first_name || ''} {shopifyOrder.billing_address.last_name || ''}
+                                        </p>
+                                        <p>{shopifyOrder.billing_address.address1 || ''}</p>
+                                        {shopifyOrder.billing_address.address2 && (
+                                            <p>{shopifyOrder.billing_address.address2}</p>
+                                        )}
+                                        <p>
+                                            {shopifyOrder.billing_address.city || ''}, {shopifyOrder.billing_address.province || ''}
+                                        </p>
+                                        <p>
+                                            {shopifyOrder.billing_address.country || ''} {shopifyOrder.billing_address.zip || ''}
+                                        </p>
+                                        {shopifyOrder.billing_address.phone && (
+                                            <p className="mt-2 text-gray-600">Tel: {shopifyOrder.billing_address.phone}</p>
+                                        )}
                                     </div>
                                 </div>
                             )}

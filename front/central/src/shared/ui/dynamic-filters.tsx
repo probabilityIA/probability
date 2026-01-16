@@ -25,6 +25,7 @@ interface DynamicFiltersProps {
     activeFilters: ActiveFilter[];
     onAddFilter: (filterKey: string, value: any) => void;
     onRemoveFilter: (filterKey: string) => void;
+    onCreate?: () => void;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
@@ -37,6 +38,7 @@ export function DynamicFilters({
     activeFilters,
     onAddFilter,
     onRemoveFilter,
+    onCreate,
     sortBy = 'created_at',
     sortOrder = 'desc',
     onSortChange,
@@ -161,16 +163,35 @@ export function DynamicFilters({
                 {/* Botón Añadir Filtro y Chips */}
                 <div className="flex-1 flex flex-wrap items-center gap-2">
                     <div className="relative">
-                        <Button
-                            ref={buttonRef}
-                            variant="primary"
-                            size="sm"
-                            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                            className="flex items-center gap-2"
-                        >
-                            <FunnelIcon className="w-4 h-4" />
-                            Añadir Filtro
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                ref={buttonRef}
+                                variant="primary"
+                                size="sm"
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="flex items-center gap-2"
+                            >
+                                <FunnelIcon className="w-4 h-4" />
+                                Añadir Filtro
+                            </Button>
+
+                            {onCreate && (
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        onCreate();
+                                        // close dropdown state
+                                        setIsDropdownOpen(false);
+                                        setSelectedFilterKey(null);
+                                        setTempValue('');
+                                    }}
+                                    className="flex items-center gap-2"
+                                >
+                                    + Crear Orden
+                                </Button>
+                            )}
+                        </div>
 
                         {/* Dropdown de filtros */}
                         {isDropdownOpen && (
