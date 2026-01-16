@@ -20,7 +20,6 @@ export default function IntegrationsPage() {
     const [selectedType, setSelectedType] = useState<IntegrationType | undefined>(undefined);
     const [selectedIntegration, setSelectedIntegration] = useState<Integration | undefined>(undefined);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [modalSize, setModalSize] = useState<'md' | '4xl' | '5xl' | '6xl' | 'full'>('5xl');
 
     const handleSuccess = () => {
         setShowCreateModal(false);
@@ -105,7 +104,7 @@ export default function IntegrationsPage() {
                                 console.error('Error al obtener integración:', response.message);
                                 alert('Error al cargar la integración para editar');
                             }
-                        } catch (error: any) {
+                        } catch (error) {
                             console.error('Error al obtener integración:', error);
                             alert('Error al cargar la integración para editar');
                         }

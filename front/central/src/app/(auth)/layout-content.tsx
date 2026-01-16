@@ -1,8 +1,7 @@
 'use client';
 
 import React from 'react';
-import { usePathname } from 'next/navigation';
-import { Sidebar, Spinner } from '@/shared/ui';
+import { Sidebar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 
 interface LayoutContentProps {
@@ -19,23 +18,13 @@ interface LayoutContentProps {
 }
 
 function LayoutContent({ user, children }: LayoutContentProps) {
-  const pathname = usePathname();
   const { 
     primaryExpanded, 
     secondaryExpanded, 
-    requestExpand, 
     requestCollapse, 
     setHasSecondarySidebar,
     requestSecondaryCollapse
   } = useSidebar();
-
-  // Rutas que pertenecen al módulo IAM
-  const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
-  const showIAMSidebar = iamRoutes.some(route => pathname.startsWith(route));
-
-  // Rutas que pertenecen al módulo de Ordenes
-  const ordersRoutes = ['/products', '/orders', '/shipments', '/order-status', '/notification-config'];
-  const showOrdersSidebar = ordersRoutes.some(route => pathname.startsWith(route));
 
   // No usamos sidebars secundarios separados: todo está integrado en el `Sidebar` principal.
   const showSecondarySidebar = false;

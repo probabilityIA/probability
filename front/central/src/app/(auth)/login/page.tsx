@@ -2,16 +2,17 @@
 
 import { LoginForm } from '@/services/auth/login/ui';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, Suspense } from 'react';
+import Image from 'next/image';
 
 function LoginContent() {
   const searchParams = useSearchParams();
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     const error = searchParams.get('error');
     if (error === 'no_business') {
-      setErrorMessage('Usuario no tiene negocio asignado. Contacte al administrador.');
+      // El mensaje de error se puede mostrar en el LoginForm si es necesario
+      console.warn('Usuario no tiene negocio asignado. Contacte al administrador.');
     }
   }, [searchParams]);
 
@@ -37,10 +38,12 @@ function LoginContent() {
           style={{ boxShadow: '-2px 0 50px rgba(0,0,0,0.12)' }}
         >
         
-        <img
+        <Image
           src="/banner.webp"
           alt="características de probability"
-          className="absolute inset-0 w-full h-full object-cover"
+          fill
+          className="object-cover"
+          priority
         />
       </div>
     </div>
