@@ -99,22 +99,34 @@ jobs:
             # Crear directorio si no existe
             mkdir -p ~/probability/infra/compose-prod
 
-            # Instalar AWS CLI si no está instalado
-            if ! command -v aws &> /dev/null; then
-              echo "📦 Instalando AWS CLI..."
+            # Instalar/reinstalar AWS CLI para ARM64
+            # Verificar si AWS CLI está instalado y funciona correctamente
+            if ! command -v aws &> /dev/null || ! aws --version &> /dev/null; then
+              echo "📦 Instalando/reinstalando AWS CLI para ARM64..."
+              # Remover instalación anterior si existe
+              sudo rm -rf /usr/local/aws-cli /usr/local/bin/aws /usr/local/bin/aws_completer
+              # Descargar e instalar versión ARM64
               curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
               unzip -q awscliv2.zip
-              sudo ./aws/install
+              sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
               rm -rf aws awscliv2.zip
-              echo "✅ AWS CLI instalado"
+              # Verificar instalación
+              /usr/local/bin/aws --version || {
+                echo "❌ Error: AWS CLI no se instaló correctamente"
+                exit 1
+              }
+              echo "✅ AWS CLI instalado correctamente"
             else
-              echo "✅ AWS CLI ya está instalado"
+              echo "✅ AWS CLI ya está instalado y funcionando"
             fi
 
             cd ~/probability/infra/compose-prod || exit 1
 
+            # Asegurar que AWS CLI esté en PATH
+            export PATH="/usr/local/bin:$PATH"
+
             # Login a ECR publico
-            aws ecr-public get-login-password --region us-east-1 | \
+            /usr/local/bin/aws ecr-public get-login-password --region us-east-1 | \
               podman login --username AWS --password-stdin public.ecr.aws
 
             # Pull latest image
