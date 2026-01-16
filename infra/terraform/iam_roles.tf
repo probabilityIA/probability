@@ -2,11 +2,30 @@
 # Este role permite que la EC2 haga pull de imagenes de ECR privado
 
 # Data source para obtener la instancia EC2 existente
+# Si se proporciona instance_id, usarlo directamente; si no, buscar por tag Name
 data "aws_instance" "existing_ec2" {
+  count = var.ec2_instance_id != "" ? 0 : 1
+  
   filter {
     name   = "tag:Name"
     values = [var.ec2_instance_name]
   }
+  
+  filter {
+    name   = "instance-state-name"
+    values = ["running"]
+  }
+}
+
+# Data source alternativo usando instance ID directamente
+data "aws_instance" "existing_ec2_by_id" {
+  count       = var.ec2_instance_id != "" ? 1 : 0
+  instance_id = var.ec2_instance_id
+}
+
+# Local para obtener el instance ID
+locals {
+  instance_id = var.ec2_instance_id != "" ? data.aws_instance.existing_ec2_by_id[0].id : data.aws_instance.existing_ec2[0].id
 }
 
 # IAM Role para EC2
@@ -98,9 +117,43 @@ resource "aws_iam_instance_profile" "ec2_ecr_profile" {
 }
 
 # Asociar el Instance Profile a la instancia EC2 automáticamente
-resource "aws_iam_instance_profile_association" "ec2_ecr_association" {
-  instance_id      = data.aws_instance.existing_ec2.id
-  iam_instance_profile_name = aws_iam_instance_profile.ec2_ecr_profile.name
+# Nota: AWS no tiene un recurso directo para asociar instance profiles a instancias existentes
+# Usamos null_resource con local-exec para ejecutar el comando AWS CLI
+resource "null_resource" "associate_iam_profile" {
+  depends_on = [
+    aws_iam_instance_profile.ec2_ecr_profile,
+    aws_iam_role_policy.ec2_ecr_auth
+  ]
+
+  # Desasociar rol anterior si existe
+  provisioner "local-exec" {
+    command = <<-EOT
+      # Obtener association ID actual si existe
+      ASSOC_ID=$(aws ec2 describe-iam-instance-profile-associations \
+        --filters "Name=instance-id,Values=${local.instance_id}" \
+        --query 'IamInstanceProfileAssociations[0].AssociationId' \
+        --output text 2>/dev/null || echo "")
+      
+      # Desasociar si existe
+      if [ "$ASSOC_ID" != "None" ] && [ -n "$ASSOC_ID" ]; then
+        echo "Desasociando rol anterior: $ASSOC_ID"
+        aws ec2 disassociate-iam-instance-profile --association-id "$ASSOC_ID" || true
+        sleep 2
+      fi
+      
+      # Asociar nuevo rol
+      echo "Asociando nuevo rol: ${aws_iam_instance_profile.ec2_ecr_profile.name}"
+      aws ec2 associate-iam-instance-profile \
+        --instance-id ${local.instance_id} \
+        --iam-instance-profile Name=${aws_iam_instance_profile.ec2_ecr_profile.name}
+    EOT
+  }
+
+  # Trigger cuando cambie el instance profile
+  triggers = {
+    instance_profile_name = aws_iam_instance_profile.ec2_ecr_profile.name
+    instance_id = local.instance_id
+  }
 }
 
 # Outputs
@@ -116,5 +169,5 @@ output "ec2_instance_profile_name" {
 
 output "ec2_instance_id" {
   description = "ID de la instancia EC2 encontrada"
-  value       = try(data.aws_instance.existing_ec2.id, "No encontrada - ajusta los filtros en iam_roles.tf")
+  value       = local.instance_id
 }
