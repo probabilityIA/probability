@@ -153,10 +153,10 @@ services:
       - "443:443"
     environment:
       DOMAIN: "${DOMAIN}"
-      SSL_CERT_PATH: "/certs/fullchain.pem"
-      SSL_KEY_PATH: "/certs/privkey.pem"
+      SSL_CERT_PATH: "${SSL_CERT_PATH}"
+      SSL_KEY_PATH: "${SSL_KEY_PATH}"
     volumes:
-      - ~/certs:/certs:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - back-central
       - front-central
