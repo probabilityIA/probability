@@ -24,16 +24,23 @@ env:
 jobs:
   build-and-push:
     name: Build and Push to ECR
-    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo - más rápido y barato
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set up QEMU for ARM64 emulation
+        uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: front/central/package-lock.json
 
       - name: Install Podman
         run: |
@@ -58,8 +65,12 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1' }}
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://back-central:3050/api/v1' }}
         run: |
+          # Pull previous image for cache (si existe)
+          podman pull ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest || true
+          
           podman build \
             --platform linux/arm64 \
+            --cache-from ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
             --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
             --build-arg API_BASE_URL=${API_BASE_URL} \
             -f docker/Dockerfile \
