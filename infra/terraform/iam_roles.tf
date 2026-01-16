@@ -97,6 +97,12 @@ resource "aws_iam_instance_profile" "ec2_ecr_profile" {
   tags = var.tags
 }
 
+# Asociar el Instance Profile a la instancia EC2 automáticamente
+resource "aws_iam_instance_profile_association" "ec2_ecr_association" {
+  instance_id      = data.aws_instance.existing_ec2.id
+  iam_instance_profile_name = aws_iam_instance_profile.ec2_ecr_profile.name
+}
+
 # Outputs
 output "ec2_iam_role_arn" {
   description = "ARN del IAM Role para EC2"
