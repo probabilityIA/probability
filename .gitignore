@@ -36,3 +36,42 @@ go.work.sum
 back/central/main
 back/central/central_reserve
 back/central/probability-back-central
+
+# ===========================================
+# Terraform - Archivos pesados y sensibles
+# ===========================================
+
+# Directorio local de Terraform (plugins, providers - muy pesado)
+**/.terraform/
+.terraform/
+
+# Archivos de estado de Terraform (contienen informacion sensible)
+*.tfstate
+*.tfstate.*
+terraform.tfstate
+terraform.tfstate.backup
+
+# Variables con datos sensibles
+*.tfvars
+!*.tfvars.example
+
+# Archivos de plan de Terraform
+*.tfplan
+*.plan
+
+# Directorio de crash logs
+crash.log
+crash.*.log
+
+# Override files (usados para configuracion local)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Lock file (opcional - algunos lo versionan, otros no)
+# .terraform.lock.hcl
