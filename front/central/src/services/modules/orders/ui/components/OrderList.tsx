@@ -274,10 +274,11 @@ interface OrderListProps {
     onView?: (order: Order) => void;
     onEdit?: (order: Order) => void;
     onViewRecommendation?: (order: Order) => void;
+    onCreate?: () => void;
     refreshKey?: number;
 }
 
-export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey }: OrderListProps) {
+export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey, onCreate }: OrderListProps) {
     const { isSuperAdmin, permissions } = usePermissions();
     const [orders, setOrders] = useState<Order[]>([]);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -900,22 +901,26 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     return (
         <div>
             {/* Dynamic Filters */}
-            <div>
-                <DynamicFilters
-                    availableFilters={availableFilters}
-                    activeFilters={activeFilters}
-                    onAddFilter={handleAddFilter}
-                    onRemoveFilter={handleRemoveFilter}
-                    sortBy={filters.sort_by || 'created_at'}
-                    sortOrder={filters.sort_order || 'desc'}
-                    onSortChange={handleSortChange}
-                    sortOptions={[
-                        { value: 'created_at', label: 'Ordenar por fecha' },
-                        { value: 'updated_at', label: 'Ordenar por actualización' },
-                        { value: 'total_amount', label: 'Ordenar por monto' },
-                        { value: 'order_number', label: 'Ordenar por ID' },
-                    ]}
-                />
+            <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex-1">
+                    <DynamicFilters
+                        availableFilters={availableFilters}
+                        activeFilters={activeFilters}
+                        onAddFilter={handleAddFilter}
+                        onRemoveFilter={handleRemoveFilter}
+                        sortBy={filters.sort_by || 'created_at'}
+                        sortOrder={filters.sort_order || 'desc'}
+                        onSortChange={handleSortChange}
+                        onCreate={onCreate}
+                        sortOptions={[
+                            { value: 'created_at', label: 'Ordenar por fecha' },
+                            { value: 'updated_at', label: 'Ordenar por actualización' },
+                            { value: 'total_amount', label: 'Ordenar por monto' },
+                            { value: 'order_number', label: 'Ordenar por ID' },
+                        ]}
+                    />
+                </div>
+                {/* + Crear Orden button rendered inside DynamicFilters */}
             </div>
 
             {/* Table */}
@@ -937,7 +942,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     {/* Columna del logo - sin título */}
                                 </th>
                                 <th
-                                    className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group"
+                                    className="px-3s sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group"
                                     onClick={() => handleSortChange('order_number', filters.sort_order === 'asc' ? 'desc' : 'asc')}
                                 >
                                     <div className="flex items-center gap-1">
