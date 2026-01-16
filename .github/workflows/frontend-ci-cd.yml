@@ -19,7 +19,6 @@ on:
 env:
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: 476702565908
-  ECR_REPO: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend
   IMAGE_NAME: frontend
 
 jobs:
@@ -66,12 +65,12 @@ jobs:
             --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
             --build-arg API_BASE_URL=${API_BASE_URL} \
             -f docker/Dockerfile \
-            -t ${{ env.ECR_REPO }}:latest \
+            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:latest \
             .
 
       - name: Push image to ECR
         run: |
-          podman push ${{ env.ECR_REPO }}:latest
+          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:latest
 
   deploy:
     name: Deploy to Server

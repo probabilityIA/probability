@@ -21,7 +21,6 @@ on:
 env:
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: 476702565908
-  ECR_REPO: ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-backend
   IMAGE_NAME: backend
 
 jobs:
@@ -62,12 +61,12 @@ jobs:
           podman build \
             --platform linux/arm64 \
             -f central/docker/Dockerfile \
-            -t ${{ env.ECR_REPO }}:latest \
+            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-backend:latest \
             .
 
       - name: Push image to ECR
         run: |
-          podman push ${{ env.ECR_REPO }}:latest
+          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-backend:latest
 
   deploy:
     name: Deploy to Server
