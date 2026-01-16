@@ -55,12 +55,8 @@ jobs:
       - name: Build image with Podman (ARM64)
         working-directory: ./infra/nginx
         run: |
-          # Pull previous image for cache (si existe)
-          podman pull ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest || true
-          
           podman build \
             --platform linux/arm64 \
-            --cache-from ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
             -f Dockerfile \
             -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-latest \
             -t ${{ env.ECR_REPO }}:${{ env.IMAGE_NAME }}-${{ github.sha }} \
