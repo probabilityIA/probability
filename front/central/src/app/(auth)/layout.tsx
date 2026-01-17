@@ -24,7 +24,7 @@ export default function AuthLayout({
   const pathname = usePathname();
   const [user, setUser] = useState<{ userId: string; name: string; email: string; role: string; avatarUrl?: string; is_super_admin?: boolean; scope?: string } | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showBusinessSelector, setShowBusinessSelector] = useState(false);
+  const [showBusinessSelector] = useState(false);
 
   // P?ginas que NO deben tener sidebar (login)
   const isLoginPage = pathname === '/login';
@@ -33,11 +33,12 @@ export default function AuthLayout({
     // Verificar autenticaci?n (solo si no es login)
     if (!isLoginPage) {
       const sessionToken = TokenStorage.getSessionToken();
-      const businessToken = TokenStorage.getBusinessToken();
       const userData = TokenStorage.getUser();
 
       if (!sessionToken || !userData) {
         router.push('/login');
+        // Usar setTimeout para evitar setState síncrono en efecto
+        setTimeout(() => setLoading(false), 0);
         return;
       }
 
@@ -58,14 +59,20 @@ export default function AuthLayout({
           console.error('? Usuario business sin negocios asignados');
           TokenStorage.clearSession();
           router.push('/login?error=no_business');
+          // Usar setTimeout para evitar setState síncrono en efecto
+          setTimeout(() => setLoading(false), 0);
           return;
         }
       }
 
-      setUser(userData);
+      // Usar setTimeout para evitar setState síncrono en efecto
+      setTimeout(() => {
+        setUser(userData);
+        setLoading(false);
+      }, 0);
+    } else {
+      setTimeout(() => setLoading(false), 0);
     }
-
-    setLoading(false);
   }, [router, isLoginPage, pathname]);
 
 

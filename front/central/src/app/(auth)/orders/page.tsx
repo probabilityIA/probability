@@ -73,8 +73,9 @@ export default function OrdersPage() {
             <OrderList
                 refreshKey={refreshKey}
                 onView={handleView}
-                onViewRecommendation={handleViewRecommendation} // Pass new handler
+                onViewRecommendation={handleViewRecommendation}
                 onEdit={handleEdit}
+                onCreate={() => setShowCreateModal(true)}
             />
 
             {/* Test Guide Modal */}

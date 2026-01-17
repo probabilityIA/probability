@@ -35,3 +35,4 @@ func main() {
 	_ = server.Init(context.Background())
 	select {}
 }
+

@@ -1,0 +1,133 @@
+name: Backend CI/CD - Probability
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'back/central/**'
+      - 'back/migration/**'
+      - '.github/workflows/backend-ci-cd.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: 476702565908
+  IMAGE_NAME: backend
+
+jobs:
+  build-and-push:
+    name: Build and Push to ECR
+    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo - más rápido y barato
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: back/central/go.sum
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            podman login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+
+      - name: Build image with Podman (ARM64)
+        working-directory: ./back
+        run: |
+          podman build \
+            --platform linux/arm64 \
+            -f central/docker/Dockerfile \
+            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-backend:latest \
+            .
+
+      - name: Push image to ECR
+        run: |
+          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-backend:latest
+
+  deploy:
+    name: Deploy to Server
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Upload compose file
+        run: |
+          scp -o StrictHostKeyChecking=no \
+            infra/compose-prod/podman-compose.yaml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
+
+      - name: Deploy to server
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
+
+            # Crear directorio si no existe
+            mkdir -p ~/probability/infra/compose-prod
+
+            # Instalar/reinstalar AWS CLI para ARM64
+            # Verificar si AWS CLI está instalado y funciona correctamente
+            if ! command -v aws &> /dev/null || ! aws --version &> /dev/null; then
+              echo "📦 Instalando/reinstalando AWS CLI para ARM64..."
+              # Remover instalación anterior si existe
+              sudo rm -rf /usr/local/aws-cli /usr/local/bin/aws /usr/local/bin/aws_completer
+              # Descargar e instalar versión ARM64
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip
+              sudo ./aws/install --bin-dir /usr/local/bin --install-dir /usr/local/aws-cli
+              rm -rf aws awscliv2.zip
+              # Verificar instalación
+              /usr/local/bin/aws --version || {
+                echo "❌ Error: AWS CLI no se instaló correctamente"
+                exit 1
+              }
+              echo "✅ AWS CLI instalado correctamente"
+            else
+              echo "✅ AWS CLI ya está instalado y funcionando"
+            fi
+
+            cd ~/probability/infra/compose-prod || exit 1
+
+            # Asegurar que AWS CLI esté en PATH
+            export PATH="/usr/local/bin:$PATH"
+
+            # Login a ECR privado
+            /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
+              podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
+
+            # Pull latest image
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
+
+            # Restart service
+            podman-compose -f podman-compose.yaml up -d back-central
+
+            # Clean up
+            podman image prune -f
+
+            echo "Backend deployed successfully"
+          EOF
