@@ -80,7 +80,7 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Variables de entorno
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=80
+ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # IMPORTANTE: API_BASE_URL debe pasarse en runtime (no en build time)
@@ -89,8 +89,8 @@ ENV HOSTNAME="0.0.0.0"
 # Cambiar a usuario no-root
 USER nextjs
 
-# Exponer puerto
-EXPOSE 80
+# Exponer puerto (3000 para Podman rootless)
+EXPOSE 3000
 
 # Comando de inicio
 CMD ["node", "server.js"]

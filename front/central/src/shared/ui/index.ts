@@ -20,8 +20,7 @@ export * from './select';
 export * from './sidebar';
 export * from './spinner';
 export * from './table';
-export * from './iam-sidebar';
-export * from './orders-sidebar';
+// IAM and Orders sidebars have been integrated into the main `sidebar` component
 export * from './user-profile-modal';
 
 // Re-exportar tipos útiles

@@ -1,0 +1,374 @@
+name: Deploy Services (Frontend, Backend, Nginx)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'front/rupu-central/**'
+      - 'back/central-reserve/**'
+      - 'infra/nginx/**'
+      - 'infra/compose-prod/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+env:
+  AWS_REGION: us-east-1
+
+jobs:
+  # Detectar qué servicios cambiaron
+  detect-changes:
+    name: Detect Changed Services
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+      nginx: ${{ steps.filter.outputs.nginx }}
+      compose: ${{ steps.filter.outputs.compose }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      
+      - name: Check for changes
+        id: filter
+        uses: dorny/paths-filter@v2
+        with:
+          filters: |
+            frontend:
+              - 'front/rupu-central/**'
+            backend:
+              - 'back/central-reserve/**'
+            nginx:
+              - 'infra/nginx/**'
+            compose:
+              - 'infra/compose-prod/**'
+              - '.github/workflows/deploy.yml'
+
+  build-frontend:
+    name: Build and Push Frontend
+    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo - más rápido y barato
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get AWS Account ID
+        id: get_account
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+          echo "ECR_REGISTRY=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            podman login --username AWS --password-stdin ${{ steps.get_account.outputs.ECR_REGISTRY }}
+
+      - name: Build and push frontend
+        working-directory: front/rupu-central
+        env:
+          NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://xn--rup-joa.com/api/v1' }}
+          API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://central_reserve:3050/api/v1' }}
+        run: |
+          podman build \
+            --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
+            --build-arg API_BASE_URL=${API_BASE_URL} \
+            -f docker/Dockerfile \
+            -t ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-frontend:latest \
+            -t ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-frontend:$(date +%Y%m%d-%H%M%S) \
+            .
+          
+          podman push ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-frontend:latest || true
+          podman push ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-frontend:$(date +%Y%m%d-%H%M%S) || true
+
+  build-backend:
+    name: Build and Push Backend
+    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo - más rápido y barato
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get AWS Account ID
+        id: get_account
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+          echo "ECR_REGISTRY=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            podman login --username AWS --password-stdin ${{ steps.get_account.outputs.ECR_REGISTRY }}
+
+      - name: Build and push backend
+        working-directory: back/central-reserve
+        run: |
+          cd ../..
+          podman build \
+            -f back/central-reserve/docker/Dockerfile \
+            -t ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-backend:latest \
+            -t ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-backend:$(date +%Y%m%d-%H%M%S) \
+            .
+          
+          podman push ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-backend:latest || true
+          podman push ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-backend:$(date +%Y%m%d-%H%M%S) || true
+
+  build-nginx:
+    name: Build and Push Nginx
+    runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo - más rápido y barato
+    needs: detect-changes
+    if: needs.detect-changes.outputs.nginx == 'true'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Podman
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y podman
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Get AWS Account ID
+        id: get_account
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+          echo "ECR_REGISTRY=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
+            podman login --username AWS --password-stdin ${{ steps.get_account.outputs.ECR_REGISTRY }}
+
+      - name: Build and push nginx
+        working-directory: infra/nginx
+        run: |
+          podman build \
+            -f Dockerfile \
+            -t ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-nginx:latest \
+            -t ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-nginx:$(date +%Y%m%d-%H%M%S) \
+            .
+          
+          podman push ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-nginx:latest || true
+          podman push ${{ steps.get_account.outputs.ECR_REGISTRY }}/rupu-nginx:$(date +%Y%m%d-%H%M%S) || true
+
+
+  deploy:
+    name: Deploy to EC2
+    needs: [detect-changes, build-frontend, build-backend, build-nginx]
+    runs-on: ubuntu-latest
+    # Solo desplegar en main y si algo cambió (incluyendo compose)
+    if: |
+      always() &&
+      github.ref == 'refs/heads/main' && 
+      (needs.detect-changes.outputs.frontend == 'true' || 
+       needs.detect-changes.outputs.backend == 'true' || 
+       needs.detect-changes.outputs.nginx == 'true' || 
+       needs.detect-changes.outputs.compose == 'true') &&
+      (needs.build-frontend.result == 'success' || needs.build-frontend.result == 'skipped') &&
+      (needs.build-backend.result == 'success' || needs.build-backend.result == 'skipped') &&
+      (needs.build-nginx.result == 'success' || needs.build-nginx.result == 'skipped')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+      - name: Get AWS Account ID for deploy
+        id: get_account_deploy
+        run: |
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "account_id=$ACCOUNT_ID" >> $GITHUB_OUTPUT
+          echo "ECR_REGISTRY=$ACCOUNT_ID.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com" >> $GITHUB_OUTPUT
+
+      - name: Deploy to server
+        run: |
+          # Crear directorio en EC2 si no existe e instalar dependencias
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'SETUP_EOF'
+            set -e
+            mkdir -p ~/reserve/infra/compose-prod
+            
+            # Instalar AWS CLI si no está instalado
+            if ! command -v aws &> /dev/null; then
+              echo "📦 Instalando AWS CLI..."
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip" -o "awscliv2.zip"
+              unzip -q awscliv2.zip
+              sudo ./aws/install
+              rm -rf aws awscliv2.zip
+              echo "✅ AWS CLI instalado"
+            else
+              echo "✅ AWS CLI ya está instalado"
+            fi
+            
+            # Verificar e instalar Podman y podman-compose
+            if ! command -v podman &> /dev/null; then
+              echo "📦 Instalando Podman..."
+              sudo apt-get update
+              sudo apt-get install -y podman
+              echo "✅ Podman instalado"
+            else
+              echo "✅ Podman ya está instalado"
+            fi
+            
+            # Instalar podman-compose si no está disponible
+            if ! command -v podman-compose &> /dev/null; then
+              echo "📦 Instalando podman-compose..."
+              
+              # Método 1: Intentar con pipx (recomendado para Ubuntu 24.04)
+              if command -v pipx &> /dev/null; then
+                echo "📦 Instalando con pipx..."
+                pipx install podman-compose || {
+                  echo "⚠️ pipx falló, intentando método alternativo..."
+                  # Método 2: Instalar pipx si no está disponible
+                  if ! command -v pipx &> /dev/null; then
+                    sudo apt-get install -y pipx
+                    pipx ensurepath
+                  fi
+                  pipx install podman-compose
+                }
+                # pipx instala en ~/.local/bin, asegurar que esté en PATH
+                export PATH="$HOME/.local/bin:$PATH"
+                sudo ln -sf "$HOME/.local/bin/podman-compose" /usr/local/bin/podman-compose 2>/dev/null || true
+              else
+                # Método 2: Instalar pipx primero
+                echo "📦 Instalando pipx..."
+                sudo apt-get install -y pipx
+                pipx ensurepath
+                export PATH="$HOME/.local/bin:$PATH"
+                pipx install podman-compose
+                sudo ln -sf "$HOME/.local/bin/podman-compose" /usr/local/bin/podman-compose 2>/dev/null || true
+              fi
+              
+              # Método 3: Si pipx falla, usar pip con --break-system-packages (último recurso)
+              if ! command -v podman-compose &> /dev/null; then
+                echo "⚠️ pipx falló, usando pip con --break-system-packages..."
+                pip3 install --user --break-system-packages podman-compose || \
+                sudo pip3 install --break-system-packages podman-compose
+                
+                # Asegurar que esté en el PATH
+                if [ -f "$HOME/.local/bin/podman-compose" ]; then
+                  sudo ln -sf "$HOME/.local/bin/podman-compose" /usr/local/bin/podman-compose || true
+                fi
+              fi
+              
+              # Verificar instalación final
+              if command -v podman-compose &> /dev/null; then
+                echo "✅ podman-compose instalado: $(which podman-compose)"
+              else
+                echo "❌ Error: No se pudo instalar podman-compose"
+                exit 1
+              fi
+            else
+              echo "✅ podman-compose ya está instalado: $(which podman-compose)"
+            fi
+            
+            # Verificar instalaciones finales
+            echo "🔍 Verificando instalaciones..."
+            command -v aws && aws --version || echo "❌ AWS CLI no disponible"
+            command -v podman && podman --version || echo "❌ Podman no disponible"
+            command -v podman-compose && podman-compose --version || echo "❌ podman-compose no disponible"
+          SETUP_EOF
+          
+          # Subir podman-compose.yaml si cambió
+          scp -o StrictHostKeyChecking=no \
+            infra/compose-prod/podman-compose.yaml \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/reserve/infra/compose-prod/
+          
+          # Ejecutar despliegue
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+            set -e
+            
+            # Actualizar PATH para incluir ubicaciones comunes
+            export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin:/usr/bin
+            
+            # Verificar que podman-compose esté disponible
+            if ! command -v podman-compose &> /dev/null; then
+              echo "❌ podman-compose no está disponible. Verificando instalación..."
+              # Intentar encontrar podman-compose
+              PODMAN_COMPOSE_PATH=\$(which podman-compose 2>/dev/null || find \$HOME -name podman-compose 2>/dev/null | head -1 || find /usr -name podman-compose 2>/dev/null | head -1)
+              if [ -n "\$PODMAN_COMPOSE_PATH" ]; then
+                echo "📍 Encontrado podman-compose en: \$PODMAN_COMPOSE_PATH"
+                export PATH=\$PATH:\$(dirname \$PODMAN_COMPOSE_PATH)
+              else
+                echo "❌ Error: podman-compose no se encuentra. Reinstalando..."
+                pip3 install --user podman-compose || sudo pip3 install podman-compose
+                export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin
+              fi
+              
+              # Verificar nuevamente
+              if ! command -v podman-compose &> /dev/null; then
+                echo "❌ Error crítico: podman-compose no está disponible después de intentar instalarlo"
+                exit 1
+              fi
+            fi
+            
+            echo "✅ podman-compose disponible: \$(which podman-compose)"
+            
+            # Navegar al directorio de compose
+            cd ~/reserve/infra/compose-prod || exit 1
+            
+            # Login a ECR usando el IAM Role (no necesita credenciales explícitas)
+            echo "🔐 Login a ECR..."
+            aws ecr get-login-password --region ${{ env.AWS_REGION }} 2>&1 | \
+              podman login --username AWS --password-stdin ${{ steps.get_account_deploy.outputs.ECR_REGISTRY }} || {
+              echo "⚠️ Error en login a ECR, verificando IAM Role..."
+              aws sts get-caller-identity || echo "❌ No se puede autenticar con AWS"
+              exit 1
+            }
+            
+            # Pull latest images
+            echo "🔄 Pulling latest images from ECR..."
+            podman-compose -f podman-compose.yaml pull
+            
+            # Update and restart services
+            echo "🚀 Updating services..."
+            podman-compose -f podman-compose.yaml up -d
+            
+            # Show status
+            echo "📊 Service status:"
+            podman-compose -f podman-compose.yaml ps
+            
+            # Clean up old images
+            podman image prune -f
+            
+            echo "✅ Deployment completed"
+          EOF

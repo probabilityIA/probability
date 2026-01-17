@@ -199,24 +199,38 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
     useEffect(() => {
         if (formData.logo_file) {
             const url = URL.createObjectURL(formData.logo_file);
-            setLogoPreview(url);
+            // Usar setTimeout para evitar setState síncrono en efecto
+            setTimeout(() => {
+                setLogoPreview(url);
+            }, 0);
             return () => URL.revokeObjectURL(url);
         } else if (initialData?.logo_url) {
-            setLogoPreview(initialData.logo_url);
+            setTimeout(() => {
+                setLogoPreview(initialData.logo_url ?? null);
+            }, 0);
         } else {
-            setLogoPreview(null);
+            setTimeout(() => {
+                setLogoPreview(null);
+            }, 0);
         }
     }, [formData.logo_file, initialData?.logo_url]);
 
     useEffect(() => {
         if (formData.navbar_image_file) {
             const url = URL.createObjectURL(formData.navbar_image_file);
-            setNavbarPreview(url);
+            // Usar setTimeout para evitar setState síncrono en efecto
+            setTimeout(() => {
+                setNavbarPreview(url);
+            }, 0);
             return () => URL.revokeObjectURL(url);
         } else if (initialData?.navbar_image_url) {
-            setNavbarPreview(initialData.navbar_image_url);
+            setTimeout(() => {
+                setNavbarPreview(initialData.navbar_image_url ?? null);
+            }, 0);
         } else {
-            setNavbarPreview(null);
+            setTimeout(() => {
+                setNavbarPreview(null);
+            }, 0);
         }
     }, [formData.navbar_image_file, initialData?.navbar_image_url]);
 

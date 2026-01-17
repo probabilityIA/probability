@@ -15,6 +15,7 @@
 --   - Order Status: any, open, closed, cancelled
 --   - Financial Status: any, authorized, pending, paid, partially_paid, refunded, voided, partially_refunded, unpaid
 --   - Fulfillment Status: any, shipped, partial, unfulfilled, unshipped
+--   - Shipment Status (dentro de fulfillments): confirmed, success, delivered, failure, cancelled (PRIORIDAD 2)
 --
 -- Estados de Probability (order_statuses):
 --   - pending, processing, shipped, delivered, completed, cancelled, refunded, failed, on_hold
@@ -54,6 +55,21 @@ VALUES
   (1, 'unshipped', (SELECT id FROM order_statuses WHERE code = 'on_hold' LIMIT 1), true, 1, 'No enviado en Shopify → En espera en Probability', NOW(), NOW()),
   (1, 'any', (SELECT id FROM order_statuses WHERE code = 'pending' LIMIT 1), true, 0, 'Estado de envío "any" en Shopify → Pendiente en Probability (por defecto)', NOW(), NOW())
 ON CONFLICT (integration_type_id, original_status) DO NOTHING;
+
+-- Mapeos de Shipment Status (Estado de Envío dentro de fulfillments) - PRIORIDAD 2
+-- Estos tienen mayor prioridad que fulfillment_status y financial_status
+INSERT INTO order_status_mappings (integration_type_id, original_status, order_status_id, is_active, priority, description, created_at, updated_at)
+VALUES 
+  (1, 'confirmed', (SELECT id FROM order_statuses WHERE code = 'processing' LIMIT 1), true, 2, 'Confirmado en Shopify → En Procesamiento en Probability', NOW(), NOW()),
+  (1, 'success', (SELECT id FROM order_statuses WHERE code = 'shipped' LIMIT 1), true, 2, 'Exitoso (en tránsito) en Shopify → Enviada en Probability', NOW(), NOW()),
+  (1, 'delivered', (SELECT id FROM order_statuses WHERE code = 'delivered' LIMIT 1), true, 2, 'Entregado en Shopify → Entregada en Probability', NOW(), NOW()),
+  (1, 'failure', (SELECT id FROM order_statuses WHERE code = 'failed' LIMIT 1), true, 2, 'Fallido en Shopify → Fallida en Probability', NOW(), NOW()),
+  (1, 'cancelled', (SELECT id FROM order_statuses WHERE code = 'cancelled' LIMIT 1), true, 2, 'Cancelado (shipment) en Shopify → Cancelada en Probability', NOW(), NOW())
+ON CONFLICT (integration_type_id, original_status) DO UPDATE SET 
+  order_status_id = EXCLUDED.order_status_id,
+  priority = EXCLUDED.priority,
+  description = EXCLUDED.description,
+  updated_at = NOW();
 
 -- ============================================
 -- Notas:
