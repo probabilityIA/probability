@@ -6,16 +6,29 @@ import { TokenStorage } from '@/shared/config';
 
 interface ShopifyOAuthFormProps {
     onCancel?: () => void;
+    onSubmit?: (data: any) => void;
+    onTestConnection?: (config: any, credentials: any) => Promise<boolean>;
+    onGetWebhook?: () => Promise<any>;
     initialData?: {
         name?: string;
+        code?: string;
         store_id?: string;
+        config?: any;
+        credentials?: any;
         business_id?: number | null;
     };
+    isEdit?: boolean;
+    integrationId?: number;
 }
 
 export default function ShopifyOAuthForm({
     onCancel,
+    onSubmit,
+    onTestConnection,
+    onGetWebhook,
     initialData,
+    isEdit,
+    integrationId,
 }: ShopifyOAuthFormProps) {
     const [formData, setFormData] = useState({
         name: initialData?.name || '',

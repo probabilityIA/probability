@@ -217,7 +217,7 @@ export const ShippingForm = () => {
             const payload = buildPayload(data, selectedRate.idRate);
             const repo = new ShipmentApiRepository();
             const res = await repo.generateGuide(payload);
-            setSuccess(`Guía generada exitosamente! Tracking: ${res.data.trackingNumber}`);
+            setSuccess(`Guía generada exitosamente! Tracking: ${res.data.tracker}`);
             // Reset logic if needed
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Error generando guía";
