@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/paymentstatus"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
+	"github.com/secamc93/probability/back/central/services/modules/wallet"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -58,5 +59,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de dashboard
 	dashboard.New(router, database, logger)
+
+	// Inicializar módulo de wallet
+	wallet.New(router, database, logger, environment)
 
 }

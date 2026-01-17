@@ -10,7 +10,7 @@ import { Order } from "@/services/modules/orders/domain/types";
 interface ShipmentGuideModalProps {
     isOpen: boolean;
     onClose: () => void;
-    order: Order;
+    order?: Order;
     recommendedCarrier?: string;
     onGuideGenerated?: (trackingNumber: string) => void;
 }
@@ -64,6 +64,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
     const [rates, setRates] = useState<EnvioClickRate[]>([]);
     const [selectedRate, setSelectedRate] = useState<EnvioClickRate | null>(null);
     const [hasQuoted, setHasQuoted] = useState(false);
+    const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
 
     const {
         register,
@@ -204,8 +205,18 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
             const payload = buildPayload(data, selectedRate.idRate);
             const repo = new ShipmentApiRepository();
             const res = await repo.generateGuide(payload);
-            setSuccess(`Guía generada exitosamente! Tracking: ${res.data.trackingNumber}`);
-            if (onGuideGenerated) onGuideGenerated(res.data.trackingNumber);
+
+            // API returns 'tracker' and 'url'
+            const tracking = res.data.tracker;
+            const pdfUrl = res.data.url;
+
+            setSuccess(`Guía generada exitosamente! Tracking: ${tracking}`);
+
+            // We can store the URL in a local state if we want to show it in the success UI specifically
+            // For now, we'll append it to the success message or handle it in the UI render
+            setGeneratedPdfUrl(pdfUrl);
+
+            if (onGuideGenerated) onGuideGenerated(tracking);
         } catch (err: any) {
             const msg = err.message || "";
             if (msg.toLowerCase().includes("no tiene suficiente crédito")) {
@@ -224,7 +235,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col">
                 <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 className="text-lg font-bold text-gray-800">Generar Guía de Envío para Orden #{order.order_number}</h3>
+                    <h3 className="text-lg font-bold text-gray-800">
+                        {order ? `Generar Guía de Envío para Orden #${order.order_number}` : 'Generar Guía de Envío (Prueba)'}
+                    </h3>
                     <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
                 </div>
 
@@ -240,6 +253,20 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
                         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 text-center">
                             <p className="font-bold text-lg mb-2">¡Éxito!</p>
                             <p>{success}</p>
+
+                            {generatedPdfUrl && (
+                                <div className="mt-4">
+                                    <a
+                                        href={generatedPdfUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors"
+                                    >
+                                        📄 Ver Guía PDF
+                                    </a>
+                                </div>
+                            )}
+
                             <Button className="mt-4" onClick={onClose}>Cerrar</Button>
                         </div>
                     )}
