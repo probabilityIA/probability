@@ -31,3 +31,4 @@ echo ""
 echo "✅ Terraform instalado correctamente!"
 echo "Ahora puedes ejecutar: cd infra/terraform && terraform init"
 
+
