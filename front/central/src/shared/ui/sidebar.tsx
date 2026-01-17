@@ -374,6 +374,35 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
+              {/* Item Billetera - Visible para todos */}
+              <li>
+                <Link
+                  href="/wallet"
+                  className={`
+                    flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                    ${isActive('/wallet')
+                      ? 'bg-white/20 text-white shadow-lg scale-105'
+                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                    }
+                  `}
+                >
+                  {isActive('/wallet') && (
+                    <div
+                      className="absolute left-0 w-1 h-8 rounded-r-full"
+                      style={{ backgroundColor: 'var(--color-tertiary)' }}
+                    />
+                  )}
+                  <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  {primaryExpanded && (
+                    <span className="text-sm font-medium transition-opacity duration-300">
+                      Billetera
+                    </span>
+                  )}
+                </Link>
+              </li>
+
               {/* Item IAM (Gestión de Identidad) - Solo si tiene permiso */}
               {canAccessIAM && (
                 <li>
