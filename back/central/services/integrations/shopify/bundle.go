@@ -121,6 +121,6 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 			Msg("URL_BASE_SWAGGER no está configurada, no se crearán webhooks automáticamente para Shopify")
 	}
 
-	shopifyHandler := handlers.New(useCase, logger, coreIntegration)
+	shopifyHandler := handlers.New(useCase, logger, coreIntegration, config)
 	shopifyHandler.RegisterRoutes(router, logger)
 }

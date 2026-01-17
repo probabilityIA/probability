@@ -12,7 +12,17 @@ import { WideModal } from '@/shared/ui/wide-modal';
 import { IntegrationType, Integration } from '@/services/integrations/core/domain/types';
 import { getIntegrationByIdAction } from '@/services/integrations/core/infra/actions';
 
+import { useSearchParams } from 'next/navigation';
+import ShopifyOAuthCallback from '@/services/integrations/core/ui/components/shopify/ShopifyOAuthCallback';
+
 export default function IntegrationsPage() {
+    const searchParams = useSearchParams();
+    const isOAuthCallback = searchParams.get('shopify_oauth');
+
+    if (isOAuthCallback) {
+        return <ShopifyOAuthCallback />;
+    }
+
     const [activeTab, setActiveTab] = useState<'integrations' | 'types'>('integrations');
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -91,7 +101,7 @@ export default function IntegrationsPage() {
             </div>
 
             {activeTab === 'integrations' ? (
-                <IntegrationList 
+                <IntegrationList
                     key={`list-${refreshKey}`}
                     onEdit={async (integration) => {
                         try {

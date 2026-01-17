@@ -93,9 +93,10 @@ export interface EnvioClickQuoteRequest {
 export interface EnvioClickGenerateResponse {
     status: string;
     data: {
-        trackingNumber: string;
-        labelUrl: string;
-        myGuideReference: string;
+        tracker: string; // The API returns 'tracker'
+        url: string; // PDF URL
+        myShipmentReference?: string;
+        // other fields if needed
     };
 }
 
