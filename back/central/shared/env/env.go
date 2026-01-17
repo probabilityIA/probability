@@ -188,6 +188,17 @@ type Config struct {
 	RabbitMQPass        string `env:"RABBITMQ_PASS,required"`
 	RabbitMQVHost       string `env:"RABBITMQ_VHOST,required"`
 	RabbitMQOrdersQueue string `env:"RABBITMQ_ORDERS_CREATE,required"`
+
+	// Shopify OAuth
+	ShopifyClientID     string `env:"SHOPIFY_CLIENT_ID"`
+	ShopifyClientSecret string `env:"SHOPIFY_CLIENT_SECRET"`
+	ShopifyRedirectURI  string `env:"SHOPIFY_REDIRECT_URI"`
+	ShopifyScopes       string `env:"SHOPIFY_SCOPES"`
+	ShopifyShopDomain   string `env:"SHOPIFY_SHOP_DOMAIN"`
+	ShopifyAPIVersion   string `env:"SHOPIFY_API_VERSION"`
+
+	// Webhooks
+	WebhookBaseURL string `env:"WEBHOOK_BASE_URL"`
 }
 
 func splitTag(tag string) []string {
