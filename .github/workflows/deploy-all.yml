@@ -8,7 +8,9 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPO: public.ecr.aws/c1l9h7c9/probability
+  AWS_ACCOUNT_ID: 476702565908
+  # IMPORTANTE: Usar solo ECR privado para evitar problemas de configuración
+  ECR_REGISTRY: 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
 jobs:
   deploy:
