@@ -52,22 +52,6 @@ export default function OrdersPage() {
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Órdenes</h1>
-                <div className="flex gap-2 w-full sm:w-auto">
-                    <Button
-                        variant="secondary"
-                        onClick={() => setShowTestGuideModal(true)}
-                        className="flex-1 sm:flex-none"
-                    >
-                        Guía Envío
-                    </Button>
-                    <Button
-                        variant="primary"
-                        onClick={() => setShowCreateModal(true)}
-                        className="flex-1 sm:flex-none"
-                    >
-                        + Crear Orden
-                    </Button>
-                </div>
             </div>
 
             <OrderList
@@ -76,6 +60,7 @@ export default function OrdersPage() {
                 onViewRecommendation={handleViewRecommendation}
                 onEdit={handleEdit}
                 onCreate={() => setShowCreateModal(true)}
+                onTestGuide={() => setShowTestGuideModal(true)}
             />
 
             {/* Test Guide Modal */}

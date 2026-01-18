@@ -1,4 +1,4 @@
-import { env } from '@/shared/config/env';
+import { envPublic } from '@/shared/config/env';
 import {
     IBusinessRepository,
 } from '../../domain/ports';
@@ -23,7 +23,7 @@ export class BusinessApiRepository implements IBusinessRepository {
     private token: string | null;
 
     constructor(token?: string | null) {
-        this.baseUrl = env.API_BASE_URL;
+        this.baseUrl = envPublic.API_BASE_URL;
         this.token = token || null;
     }
 

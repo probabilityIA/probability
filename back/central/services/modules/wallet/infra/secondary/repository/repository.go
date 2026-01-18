@@ -77,3 +77,29 @@ func (r *Repository) GetAllWallets(ctx context.Context) ([]domain.Wallet, error)
 	err := r.db.Conn(ctx).Find(&wallets).Error
 	return wallets, err
 }
+
+func (r *Repository) GetPendingTransactions(ctx context.Context) ([]domain.Transaction, error) {
+	var transactions []domain.Transaction
+	err := r.db.Conn(ctx).
+		Where("status = ?", domain.TransactionStatusPending).
+		Where("type = ?", domain.TransactionTypeRecharge).
+		Order("created_at ASC").
+		Find(&transactions).Error
+	return transactions, err
+}
+
+func (r *Repository) GetTransactionByID(ctx context.Context, id uuid.UUID) (*domain.Transaction, error) {
+	var tx domain.Transaction
+	err := r.db.Conn(ctx).Where("id = ?", id).First(&tx).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("transaction not found")
+		}
+		return nil, err
+	}
+	return &tx, nil
+}
+
+func (r *Repository) UpdateTransaction(ctx context.Context, transaction *domain.Transaction) error {
+	return r.db.Conn(ctx).Save(transaction).Error
+}

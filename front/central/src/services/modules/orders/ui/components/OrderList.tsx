@@ -275,10 +275,11 @@ interface OrderListProps {
     onEdit?: (order: Order) => void;
     onViewRecommendation?: (order: Order) => void;
     onCreate?: () => void;
+    onTestGuide?: () => void;
     refreshKey?: number;
 }
 
-export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey, onCreate }: OrderListProps) {
+export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey, onCreate, onTestGuide }: OrderListProps) {
     const { isSuperAdmin, permissions } = usePermissions();
     const [orders, setOrders] = useState<Order[]>([]);
     const [initialLoading, setInitialLoading] = useState(true);
@@ -912,6 +913,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         sortOrder={filters.sort_order || 'desc'}
                         onSortChange={handleSortChange}
                         onCreate={onCreate}
+                        onTestGuide={onTestGuide}
                         sortOptions={[
                             { value: 'created_at', label: 'Ordenar por fecha' },
                             { value: 'updated_at', label: 'Ordenar por actualización' },
