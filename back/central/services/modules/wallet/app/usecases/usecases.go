@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 
+	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/wallet/domain"
 )
 
@@ -43,13 +44,13 @@ func (u *WalletUsecases) Recharge(ctx context.Context, businessID uint, amount f
 		return "", err
 	}
 
-	// 2. Generate QR
-	qr, txID, err := u.nequiService.GenerateQR(ctx, amount)
-	if err != nil {
-		return "", err
-	}
+	// 2. Generate QR (SKIPPED - Static QR used on frontend)
+	// User requested to remove Nequi API usage completely.
+	// We generate a dummy reference for the transaction.
+	qr := "STATIC_QR"
+	txID := "MANUAL_" + uuid.New().String()
 
-	// 3. Create Transaction
+	// 3. Create Transaction (PENDING)
 	tx := &domain.Transaction{
 		WalletID:  wallet.ID,
 		Amount:    amount,
@@ -63,15 +64,67 @@ func (u *WalletUsecases) Recharge(ctx context.Context, businessID uint, amount f
 		return "", err
 	}
 
-	// 4. Update Balance (Instant credit as requested)
-	wallet.Balance += amount
-	if err := u.repo.UpdateWallet(ctx, wallet); err != nil {
-		return "", err
-	}
+	// DO NOT Update Balance automatically anymore
 
+	// Return QR code (frontend might ignore it if it uses static, but good to have)
 	return qr, nil
 }
 
 func (u *WalletUsecases) GetAllWallets(ctx context.Context) ([]domain.Wallet, error) {
 	return u.repo.GetAllWallets(ctx)
+}
+
+func (u *WalletUsecases) GetPendingTransactions(ctx context.Context) ([]domain.Transaction, error) {
+	// We need a repository method for this.
+	// Assuming GetAllWallets exists, I need to check if GetTransactionsByWalletID can be used or if I need a new repo method.
+	// Ideally I need GetPendingTransactions() on repo.
+	// I'll assume I need to add it to the interface first.
+	// But let's check ports.go again.
+	// ports.go has: GetTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) ([]Transaction, error)
+	// It does NOT have GetPendingTransactions().
+	// I'll add the method to the repo requirement.
+	// For now, I will write the usecase assuming the repo has it, and then update ports and repo implementation.
+	return u.repo.GetPendingTransactions(ctx)
+}
+
+func (u *WalletUsecases) ApproveTransaction(ctx context.Context, transactionID string) error {
+	// 1. Get Transaction
+	// Need repo method GetTransactionByID
+	tx, err := u.repo.GetTransactionByID(ctx, uuid.MustParse(transactionID))
+	if err != nil {
+		return err
+	}
+
+	if tx.Status != domain.TransactionStatusPending {
+		// Already processed
+		return nil // or error
+	}
+
+	// 2. Update Status
+	tx.Status = domain.TransactionStatusCompleted
+	if err := u.repo.UpdateTransaction(ctx, tx); err != nil {
+		return err
+	}
+
+	// 3. Update Wallet Balance
+	wallet, err := u.repo.GetWalletByID(ctx, tx.WalletID)
+	if err != nil {
+		return err
+	}
+	wallet.Balance += tx.Amount
+	return u.repo.UpdateWallet(ctx, wallet)
+}
+
+func (u *WalletUsecases) RejectTransaction(ctx context.Context, transactionID string) error {
+	tx, err := u.repo.GetTransactionByID(ctx, uuid.MustParse(transactionID))
+	if err != nil {
+		return err
+	}
+
+	if tx.Status != domain.TransactionStatusPending {
+		return nil
+	}
+
+	tx.Status = domain.TransactionStatusFailed
+	return u.repo.UpdateTransaction(ctx, tx)
 }

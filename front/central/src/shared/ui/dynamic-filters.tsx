@@ -26,6 +26,7 @@ interface DynamicFiltersProps {
     onAddFilter: (filterKey: string, value: any) => void;
     onRemoveFilter: (filterKey: string) => void;
     onCreate?: () => void;
+    onTestGuide?: () => void;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
@@ -39,6 +40,7 @@ export function DynamicFilters({
     onAddFilter,
     onRemoveFilter,
     onCreate,
+    onTestGuide,
     sortBy = 'created_at',
     sortOrder = 'desc',
     onSortChange,
@@ -175,9 +177,23 @@ export function DynamicFilters({
                                 Añadir Filtro
                             </Button>
 
+                            {onTestGuide && (
+                                <Button
+                                    variant="secondary"
+                                    size="sm"
+                                    onClick={() => {
+                                        onTestGuide();
+                                        setIsDropdownOpen(false);
+                                    }}
+                                    className="flex items-center gap-2"
+                                >
+                                    Guía Envío
+                                </Button>
+                            )}
+
                             {onCreate && (
                                 <Button
-                                    variant="outline"
+                                    variant="primary" // Changed to primary to match request if needed, but keeping existing style or logic
                                     size="sm"
                                     onClick={() => {
                                         onCreate();

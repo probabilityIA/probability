@@ -24,6 +24,11 @@ func (h *WalletHandlers) RechargeWallet(c *gin.Context) {
 		return
 	}
 
+	if req.Amount < 15000 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "El monto mínimo de recarga es de $15,000"})
+		return
+	}
+
 	qr, err := h.uc.Recharge(c.Request.Context(), businessID, req.Amount)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

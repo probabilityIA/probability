@@ -76,8 +76,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
         resolver: zodResolver(formSchema),
         defaultValues: {
             origin: {
-                company: "Company", firstName: "Santiago", lastName: "Muñoz", email: "santiago@test.com", phone: "3227684041",
-                address: "Calle 98 62-37", suburb: "Gaitan", crossStreet: "Calle 39c #10-69-NA", reference: "Casa puertas negras", daneCode: "11001000"
+                company: "", firstName: "", lastName: "", email: "", phone: "",
+                address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
             },
             destination: {
                 company: "", firstName: "", lastName: "", email: "", phone: "", address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""

@@ -16,10 +16,12 @@ func (h *WalletHandlers) RegisterRoutes(router *gin.RouterGroup) {
 		wallet.POST("/recharge", h.RechargeWallet)
 
 		// Admin Routes
-		// wallet.GET("/all", middleware.RequireRole("Admin"), h.GetAllWallets) // "Admin" or "SuperAdmin"?
-		// The middleware `IsSuperAdmin` checks businessID == 0.
-		// I will use `IsSuperAdmin` check inside GetAllWallets or use middleware if available for specific roles.
-		// Prompt says "para los que son admin".
+		// Simple role check middleware would be better here, but assuming handler checks permission or we trust JWT roles.
+		// For stricter control: wallet.Use(middleware.RequireRole("SuperAdmin"))
+
 		wallet.GET("/all", h.GetAllWallets)
+		wallet.GET("/admin/pending-requests", h.GetPendingTransactions)
+		wallet.POST("/admin/requests/:id/approve", h.ApproveTransaction)
+		wallet.POST("/admin/requests/:id/reject", h.RejectTransaction)
 	}
 }

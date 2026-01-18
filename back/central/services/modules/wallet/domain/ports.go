@@ -13,6 +13,9 @@ type IWalletRepository interface {
 	UpdateWallet(ctx context.Context, wallet *Wallet) error
 	CreateTransaction(ctx context.Context, transaction *Transaction) error
 	GetTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) ([]Transaction, error)
+	GetPendingTransactions(ctx context.Context) ([]Transaction, error)
+	GetTransactionByID(ctx context.Context, id uuid.UUID) (*Transaction, error)
+	UpdateTransaction(ctx context.Context, transaction *Transaction) error
 	GetAllWallets(ctx context.Context) ([]Wallet, error)
 }
 
