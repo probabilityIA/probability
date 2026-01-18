@@ -65,7 +65,7 @@ type EnvioClickGenerateResponse struct {
 }
 
 type EnvioClickGenerateData struct {
-	TrackingNumber   string `json:"trackingNumber"`
-	LabelURL         string `json:"labelUrl"` // Adjust based on actual API response key
+	TrackingNumber   string `json:"tracker"`
+	LabelURL         string `json:"url"` // Matches API response key "url"
 	MyGuideReference string `json:"myGuideReference"`
 }

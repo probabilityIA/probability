@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { TokenStorage } from '@/shared/config';
 import { Spinner } from '@/shared/ui';
+import { BusinessApiRepository } from '@/services/auth/business/infra/repository/api-repository';
 
 interface Wallet {
     ID: string;
@@ -19,7 +20,7 @@ export default function WalletPage() {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-6 text-white">Billetera</h1>
+            <h1 className="text-2xl font-bold mb-6 text-gray-900">Billetera</h1>
             {isSuperAdmin ? <AdminWalletView /> : <BusinessWalletView />}
         </div>
     );
@@ -29,26 +30,41 @@ function AdminWalletView() {
     const [wallets, setWallets] = useState<Wallet[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [businesses, setBusinesses] = useState<Record<number, string>>({});
 
     useEffect(() => {
-        const fetchWallets = async () => {
+        const fetchWalletsAndBusinesses = async () => {
             try {
                 const token = TokenStorage.getSessionToken();
+
+                // Fetch Wallets
                 const res = await fetch('http://localhost:3050/api/v1/wallet/all', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }
                 });
                 if (!res.ok) throw new Error('Failed to fetch wallets');
-                const data = await res.json();
-                setWallets(data || []);
+                const walletsData = await res.json();
+                setWallets(walletsData || []);
+
+                // Fetch Businesses
+                const businessRepo = new BusinessApiRepository(token);
+                const businessesRes = await businessRepo.getBusinesses({ per_page: 1000 });
+                if (businessesRes.data) {
+                    const businessMap: Record<number, string> = {};
+                    businessesRes.data.forEach((b: any) => {
+                        businessMap[b.id] = b.name;
+                    });
+                    setBusinesses(businessMap);
+                }
+
             } catch (err: any) {
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
         };
-        fetchWallets();
+        fetchWalletsAndBusinesses();
     }, []);
 
     if (loading) return <Spinner />;
@@ -56,27 +72,143 @@ function AdminWalletView() {
 
     return (
         <div className="bg-gray-800 rounded-lg p-4">
+            {/* Wallets Table */}
             <h2 className="text-lg font-semibold mb-4 text-white">Saldos de Negocios</h2>
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto mb-8">
                 <table className="min-w-full text-left text-sm whitespace-nowrap">
                     <thead className="uppercase tracking-wider border-b border-gray-700 bg-gray-800">
                         <tr>
-                            <th scope="col" className="px-6 py-3 text-gray-400">ID Negocio</th>
+                            <th scope="col" className="px-6 py-3 text-gray-400">Negocio</th>
                             <th scope="col" className="px-6 py-3 text-gray-400">Saldo</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-700">
                         {wallets.map((wallet) => (
                             <tr key={wallet.ID} className="hover:bg-gray-700">
-                                <td className="px-6 py-4 font-medium text-white">{wallet.BusinessID}</td>
+                                <td className="px-6 py-4 font-medium text-white">
+                                    {businesses[wallet.BusinessID] || `ID: ${wallet.BusinessID}`}
+                                </td>
                                 <td className="px-6 py-4 text-green-400 font-bold">{formatCurrency(wallet.Balance)}</td>
                             </tr>
                         ))}
-                        {wallets.length === 0 && (
-                            <tr>
-                                <td colSpan={2} className="px-6 py-4 text-center text-gray-500">No hay billeteras activas.</td>
-                            </tr>
-                        )}
+                    </tbody>
+                </table>
+            </div>
+
+            {/* Pending Requests Table */}
+            <PendingRequestsView businesses={businesses} onRequestsChanged={() => {
+                // Trigger refresh if needed
+            }}
+                allWallets={wallets} // Pass wallets to helper
+            />
+        </div>
+    );
+}
+
+function PendingRequestsView({ businesses, onRequestsChanged, allWallets }: { businesses: Record<number, string>, onRequestsChanged: () => void, allWallets: Wallet[] }) {
+    const [requests, setRequests] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    const fetchRequests = async () => {
+        try {
+            const token = TokenStorage.getSessionToken();
+            const res = await fetch('http://localhost:3050/api/v1/wallet/admin/pending-requests', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setRequests(data || []);
+            }
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchRequests();
+    }, []);
+
+    const handleAction = async (id: string, action: 'approve' | 'reject') => {
+        try {
+            const token = TokenStorage.getSessionToken();
+            const res = await fetch(`http://localhost:3050/api/v1/wallet/admin/requests/${id}/${action}`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                fetchRequests(); // Refresh list
+                onRequestsChanged(); // Notify parent
+                alert(`Solicitud ${action === 'approve' ? 'APROBADA' : 'RECHAZADA'} correctamente.`);
+            } else {
+                alert("Error al procesar la solicitud.");
+            }
+        } catch (e) {
+            alert("Error de conexión.");
+        }
+    };
+
+    if (loading) return <div className="mt-6 p-4 text-gray-400">Cargando solicitudes...</div>;
+
+    if (requests.length === 0) {
+        return (
+            <div className="bg-gray-800 rounded-lg p-4 mt-6 border border-gray-700 bg-opacity-50">
+                <h2 className="text-lg font-semibold mb-2 text-yellow-500">Solicitudes de Recarga Pendientes</h2>
+                <p className="text-gray-400 text-sm">No hay solicitudes pendientes por revisar.</p>
+            </div>
+        );
+    }
+
+    return (
+        <div className="bg-gray-800 rounded-lg p-4 mt-6 border border-gray-700 bg-opacity-50">
+            <h2 className="text-lg font-semibold mb-4 text-yellow-500">Solicitudes de Recarga Pendientes</h2>
+            <div className="overflow-x-auto">
+                <table className="min-w-full text-left text-sm whitespace-nowrap">
+                    <thead className="uppercase tracking-wider border-b border-gray-700 bg-gray-800">
+                        <tr>
+                            <th scope="col" className="px-6 py-3 text-gray-400">Fecha</th>
+                            <th scope="col" className="px-6 py-3 text-gray-400">Negocio</th>
+                            <th scope="col" className="px-6 py-3 text-gray-400">Monto</th>
+                            <th scope="col" className="px-6 py-3 text-gray-400">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-700">
+                        {requests.map((req) => {
+                            // Find wallet to find business? Pending requests have wallet_id.
+                            // We don't have wallet_id -> business_id mapping here easily unless we fetch wallets separately or extend the API response.
+                            // The backend response for Transaction contains WalletID. 
+                            // We probably need to map WalletID to BusinessID manually or just show WalletID if complex.
+                            // Wait, we have fetching of wallets in parent. We can pass the wallets list to finding the business.
+                            // But let's just show text for now.
+                            return (
+                                <tr key={req.ID} className="hover:bg-gray-700">
+                                    <td className="px-6 py-4 text-white">
+                                        {new Date(req.CreatedAt).toLocaleDateString()} {new Date(req.CreatedAt).toLocaleTimeString()}
+                                    </td>
+                                    <td className="px-6 py-4 text-white font-medium">
+                                        <WalletBusinessName walletId={req.WalletID} businesses={businesses} wallets={allWallets} />
+                                    </td>
+                                    <td className="px-6 py-4 text-green-400 font-bold">{formatCurrency(req.Amount)}</td>
+                                    <td className="px-6 py-4">
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => handleAction(req.ID, 'approve')}
+                                                className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs"
+                                            >
+                                                Aprobar
+                                            </button>
+                                            <button
+                                                onClick={() => handleAction(req.ID, 'reject')}
+                                                className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-xs"
+                                            >
+                                                Rechazar
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            );
+                        })}
                     </tbody>
                 </table>
             </div>
@@ -84,21 +216,33 @@ function AdminWalletView() {
     );
 }
 
+// Helper to find business name from wallet ID
+function WalletBusinessName({ walletId, businesses, wallets }: { walletId: string, businesses: Record<number, string>, wallets: Wallet[] }) {
+    const [name, setName] = useState("...");
+
+    useEffect(() => {
+        const wallet = wallets.find(w => w.ID === walletId);
+        if (wallet) {
+            const businessName = businesses[wallet.BusinessID];
+            setName(businessName ? `${businessName} (ID: ${wallet.BusinessID})` : `Negocio ${wallet.BusinessID}`);
+        } else {
+            setName(walletId.substring(0, 8) + "...");
+        }
+    }, [walletId, businesses, wallets]);
+
+    return <span>{name}</span>;
+}
+
 function BusinessWalletView() {
     const [wallet, setWallet] = useState<Wallet | null>(null);
     const [loading, setLoading] = useState(true);
     const [rechargeAmount, setRechargeAmount] = useState<string>('');
-    const [qrCode, setQrCode] = useState<string | null>(null);
-    const [processing, setProcessing] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [showQr, setShowQr] = useState(false);
+    const [message, setMessage] = useState<{ type: 'success' | 'alert' | 'error', text: string } | null>(null);
 
     const fetchBalance = async () => {
         try {
             const token = TokenStorage.getSessionToken();
-            // Use BusinessToken if available for business-specific requests?
-            // Based on sidebar/layout logic, session token might be enough or we need business token.
-            // Layout says: "Usuario business... el token de sesion ya tiene permisios" but sidebar uses specialized tokens?
-            // Lets try session token first.
             const res = await fetch('http://localhost:3050/api/v1/wallet/balance', {
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -118,45 +262,54 @@ function BusinessWalletView() {
         fetchBalance();
     }, []);
 
-    const handleRecharge = async () => {
-        if (!rechargeAmount || isNaN(Number(rechargeAmount)) || Number(rechargeAmount) <= 0) {
+    const handleRechargeRequest = async () => {
+        if (!rechargeAmount || isNaN(Number(rechargeAmount))) {
             setMessage({ type: 'error', text: 'Ingrese un monto válido' });
             return;
         }
-        setProcessing(true);
-        setQrCode(null);
+
+        const amount = Number(rechargeAmount);
+        if (amount < 15000) {
+            setMessage({ type: 'error', text: 'El monto mínimo de recarga es de $15.000' });
+            return;
+        }
+
+        setLoading(true); // Re-use loading or add a processing state? Using processing is better but it was removed in previous diff. I'll add it back locally or just use boolean.
         setMessage(null);
 
         try {
             const token = TokenStorage.getSessionToken();
+            // Call API to create pending transaction
             const res = await fetch('http://localhost:3050/api/v1/wallet/recharge', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${token}`
                 },
-                body: JSON.stringify({ amount: Number(rechargeAmount) })
+                body: JSON.stringify({ amount: amount })
             });
 
             if (!res.ok) {
                 const errData = await res.json();
-                throw new Error(errData.error || 'Error en recarga');
+                throw new Error(errData.error || 'Error al reportar pago');
             }
 
-            const data = await res.json();
-            setQrCode(data.qr_code);
-            setMessage({ type: 'success', text: 'Código QR generado. Escanéelo para pagar.' });
+            // Success
+            setMessage({
+                type: 'success',
+                text: 'Pago reportado exitosamente. Se reflejará en su cuenta en aproximadamente 2 horas una vez confirmado.'
+            });
+            setShowQr(true); // Show QR so they can pay if they haven't yet, or just as reference.
+            setRechargeAmount(''); // Clear input
 
-            // Refresh balance immediately as per requirement "numeric value stored as active balance"
-            fetchBalance();
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message });
         } finally {
-            setProcessing(false);
+            setLoading(false);
         }
     };
 
-    if (loading) return <Spinner />;
+    if (loading && !wallet) return <Spinner />; // Initial loading only
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
@@ -173,7 +326,7 @@ function BusinessWalletView() {
                 <h2 className="text-lg font-semibold text-white mb-4">Recargar Saldo</h2>
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Monto a recargar</label>
+                        <label className="block text-sm font-medium text-gray-300 mb-1">Monto a recargar (Mínimo $15.000)</label>
                         <input
                             type="number"
                             value={rechargeAmount}
@@ -182,25 +335,36 @@ function BusinessWalletView() {
                             placeholder="Ej: 50000"
                         />
                     </div>
+
+                    <div className="bg-yellow-900/30 border border-yellow-700/50 p-3 rounded text-sm text-yellow-200 mb-3">
+                        <p className="font-bold mb-1">⚠ Importante</p>
+                        <p>Debe consignar <strong>exactamente</strong> el valor ingresado. El saldo se actualizará tras validación administrativa.</p>
+                    </div>
+
                     <button
-                        onClick={handleRecharge}
-                        disabled={processing}
-                        className={`w-full py-2 px-4 rounded font-bold text-white transition-colors ${processing ? 'bg-gray-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
-                            }`}
+                        onClick={handleRechargeRequest}
+                        disabled={loading && !!wallet} // Disable if processing request
+                        className={`w-full py-2 px-4 rounded font-bold text-white transition-colors ${loading && !!wallet ? 'bg-gray-600' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
-                        {processing ? 'Generando QR...' : 'Generar QR Nequi'}
+                        {loading && !!wallet ? 'Procesando...' : 'Reportar Pago y Ver QR'}
                     </button>
 
                     {message && (
-                        <div className={`p-3 rounded text-sm ${message.type === 'success' ? 'bg-green-900/50 text-green-200' : 'bg-red-900/50 text-red-200'}`}>
+                        <div className={`p-3 rounded text-sm ${message.type === 'success' ? 'bg-green-900/50 text-green-200' :
+                            message.type === 'alert' ? 'bg-yellow-900/50 text-yellow-200' :
+                                'bg-red-900/50 text-red-200'
+                            }`}>
                             {message.text}
                         </div>
                     )}
 
-                    {qrCode && (
+                    {showQr && (
                         <div className="mt-4 flex flex-col items-center p-4 bg-white rounded-lg">
-                            <img src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrCode)}`} alt="Nequi QR" />
-                            <p className="mt-2 text-gray-800 text-sm font-medium break-all text-center">{qrCode}</p>
+                            {/* Static QR Image from public folder */}
+                            <img src="/QR.png" alt="Nequi QR" className="max-w-[200px] h-auto" />
+                            <p className="mt-2 text-gray-800 text-sm font-medium text-center">
+                                Escanea para pagar
+                            </p>
                         </div>
                     )}
                 </div>

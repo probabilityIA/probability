@@ -9,6 +9,7 @@ import { ShipmentApiRepository } from "@/services/modules/shipments/infra/reposi
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { OrderApiRepository } from "@/services/modules/orders/infra/repository/api-repository";
 import { Order } from "@/services/modules/orders/domain/types";
+import daneCodes from "../resources/municipios_dane_extendido.json";
 
 // Zod Schema
 const addressSchema = z.object({
@@ -72,8 +73,8 @@ export const ShippingForm = () => {
         defaultValues: {
             origin: {
                 // Default origin for convenience (as per user example)
-                company: "Company", firstName: "Santiago", lastName: "Muñoz", email: "santiago@test.com", phone: "3227684041",
-                address: "Calle 98 62-37", suburb: "Gaitan", crossStreet: "Calle 39c #10-69-NA", reference: "Casa puertas negras", daneCode: "11001000"
+                company: "", firstName: "", lastName: "", email: "", phone: "",
+                address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
             },
             destination: {
                 company: "", firstName: "", lastName: "", email: "", phone: "", address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
@@ -227,6 +228,13 @@ export const ShippingForm = () => {
         }
     };
 
+    // Prepare city options derived from the JSON import
+    const cityOptions = Object.entries(daneCodes).map(([code, data]) => ({
+        code,
+        label: `${(data as any).ciudad} - ${code}`,
+        name: (data as any).ciudad
+    })).sort((a, b) => a.name.localeCompare(b.name));
+
     return (
         <div className="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
             <h2 className="text-2xl font-bold mb-6 text-gray-800">Generar Guía Envioclick</h2>
@@ -275,7 +283,22 @@ export const ShippingForm = () => {
                         <Input label="Barrio" {...register("origin.suburb")} error={errors.origin?.suburb?.message} />
                         <Input label="Cruzamiento" {...register("origin.crossStreet")} error={errors.origin?.crossStreet?.message} />
                         <Input label="Referencia" {...register("origin.reference")} error={errors.origin?.reference?.message} />
-                        <Input label="Código DANE" {...register("origin.daneCode")} error={errors.origin?.daneCode?.message} />
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Código DANE)</label>
+                            <select
+                                {...register("origin.daneCode")}
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                            >
+                                <option value="">Seleccione una ciudad</option>
+                                {cityOptions.map((city) => (
+                                    <option key={`origin-${city.code}`} value={city.code}>
+                                        {city.label}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.origin?.daneCode && <p className="text-red-500 text-xs mt-1">{errors.origin.daneCode.message}</p>}
+                        </div>
                     </div>
                 </section>
 
@@ -292,7 +315,22 @@ export const ShippingForm = () => {
                         <Input label="Barrio" {...register("destination.suburb")} error={errors.destination?.suburb?.message} />
                         <Input label="Cruzamiento" {...register("destination.crossStreet")} error={errors.destination?.crossStreet?.message} />
                         <Input label="Referencia" {...register("destination.reference")} error={errors.destination?.reference?.message} />
-                        <Input label="Código DANE" {...register("destination.daneCode")} error={errors.destination?.daneCode?.message} />
+
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Código DANE)</label>
+                            <select
+                                {...register("destination.daneCode")}
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
+                            >
+                                <option value="">Seleccione una ciudad</option>
+                                {cityOptions.map((city) => (
+                                    <option key={`dest-${city.code}`} value={city.code}>
+                                        {city.label}
+                                    </option>
+                                ))}
+                            </select>
+                            {errors.destination?.daneCode && <p className="text-red-500 text-xs mt-1">{errors.destination.daneCode.message}</p>}
+                        </div>
                     </div>
                 </section>
 
