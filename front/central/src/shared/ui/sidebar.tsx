@@ -79,7 +79,7 @@ export function Sidebar({ user }: SidebarProps) {
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
   const canAccessOrders = canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications;
 
-  
+
 
   // Determinar la ruta de entrada para cada módulo (primera disponible)
   const getIAMEntryRoute = () => {
@@ -155,7 +155,7 @@ export function Sidebar({ user }: SidebarProps) {
               </div>
 
               {/* Nombre (solo visible cuando está expandido) */}
-                {primaryExpanded && (
+              {primaryExpanded && (
                 <div className="text-gray-800 overflow-hidden">
                   <p className="font-semibold text-sm truncate">{user.name}</p>
                   <p className="text-xs text-gray-500 truncate">{user.email}</p>
@@ -190,11 +190,11 @@ export function Sidebar({ user }: SidebarProps) {
                   <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                   </svg>
-                    {primaryExpanded && (
-                      <span className="text-sm font-medium transition-opacity duration-300">
+                  {primaryExpanded && (
+                    <span className="text-sm font-medium transition-opacity duration-300">
                       Inicio
                     </span>
-                    )}
+                  )}
                 </Link>
               </li>
 
@@ -283,7 +283,7 @@ export function Sidebar({ user }: SidebarProps) {
                           className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                           title="Ir a Ordenes"
                         >
-                         
+
                         </Link>
                       )}
                     </div>
@@ -357,7 +357,7 @@ export function Sidebar({ user }: SidebarProps) {
                               )}
                               {canViewNotifications && (
                                 <li>
-                                        <Link href="/notification-config" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/notification-config') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                  <Link href="/notification-config" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/notification-config') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
                                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
@@ -381,8 +381,8 @@ export function Sidebar({ user }: SidebarProps) {
                   className={`
                     flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                     ${isActive('/wallet')
-                      ? 'bg-white/20 text-white shadow-lg scale-105'
-                      : 'text-white/80 hover:bg-white/10 hover:text-white hover:scale-105'
+                      ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
                     }
                   `}
                 >
@@ -456,7 +456,7 @@ export function Sidebar({ user }: SidebarProps) {
                             className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
                             title="Ir a IAM"
                           >
-                           
+
                           </Link>
                         )}
                       </div>
