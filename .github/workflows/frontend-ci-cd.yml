@@ -122,17 +122,72 @@ jobs:
             export PATH="/usr/local/bin:$PATH"
 
             # Login a ECR privado
+            echo "🔐 Logging in to ECR..."
             /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
               podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
-            # Pull latest image
-            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+            # Obtener el ID de la imagen actual antes del pull
+            echo "📦 Pulling latest image from ECR..."
+            OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || echo "")
+            
+            # Pull latest image (sin caché para asegurar que descarga la nueva)
+            podman pull --quiet 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+            
+            # Obtener el ID de la nueva imagen
+            NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest)
+            
+            echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
+            echo "📊 New image ID: ${NEW_IMAGE_ID}"
+            
+            # Verificar si la imagen realmente cambió
+            if [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ] || [ -z "$OLD_IMAGE_ID" ]; then
+              echo "✅ Nueva imagen detectada, recreando contenedor..."
+              
+              # Detener y remover el contenedor actual
+              podman-compose -f podman-compose.yaml stop front-central 2>/dev/null || true
+              podman-compose -f podman-compose.yaml rm -f front-central 2>/dev/null || true
+              
+              # Recrear y iniciar el servicio con la nueva imagen
+              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central
+              
+              echo "⏳ Esperando a que el contenedor inicie..."
+              sleep 5
+              
+              # Verificar que el contenedor está corriendo
+              CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              echo "📋 Estado del contenedor: $CONTAINER_STATUS"
+              
+              if [ "$CONTAINER_STATUS" != "running" ]; then
+                echo "⚠️  El contenedor no está corriendo, revisando logs..."
+                podman logs --tail 50 frontend_prod 2>/dev/null || true
+                exit 1
+              fi
+              
+              # Verificar que el contenedor está usando la nueva imagen
+              CONTAINER_IMAGE_ID=$(podman inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
+              NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest | head -1)
+              
+              echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
+              echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
+              
+              if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
+                echo "✅ Contenedor actualizado correctamente con la nueva imagen"
+              else
+                echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
+              fi
+              
+              # Mostrar logs recientes
+              echo "📋 Últimos logs del contenedor:"
+              podman logs --tail 20 frontend_prod 2>/dev/null || true
+              
+            else
+              echo "ℹ️  La imagen no cambió (mismo ID), pero forzando recreación del contenedor..."
+              podman-compose -f podman-compose.yaml up -d --force-recreate front-central
+            fi
 
-            # Restart service
-            podman-compose -f podman-compose.yaml up -d front-central
-
-            # Clean up
+            # Clean up imágenes antiguas
+            echo "🧹 Limpiando imágenes antiguas..."
             podman image prune -f
 
-            echo "Frontend deployed successfully"
+            echo "✅ Frontend deployed successfully"
           EOF
