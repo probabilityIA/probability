@@ -143,24 +143,67 @@ jobs:
             if [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ] || [ -z "$OLD_IMAGE_ID" ]; then
               echo "✅ Nueva imagen detectada, recreando contenedor..."
               
-              # Detener y remover el contenedor actual
-              podman-compose -f podman-compose.yaml stop front-central 2>/dev/null || true
-              podman-compose -f podman-compose.yaml rm -f front-central 2>/dev/null || true
+              # Recrear y reiniciar el servicio con la nueva imagen (sin --no-deps para mantener dependencias)
+              # Usamos pull primero para asegurar que compose use la nueva imagen
+              podman-compose -f podman-compose.yaml pull front-central
               
-              # Recrear y iniciar el servicio con la nueva imagen
-              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central
+              # Recrear el contenedor (esto hará un rolling update)
+              echo "🔄 Recreando contenedor con nueva imagen..."
+              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central || {
+                echo "⚠️  Error al recrear, intentando sin --no-deps..."
+                podman-compose -f podman-compose.yaml up -d --force-recreate front-central
+              }
               
-              echo "⏳ Esperando a que el contenedor inicie..."
-              sleep 5
+              echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
+              sleep 15
               
-              # Verificar que el contenedor está corriendo
+              # Verificar que el contenedor está corriendo (con reintentos)
+              MAX_RETRIES=3
+              RETRY_COUNT=0
+              CONTAINER_STATUS=""
+              
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+                echo "📋 Intento $((RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
+                
+                if [ "$CONTAINER_STATUS" = "running" ]; then
+                  break
+                fi
+                
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  echo "⏳ Esperando 5 segundos más..."
+                  sleep 5
+                fi
+              done
+              
+              # Mostrar logs antes de verificar estado final
+              echo "📋 Últimos logs del contenedor:"
+              podman logs --tail 30 frontend_prod 2>/dev/null || true
+              
+              # Verificar estado final
               CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              echo "📋 Estado del contenedor: $CONTAINER_STATUS"
-              
               if [ "$CONTAINER_STATUS" != "running" ]; then
-                echo "⚠️  El contenedor no está corriendo, revisando logs..."
+                echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
+                echo "📋 Estado final: $CONTAINER_STATUS"
+                echo "📋 Revisando logs de error:"
                 podman logs --tail 50 frontend_prod 2>/dev/null || true
-                exit 1
+                
+                # Intentar reiniciar manualmente
+                echo "🔄 Intentando reiniciar manualmente..."
+                podman restart frontend_prod 2>/dev/null || podman start frontend_prod 2>/dev/null || true
+                sleep 10
+                
+                # Verificar una vez más
+                CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+                if [ "$CONTAINER_STATUS" != "running" ]; then
+                  echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
+                  exit 1
+                else
+                  echo "✅ Contenedor iniciado después de reinicio manual"
+                fi
+              else
+                echo "✅ Contenedor corriendo correctamente"
               fi
               
               # Verificar que el contenedor está usando la nueva imagen
@@ -170,19 +213,27 @@ jobs:
               echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
               echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
               
-              if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
-                echo "✅ Contenedor actualizado correctamente con la nueva imagen"
-              else
-                echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
+              if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
+                if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
+                  echo "✅ Contenedor actualizado correctamente con la nueva imagen"
+                else
+                  echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
+                fi
               fi
               
-              # Mostrar logs recientes
-              echo "📋 Últimos logs del contenedor:"
-              podman logs --tail 20 frontend_prod 2>/dev/null || true
-              
             else
-              echo "ℹ️  La imagen no cambió (mismo ID), pero forzando recreación del contenedor..."
+              echo "ℹ️  La imagen no cambió (mismo ID), forzando recreación del contenedor..."
               podman-compose -f podman-compose.yaml up -d --force-recreate front-central
+              sleep 10
+              
+              # Verificar estado
+              CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              echo "📋 Estado después de recreación: $CONTAINER_STATUS"
+              
+              if [ "$CONTAINER_STATUS" != "running" ]; then
+                echo "⚠️  El contenedor no está corriendo, intentando reiniciar..."
+                podman restart frontend_prod 2>/dev/null || podman start frontend_prod 2>/dev/null || true
+              fi
             fi
 
             # Clean up imágenes antiguas
