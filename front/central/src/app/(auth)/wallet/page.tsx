@@ -13,6 +13,7 @@ import {
     rechargeWalletAction,
     Wallet
 } from '@/services/modules/wallet/infra/actions';
+import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -42,11 +43,8 @@ function AdminWalletView() {
                 if (!walletRes.success) throw new Error(walletRes.error || 'Failed to fetch wallets');
                 setWallets(walletRes.data || []);
 
-                // Fetch Businesses (keeps using existing API repo, but could also be moved to action if needed, 
-                // but let's stick to wallets for now as requested)
-                const token = TokenStorage.getSessionToken();
-                const businessRepo = new BusinessApiRepository(token);
-                const businessesRes = await businessRepo.getBusinesses({ per_page: 1000 });
+                // Fetch Businesses via Server Action
+                const businessesRes = await getBusinessesAction({ per_page: 1000 });
                 if (businessesRes.data) {
                     const businessMap: Record<number, string> = {};
                     businessesRes.data.forEach((b: any) => {
