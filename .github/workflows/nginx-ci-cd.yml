@@ -122,21 +122,124 @@ jobs:
             export PATH="/usr/local/bin:$PATH"
 
             # Login a ECR privado
+            echo "🔐 Logging in to ECR..."
             /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
               podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
-            # Pull latest image
-            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
+            # Obtener el ID de la imagen actual antes del pull
+            echo "📦 Pulling latest image from ECR..."
+            OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || echo "")
+            
+            # Pull latest image (sin caché para asegurar que descarga la nueva)
+            podman pull --quiet 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
+            
+            # Obtener el ID de la nueva imagen
+            NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest)
+            
+            echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
+            echo "📊 New image ID: ${NEW_IMAGE_ID}"
+            
+            # Verificar si la imagen realmente cambió
+            if [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ] || [ -z "$OLD_IMAGE_ID" ]; then
+              echo "✅ Nueva imagen detectada, recreando contenedor..."
+              
+              # Recrear solo este servicio sin afectar dependencias (--no-deps)
+              # Usamos pull primero para asegurar que compose use la nueva imagen
+              podman-compose -f podman-compose.yaml pull nginx
+              
+              # Recrear el contenedor SIN reiniciar dependencias (reemplazo sutil)
+              echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
+              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps nginx
+              
+              echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
+              sleep 10
+              
+              # Verificar que el contenedor está corriendo (con reintentos)
+              MAX_RETRIES=3
+              RETRY_COUNT=0
+              CONTAINER_STATUS=""
+              
+              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+                CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+                echo "📋 Intento $((RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
+                
+                if [ "$CONTAINER_STATUS" = "running" ]; then
+                  break
+                fi
+                
+                RETRY_COUNT=$((RETRY_COUNT + 1))
+                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                  echo "⏳ Esperando 5 segundos más..."
+                  sleep 5
+                fi
+              done
+              
+              # Mostrar logs antes de verificar estado final
+              echo "📋 Últimos logs del contenedor:"
+              podman logs --tail 30 nginx_prod 2>/dev/null || true
+              
+              # Verificar estado final
+              CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              if [ "$CONTAINER_STATUS" != "running" ]; then
+                echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
+                echo "📋 Estado final: $CONTAINER_STATUS"
+                echo "📋 Revisando logs de error:"
+                podman logs --tail 50 nginx_prod 2>/dev/null || true
+                
+                # Intentar reiniciar manualmente
+                echo "🔄 Intentando reiniciar manualmente..."
+                podman restart nginx_prod 2>/dev/null || podman start nginx_prod 2>/dev/null || true
+                sleep 5
+                
+                # Verificar una vez más
+                CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+                if [ "$CONTAINER_STATUS" != "running" ]; then
+                  echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
+                  exit 1
+                else
+                  echo "✅ Contenedor iniciado después de reinicio manual"
+                fi
+              else
+                echo "✅ Contenedor corriendo correctamente"
+              fi
+              
+              # Verificar que el contenedor está usando la nueva imagen
+              CONTAINER_IMAGE_ID=$(podman inspect nginx_prod --format '{{.Image}}' 2>/dev/null || echo "")
+              NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest | head -1)
+              
+              echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
+              echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
+              
+              if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
+                if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
+                  echo "✅ Contenedor actualizado correctamente con la nueva imagen"
+                else
+                  echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
+                fi
+              fi
+              
+            else
+              echo "ℹ️  La imagen no cambió (mismo ID), forzando recreación del contenedor (sin afectar dependencias)..."
+              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps nginx
+              sleep 5
+              
+              # Verificar estado
+              CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              echo "📋 Estado después de recreación: $CONTAINER_STATUS"
+              
+              if [ "$CONTAINER_STATUS" != "running" ]; then
+                echo "⚠️  El contenedor no está corriendo, intentando reiniciar..."
+                podman restart nginx_prod 2>/dev/null || podman start nginx_prod 2>/dev/null || true
+              fi
+            fi
 
-            # Restart service
-            podman-compose -f podman-compose.yaml up -d nginx
-
-            # Verify
-            sleep 3
+            # Verificar contenedor final
+            echo "📋 Estado final del contenedor:"
             podman ps --filter "name=nginx" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-            # Clean up
+            # Clean up imágenes antiguas
+            echo "🧹 Limpiando imágenes antiguas..."
             podman image prune -f
 
-            echo "Nginx deployed successfully"
+            echo "✅ Nginx deployed successfully"
           EOF

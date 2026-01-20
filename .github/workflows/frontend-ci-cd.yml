@@ -143,16 +143,17 @@ jobs:
             if [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ] || [ -z "$OLD_IMAGE_ID" ]; then
               echo "✅ Nueva imagen detectada, recreando contenedor..."
               
-              # Recrear y reiniciar el servicio con la nueva imagen (sin --no-deps para mantener dependencias)
+              # Recrear solo este servicio sin afectar dependencias (--no-deps)
               # Usamos pull primero para asegurar que compose use la nueva imagen
               podman-compose -f podman-compose.yaml pull front-central
               
-              # Recrear el contenedor (esto hará un rolling update)
-              echo "🔄 Recreando contenedor con nueva imagen..."
-              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central || {
-                echo "⚠️  Error al recrear, intentando sin --no-deps..."
-                podman-compose -f podman-compose.yaml up -d --force-recreate front-central
-              }
+              # Recrear el contenedor SIN reiniciar dependencias (reemplazo sutil)
+              echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
+              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central
+              
+              # Recargar nginx de forma sutil para que detecte el nuevo contenedor (sin reiniciar nginx)
+              echo "🔄 Recargando configuración de nginx..."
+              podman exec nginx_prod nginx -s reload 2>/dev/null || echo "ℹ️  Nginx no está corriendo o no necesita recarga"
               
               echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
               sleep 15
@@ -222,8 +223,8 @@ jobs:
               fi
               
             else
-              echo "ℹ️  La imagen no cambió (mismo ID), forzando recreación del contenedor..."
-              podman-compose -f podman-compose.yaml up -d --force-recreate front-central
+              echo "ℹ️  La imagen no cambió (mismo ID), forzando recreación del contenedor (sin afectar dependencias)..."
+              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central
               sleep 10
               
               # Verificar estado
