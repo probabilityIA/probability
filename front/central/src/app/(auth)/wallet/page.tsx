@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { TokenStorage } from '@/shared/config';
 import { Spinner } from '@/shared/ui';
 import { BusinessApiRepository } from '@/services/auth/business/infra/repository/api-repository';
-
-interface Wallet {
-    ID: string;
-    BusinessID: number;
-    Balance: number;
-}
+import {
+    getWalletsAction,
+    getPendingRequestsAction,
+    processRequestAction,
+    getWalletBalanceAction,
+    rechargeWalletAction,
+    Wallet
+} from '@/services/modules/wallet/infra/actions';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -35,19 +37,14 @@ function AdminWalletView() {
     useEffect(() => {
         const fetchWalletsAndBusinesses = async () => {
             try {
+                // Fetch Wallets via Server Action
+                const walletRes = await getWalletsAction();
+                if (!walletRes.success) throw new Error(walletRes.error || 'Failed to fetch wallets');
+                setWallets(walletRes.data || []);
+
+                // Fetch Businesses (keeps using existing API repo, but could also be moved to action if needed, 
+                // but let's stick to wallets for now as requested)
                 const token = TokenStorage.getSessionToken();
-
-                // Fetch Wallets
-                const res = await fetch('http://localhost:3050/api/v1/wallet/all', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (!res.ok) throw new Error('Failed to fetch wallets');
-                const walletsData = await res.json();
-                setWallets(walletsData || []);
-
-                // Fetch Businesses
                 const businessRepo = new BusinessApiRepository(token);
                 const businessesRes = await businessRepo.getBusinesses({ per_page: 1000 });
                 if (businessesRes.data) {
@@ -98,8 +95,11 @@ function AdminWalletView() {
             {/* Pending Requests Table */}
             <PendingRequestsView businesses={businesses} onRequestsChanged={() => {
                 // Trigger refresh if needed
+                // For now, we reload the page or we could extract fetchWalletsAndBusinesses to be reusable
+                // Ideally, we should update the wallet list too if a request is approved.
+                window.location.reload();
             }}
-                allWallets={wallets} // Pass wallets to helper
+                allWallets={wallets}
             />
         </div>
     );
@@ -109,40 +109,32 @@ function PendingRequestsView({ businesses, onRequestsChanged, allWallets }: { bu
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
-    const fetchRequests = async () => {
+    const fetchRequests = useCallback(async () => {
         try {
-            const token = TokenStorage.getSessionToken();
-            const res = await fetch('http://localhost:3050/api/v1/wallet/admin/pending-requests', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
-                const data = await res.json();
-                setRequests(data || []);
+            const res = await getPendingRequestsAction();
+            if (res.success) {
+                setRequests(res.data as any[] || []);
             }
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
         }
-    };
+    }, []);
 
     useEffect(() => {
         fetchRequests();
-    }, []);
+    }, [fetchRequests]);
 
     const handleAction = async (id: string, action: 'approve' | 'reject') => {
         try {
-            const token = TokenStorage.getSessionToken();
-            const res = await fetch(`http://localhost:3050/api/v1/wallet/admin/requests/${id}/${action}`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (res.ok) {
+            const res = await processRequestAction(id, action);
+            if (res.success) {
                 fetchRequests(); // Refresh list
                 onRequestsChanged(); // Notify parent
                 alert(`Solicitud ${action === 'approve' ? 'APROBADA' : 'RECHAZADA'} correctamente.`);
             } else {
-                alert("Error al procesar la solicitud.");
+                alert(`Error al procesar la solicitud: ${res.error}`);
             }
         } catch (e) {
             alert("Error de conexión.");
@@ -175,12 +167,6 @@ function PendingRequestsView({ businesses, onRequestsChanged, allWallets }: { bu
                     </thead>
                     <tbody className="divide-y divide-gray-700">
                         {requests.map((req) => {
-                            // Find wallet to find business? Pending requests have wallet_id.
-                            // We don't have wallet_id -> business_id mapping here easily unless we fetch wallets separately or extend the API response.
-                            // The backend response for Transaction contains WalletID. 
-                            // We probably need to map WalletID to BusinessID manually or just show WalletID if complex.
-                            // Wait, we have fetching of wallets in parent. We can pass the wallets list to finding the business.
-                            // But let's just show text for now.
                             return (
                                 <tr key={req.ID} className="hover:bg-gray-700">
                                     <td className="px-6 py-4 text-white">
@@ -242,15 +228,9 @@ function BusinessWalletView() {
 
     const fetchBalance = async () => {
         try {
-            const token = TokenStorage.getSessionToken();
-            const res = await fetch('http://localhost:3050/api/v1/wallet/balance', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            if (!res.ok) throw new Error('Failed to fetch balance');
-            const data = await res.json();
-            setWallet(data);
+            const res = await getWalletBalanceAction();
+            if (!res.success) throw new Error(res.error || 'Failed to fetch balance');
+            setWallet(res.data || null);
         } catch (err: any) {
             console.error(err);
         } finally {
@@ -274,24 +254,14 @@ function BusinessWalletView() {
             return;
         }
 
-        setLoading(true); // Re-use loading or add a processing state? Using processing is better but it was removed in previous diff. I'll add it back locally or just use boolean.
+        setLoading(true);
         setMessage(null);
 
         try {
-            const token = TokenStorage.getSessionToken();
-            // Call API to create pending transaction
-            const res = await fetch('http://localhost:3050/api/v1/wallet/recharge', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify({ amount: amount })
-            });
+            const res = await rechargeWalletAction(amount);
 
-            if (!res.ok) {
-                const errData = await res.json();
-                throw new Error(errData.error || 'Error al reportar pago');
+            if (!res.success) {
+                throw new Error(res.error || 'Error al reportar pago');
             }
 
             // Success
@@ -299,8 +269,8 @@ function BusinessWalletView() {
                 type: 'success',
                 text: 'Pago reportado exitosamente. Se reflejará en su cuenta en aproximadamente 2 horas una vez confirmado.'
             });
-            setShowQr(true); // Show QR so they can pay if they haven't yet, or just as reference.
-            setRechargeAmount(''); // Clear input
+            setShowQr(true);
+            setRechargeAmount('');
 
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message });
@@ -309,7 +279,7 @@ function BusinessWalletView() {
         }
     };
 
-    if (loading && !wallet) return <Spinner />; // Initial loading only
+    if (loading && !wallet) return <Spinner />;
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
@@ -343,7 +313,7 @@ function BusinessWalletView() {
 
                     <button
                         onClick={handleRechargeRequest}
-                        disabled={loading && !!wallet} // Disable if processing request
+                        disabled={loading && !!wallet}
                         className={`w-full py-2 px-4 rounded font-bold text-white transition-colors ${loading && !!wallet ? 'bg-gray-600' : 'bg-blue-600 hover:bg-blue-700'}`}
                     >
                         {loading && !!wallet ? 'Procesando...' : 'Reportar Pago y Ver QR'}
@@ -372,3 +342,4 @@ function BusinessWalletView() {
         </div>
     );
 }
+
