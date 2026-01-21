@@ -151,9 +151,11 @@ jobs:
               echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
               podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central
               
-              # Recargar nginx de forma sutil para que detecte el nuevo contenedor (sin reiniciar nginx)
-              echo "🔄 Recargando configuración de nginx..."
-              podman exec nginx_prod nginx -s reload 2>/dev/null || echo "ℹ️  Nginx no está corriendo o no necesita recarga"
+              # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
+              # nginx -s reload no es suficiente porque mantiene en caché las IPs de los upstreams
+              echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
+              podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
+              sleep 5  # Esperar a que nginx se reinicie
               
               echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
               sleep 15
