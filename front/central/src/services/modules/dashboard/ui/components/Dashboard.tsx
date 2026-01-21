@@ -529,7 +529,7 @@ export default function Dashboard() {
             {/* Top revenue header (estilo similar a la imagen) */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold text-gray-700">¡Hola!, 👋 {userName} <br /> ¿Cómo va tu día? </h1>
+                    <h1 className="text-2xl font-semibold text-gray-700">¡Hola, {userName}! 👋  <br /> ¿Cómo va tu día? </h1>
                     <p className="mt-2 text-4xl font-extrabold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 bg-clip-text text-transparent capitalize">
                         Dashboard
                     </p>

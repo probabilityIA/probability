@@ -67,16 +67,38 @@ export async function getPendingRequestsAction() {
         });
 
         if (!res.ok) {
-            // It might be empty or error, handle accordingly
             if (res.status === 404) return { success: true, data: [] };
-
-            throw new Error(`Failed to fetch requests: ${res.status}`);
+            throw new Error(`Failed to fetch pending requests: ${res.status}`);
         }
 
         const data = await res.json();
         return { success: true, data: data || [] };
     } catch (error: any) {
         console.error('getPendingRequestsAction error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Fetch processed (approved/rejected) recharge requests (Admin only)
+ */
+export async function getProcessedRequestsAction() {
+    try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/processed-requests`, {
+            headers,
+            cache: 'no-store'
+        });
+
+        if (!res.ok) {
+            if (res.status === 404) return { success: true, data: [] };
+            throw new Error(`Failed to fetch processed requests: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return { success: true, data: data || [] };
+    } catch (error: any) {
+        console.error('getProcessedRequestsAction error:', error);
         return { success: false, error: error.message };
     }
 }
@@ -144,9 +166,32 @@ export async function rechargeWalletAction(amount: number) {
             throw new Error(errData.error || `Failed to recharge: ${res.status}`);
         }
 
-        return { success: true };
+        const data = await res.json();
+        return { success: true, data };
     } catch (error: any) {
         console.error('rechargeWalletAction error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Report that a payment has been made (Business only)
+ */
+export async function reportPaymentAction(requestId: string) {
+    try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${env.API_BASE_URL}/wallet/report-payment/${requestId}`, {
+            method: 'POST',
+            headers,
+        });
+
+        if (!res.ok) {
+            throw new Error(`Failed to report payment: ${res.status}`);
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('reportPaymentAction error:', error);
         return { success: false, error: error.message };
     }
 }
