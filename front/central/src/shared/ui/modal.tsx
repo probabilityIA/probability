@@ -10,6 +10,7 @@ import { ReactNode, useEffect } from 'react';
 interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
+  showCloseButton?: boolean; // NEW: Mostrar o no el botón de cerrar
   title?: string;
   children: ReactNode;
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl' | '5xl' | '6xl' | '7xl' | 'full';
@@ -31,7 +32,7 @@ const sizeClasses = {
   'full': 'max-w-[95vw] w-[95vw]',
 };
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', glass = false, transparent = false, zIndex = 50 }: ModalProps) {
+export function Modal({ isOpen, onClose, showCloseButton = true, title, children, size = 'md', glass = false, transparent = false, zIndex = 50 }: ModalProps) {
   console.log('🔧 Modal - isOpen:', isOpen, 'title:', title, 'size:', size);
 
   // Cerrar con ESC
@@ -83,14 +84,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
             {title && (
               <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 bg-white">
                 <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
-                <button
-                  onClick={onClose}
-                  className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                {showCloseButton && (
+                  <button
+                    onClick={onClose}
+                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             )}
 
@@ -121,14 +124,16 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', glass = f
             {title && (
               <div className="relative mb-4 flex-shrink-0">
                 <h3 className="text-xl font-bold text-gray-900 text-center">{title}</h3>
-                <button
-                  onClick={onClose}
-                  className="absolute right-0 top-0 text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                {showCloseButton && (
+                  <button
+                    onClick={onClose}
+                    className="absolute right-0 top-0 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                )}
               </div>
             )}
 
