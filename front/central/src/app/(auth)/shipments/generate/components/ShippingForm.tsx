@@ -9,6 +9,8 @@ import { ShipmentApiRepository } from "@/services/modules/shipments/infra/reposi
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { OrderApiRepository } from "@/services/modules/orders/infra/repository/api-repository";
 import { Order } from "@/services/modules/orders/domain/types";
+import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
+import { getAIRecommendationAction } from "@/services/modules/orders/infra/actions";
 import daneCodes from "../resources/municipios_dane_extendido.json";
 
 // Zod Schema
@@ -61,6 +63,11 @@ export const ShippingForm = () => {
     const [rates, setRates] = useState<EnvioClickRate[]>([]);
     const [selectedRate, setSelectedRate] = useState<EnvioClickRate | null>(null);
     const [hasQuoted, setHasQuoted] = useState(false);
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [aiAnalysis, setAiAnalysis] = useState<{ recommended_carrier: string; reasoning: string } | null>(null);
+    const [loadingAI, setLoadingAI] = useState(false);
+    const [showBalanceModal, setShowBalanceModal] = useState(false);
+    const [insufficientBalanceInfo, setInsufficientBalanceInfo] = useState<{ balance: number; cost: number } | null>(null);
 
     const {
         register,
@@ -102,6 +109,10 @@ export const ShippingForm = () => {
             }
         };
         fetchOrders();
+
+        getWalletBalanceAction().then(res => {
+            if (res.success && res.data) setWalletBalance(res.data.Balance);
+        });
     }, []);
 
     const handleOrderSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -193,6 +204,34 @@ export const ShippingForm = () => {
             if (res.data && res.data.rates && res.data.rates.length > 0) {
                 setRates(res.data.rates);
                 setHasQuoted(true);
+
+                // Perform AI Analysis on real rates
+                const destDane = daneCodes[data.destination.daneCode as keyof typeof daneCodes];
+                if (destDane) {
+                    setLoadingAI(true);
+                    try {
+                        const aiRes = await getAIRecommendationAction((destDane as any).ciudad, (destDane as any).departamento);
+                        if (aiRes) {
+                            const carrierExists = res.data.rates.some((r: any) =>
+                                r.carrier.toLowerCase() === aiRes.recommended_carrier.toLowerCase()
+                            );
+
+                            if (carrierExists) {
+                                setAiAnalysis({
+                                    recommended_carrier: aiRes.recommended_carrier,
+                                    reasoning: aiRes.reasoning
+                                });
+                            } else {
+                                console.warn(`AI recommended ${aiRes.recommended_carrier} but it's not in available quotes.`);
+                                setAiAnalysis(null);
+                            }
+                        }
+                    } catch (e) {
+                        console.error("AI Error:", e);
+                    } finally {
+                        setLoadingAI(false);
+                    }
+                }
             } else {
                 setError("No se encontraron cotizaciones.");
             }
@@ -205,6 +244,12 @@ export const ShippingForm = () => {
     };
 
     const handleGenerate = async (data: FormValues) => {
+        if (selectedRate && walletBalance !== null && walletBalance < selectedRate.flete) {
+            setInsufficientBalanceInfo({ balance: walletBalance, cost: selectedRate.flete });
+            setShowBalanceModal(true);
+            return;
+        }
+
         if (!selectedRate) {
             setError("Debes seleccionar una cotización");
             return;
@@ -259,6 +304,49 @@ export const ShippingForm = () => {
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
                     <p className="font-bold">Error</p>
                     <p>{error}</p>
+                </div>
+            )}
+
+            {showBalanceModal && insufficientBalanceInfo && (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+                        <div className="bg-red-600 p-6 text-center">
+                            <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <span className="text-3xl">⚠️</span>
+                            </div>
+                            <h3 className="text-xl font-bold text-white">Saldo Insuficiente</h3>
+                        </div>
+                        <div className="p-8 text-center">
+                            <p className="text-gray-600 mb-6">
+                                No cuentas con saldo suficiente en tu billetera local para generar esta guía.
+                            </p>
+                            <div className="bg-gray-50 rounded-xl p-4 mb-8 grid grid-cols-2 gap-4">
+                                <div className="text-left">
+                                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Tu Saldo</p>
+                                    <p className="text-lg font-bold text-gray-900">${walletBalance?.toLocaleString()}</p>
+                                </div>
+                                <div className="text-left border-l pl-4">
+                                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Costo Guía</p>
+                                    <p className="text-lg font-bold text-red-600">${insufficientBalanceInfo.cost.toLocaleString()}</p>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-3">
+                                <Button
+                                    className="w-full bg-red-600 hover:bg-red-700 h-12 text-lg"
+                                    onClick={() => window.location.href = '/wallet'}
+                                >
+                                    Recargar Billetera
+                                </Button>
+                                <Button
+                                    variant="secondary"
+                                    className="w-full h-12"
+                                    onClick={() => setShowBalanceModal(false)}
+                                >
+                                    Volver
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             )}
 
@@ -378,23 +466,46 @@ export const ShippingForm = () => {
                 {/* Rates Section */}
                 {rates.length > 0 && (
                     <section className="bg-gray-50 p-4 rounded-md">
+                        {loadingAI && (
+                            <div className="text-center py-4 text-blue-600 animate-pulse text-sm font-medium">
+                                🤖 IA Analizando mejores opciones...
+                            </div>
+                        )}
+
+                        {aiAnalysis && !loadingAI && (
+                            <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4">
+                                <h4 className="text-blue-900 font-bold flex items-center gap-2 mb-1">
+                                    <span>🤖</span> Recomendación: {aiAnalysis.recommended_carrier}
+                                </h4>
+                                <p className="text-blue-800 text-xs leading-relaxed italic">
+                                    "{aiAnalysis.reasoning}"
+                                </p>
+                            </div>
+                        )}
+
                         <h3 className="text-xl font-semibold mb-4 text-gray-700">Cotizaciones Disponibles</h3>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
-                            {rates.map((rate) => (
-                                <div
-                                    key={rate.idRate}
-                                    className={`p-3 border rounded cursor-pointer flex justify-between items-center ${selectedRate?.idRate === rate.idRate ? "border-indigo-500 bg-indigo-50" : "border-gray-200 bg-white"}`}
-                                    onClick={() => setSelectedRate(rate)}
-                                >
-                                    <div>
-                                        <p className="font-bold text-gray-800">{rate.carrier} - {rate.product}</p>
-                                        <p className="text-sm text-gray-600">{rate.deliveryDays} días de entrega</p>
+                            {rates.map((rate) => {
+                                const isRecommended = rate.carrier.toLowerCase() === aiAnalysis?.recommended_carrier.toLowerCase();
+                                return (
+                                    <div
+                                        key={rate.idRate}
+                                        className={`p-3 border rounded cursor-pointer flex justify-between items-center transition-all ${selectedRate?.idRate === rate.idRate ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200" : isRecommended ? "border-green-300 bg-green-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
+                                        onClick={() => setSelectedRate(rate)}
+                                    >
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <p className="font-bold text-gray-800">{rate.carrier} - {rate.product}</p>
+                                                {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
+                                            </div>
+                                            <p className="text-sm text-gray-600">{rate.deliveryDays} días de entrega</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
-                                    </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </section>
                 )}

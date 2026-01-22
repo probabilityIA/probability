@@ -6,6 +6,9 @@ import { Input, Button, Select } from "@/shared/ui";
 import { ShipmentApiRepository } from "@/services/modules/shipments/infra/repository/api-repository";
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { Order } from "@/services/modules/orders/domain/types";
+import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
+import { getAIRecommendationAction } from "@/services/modules/orders/infra/actions";
+import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 
 interface ShipmentGuideModalProps {
     isOpen: boolean;
@@ -65,6 +68,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
     const [selectedRate, setSelectedRate] = useState<EnvioClickRate | null>(null);
     const [hasQuoted, setHasQuoted] = useState(false);
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [aiAnalysis, setAiAnalysis] = useState<{ recommended_carrier: string; reasoning: string } | null>(null);
+    const [loadingAI, setLoadingAI] = useState(false);
+    const [showBalanceModal, setShowBalanceModal] = useState(false);
+    const [insufficientBalanceInfo, setInsufficientBalanceInfo] = useState<{ balance: number; cost: number } | null>(null);
+
+    // DANE options for select
+    const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
+        value: code,
+        label: `${data.ciudad} (${data.departamento})`
+    })).sort((a, b) => a.label.localeCompare(b.label));
 
     const {
         register,
@@ -93,6 +107,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
 
     const packageSize = watch("packageSize");
 
+    // Fetch wallet balance on open
+    useEffect(() => {
+        if (isOpen) {
+            getWalletBalanceAction().then(res => {
+                if (res.success && res.data) setWalletBalance(res.data.Balance);
+            });
+        }
+    }, [isOpen]);
+
     // Pre-fill form with order data on open
     useEffect(() => {
         if (isOpen && order) {
@@ -103,7 +126,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
             setValue("destination.phone", order.customer_phone);
             setValue("destination.address", order.shipping_street);
             setValue("destination.suburb", order.shipping_state || "");
-            setValue("destination.daneCode", "11001000"); // Default or try to infer/map
+
+            // Try to find DANE code by city name
+            const city = (order.shipping_city || "").toUpperCase();
+            const foundDane = Object.entries(danes).find(([_, data]: [string, any]) => data.ciudad.includes(city));
+            if (foundDane) {
+                setValue("destination.daneCode", foundDane[0]);
+            } else {
+                setValue("destination.daneCode", "11001000"); // Fallback Bogota
+            }
 
             setValue("contentValue", order.total_amount);
             setValue("description", "Order " + order.order_number);
@@ -176,6 +207,38 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
             if (res.data && res.data.rates && res.data.rates.length > 0) {
                 setRates(res.data.rates);
                 setHasQuoted(true);
+
+                // Perform AI Analysis on real rates
+                const originDane = danes[data.origin.daneCode as keyof typeof danes];
+                const destDane = danes[data.destination.daneCode as keyof typeof danes];
+
+                if (originDane && destDane) {
+                    setLoadingAI(true);
+                    try {
+                        const aiRes = await getAIRecommendationAction(destDane.ciudad, destDane.departamento);
+                        if (aiRes) {
+                            // Validate that the recommended carrier exists in the quotes
+                            const carrierExists = res.data.rates.some((r: any) =>
+                                r.carrier.toLowerCase() === aiRes.recommended_carrier.toLowerCase()
+                            );
+
+                            if (carrierExists) {
+                                setAiAnalysis({
+                                    recommended_carrier: aiRes.recommended_carrier,
+                                    reasoning: aiRes.reasoning
+                                });
+                            } else {
+                                console.warn(`AI recommended ${aiRes.recommended_carrier} but it's not in available quotes.`);
+                                setAiAnalysis(null);
+                            }
+                        }
+                    } catch (e) {
+                        console.error("AI Error:", e);
+                    } finally {
+                        setLoadingAI(false);
+                    }
+                }
+
             } else {
                 setError("No se encontraron cotizaciones.");
             }
@@ -192,6 +255,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
     };
 
     const handleGenerate = async (data: FormValues) => {
+        if (selectedRate && walletBalance !== null && walletBalance < selectedRate.flete) {
+            setInsufficientBalanceInfo({ balance: walletBalance, cost: selectedRate.flete });
+            setShowBalanceModal(true);
+            return;
+        }
+
         if (!selectedRate) {
             setError("Debes seleccionar una cotización");
             return;
@@ -249,6 +318,49 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
                         </div>
                     )}
 
+                    {showBalanceModal && insufficientBalanceInfo && (
+                        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
+                                <div className="bg-red-600 p-6 text-center">
+                                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                        <span className="text-3xl">⚠️</span>
+                                    </div>
+                                    <h3 className="text-xl font-bold text-white">Saldo Insuficiente</h3>
+                                </div>
+                                <div className="p-8 text-center">
+                                    <p className="text-gray-600 mb-6">
+                                        No cuentas con saldo suficiente en tu billetera local para generar esta guía.
+                                    </p>
+                                    <div className="bg-gray-50 rounded-xl p-4 mb-8 grid grid-cols-2 gap-4">
+                                        <div className="text-left">
+                                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Tu Saldo</p>
+                                            <p className="text-lg font-bold text-gray-900">${insufficientBalanceInfo.balance.toLocaleString()}</p>
+                                        </div>
+                                        <div className="text-left border-l pl-4">
+                                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Costo Guía</p>
+                                            <p className="text-lg font-bold text-red-600">${insufficientBalanceInfo.cost.toLocaleString()}</p>
+                                        </div>
+                                    </div>
+                                    <div className="flex flex-col gap-3">
+                                        <Button
+                                            className="w-full bg-red-600 hover:bg-red-700 h-12 text-lg"
+                                            onClick={() => window.location.href = '/wallet'}
+                                        >
+                                            Recargar Billetera
+                                        </Button>
+                                        <Button
+                                            variant="secondary"
+                                            className="w-full h-12"
+                                            onClick={() => setShowBalanceModal(false)}
+                                        >
+                                            Volver
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {success && (
                         <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 text-center">
                             <p className="font-bold text-lg mb-2">¡Éxito!</p>
@@ -284,10 +396,19 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
                                     <Input label="Teléfono" {...register("origin.phone")} error={errors.origin?.phone?.message} />
                                     <Input label="Dirección" {...register("origin.address")} error={errors.origin?.address?.message} />
                                     <Input label="Barrio" {...register("origin.suburb")} error={errors.origin?.suburb?.message} />
-                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div className="md:col-span-2 grid grid-cols-1 md:col-span-2 gap-3">
                                         <Input label="Cruzamiento" {...register("origin.crossStreet")} error={errors.origin?.crossStreet?.message} />
                                         <Input label="Referencia" {...register("origin.reference")} error={errors.origin?.reference?.message} />
-                                        <Input label="Código DANE" {...register("origin.daneCode")} error={errors.origin?.daneCode?.message} />
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
+                                            <select
+                                                {...register("origin.daneCode")}
+                                                className="w-full border-gray-300 rounded-md shadow-sm p-2 border text-sm"
+                                            >
+                                                <option value="">Buscar ciudad...</option>
+                                                {daneOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -303,10 +424,19 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
                                     <Input label="Teléfono" {...register("destination.phone")} error={errors.destination?.phone?.message} />
                                     <Input label="Dirección" {...register("destination.address")} error={errors.destination?.address?.message} />
                                     <Input label="Barrio" {...register("destination.suburb")} error={errors.destination?.suburb?.message} />
-                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    <div className="md:col-span-2 grid grid-cols-1 md:col-span-2 gap-3">
                                         <Input label="Cruzamiento" {...register("destination.crossStreet")} error={errors.destination?.crossStreet?.message} />
                                         <Input label="Referencia" {...register("destination.reference")} error={errors.destination?.reference?.message} />
-                                        <Input label="Código DANE" {...register("destination.daneCode")} error={errors.destination?.daneCode?.message} />
+                                        <div className="md:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
+                                            <select
+                                                {...register("destination.daneCode")}
+                                                className="w-full border-gray-300 rounded-md shadow-sm p-2 border text-sm"
+                                            >
+                                                <option value="">Buscar ciudad...</option>
+                                                {daneOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                             </section>
@@ -355,10 +485,26 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
                             {/* Rates Section */}
                             {rates.length > 0 && (
                                 <section className="bg-gray-50 p-4 rounded-md">
-                                    <h3 className="text-xl font-semibold mb-4 text-gray-700">Cotizaciones Disponibles</h3>
+                                    {loadingAI && (
+                                        <div className="text-center py-4 text-blue-600 animate-pulse text-sm font-medium">
+                                            🤖 IA Analizando mejores opciones...
+                                        </div>
+                                    )}
+
+                                    {aiAnalysis && !loadingAI && (
+                                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4">
+                                            <h4 className="text-blue-900 font-bold flex items-center gap-2 mb-1">
+                                                <span>🤖</span> Recomendación: {aiAnalysis.recommended_carrier}
+                                            </h4>
+                                            <p className="text-blue-800 text-xs leading-relaxed italic">
+                                                "{aiAnalysis.reasoning}"
+                                            </p>
+                                        </div>
+                                    )}
+
                                     <div className="space-y-2 max-h-60 overflow-y-auto">
                                         {rates.map((rate) => {
-                                            const isRecommended = rate.carrier === recommendedCarrier;
+                                            const isRecommended = rate.carrier === aiAnalysis?.recommended_carrier;
                                             return (
                                                 <div
                                                     key={rate.idRate}
