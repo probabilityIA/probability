@@ -150,21 +150,23 @@ jobs:
             # Verificar si la imagen realmente cambió
             if [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ] || [ -z "$OLD_IMAGE_ID" ]; then
               echo "✅ Nueva imagen detectada, recreando contenedor..."
-              
-              # Recrear solo este servicio sin afectar dependencias (--no-deps)
-              # Usamos pull primero para asegurar que compose use la nueva imagen
-              podman-compose -f podman-compose.yaml pull front-central
-              
-              # Recrear el contenedor SIN reiniciar dependencias (reemplazo sutil)
-              echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
-              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-central
-              
+
+              # Detener y eliminar el contenedor existente de forma forzada
+              echo "🛑 Deteniendo contenedor frontend_prod..."
+              podman stop frontend_prod 2>/dev/null || true
+
+              echo "🗑️  Eliminando contenedor frontend_prod..."
+              podman rm -f frontend_prod 2>/dev/null || true
+
+              # Recrear el contenedor con la nueva imagen
+              echo "🔄 Recreando contenedor con nueva imagen..."
+              podman-compose -f podman-compose.yaml up -d --no-deps front-central
+
               # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
-              # nginx -s reload no es suficiente porque mantiene en caché las IPs de los upstreams
               echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
               podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
-              sleep 5  # Esperar a que nginx se reinicie
-              
+              sleep 3
+
               echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
               sleep 15
               
