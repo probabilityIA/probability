@@ -2,6 +2,7 @@ package usecases
 
 import (
 	"context"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/wallet/domain"
@@ -127,4 +128,41 @@ func (u *WalletUsecases) RejectTransaction(ctx context.Context, transactionID st
 
 	tx.Status = domain.TransactionStatusFailed
 	return u.repo.UpdateTransaction(ctx, tx)
+}
+
+func (u *WalletUsecases) GetProcessedTransactions(ctx context.Context) ([]domain.Transaction, error) {
+	return u.repo.GetProcessedTransactions(ctx)
+}
+
+func (u *WalletUsecases) GetTransactionsByBusinessID(ctx context.Context, businessID uint) ([]domain.Transaction, error) {
+	wallet, err := u.GetWallet(ctx, businessID)
+	if err != nil {
+		return nil, err
+	}
+	return u.repo.GetTransactionsByWalletID(ctx, wallet.ID)
+}
+
+func (u *WalletUsecases) ManualDebit(ctx context.Context, businessID uint, amount float64, reference string) error {
+	wallet, err := u.GetWallet(ctx, businessID)
+	if err != nil {
+		return err
+	}
+
+	// Create a USAGE transaction
+	tx := &domain.Transaction{
+		WalletID:  wallet.ID,
+		Amount:    amount,
+		Type:      domain.TransactionTypeUsage,
+		Status:    domain.TransactionStatusCompleted,
+		Reference: "MAN_DEB_" + uuid.New().String()[:8] + ": " + reference,
+		CreatedAt: time.Now(),
+	}
+
+	if err := u.repo.CreateTransaction(ctx, tx); err != nil {
+		return err
+	}
+
+	// Update Wallet Balance
+	wallet.Balance -= amount
+	return u.repo.UpdateWallet(ctx, wallet)
 }

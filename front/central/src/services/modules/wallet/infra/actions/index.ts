@@ -195,3 +195,51 @@ export async function reportPaymentAction(requestId: string) {
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Manual debit from a business wallet (Admin only)
+ */
+export async function manualDebitAction(businessId: number, amount: number, reference: string) {
+    try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/manual-debit`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ business_id: businessId, amount, reference })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to debit wallet: ${res.status}`);
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('manualDebitAction error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
+ * Get current business transaction history
+ */
+export async function getWalletHistoryAction() {
+    try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${env.API_BASE_URL}/wallet/history`, {
+            headers,
+            cache: 'no-store'
+        });
+
+        if (!res.ok) {
+            if (res.status === 404) return { success: true, data: [] };
+            throw new Error(`Failed to fetch wallet history: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return { success: true, data: data || [] };
+    } catch (error: any) {
+        console.error('getWalletHistoryAction error:', error);
+        return { success: false, error: error.message };
+    }
+}

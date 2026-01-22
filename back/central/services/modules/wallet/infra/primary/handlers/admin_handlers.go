@@ -47,3 +47,34 @@ func (h *WalletHandlers) RejectTransaction(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Transaction rejected"})
 }
+
+// GetProcessedTransactions returns all processed (completed/failed) transactions
+func (h *WalletHandlers) GetProcessedTransactions(c *gin.Context) {
+	transactions, err := h.uc.GetProcessedTransactions(c.Request.Context())
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, transactions)
+}
+
+// ManualDebit subtracts balance from a business wallet
+func (h *WalletHandlers) ManualDebit(c *gin.Context) {
+	var req struct {
+		BusinessID uint    `json:"business_id" binding:"required"`
+		Amount     float64 `json:"amount" binding:"required"`
+		Reference  string  `json:"reference"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.uc.ManualDebit(c.Request.Context(), req.BusinessID, req.Amount, req.Reference); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Balance subtracted successfully"})
+}
