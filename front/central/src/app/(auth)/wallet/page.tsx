@@ -11,6 +11,8 @@ import {
     getWalletBalanceAction,
     rechargeWalletAction,
     reportPaymentAction,
+    manualDebitAction,
+    getWalletHistoryAction,
     Wallet
 } from '@/services/modules/wallet/infra/actions';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
@@ -46,6 +48,7 @@ function AdminWalletView() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [businesses, setBusinesses] = useState<Record<number, string>>({});
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
@@ -104,35 +107,133 @@ function AdminWalletView() {
             <div>
                 <h2 className="text-lg font-semibold text-gray-900 mb-4">Saldos de Negocios</h2>
                 <Table
-                    columns={walletColumns}
+                    columns={[
+                        ...walletColumns,
+                        {
+                            key: 'actions',
+                            label: 'Acciones',
+                            render: (_, row) => (
+                                <ManualDebitButton
+                                    businessId={row.BusinessID}
+                                    businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                    onSuccess={fetchWalletsAndBusinesses}
+                                />
+                            )
+                        }
+                    ]}
                     data={wallets}
                     loading={loading}
                     emptyMessage="No hay billeteras registradas"
                 />
             </div>
 
-            {/* In Review Section (Renamed from Pending) */}
-            <RequestsTableView
-                title="Pagos para revisión"
-                businesses={businesses}
-                onRequestsChanged={fetchWalletsAndBusinesses}
-                allWallets={wallets}
-                fetchAction={getPendingRequestsAction}
-                showActions={true}
-                emptyMessage="No hay pagos para revisión"
-            />
+            {/* Top Section - En Revisión (Full Width) */}
+            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                <RequestsTableView
+                    title="En revisión"
+                    businesses={businesses}
+                    onRequestsChanged={fetchWalletsAndBusinesses}
+                    allWallets={wallets}
+                    fetchAction={getPendingRequestsAction}
+                    showActions={true}
+                    emptyMessage="Sin pendientes"
+                    compact={false}
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                />
+            </div>
 
-            {/* Approved Section */}
-            <RequestsTableView
-                title="Pagos aprobados"
-                businesses={businesses}
-                onRequestsChanged={fetchWalletsAndBusinesses}
-                allWallets={wallets}
-                fetchAction={getProcessedRequestsAction}
-                showActions={false}
-                emptyMessage="No hay pagos aprobados"
-            />
+            {/* Bottom Row - Approved and Rejected (Side by Side) */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Approved Section */}
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    <RequestsTableView
+                        title="Aprobados"
+                        businesses={businesses}
+                        onRequestsChanged={fetchWalletsAndBusinesses}
+                        allWallets={wallets}
+                        fetchAction={getProcessedRequestsAction}
+                        filterStatus="COMPLETED"
+                        showActions={false}
+                        emptyMessage="Sin aprobados"
+                        compact={true}
+                        itemsPerPage={itemsPerPage}
+                        onItemsPerPageChange={setItemsPerPage}
+                    />
+                </div>
+
+                {/* Rejected Section */}
+                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+                    <RequestsTableView
+                        title="Rechazados"
+                        businesses={businesses}
+                        onRequestsChanged={fetchWalletsAndBusinesses}
+                        allWallets={wallets}
+                        fetchAction={getProcessedRequestsAction}
+                        filterStatus="FAILED"
+                        showActions={false}
+                        emptyMessage="Sin rechazados"
+                        compact={true}
+                        itemsPerPage={itemsPerPage}
+                        onItemsPerPageChange={setItemsPerPage}
+                    />
+                </div>
+            </div>
         </div>
+    );
+}
+
+function ManualDebitButton({ businessId, businessName, onSuccess }: { businessId: number, businessName: string, onSuccess: () => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [amount, setAmount] = useState('');
+    const [reference, setReference] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleDebit = async () => {
+        if (!amount || isNaN(Number(amount))) return;
+        setLoading(true);
+        try {
+            const res = await manualDebitAction(businessId, Number(amount), reference);
+            if (res.success) {
+                setIsOpen(false);
+                setAmount('');
+                setReference('');
+                onSuccess();
+            } else {
+                alert(res.error);
+            }
+        } catch (e) {
+            alert("Error al procesar");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <Button size="sm" variant="danger" onClick={() => setIsOpen(true)}>Restar Saldo</Button>
+            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={`Restar saldo a ${businessName}`}>
+                <div className="space-y-4 p-4">
+                    <Input
+                        label="Monto a restar"
+                        type="number"
+                        value={amount}
+                        onChange={e => setAmount(e.target.value)}
+                        placeholder="Ej: 5000"
+                    />
+                    <Input
+                        label="Referencia / Motivo"
+                        value={reference}
+                        onChange={e => setReference(e.target.value)}
+                        placeholder="Ej: Ajuste de saldo"
+                    />
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
+                        <Button variant="danger" onClick={handleDebit} loading={loading}>Restar Saldo</Button>
+                    </div>
+                </div>
+            </Modal>
+        </>
     );
 }
 
@@ -143,7 +244,11 @@ function RequestsTableView({
     allWallets,
     fetchAction,
     showActions,
-    emptyMessage
+    emptyMessage,
+    filterStatus,
+    compact,
+    itemsPerPage,
+    onItemsPerPageChange
 }: {
     title: string,
     businesses: Record<number, string>,
@@ -151,25 +256,36 @@ function RequestsTableView({
     allWallets: Wallet[],
     fetchAction: () => Promise<any>,
     showActions: boolean,
-    emptyMessage: string
+    emptyMessage: string,
+    filterStatus?: string,
+    compact?: boolean,
+    itemsPerPage: number,
+    onItemsPerPageChange: (total: number) => void
 }) {
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
+
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
 
     const fetchRequests = useCallback(async () => {
         try {
             setLoading(true);
             const res = await fetchAction();
             if (res.success) {
-                setRequests(res.data as any[] || []);
+                let data = res.data as any[] || [];
+                if (filterStatus) {
+                    data = data.filter(r => r.Status === filterStatus);
+                }
+                setRequests(data);
             }
         } catch (error) {
             console.error(error);
         } finally {
             setLoading(false);
         }
-    }, [fetchAction]);
+    }, [fetchAction, filterStatus]);
 
     useEffect(() => {
         fetchRequests();
@@ -222,9 +338,10 @@ function RequestsTableView({
             key: 'actions',
             label: 'Acciones',
             render: (_, row) => (
-                <div className="flex gap-2">
+                <div className="flex gap-1.5">
                     <Button
                         size="sm"
+                        className="px-2 py-0.5 text-[10px] h-auto min-h-0"
                         variant="success"
                         onClick={() => handleAction(row.ID, 'approve')}
                         loading={processingId === row.ID}
@@ -234,6 +351,7 @@ function RequestsTableView({
                     </Button>
                     <Button
                         size="sm"
+                        className="px-2 py-0.5 text-[10px] h-auto min-h-0"
                         variant="danger"
                         onClick={() => handleAction(row.ID, 'reject')}
                         loading={processingId === row.ID}
@@ -246,14 +364,30 @@ function RequestsTableView({
         });
     }
 
+    // Slice data for pagination
+    const totalItems = requests.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const paginatedData = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
     return (
-        <div className="pt-4 border-t border-gray-100 mt-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>
+        <div className={`${compact ? 'p-2' : 'pt-4 border-t border-gray-100 mt-8'}`}>
+            {!compact && <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>}
+            {compact && <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 font-bold text-gray-700 text-sm uppercase tracking-wider">{title}</div>}
             <Table
                 columns={requestColumns}
-                data={requests}
+                data={paginatedData}
                 loading={loading}
                 emptyMessage={emptyMessage}
+                pagination={{
+                    currentPage,
+                    totalPages,
+                    totalItems,
+                    itemsPerPage,
+                    onPageChange: setCurrentPage,
+                    onItemsPerPageChange,
+                    itemsPerPageOptions: [5, 10, 20, 50],
+                    showItemsPerPageSelector: true
+                }}
             />
         </div>
     );
@@ -272,6 +406,19 @@ function BusinessWalletView() {
 
     const QUICK_AMOUNTS = [15000, 50000, 100000, 200000, 500000];
 
+    const [history, setHistory] = useState<any[]>([]);
+
+    const fetchHistory = useCallback(async () => {
+        try {
+            const res = await getWalletHistoryAction();
+            if (res.success) {
+                setHistory(res.data || []);
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }, []);
+
     const fetchBalance = useCallback(async () => {
         try {
             const res = await getWalletBalanceAction();
@@ -286,7 +433,8 @@ function BusinessWalletView() {
 
     useEffect(() => {
         fetchBalance();
-    }, [fetchBalance]);
+        fetchHistory();
+    }, [fetchBalance, fetchHistory]);
 
     const handleRechargeRequest = async () => {
         if (!rechargeAmount || isNaN(Number(rechargeAmount))) {
@@ -530,6 +678,107 @@ function BusinessWalletView() {
                     </Button>
                 </div>
             </Modal>
+
+            {/* Business Transaction History */}
+            <div className="mt-12 space-y-8">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                    <h2 className="text-2xl font-bold text-gray-900">Historial de Transacciones</h2>
+                    <div className="flex gap-4">
+                        <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+                            <p className="text-xs text-green-700 font-medium">Total Aprobado</p>
+                            <p className="text-lg font-bold text-green-800">
+                                {formatCurrency(history.filter(t => t.Status === 'COMPLETED').reduce((acc, t) => acc + t.Amount, 0))}
+                            </p>
+                        </div>
+                        <div className="bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-100">
+                            <p className="text-xs text-yellow-700 font-medium">Total Pendiente</p>
+                            <p className="text-lg font-bold text-yellow-800">
+                                {formatCurrency(history.filter(t => t.Status === 'PENDING').reduce((acc, t) => acc + t.Amount, 0))}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="space-y-8">
+                    <HistoryTable
+                        title="Transacciones Recientes / Procesadas"
+                        data={history.filter(t => t.Status === 'COMPLETED' || t.Status === 'FAILED')}
+                        emptyMessage="No hay transacciones procesadas"
+                    />
+                    <HistoryTable
+                        title="Transacciones Pendientes"
+                        data={history.filter(t => t.Status === 'PENDING')}
+                        emptyMessage="No hay transacciones pendientes"
+                    />
+                </div>
+            </div>
         </>
+    );
+}
+
+function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[], emptyMessage: string }) {
+    // Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+
+    const columns: TableColumn<any>[] = [
+        {
+            key: 'CreatedAt',
+            label: 'Fecha',
+            render: (val) => <span className="text-gray-600 font-mono text-sm">{formatDate(val as string)}</span>
+        },
+        {
+            key: 'Reference',
+            label: 'Referencia',
+            render: (val) => <span className="text-gray-500 text-sm">{(val as string) || '---'}</span>
+        },
+        {
+            key: 'Amount',
+            label: 'Monto',
+            render: (val) => <span className="font-bold text-gray-900">{formatCurrency(val as number)}</span>
+        },
+        {
+            key: 'Status',
+            label: 'Estado',
+            render: (val) => {
+                const colors = {
+                    'PENDING': 'bg-yellow-100 text-yellow-800',
+                    'COMPLETED': 'bg-green-100 text-green-800',
+                    'FAILED': 'bg-red-100 text-red-800'
+                };
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${(colors as any)[val as string] || 'bg-gray-100'}`}>
+                        {val === 'PENDING' ? 'Pendiente' : val === 'COMPLETED' ? 'Completado' : 'Rechazado'}
+                    </span>
+                );
+            }
+        }
+    ];
+
+    // Slice data for pagination
+    const totalItems = data.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+    return (
+        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
+            <div className="p-4 border-b border-gray-50 bg-gray-50/50">
+                <h3 className="font-semibold text-gray-900">{title}</h3>
+            </div>
+            <Table
+                columns={columns}
+                data={paginatedData}
+                emptyMessage={emptyMessage}
+                pagination={{
+                    currentPage,
+                    totalPages,
+                    totalItems,
+                    itemsPerPage,
+                    onPageChange: setCurrentPage,
+                    onItemsPerPageChange: setItemsPerPage,
+                    itemsPerPageOptions: [5, 10, 20, 50]
+                }}
+            />
+        </div>
     );
 }

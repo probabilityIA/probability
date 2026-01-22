@@ -12,8 +12,9 @@ export default function OrdersPage() {
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-    const [viewMode, setViewMode] = useState<'details' | 'recommendation'>('details'); // NEW state
+    const [viewMode, setViewMode] = useState<'details' | 'recommendation'>('details');
     const [showTestGuideModal, setShowTestGuideModal] = useState(false);
+    const [showGuideModal, setShowGuideModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const handleView = (order: Order) => {
@@ -22,10 +23,9 @@ export default function OrdersPage() {
         setShowViewModal(true);
     };
 
-    const handleViewRecommendation = (order: Order) => { // NEW handler
+    const handleViewRecommendation = (order: Order) => {
         setSelectedOrder(order);
-        setViewMode('recommendation'); // Set mode to recommendation
-        setShowViewModal(true);
+        setShowGuideModal(true);
     };
 
     const handleEdit = (order: Order) => {
@@ -64,9 +64,20 @@ export default function OrdersPage() {
             />
 
             {/* Test Guide Modal */}
+            {/* Test Guide Modal (No specific order) */}
             <ShipmentGuideModal
                 isOpen={showTestGuideModal}
                 onClose={() => setShowTestGuideModal(false)}
+            />
+
+            {/* Guide Modal (Selected order) */}
+            <ShipmentGuideModal
+                isOpen={showGuideModal}
+                onClose={() => {
+                    setShowGuideModal(false);
+                    setSelectedOrder(null);
+                }}
+                order={selectedOrder || undefined}
             />
 
             {/* Create Modal */}
