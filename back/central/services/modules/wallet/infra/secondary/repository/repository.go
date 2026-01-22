@@ -100,6 +100,15 @@ func (r *Repository) GetTransactionByID(ctx context.Context, id uuid.UUID) (*dom
 	return &tx, nil
 }
 
+func (r *Repository) GetProcessedTransactions(ctx context.Context) ([]domain.Transaction, error) {
+	var transactions []domain.Transaction
+	err := r.db.Conn(ctx).
+		Where("status IN ?", []domain.TransactionStatus{domain.TransactionStatusCompleted, domain.TransactionStatusFailed}).
+		Order("created_at DESC").
+		Find(&transactions).Error
+	return transactions, err
+}
+
 func (r *Repository) UpdateTransaction(ctx context.Context, transaction *domain.Transaction) error {
 	return r.db.Conn(ctx).Save(transaction).Error
 }
