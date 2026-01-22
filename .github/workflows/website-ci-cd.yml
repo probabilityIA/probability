@@ -50,15 +50,20 @@ jobs:
       - name: Build image with Podman (ARM64)
         working-directory: ./front/website
         run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           podman build \
             --platform linux/arm64 \
+            --no-cache \
             -f docker/Dockerfile \
             -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-website:latest \
+            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-website:$SHORT_SHA \
             .
 
       - name: Push image to ECR
         run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-website:latest
+          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-website:$SHORT_SHA
 
   deploy:
     name: Deploy to Server
@@ -100,9 +105,12 @@ jobs:
             # Obtener el ID de la imagen actual antes del pull
             echo "📦 Pulling latest image from ECR..."
             OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || echo "")
-            
-            # Pull latest image (sin caché para asegurar que descarga la nueva)
-            podman pull --quiet 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
+
+            # Eliminar imagen local para forzar nuevo pull
+            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
+
+            # Pull latest image (sin caché)
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
             
             # Obtener el ID de la nueva imagen
             NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest)
