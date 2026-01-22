@@ -53,17 +53,22 @@ jobs:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1' }}
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://back-central:3050/api/v1' }}
         run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           podman build \
             --platform linux/arm64 \
+            --no-cache \
             --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
             --build-arg API_BASE_URL=${API_BASE_URL} \
             -f docker/Dockerfile \
             -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:latest \
+            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:$SHORT_SHA \
             .
 
       - name: Push image to ECR
         run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:latest
+          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:$SHORT_SHA
 
   deploy:
     name: Deploy to Server
@@ -129,9 +134,12 @@ jobs:
             # Obtener el ID de la imagen actual antes del pull
             echo "📦 Pulling latest image from ECR..."
             OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || echo "")
-            
-            # Pull latest image (sin caché para asegurar que descarga la nueva)
-            podman pull --quiet 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+
+            # Eliminar imagen local para forzar nuevo pull
+            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
+
+            # Pull latest image (sin caché)
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
             
             # Obtener el ID de la nueva imagen
             NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest)
