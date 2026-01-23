@@ -43,15 +43,19 @@ jobs:
       - name: Build image with Podman (ARM64)
         working-directory: ./infra/nginx
         run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           podman build \
             --platform linux/arm64 \
             -f Dockerfile \
             -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-nginx:latest \
+            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-nginx:$SHORT_SHA \
             .
 
       - name: Push image to ECR
         run: |
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-nginx:latest
+          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-nginx:$SHORT_SHA
 
   deploy:
     name: Deploy to Server
@@ -75,14 +79,18 @@ jobs:
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
 
       - name: Deploy to server
+        env:
+          SHORT_SHA: ${{ github.sha }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          SHORT_SHA=$(echo "$SHORT_SHA" | cut -c1-7)
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             set -e
-            export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
+            export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin:/usr/bin
+            export SHORT_SHA=$SHORT_SHA
 
             # Crear directorio si no existe
             mkdir -p ~/probability/infra/compose-prod
-            
+
             # Asegurar permisos de certificados SSL para Podman rootless
             echo "📜 Verificando permisos de certificados SSL..."
             sudo chmod 755 /etc/letsencrypt/live /etc/letsencrypt/archive 2>/dev/null || true
@@ -119,7 +127,7 @@ jobs:
             cd ~/probability/infra/compose-prod || exit 1
 
             # Asegurar que AWS CLI esté en PATH
-            export PATH="/usr/local/bin:$PATH"
+            export PATH="/usr/local/bin:\$PATH"
 
             # Login a ECR privado
             echo "🔐 Logging in to ECR..."
@@ -127,109 +135,98 @@ jobs:
               podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             # Obtener el ID de la imagen actual antes del pull
-            echo "📦 Pulling latest image from ECR..."
-            OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || echo "")
-            
-            # Pull latest image (sin caché para asegurar que descarga la nueva)
-            podman pull --quiet 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
-            
+            echo "📦 Pulling image with SHA tag: \$SHORT_SHA"
+            OLD_IMAGE_ID=\$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || echo "")
+
+            # Eliminar imágenes locales para forzar nuevo pull
+            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
+            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:\$SHORT_SHA 2>/dev/null || true
+
+            # Pull image con SHA específico (garantiza que es la imagen recién construida)
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:\$SHORT_SHA
+
+            # Tag la imagen con SHA como latest localmente
+            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:\$SHORT_SHA \
+                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
+
             # Obtener el ID de la nueva imagen
-            NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest)
-            
-            echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
-            echo "📊 New image ID: ${NEW_IMAGE_ID}"
-            
-            # Verificar si la imagen realmente cambió
-            if [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ] || [ -z "$OLD_IMAGE_ID" ]; then
-              echo "✅ Nueva imagen detectada, recreando contenedor..."
+            NEW_IMAGE_ID=\$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest)
+
+            echo "📊 Old image ID: \${OLD_IMAGE_ID:-none}"
+            echo "📊 New image ID: \$NEW_IMAGE_ID"
+            echo "📊 Git SHA: \$SHORT_SHA"
+
+            # Siempre recrear el contenedor con la nueva imagen específica
+            echo "✅ Nueva imagen detectada (SHA: \$SHORT_SHA), recreando contenedor..."
+
+            # Recrear el contenedor SIN reiniciar dependencias (reemplazo sutil)
+            echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
+            podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps nginx
+
+            echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
+            sleep 10
               
-              # Recrear solo este servicio sin afectar dependencias (--no-deps)
-              # Usamos pull primero para asegurar que compose use la nueva imagen
-              podman-compose -f podman-compose.yaml pull nginx
-              
-              # Recrear el contenedor SIN reiniciar dependencias (reemplazo sutil)
-              echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
-              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps nginx
-              
-              echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
-              sleep 10
-              
-              # Verificar que el contenedor está corriendo (con reintentos)
-              MAX_RETRIES=3
-              RETRY_COUNT=0
-              CONTAINER_STATUS=""
-              
-              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-                echo "📋 Intento $((RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
-                
-                if [ "$CONTAINER_STATUS" = "running" ]; then
-                  break
-                fi
-                
-                RETRY_COUNT=$((RETRY_COUNT + 1))
-                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                  echo "⏳ Esperando 5 segundos más..."
-                  sleep 5
-                fi
-              done
-              
-              # Mostrar logs antes de verificar estado final
-              echo "📋 Últimos logs del contenedor:"
-              podman logs --tail 30 nginx_prod 2>/dev/null || true
-              
-              # Verificar estado final
-              CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              if [ "$CONTAINER_STATUS" != "running" ]; then
-                echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
-                echo "📋 Estado final: $CONTAINER_STATUS"
-                echo "📋 Revisando logs de error:"
-                podman logs --tail 50 nginx_prod 2>/dev/null || true
-                
-                # Intentar reiniciar manualmente
-                echo "🔄 Intentando reiniciar manualmente..."
-                podman restart nginx_prod 2>/dev/null || podman start nginx_prod 2>/dev/null || true
+            # Verificar que el contenedor está corriendo (con reintentos)
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+            CONTAINER_STATUS=""
+
+            while [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; do
+              CONTAINER_STATUS=\$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              echo "📋 Intento \$((\$RETRY_COUNT + 1))/\$MAX_RETRIES - Estado del contenedor: \$CONTAINER_STATUS"
+
+              if [ "\$CONTAINER_STATUS" = "running" ]; then
+                break
+              fi
+
+              RETRY_COUNT=\$((\$RETRY_COUNT + 1))
+              if [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; then
+                echo "⏳ Esperando 5 segundos más..."
                 sleep 5
-                
-                # Verificar una vez más
-                CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-                if [ "$CONTAINER_STATUS" != "running" ]; then
-                  echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
-                  exit 1
-                else
-                  echo "✅ Contenedor iniciado después de reinicio manual"
-                fi
-              else
-                echo "✅ Contenedor corriendo correctamente"
               fi
-              
-              # Verificar que el contenedor está usando la nueva imagen
-              CONTAINER_IMAGE_ID=$(podman inspect nginx_prod --format '{{.Image}}' 2>/dev/null || echo "")
-              NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest | head -1)
-              
-              echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
-              echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
-              
-              if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
-                if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
-                  echo "✅ Contenedor actualizado correctamente con la nueva imagen"
-                else
-                  echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
-                fi
-              fi
-              
-            else
-              echo "ℹ️  La imagen no cambió (mismo ID), forzando recreación del contenedor (sin afectar dependencias)..."
-              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps nginx
+            done
+
+            # Mostrar logs antes de verificar estado final
+            echo "📋 Últimos logs del contenedor:"
+            podman logs --tail 30 nginx_prod 2>/dev/null || true
+
+            # Verificar estado final
+            CONTAINER_STATUS=\$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+            if [ "\$CONTAINER_STATUS" != "running" ]; then
+              echo "❌ El contenedor no está corriendo después de \$MAX_RETRIES intentos"
+              echo "📋 Estado final: \$CONTAINER_STATUS"
+              echo "📋 Revisando logs de error:"
+              podman logs --tail 50 nginx_prod 2>/dev/null || true
+
+              # Intentar reiniciar manualmente
+              echo "🔄 Intentando reiniciar manualmente..."
+              podman restart nginx_prod 2>/dev/null || podman start nginx_prod 2>/dev/null || true
               sleep 5
-              
-              # Verificar estado
-              CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              echo "📋 Estado después de recreación: $CONTAINER_STATUS"
-              
-              if [ "$CONTAINER_STATUS" != "running" ]; then
-                echo "⚠️  El contenedor no está corriendo, intentando reiniciar..."
-                podman restart nginx_prod 2>/dev/null || podman start nginx_prod 2>/dev/null || true
+
+              # Verificar una vez más
+              CONTAINER_STATUS=\$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              if [ "\$CONTAINER_STATUS" != "running" ]; then
+                echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
+                exit 1
+              else
+                echo "✅ Contenedor iniciado después de reinicio manual"
+              fi
+            else
+              echo "✅ Contenedor corriendo correctamente"
+            fi
+
+            # Verificar que el contenedor está usando la nueva imagen
+            CONTAINER_IMAGE_ID=\$(podman inspect nginx_prod --format '{{.Image}}' 2>/dev/null || echo "")
+            NEW_IMAGE_FULL_ID=\$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest | head -1)
+
+            echo "📋 Image ID del contenedor: \${CONTAINER_IMAGE_ID:0:12}"
+            echo "📋 Image ID esperada: \${NEW_IMAGE_FULL_ID:0:12}"
+
+            if [ -n "\$CONTAINER_IMAGE_ID" ] && [ -n "\$NEW_IMAGE_FULL_ID" ]; then
+              if [ "\${CONTAINER_IMAGE_ID:0:12}" = "\${NEW_IMAGE_FULL_ID:0:12}" ]; then
+                echo "✅ Contenedor actualizado correctamente con la nueva imagen (SHA: \$SHORT_SHA)"
+              else
+                echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
               fi
             fi
 

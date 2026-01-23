@@ -87,15 +87,19 @@ jobs:
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
 
       - name: Deploy to server
+        env:
+          SHORT_SHA: ${{ github.sha }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          SHORT_SHA=$(echo "$SHORT_SHA" | cut -c1-7)
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             set -e
-            export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
+            export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin:/usr/bin
+            export SHORT_SHA=$SHORT_SHA
 
             cd ~/probability/infra/compose-prod || exit 1
 
             # Asegurar que AWS CLI esté en PATH
-            export PATH="/usr/local/bin:$PATH"
+            export PATH="/usr/local/bin:\$PATH"
 
             # Login a ECR privado
             echo "🔐 Logging in to ECR..."
@@ -103,120 +107,110 @@ jobs:
               podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             # Obtener el ID de la imagen actual antes del pull
-            echo "📦 Pulling latest image from ECR..."
-            OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || echo "")
+            echo "📦 Pulling image with SHA tag: \$SHORT_SHA"
+            OLD_IMAGE_ID=\$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || echo "")
 
-            # Eliminar imagen local para forzar nuevo pull
+            # Eliminar imágenes locales para forzar nuevo pull
             podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
+            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:\$SHORT_SHA 2>/dev/null || true
 
-            # Pull latest image (sin caché)
-            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
-            
+            # Pull image con SHA específico (garantiza que es la imagen recién construida)
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:\$SHORT_SHA
+
+            # Tag la imagen con SHA como latest localmente
+            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:\$SHORT_SHA \
+                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
+
             # Obtener el ID de la nueva imagen
-            NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest)
-            
-            echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
-            echo "📊 New image ID: ${NEW_IMAGE_ID}"
-            
-            # Verificar si la imagen realmente cambió
-            if [ "$OLD_IMAGE_ID" != "$NEW_IMAGE_ID" ] || [ -z "$OLD_IMAGE_ID" ]; then
-              echo "✅ Nueva imagen detectada, recreando contenedor..."
+            NEW_IMAGE_ID=\$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest)
 
-              # Detener y eliminar el contenedor existente de forma forzada
-              echo "🛑 Deteniendo contenedor website_prod..."
-              podman stop website_prod 2>/dev/null || true
+            echo "📊 Old image ID: \${OLD_IMAGE_ID:-none}"
+            echo "📊 New image ID: \$NEW_IMAGE_ID"
+            echo "📊 Git SHA: \$SHORT_SHA"
 
-              echo "🗑️  Eliminando contenedor website_prod..."
-              podman rm -f website_prod 2>/dev/null || true
+            # Siempre recrear el contenedor con la nueva imagen específica
+            echo "✅ Nueva imagen detectada (SHA: \$SHORT_SHA), recreando contenedor..."
 
-              # Recrear el contenedor con la nueva imagen
-              echo "🔄 Recreando contenedor con nueva imagen..."
-              podman-compose -f podman-compose.yaml up -d --no-deps front-website
+            # Detener y eliminar el contenedor existente de forma forzada
+            echo "🛑 Deteniendo contenedor website_prod..."
+            podman stop website_prod 2>/dev/null || true
 
-              # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
-              echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
-              podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
-              sleep 3
+            echo "🗑️  Eliminando contenedor website_prod..."
+            podman rm -f website_prod 2>/dev/null || true
 
-              echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
-              sleep 15
+            # Recrear el contenedor con la nueva imagen
+            echo "🔄 Recreando contenedor con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d --no-deps front-website
+
+            # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
+            echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
+            podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
+            sleep 3
+
+            echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
+            sleep 15
               
-              # Verificar que el contenedor está corriendo (con reintentos)
-              MAX_RETRIES=3
-              RETRY_COUNT=0
-              CONTAINER_STATUS=""
-              
-              while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-                CONTAINER_STATUS=$(podman inspect website_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-                echo "📋 Intento $((RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
-                
-                if [ "$CONTAINER_STATUS" = "running" ]; then
-                  break
-                fi
-                
-                RETRY_COUNT=$((RETRY_COUNT + 1))
-                if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
-                  echo "⏳ Esperando 5 segundos más..."
-                  sleep 5
-                fi
-              done
-              
-              # Mostrar logs antes de verificar estado final
-              echo "📋 Últimos logs del contenedor:"
-              podman logs --tail 30 website_prod 2>/dev/null || true
-              
-              # Verificar estado final
-              CONTAINER_STATUS=$(podman inspect website_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              if [ "$CONTAINER_STATUS" != "running" ]; then
-                echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
-                echo "📋 Estado final: $CONTAINER_STATUS"
-                echo "📋 Revisando logs de error:"
-                podman logs --tail 50 website_prod 2>/dev/null || true
-                
-                # Intentar reiniciar manualmente
-                echo "🔄 Intentando reiniciar manualmente..."
-                podman restart website_prod 2>/dev/null || podman start website_prod 2>/dev/null || true
-                sleep 10
-                
-                # Verificar una vez más
-                CONTAINER_STATUS=$(podman inspect website_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-                if [ "$CONTAINER_STATUS" != "running" ]; then
-                  echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
-                  exit 1
-                else
-                  echo "✅ Contenedor iniciado después de reinicio manual"
-                fi
-              else
-                echo "✅ Contenedor corriendo correctamente"
+            # Verificar que el contenedor está corriendo (con reintentos)
+            MAX_RETRIES=3
+            RETRY_COUNT=0
+            CONTAINER_STATUS=""
+
+            while [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; do
+              CONTAINER_STATUS=\$(podman inspect website_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              echo "📋 Intento \$((\$RETRY_COUNT + 1))/\$MAX_RETRIES - Estado del contenedor: \$CONTAINER_STATUS"
+
+              if [ "\$CONTAINER_STATUS" = "running" ]; then
+                break
               fi
-              
-              # Verificar que el contenedor está usando la nueva imagen
-              CONTAINER_IMAGE_ID=$(podman inspect website_prod --format '{{.Image}}' 2>/dev/null || echo "")
-              NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest | head -1)
-              
-              echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
-              echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
-              
-              if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
-                if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
-                  echo "✅ Contenedor actualizado correctamente con la nueva imagen"
-                else
-                  echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
-                fi
+
+              RETRY_COUNT=\$((\$RETRY_COUNT + 1))
+              if [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; then
+                echo "⏳ Esperando 5 segundos más..."
+                sleep 5
               fi
-              
-            else
-              echo "ℹ️  La imagen no cambió (mismo ID), forzando recreación del contenedor (sin afectar dependencias)..."
-              podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps front-website
+            done
+
+            # Mostrar logs antes de verificar estado final
+            echo "📋 Últimos logs del contenedor:"
+            podman logs --tail 30 website_prod 2>/dev/null || true
+
+            # Verificar estado final
+            CONTAINER_STATUS=\$(podman inspect website_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+            if [ "\$CONTAINER_STATUS" != "running" ]; then
+              echo "❌ El contenedor no está corriendo después de \$MAX_RETRIES intentos"
+              echo "📋 Estado final: \$CONTAINER_STATUS"
+              echo "📋 Revisando logs de error:"
+              podman logs --tail 50 website_prod 2>/dev/null || true
+
+              # Intentar reiniciar manualmente
+              echo "🔄 Intentando reiniciar manualmente..."
+              podman restart website_prod 2>/dev/null || podman start website_prod 2>/dev/null || true
               sleep 10
-              
-              # Verificar estado
-              CONTAINER_STATUS=$(podman inspect website_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              echo "📋 Estado después de recreación: $CONTAINER_STATUS"
-              
-              if [ "$CONTAINER_STATUS" != "running" ]; then
-                echo "⚠️  El contenedor no está corriendo, intentando reiniciar..."
-                podman restart website_prod 2>/dev/null || podman start website_prod 2>/dev/null || true
+
+              # Verificar una vez más
+              CONTAINER_STATUS=\$(podman inspect website_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              if [ "\$CONTAINER_STATUS" != "running" ]; then
+                echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
+                exit 1
+              else
+                echo "✅ Contenedor iniciado después de reinicio manual"
+              fi
+            else
+              echo "✅ Contenedor corriendo correctamente"
+            fi
+
+            # Verificar que el contenedor está usando la nueva imagen
+            CONTAINER_IMAGE_ID=\$(podman inspect website_prod --format '{{.Image}}' 2>/dev/null || echo "")
+            NEW_IMAGE_FULL_ID=\$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest | head -1)
+
+            echo "📋 Image ID del contenedor: \${CONTAINER_IMAGE_ID:0:12}"
+            echo "📋 Image ID esperada: \${NEW_IMAGE_FULL_ID:0:12}"
+
+            if [ -n "\$CONTAINER_IMAGE_ID" ] && [ -n "\$NEW_IMAGE_FULL_ID" ]; then
+              if [ "\${CONTAINER_IMAGE_ID:0:12}" = "\${NEW_IMAGE_FULL_ID:0:12}" ]; then
+                echo "✅ Contenedor actualizado correctamente con la nueva imagen (SHA: \$SHORT_SHA)"
+              else
+                echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
               fi
             fi
 
