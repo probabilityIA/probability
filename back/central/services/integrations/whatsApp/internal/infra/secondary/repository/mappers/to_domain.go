@@ -3,7 +3,6 @@ package mappers
 import (
 	"encoding/json"
 
-	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )

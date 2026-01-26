@@ -94,19 +94,16 @@ func (h *TemplateHandler) SendTemplate(c *gin.Context) {
 		errorType := "internal_error"
 
 		// Errores específicos del dominio
-		switch err.(type) {
-		case *interface{ Error() string }:
-			errorMsg := err.Error()
-			if contains(errorMsg, "plantilla no encontrada") {
-				statusCode = http.StatusBadRequest
-				errorType = "template_not_found"
-			} else if contains(errorMsg, "variable") && contains(errorMsg, "faltante") {
-				statusCode = http.StatusBadRequest
-				errorType = "missing_variable"
-			} else if contains(errorMsg, "número de teléfono inválido") {
-				statusCode = http.StatusBadRequest
-				errorType = "invalid_phone_number"
-			}
+		errorMsg := err.Error()
+		if contains(errorMsg, "plantilla no encontrada") {
+			statusCode = http.StatusBadRequest
+			errorType = "template_not_found"
+		} else if contains(errorMsg, "variable") && contains(errorMsg, "faltante") {
+			statusCode = http.StatusBadRequest
+			errorType = "missing_variable"
+		} else if contains(errorMsg, "número de teléfono inválido") {
+			statusCode = http.StatusBadRequest
+			errorType = "invalid_phone_number"
 		}
 
 		c.JSON(statusCode, gin.H{
