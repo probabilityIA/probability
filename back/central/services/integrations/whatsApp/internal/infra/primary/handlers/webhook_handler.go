@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/hex"
@@ -175,7 +176,7 @@ func (h *WebhookHandler) ReceiveWebhook(c *gin.Context) {
 // processWebhookAsync procesa el webhook de forma asíncrona
 func (h *WebhookHandler) processWebhookAsync(webhook domain.WebhookPayload) {
 	// Crear nuevo contexto para operación asíncrona
-	ctx := h.log.WithContext()
+	ctx := context.Background()
 
 	h.log.Info(ctx).
 		Str("object", webhook.Object).
