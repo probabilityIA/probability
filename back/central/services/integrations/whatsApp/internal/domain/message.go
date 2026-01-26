@@ -14,7 +14,9 @@ type TemplateParameter struct {
 
 // TemplateComponent representa un componente del template
 type TemplateComponent struct {
-	Type       string
+	Type       string              // "body", "header", "footer", "button"
+	SubType    string              // Para botones: "quick_reply", "url", "phone_number"
+	Index      int                 // Para botones: índice del botón (0-based)
 	Parameters []TemplateParameter
 }
 

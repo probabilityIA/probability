@@ -29,6 +29,8 @@ func MapDomainToRequest(d domain.TemplateMessage) any {
 		}
 		components = append(components, request.Component{
 			Type:       comp.Type,
+			SubType:    comp.SubType,
+			Index:      comp.Index,
 			Parameters: parameters,
 		})
 	}

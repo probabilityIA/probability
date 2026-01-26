@@ -15,7 +15,9 @@ type Parameter struct {
 // Component representa un componente del template
 type Component struct {
 	Type       string      `json:"type"`
-	Parameters []Parameter `json:"parameters"`
+	SubType    string      `json:"sub_type,omitempty"` // Para botones: "quick_reply", "url", "phone_number"
+	Index      int         `json:"index,omitempty"`    // Para botones: índice del botón (0-based)
+	Parameters []Parameter `json:"parameters,omitempty"`
 }
 
 // Template representa la configuración del template a enviar
