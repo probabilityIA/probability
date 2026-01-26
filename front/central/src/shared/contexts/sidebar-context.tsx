@@ -14,6 +14,8 @@ interface SidebarContextType {
   setHasSecondarySidebar: (has: boolean) => void;
   requestSecondaryExpand: () => void;
   requestSecondaryCollapse: () => void;
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
@@ -21,6 +23,7 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [primaryExpanded, setPrimaryExpanded] = useState(true);
   const [secondaryExpanded, setSecondaryExpanded] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
   const collapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const secondaryCollapseTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const hoverRef = useRef(false); // Indica si algo está manteniendo el sidebar abierto
@@ -45,9 +48,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   // Solicitar colapso (con delay) - solo desde sidebar primario
   const requestCollapse = (hasSecondarySidebar?: boolean) => {
     cancelCollapse();
-    
+
     const hasSecondary = hasSecondarySidebar ?? hasSecondarySidebarRef.current;
-    
+
     // Si NO hay sidebar secundario, resetear hoverRef inmediatamente y cerrar rápido
     if (!hasSecondary) {
       hoverRef.current = false;
@@ -56,7 +59,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       }, 200);
       return;
     }
-    
+
     // Si hay sidebar secundario, verificar si el secundario también está siendo abandonado
     // Si el secundario no está en hover, cerrar ambos
     if (!secondaryHoverRef.current) {
@@ -66,7 +69,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       }, 200);
       return;
     }
-    
+
     // Si el secundario está en hover, dar un delay corto para permitir movimiento
     hoverRef.current = false;
     collapseTimeoutRef.current = setTimeout(() => {
@@ -119,7 +122,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       secondaryCollapseTimeoutRef.current = null;
     }
     secondaryHoverRef.current = false;
-    
+
     // Si el principal tampoco está en hover, cerrar ambos
     if (!hoverRef.current) {
       // Cerrar el secundario
@@ -128,7 +131,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
           setSecondaryExpanded(false);
         }
       }, 200);
-      
+
       // También cerrar el principal si no está en hover
       cancelCollapse();
       collapseTimeoutRef.current = setTimeout(() => {
@@ -138,7 +141,7 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       }, 200);
       return;
     }
-    
+
     // Si el principal está en hover, solo cerrar el secundario
     secondaryCollapseTimeoutRef.current = setTimeout(() => {
       if (!secondaryHoverRef.current) {
@@ -148,8 +151,8 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <SidebarContext.Provider value={{ 
-      primaryExpanded, 
+    <SidebarContext.Provider value={{
+      primaryExpanded,
       setPrimaryExpanded,
       secondaryExpanded,
       setSecondaryExpanded,
@@ -159,7 +162,9 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       requestCollapse,
       setHasSecondarySidebar,
       requestSecondaryExpand,
-      requestSecondaryCollapse
+      requestSecondaryCollapse,
+      isMobileOpen,
+      setIsMobileOpen
     }}>
       {children}
     </SidebarContext.Provider>
