@@ -18,10 +18,10 @@ interface LayoutContentProps {
 }
 
 function LayoutContent({ user, children }: LayoutContentProps) {
-  const { 
-    primaryExpanded, 
-    secondaryExpanded, 
-    requestCollapse, 
+  const {
+    primaryExpanded,
+    secondaryExpanded,
+    requestCollapse,
     setHasSecondarySidebar,
     requestSecondaryCollapse
   } = useSidebar();
@@ -41,8 +41,11 @@ function LayoutContent({ user, children }: LayoutContentProps) {
 
   const handleMainMouseEnter = () => {
     // Cuando el cursor entra al contenido principal, cerrar ambos sidebars
-    requestCollapse(false);
-    requestSecondaryCollapse();
+    // Solo en escritorio para evitar comportamientos extraños en móvil
+    if (typeof window !== 'undefined' && window.innerWidth >= 768) {
+      requestCollapse(false);
+      requestSecondaryCollapse();
+    }
   };
 
   return (
@@ -56,15 +59,22 @@ function LayoutContent({ user, children }: LayoutContentProps) {
 
       {/* Contenido principal */}
       <main
-        className="flex-1 transition-all duration-300 w-full overflow-x-hidden"
-        style={{
-          marginLeft: `${totalSidebarWidth}px`
-        }}
+        className="flex-1 transition-all duration-300 w-full overflow-x-hidden main-content"
         onMouseEnter={handleMainMouseEnter}
       >
         <div className="w-full min-w-0">
           {children}
         </div>
+        <style jsx>{`
+          .main-content {
+            margin-left: 0;
+          }
+          @media (min-width: 768px) {
+            .main-content {
+              margin-left: ${totalSidebarWidth}px;
+            }
+          }
+        `}</style>
       </main>
     </div>
   );
