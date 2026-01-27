@@ -47,28 +47,70 @@ jobs:
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
             podman login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
+      - name: Generate version
+        id: version
+        run: |
+          chmod +x .github/scripts/generate-version.sh
+          .github/scripts/generate-version.sh probability-frontend us-east-1 476702565908
+
       - name: Build image with Podman (ARM64)
         working-directory: ./front/central
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1' }}
           API_BASE_URL: ${{ secrets.API_BASE_URL || 'http://back-central:3050/api/v1' }}
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          VERSION_FULL="${{ steps.version.outputs.VERSION_FULL }}"
+          VERSION_SHORT="${{ steps.version.outputs.VERSION_SHORT }}"
+          SHORT_SHA="${{ steps.version.outputs.SHORT_SHA }}"
+
+          REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend"
+
           podman build \
             --platform linux/arm64 \
             --no-cache \
             --build-arg NEXT_PUBLIC_API_BASE_URL=${NEXT_PUBLIC_API_BASE_URL} \
             --build-arg API_BASE_URL=${API_BASE_URL} \
             -f docker/Dockerfile \
-            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:latest \
-            -t ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:$SHORT_SHA \
+            -t ${REPO_URL}:latest \
+            -t ${REPO_URL}:${VERSION_FULL} \
+            -t ${REPO_URL}:${VERSION_SHORT} \
+            -t ${REPO_URL}:${SHORT_SHA} \
             .
+
+          echo "✅ Imagen construida con 4 tags:"
+          echo "   - latest"
+          echo "   - ${VERSION_FULL}"
+          echo "   - ${VERSION_SHORT}"
+          echo "   - ${SHORT_SHA}"
 
       - name: Push image to ECR
         run: |
-          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:latest
-          podman push ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend:$SHORT_SHA
+          VERSION_FULL="${{ steps.version.outputs.VERSION_FULL }}"
+          VERSION_SHORT="${{ steps.version.outputs.VERSION_SHORT }}"
+          SHORT_SHA="${{ steps.version.outputs.SHORT_SHA }}"
+
+          REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-frontend"
+
+          echo "📤 Pushing tags to ECR..."
+          podman push ${REPO_URL}:latest
+          podman push ${REPO_URL}:${VERSION_FULL}
+          podman push ${REPO_URL}:${VERSION_SHORT}
+          podman push ${REPO_URL}:${SHORT_SHA}
+
+          echo "✅ 4 tags pushed successfully"
+
+      - name: Create Git Tag
+        run: |
+          VERSION_TAG="v${{ steps.version.outputs.VERSION_SHORT }}"
+          git config user.name "GitHub Actions Bot"
+          git config user.email "actions@github.com"
+          git tag -a "${VERSION_TAG}" -m "Release ${VERSION_TAG} - Frontend
+
+          Image: probability-frontend:${{ steps.version.outputs.VERSION_FULL }}
+          Commit: ${{ github.sha }}"
+
+          git push origin "${VERSION_TAG}"
+          echo "✅ Git tag created: ${VERSION_TAG}"
 
   deploy:
     name: Deploy to Server
@@ -93,13 +135,13 @@ jobs:
 
       - name: Deploy to server
         env:
-          SHORT_SHA: ${{ github.sha }}
+          VERSION_FULL: ${{ steps.version.outputs.VERSION_FULL }}
+          VERSION_SHORT: ${{ steps.version.outputs.VERSION_SHORT }}
         run: |
-          SHORT_SHA=$(echo "$SHORT_SHA" | cut -c1-7)
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
             set -e
-            export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin:/usr/bin
-            export SHORT_SHA=$SHORT_SHA
+            export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
+            export VERSION_FULL='${{ env.VERSION_FULL }}'
 
             # Crear directorio si no existe
             mkdir -p ~/probability/infra/compose-prod
@@ -136,29 +178,29 @@ jobs:
               podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             # Obtener el ID de la imagen actual antes del pull
-            echo "📦 Pulling image with SHA tag: \$SHORT_SHA"
-            OLD_IMAGE_ID=\$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || echo "")
+            echo "📦 Pulling image with version tag: $VERSION_FULL"
+            OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || echo "")
 
             # Eliminar imágenes locales para forzar nuevo pull
             podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
-            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:\$SHORT_SHA 2>/dev/null || true
+            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL 2>/dev/null || true
 
-            # Pull image con SHA específico (garantiza que es la imagen recién construida)
-            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:\$SHORT_SHA
+            # Pull image con versión específica (garantiza que es la imagen recién construida)
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
 
-            # Tag la imagen con SHA como latest localmente
-            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:\$SHORT_SHA \
+            # Tag la imagen con versión como latest localmente
+            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
 
             # Obtener el ID de la nueva imagen
-            NEW_IMAGE_ID=\$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest)
+            NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest)
 
-            echo "📊 Old image ID: \${OLD_IMAGE_ID:-none}"
-            echo "📊 New image ID: \$NEW_IMAGE_ID"
-            echo "📊 Git SHA: \$SHORT_SHA"
+            echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
+            echo "📊 New image ID: $NEW_IMAGE_ID"
+            echo "📊 Version: $VERSION_FULL"
 
             # Siempre recrear el contenedor con la nueva imagen específica
-            echo "✅ Nueva imagen detectada (SHA: \$SHORT_SHA), recreando contenedor..."
+            echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
             # Detener y eliminar el contenedor existente de forma forzada
             echo "🛑 Deteniendo contenedor frontend_prod..."
@@ -184,16 +226,16 @@ jobs:
             RETRY_COUNT=0
             CONTAINER_STATUS=""
 
-            while [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; do
-              CONTAINER_STATUS=\$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              echo "📋 Intento \$((\$RETRY_COUNT + 1))/\$MAX_RETRIES - Estado del contenedor: \$CONTAINER_STATUS"
+            while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+              CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              echo "📋 Intento $(($RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
 
-              if [ "\$CONTAINER_STATUS" = "running" ]; then
+              if [ "$CONTAINER_STATUS" = "running" ]; then
                 break
               fi
 
-              RETRY_COUNT=\$((\$RETRY_COUNT + 1))
-              if [ \$RETRY_COUNT -lt \$MAX_RETRIES ]; then
+              RETRY_COUNT=$(($RETRY_COUNT + 1))
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
                 echo "⏳ Esperando 5 segundos más..."
                 sleep 5
               fi
@@ -204,10 +246,10 @@ jobs:
             podman logs --tail 30 frontend_prod 2>/dev/null || true
 
             # Verificar estado final
-            CONTAINER_STATUS=\$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-            if [ "\$CONTAINER_STATUS" != "running" ]; then
-              echo "❌ El contenedor no está corriendo después de \$MAX_RETRIES intentos"
-              echo "📋 Estado final: \$CONTAINER_STATUS"
+            CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+            if [ "$CONTAINER_STATUS" != "running" ]; then
+              echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
+              echo "📋 Estado final: $CONTAINER_STATUS"
               echo "📋 Revisando logs de error:"
               podman logs --tail 50 frontend_prod 2>/dev/null || true
 
@@ -217,8 +259,8 @@ jobs:
               sleep 10
 
               # Verificar una vez más
-              CONTAINER_STATUS=\$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              if [ "\$CONTAINER_STATUS" != "running" ]; then
+              CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              if [ "$CONTAINER_STATUS" != "running" ]; then
                 echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
                 exit 1
               else
@@ -229,15 +271,15 @@ jobs:
             fi
 
             # Verificar que el contenedor está usando la nueva imagen
-            CONTAINER_IMAGE_ID=\$(podman inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
-            NEW_IMAGE_FULL_ID=\$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest | head -1)
+            CONTAINER_IMAGE_ID=$(podman inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
+            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest | head -1)
 
-            echo "📋 Image ID del contenedor: \${CONTAINER_IMAGE_ID:0:12}"
-            echo "📋 Image ID esperada: \${NEW_IMAGE_FULL_ID:0:12}"
+            echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
+            echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
 
-            if [ -n "\$CONTAINER_IMAGE_ID" ] && [ -n "\$NEW_IMAGE_FULL_ID" ]; then
-              if [ "\${CONTAINER_IMAGE_ID:0:12}" = "\${NEW_IMAGE_FULL_ID:0:12}" ]; then
-                echo "✅ Contenedor actualizado correctamente con la nueva imagen (SHA: \$SHORT_SHA)"
+            if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
+              if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
+                echo "✅ Contenedor actualizado correctamente con la nueva imagen (Version: $VERSION_FULL)"
               else
                 echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
               fi
