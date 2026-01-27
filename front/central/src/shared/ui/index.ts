@@ -22,11 +22,13 @@ export * from './spinner';
 export * from './table';
 // IAM and Orders sidebars have been integrated into the main `sidebar` component
 export * from './user-profile-modal';
+export * from './footer';
+
 
 // Re-exportar tipos útiles
-export type { 
-  TableColumn, 
-  PaginationProps, 
+export type {
+  TableColumn,
+  PaginationProps,
   TableFiltersProps
 } from './table';
 
