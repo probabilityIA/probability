@@ -296,4 +296,4 @@ jobs:
             /usr/bin/podman image prune -f
 
             echo "✅ Backend deployed successfully"
-EOF
+          EOF
