@@ -138,7 +138,7 @@ jobs:
       - name: Upload compose file
         run: |
           scp -o StrictHostKeyChecking=no \
-            infra/compose-prod/podman-compose.yaml \
+            infra/compose-prod//usr/bin/podman-compose.yaml \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
 
       - name: Deploy to server
@@ -183,25 +183,25 @@ jobs:
             # Login a ECR privado
             echo "🔐 Logging in to ECR..."
             /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
-              podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
+              /usr/bin/podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             # Obtener el ID de la imagen actual antes del pull
             echo "📦 Pulling image with version tag: $VERSION_FULL"
-            OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || echo "")
+            OLD_IMAGE_ID=$(/usr/bin//usr/bin//usr/bin/podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || echo "")
 
             # Eliminar imágenes locales para forzar nuevo pull
-            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
-            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL 2>/dev/null || true
+            /usr/bin//usr/bin//usr/bin/podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
+            /usr/bin//usr/bin//usr/bin/podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL 2>/dev/null || true
 
             # Pull image con versión específica (garantiza que es la imagen recién construida)
-            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
+            /usr/bin/podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
 
             # Tag la imagen con versión como latest localmente
-            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL \
+            /usr/bin/podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
 
             # Obtener el ID de la nueva imagen
-            NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest)
+            NEW_IMAGE_ID=$(/usr/bin//usr/bin//usr/bin/podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest)
 
             echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
             echo "📊 New image ID: $NEW_IMAGE_ID"
@@ -212,18 +212,18 @@ jobs:
 
             # Detener y eliminar el contenedor existente de forma forzada
             echo "🛑 Deteniendo contenedor frontend_prod..."
-            podman stop frontend_prod 2>/dev/null || true
+            /usr/bin/podman stop frontend_prod 2>/dev/null || true
 
             echo "🗑️  Eliminando contenedor frontend_prod..."
-            podman rm -f frontend_prod 2>/dev/null || true
+            /usr/bin/podman rm -f frontend_prod 2>/dev/null || true
 
             # Recrear el contenedor con la nueva imagen
             echo "🔄 Recreando contenedor con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d --no-deps front-central
+            /usr/bin/podman-compose -f /usr/bin/podman-compose.yaml up -d --no-deps front-central
 
             # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
-            podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
+            /usr/bin/podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
             sleep 3
 
             echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
@@ -235,7 +235,7 @@ jobs:
             CONTAINER_STATUS=""
 
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              CONTAINER_STATUS=$(/usr/bin//usr/bin//usr/bin/podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
               echo "📋 Intento $(($RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
 
               if [ "$CONTAINER_STATUS" = "running" ]; then
@@ -251,23 +251,23 @@ jobs:
 
             # Mostrar logs antes de verificar estado final
             echo "📋 Últimos logs del contenedor:"
-            podman logs --tail 30 frontend_prod 2>/dev/null || true
+            /usr/bin/podman logs --tail 30 frontend_prod 2>/dev/null || true
 
             # Verificar estado final
-            CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+            CONTAINER_STATUS=$(/usr/bin//usr/bin//usr/bin/podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
             if [ "$CONTAINER_STATUS" != "running" ]; then
               echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
               echo "📋 Estado final: $CONTAINER_STATUS"
               echo "📋 Revisando logs de error:"
-              podman logs --tail 50 frontend_prod 2>/dev/null || true
+              /usr/bin//usr/bin/podman logs --tail 50 frontend_prod 2>/dev/null || true
 
               # Intentar reiniciar manualmente
               echo "🔄 Intentando reiniciar manualmente..."
-              podman restart frontend_prod 2>/dev/null || podman start frontend_prod 2>/dev/null || true
+              /usr/bin//usr/bin//usr/bin/podman restart frontend_prod 2>/dev/null || /usr/bin//usr/bin//usr/bin/podman start frontend_prod 2>/dev/null || true
               sleep 10
 
               # Verificar una vez más
-              CONTAINER_STATUS=$(podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              CONTAINER_STATUS=$(/usr/bin//usr/bin//usr/bin/podman inspect frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
               if [ "$CONTAINER_STATUS" != "running" ]; then
                 echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
                 exit 1
@@ -279,8 +279,8 @@ jobs:
             fi
 
             # Verificar que el contenedor está usando la nueva imagen
-            CONTAINER_IMAGE_ID=$(podman inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
-            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest | head -1)
+            CONTAINER_IMAGE_ID=$(/usr/bin//usr/bin/podman inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
+            NEW_IMAGE_FULL_ID=$(/usr/bin//usr/bin/podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest | head -1)
 
             echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
             echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
@@ -295,7 +295,7 @@ jobs:
 
             # Clean up imágenes antiguas
             echo "🧹 Limpiando imágenes antiguas..."
-            podman image prune -f
+            /usr/bin/podman image prune -f
 
             echo "✅ Frontend deployed successfully"
           EOF
