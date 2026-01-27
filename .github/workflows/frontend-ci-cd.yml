@@ -106,13 +106,19 @@ jobs:
           VERSION_TAG="v${{ steps.version.outputs.VERSION_SHORT }}"
           git config user.name "GitHub Actions Bot"
           git config user.email "actions@github.com"
+
+          # Eliminar tag local si existe
+          git tag -d "${VERSION_TAG}" 2>/dev/null || true
+
+          # Crear tag
           git tag -a "${VERSION_TAG}" -m "Release ${VERSION_TAG} - Frontend
 
           Image: probability-frontend:${{ steps.version.outputs.VERSION_FULL }}
           Commit: ${{ github.sha }}"
 
-          git push origin "${VERSION_TAG}"
-          echo "✅ Git tag created: ${VERSION_TAG}"
+          # Push forzado del tag (sobrescribe si existe en remoto)
+          git push origin "${VERSION_TAG}" --force
+          echo "✅ Git tag created/updated: ${VERSION_TAG}"
 
   deploy:
     name: Deploy to Server
