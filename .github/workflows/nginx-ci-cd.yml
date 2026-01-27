@@ -292,4 +292,4 @@ jobs:
             /usr/bin/podman image prune -f
 
             echo "✅ Nginx deployed successfully"
-EOF
+          EOF
