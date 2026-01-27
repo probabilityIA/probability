@@ -1,0 +1,24 @@
+client_id = "50d82a1ec2b19da108f743c6576b3f7d"
+name = "Probability App"
+application_url = "https://app.probabilityia.com.co"
+embedded = true
+
+[build]
+automatically_update_urls_on_dev = true
+dev_store_url = "probability-8291.myshopify.com"
+
+[access_scopes]
+scopes = "read_customers,read_fulfillments,read_orders,write_orders,read_products"
+
+[auth]
+redirect_urls = [
+  "https://app.probabilityia.com.co/api/v1/shopify/callback"
+]
+
+[webhooks]
+api_version = "2024-10"
+
+  [webhooks.privacy_compliance]
+  customer_data_request_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
+  customer_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
+  shop_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
