@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -74,6 +74,28 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
     const [showBalanceModal, setShowBalanceModal] = useState(false);
     const [insufficientBalanceInfo, setInsufficientBalanceInfo] = useState<{ balance: number; cost: number } | null>(null);
 
+    // Filter states
+    const [originSearch, setOriginSearch] = useState("");
+    const [destSearch, setDestSearch] = useState("");
+    const [showOriginResults, setShowOriginResults] = useState(false);
+    const [showDestResults, setShowDestResults] = useState(false);
+
+    const originRef = useRef<HTMLDivElement>(null);
+    const destRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (originRef.current && !originRef.current.contains(event.target as Node)) {
+                setShowOriginResults(false);
+            }
+            if (destRef.current && !destRef.current.contains(event.target as Node)) {
+                setShowDestResults(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
     // DANE options for select
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
         value: code,
@@ -129,11 +151,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
 
             // Try to find DANE code by city name
             const city = (order.shipping_city || "").toUpperCase();
-            const foundDane = Object.entries(danes).find(([_, data]: [string, any]) => data.ciudad.includes(city));
+            const foundDane = Object.entries(danes).find(([_, data]: [string, any]) => (data as any).ciudad.includes(city));
             if (foundDane) {
                 setValue("destination.daneCode", foundDane[0]);
+                setDestSearch(`${(foundDane[1] as any).ciudad} (${(foundDane[1] as any).departamento})`);
             } else {
-                setValue("destination.daneCode", "11001000"); // Fallback Bogota
+                const defaultDane = "11001000";
+                setValue("destination.daneCode", defaultDane);
+                const cityData = danes[defaultDane as keyof typeof danes];
+                if (cityData) {
+                    setDestSearch(`${(cityData as any).ciudad} (${(cityData as any).departamento})`);
+                }
             }
 
             setValue("contentValue", order.total_amount);
@@ -396,18 +424,50 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
                                     <Input label="Teléfono" {...register("origin.phone")} error={errors.origin?.phone?.message} />
                                     <Input label="Dirección" {...register("origin.address")} error={errors.origin?.address?.message} />
                                     <Input label="Barrio" {...register("origin.suburb")} error={errors.origin?.suburb?.message} />
-                                    <div className="md:col-span-2 grid grid-cols-1 md:col-span-2 gap-3">
-                                        <Input label="Cruzamiento" {...register("origin.crossStreet")} error={errors.origin?.crossStreet?.message} />
-                                        <Input label="Referencia" {...register("origin.reference")} error={errors.origin?.reference?.message} />
-                                        <div className="md:col-span-2">
+                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="relative" ref={originRef}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
-                                            <select
-                                                {...register("origin.daneCode")}
+                                            <input
+                                                type="text"
+                                                value={originSearch}
+                                                onChange={(e) => {
+                                                    setOriginSearch(e.target.value);
+                                                    setShowOriginResults(true);
+                                                }}
+                                                onFocus={() => setShowOriginResults(true)}
+                                                placeholder="Escribe al menos 3 letras..."
                                                 className="w-full border-gray-300 rounded-md shadow-sm p-2 border text-sm"
-                                            >
-                                                <option value="">Buscar ciudad...</option>
-                                                {daneOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                            </select>
+                                            />
+                                            {showOriginResults && originSearch.length >= 3 && (
+                                                <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                    {Object.entries(danes)
+                                                        .filter(([_, data]: [string, any]) => `${data.ciudad} (${data.departamento})`.toLowerCase().includes(originSearch.toLowerCase()))
+                                                        .slice(0, 10)
+                                                        .map(([code, data]: [string, any]) => (
+                                                            <div
+                                                                key={`origin-opt-${code}`}
+                                                                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                                                onClick={() => {
+                                                                    setValue("origin.daneCode", code);
+                                                                    setOriginSearch(`${data.ciudad} (${data.departamento})`);
+                                                                    setShowOriginResults(false);
+                                                                }}
+                                                            >
+                                                                {data.ciudad} ({data.departamento})
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <Input
+                                            label="Código DANE"
+                                            {...register("origin.daneCode")}
+                                            error={errors.origin?.daneCode?.message}
+                                            placeholder="Código DANE"
+                                        />
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <Input label="Cruzamiento" {...register("origin.crossStreet")} error={errors.origin?.crossStreet?.message} />
+                                            <Input label="Referencia" {...register("origin.reference")} error={errors.origin?.reference?.message} />
                                         </div>
                                     </div>
                                 </div>
@@ -424,18 +484,50 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
                                     <Input label="Teléfono" {...register("destination.phone")} error={errors.destination?.phone?.message} />
                                     <Input label="Dirección" {...register("destination.address")} error={errors.destination?.address?.message} />
                                     <Input label="Barrio" {...register("destination.suburb")} error={errors.destination?.suburb?.message} />
-                                    <div className="md:col-span-2 grid grid-cols-1 md:col-span-2 gap-3">
-                                        <Input label="Cruzamiento" {...register("destination.crossStreet")} error={errors.destination?.crossStreet?.message} />
-                                        <Input label="Referencia" {...register("destination.reference")} error={errors.destination?.reference?.message} />
-                                        <div className="md:col-span-2">
+                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        <div className="relative" ref={destRef}>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
-                                            <select
-                                                {...register("destination.daneCode")}
+                                            <input
+                                                type="text"
+                                                value={destSearch}
+                                                onChange={(e) => {
+                                                    setDestSearch(e.target.value);
+                                                    setShowDestResults(true);
+                                                }}
+                                                onFocus={() => setShowDestResults(true)}
+                                                placeholder="Escribe al menos 3 letras..."
                                                 className="w-full border-gray-300 rounded-md shadow-sm p-2 border text-sm"
-                                            >
-                                                <option value="">Buscar ciudad...</option>
-                                                {daneOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                            </select>
+                                            />
+                                            {showDestResults && destSearch.length >= 3 && (
+                                                <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                                    {Object.entries(danes)
+                                                        .filter(([_, data]: [string, any]) => `${data.ciudad} (${data.departamento})`.toLowerCase().includes(destSearch.toLowerCase()))
+                                                        .slice(0, 10)
+                                                        .map(([code, data]: [string, any]) => (
+                                                            <div
+                                                                key={`dest-opt-${code}`}
+                                                                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
+                                                                onClick={() => {
+                                                                    setValue("destination.daneCode", code);
+                                                                    setDestSearch(`${data.ciudad} (${data.departamento})`);
+                                                                    setShowDestResults(false);
+                                                                }}
+                                                            >
+                                                                {data.ciudad} ({data.departamento})
+                                                            </div>
+                                                        ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                        <Input
+                                            label="Código DANE"
+                                            {...register("destination.daneCode")}
+                                            error={errors.destination?.daneCode?.message}
+                                            placeholder="Código DANE"
+                                        />
+                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <Input label="Cruzamiento" {...register("destination.crossStreet")} error={errors.destination?.crossStreet?.message} />
+                                            <Input label="Referencia" {...register("destination.reference")} error={errors.destination?.reference?.message} />
                                         </div>
                                     </div>
                                 </div>
