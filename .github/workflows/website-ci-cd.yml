@@ -20,6 +20,9 @@ jobs:
     runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo
     permissions:
       contents: write  # Necesario para crear y push de tags
+    outputs:
+      version_full: ${{ steps.version.outputs.VERSION_FULL }}
+      version_short: ${{ steps.version.outputs.VERSION_SHORT }}
 
     steps:
       - name: Checkout code
@@ -138,12 +141,12 @@ jobs:
 
       - name: Deploy to server
         env:
-          VERSION_FULL: ${{ steps.version.outputs.VERSION_FULL }}
-          VERSION_SHORT: ${{ steps.version.outputs.VERSION_SHORT }}
+          VERSION_FULL: ${{ needs.build-and-push.outputs.version_full }}
+          VERSION_SHORT: ${{ needs.build-and-push.outputs.version_short }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
             set -e
-            export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
+            export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin:/usr/bin
             export VERSION_FULL='${{ env.VERSION_FULL }}'
 
             cd ~/probability/infra/compose-prod || exit 1
@@ -269,5 +272,5 @@ jobs:
             /usr/bin/podman image prune -f
 
             echo "✅ Website deployed successfully"
-          EOF
+EOF
 
