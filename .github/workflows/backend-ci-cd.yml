@@ -144,10 +144,9 @@ jobs:
           VERSION_FULL: ${{ needs.build-and-push.outputs.version_full }}
           VERSION_SHORT: ${{ needs.build-and-push.outputs.version_short }}
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << EOF
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "VERSION_FULL='${{ env.VERSION_FULL }}' bash -s" << 'EOF'
             set -e
-            export PATH=\$PATH:\$HOME/.local/bin:/usr/local/bin:/usr/bin
-            export VERSION_FULL='${{ env.VERSION_FULL }}'
+            export PATH=$PATH:$HOME/.local/bin:/usr/local/bin:/usr/bin
 
             # Crear directorio si no existe
             mkdir -p ~/probability/infra/compose-prod
