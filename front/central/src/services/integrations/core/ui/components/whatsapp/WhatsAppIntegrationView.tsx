@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button, Alert } from '@/shared/ui';
+import { getWebhookUrlAction } from '../../../infra/actions';
+import { WebhookInfo } from '../../../domain/types';
 
 interface WhatsAppConfig {
     phone_number_id?: string;
@@ -38,6 +40,28 @@ export default function WhatsAppIntegrationView({
     const [testing, setTesting] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [testSuccess, setTestSuccess] = useState(false);
+    const [webhookInfo, setWebhookInfo] = useState<WebhookInfo | null>(null);
+    const [loadingWebhook, setLoadingWebhook] = useState(false);
+    const [copiedWebhook, setCopiedWebhook] = useState(false);
+
+    // Cargar información del webhook al montar el componente
+    useEffect(() => {
+        const loadWebhook = async () => {
+            setLoadingWebhook(true);
+            try {
+                const result = await getWebhookUrlAction(integration.id);
+                if (result.success && result.data) {
+                    setWebhookInfo(result.data);
+                }
+            } catch (err) {
+                console.error('Error loading webhook:', err);
+            } finally {
+                setLoadingWebhook(false);
+            }
+        };
+
+        loadWebhook();
+    }, [integration.id]);
 
     const handleTestConnection = async () => {
         setTesting(true);
@@ -58,6 +82,18 @@ export default function WhatsAppIntegrationView({
             setError(err.message || 'Error al probar la conexión');
         } finally {
             setTesting(false);
+        }
+    };
+
+    const handleCopyWebhook = async () => {
+        if (!webhookInfo) return;
+
+        try {
+            await navigator.clipboard.writeText(webhookInfo.url);
+            setCopiedWebhook(true);
+            setTimeout(() => setCopiedWebhook(false), 2000);
+        } catch (err) {
+            console.error('Error copying to clipboard:', err);
         }
     };
 
@@ -135,11 +171,100 @@ export default function WhatsAppIntegrationView({
                         <label className="block text-xs font-medium text-gray-500 mb-1">Business Account ID</label>
                         <p className="text-sm text-gray-900 font-mono">{integration.config?.business_account_id || 'No configurado'}</p>
                     </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Webhook URL</label>
-                        <p className="text-sm text-gray-900 break-all">{integration.config?.webhook_url || 'No configurado'}</p>
-                    </div>
                 </div>
+            </div>
+
+            {/* Webhook Configuration */}
+            <div className="bg-purple-50 border border-purple-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-gray-700">🔗 Configuración del Webhook</h3>
+                    {loadingWebhook && (
+                        <span className="text-xs text-gray-500">Cargando...</span>
+                    )}
+                </div>
+
+                {webhookInfo && (
+                    <div className="space-y-3">
+                        {/* Webhook URL */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-2">URL del Webhook</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value={webhookInfo.url}
+                                    className="flex-1 px-3 py-2 text-sm font-mono bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={handleCopyWebhook}
+                                    variant="outline"
+                                    className="whitespace-nowrap"
+                                >
+                                    {copiedWebhook ? '✓ Copiado' : '📋 Copiar'}
+                                </Button>
+                            </div>
+                        </div>
+
+                        {/* Description */}
+                        <div className="bg-white rounded-md p-3 border border-purple-200">
+                            <p className="text-xs text-gray-700">
+                                <span className="font-semibold">📌 Instrucciones:</span>
+                                <br />
+                                {webhookInfo.description}
+                            </p>
+                        </div>
+
+                        {/* Events */}
+                        {webhookInfo.events && webhookInfo.events.length > 0 && (
+                            <div>
+                                <label className="block text-xs font-medium text-gray-500 mb-2">Eventos a Suscribir</label>
+                                <div className="flex flex-wrap gap-2">
+                                    {webhookInfo.events.map((event, idx) => (
+                                        <span
+                                            key={idx}
+                                            className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800"
+                                        >
+                                            {event}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Verify Token */}
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-2">Verify Token (para Meta)</label>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    readOnly
+                                    value="probability_whatsapp_verify_token_2026_secure"
+                                    className="flex-1 px-3 py-2 text-sm font-mono bg-white border border-gray-300 rounded-md focus:outline-none"
+                                />
+                                <Button
+                                    type="button"
+                                    onClick={() => {
+                                        navigator.clipboard.writeText('probability_whatsapp_verify_token_2026_secure');
+                                    }}
+                                    variant="outline"
+                                    className="whitespace-nowrap"
+                                >
+                                    📋 Copiar
+                                </Button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Usa este token al configurar el webhook en Meta Business Manager
+                            </p>
+                        </div>
+                    </div>
+                )}
+
+                {!webhookInfo && !loadingWebhook && (
+                    <Alert type="warning">
+                        No se pudo cargar la información del webhook
+                    </Alert>
+                )}
             </div>
 
             {/* Credentials (Masked) */}

@@ -62,6 +62,7 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 		wa,
 		conversationRepo,
 		messageLogRepo,
+		database.Conn(context.Background()),
 		logger,
 		config,
 	)
@@ -165,11 +166,17 @@ func (b *bundle) SyncOrdersByBusiness(ctx context.Context, businessID uint) erro
 
 // GetWebhookURL retorna la URL del webhook de WhatsApp
 func (b *bundle) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*core.WebhookInfo, error) {
-	webhookURL := fmt.Sprintf("%s/api/integrations/whatsapp/webhook", baseURL)
+	// Construir la URL del webhook
+	// El webhook se recibe en: /integrations/whatsapp/webhook
+	webhookURL := fmt.Sprintf("%s/integrations/whatsapp/webhook", baseURL)
 
 	return &core.WebhookInfo{
-		URL:    webhookURL,
-		Events: []string{"messages", "message_template_status_update"},
-		Method: "POST",
+		URL:         webhookURL,
+		Method:      "POST",
+		Description: "Configura este webhook en Meta Business Manager (WhatsApp > Configuration > Webhook) para recibir eventos de mensajes, estados de entrega (sent, delivered, read, failed) y respuestas de botones en tiempo real. Asegúrate de suscribirte a los campos 'messages' y 'message_template_status_update'.",
+		Events: []string{
+			"messages",
+			"message_template_status_update",
+		},
 	}, nil
 }
