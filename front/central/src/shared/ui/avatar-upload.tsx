@@ -62,7 +62,7 @@ export function AvatarUpload({
 
   const handleFileChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    
+
     if (file) {
       // Limpiar preview anterior
       if (localPreview) {
@@ -110,9 +110,10 @@ export function AvatarUpload({
   const showImage = displayUrl && !hasError;
 
   return (
-      <div className={`flex flex-col items-center gap-2 ${className}`}>
+    <div className={`flex flex-col items-center gap-2 ${className}`}>
       <div className="relative group">
         <div
+          onClick={disableClick ? undefined : handleClick}
           className={`
             ${sizeClasses[size]}
             rounded-full overflow-hidden
