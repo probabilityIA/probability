@@ -50,7 +50,10 @@ ENV API_BASE_URL=${API_BASE_URL}
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
-# Build de Next.js
+# Limpiar cache de Next.js antes del build
+RUN rm -rf .next
+
+# Build de Next.js (limpio, sin cache)
 RUN \
   if [ -f pnpm-lock.yaml ]; then \
     corepack enable pnpm && pnpm run build; \

@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
+import { FooterWrapper } from "./footer-wrapper";
 import "./globals.css";
-import { ShopifyAppBridgeProvider } from "@/shared/providers/ShopifyAppBridgeProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,15 +24,28 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const apiKey = process.env.NEXT_PUBLIC_SHOPIFY_API_KEY;
+
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        {apiKey && (
+          <Script
+            src="https://cdn.shopify.com/shopify-cloud/app-bridge.js"
+            strategy="beforeInteractive"
+            data-api-key={apiKey}
+          />
+        )}
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
-        <ShopifyAppBridgeProvider>
+        <div className="flex-1">
           {children}
-        </ShopifyAppBridgeProvider>
+        </div>
+        <FooterWrapper />
       </body>
     </html>
   );
 }
+
