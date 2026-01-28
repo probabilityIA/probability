@@ -31,7 +31,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	integrationCore := core.New(router, db, logger, config, s3)
 
-	whatsappBundle := whatsApp.New(config, logger)
+	whatsappBundle := whatsApp.New(config, logger, db, rabbitMQ)
 
 	integrationCore.RegisterIntegration(core.IntegrationTypeWhatsApp, whatsappBundle)
 

@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/queue"
 	redisevents "github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/redis"
+	rabbitqueue "github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository"
 	orderstatusrepo "github.com/secamc93/probability/back/central/services/modules/orderstatus/infra/secondary/repository"
 	paymentstatusrepo "github.com/secamc93/probability/back/central/services/modules/paymentstatus/infra/secondary/repository"
@@ -45,10 +46,26 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 3.1. Init Score Use Case
 	scoreUseCase := usecaseorderscore.New(repo)
 
-	// 3. Init Use Cases
+	// 3. Init RabbitMQ Publisher (si RabbitMQ está disponible)
+	var rabbitPublisher rabbitqueue.IOrderRabbitPublisher
+	if rabbitMQ != nil {
+		rabbitPublisher = rabbitqueue.NewOrderRabbitPublisher(rabbitMQ, logger)
+		logger.Info(context.Background()).
+			Msg("Order RabbitMQ publisher initialized")
+	}
+
+	// 3.1. Init Use Cases
 	orderCRUD := usecaseorder.New(repo, eventPublisher, scoreUseCase)
 
-	// 3.0. Init Status Repositories (para mapeo de estados)
+	// 3.2. Init Request Confirmation Use Case
+	var requestConfirmationUC usecaseorder.IRequestConfirmationUseCase
+	if rabbitPublisher != nil {
+		requestConfirmationUC = usecaseorder.NewRequestConfirmationUseCase(repo, rabbitPublisher, logger)
+		logger.Info(context.Background()).
+			Msg("Request confirmation use case initialized")
+	}
+
+	// 3.3. Init Status Repositories (para mapeo de estados)
 	orderStatusRepo := orderstatusrepo.New(database, logger)
 	paymentStatusRepo := paymentstatusrepo.New(database, logger)
 	fulfillmentStatusRepo := fulfillmentstatusrepo.New(database, logger)
@@ -67,7 +84,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	}
 
 	// 4. Init Handlers
-	h := handlers.New(orderCRUD, orderMapping)
+	h := handlers.New(orderCRUD, orderMapping, requestConfirmationUC)
 
 	// 5. Register Routes
 	h.RegisterRoutes(router)
@@ -94,6 +111,20 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 					Msg("Order event consumer stopped with error")
 			}
 		}()
+	}
+
+	// 8. Init WhatsApp Consumer (si RabbitMQ está disponible)
+	if rabbitMQ != nil && eventPublisher != nil {
+		whatsappConsumer := queue.NewWhatsAppConsumer(rabbitMQ, orderCRUD, repo, eventPublisher, logger)
+		go func() {
+			if err := whatsappConsumer.Start(context.Background()); err != nil {
+				logger.Error().
+					Err(err).
+					Msg("WhatsApp consumer stopped with error")
+			}
+		}()
+		logger.Info(context.Background()).
+			Msg("WhatsApp consumer initialized")
 	}
 
 	return orderMapping

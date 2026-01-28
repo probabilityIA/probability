@@ -63,9 +63,9 @@ func New(config env.IConfig) domain.IWhatsApp {
 // Requiere:
 // - phoneNumberID: ID del número de teléfono para construir la URL.
 // - msg: DTO de dominio con los datos del mensaje.
+// - accessToken: Token de acceso para autenticación con WhatsApp API.
 // La URL se construye como: {baseURL}{phone_number_id}/messages
-// El token se obtiene de la variable de entorno WHATSAPP_TOKEN.
-func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, msg domain.TemplateMessage) (string, error) {
+func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, msg domain.TemplateMessage, accessToken string) (string, error) {
 	fmt.Printf("🚀 [WhatsAppClient] SendMessage called for PhoneID: %d\n", phoneNumberID)
 	payload := mappers.MapDomainToRequest(msg)
 
@@ -77,7 +77,7 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 
 	resp, err := c.rest.R().
 		SetContext(ctx).
-		SetHeader("Authorization", "Bearer "+c.accessToken).
+		SetHeader("Authorization", "Bearer "+accessToken).
 		SetBody(payload).
 		SetResult(&result).
 		SetError(&errorResponse).

@@ -73,7 +73,12 @@ override.tf.json
 .terraformrc
 terraform.rc
 probability.pem
+.cursor
+.cursor/
+
+# Claude Code configuration and cache
 .claude
+.claude/
 
 # Lock file (opcional - algunos lo versionan, otros no)
 # .terraform.lock.hcl

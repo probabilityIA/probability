@@ -19,5 +19,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 
 		// Mapeo de órdenes canónicas (para integraciones)
 		orders.POST("/map", middleware.JWT(), h.MapAndSaveOrder)
+
+		// Confirmación de órdenes vía WhatsApp
+		orders.POST("/:id/request-confirmation", middleware.JWT(), h.RequestConfirmation)
 	}
 }

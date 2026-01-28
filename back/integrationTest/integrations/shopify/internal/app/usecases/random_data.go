@@ -80,10 +80,11 @@ func NewRandomDataGenerator() *RandomDataGenerator {
 
 // GenerateCustomer genera un cliente aleatorio
 func (g *RandomDataGenerator) GenerateCustomer() *domain.Customer {
-	firstName := firstNames[rand.Intn(len(firstNames))]
-	lastName := lastNames[rand.Intn(len(lastNames))]
-	email := fmt.Sprintf("%s.%s.%d@example.com",
-		toLower(firstName), toLower(lastName), rand.Intn(9999))
+	// Usar datos específicos de Sebastian Camacho para testing
+	firstName := "Sebastian"
+	lastName := "Camacho"
+	email := "sebastian.camacho@example.com"
+	phone := "+573023406789"
 
 	now := time.Now()
 	createdAt := now.AddDate(0, 0, -rand.Intn(365))
@@ -91,19 +92,19 @@ func (g *RandomDataGenerator) GenerateCustomer() *domain.Customer {
 	return &domain.Customer{
 		ID:                        int64(rand.Intn(999999999) + 100000000),
 		Email:                     email,
-		AcceptsMarketing:          rand.Float32() < 0.3,
+		AcceptsMarketing:          true,
 		CreatedAt:                 createdAt,
 		UpdatedAt:                 now,
 		FirstName:                 firstName,
 		LastName:                  lastName,
-		State:                     g.randomChoice([]string{"enabled", "disabled", "invited"}),
+		State:                     "enabled",
 		Note:                      nil,
-		VerifiedEmail:             rand.Float32() < 0.8,
+		VerifiedEmail:             true,
 		MultipassIdentifier:       nil,
 		TaxExempt:                 false,
-		Phone:                     g.stringPtr(fmt.Sprintf("+57%d", rand.Intn(9999999999)+3000000000)),
+		Phone:                     g.stringPtr(phone),
 		Tags:                      "",
-		Currency:                  g.randomChoice(currencies),
+		Currency:                  "COP",
 		AcceptsMarketingUpdatedAt: g.timePtr(createdAt),
 		MarketingOptInLevel:       nil,
 		AdminGraphQLAPIID:         fmt.Sprintf("gid://shopify/Customer/%d", rand.Intn(999999999)+100000000),

@@ -80,6 +80,10 @@ type Business struct {
 	EnablePickup       bool `gorm:"default:false"`
 	EnableReservations bool `gorm:"default:true"`
 
+	// Configuración de confirmación de órdenes
+	RequiresOrderConfirmation bool   `gorm:"default:false"`        // Si requiere confirmación automática
+	ConfirmationMethod        string `gorm:"default:'whatsapp'"`   // whatsapp, email, sms
+
 	// Relaciones
 	BusinessType                BusinessType `gorm:"foreignKey:BusinessTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	ParentBusiness              *Business    `gorm:"foreignKey:ParentBusinessID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"` // Negocio padre

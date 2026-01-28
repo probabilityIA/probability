@@ -282,10 +282,14 @@ func (ic *integrationCore) GetWebhookURL(ctx context.Context, integrationID uint
 		return nil, fmt.Errorf("integración no registrada para tipo %d", integration.IntegrationType)
 	}
 
-	// Obtener la URL base del servidor
-	baseURL := ic.config.Get("URL_BASE_SWAGGER")
+	// Obtener la URL base del servidor para webhooks
+	// Prioridad: WEBHOOK_BASE_URL > URL_BASE_SWAGGER
+	baseURL := ic.config.Get("WEBHOOK_BASE_URL")
 	if baseURL == "" {
-		return nil, fmt.Errorf("URL_BASE_SWAGGER no está configurada")
+		baseURL = ic.config.Get("URL_BASE_SWAGGER")
+	}
+	if baseURL == "" {
+		return nil, fmt.Errorf("WEBHOOK_BASE_URL o URL_BASE_SWAGGER no está configurada")
 	}
 
 	// Delegar a la integración específica

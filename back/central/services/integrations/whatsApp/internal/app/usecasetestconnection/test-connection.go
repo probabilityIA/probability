@@ -104,7 +104,7 @@ func (u *TestConnectionUseCase) TestConnection(ctx context.Context, config map[s
 	u.logger.Info().Msg("Enviando mensaje de prueba...")
 
 	// 6. Enviar mensaje
-	resp, err := waClient.SendMessage(ctx, uint(pID), msg)
+	resp, err := waClient.SendMessage(ctx, uint(pID), msg, accessToken)
 	if err != nil {
 		u.logger.Error().Err(err).Msg("Error al enviar mensaje de prueba")
 		return fmt.Errorf("error al enviar mensaje de prueba: %w", err)

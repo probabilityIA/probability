@@ -479,6 +479,9 @@ const (
 
 	// Eventos de cálculo de score
 	OrderEventTypeScoreCalculationRequested OrderEventType = "order.score_calculation_requested"
+
+	// Eventos de confirmación
+	OrderEventTypeConfirmationRequested OrderEventType = "order.confirmation_requested"
 )
 
 // OrderEvent representa un evento relacionado con una orden

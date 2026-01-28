@@ -77,6 +77,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 
 		// Shipments
 		&models.Shipment{},
+
+		// WhatsApp Integration
+		&models.WhatsAppConversation{},
+		&models.WhatsAppMessageLog{},
 	); err != nil {
 		return err
 	}

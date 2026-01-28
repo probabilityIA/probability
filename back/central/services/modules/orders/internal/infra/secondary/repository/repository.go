@@ -107,6 +107,31 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
+// GetOrderByOrderNumber obtiene una orden por su order_number
+func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber string) (*domain.ProbabilityOrder, error) {
+	var order models.Order
+	err := r.db.Conn(ctx).
+		Preload("Business").
+		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
+		Preload("PaymentMethod").
+		Preload("OrderStatus").        // Precargar OrderStatus para obtener información del estado de Probability
+		Preload("PaymentStatus").      // Precargar PaymentStatus
+		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
+		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
+		Where("order_number = ?", orderNumber).
+		First(&order).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("order not found")
+		}
+		return nil, err
+	}
+
+	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
+}
+
 // ListOrders obtiene una lista paginada de órdenes con filtros
 func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.ProbabilityOrder, int64, error) {
 	var dbOrders []models.Order
