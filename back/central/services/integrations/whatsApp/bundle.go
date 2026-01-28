@@ -10,6 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/app/usecasetestconnection"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/primary/handlers"
+	primaryqueue "github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/repository"
@@ -84,6 +85,24 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 	// 3. Capa de infraestructura primaria (adaptadores de entrada)
 	templateHandler := handlers.NewTemplateHandler(sendTemplateUseCase, logger)
 	webhookHandler := handlers.NewWebhookHandler(handleWebhookUseCase, logger, config)
+
+	// 4. Inicializar consumidor de órdenes (si RabbitMQ está disponible)
+	if rabbit != nil {
+		orderConsumer := primaryqueue.NewOrderConfirmationConsumer(
+			rabbit,
+			sendTemplateUseCase,
+			logger,
+		)
+
+		// Arrancar consumidor en goroutine
+		go func() {
+			if err := orderConsumer.Start(context.Background()); err != nil {
+				logger.Error().Err(err).Msg("Error starting order confirmation consumer")
+			}
+		}()
+
+		logger.Info().Msg("Order confirmation consumer initialized")
+	}
 
 	return &bundle{
 		wa:                   wa,
