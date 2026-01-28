@@ -6,7 +6,7 @@ import (
 )
 
 type IWhatsApp interface {
-	SendMessage(ctx context.Context, phoneNumberID uint, msg TemplateMessage) (string, error)
+	SendMessage(ctx context.Context, phoneNumberID uint, msg TemplateMessage, accessToken string) (string, error)
 }
 
 // IConversationRepository define el contrato para el repositorio de conversaciones

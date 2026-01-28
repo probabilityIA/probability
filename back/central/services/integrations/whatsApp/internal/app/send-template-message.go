@@ -2,6 +2,10 @@ package app
 
 import (
 	"context"
+	"crypto/aes"
+	"crypto/cipher"
+	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -9,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"gorm.io/gorm"
 )
 
 // ISendTemplateMessageUseCase define la interfaz para el caso de uso de envío de plantillas
@@ -22,8 +27,10 @@ type SendTemplateMessageUseCase struct {
 	whatsApp         domain.IWhatsApp
 	conversationRepo domain.IConversationRepository
 	messageLogRepo   domain.IMessageLogRepository
+	db               *gorm.DB
 	log              log.ILogger
 	config           env.IConfig
+	encryptionKey    []byte
 }
 
 // NewSendTemplateMessage crea una nueva instancia del usecase
@@ -31,15 +38,30 @@ func NewSendTemplateMessage(
 	whatsApp domain.IWhatsApp,
 	conversationRepo domain.IConversationRepository,
 	messageLogRepo domain.IMessageLogRepository,
+	db *gorm.DB,
 	logger log.ILogger,
 	config env.IConfig,
 ) ISendTemplateMessageUseCase {
+	// Obtener encryption key desde env
+	encryptionKeyStr := config.Get("ENCRYPTION_KEY")
+	var encryptionKey []byte
+
+	// Intentar decodificar como base64
+	decoded, err := base64.StdEncoding.DecodeString(encryptionKeyStr)
+	if err == nil && len(decoded) == 32 {
+		encryptionKey = decoded
+	} else {
+		encryptionKey = []byte(encryptionKeyStr)
+	}
+
 	return &SendTemplateMessageUseCase{
 		whatsApp:         whatsApp,
 		conversationRepo: conversationRepo,
 		messageLogRepo:   messageLogRepo,
+		db:               db,
 		log:              logger,
 		config:           config,
+		encryptionKey:    encryptionKey,
 	}
 }
 
@@ -83,17 +105,11 @@ func (u *SendTemplateMessageUseCase) SendTemplate(
 		return "", fmt.Errorf("número de teléfono inválido: %w", err)
 	}
 
-	// 4. Obtener phone_number_id de variable de entorno
-	phoneNumberIDStr := u.config.Get("WHATSAPP_PHONE_NUMBER_ID")
-	if phoneNumberIDStr == "" {
-		u.log.Error(ctx).Msg("[WhatsApp UseCase] - WHATSAPP_PHONE_NUMBER_ID no configurado")
-		return "", fmt.Errorf("WHATSAPP_PHONE_NUMBER_ID no configurado")
-	}
-
-	phoneNumberID, err := strconv.ParseUint(phoneNumberIDStr, 10, 32)
+	// 4. Obtener configuración de WhatsApp (phone_number_id + access_token) desde la base de datos
+	whatsappConfig, err := u.getWhatsAppConfig(ctx, businessID)
 	if err != nil {
-		u.log.Error(ctx).Err(err).Str("phone_number_id", phoneNumberIDStr).Msg("[WhatsApp UseCase] - WHATSAPP_PHONE_NUMBER_ID inválido")
-		return "", fmt.Errorf("WHATSAPP_PHONE_NUMBER_ID inválido: %w", err)
+		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error obteniendo configuración de WhatsApp")
+		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
 	}
 
 	// 5. Construir mensaje con botones si aplica
@@ -113,10 +129,10 @@ func (u *SendTemplateMessageUseCase) SendTemplate(
 	u.log.Info(ctx).
 		Str("conversation_id", conversation.ID).
 		Str("template_name", templateName).
-		Uint("phone_number_id", uint(phoneNumberID)).
+		Uint("phone_number_id", whatsappConfig.PhoneNumberID).
 		Msg("[WhatsApp UseCase] - enviando mensaje a WhatsApp API")
 
-	messageID, err := u.whatsApp.SendMessage(ctx, uint(phoneNumberID), msg)
+	messageID, err := u.whatsApp.SendMessage(ctx, whatsappConfig.PhoneNumberID, msg, whatsappConfig.AccessToken)
 	if err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("template_name", templateName).
@@ -204,13 +220,16 @@ func (u *SendTemplateMessageUseCase) SendTemplateWithConversation(
 		return "", &domain.ErrConversationExpired{ConversationID: conversationID}
 	}
 
-	// 4. Obtener phone_number_id
-	phoneNumberIDStr := u.config.Get("WHATSAPP_PHONE_NUMBER_ID")
-	phoneNumberID, _ := strconv.ParseUint(phoneNumberIDStr, 10, 32)
+	// 4. Obtener configuración de WhatsApp desde la base de datos
+	whatsappConfig, err := u.getWhatsAppConfig(ctx, conversation.BusinessID)
+	if err != nil {
+		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error obteniendo configuración de WhatsApp")
+		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
+	}
 
 	// 5. Construir y enviar mensaje
 	msg := u.buildTemplateMessage(templateName, phoneNumber, variables, templateDef)
-	messageID, err := u.whatsApp.SendMessage(ctx, uint(phoneNumberID), msg)
+	messageID, err := u.whatsApp.SendMessage(ctx, whatsappConfig.PhoneNumberID, msg, whatsappConfig.AccessToken)
 	if err != nil {
 		return "", err
 	}
@@ -262,22 +281,9 @@ func (u *SendTemplateMessageUseCase) buildTemplateMessage(
 		})
 	}
 
-	// Agregar componentes de botones si existen
-	if templateDef.HasButtons {
-		for i := range templateDef.ButtonLabels {
-			components = append(components, domain.TemplateComponent{
-				Type:    "button",
-				SubType: "quick_reply",
-				Index:   i,
-				Parameters: []domain.TemplateParameter{
-					{
-						Type: "payload",
-						Text: fmt.Sprintf("button_%d", i),
-					},
-				},
-			})
-		}
-	}
+	// NOTA: Los botones de tipo "quick_reply" NO se envían en el payload.
+	// Estos botones ya están definidos en la plantilla en Meta y se
+	// renderizan automáticamente. Solo enviamos parámetros del body/header.
 
 	return domain.TemplateMessage{
 		MessagingProduct: "whatsapp",
@@ -335,4 +341,178 @@ func (u *SendTemplateMessageUseCase) getOrCreateConversation(
 		Msg("[WhatsApp UseCase] - nueva conversación creada")
 
 	return newConversation, nil
+}
+
+// WhatsAppConfig contiene la configuración de WhatsApp obtenida desde la base de datos
+type WhatsAppConfig struct {
+	PhoneNumberID uint
+	AccessToken   string
+	IntegrationID uint
+}
+
+// getWhatsAppConfig obtiene phone_number_id y access_token desde la base de datos
+func (u *SendTemplateMessageUseCase) getWhatsAppConfig(ctx context.Context, businessID uint) (*WhatsAppConfig, error) {
+	// Estructura para almacenar la integración
+	type Integration struct {
+		ID          uint            `json:"id"`
+		Config      json.RawMessage `json:"config"`
+		Credentials json.RawMessage `json:"credentials"`
+	}
+
+	var integration Integration
+
+	// Primero intentar obtener la integración del business específico
+	err := u.db.WithContext(ctx).
+		Table("integrations").
+		Select("id, config, credentials").
+		Where("integration_type_id = ?", 2).
+		Where("business_id = ?", businessID).
+		First(&integration).Error
+
+	if err == gorm.ErrRecordNotFound {
+		// Si no existe, usar la integración global (business_id IS NULL)
+		u.log.Info(ctx).
+			Uint("business_id", businessID).
+			Msg("[WhatsApp UseCase] - no se encontró integración específica, usando global")
+
+		err = u.db.WithContext(ctx).
+			Table("integrations").
+			Select("id, config, credentials").
+			Where("integration_type_id = ?", 2).
+			Where("business_id IS NULL").
+			First(&integration).Error
+
+		if err != nil {
+			u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - no se encontró integración de WhatsApp")
+			return nil, fmt.Errorf("no se encontró integración de WhatsApp")
+		}
+	} else if err != nil {
+		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error consultando integración")
+		return nil, fmt.Errorf("error consultando integración: %w", err)
+	}
+
+	// 1. Parsear el config JSON para obtener phone_number_id
+	var config map[string]interface{}
+	if err := json.Unmarshal(integration.Config, &config); err != nil {
+		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error parseando config")
+		return nil, fmt.Errorf("error parseando config: %w", err)
+	}
+
+	// Extraer phone_number_id
+	phoneNumberIDValue, exists := config["phone_number_id"]
+	if !exists {
+		u.log.Error(ctx).Msg("[WhatsApp UseCase] - phone_number_id no encontrado en config")
+		return nil, fmt.Errorf("phone_number_id no encontrado en configuración")
+	}
+
+	phoneNumberIDStr, ok := phoneNumberIDValue.(string)
+	if !ok {
+		u.log.Error(ctx).Msg("[WhatsApp UseCase] - phone_number_id no es string")
+		return nil, fmt.Errorf("phone_number_id debe ser string")
+	}
+
+	phoneNumberID, err := strconv.ParseUint(phoneNumberIDStr, 10, 64)
+	if err != nil {
+		u.log.Error(ctx).Err(err).Str("phone_number_id", phoneNumberIDStr).Msg("[WhatsApp UseCase] - error parseando phone_number_id")
+		return nil, fmt.Errorf("error parseando phone_number_id: %w", err)
+	}
+
+	// 2. Parsear credentials para obtener el wrapper encriptado
+	var credentialsWrapper map[string]interface{}
+	if err := json.Unmarshal(integration.Credentials, &credentialsWrapper); err != nil {
+		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error parseando credentials wrapper")
+		return nil, fmt.Errorf("error parseando credentials: %w", err)
+	}
+
+	// Extraer el valor encriptado del wrapper
+	encryptedValue, exists := credentialsWrapper["encrypted"]
+	if !exists {
+		u.log.Error(ctx).Msg("[WhatsApp UseCase] - credentials no tienen campo 'encrypted'")
+		return nil, fmt.Errorf("credentials inválidas: falta campo 'encrypted'")
+	}
+
+	encryptedStr, ok := encryptedValue.(string)
+	if !ok {
+		u.log.Error(ctx).Msg("[WhatsApp UseCase] - encrypted no es string")
+		return nil, fmt.Errorf("credentials inválidas: 'encrypted' debe ser string")
+	}
+
+	// Decodificar base64
+	encryptedBytes, err := base64.StdEncoding.DecodeString(encryptedStr)
+	if err != nil {
+		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error decodificando credentials desde base64")
+		return nil, fmt.Errorf("error decodificando credentials: %w", err)
+	}
+
+	// Desencriptar usando AES-GCM
+	decryptedCredentials, err := u.decryptCredentials(ctx, encryptedBytes)
+	if err != nil {
+		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error desencriptando credentials")
+		return nil, fmt.Errorf("error desencriptando credentials: %w", err)
+	}
+
+	// Extraer access_token de las credenciales desencriptadas
+	accessTokenValue, exists := decryptedCredentials["access_token"]
+	if !exists {
+		u.log.Error(ctx).Msg("[WhatsApp UseCase] - access_token no encontrado en credentials")
+		return nil, fmt.Errorf("access_token no encontrado en credentials")
+	}
+
+	accessToken, ok := accessTokenValue.(string)
+	if !ok {
+		u.log.Error(ctx).Msg("[WhatsApp UseCase] - access_token no es string")
+		return nil, fmt.Errorf("access_token debe ser string")
+	}
+
+	u.log.Info(ctx).
+		Uint("integration_id", integration.ID).
+		Uint("phone_number_id", uint(phoneNumberID)).
+		Msg("[WhatsApp UseCase] - Configuración de WhatsApp obtenida desde DB")
+
+	return &WhatsAppConfig{
+		PhoneNumberID: uint(phoneNumberID),
+		AccessToken:   accessToken,
+		IntegrationID: integration.ID,
+	}, nil
+}
+
+// decryptCredentials desencripta credenciales usando AES-256-GCM
+func (u *SendTemplateMessageUseCase) decryptCredentials(ctx context.Context, ciphertext []byte) (map[string]interface{}, error) {
+	block, err := aes.NewCipher(u.encryptionKey)
+	if err != nil {
+		return nil, fmt.Errorf("error al crear cipher: %w", err)
+	}
+
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		return nil, fmt.Errorf("error al crear GCM: %w", err)
+	}
+
+	nonceSize := gcm.NonceSize()
+	if len(ciphertext) < nonceSize {
+		return nil, fmt.Errorf("ciphertext demasiado corto")
+	}
+
+	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		return nil, fmt.Errorf("error al desencriptar: %w", err)
+	}
+
+	// Convertir JSON a mapa
+	var credentials map[string]interface{}
+	if err := json.Unmarshal(plaintext, &credentials); err != nil {
+		return nil, fmt.Errorf("error al deserializar credenciales: %w", err)
+	}
+
+	return credentials, nil
+}
+
+// getPhoneNumberID mantener por compatibilidad - ahora usa getWhatsAppConfig
+func (u *SendTemplateMessageUseCase) getPhoneNumberID(ctx context.Context, businessID uint) (uint, error) {
+	config, err := u.getWhatsAppConfig(ctx, businessID)
+	if err != nil {
+		return 0, err
+	}
+	return config.PhoneNumberID, nil
 }

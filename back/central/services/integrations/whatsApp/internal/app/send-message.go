@@ -52,6 +52,13 @@ func (u *SendMessageUsecase) SendMessage(ctx context.Context, req domain.SendMes
 		return "", fmt.Errorf("WHATSAPP_PHONE_NUMBER_ID inválido: %w", err)
 	}
 
+	// Obtener access_token de variable de entorno (legacy - deprecado)
+	accessToken := u.config.Get("WHATSAPP_TOKEN")
+	if accessToken == "" {
+		u.log.Error(ctx).Msg("[WhatsApp] - WHATSAPP_TOKEN no configurado")
+		return "", fmt.Errorf("WHATSAPP_TOKEN no configurado")
+	}
+
 	// Construir mensaje tipo plantilla
 	msg := domain.TemplateMessage{
 		MessagingProduct: "whatsapp",
@@ -88,7 +95,7 @@ func (u *SendMessageUsecase) SendMessage(ctx context.Context, req domain.SendMes
 		Str("template_name", msg.Template.Name).
 		Msg("[WhatsApp] - enviando mensaje")
 
-	messageID, err := u.whatsApp.SendMessage(ctx, uint(phoneNumberID), msg)
+	messageID, err := u.whatsApp.SendMessage(ctx, uint(phoneNumberID), msg, accessToken)
 	if err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("phone_number", req.PhoneNumber).
