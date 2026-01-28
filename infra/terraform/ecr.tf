@@ -66,7 +66,7 @@ resource "aws_ecr_repository" "nginx" {
   )
 }
 
-# Lifecycle Policy para frontend - Mantener solo 1 imagen (la última)
+# Lifecycle Policy para frontend - Mantener últimas 5 imágenes con CalVer
 resource "aws_ecr_lifecycle_policy" "frontend_lifecycle" {
   repository = aws_ecr_repository.frontend.name
 
@@ -74,11 +74,37 @@ resource "aws_ecr_lifecycle_policy" "frontend_lifecycle" {
     rules = [
       {
         rulePriority = 1
-        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
+        description  = "Mantener tag latest siempre"
         selection = {
-          tagStatus   = "any"
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 999
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2
+        description  = "Mantener últimas 5 imágenes tagueadas"
+        selection = {
+          tagStatus   = "tagged"
           countType   = "imageCountMoreThan"
-          countNumber = 1
+          countNumber = 5
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 3
+        description  = "Eliminar imágenes sin tag después de 7 días"
+        selection = {
+          tagStatus   = "untagged"
+          countType   = "sinceImagePushed"
+          countUnit   = "days"
+          countNumber = 7
         }
         action = {
           type = "expire"
@@ -88,7 +114,7 @@ resource "aws_ecr_lifecycle_policy" "frontend_lifecycle" {
   })
 }
 
-# Lifecycle Policy para backend - Mantener solo 1 imagen (la última)
+# Lifecycle Policy para backend - Mantener últimas 5 imágenes con CalVer
 resource "aws_ecr_lifecycle_policy" "backend_lifecycle" {
   repository = aws_ecr_repository.backend.name
 
@@ -96,11 +122,37 @@ resource "aws_ecr_lifecycle_policy" "backend_lifecycle" {
     rules = [
       {
         rulePriority = 1
-        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
+        description  = "Mantener tag latest siempre"
         selection = {
-          tagStatus   = "any"
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 999
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2
+        description  = "Mantener últimas 5 imágenes tagueadas"
+        selection = {
+          tagStatus   = "tagged"
           countType   = "imageCountMoreThan"
-          countNumber = 1
+          countNumber = 5
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 3
+        description  = "Eliminar imágenes sin tag después de 7 días"
+        selection = {
+          tagStatus   = "untagged"
+          countType   = "sinceImagePushed"
+          countUnit   = "days"
+          countNumber = 7
         }
         action = {
           type = "expire"
@@ -110,7 +162,7 @@ resource "aws_ecr_lifecycle_policy" "backend_lifecycle" {
   })
 }
 
-# Lifecycle Policy para nginx - Mantener solo 1 imagen (la última)
+# Lifecycle Policy para nginx - Mantener últimas 5 imágenes con CalVer
 resource "aws_ecr_lifecycle_policy" "nginx_lifecycle" {
   repository = aws_ecr_repository.nginx.name
 
@@ -118,11 +170,37 @@ resource "aws_ecr_lifecycle_policy" "nginx_lifecycle" {
     rules = [
       {
         rulePriority = 1
-        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
+        description  = "Mantener tag latest siempre"
         selection = {
-          tagStatus   = "any"
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 999
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2
+        description  = "Mantener últimas 5 imágenes tagueadas"
+        selection = {
+          tagStatus   = "tagged"
           countType   = "imageCountMoreThan"
-          countNumber = 1
+          countNumber = 5
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 3
+        description  = "Eliminar imágenes sin tag después de 7 días"
+        selection = {
+          tagStatus   = "untagged"
+          countType   = "sinceImagePushed"
+          countUnit   = "days"
+          countNumber = 7
         }
         action = {
           type = "expire"
@@ -154,7 +232,7 @@ resource "aws_ecr_repository" "website" {
   )
 }
 
-# Lifecycle Policy para website - Mantener solo 1 imagen (la última)
+# Lifecycle Policy para website - Mantener últimas 5 imágenes con CalVer
 resource "aws_ecr_lifecycle_policy" "website_lifecycle" {
   repository = aws_ecr_repository.website.name
 
@@ -162,11 +240,37 @@ resource "aws_ecr_lifecycle_policy" "website_lifecycle" {
     rules = [
       {
         rulePriority = 1
-        description  = "Mantener solo 1 imagen (la última), eliminar las demas"
+        description  = "Mantener tag latest siempre"
         selection = {
-          tagStatus   = "any"
+          tagStatus     = "tagged"
+          tagPrefixList = ["latest"]
+          countType     = "imageCountMoreThan"
+          countNumber   = 999
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 2
+        description  = "Mantener últimas 5 imágenes tagueadas"
+        selection = {
+          tagStatus   = "tagged"
           countType   = "imageCountMoreThan"
-          countNumber = 1
+          countNumber = 5
+        }
+        action = {
+          type = "expire"
+        }
+      },
+      {
+        rulePriority = 3
+        description  = "Eliminar imágenes sin tag después de 7 días"
+        selection = {
+          tagStatus   = "untagged"
+          countType   = "sinceImagePushed"
+          countUnit   = "days"
+          countNumber = 7
         }
         action = {
           type = "expire"

@@ -8,6 +8,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { TokenStorage } from '@/shared/config';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { UserProfileModal } from './user-profile-modal';
@@ -171,13 +172,28 @@ export function Sidebar({ user }: SidebarProps) {
         }}
       >
         <div className="flex flex-col h-full">
+          {/* Logo */}
+          <div className="flex items-center justify-center py-4 transition-all duration-300">
+            <div className={`relative transition-all duration-300 flex items-center justify-center ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}>
+              <Image
+                src={primaryExpanded ? "/logo2recortado.png" : "/logo.ico"}
+                alt="Probability Logo"
+                fill
+                className="object-contain"
+                priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              />
+            </div>
+          </div>
+          <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+
           {/* Tarjeta de usuario arriba */}
           <div
-            className="p-4 border-b border-gray-100 cursor-pointer hover:bg-gray-50 transition-colors"
+            className={`cursor-pointer hover:bg-gray-50 transition-colors rounded-xl mx-2 my-1 ${primaryExpanded ? 'p-4' : 'p-2 flex justify-center'}`}
             onClick={() => setShowUserModal(true)}
             title="Haz clic para cambiar tu foto de perfil"
           >
-            <div className="flex items-center gap-3">
+            <div className={`flex items-center ${primaryExpanded ? 'gap-3' : 'justify-center'}`}>
               {/* Avatar clickeable */}
               <div className="relative group">
                 {user.avatarUrl ? (
@@ -610,7 +626,8 @@ export function Sidebar({ user }: SidebarProps) {
           </nav>
 
           {/* Botón logout abajo */}
-          <div className="p-4 border-t border-gray-100">
+          <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-2" />
+          <div className="p-4 pt-2">
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-50 p-3 rounded-lg transition-colors"
