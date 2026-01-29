@@ -154,13 +154,13 @@ func (h *ShopifyHandler) InitiateOAuthHandler(c *gin.Context) {
 //	@Description	Recibe el código de autorización de Shopify y lo intercambia por un access token
 //	@Tags			Shopify OAuth
 //	@Accept			json
-//	@Produce		html
+//	@Produce		json
 //	@Param			code	query	string	true	"Código de autorización"
 //	@Param			shop	query	string	true	"Dominio de la tienda"
 //	@Param			state	query	string	true	"State CSRF"
 //	@Param			hmac	query	string	true	"HMAC signature"
-//	@Success		200		{string}	string	"HTML de éxito"
-//	@Failure		400		{string}	string	"HTML de error"
+//	@Success		302		{string}	string	"Redirección al frontend con datos de integración"
+//	@Failure		400		{object}	map[string]interface{}	"Error en validación"
 //	@Router			/shopify/callback [get]
 func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	code := c.Query("code")
@@ -171,8 +171,9 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	// Validar parámetros requeridos
 	if code == "" || shop == "" || state == "" || hmacParam == "" {
 		h.logger.Error().Msg("Parámetros faltantes en callback OAuth")
-		c.HTML(http.StatusBadRequest, "error.html", gin.H{
-			"error": "Parámetros faltantes en la solicitud",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "Parámetros faltantes en la solicitud",
 		})
 		return
 	}
