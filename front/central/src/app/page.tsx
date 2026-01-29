@@ -22,7 +22,7 @@ export default function Home() {
         </h1>
 
         <p className="mb-12 max-w-2xl text-lg text-purple-100 sm:text-xl">
-          Plataforma centralizada para la gestión inteligente de procesos y análisis probabilístico
+          Plataforma centralizada para la gestión inteligente de procesos y análisis probabilístico de tu negocio
         </p>
 
         <div className="flex flex-col gap-4 sm:flex-row">
