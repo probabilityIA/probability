@@ -183,12 +183,14 @@ jobs:
             # Nueva imagen detectada, actualizar solo website
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando website..."
 
-            # 1. Detener y eliminar contenedor website
-            echo "🛑 Deteniendo y eliminando website..."
+            # 1. Detener y eliminar solo el contenedor website
+            echo "🛑 Deteniendo website..."
             podman stop -t 10 website_prod || true
+
+            echo "🗑️  Eliminando contenedor website..."
             podman rm -f website_prod || true
 
-            # 2. Liberar puerto 8081 (matar cualquier proceso que lo esté usando)
+            # 2. Liberar puerto 8081 (matar proceso conmon/rootlessport)
             echo "🔫 Liberando puerto 8081..."
             sudo fuser -k 8081/tcp || true
             pkill -9 -f "rootlessport.*8081" || true
@@ -199,12 +201,13 @@ jobs:
             podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:$VERSION_FULL
 
             # 4. Tag como latest localmente
+            echo "🏷️  Tageando como latest..."
             podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
 
-            # 5. Levantar solo el contenedor website
-            echo "🔄 Levantando website con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d website_prod
+            # 5. Levantar solo el servicio front-website (contenedor: website_prod)
+            echo "🚀 Levantando website con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d front-website
 
             # SIEMPRE reiniciar nginx después de actualizar website
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
