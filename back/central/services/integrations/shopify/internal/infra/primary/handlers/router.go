@@ -16,6 +16,12 @@ func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILog
 		// Webhook endpoint - sin autenticación JWT (Shopify valida con HMAC)
 		shopifyGroup.POST("/webhook", h.WebhookHandler)
 		shopifyGroup.POST("/webhook/:integration_id", h.WebhookHandler) // Alternativa con ID en path
+
+		// Compliance webhooks (OBLIGATORIOS para Shopify App Store)
+		// Estos webhooks son requeridos por Shopify para cumplir con GDPR/CCPA
+		shopifyGroup.POST("/webhooks/customers/data_request", h.CustomerDataRequestHandler)
+		shopifyGroup.POST("/webhooks/customers/redact", h.CustomerRedactHandler)
+		shopifyGroup.POST("/webhooks/shop/redact", h.ShopRedactHandler)
 	}
 
 	// Callback endpoint - sin autenticación JWT (validación por state y HMAC)
