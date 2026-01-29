@@ -13,6 +13,7 @@ import {
     reportPaymentAction,
     manualDebitAction,
     getWalletHistoryAction,
+    clearRechargeHistoryAction,
     Wallet
 } from '@/services/modules/wallet/infra/actions';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
@@ -113,11 +114,18 @@ function AdminWalletView() {
                             key: 'actions',
                             label: 'Acciones',
                             render: (_, row) => (
-                                <ManualDebitButton
-                                    businessId={row.BusinessID}
-                                    businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
-                                    onSuccess={fetchWalletsAndBusinesses}
-                                />
+                                <div className="flex gap-2">
+                                    <ManualDebitButton
+                                        businessId={row.BusinessID}
+                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                        onSuccess={fetchWalletsAndBusinesses}
+                                    />
+                                    <ClearHistoryButton
+                                        businessId={row.BusinessID}
+                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                        onSuccess={fetchWalletsAndBusinesses}
+                                    />
+                                </div>
                             )
                         }
                     ]}
@@ -230,6 +238,50 @@ function ManualDebitButton({ businessId, businessName, onSuccess }: { businessId
                     <div className="flex justify-end gap-2">
                         <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
                         <Button variant="danger" onClick={handleDebit} loading={loading}>Restar Saldo</Button>
+                    </div>
+                </div>
+            </Modal>
+        </>
+    );
+}
+
+function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessId: number, businessName: string, onSuccess: () => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    const handleClear = async () => {
+        setLoading(true);
+        try {
+            const res = await clearRechargeHistoryAction(businessId);
+            if (res.success) {
+                setIsOpen(false);
+                onSuccess();
+            } else {
+                alert(res.error);
+            }
+        } catch (e) {
+            alert("Error al procesar");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => setIsOpen(true)}>
+                Borrar Historial
+            </Button>
+            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Confirmar Eliminación">
+                <div className="space-y-4 p-4">
+                    <p className="text-gray-600">
+                        ¿Estás seguro de que deseas borrar <strong>todo el historial de recargas</strong> de <strong>{businessName}</strong>?
+                    </p>
+                    <Alert type="warning">
+                        Esta acción es irreversible y eliminará todos los registros de recargas (aprobadas, rechazadas y pendientes). El saldo actual no se verá afectado.
+                    </Alert>
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
+                        <Button variant="danger" onClick={handleClear} loading={loading}>Borrar Historial</Button>
                     </div>
                 </div>
             </Modal>
