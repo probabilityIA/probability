@@ -9,6 +9,10 @@ on:
       - '.github/workflows/nginx-ci-cd.yml'
   workflow_dispatch:
 
+concurrency:
+  group: nginx-deploy
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: 476702565908

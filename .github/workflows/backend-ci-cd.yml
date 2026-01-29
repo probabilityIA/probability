@@ -10,6 +10,10 @@ on:
       - '.github/workflows/backend-ci-cd.yml'
   workflow_dispatch:
 
+concurrency:
+  group: backend-deploy
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: 476702565908
@@ -242,14 +246,8 @@ jobs:
             echo "🚀 Levantando backend con nueva imagen..."
             podman-compose -f podman-compose.yaml up -d back-central
 
-            # Reload nginx config (sin reiniciar - evita error de puerto ocupado)
-            echo "🔄 Recargando nginx para reconectar con el nuevo backend..."
-            if podman ps -a --format '{{.Names}}' | grep -q '^nginx_prod$'; then
-              podman kill -s HUP nginx_prod 2>/dev/null || echo "⚠️  No se pudo recargar nginx (no crítico)"
-              echo "✅ Nginx recargado (HUP signal)"
-            else
-              echo "⚠️  Nginx no está corriendo"
-            fi
+            # Nota: Nginx detectará automáticamente la reconexión con el backend
+            # No es necesario recargar nginx ya que usa reintentos automáticos
             sleep 3
 
             echo "⏳ Esperando a que el contenedor inicie (20 segundos)..."
