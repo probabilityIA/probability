@@ -1,8 +1,8 @@
 // main.go
 
 // @title						Restaurant Reservation API
-// @version					1.0
-// @description				Servicio REST para la gestión de reservas multi-restaurante.
+// @version					1.0.1
+// @description				Servicio REST para la gestión de reservas multi-restaurante. Deployment test.
 // @termsOfService				https://ejemplo.com/terminos
 //
 // @contact.name				Equipo de Backend
