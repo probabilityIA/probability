@@ -275,11 +275,15 @@ jobs:
             CONTAINER_IMAGE_ID=$(podman inspect website_prod --format '{{.Image}}' 2>/dev/null || echo "")
             NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:$VERSION_FULL | head -1)
 
-            echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
-            echo "📋 Image ID esperada (Version $VERSION_FULL): ${NEW_IMAGE_FULL_ID:0:12}"
+            # Remover prefijo sha256: si existe
+            NEW_IMAGE_FULL_ID_CLEAN="${NEW_IMAGE_FULL_ID#sha256:}"
+            CONTAINER_IMAGE_ID_CLEAN="${CONTAINER_IMAGE_ID#sha256:}"
 
-            if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
-              if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
+            echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID_CLEAN:0:12}"
+            echo "📋 Image ID esperada (Version $VERSION_FULL): ${NEW_IMAGE_FULL_ID_CLEAN:0:12}"
+
+            if [ -n "$CONTAINER_IMAGE_ID_CLEAN" ] && [ -n "$NEW_IMAGE_FULL_ID_CLEAN" ]; then
+              if [ "${CONTAINER_IMAGE_ID_CLEAN:0:12}" = "${NEW_IMAGE_FULL_ID_CLEAN:0:12}" ]; then
                 echo "✅ Contenedor actualizado correctamente con la nueva imagen (Version: $VERSION_FULL)"
               else
                 echo "❌ ERROR: El contenedor NO está usando la imagen correcta"
