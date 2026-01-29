@@ -183,18 +183,18 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # ENFOQUE SIMPLE: Stop -> Remove -> Delete Image -> Up
-            echo "🛑 Deteniendo servicio front-website..."
-            podman-compose -f podman-compose.yaml stop front-website
+            # ENFOQUE A LA FIJA: Down -> Delete Images -> Up
+            echo "🛑 Tumbando todos los servicios..."
+            podman-compose -f podman-compose.yaml down
 
-            echo "🗑️  Eliminando contenedor..."
-            podman-compose -f podman-compose.yaml rm -f front-website
-
-            echo "🗑️  Eliminando imagen vieja..."
+            echo "🗑️  Eliminando todas las imágenes viejas..."
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest 2>/dev/null || true
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
             podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
 
-            echo "🔄 Levantando servicio con imagen nueva..."
-            podman-compose -f podman-compose.yaml up -d front-website
+            echo "🔄 Levantando todos los servicios con imágenes nuevas..."
+            podman-compose -f podman-compose.yaml up -d
 
             # SIEMPRE reiniciar nginx después de actualizar website
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."

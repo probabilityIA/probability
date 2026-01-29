@@ -204,24 +204,23 @@ jobs:
             echo "📊 New image ID: $NEW_IMAGE_ID"
             echo "📊 Version: $VERSION_FULL"
 
-            # ENFOQUE SIMPLE: Stop -> Remove -> Delete Image -> Up (con pull automático)
+            # ENFOQUE A LA FIJA: Down -> Delete Images -> Up
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # 1. Detener el servicio
-            echo "🛑 Deteniendo servicio back-central..."
-            podman-compose -f podman-compose.yaml stop back-central
+            # 1. Tumbar TODO (down)
+            echo "🛑 Tumbando todos los servicios..."
+            podman-compose -f podman-compose.yaml down
 
-            # 2. Eliminar el contenedor
-            echo "🗑️  Eliminando contenedor..."
-            podman-compose -f podman-compose.yaml rm -f back-central
-
-            # 3. Eliminar la imagen vieja (forzar pull de la nueva)
-            echo "🗑️  Eliminando imagen vieja..."
+            # 2. Eliminar TODAS las imágenes viejas
+            echo "🗑️  Eliminando todas las imágenes viejas..."
             podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest 2>/dev/null || true
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
 
-            # 4. Levantar de nuevo (hará pull automático de la nueva imagen)
-            echo "🔄 Levantando servicio con imagen nueva..."
-            podman-compose -f podman-compose.yaml up -d back-central
+            # 3. Levantar TODO de nuevo (hará pull automático)
+            echo "🔄 Levantando todos los servicios con imágenes nuevas..."
+            podman-compose -f podman-compose.yaml up -d
 
             # SIEMPRE reiniciar nginx después de actualizar backend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
