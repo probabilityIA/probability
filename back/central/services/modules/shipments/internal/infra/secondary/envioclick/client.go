@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -125,13 +126,41 @@ func (c *Client) doRawRequest(method, url string, body []byte) ([]byte, error) {
 					for _, e := range msg.Error {
 						fullError += e + " "
 					}
-					return nil, fmt.Errorf("%s", fullError)
+					return nil, fmt.Errorf("%s", mapEnvioClickError(fullError))
 				}
 			}
 		}
 
-		return nil, fmt.Errorf("envioclick api error: %d - %s", resp.StatusCode, string(respBody))
+		return nil, fmt.Errorf("Error de EnvioClick: %s", mapEnvioClickError(string(respBody)))
 	}
 
 	return respBody, nil
+}
+
+func mapEnvioClickError(originalErr string) string {
+	lowerErr := strings.ToLower(originalErr)
+
+	if (strings.Contains(lowerErr, "destination") || strings.Contains(lowerErr, "destino")) && strings.Contains(lowerErr, "dane") {
+		return "error: el codigo dane del destino no existe o no es valido"
+	}
+	if (strings.Contains(lowerErr, "origin") || strings.Contains(lowerErr, "origen")) && strings.Contains(lowerErr, "dane") {
+		return "error: el codigo dane de origen no existe o no es valido"
+	}
+	if strings.Contains(lowerErr, "contentvalue") || strings.Contains(lowerErr, "declared value") {
+		return "El valor declarado es inválido o está fuera de rango"
+	}
+	if strings.Contains(lowerErr, "weight") || strings.Contains(lowerErr, "peso") {
+		return "El peso del paquete es inválido"
+	}
+	if strings.Contains(lowerErr, "dimensions") || strings.Contains(lowerErr, "height") || strings.Contains(lowerErr, "width") || strings.Contains(lowerErr, "length") {
+		return "Las dimensiones del paquete son inválidas"
+	}
+	if strings.Contains(lowerErr, "missing") || strings.Contains(lowerErr, "falta") {
+		return "Faltan datos obligatorios para generar la guía"
+	}
+	if strings.Contains(lowerErr, "phone") || strings.Contains(lowerErr, "telefóno") {
+		return "El número de teléfono es inválido"
+	}
+
+	return originalErr
 }
