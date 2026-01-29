@@ -212,26 +212,28 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # Detener y eliminar el contenedor existente de forma forzada
-            echo "🛑 Deteniendo contenedor frontend_prod..."
+            # 1. Detener y eliminar el contenedor existente
+            echo "🛑 Deteniendo y eliminando contenedor frontend_prod..."
             podman stop frontend_prod 2>/dev/null || true
-
-            echo "🗑️  Eliminando contenedor frontend_prod..."
             podman rm -f frontend_prod 2>/dev/null || true
+            sleep 2
 
-            # Recrear el contenedor con la nueva imagen usando podman directamente
-            echo "🔄 Recreando contenedor frontend con nueva imagen..."
+            # 2. Verificar que el contenedor fue eliminado
+            if podman ps -a --format '{{.Names}}' | grep -q '^frontend_prod$'; then
+              echo "⚠️  Contenedor aún existe, forzando eliminación..."
+              podman rm -f frontend_prod 2>/dev/null || true
+              sleep 2
+            fi
 
-            # Leer el archivo .env para las variables de entorno
+            # 3. Crear el contenedor con la NUEVA imagen (usando el tag de versión específico)
+            echo "🔄 Creando contenedor frontend con imagen $VERSION_FULL..."
+
             if [ ! -f .env ]; then
               echo "❌ Error: archivo .env no encontrado"
               exit 1
             fi
 
-            # Crear el contenedor frontend con --replace
-            # NO usamos --requires para permitir reemplazo independiente
             podman run -d \
-              --replace \
               --name frontend_prod \
               --label io.podman.compose.project=compose-prod \
               --label io.podman.compose.service=front-central \
@@ -244,7 +246,7 @@ jobs:
               --health-timeout 10s \
               --health-retries 3 \
               --health-start-period 15s \
-              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
 
             # SIEMPRE reiniciar nginx después de actualizar frontend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
@@ -310,22 +312,31 @@ jobs:
 
             # Verificar que el contenedor está usando la nueva imagen
             CONTAINER_IMAGE_ID=$(podman inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
-            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest | head -1)
+            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL | head -1)
 
             echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
-            echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
+            echo "📋 Image ID esperada (Version $VERSION_FULL): ${NEW_IMAGE_FULL_ID:0:12}"
 
             if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
               if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
                 echo "✅ Contenedor actualizado correctamente con la nueva imagen (Version: $VERSION_FULL)"
               else
-                echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
+                echo "❌ ERROR: El contenedor NO está usando la imagen correcta"
+                exit 1
               fi
             fi
 
-            # Clean up imágenes antiguas
-            echo "🧹 Limpiando imágenes antiguas..."
+            # Limpiar imágenes antiguas de frontend
+            echo "🧹 Limpiando imágenes antiguas de frontend..."
+
+            podman images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
+              grep "probability-frontend" | \
+              grep -v "$VERSION_FULL" | \
+              grep -v "latest" | \
+              awk '{print $2}' | \
+              xargs -r podman rmi -f 2>/dev/null || true
+
             podman image prune -f
 
-            echo "✅ Frontend deployed successfully"
+            echo "✅ Frontend deployed successfully with version $VERSION_FULL"
           EOF
