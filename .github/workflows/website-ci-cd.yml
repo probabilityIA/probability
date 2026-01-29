@@ -190,13 +190,33 @@ jobs:
             echo "🗑️  Eliminando contenedor website_prod..."
             podman rm -f website_prod 2>/dev/null || true
 
-            # Recrear el contenedor con la nueva imagen
-            echo "🔄 Recreando contenedor con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d --no-deps front-website
+            # Recrear el contenedor con la nueva imagen usando podman directamente
+            echo "🔄 Recreando contenedor website con nueva imagen..."
 
-            # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
+            # Crear el contenedor website con --replace
+            podman run -d \
+              --replace \
+              --name website_prod \
+              --label io.podman.compose.project=compose-prod \
+              --label io.podman.compose.service=front-website \
+              --network compose-prod_app-network \
+              -p 8081:8080 \
+              --restart unless-stopped \
+              --health-cmd 'CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health' \
+              --health-interval 30s \
+              --health-timeout 10s \
+              --health-retries 3 \
+              --health-start-period 10s \
+              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
+
+            # SIEMPRE reiniciar nginx después de actualizar website
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
-            podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
+            if podman ps -a --format '{{.Names}}' | grep -q '^nginx_prod$'; then
+              podman restart nginx_prod
+              echo "✅ Nginx reiniciado correctamente"
+            else
+              echo "⚠️  Nginx no está corriendo"
+            fi
             sleep 3
 
             echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
