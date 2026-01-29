@@ -212,12 +212,14 @@ jobs:
             # Nueva imagen detectada, actualizar solo frontend
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando frontend..."
 
-            # 1. Detener y eliminar contenedor frontend
-            echo "🛑 Deteniendo y eliminando frontend..."
+            # 1. Detener y eliminar solo el contenedor frontend
+            echo "🛑 Deteniendo frontend..."
             podman stop -t 10 frontend_prod || true
+
+            echo "🗑️  Eliminando contenedor frontend..."
             podman rm -f frontend_prod || true
 
-            # 2. Liberar puerto 8080 (matar cualquier proceso que lo esté usando)
+            # 2. Liberar puerto 8080 (matar proceso conmon/rootlessport)
             echo "🔫 Liberando puerto 8080..."
             sudo fuser -k 8080/tcp || true
             pkill -9 -f "rootlessport.*8080" || true
@@ -228,12 +230,13 @@ jobs:
             podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
 
             # 4. Tag como latest localmente
+            echo "🏷️  Tageando como latest..."
             podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
 
-            # 5. Levantar solo el contenedor frontend
-            echo "🔄 Levantando frontend con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d frontend_prod
+            # 5. Levantar solo el servicio front-central (contenedor: frontend_prod)
+            echo "🚀 Levantando frontend con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d front-central
 
             # SIEMPRE reiniciar nginx después de actualizar frontend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."

@@ -207,12 +207,14 @@ jobs:
             # Nueva imagen detectada, actualizar solo backend
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando backend..."
 
-            # 1. Detener y eliminar contenedor backend
-            echo "🛑 Deteniendo y eliminando backend..."
+            # 1. Detener y eliminar solo el contenedor backend
+            echo "🛑 Deteniendo backend..."
             podman stop -t 10 backend_prod || true
+
+            echo "🗑️  Eliminando contenedor backend..."
             podman rm -f backend_prod || true
 
-            # 2. Liberar puerto 3050 (matar cualquier proceso que lo esté usando)
+            # 2. Liberar puerto 3050 (matar proceso conmon/rootlessport)
             echo "🔫 Liberando puerto 3050..."
             sudo fuser -k 3050/tcp || true
             pkill -9 -f "rootlessport.*3050" || true
@@ -223,12 +225,13 @@ jobs:
             podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL
 
             # 4. Tag como latest localmente
+            echo "🏷️  Tageando como latest..."
             podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
 
-            # 5. Levantar solo el contenedor backend
-            echo "🔄 Levantando backend con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d backend_prod
+            # 5. Levantar solo el servicio back-central (contenedor: backend_prod)
+            echo "🚀 Levantando backend con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d back-central
 
             # SIEMPRE reiniciar nginx después de actualizar backend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."

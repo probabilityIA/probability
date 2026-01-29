@@ -211,12 +211,14 @@ jobs:
             # Nueva imagen detectada, actualizar solo nginx
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando nginx..."
 
-            # 1. Detener y eliminar contenedor nginx
-            echo "🛑 Deteniendo y eliminando nginx..."
+            # 1. Detener y eliminar solo el contenedor nginx
+            echo "🛑 Deteniendo nginx..."
             podman stop -t 10 nginx_prod || true
+
+            echo "🗑️  Eliminando contenedor nginx..."
             podman rm -f nginx_prod || true
 
-            # 2. Liberar puertos 80 y 443 (matar cualquier proceso que los esté usando)
+            # 2. Liberar puertos 80 y 443 (matar proceso conmon/rootlessport)
             echo "🔫 Liberando puertos 80 y 443..."
             sudo fuser -k 80/tcp || true
             sudo fuser -k 443/tcp || true
@@ -228,12 +230,13 @@ jobs:
             podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL
 
             # 4. Tag como latest localmente
+            echo "🏷️  Tageando como latest..."
             podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
 
-            # 5. Levantar solo el contenedor nginx
-            echo "🔄 Levantando nginx con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d nginx_prod
+            # 5. Levantar solo el servicio nginx (contenedor: nginx_prod)
+            echo "🚀 Levantando nginx con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d nginx
 
             echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
             sleep 10
