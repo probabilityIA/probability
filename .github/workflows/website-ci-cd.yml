@@ -190,6 +190,15 @@ jobs:
             echo "🗑️  Eliminando contenedor website..."
             podman rm -f website_prod || true
 
+            # Verificar y eliminar cualquier contenedor website_prod que quede
+            echo "🔍 Verificando eliminación completa..."
+            WEBSITE_IDS=$(podman ps -a --filter name=website_prod --format '{{.ID}}' 2>/dev/null || true)
+            if [ -n "$WEBSITE_IDS" ]; then
+              echo "⚠️  Contenedores website encontrados, eliminando por ID..."
+              echo "$WEBSITE_IDS" | xargs -r podman rm -f
+            fi
+            echo "✅ Contenedor website eliminado completamente"
+
             # 2. Liberar puerto 8081 (matar proceso conmon/rootlessport)
             echo "🔫 Liberando puerto 8081..."
             sudo fuser -k 8081/tcp || true
