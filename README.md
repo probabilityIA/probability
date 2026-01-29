@@ -2,6 +2,13 @@
 
 Plataforma de gestión de e-commerce multi-tenant que permite centralizar y administrar pedidos, productos, pagos y envíos desde múltiples canales de venta.
 
+## 📚 Documentación
+
+- **[Deployment System](docs/deploy/README.md)** - Sistema de deployment automático CI/CD
+  - [Panic/Restart Mechanism](docs/deploy/panic-restart-mechanism.md) - Auto-recovery de contenedores
+  - [Workflow Structure](docs/deploy/workflow-structure.md) - Estructura de workflows GitHub Actions
+  - [Troubleshooting](docs/deploy/troubleshooting.md) - Guía de resolución de problemas
+
 ## Stack Tecnológico
 
 ### Backend
