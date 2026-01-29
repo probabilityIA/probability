@@ -212,13 +212,15 @@ jobs:
             # Nueva imagen detectada, actualizar solo frontend
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando frontend..."
 
-            # 1. Detener solo el contenedor frontend
-            echo "🛑 Deteniendo frontend..."
+            # 1. Detener y eliminar contenedor frontend
+            echo "🛑 Deteniendo y eliminando frontend..."
             podman stop -t 10 frontend_prod || true
-
-            # 2. Eliminar contenedor frontend forzadamente
-            echo "🗑️  Eliminando contenedor frontend..."
             podman rm -f frontend_prod || true
+
+            # 2. Liberar puerto 8080 (matar cualquier proceso que lo esté usando)
+            echo "🔫 Liberando puerto 8080..."
+            sudo fuser -k 8080/tcp || true
+            pkill -9 -f "rootlessport.*8080" || true
             sleep 2
 
             # 3. Pull de la nueva imagen específica

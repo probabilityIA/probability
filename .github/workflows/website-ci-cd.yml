@@ -183,13 +183,15 @@ jobs:
             # Nueva imagen detectada, actualizar solo website
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando website..."
 
-            # 1. Detener solo el contenedor website
-            echo "🛑 Deteniendo website..."
+            # 1. Detener y eliminar contenedor website
+            echo "🛑 Deteniendo y eliminando website..."
             podman stop -t 10 website_prod || true
-
-            # 2. Eliminar contenedor website forzadamente
-            echo "🗑️  Eliminando contenedor website..."
             podman rm -f website_prod || true
+
+            # 2. Liberar puerto 8081 (matar cualquier proceso que lo esté usando)
+            echo "🔫 Liberando puerto 8081..."
+            sudo fuser -k 8081/tcp || true
+            pkill -9 -f "rootlessport.*8081" || true
             sleep 2
 
             # 3. Pull de la nueva imagen específica

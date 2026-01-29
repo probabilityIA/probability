@@ -207,13 +207,15 @@ jobs:
             # Nueva imagen detectada, actualizar solo backend
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando backend..."
 
-            # 1. Detener solo el contenedor backend
-            echo "🛑 Deteniendo backend..."
+            # 1. Detener y eliminar contenedor backend
+            echo "🛑 Deteniendo y eliminando backend..."
             podman stop -t 10 backend_prod || true
-
-            # 2. Eliminar contenedor backend forzadamente
-            echo "🗑️  Eliminando contenedor backend..."
             podman rm -f backend_prod || true
+
+            # 2. Liberar puerto 3050 (matar cualquier proceso que lo esté usando)
+            echo "🔫 Liberando puerto 3050..."
+            sudo fuser -k 3050/tcp || true
+            pkill -9 -f "rootlessport.*3050" || true
             sleep 2
 
             # 3. Pull de la nueva imagen específica
