@@ -211,21 +211,8 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # 1. Detener y eliminar el contenedor existente
-            echo "🛑 Deteniendo y eliminando contenedor nginx_prod..."
-            podman stop nginx_prod 2>/dev/null || true
-            podman rm -f nginx_prod 2>/dev/null || true
-            sleep 2
-
-            # 2. Verificar que el contenedor fue eliminado
-            if podman ps -a --format '{{.Names}}' | grep -q '^nginx_prod$'; then
-              echo "⚠️  Contenedor aún existe, forzando eliminación..."
-              podman rm -f nginx_prod 2>/dev/null || true
-              sleep 2
-            fi
-
-            # 3. Crear el contenedor con la NUEVA imagen (usando el tag de versión específico)
-            echo "🔄 Creando contenedor nginx con imagen $VERSION_FULL..."
+            # Crear contenedor con --replace (recomendado por Podman docs)
+            echo "🔄 Creando contenedor nginx con imagen $VERSION_FULL usando --replace..."
 
             if [ ! -f .env ]; then
               echo "❌ Error: archivo .env no encontrado"
@@ -234,6 +221,7 @@ jobs:
             source .env
 
             podman run -d \
+              --replace \
               --name nginx_prod \
               --label io.podman.compose.project=compose-prod \
               --label io.podman.compose.service=nginx \

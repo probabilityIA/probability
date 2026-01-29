@@ -183,23 +183,11 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # 1. Detener y eliminar el contenedor existente
-            echo "🛑 Deteniendo y eliminando contenedor website_prod..."
-            podman stop website_prod 2>/dev/null || true
-            podman rm -f website_prod 2>/dev/null || true
-            sleep 2
-
-            # 2. Verificar que el contenedor fue eliminado
-            if podman ps -a --format '{{.Names}}' | grep -q '^website_prod$'; then
-              echo "⚠️  Contenedor aún existe, forzando eliminación..."
-              podman rm -f website_prod 2>/dev/null || true
-              sleep 2
-            fi
-
-            # 3. Crear el contenedor con la NUEVA imagen (usando el tag de versión específico)
-            echo "🔄 Creando contenedor website con imagen $VERSION_FULL..."
+            # Crear contenedor con --replace (recomendado por Podman docs)
+            echo "🔄 Creando contenedor website con imagen $VERSION_FULL usando --replace..."
 
             podman run -d \
+              --replace \
               --name website_prod \
               --label io.podman.compose.project=compose-prod \
               --label io.podman.compose.service=front-website \
