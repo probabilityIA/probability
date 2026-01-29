@@ -1,13 +1,13 @@
 {
-  "5002000": {
+  "05002000": {
     "ciudad": "ABEJORRAL",
     "departamento": "ANTIOQUIA"
   },
   "54003000": {
-    "ciudad": "ABREGO NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "ABREGO",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5004000": {
+  "05004000": {
     "ciudad": "ABRIAQUI",
     "departamento": "ANTIOQUIA"
   },
@@ -63,31 +63,27 @@
     "ciudad": "ALBAN",
     "departamento": "CUNDINAMARCA"
   },
-  "52019000": {
-    "ciudad": "ALBAN",
-    "departamento": "NARINO"
-  },
   "18029000": {
     "ciudad": "ALBANIA",
     "departamento": "CAQUETA"
   },
   "44035000": {
-    "ciudad": "ALBANIA LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "ALBANIA",
+    "departamento": "LA GUAJIRA"
   },
   "68020000": {
     "ciudad": "ALBANIA",
     "departamento": "SANTANDER"
   },
   "76020000": {
-    "ciudad": "ALCALA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "ALCALA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "52022000": {
     "ciudad": "ALDANA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5021000": {
+  "05021000": {
     "ciudad": "ALEJANDRIA",
     "departamento": "ANTIOQUIA"
   },
@@ -127,11 +123,11 @@
     "ciudad": "ALVARADO",
     "departamento": "TOLIMA"
   },
-  "5030000": {
+  "05030000": {
     "ciudad": "AMAGA",
     "departamento": "ANTIOQUIA"
   },
-  "5031000": {
+  "05031000": {
     "ciudad": "AMALFI",
     "departamento": "ANTIOQUIA"
   },
@@ -145,21 +141,21 @@
   },
   "52036000": {
     "ciudad": "ANCUYA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "76036000": {
-    "ciudad": "ANDALUCIA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "ANDALUCIA",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5034000": {
+  "05034000": {
     "ciudad": "ANDES",
     "departamento": "ANTIOQUIA"
   },
-  "5036000": {
+  "05036000": {
     "ciudad": "ANGELOPOLIS",
     "departamento": "ANTIOQUIA"
   },
-  "5038000": {
+  "05038000": {
     "ciudad": "ANGOSTURA",
     "departamento": "ANTIOQUIA"
   },
@@ -167,7 +163,7 @@
     "ciudad": "ANOLAIMA",
     "departamento": "CUNDINAMARCA"
   },
-  "5040000": {
+  "05040000": {
     "ciudad": "ANORI",
     "departamento": "ANTIOQUIA"
   },
@@ -176,10 +172,10 @@
     "departamento": "CALDAS"
   },
   "76041000": {
-    "ciudad": "ANSERMANUEVO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "ANSERMANUEVO",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5044000": {
+  "05044000": {
     "ciudad": "ANZA",
     "departamento": "ANTIOQUIA"
   },
@@ -187,7 +183,7 @@
     "ciudad": "ANZOATEGUI",
     "departamento": "TOLIMA"
   },
-  "5045000": {
+  "05045000": {
     "ciudad": "APARTADO",
     "departamento": "ANTIOQUIA"
   },
@@ -228,14 +224,14 @@
     "departamento": "CUNDINAMARCA"
   },
   "52051000": {
-    "ciudad": "ARBOLEDA",
-    "departamento": "NARINO"
+    "ciudad": "ARBOLEDA - BERRUECOS",
+    "departamento": "NARIÑO"
   },
   "54051000": {
-    "ciudad": "ARBOLEDAS NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "ARBOLEDAS",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5051000": {
+  "05051000": {
     "ciudad": "ARBOLETES",
     "departamento": "ANTIOQUIA"
   },
@@ -247,7 +243,7 @@
     "ciudad": "ARENAL",
     "departamento": "BOLIVAR"
   },
-  "5055000": {
+  "05055000": {
     "ciudad": "ARGELIA",
     "departamento": "ANTIOQUIA"
   },
@@ -256,8 +252,8 @@
     "departamento": "CAUCA"
   },
   "76054000": {
-    "ciudad": "ARGELIA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "ARGELIA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "47058000": {
     "ciudad": "ARIGUANI",
@@ -267,7 +263,7 @@
     "ciudad": "ARJONA",
     "departamento": "BOLIVAR"
   },
-  "5059000": {
+  "05059000": {
     "ciudad": "ARMENIA",
     "departamento": "ANTIOQUIA"
   },
@@ -319,7 +315,7 @@
     "ciudad": "BALBOA",
     "departamento": "RISARALDA"
   },
-  "8078000": {
+  "08078000": {
     "ciudad": "BARANOA",
     "departamento": "ATLANTICO"
   },
@@ -329,9 +325,9 @@
   },
   "52079000": {
     "ciudad": "BARBACOAS",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5079000": {
+  "05079000": {
     "ciudad": "BARBOSA",
     "departamento": "ANTIOQUIA"
   },
@@ -352,8 +348,8 @@
     "departamento": "SANTANDER"
   },
   "44078000": {
-    "ciudad": "BARRANCAS LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "BARRANCAS",
+    "departamento": "LA GUAJIRA"
   },
   "13074000": {
     "ciudad": "BARRANCO DE LOBA",
@@ -363,7 +359,7 @@
     "ciudad": "BARRANCO MINAS",
     "departamento": "GUAINIA"
   },
-  "8001000": {
+  "08001000": {
     "ciudad": "BARRANQUILLA",
     "departamento": "ATLANTICO"
   },
@@ -381,11 +377,7 @@
   },
   "52083000": {
     "ciudad": "BELEN",
-    "departamento": "NARINO"
-  },
-  "27086000": {
-    "ciudad": "BELEN DE BAJIRA",
-    "departamento": "CHOCO"
+    "departamento": "NARIÑO"
   },
   "18094000": {
     "ciudad": "BELEN DE LOS ANDAQUIES",
@@ -395,11 +387,11 @@
     "ciudad": "BELEN DE UMBRIA",
     "departamento": "RISARALDA"
   },
-  "5088000": {
+  "05088000": {
     "ciudad": "BELLO",
     "departamento": "ANTIOQUIA"
   },
-  "5086000": {
+  "05086000": {
     "ciudad": "BELMIRA",
     "departamento": "ANTIOQUIA"
   },
@@ -411,7 +403,7 @@
     "ciudad": "BERBEO",
     "departamento": "BOYACA"
   },
-  "5091000": {
+  "05091000": {
     "ciudad": "BETANIA",
     "departamento": "ANTIOQUIA"
   },
@@ -419,7 +411,7 @@
     "ciudad": "BETEITIVA",
     "departamento": "BOYACA"
   },
-  "5093000": {
+  "05093000": {
     "ciudad": "BETULIA",
     "departamento": "ANTIOQUIA"
   },
@@ -436,12 +428,12 @@
     "departamento": "BOYACA"
   },
   "54099000": {
-    "ciudad": "BOCHALEMA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "BOCHALEMA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "11001000": {
-    "ciudad": "BOGOTA BOGOTA",
-    "departamento": "D.C"
+    "ciudad": "BOGOTA",
+    "departamento": "CUNDINAMARCA"
   },
   "25099000": {
     "ciudad": "BOJACA",
@@ -460,8 +452,8 @@
     "departamento": "SANTANDER"
   },
   "76100000": {
-    "ciudad": "BOLIVAR VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "BOLIVAR",
+    "departamento": "VALLE DEL CAUCA"
   },
   "20060000": {
     "ciudad": "BOSCONIA",
@@ -471,12 +463,12 @@
     "ciudad": "BOYACA",
     "departamento": "BOYACA"
   },
-  "5107000": {
-    "ciudad": "BRICENO",
+  "05107000": {
+    "ciudad": "BRICEÑO",
     "departamento": "ANTIOQUIA"
   },
   "15106000": {
-    "ciudad": "BRICENO",
+    "ciudad": "BRICEÑO",
     "departamento": "BOYACA"
   },
   "68001000": {
@@ -484,12 +476,12 @@
     "departamento": "SANTANDER"
   },
   "54109000": {
-    "ciudad": "BUCARASICA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "BUCARASICA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "76109000": {
-    "ciudad": "BUENAVENTURA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "BUENAVENTURA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "15109000": {
     "ciudad": "BUENAVISTA",
@@ -513,13 +505,13 @@
   },
   "52110000": {
     "ciudad": "BUESACO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "76113000": {
-    "ciudad": "BUGALAGRANDE VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "BUGALAGRANDE",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5113000": {
+  "05113000": {
     "ciudad": "BURITICA",
     "departamento": "ANTIOQUIA"
   },
@@ -543,7 +535,7 @@
     "ciudad": "CACAHUAL",
     "departamento": "GUAINIA"
   },
-  "5120000": {
+  "05120000": {
     "ciudad": "CACERES",
     "departamento": "ANTIOQUIA"
   },
@@ -552,20 +544,20 @@
     "departamento": "CUNDINAMARCA"
   },
   "54128000": {
-    "ciudad": "CACHIRA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "CACHIRA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "54125000": {
-    "ciudad": "CACOTA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "CACOTA",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5125000": {
+  "05125000": {
     "ciudad": "CAICEDO",
     "departamento": "ANTIOQUIA"
   },
   "76122000": {
-    "ciudad": "CAICEDONIA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "CAICEDONIA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "70124000": {
     "ciudad": "CAIMITO",
@@ -595,7 +587,7 @@
     "ciudad": "CALARCA",
     "departamento": "QUINDIO"
   },
-  "5129000": {
+  "05129000": {
     "ciudad": "CALDAS",
     "departamento": "ANTIOQUIA"
   },
@@ -608,26 +600,30 @@
     "departamento": "CAUCA"
   },
   "76001000": {
-    "ciudad": "CALI VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "CALI",
+    "departamento": "VALLE DEL CAUCA"
   },
   "68132000": {
     "ciudad": "CALIFORNIA",
     "departamento": "SANTANDER"
   },
   "76126000": {
-    "ciudad": "CALIMA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "CALIMA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "19142000": {
     "ciudad": "CALOTO",
     "departamento": "CAUCA"
   },
-  "5134000": {
+  "19300000": {
+    "ciudad": "CALOTO",
+    "departamento": "CAUCA"
+  },
+  "05134000": {
     "ciudad": "CAMPAMENTO",
     "departamento": "ANTIOQUIA"
   },
-  "8137000": {
+  "08137000": {
     "ciudad": "CAMPO DE LA CRUZ",
     "departamento": "ATLANTICO"
   },
@@ -643,21 +639,17 @@
     "ciudad": "CANALETE",
     "departamento": "CORDOBA"
   },
-  "8141000": {
+  "08141000": {
     "ciudad": "CANDELARIA",
     "departamento": "ATLANTICO"
   },
   "76130000": {
-    "ciudad": "CANDELARIA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "CANDELARIA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "13160000": {
     "ciudad": "CANTAGALLO",
     "departamento": "BOLIVAR"
-  },
-  "5138000": {
-    "ciudad": "CANASGORDAS",
-    "departamento": "ANTIOQUIA"
   },
   "25148000": {
     "ciudad": "CAPARRAPI",
@@ -671,11 +663,11 @@
     "ciudad": "CAQUEZA",
     "departamento": "CUNDINAMARCA"
   },
-  "5142000": {
+  "05142000": {
     "ciudad": "CARACOLI",
     "departamento": "ANTIOQUIA"
   },
-  "5145000": {
+  "05145000": {
     "ciudad": "CARAMANTA",
     "departamento": "ANTIOQUIA"
   },
@@ -683,7 +675,7 @@
     "ciudad": "CARCASI",
     "departamento": "SANTANDER"
   },
-  "5147000": {
+  "05147000": {
     "ciudad": "CAREPA",
     "departamento": "ANTIOQUIA"
   },
@@ -699,7 +691,7 @@
     "ciudad": "CARMEN DEL DARIEN",
     "departamento": "CHOCO"
   },
-  "5150000": {
+  "05150000": {
     "ciudad": "CAROLINA",
     "departamento": "ANTIOQUIA"
   },
@@ -712,8 +704,8 @@
     "departamento": "CAQUETA"
   },
   "76147000": {
-    "ciudad": "CARTAGO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "CARTAGO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "97161000": {
     "ciudad": "CARURU",
@@ -727,8 +719,12 @@
     "ciudad": "CASTILLA LA NUEVA",
     "departamento": "META"
   },
-  "5154000": {
+  "05154000": {
     "ciudad": "CAUCASIA",
+    "departamento": "ANTIOQUIA"
+  },
+  "05138000": {
+    "ciudad": "CAÑASGORDAS",
     "departamento": "ANTIOQUIA"
   },
   "68160000": {
@@ -756,8 +752,8 @@
     "departamento": "CHOCO"
   },
   "52240000": {
-    "ciudad": "CHACHAGUI",
-    "departamento": "NARINO"
+    "ciudad": "CHACHAGÜI",
+    "departamento": "NARIÑO"
   },
   "25168000": {
     "ciudad": "CHAGUANI",
@@ -791,25 +787,25 @@
     "ciudad": "CHIBOLO",
     "departamento": "MAGDALENA"
   },
-  "5172000": {
+  "05172000": {
     "ciudad": "CHIGORODO",
     "departamento": "ANTIOQUIA"
-  },
-  "68176000": {
-    "ciudad": "CHIMA",
-    "departamento": "SANTANDER"
   },
   "23168000": {
     "ciudad": "CHIMA",
     "departamento": "CORDOBA"
+  },
+  "68176000": {
+    "ciudad": "CHIMA",
+    "departamento": "SANTANDER"
   },
   "20175000": {
     "ciudad": "CHIMICHAGUA",
     "departamento": "CESAR"
   },
   "54172000": {
-    "ciudad": "CHINACOTA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "CHINACOTA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "15172000": {
     "ciudad": "CHINAVITA",
@@ -852,8 +848,8 @@
     "departamento": "BOYACA"
   },
   "54174000": {
-    "ciudad": "CHITAGA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "CHITAGA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "15185000": {
     "ciudad": "CHITARAQUE",
@@ -899,11 +895,11 @@
     "ciudad": "CIRCASIA",
     "departamento": "QUINDIO"
   },
-  "5190000": {
+  "05190000": {
     "ciudad": "CISNEROS",
     "departamento": "ANTIOQUIA"
   },
-  "5101000": {
+  "05101000": {
     "ciudad": "CIUDAD BOLIVAR",
     "departamento": "ANTIOQUIA"
   },
@@ -911,7 +907,7 @@
     "ciudad": "CLEMENCIA",
     "departamento": "BOLIVAR"
   },
-  "5197000": {
+  "05197000": {
     "ciudad": "COCORNA",
     "departamento": "ANTIOQUIA"
   },
@@ -929,7 +925,7 @@
   },
   "52203000": {
     "ciudad": "COLON",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "86219000": {
     "ciudad": "COLON",
@@ -943,7 +939,7 @@
     "ciudad": "COMBITA",
     "departamento": "BOYACA"
   },
-  "5206000": {
+  "05206000": {
     "ciudad": "CONCEPCION",
     "departamento": "ANTIOQUIA"
   },
@@ -951,7 +947,7 @@
     "ciudad": "CONCEPCION",
     "departamento": "SANTANDER"
   },
-  "5209000": {
+  "05209000": {
     "ciudad": "CONCORDIA",
     "departamento": "ANTIOQUIA"
   },
@@ -969,21 +965,21 @@
   },
   "52207000": {
     "ciudad": "CONSACA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "52210000": {
     "ciudad": "CONTADERO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "68211000": {
     "ciudad": "CONTRATACION",
     "departamento": "SANTANDER"
   },
   "54206000": {
-    "ciudad": "CONVENCION NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "CONVENCION",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5212000": {
+  "05212000": {
     "ciudad": "COPACABANA",
     "departamento": "ANTIOQUIA"
   },
@@ -997,7 +993,7 @@
   },
   "52215000": {
     "ciudad": "CORDOBA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "63212000": {
     "ciudad": "CORDOBA",
@@ -1032,7 +1028,7 @@
     "departamento": "BOYACA"
   },
   "70221000": {
-    "ciudad": "COVENAS",
+    "ciudad": "COVEÑAS",
     "departamento": "SUCRE"
   },
   "73217000": {
@@ -1045,7 +1041,7 @@
   },
   "52224000": {
     "ciudad": "CUASPUD",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "15223000": {
     "ciudad": "CUBARA",
@@ -1064,12 +1060,12 @@
     "departamento": "CUNDINAMARCA"
   },
   "54001000": {
-    "ciudad": "CUCUTA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "CUCUTA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "54223000": {
-    "ciudad": "CUCUTILLA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "CUCUTILLA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "15226000": {
     "ciudad": "CUITIVA",
@@ -1085,11 +1081,11 @@
   },
   "52227000": {
     "ciudad": "CUMBAL",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "52233000": {
     "ciudad": "CUMBITARA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "73226000": {
     "ciudad": "CUNDAY",
@@ -1107,27 +1103,27 @@
     "ciudad": "CURUMANI",
     "departamento": "CESAR"
   },
-  "5234000": {
+  "05234000": {
     "ciudad": "DABEIBA",
     "departamento": "ANTIOQUIA"
   },
   "76233000": {
-    "ciudad": "DAGUA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "DAGUA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "44090000": {
-    "ciudad": "DIBULLA LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "DIBULLA",
+    "departamento": "LA GUAJIRA"
   },
   "44098000": {
-    "ciudad": "DISTRACCION LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "DISTRACCION",
+    "departamento": "LA GUAJIRA"
   },
   "73236000": {
     "ciudad": "DOLORES",
     "departamento": "TOLIMA"
   },
-  "5237000": {
+  "05237000": {
     "ciudad": "DON MATIAS",
     "departamento": "ANTIOQUIA"
   },
@@ -1140,18 +1136,18 @@
     "departamento": "BOYACA"
   },
   "54239000": {
-    "ciudad": "DURANIA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "DURANIA",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5240000": {
+  "05240000": {
     "ciudad": "EBEJICO",
     "departamento": "ANTIOQUIA"
   },
   "76243000": {
-    "ciudad": "EL AGUILA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "EL AGUILA",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5250000": {
+  "05250000": {
     "ciudad": "EL BAGRE",
     "departamento": "ANTIOQUIA"
   },
@@ -1160,8 +1156,8 @@
     "departamento": "MAGDALENA"
   },
   "76246000": {
-    "ciudad": "EL CAIRO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "EL CAIRO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "50245000": {
     "ciudad": "EL CALVARIO",
@@ -1172,8 +1168,8 @@
     "departamento": "CHOCO"
   },
   "54245000": {
-    "ciudad": "EL CARMEN NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "EL CARMEN",
+    "departamento": "NORTE DE SANTANDER"
   },
   "27245000": {
     "ciudad": "EL CARMEN DE ATRATO",
@@ -1187,7 +1183,7 @@
     "ciudad": "EL CARMEN DE CHUCURI",
     "departamento": "SANTANDER"
   },
-  "5148000": {
+  "05148000": {
     "ciudad": "EL CARMEN DE VIBORAL",
     "departamento": "ANTIOQUIA"
   },
@@ -1196,12 +1192,12 @@
     "departamento": "META"
   },
   "76248000": {
-    "ciudad": "EL CERRITO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "EL CERRITO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "52250000": {
     "ciudad": "EL CHARCO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "15244000": {
     "ciudad": "EL COCUY",
@@ -1224,8 +1220,8 @@
     "departamento": "META"
   },
   "76250000": {
-    "ciudad": "EL DOVIO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "EL DOVIO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "91263000": {
     "ciudad": "EL ENCANTO",
@@ -1248,8 +1244,8 @@
     "departamento": "CHOCO"
   },
   "44110000": {
-    "ciudad": "EL MOLINO LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "EL MOLINO",
+    "departamento": "LA GUAJIRA"
   },
   "20250000": {
     "ciudad": "EL PASO",
@@ -1260,23 +1256,23 @@
     "departamento": "CAQUETA"
   },
   "52254000": {
-    "ciudad": "EL PENOL",
-    "departamento": "NARINO"
+    "ciudad": "EL PEÑOL",
+    "departamento": "NARIÑO"
   },
   "13268000": {
-    "ciudad": "EL PENON",
+    "ciudad": "EL PEÑON",
     "departamento": "BOLIVAR"
   },
   "25258000": {
-    "ciudad": "EL PENON",
+    "ciudad": "EL PEÑON",
     "departamento": "CUNDINAMARCA"
   },
   "68250000": {
-    "ciudad": "EL PENON",
+    "ciudad": "EL PEÑON",
     "departamento": "SANTANDER"
   },
   "47258000": {
-    "ciudad": "EL PINON",
+    "ciudad": "EL PIÑON",
     "departamento": "MAGDALENA"
   },
   "68255000": {
@@ -1301,15 +1297,15 @@
   },
   "52256000": {
     "ciudad": "EL ROSARIO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5697000": {
+  "05697000": {
     "ciudad": "EL SANTUARIO",
     "departamento": "ANTIOQUIA"
   },
   "52258000": {
     "ciudad": "EL TABLON DE GOMEZ",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "19256000": {
     "ciudad": "EL TAMBO",
@@ -1317,15 +1313,15 @@
   },
   "52260000": {
     "ciudad": "EL TAMBO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "54250000": {
-    "ciudad": "EL TARRA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "EL TARRA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "54261000": {
-    "ciudad": "EL ZULIA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "EL ZULIA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "41244000": {
     "ciudad": "ELIAS",
@@ -1339,11 +1335,11 @@
     "ciudad": "ENCISO",
     "departamento": "SANTANDER"
   },
-  "5264000": {
+  "05264000": {
     "ciudad": "ENTRERRIOS",
     "departamento": "ANTIOQUIA"
   },
-  "5266000": {
+  "05266000": {
     "ciudad": "ENVIGADO",
     "departamento": "ANTIOQUIA"
   },
@@ -1392,8 +1388,8 @@
     "departamento": "SANTANDER"
   },
   "76275000": {
-    "ciudad": "FLORIDA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "FLORIDA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "68276000": {
     "ciudad": "FLORIDABLANCA",
@@ -1404,8 +1400,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "44279000": {
-    "ciudad": "FONSECA LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "FONSECA",
+    "departamento": "LA GUAJIRA"
   },
   "81300000": {
     "ciudad": "FORTUL",
@@ -1417,9 +1413,9 @@
   },
   "52520000": {
     "ciudad": "FRANCISCO PIZARRO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5282000": {
+  "05282000": {
     "ciudad": "FREDONIA",
     "departamento": "ANTIOQUIA"
   },
@@ -1427,7 +1423,7 @@
     "ciudad": "FRESNO",
     "departamento": "TOLIMA"
   },
-  "5284000": {
+  "05284000": {
     "ciudad": "FRONTINO",
     "departamento": "ANTIOQUIA"
   },
@@ -1441,7 +1437,7 @@
   },
   "52287000": {
     "ciudad": "FUNES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "25286000": {
     "ciudad": "FUNZA",
@@ -1475,7 +1471,7 @@
     "ciudad": "GALAN",
     "departamento": "SANTANDER"
   },
-  "8296000": {
+  "08296000": {
     "ciudad": "GALAPA",
     "departamento": "ATLANTICO"
   },
@@ -1516,10 +1512,10 @@
     "departamento": "HUILA"
   },
   "76306000": {
-    "ciudad": "GINEBRA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "GINEBRA",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5306000": {
+  "05306000": {
     "ciudad": "GIRALDO",
     "departamento": "ANTIOQUIA"
   },
@@ -1527,7 +1523,7 @@
     "ciudad": "GIRARDOT",
     "departamento": "CUNDINAMARCA"
   },
-  "5308000": {
+  "05308000": {
     "ciudad": "GIRARDOTA",
     "departamento": "ANTIOQUIA"
   },
@@ -1535,7 +1531,7 @@
     "ciudad": "GIRON",
     "departamento": "SANTANDER"
   },
-  "5310000": {
+  "05310000": {
     "ciudad": "GOMEZ PLATA",
     "departamento": "ANTIOQUIA"
   },
@@ -1544,10 +1540,10 @@
     "departamento": "CESAR"
   },
   "54313000": {
-    "ciudad": "GRAMALOTE NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "GRAMALOTE",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5313000": {
+  "05313000": {
     "ciudad": "GRANADA",
     "departamento": "ANTIOQUIA"
   },
@@ -1568,8 +1564,8 @@
     "departamento": "BOYACA"
   },
   "76318000": {
-    "ciudad": "GUACARI VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "GUACARI",
+    "departamento": "VALLE DEL CAUCA"
   },
   "25317000": {
     "ciudad": "GUACHETA",
@@ -1577,13 +1573,13 @@
   },
   "52317000": {
     "ciudad": "GUACHUCAL",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "76111000": {
-    "ciudad": "GUADALAJARA DE BUGA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "GUADALAJARA DE BUGA",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5315000": {
+  "05315000": {
     "ciudad": "GUADALUPE",
     "departamento": "ANTIOQUIA"
   },
@@ -1601,11 +1597,11 @@
   },
   "52320000": {
     "ciudad": "GUAITARILLA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "52323000": {
     "ciudad": "GUALMATAN",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "47318000": {
     "ciudad": "GUAMAL",
@@ -1631,7 +1627,7 @@
     "ciudad": "GUARANDA",
     "departamento": "SUCRE"
   },
-  "5318000": {
+  "05318000": {
     "ciudad": "GUARNE",
     "departamento": "ANTIOQUIA"
   },
@@ -1639,7 +1635,7 @@
     "ciudad": "GUASCA",
     "departamento": "CUNDINAMARCA"
   },
-  "5321000": {
+  "05321000": {
     "ciudad": "GUATAPE",
     "departamento": "ANTIOQUIA"
   },
@@ -1675,21 +1671,21 @@
     "ciudad": "GUAYATA",
     "departamento": "BOYACA"
   },
-  "68327000": {
-    "ciudad": "GUEPSA",
-    "departamento": "SANTANDER"
-  },
-  "15332000": {
-    "ciudad": "GUICAN",
-    "departamento": "BOYACA"
-  },
   "25339000": {
     "ciudad": "GUTIERREZ",
     "departamento": "CUNDINAMARCA"
   },
-  "54344000": {
-    "ciudad": "HACARI NORTE DE",
+  "68327000": {
+    "ciudad": "GÜEPSA",
     "departamento": "SANTANDER"
+  },
+  "15332000": {
+    "ciudad": "GÜICAN",
+    "departamento": "BOYACA"
+  },
+  "54344000": {
+    "ciudad": "HACARI",
+    "departamento": "NORTE DE SANTANDER"
   },
   "13300000": {
     "ciudad": "HATILLO DE LOBA",
@@ -1704,22 +1700,22 @@
     "departamento": "CASANARE"
   },
   "44378000": {
-    "ciudad": "HATONUEVO LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "HATONUEVO",
+    "departamento": "LA GUAJIRA"
   },
-  "5347000": {
+  "05347000": {
     "ciudad": "HELICONIA",
     "departamento": "ANTIOQUIA"
   },
   "54347000": {
-    "ciudad": "HERRAN NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "HERRAN",
+    "departamento": "NORTE DE SANTANDER"
   },
   "73347000": {
     "ciudad": "HERVEO",
     "departamento": "TOLIMA"
   },
-  "5353000": {
+  "05353000": {
     "ciudad": "HISPANIA",
     "departamento": "ANTIOQUIA"
   },
@@ -1741,11 +1737,11 @@
   },
   "52352000": {
     "ciudad": "ILES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "52354000": {
     "ciudad": "IMUES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "94001000": {
     "ciudad": "INIRIDA",
@@ -1757,7 +1753,7 @@
   },
   "52356000": {
     "ciudad": "IPIALES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "41357000": {
     "ciudad": "IQUIRA",
@@ -1771,11 +1767,11 @@
     "ciudad": "ISTMINA",
     "departamento": "CHOCO"
   },
-  "5360000": {
-    "ciudad": "ITAGUI",
+  "05360000": {
+    "ciudad": "ITAGÜI",
     "departamento": "ANTIOQUIA"
   },
-  "5361000": {
+  "05361000": {
     "ciudad": "ITUANGO",
     "departamento": "ANTIOQUIA"
   },
@@ -1788,10 +1784,10 @@
     "departamento": "CAUCA"
   },
   "76364000": {
-    "ciudad": "JAMUNDI VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "JAMUNDI",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5364000": {
+  "05364000": {
     "ciudad": "JARDIN",
     "departamento": "ANTIOQUIA"
   },
@@ -1799,7 +1795,7 @@
     "ciudad": "JENESANO",
     "departamento": "BOYACA"
   },
-  "5368000": {
+  "05368000": {
     "ciudad": "JERICO",
     "departamento": "ANTIOQUIA"
   },
@@ -1819,7 +1815,7 @@
     "ciudad": "JORDAN",
     "departamento": "SANTANDER"
   },
-  "8372000": {
+  "08372000": {
     "ciudad": "JUAN DE ACOSTA",
     "departamento": "ATLANTICO"
   },
@@ -1851,7 +1847,7 @@
     "ciudad": "LA CAPILLA",
     "departamento": "BOYACA"
   },
-  "5376000": {
+  "05376000": {
     "ciudad": "LA CEJA",
     "departamento": "ANTIOQUIA"
   },
@@ -1865,27 +1861,27 @@
   },
   "52378000": {
     "ciudad": "LA CRUZ",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "76377000": {
-    "ciudad": "LA CUMBRE VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "LA CUMBRE",
+    "departamento": "VALLE DEL CAUCA"
   },
   "17380000": {
     "ciudad": "LA DORADA",
     "departamento": "CALDAS"
   },
   "54385000": {
-    "ciudad": "LA ESPERANZA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "LA ESPERANZA",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5380000": {
+  "05380000": {
     "ciudad": "LA ESTRELLA",
     "departamento": "ANTIOQUIA"
   },
   "52381000": {
     "ciudad": "LA FLORIDA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "20383000": {
     "ciudad": "LA GLORIA",
@@ -1900,12 +1896,12 @@
     "departamento": "CESAR"
   },
   "44420000": {
-    "ciudad": "LA JAGUA DEL PILAR LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "LA JAGUA DEL PILAR",
+    "departamento": "LA GUAJIRA"
   },
   "52385000": {
     "ciudad": "LA LLANADA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "50350000": {
     "ciudad": "LA MACARENA",
@@ -1920,7 +1916,7 @@
     "departamento": "CUNDINAMARCA"
   },
   "18410000": {
-    "ciudad": "LA MONTANITA",
+    "ciudad": "LA MONTAÑITA",
     "departamento": "CAQUETA"
   },
   "25394000": {
@@ -1940,10 +1936,10 @@
     "departamento": "AMAZONAS"
   },
   "25398000": {
-    "ciudad": "LA PENA",
+    "ciudad": "LA PEÑA",
     "departamento": "CUNDINAMARCA"
   },
-  "5390000": {
+  "05390000": {
     "ciudad": "LA PINTADA",
     "departamento": "ANTIOQUIA"
   },
@@ -1952,8 +1948,8 @@
     "departamento": "HUILA"
   },
   "54398000": {
-    "ciudad": "LA PLAYA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "LA PLAYA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "99524000": {
     "ciudad": "LA PRIMAVERA",
@@ -1973,23 +1969,23 @@
   },
   "52390000": {
     "ciudad": "LA TOLA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5400000": {
+  "05400000": {
     "ciudad": "LA UNION",
     "departamento": "ANTIOQUIA"
   },
   "52399000": {
     "ciudad": "LA UNION",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "70400000": {
     "ciudad": "LA UNION",
     "departamento": "SUCRE"
   },
   "76400000": {
-    "ciudad": "LA UNION VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "LA UNION",
+    "departamento": "VALLE DEL CAUCA"
   },
   "15403000": {
     "ciudad": "LA UVITA",
@@ -2008,8 +2004,8 @@
     "departamento": "BOYACA"
   },
   "76403000": {
-    "ciudad": "LA VICTORIA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "LA VICTORIA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "91430000": {
     "ciudad": "LA VICTORIA",
@@ -2020,8 +2016,8 @@
     "departamento": "RISARALDA"
   },
   "54377000": {
-    "ciudad": "LABATECA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "LABATECA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "15377000": {
     "ciudad": "LABRANZAGRANDE",
@@ -2041,7 +2037,7 @@
   },
   "52405000": {
     "ciudad": "LEIVA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "50400000": {
     "ciudad": "LEJANIAS",
@@ -2063,13 +2059,13 @@
     "ciudad": "LIBANO",
     "departamento": "TOLIMA"
   },
-  "5411000": {
+  "05411000": {
     "ciudad": "LIBORINA",
     "departamento": "ANTIOQUIA"
   },
   "52411000": {
     "ciudad": "LINARES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "27413000": {
     "ciudad": "LLORO",
@@ -2085,7 +2081,7 @@
   },
   "52418000": {
     "ciudad": "LOS ANDES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "23419000": {
     "ciudad": "LOS CORDOBAS",
@@ -2096,18 +2092,18 @@
     "departamento": "SUCRE"
   },
   "54405000": {
-    "ciudad": "LOS PATIOS NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "LOS PATIOS",
+    "departamento": "NORTE DE SANTANDER"
   },
   "68418000": {
     "ciudad": "LOS SANTOS",
     "departamento": "SANTANDER"
   },
   "54418000": {
-    "ciudad": "LOURDES NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "LOURDES",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "8421000": {
+  "08421000": {
     "ciudad": "LURUACO",
     "departamento": "ATLANTICO"
   },
@@ -2119,7 +2115,7 @@
     "ciudad": "MACARAVITA",
     "departamento": "SANTANDER"
   },
-  "5425000": {
+  "05425000": {
     "ciudad": "MACEO",
     "departamento": "ANTIOQUIA"
   },
@@ -2136,16 +2132,16 @@
     "departamento": "BOLIVAR"
   },
   "52427000": {
-    "ciudad": "MAGUI",
-    "departamento": "NARINO"
+    "ciudad": "MAGÜI",
+    "departamento": "NARIÑO"
   },
   "13433000": {
     "ciudad": "MAHATES",
     "departamento": "BOLIVAR"
   },
   "44430000": {
-    "ciudad": "MAICAO LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "MAICAO",
+    "departamento": "LA GUAJIRA"
   },
   "70429000": {
     "ciudad": "MAJAGUAL",
@@ -2155,25 +2151,25 @@
     "ciudad": "MALAGA",
     "departamento": "SANTANDER"
   },
-  "8433000": {
+  "08433000": {
     "ciudad": "MALAMBO",
     "departamento": "ATLANTICO"
   },
   "52435000": {
     "ciudad": "MALLAMA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "8436000": {
+  "08436000": {
     "ciudad": "MANATI",
     "departamento": "ATLANTICO"
   },
-  "20443000": {
+  "44560000": {
     "ciudad": "MANAURE",
     "departamento": "CESAR"
   },
-  "44560000": {
-    "ciudad": "MANAURE LA",
-    "departamento": "GUAJIRA"
+  "44560009": {
+    "ciudad": "MANAURE",
+    "departamento": "LA GUAJIRA"
   },
   "85139000": {
     "ciudad": "MANI",
@@ -2207,7 +2203,7 @@
     "ciudad": "MARIA LA BAJA",
     "departamento": "BOLIVAR"
   },
-  "5440000": {
+  "05440000": {
     "ciudad": "MARINILLA",
     "departamento": "ANTIOQUIA"
   },
@@ -2239,7 +2235,7 @@
     "ciudad": "MATANZA",
     "departamento": "SANTANDER"
   },
-  "50010000": {
+  "05001000": {
     "ciudad": "MEDELLIN",
     "departamento": "ANTIOQUIA"
   },
@@ -2331,7 +2327,7 @@
     "ciudad": "MONIQUIRA",
     "departamento": "BOYACA"
   },
-  "5467000": {
+  "05467000": {
     "ciudad": "MONTEBELLO",
     "departamento": "ANTIOQUIA"
   },
@@ -2354,10 +2350,6 @@
   "85162000": {
     "ciudad": "MONTERREY",
     "departamento": "CASANARE"
-  },
-  "23500000": {
-    "ciudad": "MONITOS",
-    "departamento": "CORDOBA"
   },
   "13473000": {
     "ciudad": "MORALES",
@@ -2385,43 +2377,47 @@
   },
   "52473000": {
     "ciudad": "MOSQUERA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "15476000": {
     "ciudad": "MOTAVITA",
     "departamento": "BOYACA"
   },
+  "23500000": {
+    "ciudad": "MOÑITOS",
+    "departamento": "CORDOBA"
+  },
   "73461000": {
     "ciudad": "MURILLO",
     "departamento": "TOLIMA"
   },
-  "5475000": {
+  "05475000": {
     "ciudad": "MURINDO",
     "departamento": "ANTIOQUIA"
   },
-  "5480000": {
+  "05480000": {
     "ciudad": "MUTATA",
     "departamento": "ANTIOQUIA"
   },
   "54480000": {
-    "ciudad": "MUTISCUA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "MUTISCUA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "15480000": {
     "ciudad": "MUZO",
     "departamento": "BOYACA"
   },
-  "5483000": {
-    "ciudad": "NARINO",
+  "05483000": {
+    "ciudad": "NARIÑO",
     "departamento": "ANTIOQUIA"
   },
   "25483000": {
-    "ciudad": "NARINO",
+    "ciudad": "NARIÑO",
     "departamento": "CUNDINAMARCA"
   },
   "52480000": {
-    "ciudad": "NARINO",
-    "departamento": "NARINO"
+    "ciudad": "NARIÑO",
+    "departamento": "NARIÑO"
   },
   "41483000": {
     "ciudad": "NATAGA",
@@ -2431,11 +2427,11 @@
     "ciudad": "NATAGAIMA",
     "departamento": "TOLIMA"
   },
-  "5495000": {
+  "05495000": {
     "ciudad": "NECHI",
     "departamento": "ANTIOQUIA"
   },
-  "5490000": {
+  "05490000": {
     "ciudad": "NECOCLI",
     "departamento": "ANTIOQUIA"
   },
@@ -2471,6 +2467,10 @@
     "ciudad": "NORCASIA",
     "departamento": "CALDAS"
   },
+  "13490000": {
+    "ciudad": "NOROSI",
+    "departamento": "BOLIVAR"
+  },
   "27491000": {
     "ciudad": "NOVITA",
     "departamento": "CHOCO"
@@ -2492,16 +2492,16 @@
     "departamento": "CHOCO"
   },
   "76497000": {
-    "ciudad": "OBANDO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "OBANDO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "68498000": {
     "ciudad": "OCAMONTE",
     "departamento": "SANTANDER"
   },
   "54498000": {
-    "ciudad": "OCANA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "OCAÑA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "68500000": {
     "ciudad": "OIBA",
@@ -2511,13 +2511,13 @@
     "ciudad": "OICATA",
     "departamento": "BOYACA"
   },
-  "5501000": {
+  "05501000": {
     "ciudad": "OLAYA",
     "departamento": "ANTIOQUIA"
   },
   "52490000": {
     "ciudad": "OLAYA HERRERA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "68502000": {
     "ciudad": "ONZAGA",
@@ -2541,7 +2541,7 @@
   },
   "52506000": {
     "ciudad": "OSPINA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "15507000": {
     "ciudad": "OTANCHE",
@@ -2571,13 +2571,13 @@
     "ciudad": "PADILLA",
     "departamento": "CAUCA"
   },
-  "19517000": {
-    "ciudad": "PAEZ",
-    "departamento": "CAUCA"
-  },
   "15514000": {
     "ciudad": "PAEZ",
     "departamento": "BOYACA"
+  },
+  "19517000": {
+    "ciudad": "PAEZ",
+    "departamento": "CAUCA"
   },
   "41518000": {
     "ciudad": "PAICOL",
@@ -2615,7 +2615,7 @@
     "ciudad": "PALMAR",
     "departamento": "SANTANDER"
   },
-  "8520000": {
+  "08520000": {
     "ciudad": "PALMAR DE VARELA",
     "departamento": "ATLANTICO"
   },
@@ -2624,8 +2624,8 @@
     "departamento": "SANTANDER"
   },
   "76520000": {
-    "ciudad": "PALMIRA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "PALMIRA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "70523000": {
     "ciudad": "PALMITO",
@@ -2636,12 +2636,12 @@
     "departamento": "TOLIMA"
   },
   "54518000": {
-    "ciudad": "PAMPLONA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "PAMPLONA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "54520000": {
-    "ciudad": "PAMPLONITA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "PAMPLONITA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "94887000": {
     "ciudad": "PANA PANA",
@@ -2673,7 +2673,7 @@
   },
   "52001000": {
     "ciudad": "PASTO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "19532000": {
     "ciudad": "PATIA",
@@ -2707,11 +2707,7 @@
     "ciudad": "PENSILVANIA",
     "departamento": "CALDAS"
   },
-  "5541000": {
-    "ciudad": "PENOL",
-    "departamento": "ANTIOQUIA"
-  },
-  "5543000": {
+  "05543000": {
     "ciudad": "PEQUE",
     "departamento": "ANTIOQUIA"
   },
@@ -2722,6 +2718,10 @@
   "15542000": {
     "ciudad": "PESCA",
     "departamento": "BOYACA"
+  },
+  "05541000": {
+    "ciudad": "PEÑOL",
+    "departamento": "ANTIOQUIA"
   },
   "19533000": {
     "ciudad": "PIAMONTE",
@@ -2744,7 +2744,7 @@
     "departamento": "QUINDIO"
   },
   "47545000": {
-    "ciudad": "PIJINO DEL CARMEN",
+    "ciudad": "PIJIÑO DEL CARMEN",
     "departamento": "MAGDALENA"
   },
   "68549000": {
@@ -2755,7 +2755,7 @@
     "ciudad": "PINILLOS",
     "departamento": "BOLIVAR"
   },
-  "8549000": {
+  "08549000": {
     "ciudad": "PIOJO",
     "departamento": "ATLANTICO"
   },
@@ -2789,13 +2789,13 @@
   },
   "52540000": {
     "ciudad": "POLICARPA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "8558000": {
+  "08558000": {
     "ciudad": "POLONUEVO",
     "departamento": "ATLANTICO"
   },
-  "8560000": {
+  "08560000": {
     "ciudad": "PONEDERA",
     "departamento": "ATLANTICO"
   },
@@ -2809,11 +2809,11 @@
   },
   "52560000": {
     "ciudad": "POTOSI",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "76563000": {
-    "ciudad": "PRADERA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "PRADERA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "73563000": {
     "ciudad": "PRADO",
@@ -2821,11 +2821,11 @@
   },
   "52565000": {
     "ciudad": "PROVIDENCIA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "88564000": {
-    "ciudad": "PROVIDENCIA ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA",
-    "departamento": "CATALINA"
+    "ciudad": "PROVIDENCIA",
+    "departamento": "ARCHIPIELAGO DE SAN ANDRES"
   },
   "20570000": {
     "ciudad": "PUEBLO BELLO",
@@ -2839,7 +2839,7 @@
     "ciudad": "PUEBLO RICO",
     "departamento": "RISARALDA"
   },
-  "5576000": {
+  "05576000": {
     "ciudad": "PUEBLORRICO",
     "departamento": "ANTIOQUIA"
   },
@@ -2853,7 +2853,7 @@
   },
   "52573000": {
     "ciudad": "PUERRES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "91530000": {
     "ciudad": "PUERTO ALEGRIA",
@@ -2867,7 +2867,7 @@
     "ciudad": "PUERTO ASIS",
     "departamento": "PUTUMAYO"
   },
-  "5579000": {
+  "05579000": {
     "ciudad": "PUERTO BERRIO",
     "departamento": "ANTIOQUIA"
   },
@@ -2880,10 +2880,10 @@
     "departamento": "PUTUMAYO"
   },
   "99001000": {
-    "ciudad": "PUERTO CARRENO",
+    "ciudad": "PUERTO CARREÑO",
     "departamento": "VICHADA"
   },
-  "8573000": {
+  "08573000": {
     "ciudad": "PUERTO COLOMBIA",
     "departamento": "ATLANTICO"
   },
@@ -2919,12 +2919,12 @@
     "ciudad": "PUERTO LOPEZ",
     "departamento": "META"
   },
-  "5585000": {
+  "05585000": {
     "ciudad": "PUERTO NARE",
     "departamento": "ANTIOQUIA"
   },
   "91540000": {
-    "ciudad": "PUERTO NARINO",
+    "ciudad": "PUERTO NARIÑO",
     "departamento": "AMAZONAS"
   },
   "68573000": {
@@ -2948,8 +2948,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "54553000": {
-    "ciudad": "PUERTO SANTANDER NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "PUERTO SANTANDER",
+    "departamento": "NORTE DE SANTANDER"
   },
   "91669000": {
     "ciudad": "PUERTO SANTANDER",
@@ -2959,7 +2959,7 @@
     "ciudad": "PUERTO TEJADA",
     "departamento": "CAUCA"
   },
-  "5591000": {
+  "05591000": {
     "ciudad": "PUERTO TRIUNFO",
     "departamento": "ANTIOQUIA"
   },
@@ -2973,7 +2973,7 @@
   },
   "52585000": {
     "ciudad": "PUPIALES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "19585000": {
     "ciudad": "PURACE",
@@ -3016,8 +3016,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "54599000": {
-    "ciudad": "RAGONVALIA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "RAGONVALIA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "15599000": {
     "ciudad": "RAMIRIQUI",
@@ -3035,7 +3035,7 @@
     "ciudad": "REGIDOR",
     "departamento": "BOLIVAR"
   },
-  "5604000": {
+  "05604000": {
     "ciudad": "REMEDIOS",
     "departamento": "ANTIOQUIA"
   },
@@ -3043,7 +3043,7 @@
     "ciudad": "REMOLINO",
     "departamento": "MAGDALENA"
   },
-  "8606000": {
+  "08606000": {
     "ciudad": "REPELON",
     "departamento": "ATLANTICO"
   },
@@ -3052,10 +3052,10 @@
     "departamento": "META"
   },
   "76606000": {
-    "ciudad": "RESTREPO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "RESTREPO",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "5607000": {
+  "05607000": {
     "ciudad": "RETIRO",
     "departamento": "ANTIOQUIA"
   },
@@ -3065,7 +3065,7 @@
   },
   "52612000": {
     "ciudad": "RICAURTE",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "20614000": {
     "ciudad": "RIO DE ORO",
@@ -3088,14 +3088,14 @@
     "departamento": "TOLIMA"
   },
   "76616000": {
-    "ciudad": "RIOFRIO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "RIOFRIO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "44001000": {
-    "ciudad": "RIOHACHA LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "RIOHACHA",
+    "departamento": "LA GUAJIRA"
   },
-  "5615000": {
+  "05615000": {
     "ciudad": "RIONEGRO",
     "departamento": "ANTIOQUIA"
   },
@@ -3121,11 +3121,11 @@
   },
   "52621000": {
     "ciudad": "ROBERTO PAYAN",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "76622000": {
-    "ciudad": "ROLDANILLO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "ROLDANILLO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "73622000": {
     "ciudad": "RONCESVALLES",
@@ -3147,15 +3147,15 @@
     "ciudad": "SABANA DE TORRES",
     "departamento": "SANTANDER"
   },
-  "8634000": {
+  "08634000": {
     "ciudad": "SABANAGRANDE",
     "departamento": "ATLANTICO"
   },
-  "5628000": {
+  "05628000": {
     "ciudad": "SABANALARGA",
     "departamento": "ANTIOQUIA"
   },
-  "8638000": {
+  "08638000": {
     "ciudad": "SABANALARGA",
     "departamento": "ATLANTICO"
   },
@@ -3167,7 +3167,7 @@
     "ciudad": "SABANAS DE SAN ANGEL",
     "departamento": "MAGDALENA"
   },
-  "5631000": {
+  "05631000": {
     "ciudad": "SABANETA",
     "departamento": "ANTIOQUIA"
   },
@@ -3200,18 +3200,18 @@
     "departamento": "MAGDALENA"
   },
   "54660000": {
-    "ciudad": "SALAZAR NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "SALAZAR",
+    "departamento": "NORTE DE SANTANDER"
   },
   "73671000": {
-    "ciudad": "SALDANA",
+    "ciudad": "SALDAÑA",
     "departamento": "TOLIMA"
   },
   "63690000": {
     "ciudad": "SALENTO",
     "departamento": "QUINDIO"
   },
-  "5642000": {
+  "05642000": {
     "ciudad": "SALGAR",
     "departamento": "ANTIOQUIA"
   },
@@ -3225,7 +3225,7 @@
   },
   "52678000": {
     "ciudad": "SAMANIEGO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "70670000": {
     "ciudad": "SAMPUES",
@@ -3239,17 +3239,21 @@
     "ciudad": "SAN ALBERTO",
     "departamento": "CESAR"
   },
-  "5647000": {
-    "ciudad": "SAN ANDRES",
-    "departamento": "ANTIOQUIA"
-  },
   "68669000": {
     "ciudad": "SAN ANDRES",
     "departamento": "SANTANDER"
   },
   "88001000": {
-    "ciudad": "SAN ANDRES ARCHIPIELAGO DE SAN ANDRES, PROVIDENCIA Y SANTA",
-    "departamento": "CATALINA"
+    "ciudad": "SAN ANDRES",
+    "departamento": "ARCHIPIELAGO DE SAN ANDRES"
+  },
+  "05647000": {
+    "ciudad": "SAN ANDRES DE CUERQUIA",
+    "departamento": "ANTIOQUIA"
+  },
+  "52835000": {
+    "ciudad": "SAN ANDRES DE TUMACO",
+    "departamento": "NARIÑO"
   },
   "23670000": {
     "ciudad": "SAN ANDRES SOTAVENTO",
@@ -3281,21 +3285,21 @@
   },
   "52685000": {
     "ciudad": "SAN BERNARDO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "23675000": {
     "ciudad": "SAN BERNARDO DEL VIENTO",
     "departamento": "CORDOBA"
   },
   "54670000": {
-    "ciudad": "SAN CALIXTO NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "SAN CALIXTO",
+    "departamento": "NORTE DE SANTANDER"
   },
-  "5649000": {
+  "05649000": {
     "ciudad": "SAN CARLOS",
     "departamento": "ANTIOQUIA"
   },
-  "23678000": {
+  "23678015": {
     "ciudad": "SAN CARLOS",
     "departamento": "CORDOBA"
   },
@@ -3308,8 +3312,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "54673000": {
-    "ciudad": "SAN CAYETANO NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "SAN CAYETANO",
+    "departamento": "NORTE DE SANTANDER"
   },
   "13620000": {
     "ciudad": "SAN CRISTOBAL",
@@ -3335,7 +3339,7 @@
     "ciudad": "SAN FERNANDO",
     "departamento": "BOLIVAR"
   },
-  "5652000": {
+  "05652000": {
     "ciudad": "SAN FRANCISCO",
     "departamento": "ANTIOQUIA"
   },
@@ -3359,7 +3363,7 @@
     "ciudad": "SAN JACINTO DEL CAUCA",
     "departamento": "BOLIVAR"
   },
-  "5656000": {
+  "05656000": {
     "ciudad": "SAN JERONIMO",
     "departamento": "ANTIOQUIA"
   },
@@ -3371,8 +3375,12 @@
     "ciudad": "SAN JOSE",
     "departamento": "CALDAS"
   },
-  "5658000": {
-    "ciudad": "SAN JOSE DE LA MONTANA",
+  "52019000": {
+    "ciudad": "SAN JOSE DE ALBAN",
+    "departamento": "NARIÑO"
+  },
+  "05658000": {
+    "ciudad": "SAN JOSE DE LA MONTAÑA",
     "departamento": "ANTIOQUIA"
   },
   "68684000": {
@@ -3382,6 +3390,10 @@
   "15664000": {
     "ciudad": "SAN JOSE DE PARE",
     "departamento": "BOYACA"
+  },
+  "23682000": {
+    "ciudad": "SAN JOSE DE URE",
+    "departamento": "CORDOBA"
   },
   "18610000": {
     "ciudad": "SAN JOSE DEL FRAGUA",
@@ -3407,13 +3419,13 @@
     "ciudad": "SAN JUAN DE RIO SECO",
     "departamento": "CUNDINAMARCA"
   },
-  "5659000": {
+  "05659000": {
     "ciudad": "SAN JUAN DE URABA",
     "departamento": "ANTIOQUIA"
   },
   "44650000": {
-    "ciudad": "SAN JUAN DEL CESAR LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "SAN JUAN DEL CESAR",
+    "departamento": "LA GUAJIRA"
   },
   "13657000": {
     "ciudad": "SAN JUAN NEPOMUCENO",
@@ -3425,9 +3437,9 @@
   },
   "52687000": {
     "ciudad": "SAN LORENZO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5660000": {
+  "05660000": {
     "ciudad": "SAN LUIS",
     "departamento": "ANTIOQUIA"
   },
@@ -3442,6 +3454,10 @@
   "85325000": {
     "ciudad": "SAN LUIS DE PALENQUE",
     "departamento": "CASANARE"
+  },
+  "70742000": {
+    "ciudad": "SAN LUIS DE SINCE",
+    "departamento": "SUCRE"
   },
   "70708000": {
     "ciudad": "SAN MARCOS",
@@ -3485,29 +3501,29 @@
   },
   "52693000": {
     "ciudad": "SAN PABLO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "15681000": {
     "ciudad": "SAN PABLO DE BORBUR",
     "departamento": "BOYACA"
-  },
-  "5664000": {
-    "ciudad": "SAN PEDRO",
-    "departamento": "ANTIOQUIA"
   },
   "70717000": {
     "ciudad": "SAN PEDRO",
     "departamento": "SUCRE"
   },
   "76670000": {
-    "ciudad": "SAN PEDRO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "SAN PEDRO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "52694000": {
     "ciudad": "SAN PEDRO DE CARTAGO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5665000": {
+  "05664000": {
+    "ciudad": "SAN PEDRO DE LOS MILAGROS",
+    "departamento": "ANTIOQUIA"
+  },
+  "05665000": {
     "ciudad": "SAN PEDRO DE URABA",
     "departamento": "ANTIOQUIA"
   },
@@ -3515,11 +3531,11 @@
     "ciudad": "SAN PELAYO",
     "departamento": "CORDOBA"
   },
-  "5667000": {
+  "05667000": {
     "ciudad": "SAN RAFAEL",
     "departamento": "ANTIOQUIA"
   },
-  "5670000": {
+  "05670000": {
     "ciudad": "SAN ROQUE",
     "departamento": "ANTIOQUIA"
   },
@@ -3531,7 +3547,7 @@
     "ciudad": "SAN SEBASTIAN DE BUENAVISTA",
     "departamento": "MAGDALENA"
   },
-  "5674000": {
+  "05674000": {
     "ciudad": "SAN VICENTE",
     "departamento": "ANTIOQUIA"
   },
@@ -3549,19 +3565,19 @@
   },
   "52683000": {
     "ciudad": "SANDONA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "47707000": {
     "ciudad": "SANTA ANA",
     "departamento": "MAGDALENA"
   },
-  "5679000": {
+  "05679000": {
     "ciudad": "SANTA BARBARA",
     "departamento": "ANTIOQUIA"
   },
   "52696000": {
     "ciudad": "SANTA BARBARA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "68705000": {
     "ciudad": "SANTA BARBARA",
@@ -3575,6 +3591,10 @@
     "ciudad": "SANTA CATALINA",
     "departamento": "BOLIVAR"
   },
+  "05001004": {
+    "ciudad": "SANTA ELENA",
+    "departamento": "ANTIOQUIA"
+  },
   "68720000": {
     "ciudad": "SANTA HELENA DEL OPON",
     "departamento": "SANTANDER"
@@ -3583,7 +3603,7 @@
     "ciudad": "SANTA ISABEL",
     "departamento": "TOLIMA"
   },
-  "8675000": {
+  "08675000": {
     "ciudad": "SANTA LUCIA",
     "departamento": "ATLANTICO"
   },
@@ -3603,7 +3623,7 @@
     "ciudad": "SANTA ROSA",
     "departamento": "BOLIVAR"
   },
-  "19701000": {
+  "19452000": {
     "ciudad": "SANTA ROSA",
     "departamento": "CAUCA"
   },
@@ -3611,7 +3631,7 @@
     "ciudad": "SANTA ROSA DE CABAL",
     "departamento": "RISARALDA"
   },
-  "5686000": {
+  "05686000": {
     "ciudad": "SANTA ROSA DE OSOS",
     "departamento": "ANTIOQUIA"
   },
@@ -3633,9 +3653,9 @@
   },
   "52699000": {
     "ciudad": "SANTACRUZ",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
-  "5042000": {
+  "05042000": {
     "ciudad": "SANTAFE DE ANTIOQUIA",
     "departamento": "ANTIOQUIA"
   },
@@ -3648,8 +3668,8 @@
     "departamento": "CAUCA"
   },
   "54680000": {
-    "ciudad": "SANTIAGO NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "SANTIAGO",
+    "departamento": "NORTE DE SANTANDER"
   },
   "86760000": {
     "ciudad": "SANTIAGO",
@@ -3659,11 +3679,11 @@
     "ciudad": "SANTIAGO DE TOLU",
     "departamento": "SUCRE"
   },
-  "5690000": {
+  "05690000": {
     "ciudad": "SANTO DOMINGO",
     "departamento": "ANTIOQUIA"
   },
-  "8685000": {
+  "08685000": {
     "ciudad": "SANTO TOMAS",
     "departamento": "ATLANTICO"
   },
@@ -3673,15 +3693,15 @@
   },
   "52720000": {
     "ciudad": "SAPUYES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "81736000": {
     "ciudad": "SARAVENA",
     "departamento": "ARAUCA"
   },
   "54720000": {
-    "ciudad": "SARDINATA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "SARDINATA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "25718000": {
     "ciudad": "SASAIMA",
@@ -3695,7 +3715,7 @@
     "ciudad": "SATIVASUR",
     "departamento": "BOYACA"
   },
-  "5736000": {
+  "05736000": {
     "ciudad": "SEGOVIA",
     "departamento": "ANTIOQUIA"
   },
@@ -3704,8 +3724,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "76736000": {
-    "ciudad": "SEVILLA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "SEVILLA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "15740000": {
     "ciudad": "SIACHOQUE",
@@ -3720,8 +3740,8 @@
     "departamento": "PUTUMAYO"
   },
   "54743000": {
-    "ciudad": "SILOS NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "SILOS",
+    "departamento": "NORTE DE SANTANDER"
   },
   "25743000": {
     "ciudad": "SILVANIA",
@@ -3742,10 +3762,6 @@
   "13744000": {
     "ciudad": "SIMITI",
     "departamento": "BOLIVAR"
-  },
-  "70742000": {
-    "ciudad": "SINCE",
-    "departamento": "SUCRE"
   },
   "70001000": {
     "ciudad": "SINCELEJO",
@@ -3787,7 +3803,7 @@
     "ciudad": "SOLANO",
     "departamento": "CAQUETA"
   },
-  "8758000": {
+  "08758000": {
     "ciudad": "SOLEDAD",
     "departamento": "ATLANTICO"
   },
@@ -3799,11 +3815,11 @@
     "ciudad": "SOMONDOCO",
     "departamento": "BOYACA"
   },
-  "5756000": {
+  "05756000": {
     "ciudad": "SONSON",
     "departamento": "ANTIOQUIA"
   },
-  "5761000": {
+  "05761000": {
     "ciudad": "SOPETRAN",
     "departamento": "ANTIOQUIA"
   },
@@ -3835,7 +3851,7 @@
     "ciudad": "SUAITA",
     "departamento": "SANTANDER"
   },
-  "8770000": {
+  "08770000": {
     "ciudad": "SUAN",
     "departamento": "ATLANTICO"
   },
@@ -3927,17 +3943,17 @@
     "ciudad": "TAME",
     "departamento": "ARAUCA"
   },
-  "5789000": {
+  "05789000": {
     "ciudad": "TAMESIS",
     "departamento": "ANTIOQUIA"
   },
   "52786000": {
     "ciudad": "TAMINANGO",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "52788000": {
     "ciudad": "TANGUA",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "97666000": {
     "ciudad": "TARAIRA",
@@ -3947,7 +3963,7 @@
     "ciudad": "TARAPACA",
     "departamento": "AMAZONAS"
   },
-  "5790000": {
+  "05790000": {
     "ciudad": "TARAZA",
     "departamento": "ANTIOQUIA"
   },
@@ -3955,7 +3971,7 @@
     "ciudad": "TARQUI",
     "departamento": "HUILA"
   },
-  "5792000": {
+  "05792000": {
     "ciudad": "TARSO",
     "departamento": "ANTIOQUIA"
   },
@@ -3992,8 +4008,8 @@
     "departamento": "BOYACA"
   },
   "54800000": {
-    "ciudad": "TEORAMA NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "TEORAMA",
+    "departamento": "NORTE DE SANTANDER"
   },
   "41801000": {
     "ciudad": "TERUEL",
@@ -4020,8 +4036,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "54810000": {
-    "ciudad": "TIBU NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "TIBU",
+    "departamento": "NORTE DE SANTANDER"
   },
   "23807000": {
     "ciudad": "TIERRALTA",
@@ -4051,7 +4067,7 @@
     "ciudad": "TIQUISIO",
     "departamento": "BOLIVAR"
   },
-  "5809000": {
+  "05809000": {
     "ciudad": "TITIRIBI",
     "departamento": "ANTIOQUIA"
   },
@@ -4068,16 +4084,16 @@
     "departamento": "CUNDINAMARCA"
   },
   "15816000": {
-    "ciudad": "TOGUI",
+    "ciudad": "TOGÜI",
     "departamento": "BOYACA"
   },
-  "5819000": {
+  "05819000": {
     "ciudad": "TOLEDO",
     "departamento": "ANTIOQUIA"
   },
   "54820000": {
-    "ciudad": "TOLEDO NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "TOLEDO",
+    "departamento": "NORTE DE SANTANDER"
   },
   "70823000": {
     "ciudad": "TOLU VIEJO",
@@ -4100,8 +4116,8 @@
     "departamento": "CAUCA"
   },
   "76823000": {
-    "ciudad": "TORO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "TORO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "15822000": {
     "ciudad": "TOTA",
@@ -4116,20 +4132,20 @@
     "departamento": "CASANARE"
   },
   "76828000": {
-    "ciudad": "TRUJILLO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "TRUJILLO",
+    "departamento": "VALLE DEL CAUCA"
   },
-  "8832000": {
+  "08832000": {
     "ciudad": "TUBARA",
     "departamento": "ATLANTICO"
   },
-  "76834000": {
-    "ciudad": "TULUA VALLE DEL",
-    "departamento": "CAUCA"
+  "23815000": {
+    "ciudad": "TUCHIN",
+    "departamento": "CORDOBA"
   },
-  "52835000": {
-    "ciudad": "TUMACO",
-    "departamento": "NARINO"
+  "76834000": {
+    "ciudad": "TULUA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "15001000": {
     "ciudad": "TUNJA",
@@ -4141,7 +4157,7 @@
   },
   "52838000": {
     "ciudad": "TUQUERRES",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "13836000": {
     "ciudad": "TURBACO",
@@ -4151,7 +4167,7 @@
     "ciudad": "TURBANA",
     "departamento": "BOLIVAR"
   },
-  "5837000": {
+  "05837000": {
     "ciudad": "TURBO",
     "departamento": "ANTIOQUIA"
   },
@@ -4176,8 +4192,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "76845000": {
-    "ciudad": "ULLOA VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "ULLOA",
+    "departamento": "VALLE DEL CAUCA"
   },
   "15842000": {
     "ciudad": "UMBITA",
@@ -4195,7 +4211,7 @@
     "ciudad": "UNION PANAMERICANA",
     "departamento": "CHOCO"
   },
-  "5842000": {
+  "05842000": {
     "ciudad": "URAMITA",
     "departamento": "ANTIOQUIA"
   },
@@ -4204,18 +4220,18 @@
     "departamento": "META"
   },
   "44847000": {
-    "ciudad": "URIBIA LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "URIBIA",
+    "departamento": "LA GUAJIRA"
   },
-  "5847000": {
+  "05847000": {
     "ciudad": "URRAO",
     "departamento": "ANTIOQUIA"
   },
   "44855000": {
-    "ciudad": "URUMITA LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "URUMITA",
+    "departamento": "LA GUAJIRA"
   },
-  "8849000": {
+  "08849000": {
     "ciudad": "USIACURI",
     "departamento": "ATLANTICO"
   },
@@ -4223,7 +4239,7 @@
     "ciudad": "UTICA",
     "departamento": "CUNDINAMARCA"
   },
-  "5854000": {
+  "05854000": {
     "ciudad": "VALDIVIA",
     "departamento": "ANTIOQUIA"
   },
@@ -4247,7 +4263,7 @@
     "ciudad": "VALLEDUPAR",
     "departamento": "CESAR"
   },
-  "5856000": {
+  "05856000": {
     "ciudad": "VALPARAISO",
     "departamento": "ANTIOQUIA"
   },
@@ -4255,7 +4271,7 @@
     "ciudad": "VALPARAISO",
     "departamento": "CAQUETA"
   },
-  "5858000": {
+  "05858000": {
     "ciudad": "VEGACHI",
     "departamento": "ANTIOQUIA"
   },
@@ -4267,7 +4283,7 @@
     "ciudad": "VENADILLO",
     "departamento": "TOLIMA"
   },
-  "5861000": {
+  "05861000": {
     "ciudad": "VENECIA",
     "departamento": "ANTIOQUIA"
   },
@@ -4284,8 +4300,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "76863000": {
-    "ciudad": "VERSALLES VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "VERSALLES",
+    "departamento": "VALLE DEL CAUCA"
   },
   "68867000": {
     "ciudad": "VETAS",
@@ -4299,17 +4315,17 @@
     "ciudad": "VICTORIA",
     "departamento": "CALDAS"
   },
-  "5873000": {
+  "05873000": {
     "ciudad": "VIGIA DEL FUERTE",
     "departamento": "ANTIOQUIA"
   },
   "76869000": {
-    "ciudad": "VIJES VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "VIJES",
+    "departamento": "VALLE DEL CAUCA"
   },
   "54871000": {
-    "ciudad": "VILLA CARO NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "VILLA CARO",
+    "departamento": "NORTE DE SANTANDER"
   },
   "15407000": {
     "ciudad": "VILLA DE LEYVA",
@@ -4320,8 +4336,8 @@
     "departamento": "CUNDINAMARCA"
   },
   "54874000": {
-    "ciudad": "VILLA DEL ROSARIO NORTE DE",
-    "departamento": "SANTANDER"
+    "ciudad": "VILLA DEL ROSARIO",
+    "departamento": "NORTE DE SANTANDER"
   },
   "19845000": {
     "ciudad": "VILLA RICA",
@@ -4348,8 +4364,8 @@
     "departamento": "BOLIVAR"
   },
   "44874000": {
-    "ciudad": "VILLANUEVA LA",
-    "departamento": "GUAJIRA"
+    "ciudad": "VILLANUEVA",
+    "departamento": "LA GUAJIRA"
   },
   "68872000": {
     "ciudad": "VILLANUEVA",
@@ -4401,17 +4417,17 @@
   },
   "52885000": {
     "ciudad": "YACUANQUER",
-    "departamento": "NARINO"
+    "departamento": "NARIÑO"
   },
   "41885000": {
     "ciudad": "YAGUARA",
     "departamento": "HUILA"
   },
-  "5885000": {
+  "05885000": {
     "ciudad": "YALI",
     "departamento": "ANTIOQUIA"
   },
-  "5887000": {
+  "05887000": {
     "ciudad": "YARUMAL",
     "departamento": "ANTIOQUIA"
   },
@@ -4419,11 +4435,11 @@
     "ciudad": "YAVARATE",
     "departamento": "VAUPES"
   },
-  "5890000": {
+  "05890000": {
     "ciudad": "YOLOMBO",
     "departamento": "ANTIOQUIA"
   },
-  "5893000": {
+  "05893000": {
     "ciudad": "YONDO",
     "departamento": "ANTIOQUIA"
   },
@@ -4432,12 +4448,12 @@
     "departamento": "CASANARE"
   },
   "76890000": {
-    "ciudad": "YOTOCO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "YOTOCO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "76892000": {
-    "ciudad": "YUMBO VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "YUMBO",
+    "departamento": "VALLE DEL CAUCA"
   },
   "13894000": {
     "ciudad": "ZAMBRANO",
@@ -4451,13 +4467,13 @@
     "ciudad": "ZAPAYAN",
     "departamento": "MAGDALENA"
   },
-  "5895000": {
+  "05895000": {
     "ciudad": "ZARAGOZA",
     "departamento": "ANTIOQUIA"
   },
   "76895000": {
-    "ciudad": "ZARZAL VALLE DEL",
-    "departamento": "CAUCA"
+    "ciudad": "ZARZAL",
+    "departamento": "VALLE DEL CAUCA"
   },
   "15897000": {
     "ciudad": "ZETAQUIRA",
