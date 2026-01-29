@@ -41,3 +41,4 @@ done
 
 echo "🎯 Backend is healthy, starting Next.js server..."
 exec node server.js
+# Deploy trigger 2026-01-29_17:18:31
