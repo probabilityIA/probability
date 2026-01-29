@@ -187,15 +187,15 @@ jobs:
             echo "🛑 Deteniendo website..."
             podman stop -t 10 website_prod || true
 
-            echo "🗑️  Eliminando contenedor website..."
-            podman rm -f website_prod || true
+            echo "🗑️  Eliminando contenedor website y sus dependientes..."
+            podman rm -f --depend website_prod || true
 
             # Verificar y eliminar cualquier contenedor website_prod que quede
             echo "🔍 Verificando eliminación completa..."
             WEBSITE_IDS=$(podman ps -a --filter name=website_prod --format '{{.ID}}' 2>/dev/null || true)
             if [ -n "$WEBSITE_IDS" ]; then
-              echo "⚠️  Contenedores website encontrados, eliminando por ID..."
-              echo "$WEBSITE_IDS" | xargs -r podman rm -f
+              echo "⚠️  Contenedores website encontrados, eliminando por ID con dependientes..."
+              echo "$WEBSITE_IDS" | xargs -r podman rm -f --depend
             fi
             echo "✅ Contenedor website eliminado completamente"
 
