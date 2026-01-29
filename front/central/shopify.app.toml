@@ -19,6 +19,6 @@ redirect_urls = [
 api_version = "2024-10"
 
   [webhooks.privacy_compliance]
-  customer_data_request_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
-  customer_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
-  shop_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
+  customer_data_request_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhooks/customers/data_request"
+  customer_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhooks/customers/redact"
+  shop_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhooks/shop/redact"
