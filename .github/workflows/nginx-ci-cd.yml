@@ -222,10 +222,10 @@ jobs:
             source .env
 
             # Crear el contenedor nginx con --replace
+            # NO usamos --requires para permitir reemplazo independiente
             podman run -d \
               --replace \
               --name nginx_prod \
-              --requires=backend_prod,frontend_prod \
               --label io.podman.compose.project=compose-prod \
               --label io.podman.compose.service=nginx \
               --network compose-prod_app-network \

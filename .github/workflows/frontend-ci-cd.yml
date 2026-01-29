@@ -229,10 +229,10 @@ jobs:
             fi
 
             # Crear el contenedor frontend con --replace
+            # NO usamos --requires para permitir reemplazo independiente
             podman run -d \
               --replace \
               --name frontend_prod \
-              --requires=backend_prod \
               --label io.podman.compose.project=compose-prod \
               --label io.podman.compose.service=front-central \
               --env-file .env \
