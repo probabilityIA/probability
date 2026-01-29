@@ -32,11 +32,18 @@ func (h *ShopifyHandler) ComplianceWebhookHandler(c *gin.Context) {
 		return
 	}
 
-	// Validar HMAC
+	// Validar HMAC (OBLIGATORIO para compliance)
 	hmacHeader := c.GetHeader("X-Shopify-Hmac-Sha256")
 	shopifySecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
 
-	if shopifySecret != "" && !VerifyWebhookHMAC(bodyBytes, hmacHeader, shopifySecret) {
+	// Siempre requerir HMAC para webhooks de compliance
+	if shopifySecret == "" {
+		h.logger.Error().Str("topic", topic).Msg("SHOPIFY_CLIENT_SECRET no configurado")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Webhook signature validation not configured"})
+		return
+	}
+
+	if !VerifyWebhookHMAC(bodyBytes, hmacHeader, shopifySecret) {
 		h.logger.Error().Str("topic", topic).Msg("HMAC inválido en compliance webhook")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid HMAC signature"})
 		return
