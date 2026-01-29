@@ -211,15 +211,15 @@ jobs:
             echo "🛑 Deteniendo backend..."
             podman stop -t 10 backend_prod || true
 
-            echo "🗑️  Eliminando contenedor backend..."
-            podman rm -f backend_prod || true
+            echo "🗑️  Eliminando contenedor backend y sus dependientes..."
+            podman rm -f --depend backend_prod || true
 
             # Verificar y eliminar cualquier contenedor backend_prod que quede
             echo "🔍 Verificando eliminación completa..."
             BACKEND_IDS=$(podman ps -a --filter name=backend_prod --format '{{.ID}}' 2>/dev/null || true)
             if [ -n "$BACKEND_IDS" ]; then
-              echo "⚠️  Contenedores backend encontrados, eliminando por ID..."
-              echo "$BACKEND_IDS" | xargs -r podman rm -f
+              echo "⚠️  Contenedores backend encontrados, eliminando por ID con dependientes..."
+              echo "$BACKEND_IDS" | xargs -r podman rm -f --depend
             fi
             echo "✅ Contenedor backend eliminado completamente"
 
