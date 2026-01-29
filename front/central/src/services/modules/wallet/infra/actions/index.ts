@@ -243,3 +243,26 @@ export async function getWalletHistoryAction() {
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Clear recharge history for a business (Admin only)
+ */
+export async function clearRechargeHistoryAction(businessId: number) {
+    try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/history/${businessId}`, {
+            method: 'DELETE',
+            headers,
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to clear history: ${res.status}`);
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('clearRechargeHistoryAction error:', error);
+        return { success: false, error: error.message };
+    }
+}
