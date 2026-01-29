@@ -4,16 +4,20 @@
 
 set -e
 
+# API_BASE_URL puede tener path (/api/v1), extraer solo el host para health check
 BACKEND_URL="${API_BASE_URL:-http://back-central:3050}"
+# Extraer solo el host (sin path) para el health check
+BACKEND_HOST=$(echo "$BACKEND_URL" | sed 's|^\(https\?://[^/]*\).*|\1|')
 MAX_RETRIES=10
 RETRY_INTERVAL=5
 
 echo "🚀 Starting frontend with backend verification..."
 echo "📡 Backend URL: $BACKEND_URL"
+echo "🏥 Health check URL: $BACKEND_HOST/health"
 
 # Function to check backend connectivity
 check_backend() {
-    wget -q -O- -T 3 "$BACKEND_URL/health" >/dev/null 2>&1
+    wget -q -O- -T 3 "$BACKEND_HOST/health" >/dev/null 2>&1
     return $?
 }
 
@@ -23,7 +27,7 @@ RETRY_COUNT=0
 
 while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     if check_backend; then
-        echo "✅ Backend is reachable at $BACKEND_URL"
+        echo "✅ Backend is reachable at $BACKEND_HOST"
         break
     fi
 
