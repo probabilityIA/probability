@@ -92,9 +92,13 @@ ENV HOSTNAME="0.0.0.0"
 # Cambiar a usuario no-root
 USER nextjs
 
+# Copiar script de startup con verificación de backend
+COPY docker/startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh
+
 # Exponer puerto (3000 para Podman rootless)
 EXPOSE 3000
 
-# Comando de inicio
-CMD ["node", "server.js"]
+# Comando de inicio con verificación de backend
+CMD ["/app/startup.sh"]
 
