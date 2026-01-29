@@ -207,17 +207,20 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # Crear el contenedor con la NUEVA imagen usando --replace (recomendado por Podman docs)
-            echo "🔄 Creando contenedor backend con imagen $VERSION_FULL usando --replace..."
+            # Eliminar contenedor existente y sus dependientes (según Podman docs)
+            echo "🗑️  Eliminando contenedor existente con --depend..."
+            podman rm --depend --force backend_prod 2>/dev/null || true
+            sleep 2
+
+            # Crear el contenedor con la NUEVA imagen
+            echo "🔄 Creando contenedor backend con imagen $VERSION_FULL..."
 
             if [ ! -f .env ]; then
               echo "❌ Error: archivo .env no encontrado"
               exit 1
             fi
 
-            # Usar --replace para reemplazar automáticamente el contenedor existente
             podman run -d \
-              --replace \
               --name backend_prod \
               --label io.podman.compose.project=compose-prod \
               --label io.podman.compose.service=back-central \
