@@ -183,9 +183,14 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # ENFOQUE A LA FIJA: Down -> Delete Images -> Up
+            # ENFOQUE ULTRA-NUCLEAR: Down -> Kill rootlessport -> Delete Images -> Up
             echo "🛑 Tumbando todos los servicios..."
-            podman-compose -f podman-compose.yaml down
+            podman-compose -f podman-compose.yaml down || true
+
+            echo "💀 Matando procesos rootlessport zombies..."
+            pkill -9 -f rootlessport || true
+            pkill -9 -f slirp4netns || true
+            sleep 3
 
             echo "🗑️  Eliminando todas las imágenes viejas..."
             podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest 2>/dev/null || true

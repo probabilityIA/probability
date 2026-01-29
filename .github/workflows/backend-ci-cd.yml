@@ -204,21 +204,27 @@ jobs:
             echo "📊 New image ID: $NEW_IMAGE_ID"
             echo "📊 Version: $VERSION_FULL"
 
-            # ENFOQUE A LA FIJA: Down -> Delete Images -> Up
+            # ENFOQUE ULTRA-NUCLEAR: Down -> Kill rootlessport -> Delete Images -> Up
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # 1. Tumbar TODO (down)
+            # 1. Tumbar TODO
             echo "🛑 Tumbando todos los servicios..."
-            podman-compose -f podman-compose.yaml down
+            podman-compose -f podman-compose.yaml down || true
 
-            # 2. Eliminar TODAS las imágenes viejas
+            # 2. MATAR procesos rootlessport zombies (esto libera los puertos)
+            echo "💀 Matando procesos rootlessport zombies..."
+            pkill -9 -f rootlessport || true
+            pkill -9 -f slirp4netns || true
+            sleep 3
+
+            # 3. Eliminar TODAS las imágenes viejas
             echo "🗑️  Eliminando todas las imágenes viejas..."
             podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest 2>/dev/null || true
             podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
             podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
             podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
 
-            # 3. Levantar TODO de nuevo (hará pull automático)
+            # 4. Levantar TODO de nuevo (hará pull automático)
             echo "🔄 Levantando todos los servicios con imágenes nuevas..."
             podman-compose -f podman-compose.yaml up -d
 
