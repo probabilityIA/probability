@@ -218,6 +218,15 @@ jobs:
             echo "🗑️  Eliminando contenedor nginx..."
             podman rm -f nginx_prod || true
 
+            # Verificar y eliminar cualquier contenedor nginx_prod que quede
+            echo "🔍 Verificando eliminación completa..."
+            NGINX_IDS=$(podman ps -a --filter name=nginx_prod --format '{{.ID}}' 2>/dev/null || true)
+            if [ -n "$NGINX_IDS" ]; then
+              echo "⚠️  Contenedores nginx encontrados, eliminando por ID..."
+              echo "$NGINX_IDS" | xargs -r podman rm -f
+            fi
+            echo "✅ Contenedor nginx eliminado completamente"
+
             # 2. Liberar puertos 80 y 443 (matar proceso conmon/rootlessport)
             echo "🔫 Liberando puertos 80 y 443..."
             sudo fuser -k 80/tcp || true
