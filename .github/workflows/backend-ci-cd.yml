@@ -210,7 +210,17 @@ jobs:
             # Eliminar contenedor existente y sus dependientes (según Podman docs)
             echo "🗑️  Eliminando contenedor existente con --depend..."
             podman rm --depend --force backend_prod 2>/dev/null || true
-            sleep 2
+
+            # Esperar a que los puertos se liberen (importante para rootlessport)
+            echo "⏳ Esperando a que el puerto 3050 se libere..."
+            for i in {1..10}; do
+              if ! ss -tunlp | grep -q ':3050 '; then
+                echo "✅ Puerto 3050 liberado"
+                break
+              fi
+              echo "   Intento $i/10 - Puerto aún ocupado, esperando..."
+              sleep 2
+            done
 
             # Crear el contenedor con la NUEVA imagen
             echo "🔄 Creando contenedor backend con imagen $VERSION_FULL..."

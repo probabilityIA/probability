@@ -186,7 +186,17 @@ jobs:
             # Eliminar contenedor existente
             echo "🗑️  Eliminando contenedor existente..."
             podman rm --force website_prod 2>/dev/null || true
-            sleep 2
+
+            # Esperar a que el puerto se libere
+            echo "⏳ Esperando a que el puerto 8081 se libere..."
+            for i in {1..10}; do
+              if ! ss -tunlp | grep -q ':8081 '; then
+                echo "✅ Puerto 8081 liberado"
+                break
+              fi
+              echo "   Intento $i/10 - Puerto aún ocupado, esperando..."
+              sleep 2
+            done
 
             # Crear contenedor con la NUEVA imagen
             echo "🔄 Creando contenedor website con imagen $VERSION_FULL..."

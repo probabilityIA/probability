@@ -214,7 +214,17 @@ jobs:
             # Eliminar contenedor existente
             echo "🗑️  Eliminando contenedor existente..."
             podman rm --force nginx_prod 2>/dev/null || true
-            sleep 2
+
+            # Esperar a que los puertos se liberen
+            echo "⏳ Esperando a que los puertos 80/443 se liberen..."
+            for i in {1..10}; do
+              if ! ss -tunlp | grep -q -E ':(80|443) '; then
+                echo "✅ Puertos 80/443 liberados"
+                break
+              fi
+              echo "   Intento $i/10 - Puertos aún ocupados, esperando..."
+              sleep 2
+            done
 
             # Crear contenedor con la NUEVA imagen
             echo "🔄 Creando contenedor nginx con imagen $VERSION_FULL..."
