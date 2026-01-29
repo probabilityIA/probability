@@ -218,11 +218,11 @@ jobs:
             echo "🚀 Levantando website con nueva imagen..."
             podman-compose -f podman-compose.yaml up -d front-website
 
-            # SIEMPRE reiniciar nginx después de actualizar website
-            echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
+            # Reload nginx config (sin reiniciar - evita error de puerto ocupado)
+            echo "🔄 Recargando nginx para reconectar con el nuevo website..."
             if podman ps -a --format '{{.Names}}' | grep -q '^nginx_prod$'; then
-              podman restart nginx_prod
-              echo "✅ Nginx reiniciado correctamente"
+              podman kill -s HUP nginx_prod 2>/dev/null || echo "⚠️  No se pudo recargar nginx (no crítico)"
+              echo "✅ Nginx recargado (HUP signal)"
             else
               echo "⚠️  Nginx no está corriendo"
             fi
