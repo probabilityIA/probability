@@ -8,6 +8,85 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// ComplianceWebhookHandler maneja TODOS los webhooks de compliance en un solo endpoint
+//
+//	@Summary		Webhook unificado de compliance
+//	@Description	Maneja todos los webhooks de GDPR/CCPA (data_request, redact, shop_redact)
+//	@Tags			Shopify Compliance
+//	@Accept			json
+//	@Produce		json
+//	@Param			X-Shopify-Topic		header	string	true	"Shopify webhook topic"
+//	@Param			X-Shopify-Hmac-Sha256	header	string	true	"HMAC signature"
+//	@Param			X-Shopify-Shop-Domain	header	string	true	"Shop domain"
+//	@Success		200					{object}	map[string]interface{}
+//	@Failure		401					{object}	map[string]interface{}
+//	@Router			/integrations/shopify/webhooks/compliance [post]
+func (h *ShopifyHandler) ComplianceWebhookHandler(c *gin.Context) {
+	topic := c.GetHeader("X-Shopify-Topic")
+
+	// Leer el body
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Error al leer body del webhook de compliance")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Validar HMAC
+	hmacHeader := c.GetHeader("X-Shopify-Hmac-Sha256")
+	shopifySecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+
+	if shopifySecret != "" && !VerifyWebhookHMAC(bodyBytes, hmacHeader, shopifySecret) {
+		h.logger.Error().Str("topic", topic).Msg("HMAC inválido en compliance webhook")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid HMAC signature"})
+		return
+	}
+
+	h.logger.Info().
+		Str("topic", topic).
+		Str("shop_domain", c.GetHeader("X-Shopify-Shop-Domain")).
+		Msg("Compliance webhook recibido")
+
+	// Responder inmediatamente con 200 OK (requisito de Shopify)
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Compliance webhook received",
+	})
+
+	// Procesar según el topic
+	go func() {
+		switch topic {
+		case "customers/data_request":
+			var payload CustomerDataRequestPayload
+			if err := json.Unmarshal(bodyBytes, &payload); err == nil {
+				h.logger.Info().
+					Int64("customer_id", payload.Customer.ID).
+					Msg("Procesando solicitud de datos de cliente (GDPR)")
+				// TODO: Implementar lógica de procesamiento
+			}
+
+		case "customers/redact":
+			var payload CustomerRedactPayload
+			if err := json.Unmarshal(bodyBytes, &payload); err == nil {
+				h.logger.Info().
+					Int64("customer_id", payload.Customer.ID).
+					Msg("Procesando eliminación de datos de cliente (GDPR)")
+				// TODO: Implementar lógica de procesamiento
+			}
+
+		case "shop/redact":
+			var payload ShopRedactPayload
+			if err := json.Unmarshal(bodyBytes, &payload); err == nil {
+				h.logger.Info().
+					Int64("shop_id", payload.ShopID).
+					Msg("Procesando eliminación de datos de tienda")
+				// TODO: Implementar lógica de procesamiento
+			}
+		}
+	}()
+}
+
+
 // CustomerDataRequestPayload representa la estructura del webhook customers/data_request
 type CustomerDataRequestPayload struct {
 	ShopID       int64  `json:"shop_id"`
