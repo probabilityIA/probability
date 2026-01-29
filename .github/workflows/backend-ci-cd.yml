@@ -214,13 +214,41 @@ jobs:
             echo "🗑️  Eliminando contenedor backend_prod..."
             podman rm -f backend_prod 2>/dev/null || true
 
-            # Recrear el contenedor con la nueva imagen
-            echo "🔄 Recreando contenedor con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d --no-deps back-central
+            # Recrear el contenedor con la nueva imagen usando podman directamente
+            # Esto evita que podman-compose intente recrear redis/rabbitmq
+            echo "🔄 Recreando contenedor backend con nueva imagen..."
 
-            # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
+            # Leer el archivo .env para las variables de entorno
+            if [ ! -f .env ]; then
+              echo "❌ Error: archivo .env no encontrado"
+              exit 1
+            fi
+
+            # Crear el contenedor backend con la misma configuración que en podman-compose.yaml
+            podman run -d \
+              --name backend_prod \
+              --requires=rabbitmq_prod,redis_prod \
+              --label io.podman.compose.project=compose-prod \
+              --label io.podman.compose.service=back-central \
+              --env-file .env \
+              --network compose-prod_app-network \
+              -p 127.0.0.1:3050:3050 \
+              --restart always \
+              --health-cmd 'CMD wget --no-verbose --tries=1 --spider http://localhost:3050/health' \
+              --health-interval 30s \
+              --health-timeout 10s \
+              --health-retries 5 \
+              --health-start-period 40s \
+              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
+
+            # SIEMPRE reiniciar nginx después de actualizar backend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
-            podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
+            if podman ps -a --format '{{.Names}}' | grep -q '^nginx_prod$'; then
+              podman restart nginx_prod
+              echo "✅ Nginx reiniciado correctamente"
+            else
+              echo "⚠️  Nginx no está corriendo"
+            fi
             sleep 3
 
             echo "⏳ Esperando a que el contenedor inicie (20 segundos)..."
