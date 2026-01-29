@@ -204,30 +204,29 @@ jobs:
             echo "📊 New image ID: $NEW_IMAGE_ID"
             echo "📊 Version: $VERSION_FULL"
 
-            # Nueva imagen detectada, recrear contenedores
-            echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedores..."
+            # Nueva imagen detectada, actualizar solo backend
+            echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando backend..."
 
-            # 1. Detener todos los servicios
-            echo "🛑 Deteniendo servicios..."
-            podman-compose -f podman-compose.yaml down || true
+            # 1. Detener solo el contenedor backend
+            echo "🛑 Deteniendo backend..."
+            podman stop -t 10 backend_prod || true
 
-            # 2. FORZAR eliminación de todos los contenedores (incluyendo fantasmas)
-            echo "🗑️  Eliminando contenedores forzadamente..."
-            podman rm -af || true
+            # 2. Eliminar contenedor backend forzadamente
+            echo "🗑️  Eliminando contenedor backend..."
+            podman rm -f backend_prod || true
             sleep 2
 
-            # 3. Limpiar imágenes sin usar (NO usar -a para no borrar las imágenes necesarias)
-            echo "🧹 Limpiando imágenes sin usar..."
-            podman image prune -f || true
+            # 3. Pull de la nueva imagen específica
+            echo "📦 Pulling nueva imagen $VERSION_FULL..."
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL
 
-            # 4. Re-login a ECR
-            echo "🔐 Re-login a ECR..."
-            /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
-              podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
+            # 4. Tag como latest localmente
+            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL \
+                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
 
-            # 5. Levantar todos los servicios
-            echo "🔄 Levantando todos los servicios..."
-            podman-compose -f podman-compose.yaml up -d
+            # 5. Levantar solo el contenedor backend
+            echo "🔄 Levantando backend con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d backend_prod
 
             # SIEMPRE reiniciar nginx después de actualizar backend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
