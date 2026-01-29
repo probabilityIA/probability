@@ -211,9 +211,32 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # Recrear el contenedor SIN reiniciar dependencias (reemplazo sutil)
-            echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
-            podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps nginx
+            # Recrear el contenedor nginx usando podman directamente
+            echo "🔄 Recreando contenedor nginx con nueva imagen..."
+
+            # Leer variables de entorno necesarias
+            if [ ! -f .env ]; then
+              echo "❌ Error: archivo .env no encontrado"
+              exit 1
+            fi
+            source .env
+
+            # Crear el contenedor nginx con --replace
+            podman run -d \
+              --replace \
+              --name nginx_prod \
+              --requires=backend_prod,frontend_prod \
+              --label io.podman.compose.project=compose-prod \
+              --label io.podman.compose.service=nginx \
+              --network compose-prod_app-network \
+              -p 80:80 \
+              -p 443:443 \
+              -e DOMAIN="${DOMAIN}" \
+              -e SSL_CERT_PATH="${SSL_CERT_PATH}" \
+              -e SSL_KEY_PATH="${SSL_KEY_PATH}" \
+              -v /etc/letsencrypt:/etc/letsencrypt:ro \
+              --restart always \
+              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
 
             echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
             sleep 10

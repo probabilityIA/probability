@@ -219,13 +219,41 @@ jobs:
             echo "🗑️  Eliminando contenedor frontend_prod..."
             podman rm -f frontend_prod 2>/dev/null || true
 
-            # Recrear el contenedor con la nueva imagen
-            echo "🔄 Recreando contenedor con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d --no-deps front-central
+            # Recrear el contenedor con la nueva imagen usando podman directamente
+            echo "🔄 Recreando contenedor frontend con nueva imagen..."
 
-            # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
+            # Leer el archivo .env para las variables de entorno
+            if [ ! -f .env ]; then
+              echo "❌ Error: archivo .env no encontrado"
+              exit 1
+            fi
+
+            # Crear el contenedor frontend con --replace
+            podman run -d \
+              --replace \
+              --name frontend_prod \
+              --requires=backend_prod \
+              --label io.podman.compose.project=compose-prod \
+              --label io.podman.compose.service=front-central \
+              --env-file .env \
+              --network compose-prod_app-network \
+              -p 8080:3000 \
+              --restart always \
+              --health-cmd 'CMD wget --no-verbose --tries=1 --spider http://localhost:3000/' \
+              --health-interval 30s \
+              --health-timeout 10s \
+              --health-retries 3 \
+              --health-start-period 15s \
+              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+
+            # SIEMPRE reiniciar nginx después de actualizar frontend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
-            podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
+            if podman ps -a --format '{{.Names}}' | grep -q '^nginx_prod$'; then
+              podman restart nginx_prod
+              echo "✅ Nginx reiniciado correctamente"
+            else
+              echo "⚠️  Nginx no está corriendo"
+            fi
             sleep 3
 
             echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
