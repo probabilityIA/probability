@@ -215,7 +215,18 @@ jobs:
             echo "🔴 BOTÓN ROJO: Reseteando Podman completamente..."
             podman system reset --force
             echo "✅ Sistema Podman reseteado"
+
+            # Matar procesos zombies que sobrevivieron al reset
+            echo "🔫 Matando procesos zombies..."
+            pkill -9 -f rootlessport || true
+            pkill -9 -f slirp4netns || true
+            pkill -9 -f conmon || true
             sleep 2
+
+            # Re-login a ECR (el reset elimina las credenciales)
+            echo "🔐 Re-login a ECR después del reset..."
+            /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
+              podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             echo "🔄 Levantando todos los servicios desde cero..."
             podman-compose -f podman-compose.yaml up -d
