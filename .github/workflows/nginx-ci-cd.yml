@@ -211,22 +211,13 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # ENFOQUE ULTRA-NUCLEAR: Down -> Kill rootlessport -> Delete Images -> Up
-            echo "🛑 Tumbando todos los servicios..."
-            podman-compose -f podman-compose.yaml down || true
+            # BOTÓN ROJO NUCLEAR: podman system reset
+            echo "🔴 BOTÓN ROJO: Reseteando Podman completamente..."
+            podman system reset --force
+            echo "✅ Sistema Podman reseteado"
+            sleep 2
 
-            echo "💀 Matando procesos rootlessport zombies..."
-            pkill -9 -f rootlessport || true
-            pkill -9 -f slirp4netns || true
-            sleep 3
-
-            echo "🗑️  Eliminando todas las imágenes viejas..."
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest 2>/dev/null || true
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
-
-            echo "🔄 Levantando todos los servicios con imágenes nuevas..."
+            echo "🔄 Levantando todos los servicios desde cero..."
             podman-compose -f podman-compose.yaml up -d
 
             echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."

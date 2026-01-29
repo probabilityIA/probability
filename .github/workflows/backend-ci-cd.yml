@@ -204,28 +204,20 @@ jobs:
             echo "📊 New image ID: $NEW_IMAGE_ID"
             echo "📊 Version: $VERSION_FULL"
 
-            # ENFOQUE ULTRA-NUCLEAR: Down -> Kill rootlessport -> Delete Images -> Up
+            # BOTÓN ROJO NUCLEAR: podman system reset (borra TODO y empieza desde cero)
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # 1. Tumbar TODO
-            echo "🛑 Tumbando todos los servicios..."
-            podman-compose -f podman-compose.yaml down || true
+            echo "🔴 BOTÓN ROJO: Reseteando Podman completamente..."
+            echo "⚠️  Esto eliminará TODOS los contenedores, imágenes, volúmenes y redes"
 
-            # 2. MATAR procesos rootlessport zombies (esto libera los puertos)
-            echo "💀 Matando procesos rootlessport zombies..."
-            pkill -9 -f rootlessport || true
-            pkill -9 -f slirp4netns || true
-            sleep 3
+            # Reset completo de Podman (elimina TODO)
+            podman system reset --force
 
-            # 3. Eliminar TODAS las imágenes viejas
-            echo "🗑️  Eliminando todas las imágenes viejas..."
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest 2>/dev/null || true
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
-            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
+            echo "✅ Sistema Podman reseteado - empezando desde cero"
+            sleep 2
 
-            # 4. Levantar TODO de nuevo (hará pull automático)
-            echo "🔄 Levantando todos los servicios con imágenes nuevas..."
+            # Levantar TODO desde cero (hará pull de imágenes nuevas)
+            echo "🔄 Levantando todos los servicios desde cero..."
             podman-compose -f podman-compose.yaml up -d
 
             # SIEMPRE reiniciar nginx después de actualizar backend
