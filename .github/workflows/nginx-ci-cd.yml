@@ -211,43 +211,18 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # Eliminar contenedor existente
-            echo "🗑️  Eliminando contenedor existente..."
-            podman rm --force nginx_prod 2>/dev/null || true
+            # ENFOQUE SIMPLE: Stop -> Remove -> Delete Image -> Up
+            echo "🛑 Deteniendo servicio nginx..."
+            podman-compose -f podman-compose.yaml stop nginx
 
-            # Esperar a que los puertos se liberen
-            echo "⏳ Esperando a que los puertos 80/443 se liberen..."
-            for i in {1..10}; do
-              if ! ss -tunlp | grep -q -E ':(80|443) '; then
-                echo "✅ Puertos 80/443 liberados"
-                break
-              fi
-              echo "   Intento $i/10 - Puertos aún ocupados, esperando..."
-              sleep 2
-            done
+            echo "🗑️  Eliminando contenedor..."
+            podman-compose -f podman-compose.yaml rm -f nginx
 
-            # Crear contenedor con la NUEVA imagen
-            echo "🔄 Creando contenedor nginx con imagen $VERSION_FULL..."
+            echo "🗑️  Eliminando imagen vieja..."
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
 
-            if [ ! -f .env ]; then
-              echo "❌ Error: archivo .env no encontrado"
-              exit 1
-            fi
-            source .env
-
-            podman run -d \
-              --name nginx_prod \
-              --label io.podman.compose.project=compose-prod \
-              --label io.podman.compose.service=nginx \
-              --network compose-prod_app-network \
-              -p 80:80 \
-              -p 443:443 \
-              -e DOMAIN="${DOMAIN}" \
-              -e SSL_CERT_PATH="${SSL_CERT_PATH}" \
-              -e SSL_KEY_PATH="${SSL_KEY_PATH}" \
-              -v /etc/letsencrypt:/etc/letsencrypt:ro \
-              --restart always \
-              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL
+            echo "🔄 Levantando servicio con imagen nueva..."
+            podman-compose -f podman-compose.yaml up -d nginx
 
             echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
             sleep 10

@@ -212,43 +212,18 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # Eliminar contenedor existente
-            echo "🗑️  Eliminando contenedor existente..."
-            podman rm --force frontend_prod 2>/dev/null || true
+            # ENFOQUE SIMPLE: Stop -> Remove -> Delete Image -> Up
+            echo "🛑 Deteniendo servicio front-central..."
+            podman-compose -f podman-compose.yaml stop front-central
 
-            # Esperar a que el puerto se libere
-            echo "⏳ Esperando a que el puerto 8080 se libere..."
-            for i in {1..10}; do
-              if ! ss -tunlp | grep -q ':8080 '; then
-                echo "✅ Puerto 8080 liberado"
-                break
-              fi
-              echo "   Intento $i/10 - Puerto aún ocupado, esperando..."
-              sleep 2
-            done
+            echo "🗑️  Eliminando contenedor..."
+            podman-compose -f podman-compose.yaml rm -f front-central
 
-            # Crear contenedor con la NUEVA imagen
-            echo "🔄 Creando contenedor frontend con imagen $VERSION_FULL..."
+            echo "🗑️  Eliminando imagen vieja..."
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
 
-            if [ ! -f .env ]; then
-              echo "❌ Error: archivo .env no encontrado"
-              exit 1
-            fi
-
-            podman run -d \
-              --name frontend_prod \
-              --label io.podman.compose.project=compose-prod \
-              --label io.podman.compose.service=front-central \
-              --env-file .env \
-              --network compose-prod_app-network \
-              -p 8080:3000 \
-              --restart always \
-              --health-cmd 'CMD wget --no-verbose --tries=1 --spider http://localhost:3000/' \
-              --health-interval 30s \
-              --health-timeout 10s \
-              --health-retries 3 \
-              --health-start-period 15s \
-              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
+            echo "🔄 Levantando servicio con imagen nueva..."
+            podman-compose -f podman-compose.yaml up -d front-central
 
             # SIEMPRE reiniciar nginx después de actualizar frontend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."

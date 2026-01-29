@@ -204,46 +204,24 @@ jobs:
             echo "📊 New image ID: $NEW_IMAGE_ID"
             echo "📊 Version: $VERSION_FULL"
 
-            # Siempre recrear el contenedor con la nueva imagen específica
+            # ENFOQUE SIMPLE: Stop -> Remove -> Delete Image -> Up (con pull automático)
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # Eliminar contenedor existente y sus dependientes (según Podman docs)
-            echo "🗑️  Eliminando contenedor existente con --depend..."
-            podman rm --depend --force backend_prod 2>/dev/null || true
+            # 1. Detener el servicio
+            echo "🛑 Deteniendo servicio back-central..."
+            podman-compose -f podman-compose.yaml stop back-central
 
-            # Esperar a que los puertos se liberen (importante para rootlessport)
-            echo "⏳ Esperando a que el puerto 3050 se libere..."
-            for i in {1..10}; do
-              if ! ss -tunlp | grep -q ':3050 '; then
-                echo "✅ Puerto 3050 liberado"
-                break
-              fi
-              echo "   Intento $i/10 - Puerto aún ocupado, esperando..."
-              sleep 2
-            done
+            # 2. Eliminar el contenedor
+            echo "🗑️  Eliminando contenedor..."
+            podman-compose -f podman-compose.yaml rm -f back-central
 
-            # Crear el contenedor con la NUEVA imagen
-            echo "🔄 Creando contenedor backend con imagen $VERSION_FULL..."
+            # 3. Eliminar la imagen vieja (forzar pull de la nueva)
+            echo "🗑️  Eliminando imagen vieja..."
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest 2>/dev/null || true
 
-            if [ ! -f .env ]; then
-              echo "❌ Error: archivo .env no encontrado"
-              exit 1
-            fi
-
-            podman run -d \
-              --name backend_prod \
-              --label io.podman.compose.project=compose-prod \
-              --label io.podman.compose.service=back-central \
-              --env-file .env \
-              --network compose-prod_app-network \
-              -p 127.0.0.1:3050:3050 \
-              --restart always \
-              --health-cmd 'CMD wget --no-verbose --tries=1 --spider http://localhost:3050/health' \
-              --health-interval 30s \
-              --health-timeout 10s \
-              --health-retries 5 \
-              --health-start-period 40s \
-              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL
+            # 4. Levantar de nuevo (hará pull automático de la nueva imagen)
+            echo "🔄 Levantando servicio con imagen nueva..."
+            podman-compose -f podman-compose.yaml up -d back-central
 
             # SIEMPRE reiniciar nginx después de actualizar backend
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."

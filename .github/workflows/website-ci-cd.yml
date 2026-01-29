@@ -183,37 +183,18 @@ jobs:
             # Siempre recrear el contenedor con la nueva imagen específica
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
 
-            # Eliminar contenedor existente
-            echo "🗑️  Eliminando contenedor existente..."
-            podman rm --force website_prod 2>/dev/null || true
+            # ENFOQUE SIMPLE: Stop -> Remove -> Delete Image -> Up
+            echo "🛑 Deteniendo servicio front-website..."
+            podman-compose -f podman-compose.yaml stop front-website
 
-            # Esperar a que el puerto se libere
-            echo "⏳ Esperando a que el puerto 8081 se libere..."
-            for i in {1..10}; do
-              if ! ss -tunlp | grep -q ':8081 '; then
-                echo "✅ Puerto 8081 liberado"
-                break
-              fi
-              echo "   Intento $i/10 - Puerto aún ocupado, esperando..."
-              sleep 2
-            done
+            echo "🗑️  Eliminando contenedor..."
+            podman-compose -f podman-compose.yaml rm -f front-website
 
-            # Crear contenedor con la NUEVA imagen
-            echo "🔄 Creando contenedor website con imagen $VERSION_FULL..."
+            echo "🗑️  Eliminando imagen vieja..."
+            podman rmi -f 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest 2>/dev/null || true
 
-            podman run -d \
-              --name website_prod \
-              --label io.podman.compose.project=compose-prod \
-              --label io.podman.compose.service=front-website \
-              --network compose-prod_app-network \
-              -p 8081:8080 \
-              --restart unless-stopped \
-              --health-cmd 'CMD wget --no-verbose --tries=1 --spider http://localhost:8080/health' \
-              --health-interval 30s \
-              --health-timeout 10s \
-              --health-retries 3 \
-              --health-start-period 10s \
-              476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:$VERSION_FULL
+            echo "🔄 Levantando servicio con imagen nueva..."
+            podman-compose -f podman-compose.yaml up -d front-website
 
             # SIEMPRE reiniciar nginx después de actualizar website
             echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
