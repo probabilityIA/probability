@@ -66,3 +66,4 @@ done
 echo "🎯 All upstreams are healthy, starting nginx..."
 envsubst '\$DOMAIN \$SSL_CERT_PATH \$SSL_KEY_PATH' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf
 exec nginx -g 'daemon off;'
+# Deploy trigger 2026-01-29_17:18:31
