@@ -226,10 +226,10 @@ jobs:
 
             # Crear el contenedor backend con la misma configuración que en podman-compose.yaml
             # --replace: reemplaza automáticamente el contenedor existente si existe
+            # NO usamos --requires porque impide el reemplazo cuando otros contenedores dependen de este
             podman run -d \
               --replace \
               --name backend_prod \
-              --requires=rabbitmq_prod,redis_prod \
               --label io.podman.compose.project=compose-prod \
               --label io.podman.compose.service=back-central \
               --env-file .env \
