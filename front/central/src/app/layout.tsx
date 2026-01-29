@@ -19,12 +19,33 @@ export const metadata: Metadata = {
   description: "Menos devoluciones en tu e-commerce gracias a la probabilidad",
 };
 
-export default function RootLayout({
+async function getShopifyConfig() {
+  try {
+    const baseUrl = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
+    const res = await fetch(`${baseUrl}/integrations/shopify/config`, {
+      cache: 'no-store',
+      next: { tags: ['shopify-config'] }
+    });
+
+    if (!res.ok) {
+      console.warn(`Error fetching Shopify config: ${res.status}`);
+      return null;
+    }
+
+    const data = await res.json();
+    return data.shopify_client_id;
+  } catch (error) {
+    console.error("Failed to fetch Shopify config:", error);
+    return null;
+  }
+}
+
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const apiKey = process.env.NEXT_PUBLIC_SHOPIFY_API_KEY;
+  const apiKey = await getShopifyConfig();
 
   return (
     <html lang="en" suppressHydrationWarning>

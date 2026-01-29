@@ -10,6 +10,9 @@ import (
 func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILogger) {
 	shopifyGroup := router.Group("/integrations/shopify")
 	{
+		// Config endpoint - público (reemplaza variable de entorno)
+		shopifyGroup.GET("/config", h.GetConfigHandler)
+
 		// OAuth endpoints - requieren autenticación JWT
 		shopifyGroup.POST("/connect", middleware.JWT(), h.InitiateOAuthHandler)
 

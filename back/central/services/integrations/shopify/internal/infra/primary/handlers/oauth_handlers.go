@@ -346,3 +346,27 @@ func generateIntegrationCode(name string) string {
 	code = fmt.Sprintf("%s_%d", code, time.Now().Unix())
 	return code
 }
+
+// GetConfigHandler retorna la configuración pública de Shopify (Client ID)
+//
+//	@Summary		Obtener configuración de Shopify
+//	@Description	Retorna el Client ID de Shopify para inicializar App Bridge en el frontend
+//	@Tags			Shopify Integrations
+//	@Produce		json
+//	@Success		200		{object}	map[string]string
+//	@Router			/integrations/shopify/config [get]
+func (h *ShopifyHandler) GetConfigHandler(c *gin.Context) {
+	clientID := h.config.Get("SHOPIFY_CLIENT_ID")
+
+	if clientID == "" {
+		h.logger.Error().Msg("SHOPIFY_CLIENT_ID no configurado")
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Configuración de Shopify no disponible",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"shopify_client_id": clientID,
+	})
+}
