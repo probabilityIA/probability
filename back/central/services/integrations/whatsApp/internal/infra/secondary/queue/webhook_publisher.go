@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+		"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -18,7 +18,7 @@ type WebhookPublisher struct {
 }
 
 // NewWebhookPublisher crea una nueva instancia del publicador
-func NewWebhookPublisher(rabbit rabbitmq.IQueue, logger log.ILogger) domain.IEventPublisher {
+func NewWebhookPublisher(rabbit rabbitmq.IQueue, logger log.ILogger) ports.IEventPublisher {
 	return &WebhookPublisher{
 		rabbit: rabbit,
 		log:    logger.WithModule("whatsapp-publisher"),

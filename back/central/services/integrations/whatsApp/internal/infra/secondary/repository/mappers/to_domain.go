@@ -3,12 +3,12 @@ package mappers
 import (
 	"encoding/json"
 
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+		"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/entities"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
 // ConversationModelToDomain convierte un modelo GORM a una entidad del dominio
-func ConversationModelToDomain(model *models.WhatsAppConversation) *domain.Conversation {
+func ConversationModelToDomain(model *models.WhatsAppConversation) *entities.Conversation {
 	if model == nil {
 		return nil
 	}
@@ -19,12 +19,12 @@ func ConversationModelToDomain(model *models.WhatsAppConversation) *domain.Conve
 		_ = json.Unmarshal(model.Metadata, &metadata)
 	}
 
-	return &domain.Conversation{
+	return &entities.Conversation{
 		ID:             model.ID.String(),
 		PhoneNumber:    model.PhoneNumber,
 		OrderNumber:    model.OrderNumber,
 		BusinessID:     model.BusinessID,
-		CurrentState:   domain.ConversationState(model.CurrentState),
+		CurrentState:   entities.ConversationState(model.CurrentState),
 		LastMessageID:  model.LastMessageID,
 		LastTemplateID: model.LastTemplateID,
 		Metadata:       metadata,
@@ -35,19 +35,19 @@ func ConversationModelToDomain(model *models.WhatsAppConversation) *domain.Conve
 }
 
 // MessageLogModelToDomain convierte un modelo GORM de mensaje a una entidad del dominio
-func MessageLogModelToDomain(model *models.WhatsAppMessageLog) *domain.MessageLog {
+func MessageLogModelToDomain(model *models.WhatsAppMessageLog) *entities.MessageLog {
 	if model == nil {
 		return nil
 	}
 
-	return &domain.MessageLog{
+	return &entities.MessageLog{
 		ID:             model.ID.String(),
 		ConversationID: model.ConversationID.String(),
-		Direction:      domain.MessageDirection(model.Direction),
+		Direction:      entities.MessageDirection(model.Direction),
 		MessageID:      model.MessageID,
 		TemplateName:   model.TemplateName,
 		Content:        model.Content,
-		Status:         domain.MessageStatus(model.Status),
+		Status:         entities.MessageStatus(model.Status),
 		DeliveredAt:    model.DeliveredAt,
 		ReadAt:         model.ReadAt,
 		CreatedAt:      model.CreatedAt,
@@ -55,12 +55,12 @@ func MessageLogModelToDomain(model *models.WhatsAppMessageLog) *domain.MessageLo
 }
 
 // MessageLogsModelToDomain convierte una lista de modelos GORM a entidades del dominio
-func MessageLogsModelToDomain(models []models.WhatsAppMessageLog) []domain.MessageLog {
+func MessageLogsModelToDomain(models []models.WhatsAppMessageLog) []entities.MessageLog {
 	if len(models) == 0 {
-		return []domain.MessageLog{}
+		return []entities.MessageLog{}
 	}
 
-	result := make([]domain.MessageLog, len(models))
+	result := make([]entities.MessageLog, len(models))
 	for i, model := range models {
 		if log := MessageLogModelToDomain(&model); log != nil {
 			result[i] = *log

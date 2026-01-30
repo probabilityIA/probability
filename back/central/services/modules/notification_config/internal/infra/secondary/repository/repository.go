@@ -2,36 +2,35 @@ package repository
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
-	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
-	"github.com/secamc93/probability/back/migration/shared/models"
-	"gorm.io/datatypes"
+	"github.com/secamc93/probability/back/central/shared/log"
 	"gorm.io/gorm"
 )
 
-type GormRepository struct {
-	db db.IDatabase
+type repository struct {
+	db     db.IDatabase
+	logger log.ILogger
 }
 
-func New(db db.IDatabase) domain.IRepository {
-	return &GormRepository{db: db}
-}
-
-func (r *GormRepository) Create(ctx context.Context, config *domain.NotificationConfig) error {
-	model, err := toModel(config)
+// Create crea una nueva configuración
+func (r *repository) Create(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
+	model, err := mappers.ToModel(config)
 	if err != nil {
+		r.logger.Error().Err(err).Msg("Error converting entity to model")
 		return err
 	}
 
-	if err := r.db.WithContext(ctx).Create(model).Error; err != nil {
+	if err := r.db.Conn(ctx).Create(&model).Error; err != nil {
+		r.logger.Error().Err(err).Msg("Error creating notification config")
 		return err
 	}
 
-	// Update ID and timestamps
 	config.ID = model.ID
 	config.CreatedAt = model.CreatedAt
 	config.UpdatedAt = model.UpdatedAt
@@ -39,132 +38,135 @@ func (r *GormRepository) Create(ctx context.Context, config *domain.Notification
 	return nil
 }
 
-func (r *GormRepository) GetByID(ctx context.Context, id uint) (*domain.NotificationConfig, error) {
-	var model models.BusinessNotificationConfig
-	if err := r.db.WithContext(ctx).First(&model, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
-		}
-		return nil, err
-	}
-	return toDomain(&model)
-}
-
-func (r *GormRepository) Update(ctx context.Context, id uint, config *domain.NotificationConfig) error {
-	model, err := toModel(config)
+// Update actualiza una configuración existente
+func (r *repository) Update(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
+	model, err := mappers.ToModel(config)
 	if err != nil {
-		return err
-	}
-	model.ID = id
-
-	if err := r.db.WithContext(ctx).Model(&models.BusinessNotificationConfig{Model: gorm.Model{ID: id}}).Updates(model).Error; err != nil {
+		r.logger.Error().Err(err).Msg("Error converting entity to model")
 		return err
 	}
 
-	// Fetch updated to get timestamps
-	updated, err := r.GetByID(ctx, id)
-	if err != nil {
-		return err
+	result := r.db.Conn(ctx).Model(&mappers.IntegrationNotificationConfigModel{}).
+		Where("id = ?", config.ID).
+		Updates(&model)
+
+	if result.Error != nil {
+		r.logger.Error().Err(result.Error).Msg("Error updating notification config")
+		return result.Error
 	}
-	*config = *updated
+
+	if result.RowsAffected == 0 {
+		return domainerrors.ErrNotificationConfigNotFound
+	}
+
 	return nil
 }
 
-func (r *GormRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&models.BusinessNotificationConfig{}, id).Error
-}
+// GetByID obtiene una configuración por su ID
+func (r *repository) GetByID(ctx context.Context, id uint) (*entities.IntegrationNotificationConfig, error) {
+	var model mappers.IntegrationNotificationConfigModel
 
-func (r *GormRepository) List(ctx context.Context, filter domain.ConfigFilter) ([]*domain.NotificationConfig, error) {
-	var modelsList []models.BusinessNotificationConfig
-	query := r.db.WithContext(ctx).
-		Preload("OrderStatuses") // Precargar estados de orden asociados
-
-	if filter.BusinessID != nil {
-		query = query.Where("business_id = ?", *filter.BusinessID)
-	}
-	if filter.EventType != nil {
-		query = query.Where("event_type = ?", *filter.EventType)
-	}
-
-	if err := query.Find(&modelsList).Error; err != nil {
-		return nil, err
-	}
-
-	configs := make([]*domain.NotificationConfig, len(modelsList))
-	for i, m := range modelsList {
-		d, err := toDomain(&m)
-		if err != nil {
-			return nil, err
-		}
-		configs[i] = d
-	}
-	return configs, nil
-}
-
-func (r *GormRepository) GetByBusinessAndEventType(ctx context.Context, businessID uint, eventType string) (*domain.NotificationConfig, error) {
-	var model models.BusinessNotificationConfig
-	if err := r.db.WithContext(ctx).Where("business_id = ? AND event_type = ?", businessID, eventType).First(&model).Error; err != nil {
+	if err := r.db.Conn(ctx).First(&model, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, nil
+			return nil, domainerrors.ErrNotificationConfigNotFound
 		}
+		r.logger.Error().Err(err).Uint("id", id).Msg("Error getting notification config by ID")
 		return nil, err
 	}
-	return toDomain(&model)
+
+	entity, err := mappers.ToDomain(&model)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Error converting model to entity")
+		return nil, err
+	}
+
+	return entity, nil
 }
 
-// Helpers
+// List obtiene una lista de configuraciones con filtros opcionales
+func (r *repository) List(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error) {
+	query := r.db.Conn(ctx).Model(&mappers.IntegrationNotificationConfigModel{})
 
-func toModel(d *domain.NotificationConfig) (*models.BusinessNotificationConfig, error) {
-	channelsJSON, err := json.Marshal(d.Channels)
-	if err != nil {
-		return nil, err
-	}
-	filtersJSON, err := json.Marshal(d.Filters)
-	if err != nil {
-		return nil, err
+	// Aplicar filtros
+	if filters.IntegrationID != nil {
+		query = query.Where("integration_id = ?", *filters.IntegrationID)
 	}
 
-	return &models.BusinessNotificationConfig{
-		BusinessID:  d.BusinessID,
-		EventType:   d.EventType,
-		Enabled:     d.Enabled,
-		Channels:    datatypes.JSON(channelsJSON),
-		Filters:     datatypes.JSON(filtersJSON),
-		Description: d.Description,
-	}, nil
+	if filters.NotificationType != nil {
+		query = query.Where("notification_type = ?", *filters.NotificationType)
+	}
+
+	if filters.IsActive != nil {
+		query = query.Where("is_active = ?", *filters.IsActive)
+	}
+
+	if filters.Trigger != nil {
+		query = query.Where("conditions->>'trigger' = ?", *filters.Trigger)
+	}
+
+	// Ordenar por prioridad descendente
+	query = query.Order("priority DESC, created_at DESC")
+
+	var models []mappers.IntegrationNotificationConfigModel
+	if err := query.Find(&models).Error; err != nil {
+		r.logger.Error().Err(err).Msg("Error listing notification configs")
+		return nil, err
+	}
+
+	entities, err := mappers.ToDomainList(models)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Error converting models to entities")
+		return nil, err
+	}
+
+	return entities, nil
 }
 
-func toDomain(m *models.BusinessNotificationConfig) (*domain.NotificationConfig, error) {
-	var channels []string
-	if len(m.Channels) > 0 {
-		if err := json.Unmarshal(m.Channels, &channels); err != nil {
-			return nil, err
-		}
+// Delete elimina una configuración por su ID
+func (r *repository) Delete(ctx context.Context, id uint) error {
+	result := r.db.Conn(ctx).Delete(&mappers.IntegrationNotificationConfigModel{}, id)
+
+	if result.Error != nil {
+		r.logger.Error().Err(result.Error).Uint("id", id).Msg("Error deleting notification config")
+		return result.Error
 	}
 
-	var filters map[string]interface{}
-	if len(m.Filters) > 0 {
-		if err := json.Unmarshal(m.Filters, &filters); err != nil {
-			return nil, err
-		}
+	if result.RowsAffected == 0 {
+		return domainerrors.ErrNotificationConfigNotFound
 	}
 
-	deletedAt := m.DeletedAt.Time
-	var deletedAtPtr *time.Time
-	if m.DeletedAt.Valid {
-		deletedAtPtr = &deletedAt
+	return nil
+}
+
+// GetActiveConfigsByIntegrationAndTrigger obtiene configuraciones activas por integración y trigger
+func (r *repository) GetActiveConfigsByIntegrationAndTrigger(
+	ctx context.Context,
+	integrationID uint,
+	trigger string,
+) ([]entities.IntegrationNotificationConfig, error) {
+	var models []mappers.IntegrationNotificationConfigModel
+
+	err := r.db.Conn(ctx).
+		Where("integration_id = ?", integrationID).
+		Where("is_active = ?", true).
+		Where("conditions->>'trigger' = ?", trigger).
+		Order("priority DESC").
+		Find(&models).Error
+
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Uint("integration_id", integrationID).
+			Str("trigger", trigger).
+			Msg("Error getting active configs by integration and trigger")
+		return nil, err
 	}
 
-	return &domain.NotificationConfig{
-		ID:          m.ID,
-		CreatedAt:   m.CreatedAt,
-		UpdatedAt:   m.UpdatedAt,
-		DeletedAt:   deletedAtPtr,
-		BusinessID:  m.BusinessID,
-		EventType:   m.EventType,
-		Enabled:     m.Enabled,
-		Channels:    channels,
-		Filters:     filters,
-		Description: m.Description,
-	}, nil
+	entities, err := mappers.ToDomainList(models)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("Error converting models to entities")
+		return nil, err
+	}
+
+	return entities, nil
 }

@@ -11,31 +11,9 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/app"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
-	"github.com/secamc93/probability/back/central/shared/env"
-	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/primary/handlers/mappers"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/primary/handlers/request"
 )
-
-// WebhookHandler maneja los endpoints de webhooks de WhatsApp
-type WebhookHandler struct {
-	handleWebhook app.IHandleWebhookUseCase
-	log           log.ILogger
-	config        env.IConfig
-}
-
-// NewWebhookHandler crea una nueva instancia del handler
-func NewWebhookHandler(
-	handleWebhook app.IHandleWebhookUseCase,
-	logger log.ILogger,
-	config env.IConfig,
-) *WebhookHandler {
-	return &WebhookHandler{
-		handleWebhook: handleWebhook,
-		log:           logger.WithModule("whatsapp-webhook-handler"),
-		config:        config,
-	}
-}
 
 // VerifyWebhook maneja la verificación inicial del webhook (GET request)
 // @Summary Verifica el webhook de WhatsApp
@@ -49,7 +27,7 @@ func NewWebhookHandler(
 // @Success 200 {string} string "Challenge token"
 // @Failure 403 {string} string "Forbidden"
 // @Router /integrations/whatsapp/webhook [get]
-func (h *WebhookHandler) VerifyWebhook(c *gin.Context) {
+func (h *Handler) VerifyWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	mode := c.Query("hub.mode")
@@ -103,13 +81,13 @@ func (h *WebhookHandler) VerifyWebhook(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param X-Hub-Signature-256 header string true "Firma HMAC-SHA256 del payload"
-// @Param payload body domain.WebhookPayload true "Payload del webhook"
+// @Param payload body request.WebhookPayload true "Payload del webhook"
 // @Success 200 {object} map[string]string
 // @Failure 400 {object} map[string]interface{}
 // @Failure 401 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /integrations/whatsapp/webhook [post]
-func (h *WebhookHandler) ReceiveWebhook(c *gin.Context) {
+func (h *Handler) ReceiveWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	h.log.Info(ctx).Msg("[Webhook Handler] - recibiendo webhook de WhatsApp")
@@ -148,7 +126,7 @@ func (h *WebhookHandler) ReceiveWebhook(c *gin.Context) {
 	}
 
 	// 3. Parsear payload
-	var webhook domain.WebhookPayload
+	var webhook request.WebhookPayload
 	if err := json.Unmarshal(bodyBytes, &webhook); err != nil {
 		h.log.Error(ctx).Err(err).Msg("[Webhook Handler] - error parseando webhook")
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -174,7 +152,7 @@ func (h *WebhookHandler) ReceiveWebhook(c *gin.Context) {
 }
 
 // processWebhookAsync procesa el webhook de forma asíncrona
-func (h *WebhookHandler) processWebhookAsync(webhook domain.WebhookPayload) {
+func (h *Handler) processWebhookAsync(webhook request.WebhookPayload) {
 	// Crear nuevo contexto para operación asíncrona
 	ctx := context.Background()
 
@@ -183,19 +161,22 @@ func (h *WebhookHandler) processWebhookAsync(webhook domain.WebhookPayload) {
 		Int("entries", len(webhook.Entry)).
 		Msg("[Webhook Handler] - procesando webhook de forma asíncrona")
 
+	// Mapear de infra → domain ANTES de invocar use case
+	webhookDTO := mappers.WebhookPayloadToDomain(webhook)
+
 	// Determinar tipo de evento y procesar
-	for _, entry := range webhook.Entry {
+	for _, entry := range webhookDTO.Entry {
 		for _, change := range entry.Changes {
 			switch change.Field {
 			case "messages":
 				// Procesar mensajes entrantes o cambios de estado
 				if len(change.Value.Messages) > 0 {
-					if err := h.handleWebhook.HandleIncomingMessage(ctx, webhook); err != nil {
+					if err := h.useCase.HandleIncomingMessage(ctx, webhookDTO); err != nil {
 						h.log.Error(ctx).Err(err).Msg("[Webhook Handler] - error procesando mensajes entrantes")
 					}
 				}
 				if len(change.Value.Statuses) > 0 {
-					if err := h.handleWebhook.HandleMessageStatus(ctx, webhook); err != nil {
+					if err := h.useCase.HandleMessageStatus(ctx, webhookDTO); err != nil {
 						h.log.Error(ctx).Err(err).Msg("[Webhook Handler] - error procesando estados de mensajes")
 					}
 				}
@@ -214,7 +195,7 @@ func (h *WebhookHandler) processWebhookAsync(webhook domain.WebhookPayload) {
 }
 
 // verifySignature verifica la firma HMAC-SHA256 del webhook
-func (h *WebhookHandler) verifySignature(payload []byte, signatureHeader string) bool {
+func (h *Handler) verifySignature(payload []byte, signatureHeader string) bool {
 	// Obtener secret de configuración
 	secret := h.config.Get("WHATSAPP_WEBHOOK_SECRET")
 	if secret == "" {

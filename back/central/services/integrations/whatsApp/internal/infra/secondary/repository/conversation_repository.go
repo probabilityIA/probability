@@ -6,7 +6,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -19,16 +20,8 @@ type ConversationRepository struct {
 	log log.ILogger
 }
 
-// NewConversationRepository crea una nueva instancia del repositorio
-func NewConversationRepository(database db.IDatabase, logger log.ILogger) domain.IConversationRepository {
-	return &ConversationRepository{
-		db:  database,
-		log: logger,
-	}
-}
-
 // Create crea una nueva conversación en la base de datos
-func (r *ConversationRepository) Create(ctx context.Context, conversation *domain.Conversation) error {
+func (r *ConversationRepository) Create(ctx context.Context, conversation *entities.Conversation) error {
 	r.log.Info(ctx).
 		Str("phone_number", conversation.PhoneNumber).
 		Str("order_number", conversation.OrderNumber).
@@ -62,7 +55,7 @@ func (r *ConversationRepository) Create(ctx context.Context, conversation *domai
 }
 
 // GetByID obtiene una conversación por su ID
-func (r *ConversationRepository) GetByID(ctx context.Context, id string) (*domain.Conversation, error) {
+func (r *ConversationRepository) GetByID(ctx context.Context, id string) (*entities.Conversation, error) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("ID inválido: %w", err)
@@ -87,7 +80,7 @@ func (r *ConversationRepository) GetByID(ctx context.Context, id string) (*domai
 }
 
 // GetByPhoneAndOrder obtiene una conversación por número de teléfono y número de orden
-func (r *ConversationRepository) GetByPhoneAndOrder(ctx context.Context, phoneNumber, orderNumber string) (*domain.Conversation, error) {
+func (r *ConversationRepository) GetByPhoneAndOrder(ctx context.Context, phoneNumber, orderNumber string) (*entities.Conversation, error) {
 	var model models.WhatsAppConversation
 
 	if err := r.db.Conn(ctx).
@@ -99,7 +92,7 @@ func (r *ConversationRepository) GetByPhoneAndOrder(ctx context.Context, phoneNu
 				Str("phone_number", phoneNumber).
 				Str("order_number", orderNumber).
 				Msg("[WhatsApp Repository] - conversación no encontrada")
-			return nil, &domain.ErrConversationNotFound{
+			return nil, &errors.ErrConversationNotFound{
 				PhoneNumber: phoneNumber,
 				OrderNumber: orderNumber,
 			}
@@ -111,15 +104,15 @@ func (r *ConversationRepository) GetByPhoneAndOrder(ctx context.Context, phoneNu
 }
 
 // GetActiveByPhone obtiene la conversación activa más reciente por número de teléfono
-func (r *ConversationRepository) GetActiveByPhone(ctx context.Context, phoneNumber string) (*domain.Conversation, error) {
+func (r *ConversationRepository) GetActiveByPhone(ctx context.Context, phoneNumber string) (*entities.Conversation, error) {
 	var model models.WhatsAppConversation
 
 	if err := r.db.Conn(ctx).
 		Where("phone_number = ? AND expires_at > ? AND current_state NOT IN (?, ?)",
 			phoneNumber,
 			time.Now(),
-			string(domain.StateCompleted),
-			string(domain.StateHandoffToHuman)).
+			string(entities.StateCompleted),
+			string(entities.StateHandoffToHuman)).
 		Order("created_at DESC").
 		First(&model).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -135,7 +128,7 @@ func (r *ConversationRepository) GetActiveByPhone(ctx context.Context, phoneNumb
 }
 
 // Update actualiza una conversación existente
-func (r *ConversationRepository) Update(ctx context.Context, conversation *domain.Conversation) error {
+func (r *ConversationRepository) Update(ctx context.Context, conversation *entities.Conversation) error {
 	r.log.Info(ctx).
 		Str("id", conversation.ID).
 		Str("state", string(conversation.CurrentState)).

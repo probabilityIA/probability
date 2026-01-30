@@ -21,29 +21,52 @@ whatsApp/
 ├── bundle.go                           # Ensamblaje de componentes (DI)
 ├── internal/
 │   ├── domain/                         # Núcleo - Reglas de negocio
-│   │   ├── conversation.go             # Entidades de conversación y estados
-│   │   ├── webhook.go                  # DTOs de webhooks de Meta
-│   │   ├── template_definitions.go     # Catálogo de 11 plantillas
-│   │   ├── message.go                  # Entidades de mensajes
-│   │   ├── errors.go                   # Errores del dominio
-│   │   ├── dtos.go                     # DTOs de entrada
-│   │   └── port.go                     # Interfaces (contratos)
+│   │   ├── entities/                   # Entidades del dominio (100% puras)
+│   │   │   ├── conversation.go         # Entidades de conversación y estados
+│   │   │   ├── message.go              # Entidades de mensajes
+│   │   │   └── template.go             # Catálogo de 11 plantillas
+│   │   ├── dtos/                       # DTOs de dominio
+│   │   │   └── send_message_request.go # DTOs de entrada
+│   │   ├── ports/                      # Interfaces (contratos)
+│   │   │   └── ports.go                # Repositorios, servicios externos
+│   │   └── errors/                     # Errores del dominio
+│   │       └── errors.go
 │   ├── app/                            # Casos de uso
-│   │   ├── send-template-message.go    # Envío de plantillas dinámicas
-│   │   ├── handle-webhook.go           # Procesamiento de webhooks
-│   │   ├── conversation-manager.go     # Máquina de estados conversacional
-│   │   ├── send-message.go             # Caso de uso legacy
-│   │   └── utils.go                    # Validación de teléfonos
+│   │   ├── usecasemessaging/
+│   │   │   ├── constructor.go          # Interfaz y constructor
+│   │   │   ├── send-template-message.go    # Envío de plantillas dinámicas
+│   │   │   ├── handle-webhook.go           # Procesamiento de webhooks
+│   │   │   ├── conversation-manager.go     # Máquina de estados conversacional
+│   │   │   ├── send-message.go             # Caso de uso legacy
+│   │   │   └── utils.go                    # Validación de teléfonos
+│   │   └── usecasetestconnection/
+│   │       └── test_connection.go      # Test de integración
 │   └── infra/                          # Infraestructura
 │       ├── primary/                    # Adaptadores de entrada
-│       │   └── handlers/
-│       │       ├── template_handler.go # Endpoint POST /send-template
-│       │       └── webhook_handler.go  # Endpoints GET/POST /webhook
+│       │   ├── handlers/
+│       │   │   ├── constructor.go      # Interfaz IHandler
+│       │   │   ├── routes.go           # Registro de rutas HTTP
+│       │   │   ├── template_handler.go # Endpoint POST /send-template
+│       │   │   ├── webhook_handler.go  # Endpoints GET/POST /webhook
+│       │   │   ├── request/            # DTOs de entrada HTTP (con tags json)
+│       │   │   │   ├── send_template.go
+│       │   │   │   └── webhook_payload.go  # ✨ Webhooks de Meta (con tags)
+│       │   │   └── response/           # DTOs de salida HTTP (con tags json)
+│       │   │       └── send_template.go
+│       │   ├── consumer/               # Consumidores Redis
+│       │   │   └── consumerevent/
+│       │   └── queue/                  # Consumidores RabbitMQ
+│       │       └── consumerorder/
 │       └── secondary/                  # Adaptadores de salida
 │           ├── client/                 # Cliente HTTP WhatsApp API
 │           ├── repository/             # Repositorios PostgreSQL
+│           │   ├── constructor.go
 │           │   ├── conversation_repository.go
-│           │   └── message_log_repository.go
+│           │   ├── message_log_repository.go
+│           │   └── mappers/            # Mappers domain ↔ models
+│           │       ├── to_domain.go
+│           │       └── to_model.go
+│           ├── adapters/               # Adaptadores a otros módulos
 │           └── queue/                  # Publisher RabbitMQ
 │               └── webhook_publisher.go
 ```
@@ -274,7 +297,7 @@ Recibe eventos de WhatsApp (mensajes, estados).
 **Headers:**
 - `X-Hub-Signature-256: sha256=<hmac_signature>`
 
-**Body:** Webhook payload de Meta (ver estructura en `domain/webhook.go`)
+**Body:** Webhook payload de Meta (ver estructura en `internal/infra/primary/handlers/request/webhook_payload.go`)
 
 **Response:**
 ```json
