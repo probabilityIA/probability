@@ -13,6 +13,9 @@ func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILog
 		// Config endpoint - público (reemplaza variable de entorno)
 		shopifyGroup.GET("/config", h.GetConfigHandler)
 
+		// Auth endpoints
+		shopifyGroup.POST("/auth/login", h.LoginWithSessionTokenHandler)
+
 		// OAuth endpoints - requieren autenticación JWT
 		shopifyGroup.POST("/connect", middleware.JWT(), h.InitiateOAuthHandler)
 
