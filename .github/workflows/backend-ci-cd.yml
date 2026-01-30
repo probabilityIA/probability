@@ -336,5 +336,11 @@ jobs:
             # Limpiar imágenes sin usar (dangling)
             podman image prune -f
 
+            # Reiniciar nginx para refrescar DNS cache
+            echo "🔄 Reiniciando nginx para refrescar DNS cache..."
+            podman restart nginx_prod
+            sleep 3
+            echo "✅ Nginx reiniciado correctamente"
+
             echo "✅ Backend deployed successfully with version $VERSION_FULL"
           EOF
