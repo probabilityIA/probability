@@ -188,10 +188,10 @@ export function Sidebar({ user }: SidebarProps) {
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
 
           {/* Tarjeta de usuario arriba */}
-          <div
-            className={`cursor-pointer hover:bg-gray-50 transition-colors rounded-xl mx-2 my-1 ${primaryExpanded ? 'p-4' : 'p-2 flex justify-center'}`}
-            onClick={() => setShowUserModal(true)}
-            title="Haz clic para cambiar tu foto de perfil"
+          <Link
+            href="/profile"
+            className={`cursor-pointer hover:bg-gray-50 transition-colors rounded-xl mx-2 my-1 ${primaryExpanded ? 'p-4' : 'p-2 flex justify-center'} block`}
+            title="Ver perfil completo"
           >
             <div className={`flex items-center ${primaryExpanded ? 'gap-3' : 'justify-center'}`}>
               {/* Avatar clickeable */}
@@ -227,7 +227,7 @@ export function Sidebar({ user }: SidebarProps) {
                 </div>
               )}
             </div>
-          </div>
+          </Link>
 
           {/* Menú de navegación */}
           <nav className="flex-1 py-6 px-3">
@@ -639,12 +639,13 @@ export function Sidebar({ user }: SidebarProps) {
             </button>
           </div>
         </div>
-      </aside>
+      </aside >
 
       {/* Modal para cambiar foto de perfil */}
-      <UserProfileModal
+      < UserProfileModal
         isOpen={showUserModal}
-        onClose={() => setShowUserModal(false)}
+        onClose={() => setShowUserModal(false)
+        }
         user={user}
         onUpdate={() => {
           // Recargar la página para actualizar el avatar en el sidebar
