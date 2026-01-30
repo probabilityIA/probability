@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Script from "next/script";
 import { FooterWrapper } from "./footer-wrapper";
+import { ClientProviders } from "@/providers/ClientProviders";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -62,7 +63,9 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen flex flex-col`}
       >
         <div className="flex-1">
-          {children}
+          <ClientProviders>
+            {children}
+          </ClientProviders>
         </div>
         <FooterWrapper />
       </body>
