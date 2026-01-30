@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 
 	"github.com/google/uuid"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+		"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/entities"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/datatypes"
 )
 
 // ConversationDomainToModel convierte una entidad del dominio a un modelo GORM
-func ConversationDomainToModel(entity *domain.Conversation) (*models.WhatsAppConversation, error) {
+func ConversationDomainToModel(entity *entities.Conversation) (*models.WhatsAppConversation, error) {
 	if entity == nil {
 		return nil, nil
 	}
@@ -44,7 +44,7 @@ func ConversationDomainToModel(entity *domain.Conversation) (*models.WhatsAppCon
 }
 
 // MessageLogDomainToModel convierte una entidad del dominio de mensaje a un modelo GORM
-func MessageLogDomainToModel(entity *domain.MessageLog) (*models.WhatsAppMessageLog, error) {
+func MessageLogDomainToModel(entity *entities.MessageLog) (*models.WhatsAppMessageLog, error) {
 	if entity == nil {
 		return nil, nil
 	}

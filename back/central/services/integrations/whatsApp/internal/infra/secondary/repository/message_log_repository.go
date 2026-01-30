@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+		"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -19,16 +19,8 @@ type MessageLogRepository struct {
 	log log.ILogger
 }
 
-// NewMessageLogRepository crea una nueva instancia del repositorio
-func NewMessageLogRepository(database db.IDatabase, logger log.ILogger) domain.IMessageLogRepository {
-	return &MessageLogRepository{
-		db:  database,
-		log: logger,
-	}
-}
-
 // Create crea un nuevo log de mensaje en la base de datos
-func (r *MessageLogRepository) Create(ctx context.Context, messageLog *domain.MessageLog) error {
+func (r *MessageLogRepository) Create(ctx context.Context, messageLog *entities.MessageLog) error {
 	r.log.Info(ctx).
 		Str("conversation_id", messageLog.ConversationID).
 		Str("message_id", messageLog.MessageID).
@@ -63,7 +55,7 @@ func (r *MessageLogRepository) Create(ctx context.Context, messageLog *domain.Me
 }
 
 // GetByID obtiene un log de mensaje por su ID
-func (r *MessageLogRepository) GetByID(ctx context.Context, id string) (*domain.MessageLog, error) {
+func (r *MessageLogRepository) GetByID(ctx context.Context, id string) (*entities.MessageLog, error) {
 	parsedID, err := uuid.Parse(id)
 	if err != nil {
 		return nil, fmt.Errorf("ID inválido: %w", err)
@@ -88,7 +80,7 @@ func (r *MessageLogRepository) GetByID(ctx context.Context, id string) (*domain.
 }
 
 // GetByMessageID obtiene un log de mensaje por el message_id de WhatsApp
-func (r *MessageLogRepository) GetByMessageID(ctx context.Context, messageID string) (*domain.MessageLog, error) {
+func (r *MessageLogRepository) GetByMessageID(ctx context.Context, messageID string) (*entities.MessageLog, error) {
 	var model models.WhatsAppMessageLog
 
 	if err := r.db.Conn(ctx).
@@ -107,7 +99,7 @@ func (r *MessageLogRepository) GetByMessageID(ctx context.Context, messageID str
 }
 
 // GetByConversation obtiene todos los logs de mensajes de una conversación
-func (r *MessageLogRepository) GetByConversation(ctx context.Context, conversationID string) ([]domain.MessageLog, error) {
+func (r *MessageLogRepository) GetByConversation(ctx context.Context, conversationID string) ([]entities.MessageLog, error) {
 	parsedID, err := uuid.Parse(conversationID)
 	if err != nil {
 		return nil, fmt.Errorf("ID de conversación inválido: %w", err)
@@ -134,7 +126,7 @@ func (r *MessageLogRepository) GetByConversation(ctx context.Context, conversati
 }
 
 // UpdateStatus actualiza el estado y timestamps de un mensaje
-func (r *MessageLogRepository) UpdateStatus(ctx context.Context, messageID string, status domain.MessageStatus, timestamps map[string]time.Time) error {
+func (r *MessageLogRepository) UpdateStatus(ctx context.Context, messageID string, status entities.MessageStatus, timestamps map[string]time.Time) error {
 	r.log.Info(ctx).
 		Str("message_id", messageID).
 		Str("status", string(status)).

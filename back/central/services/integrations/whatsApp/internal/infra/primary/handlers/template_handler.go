@@ -2,40 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/app"
-	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/primary/handlers/request"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/primary/handlers/response"
 )
-
-// TemplateHandler maneja los endpoints relacionados con plantillas
-type TemplateHandler struct {
-	sendTemplateUseCase app.ISendTemplateMessageUseCase
-	log                 log.ILogger
-}
-
-// NewTemplateHandler crea una nueva instancia del handler
-func NewTemplateHandler(sendTemplateUseCase app.ISendTemplateMessageUseCase, logger log.ILogger) *TemplateHandler {
-	return &TemplateHandler{
-		sendTemplateUseCase: sendTemplateUseCase,
-		log:                 logger.WithModule("whatsapp-template-handler"),
-	}
-}
-
-// SendTemplateRequest representa el request para enviar una plantilla
-type SendTemplateRequest struct {
-	TemplateName string            `json:"template_name" binding:"required"`
-	PhoneNumber  string            `json:"phone_number" binding:"required"`
-	Variables    map[string]string `json:"variables"`
-	OrderNumber  string            `json:"order_number"`
-	BusinessID   uint              `json:"business_id"`
-}
-
-// SendTemplateResponse representa la respuesta del endpoint
-type SendTemplateResponse struct {
-	MessageID string `json:"message_id"`
-	Status    string `json:"status"`
-}
 
 // SendTemplate maneja el endpoint POST /integrations/whatsapp/send-template
 // @Summary Envía una plantilla de WhatsApp
@@ -48,10 +20,10 @@ type SendTemplateResponse struct {
 // @Failure 400 {object} map[string]interface{} "Error de validación"
 // @Failure 500 {object} map[string]interface{} "Error interno del servidor"
 // @Router /integrations/whatsapp/send-template [post]
-func (h *TemplateHandler) SendTemplate(c *gin.Context) {
+func (h *Handler) SendTemplate(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	var req SendTemplateRequest
+	var req request.SendTemplateRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.log.Error(ctx).Err(err).Msg("[Template Handler] - error validando request")
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -74,7 +46,7 @@ func (h *TemplateHandler) SendTemplate(c *gin.Context) {
 	}
 
 	// Enviar plantilla
-	messageID, err := h.sendTemplateUseCase.SendTemplate(
+	messageID, err := h.useCase.SendTemplate(
 		ctx,
 		req.TemplateName,
 		req.PhoneNumber,
@@ -95,13 +67,13 @@ func (h *TemplateHandler) SendTemplate(c *gin.Context) {
 
 		// Errores específicos del dominio
 		errorMsg := err.Error()
-		if contains(errorMsg, "plantilla no encontrada") {
+		if strings.Contains(errorMsg, "plantilla no encontrada") {
 			statusCode = http.StatusBadRequest
 			errorType = "template_not_found"
-		} else if contains(errorMsg, "variable") && contains(errorMsg, "faltante") {
+		} else if strings.Contains(errorMsg, "variable") && strings.Contains(errorMsg, "faltante") {
 			statusCode = http.StatusBadRequest
 			errorType = "missing_variable"
-		} else if contains(errorMsg, "número de teléfono inválido") {
+		} else if strings.Contains(errorMsg, "número de teléfono inválido") {
 			statusCode = http.StatusBadRequest
 			errorType = "invalid_phone_number"
 		}
@@ -119,24 +91,8 @@ func (h *TemplateHandler) SendTemplate(c *gin.Context) {
 		Str("template_name", req.TemplateName).
 		Msg("[Template Handler] - plantilla enviada exitosamente")
 
-	c.JSON(http.StatusOK, SendTemplateResponse{
+	c.JSON(http.StatusOK, response.SendTemplateResponse{
 		MessageID: messageID,
 		Status:    "sent",
 	})
-}
-
-// contains es una función auxiliar para verificar si una cadena contiene una subcadena
-func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(s) > len(substr) &&
-		(s[:len(substr)] == substr || s[len(s)-len(substr):] == substr ||
-		findSubstring(s, substr)))
-}
-
-func findSubstring(s, substr string) bool {
-	for i := 0; i <= len(s)-len(substr); i++ {
-		if s[i:i+len(substr)] == substr {
-			return true
-		}
-	}
-	return false
 }

@@ -6,23 +6,24 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client/mappers"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client/response"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/httpclient"
 )
 
-// implementa domain.IWhatsApp
+// implementa ports.IWhatsApp
 type whatsAppClient struct {
 	rest        *resty.Client
 	accessToken string
 }
 
-// New construye y devuelve un cliente que implementa domain.IWhatsApp.
+// New construye y devuelve un cliente que implementa ports.IWhatsApp.
 // La baseURL y el token se toman de las variables de entorno WHATSAPP_URL y WHATSAPP_TOKEN.
 // Utiliza el cliente HTTP compartido para reutilizar la configuración común.
-func New(config env.IConfig) domain.IWhatsApp {
+func New(config env.IConfig) ports.IWhatsApp {
 	baseURL := config.Get("WHATSAPP_URL")
 	accessToken := config.Get("WHATSAPP_TOKEN")
 
@@ -65,7 +66,7 @@ func New(config env.IConfig) domain.IWhatsApp {
 // - msg: DTO de dominio con los datos del mensaje.
 // - accessToken: Token de acceso para autenticación con WhatsApp API.
 // La URL se construye como: {baseURL}{phone_number_id}/messages
-func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, msg domain.TemplateMessage, accessToken string) (string, error) {
+func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, msg entities.TemplateMessage, accessToken string) (string, error) {
 	fmt.Printf("🚀 [WhatsAppClient] SendMessage called for PhoneID: %d\n", phoneNumberID)
 	payload := mappers.MapDomainToRequest(msg)
 

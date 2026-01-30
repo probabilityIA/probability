@@ -6,18 +6,24 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-func New(router *gin.RouterGroup, database db.IDatabase) {
-	// 1. Init Repository
-	repo := repository.New(database)
+// New inicializa y registra el módulo de configuración de notificaciones
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger) {
+	logger = logger.WithModule("notification_config")
 
-	// 2. Init Use Case
-	useCase := app.New(repo)
+	// 1. Infraestructura secundaria (adaptadores de salida)
+	repo := repository.New(database, logger)
 
-	// 3. Init Handler
-	handler := handlers.New(useCase)
+	// 2. Capa de aplicación (casos de uso)
+	useCase := app.New(repo, logger)
 
-	// 4. Register Routes
+	// 3. Infraestructura primaria (adaptadores de entrada)
+	handler := handlers.New(useCase, logger)
+
+	// 4. Registrar rutas HTTP
 	handler.RegisterRoutes(router)
+
+	logger.Info().Msg("Notification config module initialized")
 }
