@@ -19,8 +19,6 @@ services:
       start_period: 15s
     networks:
       - app-network
-    depends_on:
-      - back-central
 
   front-website:
     image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website:latest
@@ -78,6 +76,11 @@ services:
       WHATSAPP_PHONE_NUMBER_ID: "${WHATSAPP_PHONE_NUMBER_ID}"
       # Encryption
       ENCRYPTION_KEY: "${ENCRYPTION_KEY}"
+      # Shopify
+      SHOPIFY_CLIENT_ID: "${SHOPIFY_CLIENT_ID}"
+      SHOPIFY_CLIENT_SECRET: "${SHOPIFY_CLIENT_SECRET}"
+      SHOPIFY_REDIRECT_URL: "${SHOPIFY_REDIRECT_URL}"
+      SHOPIFY_SCOPES: "${SHOPIFY_SCOPES}"
       # Redis
       REDIS_HOST: "redis"
       REDIS_PORT: "6379"
@@ -98,11 +101,6 @@ services:
       start_period: 40s
     networks:
       - app-network
-    depends_on:
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
 
   redis:
     image: docker.io/library/redis:7-alpine
@@ -157,9 +155,6 @@ services:
       SSL_KEY_PATH: "${SSL_KEY_PATH}"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
-    depends_on:
-      - back-central
-      - front-central
     networks:
       - app-network
     restart: always

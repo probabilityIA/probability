@@ -166,3 +166,12 @@ func (u *WalletUsecases) ManualDebit(ctx context.Context, businessID uint, amoun
 	wallet.Balance -= amount
 	return u.repo.UpdateWallet(ctx, wallet)
 }
+
+func (u *WalletUsecases) ClearRechargeHistory(ctx context.Context, businessID uint) error {
+	wallet, err := u.GetWallet(ctx, businessID)
+	if err != nil {
+		return err
+	}
+
+	return u.repo.DeleteTransactionsByWalletIDAndType(ctx, wallet.ID, domain.TransactionTypeRecharge)
+}

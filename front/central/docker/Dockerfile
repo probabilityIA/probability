@@ -89,12 +89,16 @@ ENV HOSTNAME="0.0.0.0"
 # IMPORTANTE: API_BASE_URL debe pasarse en runtime (no en build time)
 # Se configura en docker-compose.yml o docker run -e API_BASE_URL=...
 
+# Copiar script de startup con verificación de backend (antes de USER)
+COPY docker/startup.sh /app/startup.sh
+RUN chmod +x /app/startup.sh && chown nextjs:nodejs /app/startup.sh
+
 # Cambiar a usuario no-root
 USER nextjs
 
 # Exponer puerto (3000 para Podman rootless)
 EXPOSE 3000
 
-# Comando de inicio
-CMD ["node", "server.js"]
+# Comando de inicio con verificación de backend
+CMD ["/app/startup.sh"]
 

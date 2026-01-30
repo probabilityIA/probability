@@ -24,7 +24,7 @@ const addressSchema = z.object({
     suburb: z.string().min(1, "Barrio es requerido"),
     crossStreet: z.string().optional(),
     reference: z.string().optional(),
-    daneCode: z.string().min(1, "Código DANE es requerido"),
+    daneCode: z.string().min(1, "Código DANE es requerido").refine((val) => val in daneCodes, "El código DANE no es válido o no existe en la base de datos"),
 });
 
 const formSchema = z.object({
@@ -32,10 +32,10 @@ const formSchema = z.object({
     destination: addressSchema,
     packageSize: z.enum(["small", "medium", "large", "custom"]),
     customPackage: z.object({
-        weight: z.number().min(0.1),
-        height: z.number().min(1),
-        width: z.number().min(1),
-        length: z.number().min(1),
+        weight: z.number().min(0.1, "El peso debe ser al menos 0.1 kg"),
+        height: z.number().min(1, "La altura debe ser al menos 1 cm"),
+        width: z.number().min(1, "El ancho debe ser al menos 1 cm"),
+        length: z.number().min(1, "El largo debe ser al menos 1 cm"),
     }).optional(),
     description: z.string().min(1, "Descripción es requerida"),
     contentValue: z.number().min(0, "Valor declarado debe ser positivo"),

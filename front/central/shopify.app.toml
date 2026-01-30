@@ -8,7 +8,7 @@ automatically_update_urls_on_dev = true
 dev_store_url = "probability-8291.myshopify.com"
 
 [access_scopes]
-scopes = "read_customers,read_fulfillments,read_orders,write_orders,read_products"
+scopes = "read_customers,read_fulfillments,read_orders,write_orders,read_products,write_products,write_customers"
 
 [auth]
 redirect_urls = [
@@ -18,7 +18,6 @@ redirect_urls = [
 [webhooks]
 api_version = "2024-10"
 
-  [webhooks.privacy_compliance]
-  customer_data_request_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
-  customer_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
-  shop_redaction_url = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhook"
+[[webhooks.subscriptions]]
+compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
+uri = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhooks/compliance"
