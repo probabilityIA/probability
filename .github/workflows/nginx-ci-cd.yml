@@ -9,6 +9,10 @@ on:
       - '.github/workflows/nginx-ci-cd.yml'
   workflow_dispatch:
 
+concurrency:
+  group: nginx-deploy
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: 476702565908
@@ -208,12 +212,44 @@ jobs:
             echo "📊 New image ID: $NEW_IMAGE_ID"
             echo "📊 Version: $VERSION_FULL"
 
-            # Siempre recrear el contenedor con la nueva imagen específica
-            echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
+            # Nueva imagen detectada, actualizar solo nginx
+            echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando nginx..."
 
-            # Recrear el contenedor SIN reiniciar dependencias (reemplazo sutil)
-            echo "🔄 Recreando contenedor con nueva imagen (sin afectar dependencias)..."
-            podman-compose -f podman-compose.yaml up -d --force-recreate --no-deps nginx
+            # 1. Detener y eliminar solo el contenedor nginx
+            echo "🛑 Deteniendo nginx..."
+            podman stop -t 10 nginx_prod || true
+
+            echo "🗑️  Eliminando contenedor nginx y sus dependientes..."
+            podman rm -f --depend nginx_prod || true
+
+            # Verificar y eliminar cualquier contenedor nginx_prod que quede
+            echo "🔍 Verificando eliminación completa..."
+            NGINX_IDS=$(podman ps -a --filter name=nginx_prod --format '{{.ID}}' 2>/dev/null || true)
+            if [ -n "$NGINX_IDS" ]; then
+              echo "⚠️  Contenedores nginx encontrados, eliminando por ID con dependientes..."
+              echo "$NGINX_IDS" | xargs -r podman rm -f --depend
+            fi
+            echo "✅ Contenedor nginx eliminado completamente"
+
+            # 2. Liberar puertos 80 y 443 (matar proceso conmon/rootlessport)
+            echo "🔫 Liberando puertos 80 y 443..."
+            sudo fuser -k 80/tcp || true
+            sudo fuser -k 443/tcp || true
+            pkill -9 -f "rootlessport.*(80|443)" || true
+            sleep 2
+
+            # 3. Pull de la nueva imagen específica
+            echo "📦 Pulling nueva imagen $VERSION_FULL..."
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL
+
+            # 4. Tag como latest localmente
+            echo "🏷️  Tageando como latest..."
+            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL \
+                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
+
+            # 5. Levantar solo el servicio nginx (contenedor: nginx_prod)
+            echo "🚀 Levantando nginx con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d nginx
 
             echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
             sleep 10
@@ -269,16 +305,21 @@ jobs:
 
             # Verificar que el contenedor está usando la nueva imagen
             CONTAINER_IMAGE_ID=$(podman inspect nginx_prod --format '{{.Image}}' 2>/dev/null || echo "")
-            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest | head -1)
+            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL | head -1)
 
-            echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
-            echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
+            # Remover prefijo sha256: si existe
+            NEW_IMAGE_FULL_ID_CLEAN="${NEW_IMAGE_FULL_ID#sha256:}"
+            CONTAINER_IMAGE_ID_CLEAN="${CONTAINER_IMAGE_ID#sha256:}"
 
-            if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
-              if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
+            echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID_CLEAN:0:12}"
+            echo "📋 Image ID esperada (Version $VERSION_FULL): ${NEW_IMAGE_FULL_ID_CLEAN:0:12}"
+
+            if [ -n "$CONTAINER_IMAGE_ID_CLEAN" ] && [ -n "$NEW_IMAGE_FULL_ID_CLEAN" ]; then
+              if [ "${CONTAINER_IMAGE_ID_CLEAN:0:12}" = "${NEW_IMAGE_FULL_ID_CLEAN:0:12}" ]; then
                 echo "✅ Contenedor actualizado correctamente con la nueva imagen (Version: $VERSION_FULL)"
               else
-                echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
+                echo "❌ ERROR: El contenedor NO está usando la imagen correcta"
+                exit 1
               fi
             fi
 
@@ -286,9 +327,17 @@ jobs:
             echo "📋 Estado final del contenedor:"
             podman ps --filter "name=nginx" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
-            # Clean up imágenes antiguas
-            echo "🧹 Limpiando imágenes antiguas..."
+            # Limpiar imágenes antiguas de nginx
+            echo "🧹 Limpiando imágenes antiguas de nginx..."
+
+            podman images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
+              grep "probability-nginx" | \
+              grep -v "$VERSION_FULL" | \
+              grep -v "latest" | \
+              awk '{print $2}' | \
+              xargs -r podman rmi -f 2>/dev/null || true
+
             podman image prune -f
 
-            echo "✅ Nginx deployed successfully"
+            echo "✅ Nginx deployed successfully with version $VERSION_FULL"
           EOF

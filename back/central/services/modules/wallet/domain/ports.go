@@ -18,6 +18,7 @@ type IWalletRepository interface {
 	GetTransactionByID(ctx context.Context, id uuid.UUID) (*Transaction, error)
 	UpdateTransaction(ctx context.Context, transaction *Transaction) error
 	GetAllWallets(ctx context.Context) ([]Wallet, error)
+	DeleteTransactionsByWalletIDAndType(ctx context.Context, walletID uuid.UUID, txType TransactionType) error
 }
 
 type INequiService interface {

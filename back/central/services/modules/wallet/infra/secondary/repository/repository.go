@@ -112,3 +112,7 @@ func (r *Repository) GetProcessedTransactions(ctx context.Context) ([]domain.Tra
 func (r *Repository) UpdateTransaction(ctx context.Context, transaction *domain.Transaction) error {
 	return r.db.Conn(ctx).Save(transaction).Error
 }
+
+func (r *Repository) DeleteTransactionsByWalletIDAndType(ctx context.Context, walletID uuid.UUID, txType domain.TransactionType) error {
+	return r.db.Conn(ctx).Where("wallet_id = ? AND type = ?", walletID, txType).Delete(&domain.Transaction{}).Error
+}

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -77,4 +78,26 @@ func (h *WalletHandlers) ManualDebit(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Balance subtracted successfully"})
+}
+
+// ClearRechargeHistory deletes all recharge transactions for a business
+func (h *WalletHandlers) ClearRechargeHistory(c *gin.Context) {
+	businessIDStr := c.Param("business_id")
+	if businessIDStr == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Business ID is required"})
+		return
+	}
+
+	var businessID uint
+	if _, err := fmt.Sscanf(businessIDStr, "%d", &businessID); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid business ID"})
+		return
+	}
+
+	if err := h.uc.ClearRechargeHistory(c.Request.Context(), businessID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Recharge history cleared successfully"})
 }

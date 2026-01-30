@@ -9,6 +9,10 @@ on:
       - '.github/workflows/frontend-ci-cd.yml'
   workflow_dispatch:
 
+concurrency:
+  group: frontend-deploy
+  cancel-in-progress: true
+
 env:
   AWS_REGION: us-east-1
   AWS_ACCOUNT_ID: 476702565908
@@ -209,23 +213,43 @@ jobs:
             echo "📊 New image ID: $NEW_IMAGE_ID"
             echo "📊 Version: $VERSION_FULL"
 
-            # Siempre recrear el contenedor con la nueva imagen específica
-            echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), recreando contenedor..."
+            # Nueva imagen detectada, actualizar solo frontend
+            echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando frontend..."
 
-            # Detener y eliminar el contenedor existente de forma forzada
-            echo "🛑 Deteniendo contenedor frontend_prod..."
-            podman stop frontend_prod 2>/dev/null || true
+            # 1. Detener y eliminar solo el contenedor frontend
+            echo "🛑 Deteniendo frontend..."
+            podman stop -t 10 frontend_prod || true
 
-            echo "🗑️  Eliminando contenedor frontend_prod..."
-            podman rm -f frontend_prod 2>/dev/null || true
+            echo "🗑️  Eliminando contenedor frontend y sus dependientes..."
+            podman rm -f --depend frontend_prod || true
 
-            # Recrear el contenedor con la nueva imagen
-            echo "🔄 Recreando contenedor con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d --no-deps front-central
+            # Verificar y eliminar cualquier contenedor frontend_prod que quede
+            echo "🔍 Verificando eliminación completa..."
+            FRONTEND_IDS=$(podman ps -a --filter name=frontend_prod --format '{{.ID}}' 2>/dev/null || true)
+            if [ -n "$FRONTEND_IDS" ]; then
+              echo "⚠️  Contenedores frontend encontrados, eliminando por ID con dependientes..."
+              echo "$FRONTEND_IDS" | xargs -r podman rm -f --depend
+            fi
+            echo "✅ Contenedor frontend eliminado completamente"
 
-            # Reiniciar nginx completamente para que resuelva las nuevas IPs de los contenedores
-            echo "🔄 Reiniciando nginx para reconectar con el nuevo contenedor..."
-            podman restart nginx_prod 2>/dev/null || echo "ℹ️  Nginx no está corriendo"
+            # 2. Liberar puerto 8080 (matar proceso conmon/rootlessport)
+            echo "🔫 Liberando puerto 8080..."
+            sudo fuser -k 8080/tcp || true
+            pkill -9 -f "rootlessport.*8080" || true
+            sleep 2
+
+            # 3. Pull de la nueva imagen específica
+            echo "📦 Pulling nueva imagen $VERSION_FULL..."
+            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
+
+            # 4. Tag como latest localmente
+            echo "🏷️  Tageando como latest..."
+            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL \
+                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+
+            # 5. Levantar solo el servicio front-central (contenedor: frontend_prod)
+            echo "🚀 Levantando frontend con nueva imagen..."
+            podman-compose -f podman-compose.yaml up -d front-central
             sleep 3
 
             echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
@@ -282,22 +306,41 @@ jobs:
 
             # Verificar que el contenedor está usando la nueva imagen
             CONTAINER_IMAGE_ID=$(podman inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
-            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest | head -1)
+            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL | head -1)
 
-            echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID:0:12}"
-            echo "📋 Image ID esperada: ${NEW_IMAGE_FULL_ID:0:12}"
+            # Remover prefijo sha256: si existe
+            NEW_IMAGE_FULL_ID_CLEAN="${NEW_IMAGE_FULL_ID#sha256:}"
+            CONTAINER_IMAGE_ID_CLEAN="${CONTAINER_IMAGE_ID#sha256:}"
 
-            if [ -n "$CONTAINER_IMAGE_ID" ] && [ -n "$NEW_IMAGE_FULL_ID" ]; then
-              if [ "${CONTAINER_IMAGE_ID:0:12}" = "${NEW_IMAGE_FULL_ID:0:12}" ]; then
+            echo "📋 Image ID del contenedor: ${CONTAINER_IMAGE_ID_CLEAN:0:12}"
+            echo "📋 Image ID esperada (Version $VERSION_FULL): ${NEW_IMAGE_FULL_ID_CLEAN:0:12}"
+
+            if [ -n "$CONTAINER_IMAGE_ID_CLEAN" ] && [ -n "$NEW_IMAGE_FULL_ID_CLEAN" ]; then
+              if [ "${CONTAINER_IMAGE_ID_CLEAN:0:12}" = "${NEW_IMAGE_FULL_ID_CLEAN:0:12}" ]; then
                 echo "✅ Contenedor actualizado correctamente con la nueva imagen (Version: $VERSION_FULL)"
               else
-                echo "⚠️  Advertencia: El contenedor podría no estar usando la imagen más reciente"
+                echo "❌ ERROR: El contenedor NO está usando la imagen correcta"
+                exit 1
               fi
             fi
 
-            # Clean up imágenes antiguas
-            echo "🧹 Limpiando imágenes antiguas..."
+            # Limpiar imágenes antiguas de frontend
+            echo "🧹 Limpiando imágenes antiguas de frontend..."
+
+            podman images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
+              grep "probability-frontend" | \
+              grep -v "$VERSION_FULL" | \
+              grep -v "latest" | \
+              awk '{print $2}' | \
+              xargs -r podman rmi -f 2>/dev/null || true
+
             podman image prune -f
 
-            echo "✅ Frontend deployed successfully"
+            # Reiniciar nginx para refrescar DNS cache
+            echo "🔄 Reiniciando nginx para refrescar DNS cache..."
+            podman restart nginx_prod
+            sleep 3
+            echo "✅ Nginx reiniciado correctamente"
+
+            echo "✅ Frontend deployed successfully with version $VERSION_FULL"
           EOF
