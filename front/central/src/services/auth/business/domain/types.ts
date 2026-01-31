@@ -124,3 +124,18 @@ export interface CreateBusinessTypeDTO {
 }
 
 export interface UpdateBusinessTypeDTO extends Partial<CreateBusinessTypeDTO> { }
+
+// ============================================
+// Simple Types para Dropdowns/Selectores
+// ============================================
+
+export interface BusinessSimple {
+    id: number;
+    name: string;
+}
+
+export interface BusinessesSimpleResponse {
+    success: boolean;
+    message: string;
+    data: BusinessSimple[];
+}

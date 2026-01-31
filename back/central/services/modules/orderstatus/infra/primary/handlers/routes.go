@@ -7,7 +7,8 @@ func (h *OrderStatusMappingHandlers) RegisterRoutes(router *gin.RouterGroup) {
 	// Rutas para estados de órdenes
 	statuses := router.Group("/order-statuses")
 	{
-		statuses.GET("", h.ListOrderStatuses) // GET /api/v1/order-statuses
+		statuses.GET("", h.ListOrderStatuses)       // GET /api/v1/order-statuses
+		statuses.GET("/simple", h.ListOrderStatusesSimple) // GET /api/v1/order-statuses/simple
 	}
 
 	// Rutas para mapeos de estados

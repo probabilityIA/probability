@@ -9,6 +9,7 @@ import {
     UpdateOrderStatusMappingDTO,
     OrderStatusInfo
 } from '../../domain/types';
+import { env } from '@/shared/config/env';
 
 async function getUseCases() {
     const cookieStore = await cookies();
@@ -77,5 +78,39 @@ export const toggleOrderStatusMappingActiveAction = async (id: number) => {
     } catch (error: any) {
         console.error('Toggle Order Status Mapping Active Action Error:', error.message);
         throw new Error(error.message);
+    }
+};
+
+// ============================================
+// Simple Actions - Para Dropdowns/Selectores
+// ============================================
+
+export const getOrderStatusesSimpleAction = async (isActive: boolean = true): Promise<import('../../domain/types').OrderStatusesSimpleResponse> => {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || '';
+
+        const url = `${env.API_BASE_URL}/order-statuses/simple?is_active=${isActive}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al obtener estados de orden');
+        }
+
+        return await response.json();
+    } catch (error: any) {
+        console.error('Get Order Statuses Simple Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message,
+            data: [],
+        };
     }
 };
