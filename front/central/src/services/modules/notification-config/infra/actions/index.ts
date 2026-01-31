@@ -1,62 +1,34 @@
-"use server";
+// ============================================
+// RE-EXPORTS - Notification Types & Event Types
+// NOTA: Este archivo NO puede tener "use server" porque Next.js no permite re-exports
+//       Los archivos notification-types.ts y notification-event-types.ts SÍ tienen "use server"
+//       Importa directamente desde esos archivos si necesitas las actions
+// ============================================
 
-import { cookies } from "next/headers";
-import { env } from "@/shared/config/env";
-import { NotificationConfigApiRepository } from "../repository/api-repository";
-import { CreateConfigDTO, UpdateConfigDTO, ConfigFilter } from "../../domain/types";
+// Re-export notification types actions
+export {
+  getNotificationTypesAction,
+  getNotificationTypeByIdAction,
+  createNotificationTypeAction,
+  updateNotificationTypeAction,
+  deleteNotificationTypeAction,
+} from "./notification-types";
 
-const getRepository = async () => {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
-    return new NotificationConfigApiRepository(env.API_BASE_URL, token);
-};
+// Re-export notification event types actions
+export {
+  getNotificationEventTypesAction,
+  getNotificationEventTypeByIdAction,
+  createNotificationEventTypeAction,
+  updateNotificationEventTypeAction,
+  deleteNotificationEventTypeAction,
+} from "./notification-event-types";
 
-export async function createConfigAction(dto: CreateConfigDTO) {
-    try {
-        const repo = await getRepository();
-        const config = await repo.create(dto);
-        return { success: true, data: config };
-    } catch (error: any) {
-        return { success: false, error: error.message };
-    }
-}
-
-export async function updateConfigAction(id: number, dto: UpdateConfigDTO) {
-    try {
-        const repo = await getRepository();
-        const config = await repo.update(id, dto);
-        return { success: true, data: config };
-    } catch (error: any) {
-        return { success: false, error: error.message };
-    }
-}
-
-export async function deleteConfigAction(id: number) {
-    try {
-        const repo = await getRepository();
-        await repo.delete(id);
-        return { success: true };
-    } catch (error: any) {
-        return { success: false, error: error.message };
-    }
-}
-
-export async function listConfigsAction(filter?: ConfigFilter) {
-    try {
-        const repo = await getRepository();
-        const configs = await repo.list(filter);
-        return { success: true, data: configs };
-    } catch (error: any) {
-        return { success: false, error: error.message };
-    }
-}
-
-export async function getConfigAction(id: number) {
-    try {
-        const repo = await getRepository();
-        const config = await repo.getById(id);
-        return { success: true, data: config };
-    } catch (error: any) {
-        return { success: false, error: error.message };
-    }
-}
+// Re-export notification config actions
+export {
+  createConfigAction,
+  updateConfigAction,
+  deleteConfigAction,
+  listConfigsAction,
+  getConfigsAction,
+  getConfigAction,
+} from "./notification-configs";

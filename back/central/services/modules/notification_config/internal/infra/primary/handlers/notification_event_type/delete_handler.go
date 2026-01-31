@@ -1,0 +1,38 @@
+package notification_event_type
+
+import (
+	"net/http"
+	"strconv"
+
+	"github.com/gin-gonic/gin"
+)
+
+// Delete godoc
+// @Summary Eliminar tipo de evento
+// @Description Elimina un tipo de evento de notificación por su ID
+// @Tags notification-event-types
+// @Accept json
+// @Produce json
+// @Param id path int true "ID del tipo de evento"
+// @Success 204 "No Content"
+// @Failure 400 {object} map[string]interface{}
+// @Failure 404 {object} map[string]interface{}
+// @Failure 500 {object} map[string]interface{}
+// @Router /api/notification-event-types/{id} [delete]
+func (h *handler) Delete(c *gin.Context) {
+	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Invalid ID parameter")
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
+		return
+	}
+
+	err = h.useCase.DeleteNotificationEventType(c.Request.Context(), uint(id))
+	if err != nil {
+		h.logger.Error().Err(err).Uint64("id", id).Msg("Error deleting notification event type")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}

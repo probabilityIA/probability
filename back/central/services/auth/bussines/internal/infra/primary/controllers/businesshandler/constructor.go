@@ -10,6 +10,7 @@ import (
 // IBusinessHandler define la interfaz para el handler de Business
 type IBusinessHandler interface {
 	GetBusinesses(c *gin.Context)
+	GetBusinessesSimple(c *gin.Context)
 	GetBusinessByIDHandler(c *gin.Context)
 	CreateBusinessHandler(c *gin.Context)
 	UpdateBusinessHandler(c *gin.Context)

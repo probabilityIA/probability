@@ -80,6 +80,10 @@ type Business struct {
 	EnablePickup       bool `gorm:"default:false"`
 	EnableReservations bool `gorm:"default:true"`
 
+	// Configuración de confirmación de órdenes
+	RequiresOrderConfirmation bool   `gorm:"default:false"`        // Si requiere confirmación automática
+	ConfirmationMethod        string `gorm:"default:'whatsapp'"`   // whatsapp, email, sms
+
 	// Relaciones
 	BusinessType                BusinessType `gorm:"foreignKey:BusinessTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 	ParentBusiness              *Business    `gorm:"foreignKey:ParentBusinessID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"` // Negocio padre
@@ -389,14 +393,17 @@ type IntegrationNotificationConfig struct {
 
 	// Condiciones/Eventos que disparan la notificación
 	// JSON que define cuándo se debe enviar la notificación
-	// Ejemplo para estados de orden:
-	//   {"trigger": "order_status_change", "statuses": ["en_entrega", "entregada"]}
-	// Ejemplo para eventos:
-	//   {"trigger": "order_created"}
-	//   {"trigger": "payment_completed"}
-	//   {"trigger": "shipment_delivered"}
-	// Ejemplo combinado:
-	//   {"trigger": "order_status_change", "statuses": ["en_entrega"], "conditions": {"total_amount": {"gte": 50000}}}
+	// Estructura:
+	//   {
+	//     "trigger": "order.created" | "order.updated" | "order.status_changed",
+	//     "statuses": ["pending", "processing"], // opcional, vacío = todos
+	//     "payment_methods": [1, 3, 5],          // opcional, vacío = todos
+	//     "source_integration_id": 2             // opcional, null = todas las integraciones
+	//   }
+	// Ejemplos:
+	//   {"trigger": "order.created"}
+	//   {"trigger": "order.status_changed", "statuses": ["delivered"]}
+	//   {"trigger": "order.created", "payment_methods": [1], "source_integration_id": 2}
 	Conditions datatypes.JSON `gorm:"type:jsonb;not null"`
 
 	// Configuración adicional de la notificación
