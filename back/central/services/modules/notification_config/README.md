@@ -416,4 +416,177 @@ EventTypeDeprecated string  // Antiguo event_type (antes de refactorización)
 
 ---
 
+## Testing
+
+### ✅ Estado de Tests
+
+**Estado**: ✅ Todos los tests pasando
+**Fecha**: 2026-01-31
+**Arquitectura**: 100% Hexagonal (validado)
+
+### 📊 Cobertura de Tests
+
+#### Resumen Global
+
+```
+Capa de Aplicación (app/):              29.8% (5 casos de uso principales)
+Capa de Handlers (notification_config): 88.4%
+Total de tests:                         40 tests (20 app + 20 handlers)
+Total pasando:                          ✅ 40/40 (100%)
+```
+
+#### Casos de Uso Testeados
+
+| Caso de Uso | Cobertura | Tests | Estado |
+|-------------|-----------|-------|--------|
+| Create      | 100%      | 5     | ✅     |
+| Update      | 100%      | 5     | ✅     |
+| GetByID     | 100%      | 3     | ✅     |
+| List        | 100%      | 4     | ✅     |
+| Delete      | 100%      | 3     | ✅     |
+
+#### Handlers Testeados
+
+| Handler  | Cobertura | Tests | Estado |
+|----------|-----------|-------|--------|
+| Create   | 100%      | 4     | ✅     |
+| Update   | 100%      | 5     | ✅     |
+| GetByID  | 100%      | 4     | ✅     |
+| List     | 100%      | 4     | ✅     |
+| Delete   | 100%      | 4     | ✅     |
+
+### 🗂️ Estructura de Tests
+
+```
+internal/
+├── mocks/                                    # Todos los mocks centralizados
+│   ├── repository_mock.go
+│   ├── notification_type_repository_mock.go
+│   ├── notification_event_type_repository_mock.go
+│   ├── usecase_mock.go
+│   └── logger_mock.go
+│
+├── app/                                      # Tests de Casos de Uso
+│   ├── create_test.go                        # 5 tests
+│   ├── update_test.go                        # 5 tests
+│   ├── get_test.go                           # 3 tests
+│   ├── list_test.go                          # 4 tests
+│   └── delete_test.go                        # 3 tests
+│
+└── infra/primary/handlers/notification_config/  # Tests de Handlers
+    ├── create_handler_test.go                # 4 tests
+    ├── update_handler_test.go                # 5 tests
+    ├── get_by_id_handler_test.go             # 4 tests
+    ├── list_handler_test.go                  # 4 tests
+    └── delete_handler_test.go                # 4 tests
+```
+
+### 🚀 Comandos de Testing
+
+```bash
+# Ejecutar todos los tests
+go test ./internal/... -v
+
+# Ejecutar solo tests de aplicación
+go test ./internal/app -v
+
+# Ejecutar solo tests de handlers
+go test ./internal/infra/primary/handlers/notification_config -v
+
+# Ver cobertura
+go test ./internal/... -cover
+
+# Generar reporte de cobertura HTML
+go test ./internal/... -coverprofile=coverage.out
+go tool cover -html=coverage.out -o coverage.html
+```
+
+### 🎯 Mejores Prácticas Aplicadas
+
+#### Arquitectura Hexagonal
+- ✅ Todos los mocks en `internal/mocks/` (no dentro de tests)
+- ✅ Tests unitarios puros (sin base de datos real)
+- ✅ Mocks de interfaces (ports), no de implementaciones
+- ✅ Inversión de dependencias respetada
+
+#### Testing Best Practices
+- ✅ Tests independientes (sin estado compartido)
+- ✅ Nombres descriptivos (documentan el comportamiento)
+- ✅ Cobertura de casos felices, errores y casos límite
+- ✅ Sin dependencias externas (DB, HTTP, filesystem)
+- ✅ Tests rápidos (<50ms total)
+- ✅ Patrón AAA (Arrange, Act, Assert)
+
+#### Go Testing Conventions
+- ✅ Package testing estándar (sin frameworks pesados)
+- ✅ Funciones `Test*` siguiendo convención Go
+- ✅ gin.TestMode para handlers HTTP
+
+### 📋 Escenarios de Test por Caso de Uso
+
+#### Create
+- ✅ Creación exitosa
+- ✅ Detecta duplicados (ErrDuplicateConfig)
+- ✅ Error en validación de duplicados
+- ✅ Error en persistencia
+- ✅ Permite configs con condiciones diferentes
+
+#### Update
+- ✅ Actualización completa exitosa
+- ✅ Actualización parcial
+- ✅ Configuración no existe
+- ✅ Error en persistencia
+- ✅ Error al recuperar config actualizada
+
+#### GetByID
+- ✅ Obtención exitosa
+- ✅ Config no encontrada
+- ✅ Error de conexión a BD
+
+#### List
+- ✅ Listar todas las configs
+- ✅ Listar con filtros
+- ✅ Resultado vacío
+- ✅ Error de conexión
+
+#### Delete
+- ✅ Eliminación exitosa
+- ✅ Config no existe
+- ✅ Error en eliminación
+
+### 📋 Escenarios de Test por Handler
+
+#### CreateHandler
+- ✅ HTTP 201 Created
+- ✅ HTTP 400 Bad Request (validación)
+- ✅ HTTP 409 Conflict (duplicado)
+- ✅ HTTP 500 Internal Server Error
+
+#### UpdateHandler
+- ✅ HTTP 200 OK
+- ✅ HTTP 400 Bad Request (ID inválido)
+- ✅ HTTP 400 Bad Request (body inválido)
+- ✅ HTTP 404 Not Found
+- ✅ HTTP 500 Internal Server Error
+
+#### GetByIDHandler
+- ✅ HTTP 200 OK
+- ✅ HTTP 400 Bad Request
+- ✅ HTTP 404 Not Found
+- ✅ HTTP 500 Internal Server Error
+
+#### ListHandler
+- ✅ HTTP 200 OK (lista completa)
+- ✅ HTTP 200 OK (con filtros)
+- ✅ HTTP 200 OK (array vacío)
+- ✅ HTTP 500 Internal Server Error
+
+#### DeleteHandler
+- ✅ HTTP 204 No Content
+- ✅ HTTP 400 Bad Request
+- ✅ HTTP 404 Not Found
+- ✅ HTTP 500 Internal Server Error
+
+---
+
 **Última actualización:** 2026-01-31
