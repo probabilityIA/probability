@@ -249,7 +249,7 @@ export function Sidebar({ user }: SidebarProps) {
           {/* Menú de navegación */}
           <nav className="flex-1 py-6 px-3">
             <ul className="space-y-2">
-              {/* Item Home - Siempre visible */}
+              {/* Item Home  visible */}
               <li>
                 <Link
                   href="/home"
