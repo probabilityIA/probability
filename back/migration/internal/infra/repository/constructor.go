@@ -37,6 +37,7 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.Client{},
 		&models.Action{},
 		&models.APIKey{},
+		&models.IntegrationCategory{},
 		&models.IntegrationType{},
 		&models.Integration{},
 
@@ -98,6 +99,16 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.CreditNote{},
 	); err != nil {
 		return err
+	}
+
+	// Insertar datos iniciales de integration_categories
+	if err := r.seedIntegrationCategories(ctx); err != nil {
+		return fmt.Errorf("failed to seed integration categories: %w", err)
+	}
+
+	// Migrar integration_types existentes a las nuevas categorías
+	if err := r.migrateIntegrationTypesToCategories(ctx); err != nil {
+		return fmt.Errorf("failed to migrate integration types to categories: %w", err)
 	}
 
 	// Insertar datos iniciales de notification_types y notification_event_types
@@ -344,6 +355,112 @@ func (r *Repository) migrateBusinessNotificationConfigData(ctx context.Context) 
 		WHERE notification_event_type_id IS NULL
 	`).Error; err != nil {
 		return fmt.Errorf("failed to delete unmigrated configs: %w", err)
+	}
+
+	return nil
+}
+
+// seedIntegrationCategories inserta las categorías iniciales de integraciones
+func (r *Repository) seedIntegrationCategories(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	categories := []models.IntegrationCategory{
+		{
+			Model:        gorm.Model{ID: 1},
+			Code:         "ecommerce",
+			Name:         "E-commerce",
+			Description:  "Plataformas de venta online",
+			Icon:         "shopping-cart",
+			Color:        "#3B82F6",
+			DisplayOrder: 1,
+			IsActive:     true,
+			IsVisible:    true,
+		},
+		{
+			Model:        gorm.Model{ID: 2},
+			Code:         "invoicing",
+			Name:         "Facturación Electrónica",
+			Description:  "Proveedores de facturación",
+			Icon:         "receipt",
+			Color:        "#10B981",
+			DisplayOrder: 2,
+			IsActive:     true,
+			IsVisible:    true,
+		},
+		{
+			Model:        gorm.Model{ID: 3},
+			Code:         "messaging",
+			Name:         "Mensajería",
+			Description:  "Canales de comunicación",
+			Icon:         "message-circle",
+			Color:        "#8B5CF6",
+			DisplayOrder: 3,
+			IsActive:     true,
+			IsVisible:    true,
+		},
+		{
+			Model:        gorm.Model{ID: 4},
+			Code:         "payment",
+			Name:         "Pagos",
+			Description:  "Pasarelas de pago",
+			Icon:         "credit-card",
+			Color:        "#F59E0B",
+			DisplayOrder: 4,
+			IsActive:     false,
+			IsVisible:    true,
+		},
+		{
+			Model:        gorm.Model{ID: 5},
+			Code:         "shipping",
+			Name:         "Logística",
+			Description:  "Operadores logísticos",
+			Icon:         "truck",
+			Color:        "#EF4444",
+			DisplayOrder: 5,
+			IsActive:     false,
+			IsVisible:    true,
+		},
+	}
+
+	for _, category := range categories {
+		var existing models.IntegrationCategory
+		err := db.Where("id = ?", category.ID).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			// No existe, crear
+			if err := db.Create(&category).Error; err != nil {
+				return fmt.Errorf("failed to create integration_category %s: %w", category.Code, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// migrateIntegrationTypesToCategories actualiza los integration_types existentes con category_id
+func (r *Repository) migrateIntegrationTypesToCategories(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// Mapeo de códigos de integration_types a category_id
+	migrations := []struct {
+		typeCode   string
+		categoryID uint
+	}{
+		{"shopify", 1},        // ecommerce
+		{"mercadolibre", 1},   // ecommerce
+		{"amazon", 1},         // ecommerce
+		{"whatsapp", 3},       // messaging
+		{"whatsap", 3},        // messaging (typo histórico)
+	}
+
+	for _, m := range migrations {
+		if err := db.Exec(`
+			UPDATE integration_types
+			SET category_id = ?
+			WHERE code = ?
+			AND category_id IS NULL
+		`, m.categoryID, m.typeCode).Error; err != nil {
+			return fmt.Errorf("failed to update category_id for %s: %w", m.typeCode, err)
+		}
 	}
 
 	return nil

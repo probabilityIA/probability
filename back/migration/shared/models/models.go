@@ -325,7 +325,7 @@ type IntegrationType struct {
 	IsActive    bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
 
 	// Relación con IntegrationCategory
-	CategoryID uint                  `gorm:"not null;index"`
+	CategoryID *uint                 `gorm:"index"`
 	Category   *IntegrationCategory `gorm:"foreignKey:CategoryID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Configuración requerida (JSON schema - define qué campos de config son necesarios)

@@ -136,7 +136,9 @@ func TestCreateHandler_DuplicateConfig(t *testing.T) {
 			"trigger": "order.created",
 		},
 		"config": map[string]interface{}{
-			"template_name": "template",
+			"template_name":  "template",
+			"recipient_type": "customer",
+			"language":       "es",
 		},
 		"priority": 1,
 	}
@@ -186,7 +188,9 @@ func TestCreateHandler_UseCaseError(t *testing.T) {
 			"trigger": "order.updated",
 		},
 		"config": map[string]interface{}{
-			"template_name": "template",
+			"template_name":  "template",
+			"recipient_type": "customer",
+			"language":       "es",
 		},
 		"priority": 1,
 	}
