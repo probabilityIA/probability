@@ -20,16 +20,43 @@ export default function ShopifyOAuthCallback() {
                 const shop = searchParams.get('shop');
                 const integrationName = searchParams.get('integration_name');
                 const integrationCode = searchParams.get('integration_code');
-                const accessToken = searchParams.get('access_token');
+                const state = searchParams.get('state');
                 const businessId = searchParams.get('business_id');
 
-                if (!shop || !integrationName || !integrationCode || !accessToken) {
+                if (!shop || !integrationName || !integrationCode || !state) {
                     setStatus('error');
                     setMessage('Datos de OAuth incompletos');
                     return;
                 }
 
                 try {
+                    setMessage('Obteniendo credenciales de forma segura...');
+
+                    // Obtener token desde endpoint seguro (cookie)
+                    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                    const sessionToken = localStorage.getItem('session_token');
+
+                    const tokenResponse = await fetch(
+                        `${apiBaseUrl}/integrations/shopify/oauth/token?state=${state}&shop=${shop}&integration_name=${integrationName}&integration_code=${integrationCode}`,
+                        {
+                            headers: {
+                                'Authorization': `Bearer ${sessionToken}`,
+                            },
+                            credentials: 'include', // Incluir cookies
+                        }
+                    );
+
+                    if (!tokenResponse.ok) {
+                        throw new Error('Error al obtener credenciales de Shopify');
+                    }
+
+                    const tokenData = await tokenResponse.json();
+                    const accessToken = tokenData.access_token;
+
+                    if (!accessToken) {
+                        throw new Error('Token de acceso no recibido');
+                    }
+
                     setMessage('Creando integración...');
 
                     // Crear la integración

@@ -1,12 +1,12 @@
 package mappers
 
 import (
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+		"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client/request"
 )
 
 // MapDomainToRequest transforma el mensaje de dominio al DTO de request de WhatsApp
-func MapDomainToRequest(d domain.TemplateMessage) any {
+func MapDomainToRequest(d entities.TemplateMessage) any {
 	if d.Type == "text" {
 		return request.TextMessageRequest{
 			MessagingProduct: d.MessagingProduct,
@@ -29,6 +29,8 @@ func MapDomainToRequest(d domain.TemplateMessage) any {
 		}
 		components = append(components, request.Component{
 			Type:       comp.Type,
+			SubType:    comp.SubType,
+			Index:      comp.Index,
 			Parameters: parameters,
 		})
 	}

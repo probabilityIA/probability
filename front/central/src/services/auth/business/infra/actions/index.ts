@@ -9,8 +9,10 @@ import {
     UpdateBusinessDTO,
     GetConfiguredResourcesParams,
     CreateBusinessTypeDTO,
-    UpdateBusinessTypeDTO
+    UpdateBusinessTypeDTO,
+    BusinessesSimpleResponse
 } from '../../domain/types';
+import { env } from '@/shared/config/env';
 
 // Helper to get use cases with token from cookies
 async function getUseCases() {
@@ -147,5 +149,37 @@ export const deleteBusinessTypeAction = async (id: number) => {
     } catch (error: any) {
         console.error('Delete Business Type Action Error:', error.message);
         throw new Error(error.message);
+    }
+};
+
+// ============================================
+// Simple Actions - Para Dropdowns/Selectores
+// ============================================
+
+export const getBusinessesSimpleAction = async (): Promise<BusinessesSimpleResponse> => {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || '';
+
+        const response = await fetch(`${env.API_BASE_URL}/businesses/simple`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al obtener negocios');
+        }
+
+        return await response.json();
+    } catch (error: any) {
+        console.error('Get Businesses Simple Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message,
+            data: [],
+        };
     }
 };

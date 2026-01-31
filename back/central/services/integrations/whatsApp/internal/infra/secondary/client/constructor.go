@@ -5,57 +5,44 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-resty/resty/v2"
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client/mappers"
 	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/infra/secondary/client/response"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/httpclient"
+	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// implementa domain.IWhatsApp
+// implementa ports.IWhatsApp
 type whatsAppClient struct {
-	rest        *resty.Client
-	accessToken string
+	httpClient *httpclient.Client
+	baseURL    string
+	logger     log.ILogger
 }
 
-// New construye y devuelve un cliente que implementa domain.IWhatsApp.
-// La baseURL y el token se toman de las variables de entorno WHATSAPP_URL y WHATSAPP_TOKEN.
-// Utiliza el cliente HTTP compartido para reutilizar la configuración común.
-func New(config env.IConfig) domain.IWhatsApp {
+// New construye y devuelve un cliente que implementa ports.IWhatsApp.
+// La baseURL se toma de las variables de entorno WHATSAPP_URL.
+// Utiliza el cliente HTTP compartido de /back/central/shared/httpclient.
+func New(config env.IConfig, logger log.ILogger) ports.IWhatsApp {
 	baseURL := config.Get("WHATSAPP_URL")
-	accessToken := config.Get("WHATSAPP_TOKEN")
 
-	// Usar el cliente HTTP compartido
-	httpClient := httpclient.NewHTTPClient(httpclient.HTTPClientConfig{
-		Timeout:         30 * time.Second, // Timeout más largo para WhatsApp API
-		MaxIdleConns:    100,
-		IdleConnTimeout: 90 * time.Second,
-	})
+	// Configurar el cliente HTTP compartido
+	httpClient := httpclient.New(httpclient.HTTPClientConfig{
+		Timeout:    30 * time.Second, // Timeout más largo para WhatsApp API
+		BaseURL:    baseURL,
+		RetryCount: 2,
+		RetryWait:  5 * time.Second,
+		Debug:      false,
+	}, logger.WithModule("whatsapp-client"))
 
-	// Configurar resty con el cliente HTTP compartido
-	rest := resty.NewWithClient(httpClient).
-		SetBaseURL(baseURL).
-		AddRetryCondition(func(r *resty.Response, err error) bool {
-			return r.StatusCode() == 429
-		}).
-		SetRetryCount(2).
-		SetRetryWaitTime(5 * time.Second).
-		OnAfterResponse(func(c *resty.Client, r *resty.Response) error {
-			// Solo loguear, no devolver error aquí para que SendMessage pueda manejar el error
-			// con más contexto (status code, body, etc.)
-			if r.StatusCode() >= 400 {
-				fmt.Printf("⚠️ [WhatsAppClient] OnAfterResponse detectó error HTTP %d: %s\n", r.StatusCode(), r.String())
-			}
-			return nil
-		})
-
-	// Headers por defecto
-	rest.SetHeader("Content-Type", "application/json")
+	// Configurar headers por defecto
+	httpClient.SetHeader("Content-Type", "application/json")
 
 	return &whatsAppClient{
-		rest:        rest,
-		accessToken: accessToken,
+		httpClient: httpClient,
+		baseURL:    baseURL,
+		logger:     logger.WithModule("whatsapp-client"),
 	}
 }
 
@@ -63,10 +50,15 @@ func New(config env.IConfig) domain.IWhatsApp {
 // Requiere:
 // - phoneNumberID: ID del número de teléfono para construir la URL.
 // - msg: DTO de dominio con los datos del mensaje.
-// La URL se construye como: {baseURL}{phone_number_id}/messages
-// El token se obtiene de la variable de entorno WHATSAPP_TOKEN.
-func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, msg domain.TemplateMessage) (string, error) {
-	fmt.Printf("🚀 [WhatsAppClient] SendMessage called for PhoneID: %d\n", phoneNumberID)
+// - accessToken: Token de acceso para autenticación con WhatsApp API.
+// La URL se construye como: {baseURL}/{phone_number_id}/messages
+func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, msg entities.TemplateMessage, accessToken string) (string, error) {
+	c.logger.Info().
+		Uint("phone_number_id", phoneNumberID).
+		Str("to", msg.To).
+		Str("type", msg.Type).
+		Msg("Sending WhatsApp message")
+
 	payload := mappers.MapDomainToRequest(msg)
 
 	// Construir la URL específica para este phone_number_id
@@ -75,18 +67,20 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 	var result response.SendMessageResponse
 	var errorResponse map[string]interface{}
 
-	resp, err := c.rest.R().
+	resp, err := c.httpClient.R().
 		SetContext(ctx).
-		SetHeader("Authorization", "Bearer "+c.accessToken).
+		SetHeader("Authorization", "Bearer "+accessToken).
 		SetBody(payload).
 		SetResult(&result).
 		SetError(&errorResponse).
-		SetDebug(true).
 		Post(endpoint)
 
 	// Verificar errores de red o HTTP
 	if err != nil {
-		fmt.Printf("❌ [WhatsAppClient] Error de red/HTTP: %v\n", err)
+		c.logger.Error().
+			Err(err).
+			Uint("phone_number_id", phoneNumberID).
+			Msg("Network error communicating with WhatsApp API")
 		return "", fmt.Errorf("error al comunicarse con WhatsApp API: %w", err)
 	}
 
@@ -94,7 +88,11 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 	statusCode := resp.StatusCode()
 	if statusCode < 200 || statusCode >= 300 {
 		errorBody := resp.String()
-		fmt.Printf("❌ [WhatsAppClient] Error HTTP %d: %s\n", statusCode, errorBody)
+		c.logger.Error().
+			Int("status_code", statusCode).
+			Str("response_body", errorBody).
+			Uint("phone_number_id", phoneNumberID).
+			Msg("WhatsApp API returned error status")
 
 		// Intentar extraer mensaje de error de la respuesta
 		errorMsg := fmt.Sprintf("WhatsApp API retornó error %d", statusCode)
@@ -108,11 +106,18 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 	// Verificar que la respuesta contiene mensajes
 	if len(result.Messages) == 0 {
 		errorBody := resp.String()
-		fmt.Printf("❌ [WhatsAppClient] Respuesta exitosa pero sin mensajes: %s\n", errorBody)
+		c.logger.Error().
+			Str("response_body", errorBody).
+			Uint("phone_number_id", phoneNumberID).
+			Msg("Successful response but no messages in response")
 		return "", fmt.Errorf("la respuesta de WhatsApp no contiene mensajes: %s", errorBody)
 	}
 
 	messageID := result.Messages[0].ID
-	fmt.Printf("✅ [WhatsAppClient] Mensaje enviado exitosamente. MessageID: %s\n", messageID)
+	c.logger.Info().
+		Str("message_id", messageID).
+		Uint("phone_number_id", phoneNumberID).
+		Str("to", msg.To).
+		Msg("WhatsApp message sent successfully")
 	return messageID, nil
 }

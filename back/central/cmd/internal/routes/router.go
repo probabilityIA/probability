@@ -21,6 +21,9 @@ func BuildRouter(ctx context.Context, logger log.ILogger, environment env.IConfi
 	// CORS - DEBE IR PRIMERO
 	r.Use(middleware.CorsMiddleware())
 
+	// Security headers para iframe de Shopify
+	r.Use(middleware.SecurityHeadersMiddleware())
+
 	// Logging centralizado
 	SetupGinLogging(r, logger)
 

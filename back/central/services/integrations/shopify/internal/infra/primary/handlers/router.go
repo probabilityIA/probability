@@ -19,6 +19,9 @@ func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILog
 		// OAuth endpoints - requieren autenticación JWT
 		shopifyGroup.POST("/connect", middleware.JWT(), h.InitiateOAuthHandler)
 
+		// OAuth token retrieval - requiere autenticación JWT
+		shopifyGroup.GET("/oauth/token", middleware.JWT(), h.GetOAuthTokenHandler)
+
 		// Webhook endpoint - sin autenticación JWT (Shopify valida con HMAC)
 		shopifyGroup.POST("/webhook", h.WebhookHandler)
 		shopifyGroup.POST("/webhook/:integration_id", h.WebhookHandler) // Alternativa con ID en path
