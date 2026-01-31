@@ -14,7 +14,9 @@ import type {
 } from '../../domain/types';
 import { PaymentMethodSelector } from './PaymentMethodSelector';
 import { StatusSelector } from './StatusSelector';
+import { IntegrationSourceSelector } from './IntegrationSourceSelector';
 import { useWhatsAppTemplates } from '../hooks/useNotificationConfigs';
+import { TokenStorage } from '@/shared/utils/token-storage';
 
 interface ConfigFormProps {
   integrationId: number;
@@ -36,11 +38,16 @@ const NOTIFICATION_TYPE_OPTIONS: { value: NotificationType; label: string }[] = 
 ];
 
 export function ConfigForm({ integrationId, initialData, onSubmit, onCancel }: ConfigFormProps) {
+  // Obtener businessId del usuario actual
+  const permissions = TokenStorage.getPermissions();
+  const businessId = permissions?.business_id || 0;
+
   const [formData, setFormData] = useState({
     notification_type: (initialData?.notification_type || 'whatsapp') as NotificationType,
     trigger: (initialData?.conditions.trigger || 'order.created') as TriggerType,
     statuses: initialData?.conditions.statuses || [],
     payment_methods: initialData?.conditions.payment_methods || [],
+    source_integration_id: initialData?.conditions.source_integration_id ?? null,
     template_name: initialData?.config.template_name || '',
     recipient_type: initialData?.config.recipient_type || 'customer',
     language: initialData?.config.language || 'es',
@@ -70,6 +77,7 @@ export function ConfigForm({ integrationId, initialData, onSubmit, onCancel }: C
               trigger: formData.trigger,
               statuses: formData.statuses,
               payment_methods: formData.payment_methods,
+              source_integration_id: formData.source_integration_id,
             },
             config: {
               template_name: formData.template_name,
@@ -87,6 +95,7 @@ export function ConfigForm({ integrationId, initialData, onSubmit, onCancel }: C
               trigger: formData.trigger,
               statuses: formData.statuses,
               payment_methods: formData.payment_methods,
+              source_integration_id: formData.source_integration_id,
             },
             config: {
               template_name: formData.template_name,
@@ -239,6 +248,17 @@ export function ConfigForm({ integrationId, initialData, onSubmit, onCancel }: C
         <PaymentMethodSelector
           selectedMethods={formData.payment_methods}
           onChange={(payment_methods) => setFormData({ ...formData, payment_methods })}
+        />
+      </div>
+
+      {/* Selector de Integración Origen */}
+      <div className="border-t pt-6">
+        <IntegrationSourceSelector
+          businessId={businessId}
+          value={formData.source_integration_id}
+          onChange={(value) =>
+            setFormData({ ...formData, source_integration_id: value })
+          }
         />
       </div>
 

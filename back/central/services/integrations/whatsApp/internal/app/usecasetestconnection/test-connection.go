@@ -13,7 +13,7 @@ import (
 
 // ITestConnectionUseCase define la interfaz para el caso de uso de prueba de conexión
 type ITestConnectionUseCase interface {
-	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}, clientFactory func(env.IConfig) ports.IWhatsApp) error
+	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}, clientFactory func(env.IConfig, log.ILogger) ports.IWhatsApp) error
 }
 
 type TestConnectionUseCase struct {
@@ -32,7 +32,7 @@ func New(config env.IConfig, logger log.ILogger) *TestConnectionUseCase {
 // TestConnection prueba la conexión enviando un mensaje de prueba con credenciales dinámicas
 // Si test_phone_number está presente en config, envía mensaje hello_world.
 // Si no está presente, solo valida credenciales básicas (para creación sin test_phone_number).
-func (u *TestConnectionUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}, clientFactory func(env.IConfig) ports.IWhatsApp) error {
+func (u *TestConnectionUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}, clientFactory func(env.IConfig, log.ILogger) ports.IWhatsApp) error {
 	// 1. Extraer y validar parámetros básicos
 	accessToken, ok := credentials["access_token"].(string)
 	if !ok || accessToken == "" {
@@ -79,8 +79,8 @@ func (u *TestConnectionUseCase) TestConnection(ctx context.Context, config map[s
 		},
 	}
 
-	// 3. Crear cliente usando la factory
-	waClient := clientFactory(tempConfig)
+	// 3. Crear cliente usando la factory con logger
+	waClient := clientFactory(tempConfig, u.logger)
 
 	// 4. Convertir ID
 	pID, err := strconv.ParseUint(phoneNumberIDStr, 10, 64)

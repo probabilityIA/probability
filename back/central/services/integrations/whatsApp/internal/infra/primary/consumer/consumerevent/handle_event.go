@@ -86,12 +86,13 @@ func (c *consumer) handleOrderEvent(ctx context.Context, payload string) {
 
 	// 6. Validar contra cada config (por prioridad)
 	for _, config := range configs {
-		// Validar condiciones (usando adaptador directo)
-		if c.notificationConfigRepo.ValidateConditions(&config, order.Status, order.PaymentMethodID) {
+		// Validar condiciones - PASAR integration_id de la orden
+		if c.notificationConfigRepo.ValidateConditions(&config, order.Status, order.PaymentMethodID, order.IntegrationID) {
 			c.logger.Info().
 				Uint("config_id", config.ID).
 				Str("order_id", order.ID).
 				Str("template", config.TemplateName).
+				Uint("source_integration_id", order.IntegrationID).
 				Msg("Order matches notification config, publishing to RabbitMQ")
 
 			// Publicar a RabbitMQ

@@ -200,3 +200,21 @@ export interface SyncOrdersParams {
     financial_status?: string; // any, paid, pending, refunded, etc.
     fulfillment_status?: string; // any, shipped, partial, unshipped, etc.
 }
+
+// ============================================
+// Simple Types para Dropdowns/Selectores
+// ============================================
+
+export interface IntegrationSimple {
+    id: number;
+    name: string;
+    type: string;
+    business_id: number | null;
+    is_active: boolean;
+}
+
+export interface IntegrationsSimpleResponse {
+    success: boolean;
+    message: string;
+    data: IntegrationSimple[];
+}

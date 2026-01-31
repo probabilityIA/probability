@@ -11,6 +11,7 @@ export interface NotificationConditions {
   trigger: TriggerType;
   statuses: string[];
   payment_methods: number[];
+  source_integration_id?: number | null; // null/undefined = todas las integraciones
 }
 
 export interface NotificationConfig {

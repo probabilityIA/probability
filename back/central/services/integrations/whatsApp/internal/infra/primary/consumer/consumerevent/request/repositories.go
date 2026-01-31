@@ -17,6 +17,7 @@ type OrderData struct {
 	TotalAmount     float64
 	Currency        string
 	BusinessID      *uint
+	IntegrationID   uint // Nueva: integración origen de la orden
 }
 
 // IntegrationRepository define la interfaz para obtener integraciones

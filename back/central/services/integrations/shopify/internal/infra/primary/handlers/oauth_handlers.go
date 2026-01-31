@@ -226,15 +226,18 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	// Codificar datos para el frontend
 	integrationCode := generateIntegrationCode(stateData.IntegrationName)
 
-	// Redirigir al frontend con los datos necesarios para crear la integración
+	// Almacenar access token en cookie segura (5 minutos de validez)
+	middleware.SetSecureCookie(c, "shopify_temp_token", accessToken, 300)
+
+	// Redirigir al frontend SIN el token en la URL (seguro)
 	frontendURL := h.config.Get("WEBHOOK_BASE_URL")
 	redirectURL := fmt.Sprintf(
-		"%s/integrations?shopify_oauth=success&shop=%s&integration_name=%s&integration_code=%s&access_token=%s&user_id=%d&business_id=%d",
+		"%s/integrations?shopify_oauth=success&shop=%s&integration_name=%s&integration_code=%s&state=%s&user_id=%d&business_id=%d",
 		frontendURL,
 		url.QueryEscape(shop),
 		url.QueryEscape(stateData.IntegrationName),
 		url.QueryEscape(integrationCode),
-		url.QueryEscape(accessToken),
+		url.QueryEscape(state),
 		stateData.UserID,
 		stateData.BusinessID,
 	)
