@@ -6,6 +6,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
 	"github.com/secamc93/probability/back/central/services/modules/fulfillmentstatus"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
@@ -21,8 +22,15 @@ import (
 	"github.com/secamc93/probability/back/central/shared/redis"
 )
 
-// New inicializa todos los módulos
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) {
+// ModuleBundles contiene referencias a los bundles de módulos que otros servicios pueden necesitar
+// NOTA: Los módulos deberían consultar datos directamente desde la BD o vía API HTTP,
+// no a través de bundles. Este struct está vacío por diseño.
+type ModuleBundles struct {
+	// Vacío intencionalmente - los módulos no deben depender entre sí vía bundles
+}
+
+// New inicializa todos los módulos y retorna referencias a bundles compartidos
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) *ModuleBundles {
 	// Inicializar módulo de payments
 	payments.New(router, database, logger, environment)
 
@@ -45,7 +53,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	shipments.New(router, database, logger, environment)
 
 	// Inicializar módulo de notification configs
-	notification_config.New(router, database)
+	notification_config.New(router, database, logger)
 
 	// Inicializar módulo de events (notificaciones en tiempo real)
 	if redisClient != nil {
@@ -63,4 +71,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de wallet
 	wallet.New(router, database, logger, environment)
 
+	// Inicializar módulo de invoicing (facturación electrónica)
+	invoicing.New(router, database, logger, environment, rabbitMQ)
+
+	// Retornar referencias a bundles compartidos
+	return &ModuleBundles{
+		// Vacío intencionalmente
+	}
 }

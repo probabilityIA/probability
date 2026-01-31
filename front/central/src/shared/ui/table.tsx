@@ -32,6 +32,9 @@ export interface TableFiltersProps {
   activeFilters: ActiveFilter[];
   onAddFilter: (filterKey: string, value: any) => void;
   onRemoveFilter: (filterKey: string) => void;
+  onCreate?: () => void; // Botón de crear
+  createButtonText?: string; // Texto del botón (opcional)
+  createButtonIconOnly?: boolean; // Solo mostrar ícono +
   sortBy?: string;
   sortOrder?: 'asc' | 'desc';
   onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
@@ -142,6 +145,9 @@ export function Table<T = Record<string, unknown>>({
             activeFilters={filters.activeFilters}
             onAddFilter={filters.onAddFilter}
             onRemoveFilter={filters.onRemoveFilter}
+            onCreate={filters.onCreate}
+            createButtonText={filters.createButtonText}
+            createButtonIconOnly={filters.createButtonIconOnly}
             sortBy={filters.sortBy || 'created_at'}
             sortOrder={filters.sortOrder || 'desc'}
             onSortChange={filters.onSortChange}

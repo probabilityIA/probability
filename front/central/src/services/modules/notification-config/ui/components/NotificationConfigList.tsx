@@ -87,7 +87,7 @@ export function NotificationConfigList({ onEdit, onCreate }: NotificationConfigL
                                     <td className="px-6 py-4 font-medium text-gray-900">{config.event_type}</td>
                                     <td className="px-6 py-4 text-gray-900">
                                         <div className="flex gap-1 flex-wrap">
-                                            {config.channels.map((channel) => (
+                                            {(config.channels || []).map((channel) => (
                                                 <Badge key={channel} type="secondary">
                                                     {channel}
                                                 </Badge>

@@ -26,6 +26,8 @@ interface DynamicFiltersProps {
     onAddFilter: (filterKey: string, value: any) => void;
     onRemoveFilter: (filterKey: string) => void;
     onCreate?: () => void;
+    createButtonText?: string; // Texto del botón crear (opcional, default: "+ Crear Orden")
+    createButtonIconOnly?: boolean; // Si true, solo muestra el ícono +
     onTestGuide?: () => void;
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
@@ -40,6 +42,8 @@ export function DynamicFilters({
     onAddFilter,
     onRemoveFilter,
     onCreate,
+    createButtonText = '+ Crear Orden',
+    createButtonIconOnly = false,
     onTestGuide,
     sortBy = 'created_at',
     sortOrder = 'desc',
@@ -193,7 +197,7 @@ export function DynamicFilters({
 
                             {onCreate && (
                                 <Button
-                                    variant="primary" // Changed to primary to match request if needed, but keeping existing style or logic
+                                    variant="primary"
                                     size="sm"
                                     onClick={() => {
                                         onCreate();
@@ -203,8 +207,15 @@ export function DynamicFilters({
                                         setTempValue('');
                                     }}
                                     className="flex items-center gap-2"
+                                    title={createButtonIconOnly ? 'Crear nuevo' : undefined}
                                 >
-                                    + Crear Orden
+                                    {createButtonIconOnly ? (
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                        </svg>
+                                    ) : (
+                                        createButtonText
+                                    )}
                                 </Button>
                             )}
                         </div>

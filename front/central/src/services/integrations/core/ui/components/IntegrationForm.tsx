@@ -8,6 +8,14 @@ import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
 import DynamicIntegrationForm from './DynamicIntegrationForm';
 
+// IDs constantes de tipos de integración (tabla integration_types)
+const INTEGRATION_TYPE_IDS = {
+    SHOPIFY: 1,
+    WHATSAPP: 2,
+    MERCADO_LIBRE: 3,
+    WOOCOMMERCE: 4,
+} as const;
+
 interface IntegrationFormProps {
     integration?: Integration;
     onSuccess?: () => void;
@@ -205,7 +213,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         }
 
         // Show edit form for Shopify with webhook support
-        if (selectedType && selectedType.code.toLowerCase() === 'shopify') {
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SHOPIFY) {
             console.log('🛒 Editando Shopify - store_id:', integration.store_id);
             console.log('🛒 Editando Shopify - config:', parsedConfig);
             console.log('🛒 Editando Shopify - credentials:', integration.credentials);
@@ -229,68 +237,43 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
-        // Show edit form for WhatsApp and other dynamic types
-        if (selectedType && (selectedType.code.toLowerCase() === 'whatsapp' || selectedType.code.toLowerCase() === 'whatsap')) {
-            if (selectedType.config_schema && selectedType.credentials_schema) {
-                return (
-                    <DynamicIntegrationForm
-                        integrationType={selectedType}
-                        isEdit={true}
-                        initialData={{
-                            name: integration.name,
-                            code: integration.code,
-                            config: parsedConfig,
-                            credentials: integration.credentials || {}, // Credenciales desencriptadas (si están disponibles)
-                            business_id: integration.business_id,
-                        }}
-                        onSubmit={async (data) => {
-                            try {
-                                if (!integration.id) {
-                                    throw new Error('ID de integración no encontrado');
-                                }
-                                // Solo enviar credenciales si hay valores (no vacío)
-                                const updateData: any = {
-                                    name: data.name,
-                                    code: data.code,
-                                    config: data.config,
-                                };
-                                // Solo incluir credenciales si hay valores ingresados
-                                if (data.credentials && Object.keys(data.credentials).length > 0) {
-                                    updateData.credentials = data.credentials;
-                                }
-                                const result = await updateIntegrationAction(integration.id, updateData);
+        // Show WhatsApp view (read-only with webhook info)
+        console.log('🔍 Verificando tipo de integración:', {
+            hasSelectedType: !!selectedType,
+            selectedTypeId: selectedType?.id,
+            isWhatsApp: selectedType?.id === INTEGRATION_TYPE_IDS.WHATSAPP,
+        });
 
-                                if (result.success) {
-                                    onSuccess?.();
-                                } else {
-                                    setError(result.message || 'Error al actualizar la integración');
-                                }
-                            } catch (err: any) {
-                                setError(err.message || 'Error al actualizar la integración');
-                            }
-                        }}
-                        onTest={async (config, credentials) => {
-                            try {
-                                const result = await testConnectionRawAction(selectedType.code, config, credentials);
-                                return {
-                                    success: result.success,
-                                    message: result.message
-                                };
-                            } catch (error: any) {
-                                return {
-                                    success: false,
-                                    message: error.message
-                                };
-                            }
-                        }}
-                        onCancel={onCancel}
-                    />
-                );
-            }
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.WHATSAPP) {
+            console.log('✅ Usando WhatsAppIntegrationView');
+            return (
+                <WhatsAppIntegrationView
+                    integration={{
+                        id: integration.id,
+                        name: integration.name,
+                        code: integration.code,
+                        config: parsedConfig,
+                        credentials: integration.credentials || {},
+                        is_active: integration.is_active,
+                        created_at: integration.created_at,
+                        updated_at: integration.updated_at,
+                    }}
+                    onTestConnection={handleWhatsAppTest}
+                    onRefresh={onSuccess}
+                />
+            );
         }
 
-        // For other types with schemas, show dynamic form
+        // Show edit form for other dynamic types (not WhatsApp)
+        console.log('🔍 Verificando DynamicIntegrationForm:', {
+            hasSelectedType: !!selectedType,
+            selectedTypeCode: selectedType?.code,
+            hasConfigSchema: !!selectedType?.config_schema,
+            hasCredentialsSchema: !!selectedType?.credentials_schema,
+        });
+
         if (selectedType && selectedType.config_schema && selectedType.credentials_schema) {
+            console.log('⚠️ Usando DynamicIntegrationForm para:', selectedType.code);
             return (
                 <DynamicIntegrationForm
                     integrationType={selectedType}
@@ -336,16 +319,16 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                 message: result.message
                             };
                         } catch (error: any) {
-                            return {
-                                success: false,
-                                message: error.message
-                            };
-                        }
-                    }}
-                    onCancel={onCancel}
-                />
-            );
-        }
+                                return {
+                                    success: false,
+                                    message: error.message
+                                };
+                            }
+                        }}
+                        onCancel={onCancel}
+                    />
+                );
+            }
 
         // For other types, show a generic message for now
         return (
@@ -383,9 +366,9 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                                 onError={(e) => {
                                                     // Fallback a imágenes hardcodeadas si la imagen falla
                                                     const target = e.target as HTMLImageElement;
-                                                    if (type.code.toLowerCase() === 'shopify') {
+                                                    if (type.id === INTEGRATION_TYPE_IDS.SHOPIFY) {
                                                         target.src = '/integrations/shopify.png';
-                                                    } else if (type.code.toLowerCase() === 'whatsapp' || type.code.toLowerCase() === 'whatsap') {
+                                                    } else if (type.id === INTEGRATION_TYPE_IDS.WHATSAPP) {
                                                         target.src = '/integrations/whatsapp.png';
                                                     } else {
                                                         target.style.display = 'none';
@@ -395,21 +378,21 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                         ) : (
                                             // Fallback a imágenes hardcodeadas si no hay imagen_url
                                             <>
-                                                {type.code.toLowerCase() === 'shopify' && (
+                                                {type.id === INTEGRATION_TYPE_IDS.SHOPIFY && (
                                                     <img
                                                         src="/integrations/shopify.png"
                                                         alt="Shopify"
                                                         className="w-14 h-14 object-contain rounded-lg shadow-md"
                                                     />
                                                 )}
-                                                {(type.code.toLowerCase() === 'whatsapp' || type.code.toLowerCase() === 'whatsap') && (
+                                                {type.id === INTEGRATION_TYPE_IDS.WHATSAPP && (
                                                     <img
                                                         src="/integrations/whatsapp.png"
                                                         alt="WhatsApp"
                                                         className="w-14 h-14 object-contain rounded-lg shadow-md"
                                                     />
                                                 )}
-                                                {type.code.toLowerCase() !== 'shopify' && type.code.toLowerCase() !== 'whatsapp' && type.code.toLowerCase() !== 'whatsap' && (
+                                                {type.id !== INTEGRATION_TYPE_IDS.SHOPIFY && type.id !== INTEGRATION_TYPE_IDS.WHATSAPP && (
                                                     <div className="w-14 h-14 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-base font-semibold shadow-md">
                                                         {type.name.charAt(0).toUpperCase()}
                                                     </div>
@@ -440,7 +423,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             {/* Render specific form based on selected type */}
             {selectedType && (
                 <div>
-                    {selectedType.code.toLowerCase() === 'shopify' && (
+                    {selectedType.id === INTEGRATION_TYPE_IDS.SHOPIFY && (
                         <ShopifyIntegrationForm
                             onSubmit={handleShopifySubmit}
                             onCancel={onCancel}
@@ -448,7 +431,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
-                    {selectedType.code.toLowerCase() !== 'shopify' && selectedType.config_schema && selectedType.credentials_schema && (
+                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY && selectedType.config_schema && selectedType.credentials_schema && (
                         <DynamicIntegrationForm
                             integrationType={selectedType}
                             onSubmit={async (data) => {
@@ -491,7 +474,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
-                    {selectedType.code.toLowerCase() !== 'shopify' && (!selectedType.config_schema || !selectedType.credentials_schema) && (
+                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY && (!selectedType.config_schema || !selectedType.credentials_schema) && (
                         <Alert type="warning">
                             <p className="font-medium">Esquema no configurado</p>
                             <p className="text-sm mt-1">Este tipo de integración aún no tiene un esquema configurado. Por favor, configura los schemas en el módulo de administración.</p>

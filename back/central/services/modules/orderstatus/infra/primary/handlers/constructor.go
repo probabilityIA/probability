@@ -8,6 +8,7 @@ import (
 
 type OrderStatusMappingHandlers struct {
 	uc     app.IUseCase
+	log    log.ILogger // Cambiado de logger a log para consistencia
 	logger log.ILogger
 	env    env.IConfig
 }
@@ -15,6 +16,7 @@ type OrderStatusMappingHandlers struct {
 func New(uc app.IUseCase, logger log.ILogger, env env.IConfig) *OrderStatusMappingHandlers {
 	return &OrderStatusMappingHandlers{
 		uc:     uc,
+		log:    logger, // Asignar a ambos para compatibilidad
 		logger: logger,
 		env:    env,
 	}

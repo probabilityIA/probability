@@ -30,6 +30,7 @@ export function Sidebar({ user }: SidebarProps) {
   const { primaryExpanded, requestExpand, requestCollapse, isMobileOpen, setIsMobileOpen } = useSidebar();
   const [showUserModal, setShowUserModal] = useState(false);
   const [ordersOpen, setOrdersOpen] = useState(false);
+  const [invoicingOpen, setInvoicingOpen] = useState(false);
   const [iamOpen, setIamOpen] = useState(false);
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
 
@@ -37,6 +38,7 @@ export function Sidebar({ user }: SidebarProps) {
     // When primary sidebar collapses, ensure submenus collapse too
     if (!primaryExpanded) {
       setOrdersOpen(false);
+      setInvoicingOpen(false);
       setIamOpen(false);
     }
   }, [primaryExpanded]);
@@ -49,8 +51,10 @@ export function Sidebar({ user }: SidebarProps) {
   // Determinar si hay sidebar secundario basado en la ruta actual
   const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
   const ordersRoutes = ['/products', '/orders', '/shipments', '/order-status', '/notification-config'];
+  const invoicingRoutes = ['/invoicing'];
   const hasSecondarySidebar = iamRoutes.some(route => pathname.startsWith(route)) ||
-    ordersRoutes.some(route => pathname.startsWith(route));
+    ordersRoutes.some(route => pathname.startsWith(route)) ||
+    invoicingRoutes.some(route => pathname.startsWith(route));
 
   // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
   // Si está cargando, esperamos (no mostramos nada o mostramos skeleton si se implementara)
@@ -81,9 +85,15 @@ export function Sidebar({ user }: SidebarProps) {
   // Integraciones: Visible para negocio (para crear integraciones)
   const canViewIntegrations = isSuperAdmin || user?.role === 'Administrador' || hasPermission('Integraciones', 'Read') || hasPermission('Integrations', 'Read');
 
+  // Facturación: Visible para administradores de negocio
+  const canViewInvoices = isSuperAdmin || hasPermission('Facturas', 'Read') || hasPermission('Invoices', 'Read');
+  const canViewInvoicingProviders = isSuperAdmin || hasPermission('Proveedores de Facturación', 'Read');
+  const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Configuración de Facturación', 'Read');
+
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
   const canAccessOrders = canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications;
+  const canAccessInvoicing = canViewInvoices || canViewInvoicingProviders || canViewInvoicingConfigs;
 
 
 
@@ -104,6 +114,13 @@ export function Sidebar({ user }: SidebarProps) {
     if (canViewOrderStatus) return '/order-status';
     if (canViewNotifications) return '/notification-config';
     return '/orders';
+  };
+
+  const getInvoicingEntryRoute = () => {
+    if (canViewInvoices) return '/invoicing/invoices';
+    if (canViewInvoicingProviders) return '/invoicing/providers';
+    if (canViewInvoicingConfigs) return '/invoicing/configs';
+    return '/invoicing/invoices';
   };
 
   const handleLogout = () => {
@@ -427,6 +444,124 @@ export function Sidebar({ user }: SidebarProps) {
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                                     </svg>
                                     <span>Notificaciones</span>
+                                  </Link>
+                                </li>
+                              )}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </li>
+              )}
+
+              {/* Item Facturación (Finanzas) - Solo si tiene permiso */}
+              {canAccessInvoicing && (
+                <li>
+                  <div>
+                    <div className="flex items-center justify-between">
+                      <button
+                        type="button"
+                        onClick={() => setInvoicingOpen(v => {
+                          const nv = !v;
+                          if (nv) {
+                            setOrdersOpen(false);
+                            setIamOpen(false);
+                          }
+                          return nv;
+                        })}
+                        aria-expanded={invoicingOpen}
+                        aria-controls="invoicing-submenu"
+                        className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 text-left w-full
+                          ${pathname.startsWith('/invoicing')
+                            ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                          }
+                        `}
+                      >
+                        {pathname.startsWith('/invoicing') && (
+                          <div
+                            className="absolute left-0 w-1 h-8 rounded-r-full"
+                            style={{ backgroundColor: 'var(--color-tertiary)' }}
+                          />
+                        )}
+
+                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+                        </svg>
+                        {primaryExpanded && (
+                          <>
+                            <span className="text-sm font-medium transition-opacity duration-300">Facturación</span>
+                            <svg
+                              className={`w-4 h-4 transform transition-transform duration-150 ml-auto select-none ${invoicingOpen ? '-rotate-90' : 'rotate-90'}`}
+                              viewBox="0 0 20 20"
+                              fill="none"
+                              stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l6 4-6 4" />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+
+                      {primaryExpanded && (
+                        <Link
+                          href={getInvoicingEntryRoute()}
+                          className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                          title="Ir a Facturación"
+                        >
+
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Submenu: mostrar solo cuando se haga click para expandir */}
+                    {primaryExpanded && invoicingOpen && (
+                      <div id="invoicing-submenu" className="mt-2 pl-8 pr-2">
+                        {/* FACTURAS */}
+                        {canViewInvoices && (
+                          <div className="mb-3">
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">FACTURAS</h4>
+                            <ul className="space-y-1">
+                              <li>
+                                <Link
+                                  href="/invoicing/invoices"
+                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/invoicing/invoices') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                >
+                                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                  </svg>
+                                  <span>Facturas</span>
+                                </Link>
+                              </li>
+                            </ul>
+                          </div>
+                        )}
+
+                        {/* CONFIGURACIÓN */}
+                        {(canViewInvoicingProviders || canViewInvoicingConfigs) && (
+                          <div>
+                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CONFIGURACIÓN</h4>
+                            <ul className="space-y-1">
+                              {canViewInvoicingProviders && (
+                                <li>
+                                  <Link href="/invoicing/providers" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/invoicing/providers') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                    </svg>
+                                    <span>Proveedores</span>
+                                  </Link>
+                                </li>
+                              )}
+                              {canViewInvoicingConfigs && (
+                                <li>
+                                  <Link href="/invoicing/configs" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/invoicing/configs') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
+                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    </svg>
+                                    <span>Configuraciones</span>
                                   </Link>
                                 </li>
                               )}

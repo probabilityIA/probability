@@ -1,22 +1,41 @@
 package handlers
 
 import (
-	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/app"
+	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/integrations/whatsApp/internal/app/usecasemessaging"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-type WhatsAppHandler struct {
-	useCase app.IUseCaseSendMessage
-	logger  log.ILogger
+// IHandler define todos los métodos HTTP de los handlers de WhatsApp
+type IHandler interface {
+	// Rutas
+	RegisterRoutes(router *gin.RouterGroup)
+
+	// Template
+	SendTemplate(c *gin.Context)
+
+	// Webhook
+	VerifyWebhook(c *gin.Context)
+	ReceiveWebhook(c *gin.Context)
 }
 
-func New(useCase app.IUseCaseSendMessage, logger log.ILogger) *WhatsAppHandler {
-	// El logger ya viene con service="integrations" desde el bundle
-	// Solo agregamos el módulo específico
-	contextualLogger := logger.WithModule("whatsapp")
+// handler contiene las dependencias compartidas
+type Handler struct {
+	useCase usecasemessaging.IUseCase
+	log     log.ILogger
+	config  env.IConfig
+}
 
-	return &WhatsAppHandler{
+// New crea la instancia única de handler con todas las dependencias
+func New(
+	useCase usecasemessaging.IUseCase,
+	logger log.ILogger,
+	config env.IConfig,
+) IHandler {
+	return &Handler{
 		useCase: useCase,
-		logger:  contextualLogger,
+		log:     logger,
+		config:  config,
 	}
 }

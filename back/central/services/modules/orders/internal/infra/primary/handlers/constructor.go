@@ -7,14 +7,20 @@ import (
 
 // Handlers contiene todos los handlers del módulo orders
 type Handlers struct {
-	orderCRUD    *usecaseorder.UseCaseOrder
-	orderMapping domain.IOrderMappingUseCase
+	orderCRUD             *usecaseorder.UseCaseOrder
+	orderMapping          domain.IOrderMappingUseCase
+	requestConfirmationUC usecaseorder.IRequestConfirmationUseCase
 }
 
 // New crea una nueva instancia de Handlers
-func New(orderCRUD *usecaseorder.UseCaseOrder, orderMapping domain.IOrderMappingUseCase) *Handlers {
+func New(
+	orderCRUD *usecaseorder.UseCaseOrder,
+	orderMapping domain.IOrderMappingUseCase,
+	requestConfirmationUC usecaseorder.IRequestConfirmationUseCase,
+) *Handlers {
 	return &Handlers{
-		orderCRUD:    orderCRUD,
-		orderMapping: orderMapping,
+		orderCRUD:             orderCRUD,
+		orderMapping:          orderMapping,
+		requestConfirmationUC: requestConfirmationUC,
 	}
 }
