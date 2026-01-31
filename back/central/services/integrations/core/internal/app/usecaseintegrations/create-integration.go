@@ -24,9 +24,7 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	if dto.IntegrationTypeID == 0 {
 		return nil, domain.ErrIntegrationTypeRequired
 	}
-	if !domain.IsValidCategory(dto.Category) {
-		return nil, fmt.Errorf("%w: %s", domain.ErrIntegrationCategoryInvalid, dto.Category)
-	}
+	// Category ya no se valida aquí, se obtiene del IntegrationType
 
 	// Validar que el tipo de integración exista (necesitamos el repositorio de tipos)
 	// TODO: Inyectar IIntegrationTypeRepository en el use case
@@ -122,7 +120,6 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		Name:              dto.Name,
 		Code:              dto.Code,
 		IntegrationTypeID: dto.IntegrationTypeID,
-		Category:          dto.Category,
 		BusinessID:        dto.BusinessID,
 		StoreID:           dto.StoreID,
 		IsActive:          dto.IsActive,

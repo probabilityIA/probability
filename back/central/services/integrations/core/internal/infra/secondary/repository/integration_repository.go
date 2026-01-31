@@ -104,7 +104,6 @@ func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration
 	updateFields := map[string]interface{}{
 		"name":                model.Name,
 		"code":                model.Code,
-		"category":            model.Category,
 		"integration_type_id": model.IntegrationTypeID,
 		"business_id":         model.BusinessID,
 		"store_id":            model.StoreID,
@@ -364,7 +363,6 @@ func (r *Repository) toModel(integration *domain.Integration) *models.Integratio
 		Name:              integration.Name,
 		Code:              integration.Code,
 		IntegrationTypeID: integration.IntegrationTypeID,
-		Category:          integration.Category,
 		BusinessID:        integration.BusinessID,
 		StoreID:           integration.StoreID,
 		IsActive:          integration.IsActive,
@@ -393,7 +391,6 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 		Name:              model.Name,
 		Code:              model.Code,
 		IntegrationTypeID: model.IntegrationTypeID,
-		Category:          model.Category,
 		BusinessID:        businessID,
 		StoreID:           model.StoreID,
 		IsActive:          model.IsActive,
@@ -409,6 +406,24 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 
 	// Cargar IntegrationType si está disponible en el modelo
 	if model.IntegrationType.ID != 0 {
+		var category *domain.IntegrationCategory
+		if model.IntegrationType.Category != nil {
+			category = &domain.IntegrationCategory{
+				ID:               model.IntegrationType.Category.ID,
+				Code:             model.IntegrationType.Category.Code,
+				Name:             model.IntegrationType.Category.Name,
+				Description:      model.IntegrationType.Category.Description,
+				Icon:             model.IntegrationType.Category.Icon,
+				Color:            model.IntegrationType.Category.Color,
+				DisplayOrder:     model.IntegrationType.Category.DisplayOrder,
+				ParentCategoryID: model.IntegrationType.Category.ParentCategoryID,
+				IsActive:         model.IntegrationType.Category.IsActive,
+				IsVisible:        model.IntegrationType.Category.IsVisible,
+				CreatedAt:        model.IntegrationType.Category.CreatedAt,
+				UpdatedAt:        model.IntegrationType.Category.UpdatedAt,
+			}
+		}
+
 		integrationType := domain.IntegrationType{
 			ID:                model.IntegrationType.ID,
 			Name:              model.IntegrationType.Name,
@@ -416,7 +431,8 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 			Description:       model.IntegrationType.Description,
 			Icon:              model.IntegrationType.Icon,
 			ImageURL:          model.IntegrationType.ImageURL,
-			Category:          model.IntegrationType.Category,
+			CategoryID:        model.IntegrationType.CategoryID,
+			Category:          category,
 			IsActive:          model.IntegrationType.IsActive,
 			ConfigSchema:      model.IntegrationType.ConfigSchema,
 			CredentialsSchema: model.IntegrationType.CredentialsSchema,

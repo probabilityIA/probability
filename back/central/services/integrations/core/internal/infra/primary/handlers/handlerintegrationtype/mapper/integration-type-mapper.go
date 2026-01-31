@@ -23,6 +23,18 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURL
 		}
 	}
 
+	var category *response.IntegrationCategoryResponse
+	if integrationType.Category != nil {
+		category = &response.IntegrationCategoryResponse{
+			ID:          integrationType.Category.ID,
+			Code:        integrationType.Category.Code,
+			Name:        integrationType.Category.Name,
+			Description: integrationType.Category.Description,
+			Icon:        integrationType.Category.Icon,
+			Color:       integrationType.Category.Color,
+		}
+	}
+
 	return response.IntegrationTypeResponse{
 		ID:                integrationType.ID,
 		Name:              integrationType.Name,
@@ -30,7 +42,7 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURL
 		Description:       integrationType.Description,
 		Icon:              integrationType.Icon,
 		ImageURL:          imageURL,
-		Category:          integrationType.Category,
+		Category:          category,
 		IsActive:          integrationType.IsActive,
 		ConfigSchema:      integrationType.ConfigSchema,
 		CredentialsSchema: integrationType.CredentialsSchema,
@@ -53,7 +65,7 @@ func ToCreateIntegrationTypeDTO(req request.CreateIntegrationTypeRequest) domain
 		Code:              req.Code,
 		Description:       req.Description,
 		Icon:              req.Icon,
-		Category:          req.Category,
+		CategoryID:        req.CategoryID,
 		IsActive:          req.IsActive,
 		ConfigSchema:      configSchema,
 		CredentialsSchema: credentialsSchema,
@@ -77,8 +89,8 @@ func ToUpdateIntegrationTypeDTO(req request.UpdateIntegrationTypeRequest) domain
 	if req.Icon != nil {
 		dto.Icon = req.Icon
 	}
-	if req.Category != nil {
-		dto.Category = req.Category
+	if req.CategoryID != nil {
+		dto.CategoryID = req.CategoryID
 	}
 	if req.IsActive != nil {
 		dto.IsActive = req.IsActive

@@ -9,7 +9,7 @@ type CreateIntegrationTypeRequest struct {
 	Code         string                 `json:"code" form:"code" example:"whatsapp"` // Opcional, se genera automáticamente
 	Description  string                 `json:"description" form:"description" example:"Integración con WhatsApp Cloud API"`
 	Icon         string                 `json:"icon" form:"icon" example:"whatsapp-icon"`
-	Category     string                 `json:"category" form:"category" binding:"required" example:"internal"`
+	CategoryID   uint                   `json:"category_id" form:"category_id" binding:"required" example:"1"`
 	IsActive     bool                   `json:"is_active" form:"is_active" example:"true"`
 	ConfigSchema map[string]interface{} `json:"credentials_schema" form:"credentials_schema"` // JSON schema para credenciales
 	ImageFile    *multipart.FileHeader  `form:"image_file"`                                   // Archivo de imagen para subir a S3
@@ -22,7 +22,7 @@ type UpdateIntegrationTypeRequest struct {
 	Code         *string                 `json:"code" form:"code" example:"whatsapp"`
 	Description  *string                 `json:"description" form:"description" example:"Nueva descripción"`
 	Icon         *string                 `json:"icon" form:"icon" example:"whatsapp-icon"`
-	Category     *string                 `json:"category" form:"category" example:"internal"`
+	CategoryID   *uint                   `json:"category_id" form:"category_id" example:"1"`
 	IsActive     *bool                   `json:"is_active" form:"is_active" example:"true"`
 	ConfigSchema *map[string]interface{} `json:"credentials_schema" form:"credentials_schema"`
 	ImageFile    *multipart.FileHeader   `form:"image_file"`                       // Archivo de imagen para subir a S3

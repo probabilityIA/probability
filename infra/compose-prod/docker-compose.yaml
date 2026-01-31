@@ -1,6 +1,6 @@
 services:
 
-  font-central:
+  front-central:
     platform: linux/arm64
     image: public.ecr.aws/c1l9h7c9/probability:frontend-latest
     container_name: frontend_prod
@@ -32,7 +32,7 @@ services:
           cpus: "0.25"
           memory: 128M
 
-  font-website:
+  front-website:
     platform: linux/arm64
     image: public.ecr.aws/c1l9h7c9/probability:website-latest
     container_name: website_prod
@@ -193,9 +193,9 @@ services:
     depends_on:
       back-central:
         condition: service_healthy
-      font-central:
+      front-central:
         condition: service_started
-      font-website:
+      front-website:
         condition: service_started
     networks:
       - app-network

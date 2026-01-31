@@ -31,6 +31,94 @@ Este módulo permite:
 
 ---
 
+## 🔗 Relación con Integraciones
+
+**IMPORTANTE**: A partir de 2026, los proveedores de facturación se registran como **tipos de integración** en la tabla `integration_types` del módulo `integrations/core`.
+
+### Concepto Unificado
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│          CATÁLOGO UNIFICADO (integration_types)             │
+├─────────────────────────────────────────────────────────────┤
+│  📦 E-commerce         💳 Facturación       📧 Mensajería   │
+│  • Shopify             • Softpymes          • WhatsApp      │
+│  • MercadoLibre        • Alegra             • Telegram      │
+│  • Amazon              • Siigo                              │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ Cada negocio instala lo que necesita
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│         INSTANCIAS CONFIGURADAS (integrations)              │
+├─────────────────────────────────────────────────────────────┤
+│  Mi Tiendita (business_id=1):                               │
+│    ✓ Shopify (#1)     - Recibe órdenes                      │
+│    ✓ Softpymes (#2)   - Emite facturas                      │
+│                                                             │
+│  Tu Negocio (business_id=2):                                │
+│    ✓ Shopify (#3)     - Recibe órdenes                      │
+│    ✓ Alegra (#4)      - Emite facturas                      │
+└─────────────────────────────────────────────────────────────┘
+                          │
+                          │ Configurar qué integración factura
+                          ▼
+┌─────────────────────────────────────────────────────────────┐
+│          CONFIGURACIÓN (invoicing_configs)                  │
+├─────────────────────────────────────────────────────────────┤
+│  Shopify (#1) ────factura con───→ Softpymes (#2)            │
+│  Shopify (#3) ────factura con───→ Alegra (#4)               │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Diferencias Clave
+
+| Concepto | Descripción | Ejemplo |
+|----------|-------------|---------|
+| **integration_type** | Catálogo de integraciones disponibles | `softpymes`, `alegra`, `siigo` |
+| **integration** | Instancia configurada para un negocio | "Mi Tiendita - Softpymes" con credenciales |
+| **invoicing_config** | Vincula e-commerce con facturación | Shopify (#1) → Softpymes (#2) |
+
+### Migración de Arquitectura
+
+**Antes (Separado)**:
+```sql
+-- Dos catálogos separados
+invoicing_provider_types → softpymes, alegra
+integration_types → shopify, mercadolibre
+
+-- Dos tablas de instancias
+invoicing_providers → credenciales de facturación
+integrations → credenciales de e-commerce
+```
+
+**Ahora (Unificado)**:
+```sql
+-- Un solo catálogo con categorías
+integration_types:
+  id=1, code=shopify, category=ecommerce
+  id=4, code=softpymes, category=invoicing
+
+-- Una sola tabla de instancias
+integrations:
+  id=1, type=shopify, business_id=1
+  id=2, type=softpymes, business_id=1
+
+-- Configuración vincula ambos
+invoicing_configs:
+  source_integration_id=1 (Shopify)
+  invoicing_integration_id=2 (Softpymes)
+```
+
+### Ventajas del Enfoque Unificado
+
+✅ **UI Unificada**: Un solo "marketplace" de integraciones
+✅ **Reutilización**: Encriptación, test conexión, etc.
+✅ **Escalabilidad**: Agregar Alegra, Siigo es solo un registro
+✅ **Consistencia**: Mismo patrón para todas las integraciones
+
+---
+
 ## Arquitectura
 
 El módulo sigue **Arquitectura Hexagonal (Clean Architecture)**:

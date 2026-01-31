@@ -35,7 +35,7 @@ func (r *Repository) UpdateIntegrationType(ctx context.Context, id uint, integra
 // GetIntegrationTypeByID obtiene un tipo de integración por ID
 func (r *Repository) GetIntegrationTypeByID(ctx context.Context, id uint) (*domain.IntegrationType, error) {
 	var model models.IntegrationType
-	if err := r.db.Conn(ctx).Where("id = ?", id).First(&model).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("Category").Where("id = ?", id).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("tipo de integración con ID %d no encontrado", id)
 		}
@@ -49,7 +49,7 @@ func (r *Repository) GetIntegrationTypeByID(ctx context.Context, id uint) (*doma
 // GetIntegrationTypeByCode obtiene un tipo de integración por código
 func (r *Repository) GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error) {
 	var model models.IntegrationType
-	if err := r.db.Conn(ctx).Where("code = ?", code).First(&model).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("Category").Where("code = ?", code).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("tipo de integración con código '%s' no encontrado", code)
 		}
@@ -63,7 +63,7 @@ func (r *Repository) GetIntegrationTypeByCode(ctx context.Context, code string) 
 // GetIntegrationTypeByName obtiene un tipo de integración por nombre
 func (r *Repository) GetIntegrationTypeByName(ctx context.Context, name string) (*domain.IntegrationType, error) {
 	var model models.IntegrationType
-	if err := r.db.Conn(ctx).Where("name = ?", name).First(&model).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("Category").Where("name = ?", name).First(&model).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, fmt.Errorf("tipo de integración con nombre '%s' no encontrado", name)
 		}
@@ -86,7 +86,7 @@ func (r *Repository) DeleteIntegrationType(ctx context.Context, id uint) error {
 // ListIntegrationTypes obtiene todos los tipos de integración
 func (r *Repository) ListIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error) {
 	var models []models.IntegrationType
-	if err := r.db.Conn(ctx).Order("name ASC").Find(&models).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("Category").Order("name ASC").Find(&models).Error; err != nil {
 		r.log.Error(ctx).Err(err).Msg("Error al listar tipos de integración")
 		return nil, fmt.Errorf("error al listar tipos de integración: %w", err)
 	}
@@ -101,7 +101,7 @@ func (r *Repository) ListIntegrationTypes(ctx context.Context) ([]*domain.Integr
 // ListActiveIntegrationTypes obtiene solo los tipos de integración activos
 func (r *Repository) ListActiveIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error) {
 	var models []models.IntegrationType
-	if err := r.db.Conn(ctx).Where("is_active = ?", true).Order("name ASC").Find(&models).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("Category").Where("is_active = ?", true).Order("name ASC").Find(&models).Error; err != nil {
 		r.log.Error(ctx).Err(err).Msg("Error al listar tipos de integración activos")
 		return nil, fmt.Errorf("error al listar tipos de integración activos: %w", err)
 	}
@@ -126,7 +126,7 @@ func toIntegrationTypeModel(d *domain.IntegrationType) models.IntegrationType {
 		Description:       d.Description,
 		Icon:              d.Icon,
 		ImageURL:          d.ImageURL,
-		Category:          d.Category,
+		CategoryID:        d.CategoryID,
 		IsActive:          d.IsActive,
 		ConfigSchema:      d.ConfigSchema,
 		CredentialsSchema: d.CredentialsSchema,
@@ -136,6 +136,24 @@ func toIntegrationTypeModel(d *domain.IntegrationType) models.IntegrationType {
 
 // toIntegrationTypeDomain convierte models.IntegrationType a domain.IntegrationType
 func toIntegrationTypeDomain(m models.IntegrationType) domain.IntegrationType {
+	var category *domain.IntegrationCategory
+	if m.Category != nil {
+		category = &domain.IntegrationCategory{
+			ID:               m.Category.ID,
+			Code:             m.Category.Code,
+			Name:             m.Category.Name,
+			Description:      m.Category.Description,
+			Icon:             m.Category.Icon,
+			Color:            m.Category.Color,
+			DisplayOrder:     m.Category.DisplayOrder,
+			ParentCategoryID: m.Category.ParentCategoryID,
+			IsActive:         m.Category.IsActive,
+			IsVisible:        m.Category.IsVisible,
+			CreatedAt:        m.Category.CreatedAt,
+			UpdatedAt:        m.Category.UpdatedAt,
+		}
+	}
+
 	return domain.IntegrationType{
 		ID:                m.ID,
 		Name:              m.Name,
@@ -143,7 +161,8 @@ func toIntegrationTypeDomain(m models.IntegrationType) domain.IntegrationType {
 		Description:       m.Description,
 		Icon:              m.Icon,
 		ImageURL:          m.ImageURL,
-		Category:          m.Category,
+		CategoryID:        m.CategoryID,
+		Category:          category,
 		IsActive:          m.IsActive,
 		ConfigSchema:      m.ConfigSchema,
 		CredentialsSchema: m.CredentialsSchema,

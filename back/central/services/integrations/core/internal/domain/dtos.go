@@ -12,7 +12,7 @@ type CreateIntegrationTypeDTO struct {
 	Code              string
 	Description       string
 	Icon              string
-	Category          string
+	CategoryID        uint
 	IsActive          bool
 	ConfigSchema      datatypes.JSON
 	CredentialsSchema datatypes.JSON
@@ -25,7 +25,7 @@ type UpdateIntegrationTypeDTO struct {
 	Code              *string
 	Description       *string
 	Icon              *string
-	Category          *string
+	CategoryID        *uint
 	IsActive          *bool
 	ConfigSchema      *datatypes.JSON
 	CredentialsSchema *datatypes.JSON
@@ -38,7 +38,6 @@ type CreateIntegrationDTO struct {
 	Name              string
 	Code              string
 	IntegrationTypeID uint // ID del tipo de integración (obligatorio)
-	Category          string
 	BusinessID        *uint
 	StoreID           string // Identificador externo (ej: shop domain para Shopify)
 	IsActive          bool

@@ -6,6 +6,21 @@ import (
 	"gorm.io/datatypes"
 )
 
+type IntegrationCategory struct {
+	ID               uint
+	Code             string
+	Name             string
+	Description      string
+	Icon             string
+	Color            string
+	DisplayOrder     int
+	ParentCategoryID *uint
+	IsActive         bool
+	IsVisible        bool
+	CreatedAt        time.Time
+	UpdatedAt        time.Time
+}
+
 type IntegrationType struct {
 	ID                uint
 	Name              string
@@ -13,7 +28,8 @@ type IntegrationType struct {
 	Description       string
 	Icon              string
 	ImageURL          string
-	Category          string
+	CategoryID        uint
+	Category          *IntegrationCategory
 	IsActive          bool
 	ConfigSchema      datatypes.JSON
 	CredentialsSchema datatypes.JSON
@@ -28,7 +44,6 @@ type Integration struct {
 	Code              string
 	IntegrationTypeID uint
 	IntegrationType   *IntegrationType
-	Category          string
 	BusinessID        *uint
 	StoreID           string
 	IsActive          bool

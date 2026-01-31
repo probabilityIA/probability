@@ -55,8 +55,8 @@ func (uc *integrationTypeUseCase) UpdateIntegrationType(ctx context.Context, id 
 	if dto.Icon != nil {
 		existing.Icon = *dto.Icon
 	}
-	if dto.Category != nil {
-		existing.Category = *dto.Category
+	if dto.CategoryID != nil {
+		existing.CategoryID = *dto.CategoryID
 	}
 	if dto.IsActive != nil {
 		existing.IsActive = *dto.IsActive

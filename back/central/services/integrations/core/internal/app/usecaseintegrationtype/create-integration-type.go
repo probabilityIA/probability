@@ -81,7 +81,7 @@ func (uc *integrationTypeUseCase) CreateIntegrationType(ctx context.Context, dto
 	uc.log.Info(ctx).
 		Str("name", dto.Name).
 		Str("code", code).
-		Str("category", dto.Category).
+		Uint("category_id", dto.CategoryID).
 		Msg("Creando tipo de integración")
 
 	// Procesar imagen si se proporciona
@@ -108,7 +108,7 @@ func (uc *integrationTypeUseCase) CreateIntegrationType(ctx context.Context, dto
 		Description:       dto.Description,
 		Icon:              dto.Icon,
 		ImageURL:          imageURL,
-		Category:          dto.Category,
+		CategoryID:        dto.CategoryID,
 		IsActive:          dto.IsActive,
 		ConfigSchema:      dto.ConfigSchema,
 		CredentialsSchema: dto.CredentialsSchema,
