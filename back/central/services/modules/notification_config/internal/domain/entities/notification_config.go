@@ -1,9 +1,6 @@
 package entities
 
-import (
-	"encoding/json"
-	"time"
-)
+import "time"
 
 // IntegrationNotificationConfig representa la configuración de notificaciones para una integración
 type IntegrationNotificationConfig struct {
@@ -32,46 +29,4 @@ type NotificationConfig struct {
 	TemplateName  string // "confirmacion_pedido_contraentrega"
 	RecipientType string // "customer", "business"
 	Language      string // "es", "en"
-}
-
-// MarshalJSON convierte NotificationConditions a JSON
-func (nc NotificationConditions) MarshalJSON() ([]byte, error) {
-	type Alias NotificationConditions
-	return json.Marshal(&struct {
-		*Alias
-	}{
-		Alias: (*Alias)(&nc),
-	})
-}
-
-// UnmarshalJSON convierte JSON a NotificationConditions
-func (nc *NotificationConditions) UnmarshalJSON(data []byte) error {
-	type Alias NotificationConditions
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(nc),
-	}
-	return json.Unmarshal(data, &aux)
-}
-
-// MarshalJSON convierte NotificationConfig a JSON
-func (ncfg NotificationConfig) MarshalJSON() ([]byte, error) {
-	type Alias NotificationConfig
-	return json.Marshal(&struct {
-		*Alias
-	}{
-		Alias: (*Alias)(&ncfg),
-	})
-}
-
-// UnmarshalJSON convierte JSON a NotificationConfig
-func (ncfg *NotificationConfig) UnmarshalJSON(data []byte) error {
-	type Alias NotificationConfig
-	aux := &struct {
-		*Alias
-	}{
-		Alias: (*Alias)(ncfg),
-	}
-	return json.Unmarshal(data, &aux)
 }

@@ -1,0 +1,2 @@
+# Esta carpeta contendrá DTOs de request específicos de la capa de aplicación
+# Por ahora, la app usa DTOs del domain/dtos/

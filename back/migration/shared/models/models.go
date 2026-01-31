@@ -285,6 +285,33 @@ type APIKey struct {
 
 // ───────────────────────────────────────────
 //
+//	INTEGRATION CATEGORIES - Categorías de integraciones
+//
+// ───────────────────────────────────────────
+type IntegrationCategory struct {
+	gorm.Model
+	Code             string `gorm:"size:50;not null;unique;index"` // "ecommerce", "invoicing", "messaging"
+	Name             string `gorm:"size:100;not null"`             // "E-commerce", "Facturación Electrónica"
+	Description      string `gorm:"size:500"`                      // Descripción de la categoría
+	Icon             string `gorm:"size:100"`                      // Icono para UI
+	Color            string `gorm:"size:20"`                       // Color hexadecimal para UI
+	DisplayOrder     int    `gorm:"default:0"`                     // Orden de visualización
+	ParentCategoryID *uint  `gorm:"index"`                         // Para categorías anidadas (futuro)
+	IsActive         bool   `gorm:"default:true;index"`            // Si la categoría está activa
+	IsVisible        bool   `gorm:"default:true"`                  // Si se muestra en UI
+
+	// Relaciones
+	ParentCategory     *IntegrationCategory `gorm:"foreignKey:ParentCategoryID"`
+	IntegrationTypes   []IntegrationType    `gorm:"foreignKey:CategoryID"`
+}
+
+// TableName especifica el nombre de la tabla para IntegrationCategory
+func (IntegrationCategory) TableName() string {
+	return "integration_categories"
+}
+
+// ───────────────────────────────────────────
+//
 //	INTEGRATION TYPES - Tipos de integraciones disponibles
 //
 // ───────────────────────────────────────────
@@ -295,8 +322,11 @@ type IntegrationType struct {
 	Description string `gorm:"size:500"`                 // Descripción del tipo de integración
 	Icon        string `gorm:"size:100"`                 // Icono para UI
 	ImageURL    string `gorm:"size:500"`                 // URL de la imagen del logo (path relativo en S3)
-	Category    string `gorm:"size:20;not null;index"`   // "internal" | "external"
 	IsActive    bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
+
+	// Relación con IntegrationCategory
+	CategoryID uint                  `gorm:"not null;index"`
+	Category   *IntegrationCategory `gorm:"foreignKey:CategoryID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Configuración requerida (JSON schema - define qué campos de config son necesarios)
 	// Ejemplo: {"required_fields": ["phone_number_id"], "optional_fields": ["webhook_url"]}
@@ -327,10 +357,9 @@ type Integration struct {
 	gorm.Model
 
 	// Identificación
-	Name     string `gorm:"size:100;not null"`       // "WhatsApp Principal", "Shopify Store 1"
-	Code     string `gorm:"size:50;not null;unique"` // "whatsapp_platform", "shopify_store_1"
-	Category string `gorm:"size:20;not null;index"`  // "internal" | "external" (redundante, pero útil para queries)
-	StoreID  string `gorm:"size:150;index"`          // Identificador externo (p.e. shop domain)
+	Name    string `gorm:"size:100;not null"`       // "WhatsApp Principal", "Shopify Store 1"
+	Code    string `gorm:"size:50;not null;unique"` // "whatsapp_platform", "shopify_store_1"
+	StoreID string `gorm:"size:150;index"`          // Identificador externo (p.e. shop domain)
 
 	// Relación con IntegrationType (obligatorio)
 	IntegrationTypeID uint            `gorm:"not null;index"`
