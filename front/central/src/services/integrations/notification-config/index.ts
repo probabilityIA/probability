@@ -33,3 +33,4 @@ export { ConfigList } from './ui/components/ConfigList';
 export { ConfigForm } from './ui/components/ConfigForm';
 export { PaymentMethodSelector } from './ui/components/PaymentMethodSelector';
 export { StatusSelector } from './ui/components/StatusSelector';
+export { IntegrationSourceSelector } from './ui/components/IntegrationSourceSelector';

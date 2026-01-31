@@ -79,7 +79,9 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
         const params = new URLSearchParams();
         if (filter) {
             if (filter.business_id) params.append("business_id", filter.business_id.toString());
-            if (filter.event_type) params.append("event_type", filter.event_type);
+            if (filter.integration_id) params.append("integration_id", filter.integration_id.toString());
+            if (filter.notification_type_id) params.append("notification_type_id", filter.notification_type_id.toString());
+            if (filter.notification_event_type_id) params.append("notification_event_type_id", filter.notification_event_type_id.toString());
         }
 
         const response = await fetch(`${this.baseUrl}/notification-configs?${params.toString()}`, {

@@ -7,7 +7,7 @@ import (
 	"gorm.io/datatypes"
 )
 
-// ToModel convierte una entidad de dominio a modelo de base de datos
+// ToModel convierte una entidad IntegrationNotificationConfig a modelo de BD
 func ToModel(entity *entities.IntegrationNotificationConfig) (*IntegrationNotificationConfigModel, error) {
 	if entity == nil {
 		return nil, nil
@@ -32,7 +32,5 @@ func ToModel(entity *entities.IntegrationNotificationConfig) (*IntegrationNotifi
 		Config:           datatypes.JSON(configJSON),
 		Description:      entity.Description,
 		Priority:         entity.Priority,
-		CreatedAt:        entity.CreatedAt,
-		UpdatedAt:        entity.UpdatedAt,
 	}, nil
 }

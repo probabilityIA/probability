@@ -6,14 +6,23 @@ import (
 )
 
 type useCase struct {
-	repository ports.IRepository
-	logger     log.ILogger
+	repository              ports.IRepository
+	notificationTypeRepo    ports.INotificationTypeRepository
+	notificationEventRepo   ports.INotificationEventTypeRepository
+	logger                  log.ILogger
 }
 
 // New crea una nueva instancia del caso de uso
-func New(repository ports.IRepository, logger log.ILogger) ports.IUseCase {
+func New(
+	repository ports.IRepository,
+	notificationTypeRepo ports.INotificationTypeRepository,
+	notificationEventRepo ports.INotificationEventTypeRepository,
+	logger log.ILogger,
+) ports.IUseCase {
 	return &useCase{
-		repository: repository,
-		logger:     logger.WithModule("notification_config_usecase"),
+		repository:            repository,
+		notificationTypeRepo:  notificationTypeRepo,
+		notificationEventRepo: notificationEventRepo,
+		logger:                logger.WithModule("notification_config_usecase"),
 	}
 }

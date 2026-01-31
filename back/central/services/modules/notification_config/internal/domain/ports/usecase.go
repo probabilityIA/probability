@@ -9,6 +9,7 @@ import (
 
 // IUseCase define el contrato de los casos de uso
 type IUseCase interface {
+	// ========== Notification Configs ==========
 	// Create crea una nueva configuración
 	Create(ctx context.Context, dto dtos.CreateNotificationConfigDTO) (*dtos.NotificationConfigResponseDTO, error)
 
@@ -26,4 +27,39 @@ type IUseCase interface {
 
 	// ValidateConditions valida si una orden cumple las condiciones de una configuración
 	ValidateConditions(config *entities.IntegrationNotificationConfig, orderStatus string, paymentMethodID uint) bool
+
+	// ========== Notification Types ==========
+	// GetNotificationTypes obtiene todos los tipos de notificaciones
+	GetNotificationTypes(ctx context.Context) ([]entities.NotificationType, error)
+
+	// GetNotificationTypeByID obtiene un tipo de notificación por su ID
+	GetNotificationTypeByID(ctx context.Context, id uint) (*entities.NotificationType, error)
+
+	// GetNotificationTypeByCode obtiene un tipo de notificación por su código
+	GetNotificationTypeByCode(ctx context.Context, code string) (*entities.NotificationType, error)
+
+	// CreateNotificationType crea un nuevo tipo de notificación
+	CreateNotificationType(ctx context.Context, notificationType *entities.NotificationType) error
+
+	// UpdateNotificationType actualiza un tipo de notificación existente
+	UpdateNotificationType(ctx context.Context, notificationType *entities.NotificationType) error
+
+	// DeleteNotificationType elimina un tipo de notificación por su ID
+	DeleteNotificationType(ctx context.Context, id uint) error
+
+	// ========== Notification Event Types ==========
+	// GetEventTypesByNotificationType obtiene todos los tipos de eventos de un tipo de notificación
+	GetEventTypesByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error)
+
+	// GetNotificationEventTypeByID obtiene un tipo de evento de notificación por su ID
+	GetNotificationEventTypeByID(ctx context.Context, id uint) (*entities.NotificationEventType, error)
+
+	// CreateNotificationEventType crea un nuevo tipo de evento de notificación
+	CreateNotificationEventType(ctx context.Context, eventType *entities.NotificationEventType) error
+
+	// UpdateNotificationEventType actualiza un tipo de evento de notificación existente
+	UpdateNotificationEventType(ctx context.Context, eventType *entities.NotificationEventType) error
+
+	// DeleteNotificationEventType elimina un tipo de evento de notificación por su ID
+	DeleteNotificationEventType(ctx context.Context, id uint) error
 }

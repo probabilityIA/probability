@@ -71,3 +71,20 @@ export interface UpdateOrderStatusMappingDTO {
     priority?: number;
     description?: string;
 }
+
+// ============================================
+// Simple Types para Dropdowns/Selectores
+// ============================================
+
+export interface OrderStatusSimple {
+    id: number;
+    name: string;
+    code: string;
+    is_active: boolean;
+}
+
+export interface OrderStatusesSimpleResponse {
+    success: boolean;
+    message: string;
+    data: OrderStatusSimple[];
+}

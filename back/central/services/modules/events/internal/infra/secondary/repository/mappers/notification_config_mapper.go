@@ -9,6 +9,8 @@ import (
 )
 
 // ToDBNotificationConfig convierte una configuración de dominio a modelo de base de datos
+// NOTA: Este mapper está usando campos legacy (Channels, EventType) que fueron refactorizados
+// TODO: Actualizar este mapper cuando se migre el módulo events a la nueva arquitectura
 func ToDBNotificationConfig(nc *domain.NotificationConfig) *models.BusinessNotificationConfig {
 	if nc == nil {
 		return nil
@@ -23,7 +25,7 @@ func ToDBNotificationConfig(nc *domain.NotificationConfig) *models.BusinessNotif
 		BusinessID:  nc.BusinessID,
 		EventType:   nc.EventType,
 		Enabled:     nc.Enabled,
-		Channels:    nc.Channels,
+		// Channels: nc.Channels, // REMOVIDO - campo eliminado en refactorización
 		Filters:     nc.Filters,
 		Description: nc.Description,
 	}
@@ -57,7 +59,7 @@ func ToDomainNotificationConfig(nc *models.BusinessNotificationConfig) *domain.N
 		BusinessID:       nc.BusinessID,
 		EventType:        nc.EventType,
 		Enabled:          nc.Enabled,
-		Channels:         nc.Channels,
+		// Channels: nc.Channels, // REMOVIDO - campo eliminado en refactorización
 		Filters:          nc.Filters,
 		Description:      nc.Description,
 		OrderStatusCodes: statusCodes,

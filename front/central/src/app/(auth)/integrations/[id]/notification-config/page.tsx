@@ -41,6 +41,16 @@ export default function NotificationConfigPage() {
     }
   };
 
+  // Wrapper que maneja ambos tipos de submit
+  const handleSubmit = async (data: CreateNotificationConfigDTO | UpdateNotificationConfigDTO) => {
+    if (editingConfig) {
+      await handleUpdate(data as UpdateNotificationConfigDTO);
+    } else {
+      await handleCreate(data as CreateNotificationConfigDTO);
+    }
+    setShowForm(false);
+  };
+
   const handleEdit = (config: IntegrationNotificationConfig) => {
     setEditingConfig(config);
     setShowForm(true);
@@ -104,7 +114,7 @@ export default function NotificationConfigPage() {
           <ConfigForm
             integrationId={integrationId}
             initialData={editingConfig || undefined}
-            onSubmit={editingConfig ? handleUpdate : handleCreate}
+            onSubmit={handleSubmit}
             onCancel={() => {
               setShowForm(false);
               setEditingConfig(null);

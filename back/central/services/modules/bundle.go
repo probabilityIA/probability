@@ -6,6 +6,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
 	"github.com/secamc93/probability/back/central/services/modules/fulfillmentstatus"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
@@ -69,6 +70,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de wallet
 	wallet.New(router, database, logger, environment)
+
+	// Inicializar módulo de invoicing (facturación electrónica)
+	invoicing.New(router, database, logger, environment, rabbitMQ)
 
 	// Retornar referencias a bundles compartidos
 	return &ModuleBundles{

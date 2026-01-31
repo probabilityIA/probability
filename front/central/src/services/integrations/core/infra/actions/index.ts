@@ -11,6 +11,7 @@ import {
     UpdateIntegrationTypeDTO,
     SyncOrdersParams
 } from '../../domain/types';
+import { env } from '@/shared/config/env';
 
 async function getUseCases() {
     const cookieStore = await cookies();
@@ -251,5 +252,45 @@ export const createWebhookAction = async (id: number) => {
     } catch (error: any) {
         console.error('Create Webhook Action Error:', error.message);
         throw new Error(error.message);
+    }
+};
+
+// ============================================
+// Simple Actions - Para Dropdowns/Selectores
+// ============================================
+
+export const getIntegrationsSimpleAction = async (businessId?: number): Promise<import('../../domain/types').IntegrationsSimpleResponse> => {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || '';
+
+        const queryParams = new URLSearchParams();
+        if (businessId) {
+            queryParams.append('business_id', businessId.toString());
+        }
+        queryParams.append('is_active', 'true');
+
+        const url = `${env.API_BASE_URL}/integrations/simple${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al obtener integraciones');
+        }
+
+        return await response.json();
+    } catch (error: any) {
+        console.error('Get Integrations Simple Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message,
+            data: [],
+        };
     }
 };

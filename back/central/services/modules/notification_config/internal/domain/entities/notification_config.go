@@ -21,9 +21,10 @@ type IntegrationNotificationConfig struct {
 
 // NotificationConditions define las condiciones para disparar una notificación
 type NotificationConditions struct {
-	Trigger        string   // "order.created", "order.updated", "order.status_changed"
-	Statuses       []string // ["pending", "processing"] - vacío = todos
-	PaymentMethods []uint   // [1, 3, 5] - vacío = todos
+	Trigger             string   // "order.created", "order.updated", "order.status_changed"
+	Statuses            []string // ["pending", "processing"] - vacío = todos
+	PaymentMethods      []uint   // [1, 3, 5] - vacío = todos
+	SourceIntegrationID *uint    // null = todas las integraciones
 }
 
 // NotificationConfig contiene la configuración específica de la notificación

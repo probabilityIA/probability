@@ -46,7 +46,7 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 
 	// 1. Capa de infraestructura secundaria (adaptadores de salida)
 	// Cliente HTTP de WhatsApp
-	wa := client.New(config)
+	wa := client.New(config, logger)
 
 	// Preparar encryption key para IntegrationRepository
 	encryptionKeyStr := config.Get("ENCRYPTION_KEY")
@@ -162,8 +162,8 @@ func (b *bundle) SendMessage(ctx context.Context, orderNumber, phoneNumber strin
 // TestConnection prueba la conexión enviando un mensaje de prueba
 func (b *bundle) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
 	// Factory para crear clientes de WhatsApp con configuración dinámica
-	clientFactory := func(cfg env.IConfig) ports.IWhatsApp {
-		return client.New(cfg)
+	clientFactory := func(cfg env.IConfig, logger log.ILogger) ports.IWhatsApp {
+		return client.New(cfg, logger)
 	}
 
 	// Delegar al caso de uso pasando los mapas directamente

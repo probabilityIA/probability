@@ -10,6 +10,7 @@ import (
 
 type IIntegrationHandler interface {
 	GetIntegrationsHandler(c *gin.Context)
+	GetIntegrationsSimpleHandler(c *gin.Context)
 	GetIntegrationByIDHandler(c *gin.Context)
 	GetIntegrationByTypeHandler(c *gin.Context)
 	CreateIntegrationHandler(c *gin.Context)

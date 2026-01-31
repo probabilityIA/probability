@@ -28,7 +28,6 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.BusinessType{},
 		&models.Scope{},
 		&models.Business{},
-		&models.BusinessNotificationConfig{},
 		&models.BusinessResourceConfigured{},
 		&models.Resource{},
 		&models.Role{},
@@ -51,6 +50,13 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.OrderStatus{},
 		&models.PaymentStatus{},
 		&models.FulfillmentStatus{},
+
+		// Notification Types (nueva arquitectura)
+		&models.NotificationType{},
+		&models.NotificationEventType{},
+
+		// Business Notification Config (debe ir después de Integration, NotificationType, NotificationEventType)
+		&models.BusinessNotificationConfig{},
 
 		// Business Notification Config Order Status (tabla intermedia)
 		// Debe ir después de BusinessNotificationConfig y OrderStatus
@@ -81,8 +87,27 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		// WhatsApp Integration
 		&models.WhatsAppConversation{},
 		&models.WhatsAppMessageLog{},
+
+		// Invoicing System
+		&models.InvoicingProviderType{},
+		&models.InvoicingProvider{},
+		&models.InvoicingConfig{},
+		&models.Invoice{},
+		&models.InvoiceItem{},
+		&models.InvoiceSyncLog{},
+		&models.CreditNote{},
 	); err != nil {
 		return err
+	}
+
+	// Insertar datos iniciales de notification_types y notification_event_types
+	if err := r.seedNotificationTypesAndEvents(ctx); err != nil {
+		return fmt.Errorf("failed to seed notification types and events: %w", err)
+	}
+
+	// Migrar datos de business_notification_configs después de crear columnas
+	if err := r.migrateBusinessNotificationConfigData(ctx); err != nil {
+		return fmt.Errorf("failed to migrate business_notification_configs data: %w", err)
 	}
 
 	return r.createDefaultUserIfNotExists(ctx)
@@ -124,6 +149,201 @@ func (r *Repository) createDefaultUserIfNotExists(ctx context.Context) error {
 		if err := db.Create(&user).Error; err != nil {
 			return fmt.Errorf("failed to create default user: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// seedNotificationTypesAndEvents inserta los datos iniciales de notification_types y notification_event_types
+func (r *Repository) seedNotificationTypesAndEvents(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Insertar notification_types si no existen
+	notificationTypes := []models.NotificationType{
+		{
+			Model:       gorm.Model{ID: 1},
+			Name:        "SSE",
+			Code:        "sse",
+			Description: "Server-Sent Events para notificaciones en tiempo real",
+			IsActive:    true,
+		},
+		{
+			Model:       gorm.Model{ID: 2},
+			Name:        "WhatsApp",
+			Code:        "whatsapp",
+			Description: "Mensajes de WhatsApp Business",
+			IsActive:    true,
+		},
+		{
+			Model:       gorm.Model{ID: 3},
+			Name:        "Email",
+			Code:        "email",
+			Description: "Notificaciones por correo electrónico",
+			IsActive:    true,
+		},
+		{
+			Model:       gorm.Model{ID: 4},
+			Name:        "SMS",
+			Code:        "sms",
+			Description: "Mensajes de texto SMS",
+			IsActive:    false,
+		},
+	}
+
+	for _, nt := range notificationTypes {
+		var existing models.NotificationType
+		err := db.Where("id = ?", nt.ID).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			// No existe, crear
+			if err := db.Create(&nt).Error; err != nil {
+				return fmt.Errorf("failed to create notification_type %s: %w", nt.Code, err)
+			}
+		}
+	}
+
+	// 2. Insertar notification_event_types si no existen
+	notificationEventTypes := []models.NotificationEventType{
+		// Eventos para SSE
+		{
+			Model:              gorm.Model{ID: 1},
+			NotificationTypeID: 1,
+			EventCode:          "order.created",
+			EventName:          "Nueva Orden",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 2},
+			NotificationTypeID: 1,
+			EventCode:          "order.status_changed",
+			EventName:          "Cambio de Estado",
+			IsActive:           true,
+		},
+		// Eventos para WhatsApp
+		{
+			Model:              gorm.Model{ID: 3},
+			NotificationTypeID: 2,
+			EventCode:          "order.created",
+			EventName:          "Confirmación de Pedido",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 4},
+			NotificationTypeID: 2,
+			EventCode:          "order.shipped",
+			EventName:          "Pedido Enviado",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 5},
+			NotificationTypeID: 2,
+			EventCode:          "order.delivered",
+			EventName:          "Pedido Entregado",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 6},
+			NotificationTypeID: 2,
+			EventCode:          "order.canceled",
+			EventName:          "Pedido Cancelado",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 7},
+			NotificationTypeID: 2,
+			EventCode:          "invoice.created",
+			EventName:          "Factura Generada",
+			IsActive:           true,
+		},
+	}
+
+	for _, net := range notificationEventTypes {
+		var existing models.NotificationEventType
+		err := db.Where("id = ?", net.ID).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			// No existe, crear
+			if err := db.Create(&net).Error; err != nil {
+				return fmt.Errorf("failed to create notification_event_type %s: %w", net.EventCode, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// migrateBusinessNotificationConfigData migra los datos existentes de business_notification_configs
+// a la nueva estructura con integration_id, notification_type_id, notification_event_type_id
+func (r *Repository) migrateBusinessNotificationConfigData(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Poblar integration_id con la primera integración activa de cada business
+	if err := db.Exec(`
+		UPDATE business_notification_configs bnc
+		SET integration_id = (
+			SELECT i.id
+			FROM integrations i
+			WHERE i.business_id = bnc.business_id
+			AND i.is_active = true
+			LIMIT 1
+		)
+		WHERE integration_id IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to populate integration_id: %w", err)
+	}
+
+	// 2. Eliminar configs huérfanas (businesses sin integraciones)
+	if err := db.Exec(`
+		DELETE FROM business_notification_configs
+		WHERE integration_id IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to delete orphaned configs: %w", err)
+	}
+
+	// 3. Poblar notification_type_id con 1 (SSE) por defecto
+	if err := db.Exec(`
+		UPDATE business_notification_configs
+		SET notification_type_id = 1
+		WHERE notification_type_id IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to populate notification_type_id: %w", err)
+	}
+
+	// 4. Poblar notification_event_type_id basándose en event_type
+	if err := db.Exec(`
+		UPDATE business_notification_configs bnc
+		SET notification_event_type_id = (
+			SELECT id
+			FROM notification_event_types
+			WHERE notification_type_id = bnc.notification_type_id
+			AND event_code = bnc.event_type
+			LIMIT 1
+		)
+		WHERE notification_event_type_id IS NULL
+		AND event_type IS NOT NULL
+		AND event_type != ''
+	`).Error; err != nil {
+		return fmt.Errorf("failed to map notification_event_type_id from event_type: %w", err)
+	}
+
+	// 5. Poblar notification_event_type_id con el primer evento disponible si aún es NULL
+	if err := db.Exec(`
+		UPDATE business_notification_configs bnc
+		SET notification_event_type_id = (
+			SELECT id
+			FROM notification_event_types
+			WHERE notification_type_id = bnc.notification_type_id
+			LIMIT 1
+		)
+		WHERE notification_event_type_id IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to populate notification_event_type_id with default: %w", err)
+	}
+
+	// 6. Eliminar configs que no se pudieron migrar (no deberían existir si los datos son consistentes)
+	if err := db.Exec(`
+		DELETE FROM business_notification_configs
+		WHERE notification_event_type_id IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to delete unmigrated configs: %w", err)
 	}
 
 	return nil

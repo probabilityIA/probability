@@ -35,11 +35,12 @@ func (a *orderQueries) GetByID(ctx context.Context, id string) (*request.OrderDa
 		TotalAmount     float64
 		Currency        string
 		BusinessID      *uint
+		IntegrationID   uint
 	}
 
 	err := a.db.Conn(ctx).
 		Table("orders").
-		Select("id, order_number, status, payment_method_id, customer_phone, total_amount, currency, business_id").
+		Select("id, order_number, status, payment_method_id, customer_phone, total_amount, currency, business_id, integration_id").
 		Where("id = ?", id).
 		First(&order).Error
 
@@ -60,5 +61,6 @@ func (a *orderQueries) GetByID(ctx context.Context, id string) (*request.OrderDa
 		TotalAmount:     order.TotalAmount,
 		Currency:        order.Currency,
 		BusinessID:      order.BusinessID,
+		IntegrationID:   order.IntegrationID,
 	}, nil
 }
