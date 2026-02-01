@@ -2,6 +2,8 @@
  * Página principal después del login
  */
 
+'use client';
+
 import { Dashboard } from '@/services/modules/dashboard/ui';
 
 export default function HomePage() {
