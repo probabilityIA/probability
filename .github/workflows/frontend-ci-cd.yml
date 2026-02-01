@@ -216,14 +216,14 @@ jobs:
             docker stop -t 10 frontend_prod || true
 
             echo "🗑️  Eliminando contenedor frontend y sus dependientes..."
-            docker rm -f --depend frontend_prod || true
+            docker rm -f frontend_prod || true
 
             # Verificar y eliminar cualquier contenedor frontend_prod que quede
             echo "🔍 Verificando eliminación completa..."
             FRONTEND_IDS=$(docker ps -a --filter name=frontend_prod --format '{{.ID}}' 2>/dev/null || true)
             if [ -n "$FRONTEND_IDS" ]; then
               echo "⚠️  Contenedores frontend encontrados, eliminando por ID con dependientes..."
-              echo "$FRONTEND_IDS" | xargs -r docker rm -f --depend
+              echo "$FRONTEND_IDS" | xargs -r docker rm -f
             fi
             echo "✅ Contenedor frontend eliminado completamente"
 
