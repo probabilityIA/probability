@@ -286,7 +286,7 @@ export class IntegrationApiRepository implements IIntegrationRepository {
     // Integration Categories
     async getIntegrationCategories(): Promise<IntegrationCategoriesResponse> {
         return this.fetch<IntegrationCategoriesResponse>('/integration-categories', {
-            cache: 'force-cache', // Cache categories as they don't change frequently
+            cache: 'no-store', // Don't cache to always get fresh data
         } as any);
     }
 }

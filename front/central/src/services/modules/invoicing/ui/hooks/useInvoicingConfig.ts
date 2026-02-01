@@ -162,7 +162,7 @@ export function useInvoicingConfig(businessId?: number) {
   useEffect(() => {
     if (businessId) {
       fetchConfigs();
-      fetchProviders();
+      // fetchProviders() eliminado - ya no se usan providers deprecados
     }
   }, [businessId]);
 

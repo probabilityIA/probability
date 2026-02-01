@@ -42,6 +42,7 @@ type Integration struct {
 	ID                uint
 	Name              string
 	Code              string
+	Category          string // Código de categoría (derivado de IntegrationType.Category.Code)
 	IntegrationTypeID uint
 	IntegrationType   *IntegrationType
 	BusinessID        *uint

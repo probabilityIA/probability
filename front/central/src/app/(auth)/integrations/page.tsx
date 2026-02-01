@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     IntegrationList,
     IntegrationForm,
@@ -39,6 +39,22 @@ export default function IntegrationsPage() {
     const { categories, loading: categoriesLoading } = useCategories();
     const { setFilterCategory, refresh: refreshIntegrations } = useIntegrations();
 
+    // Seleccionar primera categoría automáticamente cuando se cargan las categorías
+    useEffect(() => {
+        if (!categoriesLoading && categories.length > 0 && activeCategoryCode === null) {
+            const firstCategory = categories
+                .filter(c => c.is_visible && c.is_active)
+                .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))[0];
+            if (firstCategory) {
+                setActiveCategoryCode(firstCategory.code);
+                setFilterCategory(firstCategory.code);
+            }
+        }
+    }, [categories, categoriesLoading, activeCategoryCode]);
+
+    // TODO: Obtener del contexto de usuario si es super admin
+    const isSuperUser = true; // Por ahora en true, después conectar con el contexto de permisos
+
     const handleSuccess = () => {
         setShowCreateModal(false);
         setShowEditModal(false);
@@ -52,7 +68,8 @@ export default function IntegrationsPage() {
     const handleCategoryChange = (categoryCode: string | null) => {
         setActiveCategoryCode(categoryCode);
         setFilterCategory(categoryCode || '');
-        refreshIntegrations();
+        // No need to call refreshIntegrations() - the useEffect in useIntegrations will automatically
+        // trigger when filterCategory changes
     };
 
     const handleModalClose = () => {
@@ -80,46 +97,25 @@ export default function IntegrationsPage() {
                 </Button>
             </div>
 
-            {/* Main Tabs (Integraciones vs Tipos) */}
-            <div className="border-b border-gray-200 mb-6">
-                <nav className="-mb-px flex space-x-8">
-                    <button
-                        onClick={() => setActiveTab('integrations')}
-                        className={`
-                            whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm
-                            ${activeTab === 'integrations'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
-                        `}
-                    >
-                        Mis Integraciones
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('types')}
-                        className={`
-                            whitespace-nowrap pb-4 px-1 border-b-2 font-medium text-sm
-                            ${activeTab === 'types'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
-                        `}
-                    >
-                        Tipos de Integración
-                    </button>
-                </nav>
-            </div>
-
-            {/* Category Tabs (only show in integrations tab) */}
-            {activeTab === 'integrations' && !categoriesLoading && (
+            {/* Category Tabs - navegación única */}
+            {!categoriesLoading && (
                 <CategoryTabs
                     categories={categories}
                     activeCategory={activeCategoryCode}
-                    onSelectCategory={handleCategoryChange}
+                    activeTab={activeTab}
+                    onSelectCategory={(code) => {
+                        setActiveTab('integrations');
+                        handleCategoryChange(code);
+                    }}
+                    onSelectTypes={() => setActiveTab('types')}
+                    isSuperUser={isSuperUser}
                 />
             )}
 
             {activeTab === 'integrations' ? (
                 <IntegrationList
                     key={`list-${refreshKey}`}
+                    filterCategory={activeCategoryCode || ''}
                     onEdit={async (integration) => {
                         try {
                             // Obtener la integración completa por ID

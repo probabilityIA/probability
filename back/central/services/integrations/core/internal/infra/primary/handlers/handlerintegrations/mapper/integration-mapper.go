@@ -120,12 +120,26 @@ func ToIntegrationResponse(integration *domain.Integration, imageURLBase string)
 				imageURL = integration.IntegrationType.ImageURL
 			}
 		}
-		resp.IntegrationType = &response.IntegrationTypeInfo{
+
+		typeInfo := &response.IntegrationTypeInfo{
 			ID:       integration.IntegrationType.ID,
 			Name:     integration.IntegrationType.Name,
 			Code:     integration.IntegrationType.Code,
 			ImageURL: imageURL,
 		}
+
+		// Incluir categoría si está cargada
+		if integration.IntegrationType.Category != nil {
+			typeInfo.Category = &response.IntegrationCategoryInfo{
+				ID:    integration.IntegrationType.Category.ID,
+				Code:  integration.IntegrationType.Category.Code,
+				Name:  integration.IntegrationType.Category.Name,
+				Icon:  integration.IntegrationType.Category.Icon,
+				Color: integration.IntegrationType.Category.Color,
+			}
+		}
+
+		resp.IntegrationType = typeInfo
 	}
 
 	return resp

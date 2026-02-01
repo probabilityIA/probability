@@ -18,7 +18,9 @@ import {
   deleteConfigAction,
   updateConfigAction,
 } from '@/services/modules/invoicing/infra/actions';
+import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
+import type { Business } from '@/services/auth/business/domain/types';
 
 export default function InvoicingConfigsPage() {
   const { showToast } = useToast();
@@ -29,18 +31,38 @@ export default function InvoicingConfigsPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // Para super admins
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+
   const businessId = permissions?.business_id || 0;
+  const isSuperAdmin = !businessId || businessId === 0;
+
+  // Cargar businesses si es super admin
+  useEffect(() => {
+    const loadBusinesses = async () => {
+      if (isSuperAdmin) {
+        try {
+          const response = await getBusinessesAction({});
+          setBusinesses(response.data || []);
+        } catch (error: any) {
+          console.error('Error al cargar businesses:', error);
+        }
+      }
+    };
+    loadBusinesses();
+  }, [isSuperAdmin]);
 
   const loadConfigs = async () => {
-    if (!businessId || businessId === 0) {
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
-      const response = await getConfigsAction({ business_id: businessId });
-      setConfigs(response.data);
+      // Super admin: filtra por el business seleccionado en el dropdown
+      // Usuario normal: filtra por su business_id del token
+      const filters = isSuperAdmin
+        ? (selectedBusinessId ? { business_id: selectedBusinessId } : {})
+        : { business_id: businessId };
+      const response = await getConfigsAction(filters);
+      setConfigs(response.data || []);
     } catch (error: any) {
       showToast('Error al cargar configuraciones: ' + error.message, 'error');
       setConfigs([]);
@@ -50,10 +72,8 @@ export default function InvoicingConfigsPage() {
   };
 
   useEffect(() => {
-    if (businessId) {
-      loadConfigs();
-    }
-  }, [businessId]);
+    loadConfigs();
+  }, [businessId, selectedBusinessId]);
 
   const handleToggleEnabled = async (config: InvoicingConfig) => {
     try {
@@ -106,6 +126,16 @@ export default function InvoicingConfigsPage() {
   };
 
   const columns = [
+    // Columna de Negocio solo para super admins
+    ...(isSuperAdmin ? [{
+      key: 'business',
+      label: 'Negocio',
+      render: (_: unknown, config: InvoicingConfig) => (
+        <div className="text-sm text-gray-700">
+          <Badge color="purple">ID: {config.business_id}</Badge>
+        </div>
+      ),
+    }] : []),
     {
       key: 'integration',
       label: 'Integración',
@@ -210,7 +240,29 @@ export default function InvoicingConfigsPage() {
         </Button>
       </div>
 
-      {configs.length === 0 ? (
+      {/* Dropdown de Business para Super Admins */}
+      {isSuperAdmin && businesses.length > 0 && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Seleccionar Negocio (Super Admin)
+          </label>
+          <select
+            value={selectedBusinessId || ''}
+            onChange={(e) => setSelectedBusinessId(e.target.value ? Number(e.target.value) : null)}
+            className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Todos los negocios</option>
+            {businesses.map((business) => (
+              <option key={business.id} value={business.id}>
+                {business.name} (ID: {business.id})
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+
+      {!configs || configs.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"

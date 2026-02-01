@@ -29,6 +29,10 @@ type IRepository interface {
 	DeleteIntegrationType(ctx context.Context, id uint) error
 	ListIntegrationTypes(ctx context.Context) ([]*IntegrationType, error)
 	ListActiveIntegrationTypes(ctx context.Context) ([]*IntegrationType, error)
+
+	// Integration Categories
+	GetIntegrationCategoryByID(ctx context.Context, id uint) (*IntegrationCategory, error)
+	ListIntegrationCategories(ctx context.Context) ([]*IntegrationCategory, error)
 }
 
 type IEncryptionService interface {

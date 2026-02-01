@@ -100,9 +100,9 @@ export interface IntegrationType {
     description?: string;
     icon?: string;
     image_url?: string; // URL completa de la imagen del logo
-    category: 'internal' | 'external' | string; // Legacy field, kept for backward compatibility
-    category_id?: number;             // NEW - FK to IntegrationCategory
-    integration_category?: IntegrationCategory;  // NEW - Populated category object
+    category?: IntegrationCategory; // Populated category object from backend
+    category_id?: number;             // FK to IntegrationCategory
+    integration_category?: IntegrationCategory;  // Alias - same as category
     is_active: boolean;
     config_schema?: any;
     credentials_schema?: any;

@@ -36,7 +36,8 @@ type IProviderTypeRepository interface {
 // ISoftpymesClient define las operaciones con la API de Softpymes
 type ISoftpymesClient interface {
 	// TestAuthentication verifica que las credenciales sean válidas
-	TestAuthentication(ctx context.Context, apiKey string) error
+	// referer: Identificación de la instancia del cliente (requerido por API)
+	TestAuthentication(ctx context.Context, apiKey, apiSecret, referer string) error
 
 	// CreateInvoice crea una factura en Softpymes
 	CreateInvoice(ctx context.Context, invoiceData map[string]interface{}) error

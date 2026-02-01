@@ -29,4 +29,5 @@ var (
 	ErrConnectionFailed       = errors.New("failed to connect to provider API")
 	ErrAuthenticationFailed   = errors.New("authentication with provider failed")
 	ErrAPIKeyRequired         = errors.New("API key is required in credentials")
+	ErrAPISecretRequired      = errors.New("API secret is required in credentials")
 )

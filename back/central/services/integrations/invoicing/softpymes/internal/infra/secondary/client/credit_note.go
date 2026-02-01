@@ -39,8 +39,19 @@ func (c *Client) CreateCreditNote(ctx context.Context, creditNoteData map[string
 		return fmt.Errorf("api_secret not found in credentials")
 	}
 
+	// Extraer referer del config
+	config, ok := creditNoteData["config"].(map[string]interface{})
+	if !ok {
+		return fmt.Errorf("config not found in credit note data")
+	}
+
+	referer, ok := config["referer"].(string)
+	if !ok || referer == "" {
+		return fmt.Errorf("referer not found in config")
+	}
+
 	// Autenticar
-	token, err := c.authenticate(ctx, apiKey, apiSecret)
+	token, err := c.authenticate(ctx, apiKey, apiSecret, referer)
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}

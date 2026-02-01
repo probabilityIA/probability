@@ -4,17 +4,15 @@ import { useState, FormEvent } from 'react';
 import type {
   InvoicingConfig,
   InvoicingFilters,
-  InvoicingProvider,
   CreateConfigDTO,
 } from '@/services/modules/invoicing/domain/types';
-import { InvoicingProviderSelector } from './InvoicingProviderSelector';
 import { InvoicingFilterBuilder } from './InvoicingFilterBuilder';
 import { useInvoicingConfig } from '@/services/modules/invoicing/ui/hooks/useInvoicingConfig';
 
 interface InvoicingConfigFormProps {
-  integrationId: number;
+  integrationIds: number[]; // Array de IDs de integraciones de e-commerce
+  invoicingIntegrationId: number;
   businessId: number;
-  providers: InvoicingProvider[];
   onSuccess?: () => void;
   onCancel?: () => void;
   initialData?: InvoicingConfig;
@@ -24,9 +22,9 @@ interface InvoicingConfigFormProps {
  * Formulario de configuración de facturación electrónica
  */
 export function InvoicingConfigForm({
-  integrationId,
+  integrationIds,
+  invoicingIntegrationId,
   businessId,
-  providers,
   onSuccess,
   onCancel,
   initialData,
@@ -34,11 +32,9 @@ export function InvoicingConfigForm({
   const { createConfig, updateConfig, loading } = useInvoicingConfig(businessId);
 
   const [formData, setFormData] = useState<Partial<InvoicingConfig>>({
-    integration_id: integrationId,
     business_id: businessId,
     enabled: initialData?.enabled ?? true,
     auto_invoice: initialData?.auto_invoice ?? false,
-    invoicing_provider_id: initialData?.invoicing_provider_id,
     filters: initialData?.filters ?? {},
     config: initialData?.config ?? {},
   });
@@ -49,43 +45,52 @@ export function InvoicingConfigForm({
     e.preventDefault();
     setError(null);
 
-    // Validaciones
-    if (!formData.invoicing_provider_id) {
-      setError('Debe seleccionar un proveedor de facturación');
-      return;
-    }
-
     try {
-      let result;
-
       if (initialData?.id) {
         // Actualizar configuración existente
-        result = await updateConfig(initialData.id, {
+        const result = await updateConfig(initialData.id, {
           enabled: formData.enabled,
           auto_invoice: formData.auto_invoice,
           filters: formData.filters,
           config: formData.config,
-          invoicing_provider_id: formData.invoicing_provider_id,
+          invoicing_integration_id: invoicingIntegrationId,
         });
-      } else {
-        // Crear nueva configuración
-        const createData: CreateConfigDTO = {
-          business_id: businessId,
-          integration_id: integrationId,
-          invoicing_provider_id: formData.invoicing_provider_id,
-          enabled: formData.enabled,
-          auto_invoice: formData.auto_invoice,
-          filters: formData.filters,
-          config: formData.config,
-        };
 
-        result = await createConfig(createData);
-      }
-
-      if (result.success) {
-        onSuccess?.();
+        if (result.success) {
+          onSuccess?.();
+        } else {
+          setError(result.error || 'Error al actualizar configuración');
+        }
       } else {
-        setError(result.error || 'Error al guardar configuración');
+        // Crear múltiples configuraciones (una por cada tienda seleccionada)
+        const results = await Promise.all(
+          integrationIds.map((integrationId) => {
+            const createData: CreateConfigDTO = {
+              business_id: businessId,
+              integration_id: integrationId,
+              invoicing_integration_id: invoicingIntegrationId,
+              enabled: formData.enabled,
+              auto_invoice: formData.auto_invoice,
+              filters: formData.filters,
+              config: formData.config,
+            };
+
+            return createConfig(createData);
+          })
+        );
+
+        // Verificar si todas fueron exitosas
+        const failedResults = results.filter((r) => !r.success);
+
+        if (failedResults.length === 0) {
+          onSuccess?.();
+        } else if (failedResults.length === results.length) {
+          setError('Error al crear las configuraciones');
+        } else {
+          setError(
+            `Se crearon ${results.length - failedResults.length} de ${results.length} configuraciones. Algunas fallaron.`
+          );
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
@@ -100,16 +105,6 @@ export function InvoicingConfigForm({
           <p className="text-sm text-red-800">{error}</p>
         </div>
       )}
-
-      {/* Selector de proveedor */}
-      <InvoicingProviderSelector
-        providers={providers}
-        value={formData.invoicing_provider_id}
-        onChange={(providerId) =>
-          setFormData({ ...formData, invoicing_provider_id: providerId })
-        }
-        disabled={loading}
-      />
 
       {/* Toggle de habilitado */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
@@ -291,7 +286,7 @@ export function InvoicingConfigForm({
 
         <button
           type="submit"
-          disabled={loading || !formData.invoicing_provider_id}
+          disabled={loading}
           className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading

@@ -37,7 +37,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 name: integrationType.name,
                 code: integrationType.code,
                 description: integrationType.description || '',
-                category: integrationType.category,
+                category: integrationType.category?.code || integrationType.integration_category?.code || 'internal',
                 is_active: integrationType.is_active,
                 config_schema: JSON.stringify(integrationType.config_schema || {}, null, 2),
                 credentials_schema: JSON.stringify(integrationType.credentials_schema || {}, null, 2),

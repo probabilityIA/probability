@@ -29,17 +29,23 @@ func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) 
 	// }
 
 	// 3. Crear entidad
-	invoicingProviderID := &dto.InvoicingProviderID
+	invoicingIntegrationID := &dto.InvoicingIntegrationID
+
+	description := ""
+	if dto.Description != nil {
+		description = *dto.Description
+	}
+
 	config := &entities.InvoicingConfig{
-		BusinessID:          dto.BusinessID,
-		IntegrationID:       dto.IntegrationID,
-		InvoicingProviderID: invoicingProviderID,
-		Enabled:             dto.Enabled,
-		AutoInvoice:         dto.AutoInvoice,
-		Filters:             dto.Filters,
-		InvoiceConfig:       dto.InvoiceConfig,
-		Description:         *dto.Description,
-		CreatedByID:         dto.CreatedByUserID,
+		BusinessID:             dto.BusinessID,
+		IntegrationID:          dto.IntegrationID,
+		InvoicingIntegrationID: invoicingIntegrationID,
+		Enabled:                dto.Enabled,
+		AutoInvoice:            dto.AutoInvoice,
+		Filters:                dto.Filters,
+		InvoiceConfig:          dto.InvoiceConfig,
+		Description:            description,
+		CreatedByID:            dto.CreatedByUserID,
 	}
 
 	// 4. Guardar en BD

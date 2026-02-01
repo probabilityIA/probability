@@ -6,7 +6,6 @@ import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
 import { Alert } from '@/shared/ui';
 import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
-import DynamicIntegrationForm from './DynamicIntegrationForm';
 
 // IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
@@ -89,7 +88,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             code: data.code,
             store_id: data.store_id,
             integration_type_id: selectedType.id,
-            category: selectedType.category,
+            category: selectedType.category?.code || selectedType.integration_category?.code || 'external',
             business_id: data.business_id || null,
             config: data.config,
             credentials: data.credentials,
@@ -264,77 +263,20 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
-        // Show edit form for other dynamic types (not WhatsApp)
-        console.log('🔍 Verificando DynamicIntegrationForm:', {
-            hasSelectedType: !!selectedType,
-            selectedTypeCode: selectedType?.code,
-            hasConfigSchema: !!selectedType?.config_schema,
-            hasCredentialsSchema: !!selectedType?.credentials_schema,
-        });
-
-        if (selectedType && selectedType.config_schema && selectedType.credentials_schema) {
-            console.log('⚠️ Usando DynamicIntegrationForm para:', selectedType.code);
-            return (
-                <DynamicIntegrationForm
-                    integrationType={selectedType}
-                    isEdit={true}
-                    initialData={{
-                        name: integration.name,
-                        code: integration.code,
-                        config: parsedConfig,
-                        credentials: integration.credentials || {}, // Credenciales desencriptadas (si están disponibles)
-                        business_id: integration.business_id,
-                    }}
-                    onSubmit={async (data) => {
-                        try {
-                            if (!integration.id) {
-                                throw new Error('ID de integración no encontrado');
-                            }
-                            // Solo enviar credenciales si hay valores (no vacío)
-                            const updateData: any = {
-                                name: data.name,
-                                code: data.code,
-                                config: data.config,
-                            };
-                            // Solo incluir credenciales si hay valores ingresados
-                            if (data.credentials && Object.keys(data.credentials).length > 0) {
-                                updateData.credentials = data.credentials;
-                            }
-                            const result = await updateIntegrationAction(integration.id, updateData);
-
-                            if (result.success) {
-                                onSuccess?.();
-                            } else {
-                                setError(result.message || 'Error al actualizar la integración');
-                            }
-                        } catch (err: any) {
-                            setError(err.message || 'Error al actualizar la integración');
-                        }
-                    }}
-                    onTest={async (config, credentials) => {
-                        try {
-                            const result = await testConnectionRawAction(selectedType.code, config, credentials);
-                            return {
-                                success: result.success,
-                                message: result.message
-                            };
-                        } catch (error: any) {
-                                return {
-                                    success: false,
-                                    message: error.message
-                                };
-                            }
-                        }}
-                        onCancel={onCancel}
-                    />
-                );
-            }
-
-        // For other types, show a generic message for now
+        // For other types that don't have a specific form yet
         return (
-            <div className="text-center py-8">
-                <p className="text-gray-600">La edición de integraciones de tipo {selectedType?.name} aún no está implementada.</p>
-            </div>
+            <Alert type="info">
+                <div className="space-y-3">
+                    <p className="font-semibold">Formulario de Edición No Disponible</p>
+                    <p>
+                        El formulario de edición para <strong>{selectedType?.name}</strong> aún no está implementado.
+                    </p>
+                    <p className="text-sm">
+                        Cada tipo de integración requiere su propio formulario personalizado.
+                        Por favor, contacta al equipo de desarrollo para implementar este formulario.
+                    </p>
+                </div>
+            </Alert>
         );
     }
 
@@ -431,53 +373,18 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
-                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY && selectedType.config_schema && selectedType.credentials_schema && (
-                        <DynamicIntegrationForm
-                            integrationType={selectedType}
-                            onSubmit={async (data) => {
-                                try {
-                                    const result = await createIntegrationAction({
-                                        name: data.name,
-                                        code: data.code,
-                                        integration_type_id: selectedType.id,
-                                        category: selectedType.category,
-                                        business_id: data.business_id || null,
-                                        config: data.config,
-                                        credentials: data.credentials,
-                                        is_active: true,
-                                    });
-
-                                    if (result.success) {
-                                        onSuccess?.();
-                                    } else {
-                                        setError(result.message || 'Error al crear la integración');
-                                    }
-                                } catch (err: any) {
-                                    setError(err.message || 'Error al crear la integración');
-                                }
-                            }}
-                            onTest={async (config, credentials) => {
-                                try {
-                                    const result = await testConnectionRawAction(selectedType.code, config, credentials);
-                                    return {
-                                        success: result.success,
-                                        message: result.message
-                                    };
-                                } catch (error: any) {
-                                    return {
-                                        success: false,
-                                        message: error.message
-                                    };
-                                }
-                            }}
-                            onCancel={onCancel}
-                        />
-                    )}
-
-                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY && (!selectedType.config_schema || !selectedType.credentials_schema) && (
+                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY && (
                         <Alert type="warning">
-                            <p className="font-medium">Esquema no configurado</p>
-                            <p className="text-sm mt-1">Este tipo de integración aún no tiene un esquema configurado. Por favor, configura los schemas en el módulo de administración.</p>
+                            <div className="space-y-3">
+                                <p className="font-semibold">Formulario No Disponible</p>
+                                <p>
+                                    El formulario de configuración para <strong>{selectedType.name}</strong> aún no está implementado.
+                                </p>
+                                <p className="text-sm">
+                                    Cada tipo de integración requiere su propio formulario personalizado.
+                                    Por favor, selecciona una integración con formulario disponible (ej: Shopify) o contacta al equipo de desarrollo.
+                                </p>
+                            </div>
                         </Alert>
                     )}
                 </div>

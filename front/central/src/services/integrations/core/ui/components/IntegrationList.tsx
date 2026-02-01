@@ -25,6 +25,7 @@ import { playNotificationSound } from '@/shared/utils';
 
 interface IntegrationListProps {
     onEdit?: (integration: Integration) => void;
+    filterCategory?: string;
 }
 
 // Estado inicial para los filtros de sincronización
@@ -36,7 +37,7 @@ const initialSyncFilters: SyncOrdersParams = {
     fulfillment_status: 'any'
 };
 
-export default function IntegrationList({ onEdit }: IntegrationListProps) {
+export default function IntegrationList({ onEdit, filterCategory: propFilterCategory }: IntegrationListProps) {
     const {
         integrations,
         loading,
@@ -56,6 +57,13 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
         syncOrders,
         setError
     } = useIntegrations();
+
+    // Sincronizar filtro de categoría desde las props
+    useEffect(() => {
+        if (propFilterCategory !== undefined && propFilterCategory !== filterCategory) {
+            setFilterCategory(propFilterCategory);
+        }
+    }, [propFilterCategory, filterCategory, setFilterCategory]);
 
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
@@ -473,33 +481,25 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
     const [filters, setFilters] = useState<{
         search?: string;
         type?: string;
-        category?: string;
     }>({});
 
     // Definir filtros disponibles
-    const availableFilters: FilterOption[] = useMemo(() => [
-        {
-            key: 'search',
-            label: 'Nombre',
-            type: 'text',
-            placeholder: 'Buscar por nombre...',
-        },
-        {
-            key: 'type',
-            label: 'Tipo',
-            type: 'select',
-            options: integrationTypes,
-        },
-        {
-            key: 'category',
-            label: 'Categoría',
-            type: 'select',
-            options: [
-                { value: 'internal', label: 'Interna' },
-                { value: 'external', label: 'Externa' },
-            ],
-        },
-    ], [integrationTypes]);
+    const availableFilters: FilterOption[] = useMemo(() => {
+        return [
+            {
+                key: 'search',
+                label: 'Nombre',
+                type: 'text',
+                placeholder: 'Buscar por nombre...',
+            },
+            {
+                key: 'type',
+                label: 'Tipo',
+                type: 'select',
+                options: integrationTypes,
+            },
+        ];
+    }, [integrationTypes]);
 
     // Convertir filtros a ActiveFilter[]
     const activeFilters: ActiveFilter[] = useMemo(() => {
@@ -523,15 +523,6 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
             });
         }
 
-        if (filters.category) {
-            active.push({
-                key: 'category',
-                label: 'Categoría',
-                value: filters.category,
-                type: 'select',
-            });
-        }
-
         return active;
     }, [filters]);
 
@@ -544,13 +535,11 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
                 setSearch(value);
             } else if (filterKey === 'type') {
                 setFilterType(value);
-            } else if (filterKey === 'category') {
-                setFilterCategory(value);
             }
             return newFilters;
         });
         setPage(1);
-    }, [setSearch, setFilterType, setFilterCategory, setPage]);
+    }, [setSearch, setFilterType, setPage]);
 
     // Manejar eliminar filtro
     const handleRemoveFilter = useCallback((filterKey: string) => {
@@ -562,13 +551,11 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
                 setSearch('');
             } else if (filterKey === 'type') {
                 setFilterType('');
-            } else if (filterKey === 'category') {
-                setFilterCategory('');
             }
             return newFilters;
         });
         setPage(1);
-    }, [setSearch, setFilterType, setFilterCategory, setPage]);
+    }, [setSearch, setFilterType, setPage]);
 
     // Manejar cambio de ordenamiento
     const handleSortChange = useCallback((sortBy: string, sortOrder: 'asc' | 'desc') => {
@@ -795,7 +782,6 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
         { key: 'id', label: 'ID' },
         { key: 'logo', label: 'Logo' },
         { key: 'name', label: 'Nombre' },
-        { key: 'type', label: 'Tipo' },
         { key: 'category', label: 'Categoría' },
         { key: 'status', label: 'Estado' },
         { key: 'actions', label: 'Acciones' }
@@ -834,8 +820,11 @@ export default function IntegrationList({ onEdit }: IntegrationListProps) {
                 )}
             </div>
         ),
-        type: integration.integration_type?.name || integration.type,
-        category: integration.category,
+        category: (
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500 text-white">
+                {integration.category || 'Sin categoría'}
+            </span>
+        ),
         status: (
             <div className="flex items-center gap-2">
                 <Badge type={integration.is_active ? 'success' : 'error'}>

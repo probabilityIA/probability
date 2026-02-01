@@ -1,11 +1,33 @@
 'use client';
 
+import { ReactElement } from 'react';
+import {
+    ShoppingCartIcon,
+    DocumentTextIcon,
+    ChatBubbleLeftRightIcon,
+    CogIcon,
+    BanknotesIcon,
+    TruckIcon,
+} from '@heroicons/react/24/outline';
 import { IntegrationCategory } from '../../domain/types';
 
 interface CategorySelectorProps {
     categories: IntegrationCategory[];
     onSelect: (category: IntegrationCategory) => void;
 }
+
+// Mapeo de códigos de categoría a iconos
+const getCategoryIcon = (code: string) => {
+    const icons: Record<string, ReactElement> = {
+        'ecommerce': <ShoppingCartIcon className="w-10 h-10" />,
+        'invoicing': <DocumentTextIcon className="w-10 h-10" />,
+        'messaging': <ChatBubbleLeftRightIcon className="w-10 h-10" />,
+        'payment': <BanknotesIcon className="w-10 h-10" />,
+        'shipping': <TruckIcon className="w-10 h-10" />,
+        'system': <CogIcon className="w-10 h-10" />,
+    };
+    return icons[code] || <CogIcon className="w-10 h-10" />;
+};
 
 export function CategorySelector({ categories, onSelect }: CategorySelectorProps) {
     const sortedCategories = [...categories]
@@ -25,14 +47,21 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
                         key={category.code}
                         onClick={() => onSelect(category)}
                         className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left group"
+                        style={{
+                            borderColor: category.color ? `${category.color}20` : undefined,
+                        }}
                     >
                         <div className="flex items-start gap-4">
-                            {/* Icon */}
-                            {category.icon && (
-                                <div className="text-3xl flex-shrink-0">
-                                    {category.icon}
-                                </div>
-                            )}
+                            {/* Icon with category color */}
+                            <div
+                                className="flex-shrink-0 p-3 rounded-lg group-hover:scale-110 transition-transform"
+                                style={{
+                                    backgroundColor: category.color ? `${category.color}15` : '#f3f4f6',
+                                    color: category.color || '#6b7280',
+                                }}
+                            >
+                                {getCategoryIcon(category.code)}
+                            </div>
 
                             <div className="flex-1">
                                 {/* Category Name */}

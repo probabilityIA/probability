@@ -1,6 +1,7 @@
 /**
  * Página de Proveedores de Facturación
  * Gestión de proveedores de facturación electrónica (Softpymes, Siigo, etc.)
+ * Ahora usa integrations/core en lugar del módulo deprecado
  */
 
 'use client';
@@ -12,30 +13,35 @@ import { Badge } from '@/shared/ui/badge';
 import { Spinner } from '@/shared/ui/spinner';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { ProviderForm } from '@/services/modules/invoicing/ui/components/ProviderForm';
-import { getProvidersAction } from '@/services/modules/invoicing/infra/actions';
-import type { InvoicingProvider } from '@/services/modules/invoicing/domain/types';
+import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
+import type { Integration } from '@/services/integrations/core/domain/types';
 
 export default function InvoicingProvidersPage() {
   const { showToast } = useToast();
   const { permissions } = usePermissions();
-  const [providers, setProviders] = useState<InvoicingProvider[]>([]);
+  const [providers, setProviders] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<InvoicingProvider | undefined>();
 
   const businessId = permissions?.business_id || 0;
+  const isSuperAdmin = permissions?.is_super || false;
 
   const loadProviders = async () => {
-    if (!businessId || businessId === 0) {
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
-      const response = await getProvidersAction({ business_id: businessId });
-      setProviders(response.data);
+      // Filtrar por categoría "invoicing" (facturación electrónica)
+      const filters: any = {
+        category: 'invoicing',
+        page: 1,
+        page_size: 100
+      };
+
+      // Si no es super admin, filtrar también por business_id
+      if (!isSuperAdmin && businessId) {
+        filters.business_id = businessId;
+      }
+
+      const response = await getIntegrationsAction(filters);
+      setProviders(response.data || []);
     } catch (error: any) {
       showToast('Error al cargar proveedores: ' + error.message, 'error');
       setProviders([]);
@@ -45,31 +51,14 @@ export default function InvoicingProvidersPage() {
   };
 
   useEffect(() => {
-    if (businessId) {
-      loadProviders();
-    }
+    loadProviders();
   }, [businessId]);
-
-  const handleEdit = (provider: InvoicingProvider) => {
-    setSelectedProvider(provider);
-    setShowForm(true);
-  };
-
-  const handleNew = () => {
-    setSelectedProvider(undefined);
-    setShowForm(true);
-  };
-
-  const handleClose = () => {
-    setShowForm(false);
-    setSelectedProvider(undefined);
-  };
 
   const columns = [
     {
       key: 'name',
       label: 'Nombre',
-      render: (_: unknown, provider: InvoicingProvider) => (
+      render: (_: unknown, provider: Integration) => (
         <div>
           <div className="font-medium">{provider.name}</div>
           {provider.description && (
@@ -79,16 +68,18 @@ export default function InvoicingProvidersPage() {
       ),
     },
     {
-      key: 'provider_type_code',
+      key: 'integration_type',
       label: 'Tipo',
-      render: (_: unknown, provider: InvoicingProvider) => (
-        <Badge color="blue">{provider.provider_type_code.toUpperCase()}</Badge>
+      render: (_: unknown, provider: Integration) => (
+        <Badge color="blue">
+          {provider.integration_type?.name || provider.integration_type?.code || 'N/A'}
+        </Badge>
       ),
     },
     {
       key: 'is_active',
       label: 'Estado',
-      render: (_: unknown, provider: InvoicingProvider) => (
+      render: (_: unknown, provider: Integration) => (
         <Badge color={provider.is_active ? 'green' : 'gray'}>
           {provider.is_active ? 'Activo' : 'Inactivo'}
         </Badge>
@@ -97,7 +88,7 @@ export default function InvoicingProvidersPage() {
     {
       key: 'is_default',
       label: 'Por Defecto',
-      render: (_: unknown, provider: InvoicingProvider) =>
+      render: (_: unknown, provider: Integration) =>
         provider.is_default ? (
           <Badge color="purple">Predeterminado</Badge>
         ) : (
@@ -107,19 +98,10 @@ export default function InvoicingProvidersPage() {
     {
       key: 'created_at',
       label: 'Creado',
-      render: (_: unknown, provider: InvoicingProvider) => (
+      render: (_: unknown, provider: Integration) => (
         <div className="text-sm text-gray-600">
           {new Date(provider.created_at).toLocaleDateString('es-CO')}
         </div>
-      ),
-    },
-    {
-      key: 'actions',
-      label: 'Acciones',
-      render: (_: unknown, provider: InvoicingProvider) => (
-        <Button variant="secondary" size="sm" onClick={() => handleEdit(provider)}>
-          Editar
-        </Button>
       ),
     },
   ];
@@ -141,7 +123,10 @@ export default function InvoicingProvidersPage() {
             Configura los proveedores de facturación electrónica para tu negocio
           </p>
         </div>
-        <Button variant="primary" onClick={handleNew}>
+        <Button
+          variant="primary"
+          onClick={() => window.location.href = '/integrations'}
+        >
           + Nuevo Proveedor
         </Button>
       </div>
@@ -150,20 +135,9 @@ export default function InvoicingProvidersPage() {
         <Table
           data={providers}
           columns={columns}
-          emptyMessage="No hay proveedores configurados. Crea uno para empezar a facturar."
+          emptyMessage="No hay proveedores configurados. Crea uno desde Integraciones → Facturación Electrónica."
         />
       </div>
-
-      <ProviderForm
-        isOpen={showForm}
-        onClose={handleClose}
-        onSuccess={() => {
-          loadProviders();
-          handleClose();
-        }}
-        provider={selectedProvider}
-        businessId={businessId}
-      />
     </div>
   );
 }

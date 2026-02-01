@@ -43,11 +43,31 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	// Por ejemplo, si el tipo es WhatsApp, debe ser global (BusinessID = NULL)
 	// Esto se puede hacer consultando el IntegrationType y sus reglas
 
-	// Obtener el tipo de integración para validar la conexión
+	// Obtener el tipo de integración para validar la conexión y derivar la categoría
 	integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, dto.IntegrationTypeID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Uint("integration_type_id", dto.IntegrationTypeID).Msg("Error al obtener tipo de integración")
 		return nil, fmt.Errorf("error al obtener tipo de integración: %w", err)
+	}
+
+	// Derivar la categoría del IntegrationType
+	// Si el IntegrationType tiene una categoría cargada, usar su código
+	categoryCode := ""
+	if integrationType.Category != nil {
+		categoryCode = integrationType.Category.Code
+	} else if integrationType.CategoryID > 0 {
+		// Si no está cargada pero tenemos el ID, obtenerla
+		category, err := uc.repo.GetIntegrationCategoryByID(ctx, integrationType.CategoryID)
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Uint("category_id", integrationType.CategoryID).Msg("Error al obtener categoría de integración")
+			return nil, fmt.Errorf("error al obtener categoría: %w", err)
+		}
+		categoryCode = category.Code
+	}
+
+	if categoryCode == "" {
+		uc.log.Error(ctx).Uint("integration_type_id", dto.IntegrationTypeID).Msg("Tipo de integración sin categoría válida")
+		return nil, domain.ErrIntegrationCategoryInvalid
 	}
 
 	// VALIDAR CONEXIÓN ANTES DE GUARDAR
@@ -119,6 +139,7 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	integration := &domain.Integration{
 		Name:              dto.Name,
 		Code:              dto.Code,
+		Category:          categoryCode, // Derivado de IntegrationType.Category.Code
 		IntegrationTypeID: dto.IntegrationTypeID,
 		BusinessID:        dto.BusinessID,
 		StoreID:           dto.StoreID,

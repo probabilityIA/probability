@@ -8,7 +8,10 @@ type CreateConfigDTO struct {
 	// ID de la integración (fuente de órdenes)
 	IntegrationID uint
 
-	// ID del proveedor de facturación
+	// ID de la integración de facturación (nuevo campo - FK a integrations)
+	InvoicingIntegrationID uint
+
+	// ID del proveedor de facturación (deprecado - usar InvoicingIntegrationID)
 	InvoicingProviderID uint
 
 	// Si la configuración está habilitada

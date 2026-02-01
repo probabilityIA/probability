@@ -71,7 +71,14 @@ export async function getInvoicesAction(filters?: InvoiceFilters): Promise<Pagin
   const queryString = params.toString();
   const url = `${API_BASE_URL}/invoicing/invoices${queryString ? '?' + queryString : ''}`;
 
-  return fetchWithAuth(url);
+  const response = await fetchWithAuth(url);
+  // Mapear respuesta del backend al formato esperado
+  return {
+    data: response.items || [],
+    total: response.total_count || 0,
+    page: response.page || 1,
+    page_size: response.page_size || 20,
+  };
 }
 
 export async function getInvoiceByIdAction(id: number): Promise<Invoice> {
@@ -105,7 +112,14 @@ export async function getProvidersAction(filters?: ProviderFilters): Promise<Pag
   const queryString = params.toString();
   const url = `${API_BASE_URL}/invoicing/providers${queryString ? '?' + queryString : ''}`;
 
-  return fetchWithAuth(url);
+  const response = await fetchWithAuth(url);
+  // Mapear respuesta del backend al formato esperado
+  return {
+    data: response.items || [],
+    total: response.total_count || 0,
+    page: response.page || 1,
+    page_size: response.page_size || 20,
+  };
 }
 
 export async function getProviderByIdAction(id: number): Promise<InvoicingProvider> {
@@ -152,7 +166,14 @@ export async function getConfigsAction(filters?: ConfigFilters): Promise<Paginat
   const queryString = params.toString();
   const url = `${API_BASE_URL}/invoicing/configs${queryString ? '?' + queryString : ''}`;
 
-  return fetchWithAuth(url);
+  const response = await fetchWithAuth(url);
+  // Mapear respuesta del backend al formato esperado
+  return {
+    data: response.items || [],
+    total: response.total_count || 0,
+    page: response.page || 1,
+    page_size: response.page_size || 20,
+  };
 }
 
 export async function getConfigByIdAction(id: number): Promise<InvoicingConfig> {
