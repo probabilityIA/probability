@@ -91,14 +91,26 @@ function isShopifyIframe(): boolean {
 
 /**
  * Set cookie con SameSite=None para iframes de terceros
+ * En iframes de Shopify, usa sessionStorage porque cookies pueden estar bloqueadas
  */
 function setCookie(name: string, value: string, days: number = 7): void {
     if (typeof window === 'undefined') return;
 
+    // En iframe de Shopify, usar sessionStorage (cookies third-party pueden estar bloqueadas)
+    if (isShopifyIframe()) {
+        try {
+            sessionStorage.setItem(name, value);
+            console.log(`🛍️ Shopify iframe: Guardado en sessionStorage: ${name}`);
+            return;
+        } catch (e) {
+            console.error('❌ Error guardando en sessionStorage:', e);
+        }
+    }
+
+    // Fuera de iframe o iframe normal, usar cookies
     const expires = new Date();
     expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
 
-    // Si estamos en iframe, SIEMPRE usar SameSite=None; Secure
     const sameSite = isInIframe() ? 'None' : 'Lax';
     const secure = isInIframe() ? '; Secure' : '';
 
@@ -107,10 +119,26 @@ function setCookie(name: string, value: string, days: number = 7): void {
 
 /**
  * Get cookie
+ * En iframes de Shopify, lee de sessionStorage
  */
 function getCookie(name: string): string | null {
     if (typeof window === 'undefined') return null;
 
+    // En iframe de Shopify, leer de sessionStorage
+    if (isShopifyIframe()) {
+        try {
+            const value = sessionStorage.getItem(name);
+            if (value) {
+                console.log(`🛍️ Shopify iframe: Leído de sessionStorage: ${name}`);
+            }
+            return value;
+        } catch (e) {
+            console.error('❌ Error leyendo de sessionStorage:', e);
+            return null;
+        }
+    }
+
+    // Fuera de iframe o iframe normal, leer cookies
     const nameEQ = name + '=';
     const ca = document.cookie.split(';');
 
@@ -125,10 +153,23 @@ function getCookie(name: string): string | null {
 
 /**
  * Delete cookie
+ * En iframes de Shopify, elimina de sessionStorage
  */
 function deleteCookie(name: string): void {
     if (typeof window === 'undefined') return;
 
+    // En iframe de Shopify, eliminar de sessionStorage
+    if (isShopifyIframe()) {
+        try {
+            sessionStorage.removeItem(name);
+            console.log(`🛍️ Shopify iframe: Eliminado de sessionStorage: ${name}`);
+            return;
+        } catch (e) {
+            console.error('❌ Error eliminando de sessionStorage:', e);
+        }
+    }
+
+    // Fuera de iframe o iframe normal, eliminar cookie
     const sameSite = isInIframe() ? 'None' : 'Lax';
     const secure = isInIframe() ? '; Secure' : '';
 
