@@ -58,7 +58,7 @@ func UpdateProviderRequestToDTO(req *request.UpdateProvider) *dtos.UpdateProvide
 }
 
 // CreateConfigRequestToDTO convierte request a DTO de dominio
-func CreateConfigRequestToDTO(req *request.CreateConfig) *dtos.CreateConfigDTO {
+func CreateConfigRequestToDTO(req *request.CreateConfig, userID uint) *dtos.CreateConfigDTO {
 	enabled := true
 	if req.Enabled != nil {
 		enabled = *req.Enabled
@@ -69,13 +69,20 @@ func CreateConfigRequestToDTO(req *request.CreateConfig) *dtos.CreateConfigDTO {
 		autoInvoice = *req.AutoInvoice
 	}
 
+	var invoicingProviderID uint
+	if req.InvoicingProviderID != nil {
+		invoicingProviderID = *req.InvoicingProviderID
+	}
+
 	return &dtos.CreateConfigDTO{
-		BusinessID:          req.BusinessID,
-		IntegrationID:       req.IntegrationID,
-		InvoicingProviderID: req.InvoicingProviderID,
-		Enabled:             enabled,
-		AutoInvoice:         autoInvoice,
-		Filters:             req.Filters,
+		BusinessID:             req.BusinessID,
+		IntegrationID:          req.IntegrationID,
+		InvoicingIntegrationID: req.InvoicingIntegrationID,
+		InvoicingProviderID:    invoicingProviderID, // Deprecado pero mantener compatibilidad
+		Enabled:                enabled,
+		AutoInvoice:            autoInvoice,
+		Filters:                req.Filters,
+		CreatedByUserID:        userID,
 	}
 }
 

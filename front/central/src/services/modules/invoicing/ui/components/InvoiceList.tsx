@@ -28,16 +28,17 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
   const [actionLoading, setActionLoading] = useState(false);
 
   const loadInvoices = async () => {
-    // No hacer nada si no hay businessId válido
-    if (!businessId || businessId === 0) {
-      setLoading(false);
-      return;
-    }
-
     try {
       setLoading(true);
-      const response = await getInvoicesAction({ ...filters, business_id: businessId });
-      setInvoices(response.data);
+      // Super admin (businessId = 0): no filtra por business_id, ve todas las facturas
+      // Usuario normal: filtra por su business_id
+      const isSuperAdmin = !businessId || businessId === 0;
+      const finalFilters = isSuperAdmin
+        ? { ...filters }
+        : { ...filters, business_id: businessId };
+
+      const response = await getInvoicesAction(finalFilters);
+      setInvoices(response.data || []);
     } catch (error: any) {
       showToast('Error al cargar facturas: ' + error.message, 'error');
       setInvoices([]);

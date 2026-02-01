@@ -49,7 +49,6 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         { key: 'id', label: 'ID' },
         { key: 'logo', label: 'Logo' },
         { key: 'name', label: 'Nombre' },
-        { key: 'code', label: 'Código' },
         { key: 'category', label: 'Categoría' },
         { key: 'status', label: 'Estado' },
         { key: 'actions', label: 'Acciones' }
@@ -88,8 +87,16 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                 )}
             </div>
         ),
-        code: <code className="text-xs bg-gray-100 px-2 py-1 rounded">{type.code}</code>,
-        category: type.category,
+        category: type.category ? (
+            <span
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+                style={{ backgroundColor: type.category.color }}
+            >
+                {type.category.name}
+            </span>
+        ) : (
+            <span className="text-gray-400 text-sm">Sin categoría</span>
+        ),
         status: (
             <Badge type={type.is_active ? 'success' : 'error'}>
                 {type.is_active ? 'Activo' : 'Inactivo'}

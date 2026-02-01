@@ -25,11 +25,23 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
         setError(null);
         try {
             const response = await getActiveIntegrationTypesAction();
+            console.log('[ProviderSelector] Response from API:', response);
+            console.log('[ProviderSelector] Selected category:', category);
             if (response.success && response.data) {
+                console.log('[ProviderSelector] All providers:', response.data);
                 // Filter providers by category
+                // El backend devuelve category como objeto, no category_id
                 const filtered = response.data.filter(
-                    (provider) => provider.category_id === category.id
+                    (provider) => {
+                        console.log(`[ProviderSelector] Provider ${provider.name}:`, {
+                            category: provider.category,
+                            category_id: provider.category_id,
+                            matches: provider.category?.id === category.id || provider.category_id === category.id
+                        });
+                        return provider.category?.id === category.id || provider.category_id === category.id;
+                    }
                 );
+                console.log('[ProviderSelector] Filtered providers:', filtered);
                 setProviders(filtered);
             } else {
                 setError('Error al cargar proveedores');

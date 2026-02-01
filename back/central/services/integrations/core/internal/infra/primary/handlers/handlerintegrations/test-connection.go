@@ -43,7 +43,7 @@ func (h *IntegrationHandler) TestConnectionRawHandler(c *gin.Context) {
 
 	var req TestConnectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error().Err(err).Msg("Error al bindear JSON para TestConnectionRaw")
+		h.logger.Error().Err(err).Msg("❌ Error al bindear JSON para TestConnectionRaw")
 		c.JSON(http.StatusBadRequest, response.IntegrationErrorResponse{
 			Success: false,
 			Message: "Datos inválidos",
@@ -51,6 +51,11 @@ func (h *IntegrationHandler) TestConnectionRawHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	h.logger.Info().
+		Str("type_code", req.TypeCode).
+		Interface("config", req.Config).
+		Msg("📥 TestConnectionRaw - Request received")
 
 	if err := h.usecase.TestConnectionRaw(c.Request.Context(), req.TypeCode, req.Config, req.Credentials); err != nil {
 		statusCode := http.StatusInternalServerError
@@ -64,7 +69,11 @@ func (h *IntegrationHandler) TestConnectionRawHandler(c *gin.Context) {
 			errorMsg = "Falta el token de acceso"
 		}
 
-		h.logger.Error().Err(err).Str("type_code", req.TypeCode).Msg("Fallo en TestConnectionRaw")
+		h.logger.Error().
+			Err(err).
+			Str("type_code", req.TypeCode).
+			Int("status_code", statusCode).
+			Msg("❌ Fallo en TestConnectionRaw")
 		c.JSON(statusCode, response.IntegrationErrorResponse{
 			Success: false,
 			Message: errorMsg,
@@ -72,6 +81,10 @@ func (h *IntegrationHandler) TestConnectionRawHandler(c *gin.Context) {
 		})
 		return
 	}
+
+	h.logger.Info().
+		Str("type_code", req.TypeCode).
+		Msg("✅ TestConnectionRaw - Successful")
 
 	c.JSON(http.StatusOK, response.IntegrationMessageResponse{
 		Success: true,

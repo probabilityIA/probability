@@ -3,6 +3,7 @@
 export interface SoftpymesConfig {
     company_nit: string;          // NIT de la empresa
     company_name: string;         // Nombre de la empresa
+    referer: string;              // Identificación de instancia del cliente (requerido para header Referer)
     api_url: string;              // URL de la API de Softpymes
     test_mode?: boolean;          // Modo de pruebas
 }

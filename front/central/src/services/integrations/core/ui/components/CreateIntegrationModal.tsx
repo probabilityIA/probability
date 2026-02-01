@@ -1,12 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal } from '@/shared/ui';
+import { Modal, Alert } from '@/shared/ui';
 import { IntegrationCategory, IntegrationType } from '../../domain/types';
 import { CategorySelector } from './CategorySelector';
 import { ProviderSelector } from './ProviderSelector';
-import DynamicIntegrationForm from './DynamicIntegrationForm';
 import { createIntegrationAction, testConnectionRawAction } from '../../infra/actions';
+
+// Importar formularios específicos por tipo de integración
+import { SoftpymesConfigForm } from '@/services/integrations/invoicing/softpymes/ui/components';
 
 interface CreateIntegrationModalProps {
     isOpen: boolean;
@@ -124,35 +126,42 @@ interface FormWrapperProps {
 }
 
 function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapperProps) {
-    const handleSubmit = async (data: {
-        name: string;
-        code: string;
-        config: Record<string, any>;
-        credentials: Record<string, any>;
-        business_id?: number | null;
-    }) => {
-        const integrationData = {
-            name: data.name,
-            code: data.code,
-            integration_type_id: integrationType.id,
-            category: integrationType.category,
-            business_id: data.business_id || null,
-            config: data.config,
-            credentials: data.credentials,
-            is_active: true,
-            is_default: false,
-        };
+    const integrationCode = integrationType.code.toLowerCase();
 
-        await createIntegrationAction(integrationData);
-        onSuccess();
-    };
+    // Renderizar formulario específico según el código del tipo de integración
+    const renderSpecificForm = () => {
+        switch (integrationCode) {
+            case 'softpymes':
+                return (
+                    <SoftpymesConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
 
-    const handleTest = async (config: Record<string, any>, credentials: Record<string, any>) => {
-        try {
-            const result = await testConnectionRawAction(integrationType.code, config, credentials);
-            return result;
-        } catch (error: any) {
-            return { success: false, message: error.message || 'Error al probar conexión' };
+            // TODO: Agregar más formularios específicos aquí
+            // case 'shopify':
+            //     return <ShopifyConfigForm onSuccess={onSuccess} onCancel={onBack} />;
+            // case 'whatsapp':
+            //     return <WhatsAppConfigForm onSuccess={onSuccess} onCancel={onBack} />;
+            // case 'mercadolibre':
+            //     return <MercadoLibreConfigForm onSuccess={onSuccess} onCancel={onBack} />;
+
+            default:
+                return (
+                    <Alert type="warning">
+                        <div className="space-y-3">
+                            <p className="font-semibold">Formulario No Disponible</p>
+                            <p>
+                                El formulario de configuración para <strong>{integrationType.name}</strong> aún no está implementado.
+                            </p>
+                            <p className="text-sm">
+                                Cada tipo de integración requiere su propio formulario personalizado.
+                                Por favor, contacta al equipo de desarrollo para implementar este formulario.
+                            </p>
+                        </div>
+                    </Alert>
+                );
         }
     };
 
@@ -160,18 +169,13 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
         <div className="p-6">
             <button
                 onClick={onBack}
-                className="text-blue-600 hover:text-blue-800 mb-4 flex items-center gap-2"
+                className="text-blue-600 hover:text-blue-800 mb-6 flex items-center gap-2 font-medium transition-colors"
             >
                 <span>←</span>
                 <span>Volver a proveedores</span>
             </button>
 
-            <DynamicIntegrationForm
-                integrationType={integrationType}
-                onSubmit={handleSubmit}
-                onCancel={onCancel}
-                onTest={handleTest}
-            />
+            {renderSpecificForm()}
         </div>
     );
 }

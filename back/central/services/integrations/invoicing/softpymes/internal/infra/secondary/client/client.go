@@ -24,7 +24,7 @@ func New(baseURL string, logger log.ILogger) ports.ISoftpymesClient {
 		Timeout:    30 * time.Second,
 		RetryCount: 2,
 		RetryWait:  3 * time.Second,
-		Debug:      false,
+		Debug:      true, // ✅ Debug habilitado para ver todas las peticiones HTTP
 	}
 
 	httpClient := httpclient.New(httpConfig, logger)

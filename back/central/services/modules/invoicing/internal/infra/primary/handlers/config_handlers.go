@@ -24,13 +24,29 @@ func (h *handler) CreateConfig(c *gin.Context) {
 		return
 	}
 
-	h.log.Info(ctx).
+	logInfo := h.log.Info(ctx).
 		Uint("business_id", req.BusinessID).
 		Uint("integration_id", req.IntegrationID).
-		Uint("provider_id", req.InvoicingProviderID).
-		Msg("Creating invoicing config")
+		Uint("invoicing_integration_id", req.InvoicingIntegrationID)
 
-	dto := mappers.CreateConfigRequestToDTO(&req)
+	if req.InvoicingProviderID != nil {
+		logInfo = logInfo.Uint("provider_id", *req.InvoicingProviderID)
+	}
+
+	logInfo.Msg("Creating invoicing config")
+
+	// Obtener user ID del contexto (JWT)
+	userID, exists := c.Get("user_id")
+	if !exists {
+		h.log.Error(ctx).Msg("User ID not found in context")
+		c.JSON(http.StatusUnauthorized, response.Error{
+			Error:   "unauthorized",
+			Message: "User not authenticated",
+		})
+		return
+	}
+
+	dto := mappers.CreateConfigRequestToDTO(&req, userID.(uint))
 
 	config, err := h.useCase.CreateConfig(ctx, dto)
 	if err != nil {

@@ -138,7 +138,10 @@ func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration
 // GetIntegrationByID obtiene una integración por su ID
 func (r *Repository) GetIntegrationByID(ctx context.Context, id uint) (*domain.Integration, error) {
 	var model models.Integration
-	if err := r.db.Conn(ctx).Preload("IntegrationType").First(&model, id).Error; err != nil {
+	if err := r.db.Conn(ctx).
+		Preload("IntegrationType").
+		Preload("IntegrationType.Category").
+		First(&model, id).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			return nil, fmt.Errorf("integración con ID %d no encontrada", id)
 		}
@@ -174,7 +177,10 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 			Where("integration_type.code = ?", *filters.IntegrationTypeCode)
 	}
 	if filters.Category != nil {
-		query = query.Where("category = ?", *filters.Category)
+		// Filtrar por categoría a través de integration_types -> integration_categories
+		query = query.Joins("JOIN integration_types it ON integrations.integration_type_id = it.id").
+			Joins("JOIN integration_categories ic ON it.category_id = ic.id").
+			Where("ic.code = ?", *filters.Category)
 	}
 	if filters.BusinessID != nil {
 		query = query.Where("business_id = ?", *filters.BusinessID)
@@ -211,10 +217,39 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 	}
 	offset := (page - 1) * pageSize
 
-	// Obtener resultados con la relación IntegrationType cargada
-	if err := query.Preload("IntegrationType").Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&integrationModels).Error; err != nil {
+	// Obtener resultados con la relación IntegrationType y su categoría cargadas
+	if err := query.
+		Preload("IntegrationType").
+		Preload("IntegrationType.Category").
+		Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&integrationModels).Error; err != nil {
 		r.log.Error(ctx).Err(err).Msg("Error al listar integraciones")
 		return nil, 0, fmt.Errorf("error al listar integraciones: %w", err)
+	}
+
+	// DEBUG: Log para verificar qué se cargó de la BD
+	if len(integrationModels) > 0 {
+		firstModel := integrationModels[0]
+		r.log.Info(ctx).
+			Uint("integration_id", firstModel.ID).
+			Str("integration_name", firstModel.Name).
+			Uint("integration_type_id", firstModel.IntegrationTypeID).
+			Bool("integration_type_loaded", firstModel.IntegrationType.ID != 0).
+			Interface("category_id_ptr", firstModel.IntegrationType.CategoryID).
+			Bool("category_loaded", firstModel.IntegrationType.Category != nil).
+			Msg("[DEBUG] ListIntegrations - First result loaded from DB")
+
+		if firstModel.IntegrationType.Category != nil {
+			r.log.Info(ctx).
+				Uint("category_id", firstModel.IntegrationType.Category.ID).
+				Str("category_code", firstModel.IntegrationType.Category.Code).
+				Str("category_name", firstModel.IntegrationType.Category.Name).
+				Msg("[DEBUG] ListIntegrations - Category data found")
+		} else {
+			r.log.Warn(ctx).
+				Uint("integration_type_id", firstModel.IntegrationType.ID).
+				Interface("category_id", firstModel.IntegrationType.CategoryID).
+				Msg("[DEBUG] ListIntegrations - Category is NIL despite CategoryID being set")
+		}
 	}
 
 	// Convertir a dominio
@@ -229,7 +264,10 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 // GetIntegrationByIntegrationTypeID obtiene una integración por tipo y business_id
 func (r *Repository) GetIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*domain.Integration, error) {
 	var model models.Integration
-	query := r.db.Conn(ctx).Preload("IntegrationType").Where("integration_type_id = ?", integrationTypeID)
+	query := r.db.Conn(ctx).
+		Preload("IntegrationType").
+		Preload("IntegrationType.Category").
+		Where("integration_type_id = ?", integrationTypeID)
 
 	if businessID != nil {
 		query = query.Where("business_id = ?", *businessID)
@@ -251,7 +289,10 @@ func (r *Repository) GetIntegrationByIntegrationTypeID(ctx context.Context, inte
 // GetActiveIntegrationByIntegrationTypeID obtiene una integración activa por tipo y business_id
 func (r *Repository) GetActiveIntegrationByIntegrationTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (*domain.Integration, error) {
 	var model models.Integration
-	query := r.db.Conn(ctx).Preload("IntegrationType").Where("integration_type_id = ? AND is_active = ?", integrationTypeID, true)
+	query := r.db.Conn(ctx).
+		Preload("IntegrationType").
+		Preload("IntegrationType.Category").
+		Where("integration_type_id = ? AND is_active = ?", integrationTypeID, true)
 
 	if businessID != nil {
 		query = query.Where("business_id = ?", *businessID)
@@ -405,9 +446,23 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 	}
 
 	// Cargar IntegrationType si está disponible en el modelo
-	if model.IntegrationType.ID != 0 {
+	if model.IntegrationType != nil && model.IntegrationType.ID != 0 {
+		// DEBUG: Log para verificar si Category se está cargando
+		r.log.Info(context.Background()).
+			Uint("integration_type_id", model.IntegrationType.ID).
+			Str("integration_type_code", model.IntegrationType.Code).
+			Interface("category_id", model.IntegrationType.CategoryID).
+			Bool("category_is_nil", model.IntegrationType.Category == nil).
+			Msg("[DEBUG] toDomain - IntegrationType loaded")
+
 		var category *domain.IntegrationCategory
 		if model.IntegrationType.Category != nil {
+			r.log.Info(context.Background()).
+				Uint("category_id", model.IntegrationType.Category.ID).
+				Str("category_code", model.IntegrationType.Category.Code).
+				Str("category_name", model.IntegrationType.Category.Name).
+				Msg("[DEBUG] toDomain - Category found and mapping")
+
 			category = &domain.IntegrationCategory{
 				ID:               model.IntegrationType.Category.ID,
 				Code:             model.IntegrationType.Category.Code,

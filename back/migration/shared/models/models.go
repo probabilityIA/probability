@@ -357,13 +357,14 @@ type Integration struct {
 	gorm.Model
 
 	// Identificación
-	Name    string `gorm:"size:100;not null"`       // "WhatsApp Principal", "Shopify Store 1"
-	Code    string `gorm:"size:50;not null;unique"` // "whatsapp_platform", "shopify_store_1"
-	StoreID string `gorm:"size:150;index"`          // Identificador externo (p.e. shop domain)
+	Name     string `gorm:"size:100;not null"`       // "WhatsApp Principal", "Shopify Store 1"
+	Code     string `gorm:"size:50;not null;unique"` // "whatsapp_platform", "shopify_store_1"
+	Category string `gorm:"size:50;not null;index"`  // Código de categoría (derivado de IntegrationType.Category.Code)
+	StoreID  string `gorm:"size:150;index"`          // Identificador externo (p.e. shop domain)
 
 	// Relación con IntegrationType (obligatorio)
-	IntegrationTypeID uint            `gorm:"not null;index"`
-	IntegrationType   IntegrationType `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+	IntegrationTypeID uint             `gorm:"not null;index"`
+	IntegrationType   *IntegrationType `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Relación con Business
 	// NULL = integración global (como WhatsApp - una sola para toda la plataforma)

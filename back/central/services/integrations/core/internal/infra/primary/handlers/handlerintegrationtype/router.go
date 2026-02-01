@@ -19,4 +19,10 @@ func (h *IntegrationTypeHandler) RegisterRoutes(router *gin.RouterGroup, logger 
 		integrationTypesGroup.PUT("/:id", middleware.JWT(), h.UpdateIntegrationTypeHandler)
 		integrationTypesGroup.DELETE("/:id", middleware.JWT(), h.DeleteIntegrationTypeHandler)
 	}
+
+	// Integration Categories
+	integrationCategoriesGroup := router.Group("/integration-categories")
+	{
+		integrationCategoriesGroup.GET("", middleware.JWT(), h.ListIntegrationCategoriesHandler)
+	}
 }

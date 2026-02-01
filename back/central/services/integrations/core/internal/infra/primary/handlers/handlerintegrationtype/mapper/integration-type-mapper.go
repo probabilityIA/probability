@@ -10,6 +10,21 @@ import (
 	"gorm.io/datatypes"
 )
 
+// ToIntegrationCategoryResponse convierte domain.IntegrationCategory a IntegrationCategoryResponse
+func ToIntegrationCategoryResponse(category *domain.IntegrationCategory) response.IntegrationCategoryResponse {
+	return response.IntegrationCategoryResponse{
+		ID:           category.ID,
+		Code:         category.Code,
+		Name:         category.Name,
+		Description:  category.Description,
+		Icon:         category.Icon,
+		Color:        category.Color,
+		DisplayOrder: category.DisplayOrder,
+		IsActive:     category.IsActive,
+		IsVisible:    category.IsVisible,
+	}
+}
+
 // ToIntegrationTypeResponse convierte domain.IntegrationType a IntegrationTypeResponse
 // imageURLBase es la URL base de S3 para construir URLs completas
 func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURLBase string) response.IntegrationTypeResponse {
@@ -42,6 +57,7 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURL
 		Description:       integrationType.Description,
 		Icon:              integrationType.Icon,
 		ImageURL:          imageURL,
+		CategoryID:        integrationType.CategoryID,
 		Category:          category,
 		IsActive:          integrationType.IsActive,
 		ConfigSchema:      integrationType.ConfigSchema,

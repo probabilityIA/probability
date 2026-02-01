@@ -124,7 +124,8 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 
 	// Obtener el logo de la integración si está disponible
 	var integrationLogoURL *string
-	if o.Integration.IntegrationType.ID > 0 && o.Integration.IntegrationType.ImageURL != "" {
+	if o.Integration.ID > 0 && o.Integration.IntegrationType != nil &&
+		o.Integration.IntegrationType.ID > 0 && o.Integration.IntegrationType.ImageURL != "" {
 		logoURL := o.Integration.IntegrationType.ImageURL
 		// Si no es una URL completa, construirla con la base
 		if imageURLBase != "" && !strings.HasPrefix(logoURL, "http") {

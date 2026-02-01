@@ -199,6 +199,9 @@ type Config struct {
 
 	// Webhooks
 	WebhookBaseURL string `env:"WEBHOOK_BASE_URL"`
+
+	// Softpymes (Facturación Electrónica)
+	SoftpymesAPIURL string `env:"SOFTPYMES_API_URL"`
 }
 
 func splitTag(tag string) []string {

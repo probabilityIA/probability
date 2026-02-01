@@ -86,21 +86,50 @@ func (b *Bundle) RegisterRoutes(router *gin.RouterGroup) {
 // TestConnection prueba la conexión con Softpymes usando credenciales
 // Implementa core.IIntegrationContract
 func (b *Bundle) TestConnection(ctx context.Context, config, credentials map[string]interface{}) error {
-	b.log.Info(ctx).Msg("Testing connection with Softpymes API")
+	b.log.Info(ctx).
+		Interface("config", config).
+		Msg("🧪 Testing connection with Softpymes API")
 
-	// Extraer API key de las credenciales
-	apiKey, ok := credentials["api_key"].(string)
-	if !ok || apiKey == "" {
+	// Extraer API key y API secret de las credenciales
+	apiKey, okKey := credentials["api_key"].(string)
+	apiSecret, okSecret := credentials["api_secret"].(string)
+
+	// Extraer referer del config (identificación de la instancia del cliente)
+	referer, okReferer := config["referer"].(string)
+
+	b.log.Info(ctx).
+		Bool("has_api_key", okKey && apiKey != "").
+		Bool("has_api_secret", okSecret && apiSecret != "").
+		Bool("has_referer", okReferer && referer != "").
+		Int("api_key_length", len(apiKey)).
+		Int("api_secret_length", len(apiSecret)).
+		Msg("📋 Credentials and config validation")
+
+	if !okKey || apiKey == "" {
+		b.log.Error(ctx).Msg("❌ API key is missing or empty")
 		return fmt.Errorf("api_key is required in credentials")
 	}
 
+	if !okSecret || apiSecret == "" {
+		b.log.Error(ctx).Msg("❌ API secret is missing or empty")
+		return fmt.Errorf("api_secret is required in credentials")
+	}
+
+	if !okReferer || referer == "" {
+		b.log.Error(ctx).Msg("❌ Referer is missing or empty in config")
+		return fmt.Errorf("referer is required in config (identificación de instancia del cliente)")
+	}
+
 	// Usar el cliente para probar la conexión
-	if err := b.client.TestAuthentication(ctx, apiKey); err != nil {
-		b.log.Error(ctx).Err(err).Msg("Softpymes connection test failed")
+	b.log.Info(ctx).Msg("🔌 Calling client.TestAuthentication...")
+	if err := b.client.TestAuthentication(ctx, apiKey, apiSecret, referer); err != nil {
+		b.log.Error(ctx).
+			Err(err).
+			Msg("❌ Softpymes connection test failed")
 		return fmt.Errorf("failed to connect to Softpymes: %w", err)
 	}
 
-	b.log.Info(ctx).Msg("Softpymes connection test successful")
+	b.log.Info(ctx).Msg("✅ Softpymes connection test successful")
 	return nil
 }
 

@@ -16,6 +16,9 @@ type IIntegrationTypeUseCase interface {
 	DeleteIntegrationType(ctx context.Context, id uint) error
 	ListIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error)
 	ListActiveIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error)
+
+	// Integration Categories
+	ListIntegrationCategories(ctx context.Context) ([]*domain.IntegrationCategory, error)
 }
 
 type integrationTypeUseCase struct {

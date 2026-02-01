@@ -83,7 +83,8 @@ export interface InvoicingConfig {
   id: number;
   business_id: number;
   integration_id: number;
-  invoicing_provider_id: number;
+  invoicing_integration_id?: number; // Nueva columna FK a integrations (categoria invoicing)
+  invoicing_provider_id?: number; // Deprecado - usar invoicing_integration_id
   enabled: boolean;
   auto_invoice: boolean;
   filters?: InvoicingFilters;
@@ -198,7 +199,7 @@ export interface UpdateProviderDTO {
 export interface CreateConfigDTO {
   business_id: number;
   integration_id: number;
-  invoicing_provider_id: number;
+  invoicing_integration_id: number; // Nueva columna FK a integrations (categoria invoicing)
   enabled?: boolean;
   auto_invoice?: boolean;
   filters?: InvoicingFilters;
@@ -211,7 +212,7 @@ export interface UpdateConfigDTO {
   auto_invoice?: boolean;
   filters?: InvoicingFilters;
   config?: InvoicingSettings;
-  invoicing_provider_id?: number;
+  invoicing_integration_id?: number;
 }
 
 export interface CreateCreditNoteDTO {

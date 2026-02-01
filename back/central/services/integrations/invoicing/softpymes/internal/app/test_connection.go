@@ -16,14 +16,26 @@ func (uc *useCase) TestProviderConnection(ctx context.Context, id uint) error {
 		return errors.ErrProviderNotFound
 	}
 
-	// 2. Extraer API key de las credenciales
-	apiKey, ok := provider.Credentials["api_key"].(string)
-	if !ok || apiKey == "" {
+	// 2. Extraer credenciales y configuración
+	apiKey, okKey := provider.Credentials["api_key"].(string)
+	apiSecret, okSecret := provider.Credentials["api_secret"].(string)
+	referer, okReferer := provider.Config["referer"].(string)
+
+	if !okKey || apiKey == "" {
 		return errors.ErrAPIKeyRequired
 	}
 
+	if !okSecret || apiSecret == "" {
+		return errors.ErrAPISecretRequired
+	}
+
+	if !okReferer || referer == "" {
+		uc.log.Error(ctx).Msg("Referer is missing in provider config")
+		return errors.ErrAuthenticationFailed // TODO: crear error específico para referer
+	}
+
 	// 3. Probar autenticación con Softpymes
-	if err := uc.softpymesClient.TestAuthentication(ctx, apiKey); err != nil {
+	if err := uc.softpymesClient.TestAuthentication(ctx, apiKey, apiSecret, referer); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Softpymes connection test failed")
 		return errors.ErrAuthenticationFailed
 	}
