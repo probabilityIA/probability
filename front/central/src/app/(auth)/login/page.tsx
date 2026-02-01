@@ -26,18 +26,19 @@ function LoginContent() {
       if (isShopifyEmbedded && sessionToken) {
         setIsAuthenticating(true);
         try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3050'; // Ajustar según env
-          const response = await fetch(`${baseUrl}/api/v1/integrations/shopify/auth/login`, {
+          const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1';
+          const response = await fetch(`${baseUrl}/integrations/shopify/auth/login`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ session_token: sessionToken }),
+            credentials: 'include', // ✅ IMPORTANTE: incluir cookies
           });
 
           if (response.ok) {
             const data = await response.json();
-            // ✅ NO guardar token (viene en cookie HttpOnly del backend)
+            // ✅ Cookie ya está seteada en el navegador por el backend
             // Solo guardar datos del usuario
             if (data.user) {
               CookieStorage.setUser(data.user);

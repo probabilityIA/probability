@@ -58,6 +58,38 @@ export class LoginRepository implements ILoginRepository {
         }
     }
 
+    // Nueva función que retorna Response completo (para leer headers)
+    private async fetchWithResponse<T>(url: string, options: RequestInit = {}): Promise<{ data: T; response: Response }> {
+        console.log(`[API Request] ${options.method || 'GET'} ${url}`, {
+            headers: options.headers,
+            body: options.body
+        });
+
+        try {
+            const res = await fetch(url, {
+                ...options,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+            });
+
+            const data = await res.json();
+
+            console.log(`[API Response] ${res.status} ${url}`, data);
+
+            if (!res.ok) {
+                console.error(`[API Error] ${res.status} ${url}`, data);
+                throw new Error(data.error || data.message || res.statusText || 'An error occurred');
+            }
+
+            return { data, response: res };
+        } catch (error) {
+            console.error(`[API Network Error] ${url}`, error);
+            throw error;
+        }
+    }
+
     /**
      * Autentica un usuario
      * POST /auth/login
