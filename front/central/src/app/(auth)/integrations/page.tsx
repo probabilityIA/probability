@@ -5,10 +5,13 @@ import {
     IntegrationList,
     IntegrationForm,
     IntegrationTypeList,
-    IntegrationTypeForm
+    IntegrationTypeForm,
+    CategoryTabs,
+    CreateIntegrationModal,
+    useCategories,
+    useIntegrations
 } from '@/services/integrations/core/ui';
 import { Button, Modal } from '@/shared/ui';
-import { WideModal } from '@/shared/ui/wide-modal';
 import { IntegrationType, Integration } from '@/services/integrations/core/domain/types';
 import { getIntegrationByIdAction } from '@/services/integrations/core/infra/actions';
 
@@ -24,13 +27,17 @@ export default function IntegrationsPage() {
     }
 
     const [activeTab, setActiveTab] = useState<'integrations' | 'types'>('integrations');
+    const [activeCategoryCode, setActiveCategoryCode] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showEditIntegrationModal, setShowEditIntegrationModal] = useState(false);
     const [selectedType, setSelectedType] = useState<IntegrationType | undefined>(undefined);
     const [selectedIntegration, setSelectedIntegration] = useState<Integration | undefined>(undefined);
     const [refreshKey, setRefreshKey] = useState(0);
-    const [modalSize, setModalSize] = useState<'md' | '4xl' | '5xl' | '6xl' | 'full'>('5xl');
+
+    // Hooks for categories and integrations
+    const { categories, loading: categoriesLoading } = useCategories();
+    const { setFilterCategory, refresh: refreshIntegrations } = useIntegrations();
 
     const handleSuccess = () => {
         setShowCreateModal(false);
@@ -39,11 +46,13 @@ export default function IntegrationsPage() {
         setSelectedType(undefined);
         setSelectedIntegration(undefined);
         setRefreshKey(prev => prev + 1);
-        setModalSize('5xl'); // Reset to large when closing
+        refreshIntegrations(); // Refresh integrations list
     };
 
-    const handleTypeSelected = (hasTypeSelected: boolean) => {
-        setModalSize(hasTypeSelected ? 'full' : 'md');
+    const handleCategoryChange = (categoryCode: string | null) => {
+        setActiveCategoryCode(categoryCode);
+        setFilterCategory(categoryCode || '');
+        refreshIntegrations();
     };
 
     const handleModalClose = () => {
@@ -52,7 +61,6 @@ export default function IntegrationsPage() {
         setShowEditIntegrationModal(false);
         setSelectedType(undefined);
         setSelectedIntegration(undefined);
-        setModalSize('5xl'); // Reset to large when closing
     };
 
     const handleEditType = (type: IntegrationType) => {
@@ -72,7 +80,7 @@ export default function IntegrationsPage() {
                 </Button>
             </div>
 
-            {/* Tabs */}
+            {/* Main Tabs (Integraciones vs Tipos) */}
             <div className="border-b border-gray-200 mb-6">
                 <nav className="-mb-px flex space-x-8">
                     <button
@@ -99,6 +107,15 @@ export default function IntegrationsPage() {
                     </button>
                 </nav>
             </div>
+
+            {/* Category Tabs (only show in integrations tab) */}
+            {activeTab === 'integrations' && !categoriesLoading && (
+                <CategoryTabs
+                    categories={categories}
+                    activeCategory={activeCategoryCode}
+                    onSelectCategory={handleCategoryChange}
+                />
+            )}
 
             {activeTab === 'integrations' ? (
                 <IntegrationList
@@ -130,18 +147,12 @@ export default function IntegrationsPage() {
 
             {/* Create Modal */}
             {activeTab === 'integrations' ? (
-                <WideModal
+                <CreateIntegrationModal
                     isOpen={showCreateModal}
                     onClose={handleModalClose}
-                    title="Nueva Integración"
-                    width="90vw"
-                >
-                    <IntegrationForm
-                        onSuccess={handleSuccess}
-                        onCancel={handleModalClose}
-                        onTypeSelected={handleTypeSelected}
-                    />
-                </WideModal>
+                    categories={categories}
+                    onSuccess={handleSuccess}
+                />
             ) : (
                 <Modal
                     isOpen={showCreateModal}
@@ -181,7 +192,6 @@ export default function IntegrationsPage() {
                     integration={selectedIntegration}
                     onSuccess={handleSuccess}
                     onCancel={handleModalClose}
-                    onTypeSelected={handleTypeSelected}
                 />
             </Modal>
         </div>

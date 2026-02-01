@@ -2,6 +2,7 @@ package modules
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
@@ -23,13 +24,17 @@ import (
 )
 
 // ModuleBundles contiene referencias a los bundles de módulos que otros servicios pueden necesitar
-// NOTA: Los módulos deberían consultar datos directamente desde la BD o vía API HTTP,
-// no a través de bundles. Este struct está vacío por diseño.
 type ModuleBundles struct {
-	// Vacío intencionalmente - los módulos no deben depender entre sí vía bundles
+	router          *gin.RouterGroup
+	database        db.IDatabase
+	logger          log.ILogger
+	environment     env.IConfig
+	rabbitMQ        rabbitmq.IQueue
+	integrationCore core.IIntegrationCore
 }
 
-// New inicializa todos los módulos y retorna referencias a bundles compartidos
+// New inicializa todos los módulos (excepto invoicing que requiere integrationCore)
+// y retorna referencias a bundles compartidos
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) *ModuleBundles {
 	// Inicializar módulo de payments
 	payments.New(router, database, logger, environment)
@@ -53,7 +58,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	shipments.New(router, database, logger, environment)
 
 	// Inicializar módulo de notification configs
-	notification_config.New(router, database, logger)
+	notification_config.New(router, database, redisClient, logger)
 
 	// Inicializar módulo de events (notificaciones en tiempo real)
 	if redisClient != nil {
@@ -71,11 +76,22 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de wallet
 	wallet.New(router, database, logger, environment)
 
-	// Inicializar módulo de invoicing (facturación electrónica)
-	invoicing.New(router, database, logger, environment, rabbitMQ)
+	// NOTA: invoicing se inicializa en SetIntegrationCore() porque depende de integrationCore
 
 	// Retornar referencias a bundles compartidos
 	return &ModuleBundles{
-		// Vacío intencionalmente
+		router:      router,
+		database:    database,
+		logger:      logger,
+		environment: environment,
+		rabbitMQ:    rabbitMQ,
 	}
+}
+
+// SetIntegrationCore establece el integrationCore y luego inicializa módulos que lo requieren
+func (mb *ModuleBundles) SetIntegrationCore(integrationCore core.IIntegrationCore) {
+	mb.integrationCore = integrationCore
+
+	// Inicializar módulo de invoicing (requiere integrationCore)
+	invoicing.New(mb.router, mb.database, mb.logger, mb.environment, mb.rabbitMQ, integrationCore)
 }

@@ -6,11 +6,11 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 )
 
 // GetOrderByID obtiene una orden por su ID
-func (uc *UseCaseOrder) GetOrderByID(ctx context.Context, id string) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrder) GetOrderByID(ctx context.Context, id string) (*dtos.OrderResponse, error) {
 	if id == "" {
 		return nil, errors.New("order ID is required")
 	}

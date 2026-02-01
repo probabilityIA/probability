@@ -9,13 +9,16 @@ import (
 	"time"
 
 	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseordermapping/mappers"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"gorm.io/datatypes"
 )
 
 // MapAndSaveOrder recibe una orden en formato canónico y la guarda en todas las tablas relacionadas
 // Este es el punto de entrada principal para todas las integraciones después de mapear sus datos
-func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *domain.ProbabilityOrderDTO) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error) {
 	// 0. Validar datos obligatorios de integración
 	if dto.IntegrationID == 0 {
 		return nil, errors.New("integration_id is required")
@@ -273,7 +276,7 @@ type orderStatusMapping struct {
 }
 
 // mapOrderStatuses mapea todos los estados de la orden (OrderStatus, PaymentStatus, FulfillmentStatus)
-func (uc *UseCaseOrderMapping) mapOrderStatuses(ctx context.Context, dto *domain.ProbabilityOrderDTO) orderStatusMapping {
+func (uc *UseCaseOrderMapping) mapOrderStatuses(ctx context.Context, dto *dtos.ProbabilityOrderDTO) orderStatusMapping {
 	mapping := orderStatusMapping{}
 
 	// Mapear OrderStatusID
@@ -291,19 +294,19 @@ func (uc *UseCaseOrderMapping) mapOrderStatuses(ctx context.Context, dto *domain
 // mapOrderStatusID mapea el estado general de la orden
 // Prioridad 1: Intentar mapear usando Status (que será shipment_status cuando existe)
 // Prioridad 2: Si no encuentra con Status, intentar con OriginalStatus (financial_status) como fallback
-func (uc *UseCaseOrderMapping) mapOrderStatusID(ctx context.Context, dto *domain.ProbabilityOrderDTO) *uint {
+func (uc *UseCaseOrderMapping) mapOrderStatusID(ctx context.Context, dto *dtos.ProbabilityOrderDTO) *uint {
 	if dto.IntegrationType == "" {
 		return nil
 	}
 
-	integrationTypeID := getIntegrationTypeID(dto.IntegrationType)
+	integrationTypeID := mappers.GetIntegrationTypeID(dto.IntegrationType)
 	if integrationTypeID == 0 {
 		return nil
 	}
 
 	// Prioridad 1: Intentar mapear usando Status (puede ser shipment_status, fulfillment_status, o financial_status)
 	if dto.Status != "" {
-		mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.Status)
+		mappedStatusID, err := uc.repo.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.Status)
 		if err == nil && mappedStatusID != nil {
 			return mappedStatusID
 		}
@@ -311,7 +314,7 @@ func (uc *UseCaseOrderMapping) mapOrderStatusID(ctx context.Context, dto *domain
 
 	// Prioridad 2: Si no encontró con Status, intentar con OriginalStatus (financial_status)
 	if dto.OriginalStatus != "" {
-		mappedStatusID, err := uc.orderStatusRepository.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
+		mappedStatusID, err := uc.repo.GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx, integrationTypeID, dto.OriginalStatus)
 		if err != nil {
 			uc.logger.Warn().
 				Uint("integration_type_id", integrationTypeID).
@@ -328,7 +331,7 @@ func (uc *UseCaseOrderMapping) mapOrderStatusID(ctx context.Context, dto *domain
 }
 
 // mapPaymentStatusID mapea el estado de pago desde el DTO o desde PaymentDetails si es Shopify
-func (uc *UseCaseOrderMapping) mapPaymentStatusID(ctx context.Context, dto *domain.ProbabilityOrderDTO) *uint {
+func (uc *UseCaseOrderMapping) mapPaymentStatusID(ctx context.Context, dto *dtos.ProbabilityOrderDTO) *uint {
 	// Si el DTO ya tiene PaymentStatusID, usarlo directamente
 	if dto.PaymentStatusID != nil && *dto.PaymentStatusID > 0 {
 		return dto.PaymentStatusID
@@ -346,8 +349,8 @@ func (uc *UseCaseOrderMapping) mapPaymentStatusID(ctx context.Context, dto *doma
 			return nil
 		}
 
-		paymentStatusCode := mapShopifyFinancialStatusToPaymentStatus(financialStatus)
-		mappedID, err := uc.paymentStatusRepository.GetPaymentStatusIDByCode(ctx, paymentStatusCode)
+		paymentStatusCode := mappers.MapShopifyFinancialStatusToPaymentStatus(financialStatus)
+		mappedID, err := uc.repo.GetPaymentStatusIDByCode(ctx, paymentStatusCode)
 		if err != nil || mappedID == nil {
 			return nil
 		}
@@ -359,7 +362,7 @@ func (uc *UseCaseOrderMapping) mapPaymentStatusID(ctx context.Context, dto *doma
 }
 
 // mapFulfillmentStatusID mapea el estado de fulfillment desde el DTO o desde FulfillmentDetails si es Shopify
-func (uc *UseCaseOrderMapping) mapFulfillmentStatusID(ctx context.Context, dto *domain.ProbabilityOrderDTO) *uint {
+func (uc *UseCaseOrderMapping) mapFulfillmentStatusID(ctx context.Context, dto *dtos.ProbabilityOrderDTO) *uint {
 	// Si el DTO ya tiene FulfillmentStatusID, usarlo directamente
 	if dto.FulfillmentStatusID != nil && *dto.FulfillmentStatusID > 0 {
 		return dto.FulfillmentStatusID
@@ -379,7 +382,7 @@ func (uc *UseCaseOrderMapping) mapFulfillmentStatusID(ctx context.Context, dto *
 			return uc.getFulfillmentStatusIDByCode(ctx, "unfulfilled")
 		}
 
-		fulfillmentStatusCode := mapShopifyFulfillmentStatusToFulfillmentStatus(&fulfillmentStatus)
+		fulfillmentStatusCode := mappers.MapShopifyFulfillmentStatusToFulfillmentStatus(&fulfillmentStatus)
 		return uc.getFulfillmentStatusIDByCode(ctx, fulfillmentStatusCode)
 	}
 
@@ -388,7 +391,7 @@ func (uc *UseCaseOrderMapping) mapFulfillmentStatusID(ctx context.Context, dto *
 
 // getFulfillmentStatusIDByCode obtiene el ID de un estado de fulfillment por su código
 func (uc *UseCaseOrderMapping) getFulfillmentStatusIDByCode(ctx context.Context, code string) *uint {
-	mappedID, err := uc.fulfillmentStatusRepository.GetFulfillmentStatusIDByCode(ctx, code)
+	mappedID, err := uc.repo.GetFulfillmentStatusIDByCode(ctx, code)
 	if err != nil || mappedID == nil {
 		return nil
 	}
@@ -396,12 +399,12 @@ func (uc *UseCaseOrderMapping) getFulfillmentStatusIDByCode(ctx context.Context,
 }
 
 // syncIsPaidFromPaymentStatus sincroniza IsPaid basado en PaymentStatusID
-func (uc *UseCaseOrderMapping) syncIsPaidFromPaymentStatus(ctx context.Context, order *domain.ProbabilityOrder, paymentStatusID *uint) {
+func (uc *UseCaseOrderMapping) syncIsPaidFromPaymentStatus(ctx context.Context, order *entities.ProbabilityOrder, paymentStatusID *uint) {
 	if paymentStatusID == nil {
 		return
 	}
 
-	paidStatusID, err := uc.paymentStatusRepository.GetPaymentStatusIDByCode(ctx, "paid")
+	paidStatusID, err := uc.repo.GetPaymentStatusIDByCode(ctx, "paid")
 	if err != nil || paidStatusID == nil || *paidStatusID != *paymentStatusID {
 		return
 	}
@@ -420,8 +423,8 @@ func (uc *UseCaseOrderMapping) syncIsPaidFromPaymentStatus(ctx context.Context, 
 // ───────────────────────────────────────────
 
 // buildOrderEntity construye la entidad ProbabilityOrder desde el DTO
-func (uc *UseCaseOrderMapping) buildOrderEntity(dto *domain.ProbabilityOrderDTO, clientID *uint, statusMapping orderStatusMapping) *domain.ProbabilityOrder {
-	return &domain.ProbabilityOrder{
+func (uc *UseCaseOrderMapping) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, clientID *uint, statusMapping orderStatusMapping) *entities.ProbabilityOrder {
+	return &entities.ProbabilityOrder{
 		// Identificadores de integración
 		BusinessID:      dto.BusinessID,
 		IntegrationID:   dto.IntegrationID,
@@ -505,7 +508,7 @@ func (uc *UseCaseOrderMapping) buildOrderEntity(dto *domain.ProbabilityOrderDTO,
 }
 
 // assignPaymentMethodID asigna el PaymentMethodID desde el primer pago
-func (uc *UseCaseOrderMapping) assignPaymentMethodID(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) {
+func (uc *UseCaseOrderMapping) assignPaymentMethodID(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) {
 	order.PaymentMethodID = 1 // Valor por defecto
 
 	if len(dto.Payments) == 0 {
@@ -523,7 +526,7 @@ func (uc *UseCaseOrderMapping) assignPaymentMethodID(order *domain.ProbabilityOr
 }
 
 // populateOrderFields popula campos JSONB y campos planos de dirección
-func (uc *UseCaseOrderMapping) populateOrderFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) {
+func (uc *UseCaseOrderMapping) populateOrderFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) {
 	// Popular campos JSONB Items si están vacíos (backward compatibility)
 	if len(dto.OrderItems) > 0 && len(dto.Items) <= 4 {
 		itemsJSON, err := json.Marshal(dto.OrderItems)
@@ -562,7 +565,7 @@ func (uc *UseCaseOrderMapping) populateOrderFields(order *domain.ProbabilityOrde
 // ───────────────────────────────────────────
 
 // saveRelatedEntities guarda todas las entidades relacionadas (items, addresses, payments, shipments, metadata)
-func (uc *UseCaseOrderMapping) saveRelatedEntities(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+func (uc *UseCaseOrderMapping) saveRelatedEntities(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) error {
 	if err := uc.saveOrderItems(ctx, order, dto); err != nil {
 		return err
 	}
@@ -587,12 +590,12 @@ func (uc *UseCaseOrderMapping) saveRelatedEntities(ctx context.Context, order *d
 }
 
 // saveOrderItems guarda los items de la orden
-func (uc *UseCaseOrderMapping) saveOrderItems(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+func (uc *UseCaseOrderMapping) saveOrderItems(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) error {
 	if len(dto.OrderItems) == 0 {
 		return nil
 	}
 
-	orderItems := make([]*domain.ProbabilityOrderItem, len(dto.OrderItems))
+	orderItems := make([]*entities.ProbabilityOrderItem, len(dto.OrderItems))
 	for i, itemDTO := range dto.OrderItems {
 		// Validar/Crear Producto
 		product, err := uc.GetOrCreateProduct(ctx, *dto.BusinessID, itemDTO)
@@ -605,7 +608,7 @@ func (uc *UseCaseOrderMapping) saveOrderItems(ctx context.Context, order *domain
 			productID = &product.ID
 		}
 
-		orderItems[i] = &domain.ProbabilityOrderItem{
+		orderItems[i] = &entities.ProbabilityOrderItem{
 			OrderID:          order.ID,
 			ProductID:        productID,
 			ProductSKU:       itemDTO.ProductSKU,
@@ -637,14 +640,14 @@ func (uc *UseCaseOrderMapping) saveOrderItems(ctx context.Context, order *domain
 }
 
 // saveAddresses guarda las direcciones de la orden
-func (uc *UseCaseOrderMapping) saveAddresses(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+func (uc *UseCaseOrderMapping) saveAddresses(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) error {
 	if len(dto.Addresses) == 0 {
 		return nil
 	}
 
-	addresses := make([]*domain.ProbabilityAddress, len(dto.Addresses))
+	addresses := make([]*entities.ProbabilityAddress, len(dto.Addresses))
 	for i, addrDTO := range dto.Addresses {
-		addresses[i] = &domain.ProbabilityAddress{
+		addresses[i] = &entities.ProbabilityAddress{
 			Type:         addrDTO.Type,
 			OrderID:      order.ID,
 			FirstName:    addrDTO.FirstName,
@@ -669,14 +672,14 @@ func (uc *UseCaseOrderMapping) saveAddresses(ctx context.Context, order *domain.
 }
 
 // savePayments guarda los pagos de la orden
-func (uc *UseCaseOrderMapping) savePayments(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+func (uc *UseCaseOrderMapping) savePayments(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) error {
 	if len(dto.Payments) == 0 {
 		return nil
 	}
 
-	payments := make([]*domain.ProbabilityPayment, len(dto.Payments))
+	payments := make([]*entities.ProbabilityPayment, len(dto.Payments))
 	for i, payDTO := range dto.Payments {
-		payments[i] = &domain.ProbabilityPayment{
+		payments[i] = &entities.ProbabilityPayment{
 			OrderID:          order.ID,
 			PaymentMethodID:  payDTO.PaymentMethodID,
 			Amount:           payDTO.Amount,
@@ -699,14 +702,14 @@ func (uc *UseCaseOrderMapping) savePayments(ctx context.Context, order *domain.P
 }
 
 // saveShipments guarda los envíos de la orden
-func (uc *UseCaseOrderMapping) saveShipments(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+func (uc *UseCaseOrderMapping) saveShipments(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) error {
 	if len(dto.Shipments) == 0 {
 		return nil
 	}
 
-	shipments := make([]*domain.ProbabilityShipment, len(dto.Shipments))
+	shipments := make([]*entities.ProbabilityShipment, len(dto.Shipments))
 	for i, shipDTO := range dto.Shipments {
-		shipments[i] = &domain.ProbabilityShipment{
+		shipments[i] = &entities.ProbabilityShipment{
 			OrderID:           order.ID,
 			TrackingNumber:    shipDTO.TrackingNumber,
 			TrackingURL:       shipDTO.TrackingURL,
@@ -740,12 +743,12 @@ func (uc *UseCaseOrderMapping) saveShipments(ctx context.Context, order *domain.
 }
 
 // saveChannelMetadata guarda los metadatos del canal
-func (uc *UseCaseOrderMapping) saveChannelMetadata(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) error {
+func (uc *UseCaseOrderMapping) saveChannelMetadata(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) error {
 	if dto.ChannelMetadata == nil {
 		return nil
 	}
 
-	metadata := &domain.ProbabilityOrderChannelMetadata{
+	metadata := &entities.ProbabilityOrderChannelMetadata{
 		OrderID:       order.ID,
 		ChannelSource: dto.ChannelMetadata.ChannelSource,
 		IntegrationID: dto.IntegrationID,
@@ -775,8 +778,8 @@ func (uc *UseCaseOrderMapping) saveChannelMetadata(ctx context.Context, order *d
 // ───────────────────────────────────────────
 
 // publishOrderEvents publica los eventos relacionados con la orden creada
-func (uc *UseCaseOrderMapping) publishOrderEvents(ctx context.Context, order *domain.ProbabilityOrder) {
-	if uc.eventPublisher == nil {
+func (uc *UseCaseOrderMapping) publishOrderEvents(ctx context.Context, order *entities.ProbabilityOrder) {
+	if uc.redisEventPublisher == nil {
 		return
 	}
 
@@ -791,8 +794,8 @@ func (uc *UseCaseOrderMapping) publishOrderEvents(ctx context.Context, order *do
 }
 
 // publishOrderCreatedEvent publica el evento de orden creada
-func (uc *UseCaseOrderMapping) publishOrderCreatedEvent(_ context.Context, order *domain.ProbabilityOrder) {
-	eventData := domain.OrderEventData{
+func (uc *UseCaseOrderMapping) publishOrderCreatedEvent(_ context.Context, order *entities.ProbabilityOrder) {
+	eventData := entities.OrderEventData{
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,
 		ExternalID:     order.ExternalID,
@@ -803,40 +806,19 @@ func (uc *UseCaseOrderMapping) publishOrderCreatedEvent(_ context.Context, order
 		Platform:       order.Platform,
 	}
 
-	event := domain.NewOrderEvent(domain.OrderEventTypeCreated, order.ID, eventData)
+	event := entities.NewOrderEvent(entities.OrderEventTypeCreated, order.ID, eventData)
 	event.BusinessID = order.BusinessID
 	if order.IntegrationID > 0 {
 		integrationID := order.IntegrationID
 		event.IntegrationID = &integrationID
 	}
 
-	go func() {
-		bgCtx := context.Background()
-		uc.logger.Info(bgCtx).
-			Str("order_id", order.ID).
-			Str("event_type", string(event.Type)).
-			Interface("business_id", event.BusinessID).
-			Interface("integration_id", event.IntegrationID).
-			Str("order_number", order.OrderNumber).
-			Msg("📤 Publicando evento order.created a Redis...")
-
-		if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
-			uc.logger.Error(bgCtx).
-				Err(err).
-				Str("order_id", order.ID).
-				Str("event_type", string(event.Type)).
-				Msg("❌ Error al publicar evento de orden creada")
-		} else {
-			uc.logger.Info(bgCtx).
-				Str("order_id", order.ID).
-				Str("event_type", string(event.Type)).
-				Msg("✅ Evento order.created publicado exitosamente a Redis")
-		}
-	}()
+	// Publicar en ambos canales (Redis + RabbitMQ) con orden completa
+	helpers.PublishEventDual(context.Background(), event, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 }
 
 // calculateOrderScore calcula el score de la orden directamente
-func (uc *UseCaseOrderMapping) calculateOrderScore(ctx context.Context, order *domain.ProbabilityOrder) {
+func (uc *UseCaseOrderMapping) calculateOrderScore(ctx context.Context, order *entities.ProbabilityOrder) {
 	go func() {
 		fmt.Printf("[MapAndSaveOrder] Calculando score directamente para orden %s\n", order.ID)
 		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
@@ -854,31 +836,22 @@ func (uc *UseCaseOrderMapping) calculateOrderScore(ctx context.Context, order *d
 }
 
 // publishScoreCalculationEvent publica el evento para calcular score
-func (uc *UseCaseOrderMapping) publishScoreCalculationEvent(ctx context.Context, order *domain.ProbabilityOrder) {
-	scoreEventData := domain.OrderEventData{
+func (uc *UseCaseOrderMapping) publishScoreCalculationEvent(ctx context.Context, order *entities.ProbabilityOrder) {
+	scoreEventData := entities.OrderEventData{
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,
 		ExternalID:     order.ExternalID,
 	}
 
-	scoreEvent := domain.NewOrderEvent(domain.OrderEventTypeScoreCalculationRequested, order.ID, scoreEventData)
+	scoreEvent := entities.NewOrderEvent(entities.OrderEventTypeScoreCalculationRequested, order.ID, scoreEventData)
 	scoreEvent.BusinessID = order.BusinessID
 	if order.IntegrationID > 0 {
 		integrationID := order.IntegrationID
 		scoreEvent.IntegrationID = &integrationID
 	}
 
-	go func() {
-		fmt.Printf("[MapAndSaveOrder] Publicando evento order.score_calculation_requested para orden %s\n", order.ID)
-		if err := uc.eventPublisher.PublishOrderEvent(ctx, scoreEvent); err != nil {
-			uc.logger.Error(ctx).
-				Err(err).
-				Str("order_id", order.ID).
-				Msg("Error al publicar evento de cálculo de score")
-		} else {
-			fmt.Printf("[MapAndSaveOrder] Evento order.score_calculation_requested publicado exitosamente para orden %s\n", order.ID)
-		}
-	}()
+	// Publicar en ambos canales (Redis + RabbitMQ) con orden completa
+	helpers.PublishEventDual(context.Background(), scoreEvent, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 }
 
 // ───────────────────────────────────────────
@@ -888,8 +861,8 @@ func (uc *UseCaseOrderMapping) publishScoreCalculationEvent(ctx context.Context,
 // ───────────────────────────────────────────
 
 // mapOrderToResponse convierte un modelo Order a OrderResponse
-func (uc *UseCaseOrderMapping) mapOrderToResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
-	return &domain.OrderResponse{
+func (uc *UseCaseOrderMapping) mapOrderToResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
+	return &dtos.OrderResponse{
 		ID:        order.ID,
 		CreatedAt: order.CreatedAt,
 		UpdatedAt: order.UpdatedAt,

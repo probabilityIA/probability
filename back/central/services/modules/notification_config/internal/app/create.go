@@ -58,6 +58,15 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateNotificationConfig
 		Str("type", entity.NotificationType).
 		Msg("Notification config created successfully")
 
+	// Cachear en Redis
+	if err := uc.cacheManager.CacheConfig(ctx, entity); err != nil {
+		uc.logger.Error().
+			Err(err).
+			Uint("config_id", entity.ID).
+			Msg("Error cacheando config después de crear - cache puede estar desincronizado")
+		// NO fallar - el cache es secundario
+	}
+
 	return mappers.ToResponseDTO(entity), nil
 }
 

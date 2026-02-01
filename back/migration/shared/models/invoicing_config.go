@@ -25,9 +25,13 @@ type InvoicingConfig struct {
 	IntegrationID uint        `gorm:"not null;index;uniqueIndex:idx_business_integration_config,priority:2"`
 	Integration   Integration `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
-	// Relación con InvoicingProvider (destino de facturación)
-	InvoicingProviderID uint              `gorm:"not null;index"`
+	// Relación con InvoicingProvider (DEPRECATED - mantener temporalmente para dual-read)
+	InvoicingProviderID *uint             `gorm:"index"`
 	InvoicingProvider   InvoicingProvider `gorm:"foreignKey:InvoicingProviderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+
+	// Relación con Integration (nuevo - provider de facturación desde integrations/)
+	InvoicingIntegrationID *uint       `gorm:"index"`
+	InvoicingIntegration   Integration `gorm:"foreignKey:InvoicingIntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
 	// Estado
 	Enabled      bool `gorm:"default:true;index"`  // Si la configuración está habilitada

@@ -1,0 +1,2 @@
+# Mappers adicionales si se necesitan funciones de conversión más complejas
+# Los mappers principales (ToDomain, FromDomain) están en models/

@@ -12,9 +12,10 @@ type InvoicingConfig struct {
 	DeletedAt *time.Time
 
 	// Relaciones (solo IDs)
-	BusinessID          uint
-	IntegrationID       uint
-	InvoicingProviderID uint
+	BusinessID     uint
+	IntegrationID  uint                // Integración de e-commerce (Shopify, MeLi, etc.)
+	InvoicingProviderID *uint          // DEPRECATED: Mantener temporalmente para dual-read
+	InvoicingIntegrationID *uint       // Integración de facturación (Softpymes - desde integrations/)
 
 	// Estado
 	Enabled     bool

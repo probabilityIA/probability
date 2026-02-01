@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
 // UpdateOrder actualiza una orden existente
-func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *domain.UpdateOrderRequest) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.UpdateOrderRequest) (*dtos.OrderResponse, error) {
 	if id == "" {
 		return nil, errors.New("order ID is required")
 	}
@@ -253,54 +255,45 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *domain.
 		}
 	}
 
-	// Publicar eventos si hay publicador disponible
-	if uc.eventPublisher != nil {
-		// Publicar evento de actualización
-		eventData := domain.OrderEventData{
+	// Publicar evento de actualización (Redis + RabbitMQ)
+	eventData := entities.OrderEventData{
+		OrderNumber:    order.OrderNumber,
+		InternalNumber: order.InternalNumber,
+		ExternalID:     order.ExternalID,
+		CurrentStatus:  order.Status,
+		CustomerEmail:  order.CustomerEmail,
+		TotalAmount:    &order.TotalAmount,
+		Currency:       order.Currency,
+		Platform:       order.Platform,
+	}
+	event := entities.NewOrderEvent(entities.OrderEventTypeUpdated, order.ID, eventData)
+	event.BusinessID = order.BusinessID
+	if order.IntegrationID > 0 {
+		integrationID := order.IntegrationID
+		event.IntegrationID = &integrationID
+	}
+	helpers.PublishEventDual(ctx, event, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
+
+	// Si cambió el estado, publicar evento de cambio de estado
+	if previousStatus != order.Status {
+		statusEventData := entities.OrderEventData{
 			OrderNumber:    order.OrderNumber,
 			InternalNumber: order.InternalNumber,
 			ExternalID:     order.ExternalID,
+			PreviousStatus: previousStatus,
 			CurrentStatus:  order.Status,
 			CustomerEmail:  order.CustomerEmail,
 			TotalAmount:    &order.TotalAmount,
 			Currency:       order.Currency,
 			Platform:       order.Platform,
 		}
-		event := domain.NewOrderEvent(domain.OrderEventTypeUpdated, order.ID, eventData)
-		event.BusinessID = order.BusinessID
+		statusEvent := entities.NewOrderEvent(entities.OrderEventTypeStatusChanged, order.ID, statusEventData)
+		statusEvent.BusinessID = order.BusinessID
 		if order.IntegrationID > 0 {
 			integrationID := order.IntegrationID
-			event.IntegrationID = &integrationID
+			statusEvent.IntegrationID = &integrationID
 		}
-		// Publicar de forma asíncrona
-		go func() {
-			uc.eventPublisher.PublishOrderEvent(ctx, event)
-		}()
-
-		// Si cambió el estado, publicar evento de cambio de estado
-		if previousStatus != order.Status {
-			statusEventData := domain.OrderEventData{
-				OrderNumber:    order.OrderNumber,
-				InternalNumber: order.InternalNumber,
-				ExternalID:     order.ExternalID,
-				PreviousStatus: previousStatus,
-				CurrentStatus:  order.Status,
-				CustomerEmail:  order.CustomerEmail,
-				TotalAmount:    &order.TotalAmount,
-				Currency:       order.Currency,
-				Platform:       order.Platform,
-			}
-			statusEvent := domain.NewOrderEvent(domain.OrderEventTypeStatusChanged, order.ID, statusEventData)
-			statusEvent.BusinessID = order.BusinessID
-			if order.IntegrationID > 0 {
-				integrationID := order.IntegrationID
-				statusEvent.IntegrationID = &integrationID
-			}
-			// Publicar de forma asíncrona
-			go func() {
-				uc.eventPublisher.PublishOrderEvent(ctx, statusEvent)
-			}()
-		}
+		helpers.PublishEventDual(ctx, statusEvent, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 	}
 
 	return mapper.ToOrderResponse(order), nil

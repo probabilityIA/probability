@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 )
 
 // UpdateOrder godoc
@@ -14,9 +14,9 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        id     path      string                     true  "ID de la orden (UUID)"
-// @Param        order  body      domain.UpdateOrderRequest  true  "Datos a actualizar"
+// @Param        order  body      dtos.UpdateOrderRequest  true  "Datos a actualizar"
 // @Security     BearerAuth
-// @Success      200  {object}  domain.OrderResponse
+// @Success      200  {object}  dtos.OrderResponse
 // @Failure      400  {object}  map[string]interface{}
 // @Failure      404  {object}  map[string]interface{}
 // @Failure      500  {object}  map[string]interface{}
@@ -33,7 +33,7 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	var req domain.UpdateOrderRequest
+	var req dtos.UpdateOrderRequest
 
 	// Validar el request body
 	if err := c.ShouldBindJSON(&req); err != nil {

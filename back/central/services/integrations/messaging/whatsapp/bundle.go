@@ -14,6 +14,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/consumer/consumerevent"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
@@ -112,14 +113,14 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 			redisChannel = "probability:orders:events" // Valor por defecto
 		}
 
-		// Crear repositorio de notification_config (consulta directa a BD)
-		notificationConfigRepo := repository.NewNotificationConfigRepository(database, logger)
+		// ✅ CAMBIO: Crear cache adapter de notification_config (solo lectura desde Redis)
+		notificationConfigCache := cache.New(redisClient, logger)
 
 		// Crear consumer de eventos
 		orderEventConsumer := consumerevent.New(
 			redisClient,
 			rabbit,
-			notificationConfigRepo, // ← Pasa repositorio
+			notificationConfigCache, // ✅ CAMBIO: Cache en lugar de repositorio
 			integrationQueries,
 			orderQueries,
 			logger,

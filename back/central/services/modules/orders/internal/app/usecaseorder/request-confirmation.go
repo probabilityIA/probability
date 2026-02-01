@@ -4,8 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/queue"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -16,15 +15,15 @@ type IRequestConfirmationUseCase interface {
 
 // RequestConfirmationUseCase implementa el caso de uso de solicitud de confirmación
 type RequestConfirmationUseCase struct {
-	repository      domain.IRepository
-	rabbitPublisher queue.IOrderRabbitPublisher
+	repository      ports.IRepository
+	rabbitPublisher ports.IOrderRabbitPublisher
 	log             log.ILogger
 }
 
 // NewRequestConfirmationUseCase crea una nueva instancia del caso de uso
 func NewRequestConfirmationUseCase(
-	repo domain.IRepository,
-	rabbitPublisher queue.IOrderRabbitPublisher,
+	repo ports.IRepository,
+	rabbitPublisher ports.IOrderRabbitPublisher,
 	logger log.ILogger,
 ) IRequestConfirmationUseCase {
 	return &RequestConfirmationUseCase{

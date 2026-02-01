@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -9,6 +10,7 @@ type useCase struct {
 	repository              ports.IRepository
 	notificationTypeRepo    ports.INotificationTypeRepository
 	notificationEventRepo   ports.INotificationEventTypeRepository
+	cacheManager            cache.ICacheManager
 	logger                  log.ILogger
 }
 
@@ -17,12 +19,14 @@ func New(
 	repository ports.IRepository,
 	notificationTypeRepo ports.INotificationTypeRepository,
 	notificationEventRepo ports.INotificationEventTypeRepository,
+	cacheManager cache.ICacheManager,
 	logger log.ILogger,
 ) ports.IUseCase {
 	return &useCase{
 		repository:            repository,
 		notificationTypeRepo:  notificationTypeRepo,
 		notificationEventRepo: notificationEventRepo,
+		cacheManager:          cacheManager,
 		logger:                logger.WithModule("notification_config_usecase"),
 	}
 }

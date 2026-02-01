@@ -22,9 +22,10 @@ func TestDelete_Success(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	// Act
 	err := useCase.Delete(ctx, 1)
@@ -47,9 +48,10 @@ func TestDelete_NotFound(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	// Act
 	err := useCase.Delete(ctx, 999)
@@ -76,9 +78,10 @@ func TestDelete_RepositoryError(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	// Act
 	err := useCase.Delete(ctx, 1)

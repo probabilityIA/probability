@@ -6,15 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/queue/mappers"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/queue/response"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
-
-// IOrderRabbitPublisher define la interfaz para publicar eventos de órdenes a RabbitMQ
-type IOrderRabbitPublisher interface {
-	PublishConfirmationRequested(ctx context.Context, order *domain.ProbabilityOrder) error
-}
 
 // OrderRabbitPublisher implementa el publicador de eventos de órdenes
 type OrderRabbitPublisher struct {
@@ -23,15 +21,105 @@ type OrderRabbitPublisher struct {
 }
 
 // NewOrderRabbitPublisher crea un nuevo publisher de RabbitMQ
-func NewOrderRabbitPublisher(rabbit rabbitmq.IQueue, logger log.ILogger) IOrderRabbitPublisher {
+func NewOrderRabbitPublisher(rabbit rabbitmq.IQueue, logger log.ILogger) ports.IOrderRabbitPublisher {
 	return &OrderRabbitPublisher{
 		rabbit: rabbit,
 		log:    logger,
 	}
 }
 
+// ───────────────────────────────────────────
+//
+//	MÉTODOS DE PUBLICACIÓN DE EVENTOS
+//
+// ───────────────────────────────────────────
+
+// PublishOrderCreated publica un evento de orden creada
+func (p *OrderRabbitPublisher) PublishOrderCreated(ctx context.Context, order *entities.ProbabilityOrder) error {
+	message := &response.OrderEventMessage{
+		EventID:       mappers.GenerateEventID(),
+		EventType:     "order.created",
+		OrderID:       order.ID,
+		BusinessID:    order.BusinessID,
+		IntegrationID: &order.IntegrationID,
+		Timestamp:     time.Now(),
+		Order:         mappers.OrderToSnapshot(order),
+	}
+	return p.publishToQueue(ctx, "orders.events.created", message)
+}
+
+// PublishOrderUpdated publica un evento de orden actualizada
+func (p *OrderRabbitPublisher) PublishOrderUpdated(ctx context.Context, order *entities.ProbabilityOrder) error {
+	message := &response.OrderEventMessage{
+		EventID:       mappers.GenerateEventID(),
+		EventType:     "order.updated",
+		OrderID:       order.ID,
+		BusinessID:    order.BusinessID,
+		IntegrationID: &order.IntegrationID,
+		Timestamp:     time.Now(),
+		Order:         mappers.OrderToSnapshot(order),
+	}
+	return p.publishToQueue(ctx, "orders.events.updated", message)
+}
+
+// PublishOrderCancelled publica un evento de orden cancelada
+func (p *OrderRabbitPublisher) PublishOrderCancelled(ctx context.Context, order *entities.ProbabilityOrder) error {
+	message := &response.OrderEventMessage{
+		EventID:       mappers.GenerateEventID(),
+		EventType:     "order.cancelled",
+		OrderID:       order.ID,
+		BusinessID:    order.BusinessID,
+		IntegrationID: &order.IntegrationID,
+		Timestamp:     time.Now(),
+		Order:         mappers.OrderToSnapshot(order),
+	}
+	return p.publishToQueue(ctx, "orders.events.cancelled", message)
+}
+
+// PublishOrderStatusChanged publica un evento de cambio de estado
+func (p *OrderRabbitPublisher) PublishOrderStatusChanged(ctx context.Context, order *entities.ProbabilityOrder, previousStatus, currentStatus string) error {
+	message := &response.OrderEventMessage{
+		EventID:       mappers.GenerateEventID(),
+		EventType:     "order.status_changed",
+		OrderID:       order.ID,
+		BusinessID:    order.BusinessID,
+		IntegrationID: &order.IntegrationID,
+		Timestamp:     time.Now(),
+		Changes: map[string]interface{}{
+			"previous_status": previousStatus,
+			"current_status":  currentStatus,
+		},
+		Order: mappers.OrderToSnapshot(order),
+	}
+	return p.publishToQueue(ctx, "orders.events.status_changed", message)
+}
+
+// PublishOrderEvent publica un evento genérico de orden con snapshot completo
+func (p *OrderRabbitPublisher) PublishOrderEvent(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error {
+	queue := p.getQueueForEventType(event.Type)
+
+	// Construir mensaje completo con OrderSnapshot
+	message := &response.OrderEventMessage{
+		EventID:       event.ID,
+		EventType:     string(event.Type),
+		OrderID:       event.OrderID,
+		BusinessID:    event.BusinessID,
+		IntegrationID: event.IntegrationID,
+		Timestamp:     event.Timestamp,
+		Order:         mappers.OrderToSnapshot(order), // ✅ Snapshot completo
+		Changes: map[string]interface{}{
+			"previous_status": event.Data.PreviousStatus,
+			"current_status":  event.Data.CurrentStatus,
+			"platform":        event.Data.Platform,
+		},
+		Metadata: event.Metadata,
+	}
+
+	return p.publishToQueue(ctx, queue, message)
+}
+
 // PublishConfirmationRequested publica un evento cuando una orden requiere confirmación
-func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context, order *domain.ProbabilityOrder) error {
+func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context, order *entities.ProbabilityOrder) error {
 	// Construir resumen de items
 	itemsSummary := buildItemsSummary(order)
 
@@ -40,21 +128,21 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 
 	// Construir evento
 	event := map[string]interface{}{
-		"event_type":       "order.confirmation_requested",
-		"order_id":         order.ID,
-		"order_number":     order.OrderNumber,
-		"business_id":      order.BusinessID,
-		"customer_name":    order.CustomerName,
-		"customer_phone":   order.CustomerPhone,
-		"customer_email":   order.CustomerEmail,
-		"total_amount":     order.TotalAmount,
-		"currency":         order.Currency,
-		"items_summary":    itemsSummary,
-		"shipping_address": shippingAddress,
+		"event_type":        "order.confirmation_requested",
+		"order_id":          order.ID,
+		"order_number":      order.OrderNumber,
+		"business_id":       order.BusinessID,
+		"customer_name":     order.CustomerName,
+		"customer_phone":    order.CustomerPhone,
+		"customer_email":    order.CustomerEmail,
+		"total_amount":      order.TotalAmount,
+		"currency":          order.Currency,
+		"items_summary":     itemsSummary,
+		"shipping_address":  shippingAddress,
 		"payment_method_id": order.PaymentMethodID,
-		"integration_id":   order.IntegrationID,
-		"platform":         order.Platform,
-		"timestamp":        time.Now().Unix(),
+		"integration_id":    order.IntegrationID,
+		"platform":          order.Platform,
+		"timestamp":         time.Now().Unix(),
 	}
 
 	// Serializar a JSON
@@ -87,7 +175,7 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 }
 
 // buildItemsSummary construye un resumen de los items de la orden
-func buildItemsSummary(order *domain.ProbabilityOrder) string {
+func buildItemsSummary(order *entities.ProbabilityOrder) string {
 	if len(order.OrderItems) == 0 {
 		return "Sin items"
 	}
@@ -104,7 +192,7 @@ func buildItemsSummary(order *domain.ProbabilityOrder) string {
 }
 
 // buildShippingAddress construye un resumen de la dirección de envío
-func buildShippingAddress(order *domain.ProbabilityOrder) string {
+func buildShippingAddress(order *entities.ProbabilityOrder) string {
 	if order.ShippingStreet == "" && order.ShippingCity == "" {
 		return "Sin dirección"
 	}
@@ -124,4 +212,61 @@ func buildShippingAddress(order *domain.ProbabilityOrder) string {
 	}
 
 	return address
+}
+
+// ───────────────────────────────────────────
+//
+//	FUNCIONES HELPER
+//
+// ───────────────────────────────────────────
+
+// publishToQueue publica un mensaje a una queue específica de RabbitMQ
+func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, queue string, message *response.OrderEventMessage) error {
+	// Serializar a JSON
+	payload, err := json.Marshal(message)
+	if err != nil {
+		p.log.Error().
+			Err(err).
+			Str("order_id", message.OrderID).
+			Str("event_type", message.EventType).
+			Msg("Error marshaling order event")
+		return fmt.Errorf("error marshaling event: %w", err)
+	}
+
+	// Publicar a RabbitMQ
+	if err := p.rabbit.Publish(ctx, queue, payload); err != nil {
+		p.log.Error().
+			Err(err).
+			Str("order_id", message.OrderID).
+			Str("event_type", message.EventType).
+			Str("queue", queue).
+			Msg("Error publishing order event to RabbitMQ")
+		return fmt.Errorf("error publishing to RabbitMQ: %w", err)
+	}
+
+	p.log.Info().
+		Str("order_id", message.OrderID).
+		Str("event_type", message.EventType).
+		Str("queue", queue).
+		Msg("✅ Order event published to RabbitMQ")
+
+	return nil
+}
+
+// getQueueForEventType retorna la queue correspondiente al tipo de evento
+func (p *OrderRabbitPublisher) getQueueForEventType(eventType entities.OrderEventType) string {
+	switch eventType {
+	case entities.OrderEventTypeCreated:
+		return "orders.events.created"
+	case entities.OrderEventTypeUpdated:
+		return "orders.events.updated"
+	case entities.OrderEventTypeCancelled:
+		return "orders.events.cancelled"
+	case entities.OrderEventTypeStatusChanged:
+		return "orders.events.status_changed"
+	case entities.OrderEventTypeConfirmationRequested:
+		return "orders.confirmation.requested"
+	default:
+		return "orders.events.generic"
+	}
 }

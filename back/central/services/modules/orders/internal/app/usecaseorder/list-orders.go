@@ -6,11 +6,11 @@ import (
 	"math"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 )
 
 // ListOrders obtiene una lista paginada de órdenes con filtros
-func (uc *UseCaseOrder) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*domain.OrdersListResponse, error) {
+func (uc *UseCaseOrder) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*dtos.OrdersListResponse, error) {
 	// Validar paginación
 	if page < 1 {
 		page = 1
@@ -26,7 +26,7 @@ func (uc *UseCaseOrder) ListOrders(ctx context.Context, page, pageSize int, filt
 	}
 
 	// Mapear a respuestas resumidas
-	orderSummaries := make([]domain.OrderSummary, len(orders))
+	orderSummaries := make([]dtos.OrderSummary, len(orders))
 	for i, order := range orders {
 		orderSummaries[i] = mapper.ToOrderSummary(&order)
 	}
@@ -34,7 +34,7 @@ func (uc *UseCaseOrder) ListOrders(ctx context.Context, page, pageSize int, filt
 	// Calcular total de páginas
 	totalPages := int(math.Ceil(float64(total) / float64(pageSize)))
 
-	return &domain.OrdersListResponse{
+	return &dtos.OrdersListResponse{
 		Data:       orderSummaries,
 		Total:      total,
 		Page:       page,

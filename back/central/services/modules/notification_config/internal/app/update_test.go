@@ -70,9 +70,10 @@ func TestUpdate_Success(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	newNotificationType := "email"
 	newIsActive := false
@@ -158,9 +159,10 @@ func TestUpdate_PartialUpdate(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	// Solo actualizar IsActive
 	newIsActive := false
@@ -202,9 +204,10 @@ func TestUpdate_ConfigNotFound(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	newIsActive := false
 	dto := dtos.UpdateNotificationConfigDTO{
@@ -251,9 +254,10 @@ func TestUpdate_RepositoryUpdateError(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	newIsActive := false
 	dto := dtos.UpdateNotificationConfigDTO{
@@ -307,9 +311,10 @@ func TestUpdate_GetUpdatedConfigError(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	newIsActive := false
 	dto := dtos.UpdateNotificationConfigDTO{

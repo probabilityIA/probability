@@ -15,7 +15,8 @@ import {
     DeleteWebhookResponse,
     VerifyWebhooksResponse,
     CreateWebhookResponse,
-    SyncOrdersParams
+    SyncOrdersParams,
+    IntegrationCategoriesResponse
 } from '../domain/types';
 
 export class IntegrationUseCases {
@@ -124,5 +125,10 @@ export class IntegrationUseCases {
 
     async createWebhook(id: number): Promise<CreateWebhookResponse> {
         return this.repository.createWebhook(id);
+    }
+
+    // Integration Categories
+    async getIntegrationCategories(): Promise<IntegrationCategoriesResponse> {
+        return this.repository.getIntegrationCategories();
     }
 }

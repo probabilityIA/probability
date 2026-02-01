@@ -115,6 +115,11 @@ func (r *Repository) ListActiveIntegrationTypes(ctx context.Context) ([]*domain.
 
 // toIntegrationTypeModel convierte domain.IntegrationType a models.IntegrationType
 func toIntegrationTypeModel(d *domain.IntegrationType) models.IntegrationType {
+	var categoryID *uint
+	if d.CategoryID != 0 {
+		categoryID = &d.CategoryID
+	}
+
 	return models.IntegrationType{
 		Model: gorm.Model{
 			ID:        d.ID,
@@ -126,7 +131,7 @@ func toIntegrationTypeModel(d *domain.IntegrationType) models.IntegrationType {
 		Description:       d.Description,
 		Icon:              d.Icon,
 		ImageURL:          d.ImageURL,
-		CategoryID:        d.CategoryID,
+		CategoryID:        categoryID,
 		IsActive:          d.IsActive,
 		ConfigSchema:      d.ConfigSchema,
 		CredentialsSchema: d.CredentialsSchema,
@@ -154,6 +159,11 @@ func toIntegrationTypeDomain(m models.IntegrationType) domain.IntegrationType {
 		}
 	}
 
+	categoryID := uint(0)
+	if m.CategoryID != nil {
+		categoryID = *m.CategoryID
+	}
+
 	return domain.IntegrationType{
 		ID:                m.ID,
 		Name:              m.Name,
@@ -161,7 +171,7 @@ func toIntegrationTypeDomain(m models.IntegrationType) domain.IntegrationType {
 		Description:       m.Description,
 		Icon:              m.Icon,
 		ImageURL:          m.ImageURL,
-		CategoryID:        m.CategoryID,
+		CategoryID:        categoryID,
 		Category:          category,
 		IsActive:          m.IsActive,
 		ConfigSchema:      m.ConfigSchema,

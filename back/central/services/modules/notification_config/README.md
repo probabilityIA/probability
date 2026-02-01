@@ -1,267 +1,577 @@
 # Notification Config Module
 
-## Descripción
+Sistema de configuración de notificaciones multi-canal para Probability. Permite configurar qué notificaciones enviar, por qué canal, y bajo qué condiciones, para cada integración de e-commerce.
 
-Módulo de configuración de notificaciones con **arquitectura jerárquica de tres niveles**:
+---
 
-1. **Notification Types** (Tipos de Notificación) - Canales de comunicación: WhatsApp, SSE, Email, SMS
-2. **Notification Event Types** (Eventos de Notificación) - Eventos específicos por tipo: order.created, order.shipped, invoice.created
-3. **Business Notification Configs** (Configuraciones de Negocio) - Configuraciones específicas por negocio/integración
+## 📌 ¿Qué hace este módulo?
 
-## Arquitectura Hexagonal
+Este módulo permite a los negocios **configurar notificaciones automáticas** que se disparan cuando ocurren eventos específicos en sus órdenes (creación, cambio de estado, envío, cancelación, etc.).
+
+### Problema que resuelve
+
+En una plataforma multi-tenant como Probability, cada negocio:
+- Tiene múltiples integraciones (Shopify, Amazon, MercadoLibre)
+- Necesita notificar a sus clientes por diferentes canales (WhatsApp, Email, SMS)
+- Quiere diferentes mensajes para diferentes eventos (pedido creado, enviado, entregado)
+- Necesita filtrar cuándo enviar cada notificación (solo para ciertos estados, métodos de pago, etc.)
+
+**Este módulo centraliza y hace configurable todo este sistema de notificaciones.**
+
+---
+
+## 🔄 ¿Cómo funciona?
+
+### Flujo Conceptual
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  1. EVENTO OCURRE                                               │
+│  Una orden es creada en Shopify                                │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  2. SISTEMA BUSCA CONFIGURACIONES                               │
+│  ¿Hay configs activas para esta integración + evento?          │
+│  → Business: "Mi Tienda"                                        │
+│  → Integration: "Shopify Mi Tiendita"                          │
+│  → Event: "order.created"                                       │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  3. VALIDA CONDICIONES                                          │
+│  ¿Cumple con los filtros configurados?                         │
+│  → Estado de la orden: "created" ✓                             │
+│  → Método de pago: "contra_entrega" ✓                          │
+└─────────────────────────────────────────────────────────────────┘
+                            ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  4. ENVÍA NOTIFICACIÓN                                          │
+│  Por el canal configurado:                                      │
+│  → WhatsApp: "Tu pedido #1234 ha sido confirmado"              │
+│  → Email: "Confirmación de Pedido"                             │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🏗️ Arquitectura de 3 Niveles
+
+El módulo sigue una **jerarquía de tres niveles** que permite flexibilidad y reutilización:
+
+### Nivel 1: Tipos de Notificación (Canales)
+
+**¿Qué es?** Define los canales de comunicación disponibles.
+
+**Tabla:** `notification_types`
+
+**Ejemplos:**
+- WhatsApp Business
+- Email
+- SMS
+- SSE (Server-Sent Events - notificaciones en tiempo real en la web)
+
+**Características:**
+- Cada tipo tiene un código único (`whatsapp`, `email`, `sms`, `sse`)
+- Puede estar activo o inactivo globalmente
+- Define un esquema de configuración específico (ej: para WhatsApp se necesita API key, número, etc.)
+
+```go
+type NotificationType struct {
+    ID           uint
+    Name         string  // "WhatsApp Business"
+    Code         string  // "whatsapp" (unique)
+    Description  string
+    Icon         string
+    IsActive     bool
+    ConfigSchema map[string]interface{}  // Esquema JSON de configuración
+    CreatedAt    time.Time
+    UpdatedAt    time.Time
+}
+```
+
+---
+
+### Nivel 2: Tipos de Evento (Qué pasó)
+
+**¿Qué es?** Define los eventos específicos que pueden ocurrir en cada canal.
+
+**Tabla:** `notification_event_types`
+
+**Relación:** Cada evento pertenece a UN tipo de notificación.
+
+**Ejemplos para WhatsApp:**
+- `order.created` → "Confirmación de Pedido"
+- `order.shipped` → "Tu pedido ha sido enviado"
+- `order.delivered` → "Tu pedido ha sido entregado"
+- `order.canceled` → "Pedido cancelado"
+- `invoice.created` → "Factura disponible"
+
+**Ejemplos para SSE (notificaciones web):**
+- `order.created` → "Nueva Orden en el Dashboard"
+- `order.status_changed` → "Estado de Orden Actualizado"
+
+```go
+type NotificationEventType struct {
+    ID                 uint
+    NotificationTypeID uint    // FK a notification_types
+    EventCode          string  // "order.created", "order.shipped"
+    EventName          string  // "Confirmación de Pedido"
+    Description        string
+    TemplateConfig     map[string]interface{}  // Config del template (variables, etc.)
+    IsActive           bool
+    CreatedAt          time.Time
+    UpdatedAt          time.Time
+}
+```
+
+**Índice único:** `(notification_type_id, event_code)` - No puede haber dos eventos con el mismo código para el mismo tipo.
+
+---
+
+### Nivel 3: Configuraciones de Negocio (Cuándo y cómo enviar)
+
+**¿Qué es?** Configura qué notificaciones enviar para cada integración de un negocio.
+
+**Tabla:** `business_notification_configs`
+
+**Relación:** Conecta una integración con un tipo de notificación y un evento.
+
+```go
+type BusinessNotificationConfig struct {
+    ID                      uint
+    BusinessID              uint  // FK a businesses (el negocio dueño)
+    IntegrationID           uint  // FK a integrations (de dónde viene el evento)
+    NotificationTypeID      uint  // FK a notification_types (por dónde enviar)
+    NotificationEventTypeID uint  // FK a notification_event_types (qué evento)
+    Enabled                 bool  // ¿Está activa esta config?
+    Filters                 map[string]interface{}  // Filtros adicionales (JSON)
+    Description             string
+    CreatedAt               time.Time
+    UpdatedAt               time.Time
+    DeletedAt               *time.Time  // Soft delete
+
+    // Relaciones Many-to-Many
+    OrderStatusIDs []uint  // Estados de orden que disparan la notificación
+}
+```
+
+**Índice único:** `(integration_id, notification_type_id, notification_event_type_id)` - Una integración no puede tener dos configs iguales.
+
+**Relación M2M con Order Statuses:**
+- Tabla intermedia: `business_notification_config_order_statuses`
+- Permite filtrar: "Solo enviar WhatsApp cuando el estado sea 'created' o 'paid'"
+- Estados disponibles: `pending`, `processing`, `shipped`, `delivered`, `completed`, `cancelled`, `refunded`, `failed`, `on_hold`
+
+---
+
+## 💡 Ejemplos de Uso
+
+### Ejemplo 1: Confirmación de Pedido por WhatsApp
+
+**Escenario:**
+"Mi Tienda" quiere enviar un mensaje de WhatsApp cuando se crea una orden en su tienda Shopify, solo si el pago es contra entrega o PSE.
+
+**Configuración:**
+
+```json
+{
+  "business_id": 1,
+  "integration_id": 5,
+  "notification_type_id": 2,
+  "notification_event_type_id": 10,
+  "enabled": true,
+  "order_status_ids": [1, 3],
+  "filters": {
+    "payment_methods": ["contra_entrega", "pse"]
+  },
+  "description": "Confirmación por WhatsApp para órdenes de Shopify"
+}
+```
+
+**Datos relacionados:**
+- Business: "Mi Tienda" (ID: 1)
+- Integration: "Shopify - Mi Tiendita" (ID: 5)
+- NotificationType: "WhatsApp" (ID: 2, code: `whatsapp`)
+- NotificationEventType: "Confirmación de Pedido" (ID: 10, event_code: `order.created`)
+- OrderStatuses:
+  - ID 1: `created`
+  - ID 3: `paid`
+
+**Resultado:**
+- ✅ Se enviará WhatsApp cuando:
+  - La orden viene de la integración Shopify (ID: 5)
+  - Se dispara el evento `order.created`
+  - El estado de la orden es `created` O `paid`
+  - El método de pago es "contra_entrega" O "pse"
+
+- ❌ NO se enviará si:
+  - El estado es diferente (ej: `cancelled`)
+  - El método de pago es otro (ej: "tarjeta_credito")
+
+---
+
+### Ejemplo 2: Notificaciones en Dashboard (SSE)
+
+**Escenario:**
+"Mi Tienda" quiere mostrar notificaciones en tiempo real en el dashboard cuando cambia el estado de una orden.
+
+**Configuración:**
+
+```json
+{
+  "business_id": 1,
+  "integration_id": 5,
+  "notification_type_id": 1,
+  "notification_event_type_id": 2,
+  "enabled": true,
+  "order_status_ids": [2, 4, 5],
+  "description": "Notificaciones en tiempo real en el dashboard"
+}
+```
+
+**Datos relacionados:**
+- NotificationType: "SSE" (ID: 1, code: `sse`)
+- NotificationEventType: "Cambio de Estado" (ID: 2, event_code: `order.status_changed`)
+- OrderStatuses:
+  - ID 2: `processing`
+  - ID 4: `shipped`
+  - ID 5: `delivered`
+
+**Resultado:**
+- ✅ Se enviará notificación SSE al dashboard cuando:
+  - El estado de una orden cambie a `processing`, `shipped` o `delivered`
+
+---
+
+### Ejemplo 3: Email de Factura
+
+**Escenario:**
+Enviar email con la factura cuando se genere el documento.
+
+```json
+{
+  "business_id": 1,
+  "integration_id": 5,
+  "notification_type_id": 3,
+  "notification_event_type_id": 15,
+  "enabled": true,
+  "description": "Email con factura generada"
+}
+```
+
+**Datos relacionados:**
+- NotificationType: "Email" (ID: 3, code: `email`)
+- NotificationEventType: "Factura Generada" (ID: 15, event_code: `invoice.created`)
+
+---
+
+## 🚀 API Endpoints
+
+### Tipos de Notificación (Notification Types)
+
+```http
+GET    /api/notification-types           # Listar todos los canales
+GET    /api/notification-types/:id       # Obtener un tipo específico
+POST   /api/notification-types           # Crear nuevo canal (admin)
+PATCH  /api/notification-types/:id       # Actualizar canal
+DELETE /api/notification-types/:id       # Eliminar canal (soft delete)
+```
+
+**Ejemplo - Listar tipos:**
+```bash
+curl http://localhost:8080/api/notification-types
+```
+
+**Respuesta:**
+```json
+[
+  {
+    "id": 1,
+    "name": "SSE (Server-Sent Events)",
+    "code": "sse",
+    "description": "Notificaciones en tiempo real en el dashboard",
+    "icon": "bell",
+    "is_active": true
+  },
+  {
+    "id": 2,
+    "name": "WhatsApp Business",
+    "code": "whatsapp",
+    "description": "Mensajes por WhatsApp",
+    "icon": "whatsapp",
+    "is_active": true
+  }
+]
+```
+
+---
+
+### Tipos de Evento (Notification Event Types)
+
+```http
+GET    /api/notification-event-types?notification_type_id=2  # Listar eventos (filtrable)
+GET    /api/notification-event-types/:id                     # Obtener evento
+POST   /api/notification-event-types                         # Crear evento
+PATCH  /api/notification-event-types/:id                     # Actualizar evento
+DELETE /api/notification-event-types/:id                     # Eliminar evento
+```
+
+**Ejemplo - Listar eventos de WhatsApp:**
+```bash
+curl http://localhost:8080/api/notification-event-types?notification_type_id=2
+```
+
+**Respuesta:**
+```json
+[
+  {
+    "id": 10,
+    "notification_type_id": 2,
+    "event_code": "order.created",
+    "event_name": "Confirmación de Pedido",
+    "description": "Se envía cuando se crea una nueva orden",
+    "is_active": true
+  },
+  {
+    "id": 11,
+    "notification_type_id": 2,
+    "event_code": "order.shipped",
+    "event_name": "Pedido Enviado",
+    "description": "Notifica cuando el pedido ha sido despachado",
+    "is_active": true
+  }
+]
+```
+
+---
+
+### Configuraciones de Negocio (Business Notification Configs)
+
+```http
+GET    /api/notification-configs?business_id=1&integration_id=5  # Listar configs
+GET    /api/notification-configs/:id                             # Obtener config
+POST   /api/notification-configs                                 # Crear config
+PATCH  /api/notification-configs/:id                             # Actualizar config
+DELETE /api/notification-configs/:id                             # Eliminar config
+```
+
+**Ejemplo - Crear configuración:**
+```bash
+curl -X POST http://localhost:8080/api/notification-configs \
+  -H "Content-Type: application/json" \
+  -d '{
+    "business_id": 1,
+    "integration_id": 5,
+    "notification_type_id": 2,
+    "notification_event_type_id": 10,
+    "enabled": true,
+    "order_status_ids": [1, 3],
+    "filters": {
+      "payment_methods": ["contra_entrega", "pse"]
+    },
+    "description": "WhatsApp para órdenes de Shopify"
+  }'
+```
+
+**Ejemplo - Listar configs de una integración:**
+```bash
+curl http://localhost:8080/api/notification-configs?integration_id=5
+```
+
+**Respuesta:**
+```json
+[
+  {
+    "id": 1,
+    "business_id": 1,
+    "integration_id": 5,
+    "notification_type_id": 2,
+    "notification_event_type_id": 10,
+    "enabled": true,
+    "order_status_ids": [1, 3],
+    "filters": {
+      "payment_methods": ["contra_entrega", "pse"]
+    },
+    "description": "WhatsApp para órdenes de Shopify",
+    "integration": {
+      "id": 5,
+      "name": "Shopify - Mi Tiendita"
+    },
+    "notification_type": {
+      "id": 2,
+      "name": "WhatsApp Business",
+      "code": "whatsapp"
+    },
+    "notification_event_type": {
+      "id": 10,
+      "event_code": "order.created",
+      "event_name": "Confirmación de Pedido"
+    }
+  }
+]
+```
+
+---
+
+## 📖 Guía de Configuración
+
+### Paso 1: Configurar Tipos de Notificación
+
+Los tipos básicos (WhatsApp, Email, SMS, SSE) vienen preconfigurados. Solo necesitas activarlos/desactivarlos según tu plan.
+
+```bash
+# Listar tipos disponibles
+GET /api/notification-types
+
+# Desactivar un tipo (ej: SMS)
+PATCH /api/notification-types/4
+{
+  "is_active": false
+}
+```
+
+---
+
+### Paso 2: Configurar Eventos
+
+Los eventos comunes vienen precargados, pero puedes crear eventos personalizados.
+
+```bash
+# Crear evento personalizado para WhatsApp
+POST /api/notification-event-types
+{
+  "notification_type_id": 2,
+  "event_code": "order.ready_for_pickup",
+  "event_name": "Pedido Listo para Recoger",
+  "description": "Notifica cuando el pedido está listo en tienda",
+  "is_active": true
+}
+```
+
+---
+
+### Paso 3: Crear Configuraciones para tus Integraciones
+
+Ahora conecta tus integraciones con los eventos y canales que quieres usar.
+
+```bash
+# Configurar WhatsApp para confirmaciones de Shopify
+POST /api/notification-configs
+{
+  "business_id": 1,
+  "integration_id": 5,
+  "notification_type_id": 2,
+  "notification_event_type_id": 10,
+  "enabled": true,
+  "order_status_ids": [1, 3],
+  "description": "Confirmación de pedido por WhatsApp"
+}
+```
+
+---
+
+### Paso 4: Filtrar por Estados
+
+Especifica en qué estados de orden se debe enviar la notificación.
+
+**Estados disponibles:**
+- `pending` (1)
+- `processing` (2)
+- `paid` (3)
+- `shipped` (4)
+- `delivered` (5)
+- `completed` (6)
+- `cancelled` (7)
+- `refunded` (8)
+- `failed` (9)
+- `on_hold` (10)
+
+**Ejemplo:**
+```json
+{
+  "order_status_ids": [1, 3]  // Solo estados "pending" y "paid"
+}
+```
+
+---
+
+### Paso 5: Filtros Adicionales (Opcional)
+
+Agrega filtros adicionales en formato JSON:
+
+```json
+{
+  "filters": {
+    "payment_methods": ["contra_entrega", "pse"],
+    "min_amount": 50000,
+    "source_integration_id": 5
+  }
+}
+```
+
+---
+
+## 🏛️ Arquitectura Técnica
+
+### Estructura de Carpetas (Arquitectura Hexagonal)
 
 ```
 notification_config/
 ├── bundle.go                    # Ensamblador del módulo
 └── internal/
     ├── domain/                  # 🔵 DOMINIO (núcleo puro)
-    │   ├── entities/
-    │   │   ├── notification_type.go              # Entidad NotificationType
-    │   │   ├── notification_event_type.go        # Entidad NotificationEventType (NUEVA)
-    │   │   ├── business_notification_config.go   # Entidad refactorizada
-    │   │   └── notification_config.go            # IntegrationNotificationConfig (legacy)
-    │   ├── dtos/
-    │   ├── ports/
-    │   │   ├── repository.go    # Interfaces de repositorios
-    │   │   └── usecase.go       # Interfaces de casos de uso
-    │   └── errors/
+    │   ├── entities/            # Entidades sin tags
+    │   │   ├── notification_type.go
+    │   │   ├── notification_event_type.go
+    │   │   └── business_notification_config.go
+    │   ├── dtos/                # DTOs de dominio
+    │   ├── ports/               # Interfaces
+    │   │   ├── repository.go
+    │   │   └── usecase.go
+    │   └── errors/              # Errores de dominio
     │
     ├── app/                     # 🟢 APLICACIÓN (casos de uso)
     │   ├── constructor.go
-    │   ├── create_notification_type.go           # CRUD NotificationType
-    │   ├── get_notification_types.go
-    │   ├── update_notification_type.go
-    │   ├── delete_notification_type.go
-    │   ├── create_notification_event_type.go     # CRUD NotificationEventType
-    │   ├── get_notification_event_types.go
-    │   ├── update_notification_event_type.go
-    │   ├── delete_notification_event_type.go
-    │   ├── create_notification_config.go         # CRUD BusinessNotificationConfig
-    │   ├── list_notification_configs.go
-    │   ├── update_notification_config.go
-    │   └── delete_notification_config.go
+    │   ├── create*.go           # Casos de uso de creación
+    │   ├── update*.go           # Casos de uso de actualización
+    │   ├── delete*.go           # Casos de uso de eliminación
+    │   ├── get*.go              # Casos de uso de consulta
+    │   ├── list*.go             # Casos de uso de listado
+    │   ├── request/             # DTOs de request
+    │   ├── response/            # DTOs de response
+    │   └── mappers/             # Conversiones
     │
-    └── infra/                   # 🔴 INFRAESTRUCTURA
-        ├── primary/             # Adaptadores de entrada
-        │   └── handlers/
-        │       ├── notification_type/           # Handlers para NotificationType
-        │       │   ├── constructor.go
-        │       │   ├── routes.go
-        │       │   ├── create_handler.go
-        │       │   ├── list_handler.go
-        │       │   ├── get_by_id_handler.go
-        │       │   ├── update_handler.go
-        │       │   ├── delete_handler.go
-        │       │   ├── request/
-        │       │   ├── response/
-        │       │   └── mappers/
-        │       │
-        │       ├── notification_event_type/     # Handlers para NotificationEventType
-        │       │   ├── constructor.go
-        │       │   ├── routes.go
-        │       │   ├── create_handler.go
-        │       │   ├── list_handler.go
-        │       │   ├── get_by_id_handler.go
-        │       │   ├── update_handler.go
-        │       │   ├── delete_handler.go
-        │       │   ├── request/
-        │       │   ├── response/
-        │       │   └── mappers/
-        │       │
-        │       └── notification_config/         # Handlers para BusinessNotificationConfig
-        │           ├── constructor.go
-        │           ├── routes.go
-        │           ├── create_handler.go
-        │           ├── list_handler.go
-        │           ├── get_by_id_handler.go
-        │           ├── update_handler.go
-        │           ├── delete_handler.go
-        │           ├── request/
-        │           ├── response/
-        │           └── mappers/
-        │
-        └── secondary/           # Adaptadores de salida
-            └── repository/
-                ├── constructor.go
-                ├── notification_type_repository.go        # Repositorio NotificationType
-                ├── notification_event_type_repository.go  # Repositorio NotificationEventType
-                ├── repository.go                          # Repositorio BusinessNotificationConfig
-                └── mappers/
-                    ├── notification_type_to_domain.go
-                    ├── notification_type_to_model.go
-                    ├── notification_event_type_to_domain.go
-                    ├── notification_event_type_to_model.go
-                    ├── to_domain.go
-                    └── to_model.go
+    ├── infra/                   # 🔴 INFRAESTRUCTURA
+    │   ├── primary/             # Adaptadores de entrada
+    │   │   └── handlers/
+    │   │       ├── notification_type/
+    │   │       ├── notification_event_type/
+    │   │       └── notification_config/
+    │   │
+    │   └── secondary/           # Adaptadores de salida
+    │       └── repository/
+    │           ├── notification_type_repository.go
+    │           ├── notification_event_type_repository.go
+    │           ├── repository.go
+    │           └── mappers/
+    │
+    └── mocks/                   # 🧪 Mocks para testing
+        ├── repository_mock.go
+        ├── notification_type_repository_mock.go
+        ├── notification_event_type_repository_mock.go
+        ├── usecase_mock.go
+        └── logger_mock.go
 ```
 
-## Jerarquía de Datos
+---
 
-### 1. Notification Types (Nivel Superior)
+### Reglas de Arquitectura Hexagonal
 
-**Tabla:** `notification_types`
-
-Tipos de canales de notificación disponibles:
+#### ✅ Domain (Entidades Puras)
 
 ```go
-type NotificationType struct {
-    ID           uint
-    Name         string  // "WhatsApp", "SSE", "Email", "SMS"
-    Code         string  // "whatsapp", "sse", "email", "sms" (unique)
-    Description  string
-    Icon         string
-    IsActive     bool
-    ConfigSchema map[string]interface{}  // Esquema de configuración específico
-    CreatedAt    time.Time
-    UpdatedAt    time.Time
-}
-```
-
-**Datos iniciales:**
-- SSE (Server-Sent Events)
-- WhatsApp Business
-- Email
-- SMS
-
-### 2. Notification Event Types (Nivel Medio)
-
-**Tabla:** `notification_event_types`
-
-Eventos específicos por tipo de notificación:
-
-```go
-type NotificationEventType struct {
-    ID                 uint
-    NotificationTypeID uint    // FK a notification_types
-    EventCode          string  // "order.created", "order.shipped", etc.
-    EventName          string  // "Pedido Creado", "Pedido Enviado"
-    Description        string
-    TemplateConfig     map[string]interface{}  // Configuración de template
-    IsActive           bool
-    CreatedAt          time.Time
-    UpdatedAt          time.Time
-    NotificationType   *NotificationType  // Relación
-}
-```
-
-**Índice único:** `(notification_type_id, event_code)`
-
-**Ejemplos:**
-
-**WhatsApp:**
-- `order.created` → Confirmación de Pedido
-- `order.shipped` → Pedido Enviado
-- `order.delivered` → Pedido Entregado
-- `order.canceled` → Pedido Cancelado
-- `invoice.created` → Factura Generada
-
-**SSE:**
-- `order.created` → Nueva Orden
-- `order.status_changed` → Cambio de Estado
-
-### 3. Business Notification Configs (Nivel Inferior)
-
-**Tabla:** `business_notification_configs`
-
-Configuraciones específicas por negocio/integración:
-
-```go
-type BusinessNotificationConfig struct {
-    ID                      uint
-    BusinessID              uint  // FK a businesses
-    IntegrationID           uint  // FK a integrations (origen del evento)
-    NotificationTypeID      uint  // FK a notification_types (canal de salida)
-    NotificationEventTypeID uint  // FK a notification_event_types (tipo de evento)
-    Enabled                 bool
-    Filters                 map[string]interface{}  // Filtros adicionales
-    Description             string
-    CreatedAt               time.Time
-    UpdatedAt               time.Time
-    DeletedAt               *time.Time
-
-    // Relaciones
-    Integration           *Integration
-    NotificationType      *NotificationType
-    NotificationEventType *NotificationEventType
-    OrderStatusIDs        []uint  // M2M con order_statuses
-}
-```
-
-**Índice único:** `(integration_id, notification_type_id, notification_event_type_id)`
-
-**Relación M2M:** `business_notification_config_order_statuses`
-- Permite configurar en qué estados de orden disparar la notificación
-- Estados disponibles: pending, processing, shipped, delivered, completed, cancelled, refunded, failed, on_hold
-
-## Flujo de Uso
-
-### Ejemplo Completo
-
-**Configuración:**
-```
-Business: "Mi Tienda" (ID: 1)
-Integration: "Shopify - Mi Tiendita" (ID: 5, type: shopify)
-NotificationType: "WhatsApp" (ID: 2, code: "whatsapp")
-NotificationEventType: "Confirmación de Pedido" (ID: 10, event_code: "order.created")
-OrderStatuses: [created (ID: 1), paid (ID: 3)]
-```
-
-**Resultado:**
-- Cuando una orden de la integración Shopify (ID: 5) genera el evento `order.created`
-- Y el estado de la orden es `created` O `paid`
-- → Se envía una notificación por WhatsApp
-
-## API Endpoints
-
-### Notification Types
-
-```http
-GET    /api/notification-types           # Listar todos los tipos
-GET    /api/notification-types/:id       # Obtener por ID
-POST   /api/notification-types           # Crear nuevo tipo
-PATCH  /api/notification-types/:id       # Actualizar tipo
-DELETE /api/notification-types/:id       # Eliminar tipo (soft delete)
-```
-
-### Notification Event Types
-
-```http
-GET    /api/notification-event-types?notification_type_id=2  # Listar eventos (filtrable por tipo)
-GET    /api/notification-event-types/:id                     # Obtener por ID
-POST   /api/notification-event-types                         # Crear nuevo evento
-PATCH  /api/notification-event-types/:id                     # Actualizar evento
-DELETE /api/notification-event-types/:id                     # Eliminar evento (soft delete)
-```
-
-### Business Notification Configs
-
-```http
-GET    /api/notification-configs?business_id=1&integration_id=5  # Listar configs (filtrable)
-GET    /api/notification-configs/:id                             # Obtener por ID
-POST   /api/notification-configs                                 # Crear nueva config
-PATCH  /api/notification-configs/:id                             # Actualizar config
-DELETE /api/notification-configs/:id                             # Eliminar config (soft delete)
-```
-
-## Modelos GORM
-
-Los modelos GORM con tags están centralizados en:
-
-**`/back/migration/shared/models/`**
-- `notification_type.go` - Modelo con tags GORM
-- `notification_event_type.go` - Modelo con tags GORM
-- `notification_config.go` - Modelo con tags GORM (refactorizado)
-
-**Migración:**
-- Script SQL: `/back/migration/shared/sql/migrate_notification_system_refactor.sql`
-- Incluye creación de tablas, datos iniciales y migración de configs existentes
-
-## Reglas de Arquitectura Hexagonal
-
-### ✅ Domain (Entidades Puras)
-
-```go
-// ✅ CORRECTO - Sin tags
+// ✅ CORRECTO - Sin tags, solo tipos nativos
 type NotificationType struct {
     ID          uint
     Name        string
@@ -270,10 +580,10 @@ type NotificationType struct {
 }
 ```
 
-### ❌ Domain (NO hacer esto)
+#### ❌ Domain (NO hacer esto)
 
 ```go
-// ❌ INCORRECTO - Con tags (esto va en models de migration)
+// ❌ INCORRECTO - Tags de frameworks (esto va en models)
 type NotificationType struct {
     ID       uint   `gorm:"primaryKey"`
     Name     string `gorm:"size:100;not null"`
@@ -281,7 +591,7 @@ type NotificationType struct {
 }
 ```
 
-### ✅ Repository (Usa modelos de migration)
+#### ✅ Repository (Usa modelos GORM externos)
 
 ```go
 import "github.com/secamc93/probability/back/migration/shared/models"
@@ -290,28 +600,117 @@ var model models.NotificationType
 db.Find(&model)
 ```
 
-## Migraciones
+**Modelos GORM centralizados en:**
+- `/back/migration/shared/models/notification_type.go`
+- `/back/migration/shared/models/notification_event_type.go`
+- `/back/migration/shared/models/notification_config.go`
 
-### 1. Ejecutar AutoMigrate
+---
+
+## 🧪 Testing
+
+### ✅ Estado de Tests
+
+**Estado**: ✅ Todos los tests pasando
+**Arquitectura**: 100% Hexagonal (validado)
+
+### 📊 Cobertura
+
+```
+Capa de Aplicación (app/):              29.8% (5 casos de uso principales)
+Capa de Handlers (notification_config): 88.4%
+Total de tests:                         40 tests (20 app + 20 handlers)
+Total pasando:                          ✅ 40/40 (100%)
+```
+
+### 🚀 Comandos de Testing
+
+```bash
+# Ejecutar todos los tests
+go test ./internal/... -v
+
+# Ejecutar solo tests de aplicación
+go test ./internal/app -v
+
+# Ejecutar solo tests de handlers
+go test ./internal/infra/primary/handlers/notification_config -v
+
+# Ver cobertura
+go test ./internal/... -cover
+
+# Generar reporte HTML
+go test ./internal/... -coverprofile=coverage.out
+go tool cover -html=coverage.out -o coverage.html
+```
+
+### 📋 Casos de Uso Testeados
+
+| Caso de Uso | Cobertura | Tests | Estado |
+|-------------|-----------|-------|--------|
+| Create      | 100%      | 5     | ✅     |
+| Update      | 100%      | 5     | ✅     |
+| GetByID     | 100%      | 3     | ✅     |
+| List        | 100%      | 4     | ✅     |
+| Delete      | 100%      | 3     | ✅     |
+
+### 📋 Handlers Testeados
+
+| Handler  | Cobertura | Tests | Estado |
+|----------|-----------|-------|--------|
+| Create   | 100%      | 4     | ✅     |
+| Update   | 100%      | 5     | ✅     |
+| GetByID  | 100%      | 4     | ✅     |
+| List     | 100%      | 4     | ✅     |
+| Delete   | 100%      | 4     | ✅     |
+
+### 🎯 Mejores Prácticas Aplicadas
+
+- ✅ Todos los mocks en `internal/mocks/` (no dentro de tests)
+- ✅ Tests unitarios puros (sin base de datos real)
+- ✅ Mocks de interfaces (ports), no de implementaciones
+- ✅ Patrón AAA (Arrange, Act, Assert)
+- ✅ Tests independientes
+- ✅ Nombres descriptivos
+- ✅ Cobertura de casos felices, errores y casos límite
+
+---
+
+## 🛠️ Desarrollo
+
+### Compilar
+
+```bash
+go build ./...
+```
+
+### Ejecutar Tests
+
+```bash
+go test ./...
+```
+
+### Migraciones
+
+#### 1. AutoMigrate (desde el código)
 
 ```bash
 cd /back/central
 go run cmd/main.go migrate
 ```
 
-### 2. Ejecutar Script SQL
+#### 2. Script SQL (manual)
 
 ```bash
 psql -U postgres -d probability_db -f /back/migration/shared/sql/migrate_notification_system_refactor.sql
 ```
 
-### 3. Verificar Datos
+### Verificar Datos en BD
 
 ```sql
 -- Ver tipos de notificación
 SELECT * FROM notification_types;
 
--- Ver eventos de notificación
+-- Ver eventos de notificación con su tipo
 SELECT
     net.id,
     nt.name as tipo,
@@ -335,57 +734,41 @@ JOIN integrations i ON bnc.integration_id = i.id
 JOIN notification_types nt ON bnc.notification_type_id = nt.id
 JOIN notification_event_types net ON bnc.notification_event_type_id = net.id;
 
--- Ver estados de orden asociados a una config
+-- Ver estados asociados a una config
 SELECT
     bnc.id,
     os.name as estado,
     os.code
 FROM business_notification_configs bnc
-JOIN business_notification_config_order_statuses bcs ON bnc.id = bcs.business_notification_config_id
+JOIN business_notification_config_order_statuses bcs
+  ON bnc.id = bcs.business_notification_config_id
 JOIN order_statuses os ON bcs.order_status_id = os.id
 WHERE bnc.id = 1;
 ```
 
-## Testing
+---
 
-```bash
-# Compilar
-go build ./...
-
-# Tests
-go test ./...
-
-# Test específico
-go test ./internal/app/...
-go test ./internal/infra/secondary/repository/...
-```
-
-## Convenciones
+## 📝 Convenciones
 
 1. **Entidades de dominio:** Sin tags, solo tipos nativos de Go
 2. **Modelos GORM:** Centralizados en `/back/migration/shared/models/`
 3. **Repositorios:** Usan modelos de migration, retornan entidades de dominio
-4. **Handlers:** Cada handler en su propio archivo
+4. **Handlers:** Cada handler en su propio archivo (`create_handler.go`, `list_handler.go`)
 5. **Rutas:** Registradas en `routes.go` dentro de cada grupo de handlers
 6. **Mappers:** Obligatorios en `request/`, `response/`, `mappers/` para cada handler
 
-## Campos Deprecados (Migración)
+---
 
-Durante la migración, se mantienen campos deprecados para compatibilidad temporal:
-
-```go
-EventTypeDeprecated string  // Antiguo event_type (antes de refactorización)
-// Se eliminará en versión futura
-```
-
-## Dependencias
+## 📦 Dependencias
 
 - **GORM:** ORM para PostgreSQL
 - **Gin:** Framework HTTP
 - **datatypes.JSON:** Soporte para campos JSONB
 - **Zerolog:** Logging estructurado
 
-## Notas Importantes
+---
+
+## ⚠️ Notas Importantes
 
 1. **Unique constraints:** Evitan duplicados en combinaciones clave
 2. **Soft deletes:** Implementados con `gorm.DeletedAt`
@@ -393,7 +776,9 @@ EventTypeDeprecated string  // Antiguo event_type (antes de refactorización)
 4. **Validaciones:** Implementadas en capa de aplicación (use cases)
 5. **Errores de dominio:** Tipados y centralizados en `domain/errors/`
 
-## Changelog
+---
+
+## 📜 Changelog
 
 ### v2.0.0 - Refactorización Arquitectura Jerárquica (2026-01-31)
 
@@ -406,186 +791,14 @@ EventTypeDeprecated string  // Antiguo event_type (antes de refactorización)
 **Nuevas Features:**
 - CRUD completo de NotificationTypes
 - CRUD completo de NotificationEventTypes
-- Relación M2M con OrderStatuses para filtrar estados que disparan notificaciones
+- Relación M2M con OrderStatuses para filtrar estados
 - Script de migración de datos existentes
 
 **Arquitectura:**
-- Handlers organizados en carpetas (`notification_type/`, `notification_event_type/`, `notification_config/`)
+- Handlers organizados en carpetas separadas
 - Modelos GORM centralizados en `/back/migration/shared/models/`
-- Mappers actualizados para usar modelos de migration
-
----
-
-## Testing
-
-### ✅ Estado de Tests
-
-**Estado**: ✅ Todos los tests pasando
-**Fecha**: 2026-01-31
-**Arquitectura**: 100% Hexagonal (validado)
-
-### 📊 Cobertura de Tests
-
-#### Resumen Global
-
-```
-Capa de Aplicación (app/):              29.8% (5 casos de uso principales)
-Capa de Handlers (notification_config): 88.4%
-Total de tests:                         40 tests (20 app + 20 handlers)
-Total pasando:                          ✅ 40/40 (100%)
-```
-
-#### Casos de Uso Testeados
-
-| Caso de Uso | Cobertura | Tests | Estado |
-|-------------|-----------|-------|--------|
-| Create      | 100%      | 5     | ✅     |
-| Update      | 100%      | 5     | ✅     |
-| GetByID     | 100%      | 3     | ✅     |
-| List        | 100%      | 4     | ✅     |
-| Delete      | 100%      | 3     | ✅     |
-
-#### Handlers Testeados
-
-| Handler  | Cobertura | Tests | Estado |
-|----------|-----------|-------|--------|
-| Create   | 100%      | 4     | ✅     |
-| Update   | 100%      | 5     | ✅     |
-| GetByID  | 100%      | 4     | ✅     |
-| List     | 100%      | 4     | ✅     |
-| Delete   | 100%      | 4     | ✅     |
-
-### 🗂️ Estructura de Tests
-
-```
-internal/
-├── mocks/                                    # Todos los mocks centralizados
-│   ├── repository_mock.go
-│   ├── notification_type_repository_mock.go
-│   ├── notification_event_type_repository_mock.go
-│   ├── usecase_mock.go
-│   └── logger_mock.go
-│
-├── app/                                      # Tests de Casos de Uso
-│   ├── create_test.go                        # 5 tests
-│   ├── update_test.go                        # 5 tests
-│   ├── get_test.go                           # 3 tests
-│   ├── list_test.go                          # 4 tests
-│   └── delete_test.go                        # 3 tests
-│
-└── infra/primary/handlers/notification_config/  # Tests de Handlers
-    ├── create_handler_test.go                # 4 tests
-    ├── update_handler_test.go                # 5 tests
-    ├── get_by_id_handler_test.go             # 4 tests
-    ├── list_handler_test.go                  # 4 tests
-    └── delete_handler_test.go                # 4 tests
-```
-
-### 🚀 Comandos de Testing
-
-```bash
-# Ejecutar todos los tests
-go test ./internal/... -v
-
-# Ejecutar solo tests de aplicación
-go test ./internal/app -v
-
-# Ejecutar solo tests de handlers
-go test ./internal/infra/primary/handlers/notification_config -v
-
-# Ver cobertura
-go test ./internal/... -cover
-
-# Generar reporte de cobertura HTML
-go test ./internal/... -coverprofile=coverage.out
-go tool cover -html=coverage.out -o coverage.html
-```
-
-### 🎯 Mejores Prácticas Aplicadas
-
-#### Arquitectura Hexagonal
-- ✅ Todos los mocks en `internal/mocks/` (no dentro de tests)
-- ✅ Tests unitarios puros (sin base de datos real)
-- ✅ Mocks de interfaces (ports), no de implementaciones
-- ✅ Inversión de dependencias respetada
-
-#### Testing Best Practices
-- ✅ Tests independientes (sin estado compartido)
-- ✅ Nombres descriptivos (documentan el comportamiento)
-- ✅ Cobertura de casos felices, errores y casos límite
-- ✅ Sin dependencias externas (DB, HTTP, filesystem)
-- ✅ Tests rápidos (<50ms total)
-- ✅ Patrón AAA (Arrange, Act, Assert)
-
-#### Go Testing Conventions
-- ✅ Package testing estándar (sin frameworks pesados)
-- ✅ Funciones `Test*` siguiendo convención Go
-- ✅ gin.TestMode para handlers HTTP
-
-### 📋 Escenarios de Test por Caso de Uso
-
-#### Create
-- ✅ Creación exitosa
-- ✅ Detecta duplicados (ErrDuplicateConfig)
-- ✅ Error en validación de duplicados
-- ✅ Error en persistencia
-- ✅ Permite configs con condiciones diferentes
-
-#### Update
-- ✅ Actualización completa exitosa
-- ✅ Actualización parcial
-- ✅ Configuración no existe
-- ✅ Error en persistencia
-- ✅ Error al recuperar config actualizada
-
-#### GetByID
-- ✅ Obtención exitosa
-- ✅ Config no encontrada
-- ✅ Error de conexión a BD
-
-#### List
-- ✅ Listar todas las configs
-- ✅ Listar con filtros
-- ✅ Resultado vacío
-- ✅ Error de conexión
-
-#### Delete
-- ✅ Eliminación exitosa
-- ✅ Config no existe
-- ✅ Error en eliminación
-
-### 📋 Escenarios de Test por Handler
-
-#### CreateHandler
-- ✅ HTTP 201 Created
-- ✅ HTTP 400 Bad Request (validación)
-- ✅ HTTP 409 Conflict (duplicado)
-- ✅ HTTP 500 Internal Server Error
-
-#### UpdateHandler
-- ✅ HTTP 200 OK
-- ✅ HTTP 400 Bad Request (ID inválido)
-- ✅ HTTP 400 Bad Request (body inválido)
-- ✅ HTTP 404 Not Found
-- ✅ HTTP 500 Internal Server Error
-
-#### GetByIDHandler
-- ✅ HTTP 200 OK
-- ✅ HTTP 400 Bad Request
-- ✅ HTTP 404 Not Found
-- ✅ HTTP 500 Internal Server Error
-
-#### ListHandler
-- ✅ HTTP 200 OK (lista completa)
-- ✅ HTTP 200 OK (con filtros)
-- ✅ HTTP 200 OK (array vacío)
-- ✅ HTTP 500 Internal Server Error
-
-#### DeleteHandler
-- ✅ HTTP 204 No Content
-- ✅ HTTP 400 Bad Request
-- ✅ HTTP 404 Not Found
-- ✅ HTTP 500 Internal Server Error
+- Tests completos (40 tests, 100% pasando)
+- Arquitectura hexagonal 100% validada
 
 ---
 

@@ -2,6 +2,7 @@ package ports
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
@@ -21,6 +22,11 @@ type IInvoiceRepository interface {
 	Update(ctx context.Context, invoice *entities.Invoice) error
 	Delete(ctx context.Context, id uint) error
 	ExistsForOrder(ctx context.Context, orderID string, providerID uint) (bool, error)
+
+	// Estadísticas y resúmenes
+	GetSummary(ctx context.Context, businessID uint, start, end time.Time) (*entities.InvoiceSummary, error)
+	GetDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error)
+	GetTrends(ctx context.Context, businessID uint, start, end time.Time, granularity, metric string) (*entities.TrendData, error)
 }
 
 // IInvoiceItemRepository define las operaciones de persistencia para items de factura
@@ -166,6 +172,7 @@ type IEventPublisher interface {
 
 // OrderData representa los datos mínimos necesarios de una orden para facturación
 type OrderData struct {
+	// Campos existentes
 	ID               string
 	BusinessID       uint
 	IntegrationID    uint
@@ -184,6 +191,17 @@ type OrderData struct {
 	PaymentMethodID  uint
 	Invoiceable      bool
 	Items            []OrderItemData
+
+	// Campos nuevos - Necesarios para filtros avanzados
+	Status          string     // Estado de la orden (pending, confirmed, etc.)
+	OrderTypeID     uint       // Tipo de orden (delivery, pickup, etc.)
+	OrderTypeName   string     // Nombre del tipo de orden
+	CustomerID      *string    // ID del cliente (para exclusiones)
+	CustomerType    *string    // Tipo de cliente (natural, juridica)
+	ShippingCity    *string    // Ciudad de envío
+	ShippingState   *string    // Departamento/Estado de envío
+	ShippingCountry *string    // País de envío
+	CreatedAt       time.Time  // Fecha de creación
 }
 
 // OrderItemData representa un item de orden
@@ -198,6 +216,10 @@ type OrderItemData struct {
 	Tax         float64
 	TaxRate     *float64
 	Discount    float64
+
+	// Campos nuevos - Para filtros de productos
+	CategoryID   *uint   // Categoría del producto
+	CategoryName *string // Nombre de la categoría
 }
 
 // IOrderRepository define las operaciones para obtener datos de órdenes
@@ -220,7 +242,9 @@ type IUseCase interface {
 	ListInvoices(ctx context.Context, filters map[string]interface{}) ([]*entities.Invoice, error)
 	GetInvoicesByOrder(ctx context.Context, orderID string) ([]*entities.Invoice, error)
 
-	// Proveedores
+	// Proveedores (DEPRECADOS - Migrados a integrations/core)
+	// NOTA: Estos métodos están deprecados y serán eliminados en una futura versión
+	// Usar integrations/core para gestión de proveedores de facturación
 	CreateProvider(ctx context.Context, dto *dtos.CreateProviderDTO) (*entities.InvoicingProvider, error)
 	UpdateProvider(ctx context.Context, id uint, dto *dtos.UpdateProviderDTO) error
 	GetProvider(ctx context.Context, id uint) (*entities.InvoicingProvider, error)
@@ -239,6 +263,13 @@ type IUseCase interface {
 	GetCreditNote(ctx context.Context, id uint) (*entities.CreditNote, error)
 	ListCreditNotes(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error)
 
-	// Tipos de proveedores
+	// Tipos de proveedores (DEPRECADO - Migrado a integrations/core)
+	// NOTA: Este método está deprecado y será eliminado en una futura versión
+	// Usar integrations/core para listar tipos de integraciones de facturación
 	ListProviderTypes(ctx context.Context) ([]*entities.InvoicingProviderType, error)
+
+	// Estadísticas y resúmenes
+	GetSummary(ctx context.Context, businessID uint, period string) (*entities.InvoiceSummary, error)
+	GetDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error)
+	GetTrends(ctx context.Context, businessID uint, startDate, endDate, granularity, metric string) (*entities.TrendData, error)
 }

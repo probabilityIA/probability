@@ -11,9 +11,10 @@ type Invoice struct {
 	DeletedAt *time.Time
 
 	// Relaciones (solo IDs)
-	OrderID             string // UUID de la orden
-	BusinessID          uint
-	InvoicingProviderID uint
+	OrderID                string // UUID de la orden
+	BusinessID             uint
+	InvoicingProviderID    *uint  // DEPRECATED: Mantener temporalmente para dual-read
+	InvoicingIntegrationID *uint  // Integración de facturación (Softpymes - desde integrations/)
 
 	// Identificadores
 	InvoiceNumber  string

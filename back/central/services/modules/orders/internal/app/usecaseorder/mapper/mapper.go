@@ -3,12 +3,13 @@ package mapper
 import (
 	"encoding/json"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain" // Added import for service
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos" // Added import for service
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"gorm.io/datatypes"
 )
 
 // ToOrderResponse convierte un modelo Order a OrderResponse
-func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
+func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 	if order == nil {
 		return nil
 	}
@@ -28,7 +29,7 @@ func ToOrderResponse(order *domain.ProbabilityOrder) *domain.OrderResponse {
 	}
 
 	// Checking imports first...
-	return &domain.OrderResponse{
+	return &dtos.OrderResponse{
 		ID:        order.ID,
 		CreatedAt: order.CreatedAt,
 		UpdatedAt: order.UpdatedAt,
@@ -162,13 +163,13 @@ func UnmarshalNegativeFactors(jsonData datatypes.JSON) []string {
 }
 
 // ToOrderSummary convierte un modelo Order a OrderSummary
-func ToOrderSummary(order *domain.ProbabilityOrder) domain.OrderSummary {
+func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 	var businessID uint
 	if order.BusinessID != nil {
 		businessID = *order.BusinessID
 	}
 
-	return domain.OrderSummary{
+	return dtos.OrderSummary{
 		ID:                     order.ID,
 		CreatedAt:              order.CreatedAt,
 		BusinessID:             businessID,

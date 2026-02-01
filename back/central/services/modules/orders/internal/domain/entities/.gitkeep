@@ -1,0 +1,12 @@
+# Esta carpeta debe contener las entidades de dominio PURAS (sin tags)
+# TODO: Mover entities.go aquí y dividir en múltiples archivos:
+#   - order.go (ProbabilityOrder)
+#   - order_item.go (ProbabilityOrderItem)
+#   - address.go (ProbabilityAddress)
+#   - payment.go (ProbabilityPayment)
+#   - shipment.go (ProbabilityShipment)
+#   - channel_metadata.go (ProbabilityOrderChannelMetadata)
+#   - product.go (Product)
+#   - client.go (Client)
+#   - order_status.go (OrderStatus, OrderEvent)
+#   - order_error.go (OrderError)

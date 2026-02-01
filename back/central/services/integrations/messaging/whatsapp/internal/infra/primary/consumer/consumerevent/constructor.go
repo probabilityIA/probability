@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/consumer/consumerevent/request"
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/shared/log"
 	rabbitmq "github.com/secamc93/probability/back/central/shared/rabbitmq"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
@@ -19,7 +19,7 @@ type IConsumer interface {
 type consumer struct {
 	redisClient            redisclient.IRedis
 	rabbitMQ               rabbitmq.IQueue
-	notificationConfigRepo repository.INotificationConfigRepository // ← Usa repositorio
+	notificationConfigCache cache.INotificationConfigCache // ✅ CAMBIO: Cache en lugar de repo
 	integrationRepo        request.IntegrationRepository
 	orderRepo              request.OrderRepository
 	logger                 log.ILogger
@@ -30,7 +30,7 @@ type consumer struct {
 func New(
 	redisClient redisclient.IRedis,
 	rabbitMQ rabbitmq.IQueue,
-	notificationConfigRepo repository.INotificationConfigRepository, // ← Recibe repositorio
+	notificationConfigCache cache.INotificationConfigCache, // ✅ CAMBIO: Cache en lugar de repo
 	integrationRepo request.IntegrationRepository,
 	orderRepo request.OrderRepository,
 	logger log.ILogger,
@@ -39,7 +39,7 @@ func New(
 	return &consumer{
 		redisClient:            redisClient,
 		rabbitMQ:               rabbitMQ,
-		notificationConfigRepo: notificationConfigRepo, // ← Guarda repositorio
+		notificationConfigCache: notificationConfigCache, // ✅ CAMBIO: Cache en lugar de repo
 		integrationRepo:        integrationRepo,
 		orderRepo:              orderRepo,
 		logger:                 logger.WithModule("whatsapp_order_event_consumer"),

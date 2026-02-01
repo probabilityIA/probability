@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
@@ -8,17 +9,15 @@ import (
 // useCase implementa todos los casos de uso del módulo de facturación
 type useCase struct {
 	// Repositorios
-	invoiceRepo         ports.IInvoiceRepository
-	invoiceItemRepo     ports.IInvoiceItemRepository
-	providerRepo        ports.IInvoicingProviderRepository
-	providerTypeRepo    ports.IInvoicingProviderTypeRepository
-	configRepo          ports.IInvoicingConfigRepository
-	syncLogRepo         ports.IInvoiceSyncLogRepository
-	creditNoteRepo      ports.ICreditNoteRepository
-	orderRepo           ports.IOrderRepository
+	invoiceRepo     ports.IInvoiceRepository
+	invoiceItemRepo ports.IInvoiceItemRepository
+	configRepo      ports.IInvoicingConfigRepository
+	syncLogRepo     ports.IInvoiceSyncLogRepository
+	creditNoteRepo  ports.ICreditNoteRepository
+	orderRepo       ports.IOrderRepository
 
 	// Servicios externos
-	providerClient  ports.IInvoicingProviderClient
+	integrationCore core.IIntegrationCore // Reemplaza providerRepo, providerTypeRepo y providerClient
 	encryption      ports.IEncryptionService
 	eventPublisher  ports.IEventPublisher
 
@@ -30,29 +29,25 @@ type useCase struct {
 func New(
 	invoiceRepo ports.IInvoiceRepository,
 	invoiceItemRepo ports.IInvoiceItemRepository,
-	providerRepo ports.IInvoicingProviderRepository,
-	providerTypeRepo ports.IInvoicingProviderTypeRepository,
 	configRepo ports.IInvoicingConfigRepository,
 	syncLogRepo ports.IInvoiceSyncLogRepository,
 	creditNoteRepo ports.ICreditNoteRepository,
 	orderRepo ports.IOrderRepository,
-	providerClient ports.IInvoicingProviderClient,
+	integrationCore core.IIntegrationCore,
 	encryption ports.IEncryptionService,
 	eventPublisher ports.IEventPublisher,
 	logger log.ILogger,
 ) ports.IUseCase {
 	return &useCase{
-		invoiceRepo:      invoiceRepo,
-		invoiceItemRepo:  invoiceItemRepo,
-		providerRepo:     providerRepo,
-		providerTypeRepo: providerTypeRepo,
-		configRepo:       configRepo,
-		syncLogRepo:      syncLogRepo,
-		creditNoteRepo:   creditNoteRepo,
-		orderRepo:        orderRepo,
-		providerClient:   providerClient,
-		encryption:       encryption,
-		eventPublisher:   eventPublisher,
-		log:              logger.WithModule("invoicing.usecase"),
+		invoiceRepo:     invoiceRepo,
+		invoiceItemRepo: invoiceItemRepo,
+		configRepo:      configRepo,
+		syncLogRepo:     syncLogRepo,
+		creditNoteRepo:  creditNoteRepo,
+		orderRepo:       orderRepo,
+		integrationCore: integrationCore,
+		encryption:      encryption,
+		eventPublisher:  eventPublisher,
+		log:             logger.WithModule("invoicing.usecase"),
 	}
 }

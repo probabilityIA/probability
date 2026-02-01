@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/mappers"
 )
 
 // GetOrderRaw godoc
@@ -15,7 +16,7 @@ import (
 // @Produce      json
 // @Param        id   path      string  true  "ID de la orden (UUID)"
 // @Security     BearerAuth
-// @Success      200  {object}  domain.OrderRawResponse
+// @Success      200  {object}  response.OrderRaw
 // @Failure      400  {object}  map[string]interface{}
 // @Failure      404  {object}  map[string]interface{}
 // @Failure      500  {object}  map[string]interface{}
@@ -32,8 +33,8 @@ func (h *Handlers) GetOrderRaw(c *gin.Context) {
 		return
 	}
 
-	// Llamar al caso de uso
-	rawResponse, err := h.orderCRUD.GetOrderRaw(c.Request.Context(), id)
+	// Llamar al caso de uso (retorna DTO de dominio)
+	domainResp, err := h.orderCRUD.GetOrderRaw(c.Request.Context(), id)
 	if err != nil {
 		// Verificar si es un error de "no encontrado" (puede estar envuelto)
 		errMsg := err.Error()
@@ -54,9 +55,12 @@ func (h *Handlers) GetOrderRaw(c *gin.Context) {
 		return
 	}
 
+	// ✅ Convertir Domain response → HTTP response ([]byte → datatypes.JSON)
+	httpResp := mappers.OrderRawToResponse(domainResp)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Datos crudos obtenidos exitosamente",
-		"data":    rawResponse,
+		"data":    httpResp,
 	})
 }

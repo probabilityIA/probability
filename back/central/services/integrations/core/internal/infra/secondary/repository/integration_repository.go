@@ -424,6 +424,11 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 			}
 		}
 
+		categoryID := uint(0)
+		if model.IntegrationType.CategoryID != nil {
+			categoryID = *model.IntegrationType.CategoryID
+		}
+
 		integrationType := domain.IntegrationType{
 			ID:                model.IntegrationType.ID,
 			Name:              model.IntegrationType.Name,
@@ -431,7 +436,7 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 			Description:       model.IntegrationType.Description,
 			Icon:              model.IntegrationType.Icon,
 			ImageURL:          model.IntegrationType.ImageURL,
-			CategoryID:        model.IntegrationType.CategoryID,
+			CategoryID:        categoryID,
 			Category:          category,
 			IsActive:          model.IntegrationType.IsActive,
 			ConfigSchema:      model.IntegrationType.ConfigSchema,

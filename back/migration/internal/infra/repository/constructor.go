@@ -111,6 +111,16 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate integration types to categories: %w", err)
 	}
 
+	// Crear tipo de integración para Softpymes (facturación)
+	if err := r.seedSoftpymesIntegrationType(ctx); err != nil {
+		return fmt.Errorf("failed to seed softpymes integration type: %w", err)
+	}
+
+	// Migrar datos de invoicing_providers a integrations
+	if err := r.migrateInvoicingProvidersToIntegrations(ctx); err != nil {
+		return fmt.Errorf("failed to migrate invoicing providers: %w", err)
+	}
+
 	// Insertar datos iniciales de notification_types y notification_event_types
 	if err := r.seedNotificationTypesAndEvents(ctx); err != nil {
 		return fmt.Errorf("failed to seed notification types and events: %w", err)
@@ -464,4 +474,114 @@ func (r *Repository) migrateIntegrationTypesToCategories(ctx context.Context) er
 	}
 
 	return nil
+}
+
+// seedSoftpymesIntegrationType crea el tipo de integración para Softpymes (facturación electrónica)
+func (r *Repository) seedSoftpymesIntegrationType(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	integrationType := models.IntegrationType{
+		Model:       gorm.Model{ID: 5},
+		Name:        "Softpymes Facturación",
+		Code:        "softpymes",
+		CategoryID:  ptrUint(2), // invoicing category
+		IsActive:    true,
+		Description: "Proveedor de facturación electrónica Softpymes",
+		Icon:        "receipt",
+	}
+
+	var existing models.IntegrationType
+	err := db.Where("id = ?", 5).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		// No existe, crear
+		if err := db.Create(&integrationType).Error; err != nil {
+			return fmt.Errorf("failed to create softpymes integration type: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// migrateInvoicingProvidersToIntegrations migra datos de invoicing_providers → integrations
+func (r *Repository) migrateInvoicingProvidersToIntegrations(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Verificar si ya se migró
+	var count int64
+	if err := db.Model(&models.Integration{}).
+		Where("integration_type_id = ? AND store_id LIKE 'softpymes-%'", 5).
+		Count(&count).Error; err != nil {
+		return fmt.Errorf("failed to check existing migrations: %w", err)
+	}
+
+	if count > 0 {
+		// Ya se migró, salir
+		return nil
+	}
+
+	// 2. Migrar invoicing_providers → integrations
+	err := db.Exec(`
+		INSERT INTO integrations (
+			business_id, integration_type_id, name, description,
+			store_id, credentials, config, is_active, is_default,
+			created_at, updated_at, created_by_id
+		)
+		SELECT
+			ip.business_id,
+			5 AS integration_type_id,
+			ip.name,
+			ip.description,
+			CONCAT('softpymes-', ip.id) AS store_id,
+			ip.credentials,
+			ip.config,
+			ip.is_active,
+			ip.is_default,
+			ip.created_at,
+			ip.updated_at,
+			ip.created_by_id
+		FROM invoicing_providers ip
+		WHERE NOT EXISTS (
+			SELECT 1 FROM integrations i
+			WHERE i.store_id = CONCAT('softpymes-', ip.id)
+		)
+	`).Error
+
+	if err != nil {
+		return fmt.Errorf("failed to migrate invoicing_providers: %w", err)
+	}
+
+	// 3. Actualizar invoicing_configs con invoicing_integration_id
+	err = db.Exec(`
+		UPDATE invoicing_configs ic
+		SET invoicing_integration_id = i.id
+		FROM integrations i
+		JOIN invoicing_providers ip ON i.store_id = CONCAT('softpymes-', ip.id)
+		WHERE ic.invoicing_provider_id = ip.id
+		AND ic.invoicing_integration_id IS NULL
+	`).Error
+
+	if err != nil {
+		return fmt.Errorf("failed to update invoicing_configs: %w", err)
+	}
+
+	// 4. Actualizar invoices con invoicing_integration_id
+	err = db.Exec(`
+		UPDATE invoices inv
+		SET invoicing_integration_id = i.id
+		FROM integrations i
+		JOIN invoicing_providers ip ON i.store_id = CONCAT('softpymes-', ip.id)
+		WHERE inv.invoicing_provider_id = ip.id
+		AND inv.invoicing_integration_id IS NULL
+	`).Error
+
+	if err != nil {
+		return fmt.Errorf("failed to update invoices: %w", err)
+	}
+
+	return nil
+}
+
+// ptrUint es un helper para crear punteros a uint
+func ptrUint(v uint) *uint {
+	return &v
 }

@@ -5,11 +5,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 )
 
 // GetOrderRaw obtiene los datos crudos de una orden
-func (uc *UseCaseOrder) GetOrderRaw(ctx context.Context, id string) (*domain.OrderRawResponse, error) {
+func (uc *UseCaseOrder) GetOrderRaw(ctx context.Context, id string) (*dtos.OrderRawResponse, error) {
 	if id == "" {
 		return nil, errors.New("order ID is required")
 	}
@@ -27,7 +27,7 @@ func (uc *UseCaseOrder) GetOrderRaw(ctx context.Context, id string) (*domain.Ord
 		return nil, errors.New("raw data not found for this order")
 	}
 
-	return &domain.OrderRawResponse{
+	return &dtos.OrderRawResponse{
 		OrderID:       metadata.OrderID,
 		ChannelSource: metadata.ChannelSource,
 		RawData:       metadata.RawData,

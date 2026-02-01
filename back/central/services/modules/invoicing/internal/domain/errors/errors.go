@@ -47,11 +47,36 @@ var (
 
 // Errores de filtros
 var (
+	// Monto
 	ErrOrderBelowMinAmount    = errors.New("order amount is below minimum threshold")
-	ErrOrderNotPaid           = errors.New("order is not paid")
+	ErrOrderAboveMaxAmount    = errors.New("order amount exceeds maximum threshold")
+
+	// Pago
+	ErrOrderNotPaid            = errors.New("order is not paid")
 	ErrPaymentMethodNotAllowed = errors.New("payment method is not allowed")
-	ErrOrderTypeNotAllowed    = errors.New("order type is not allowed")
-	ErrOrderStatusExcluded    = errors.New("order status is excluded from invoicing")
+
+	// Orden
+	ErrOrderTypeNotAllowed = errors.New("order type is not allowed")
+	ErrOrderStatusExcluded = errors.New("order status is excluded from invoicing")
+
+	// Productos
+	ErrProductExcluded   = errors.New("order contains excluded products")
+	ErrProductNotAllowed = errors.New("order contains products not in allowed list")
+	ErrMinItemsNotMet    = errors.New("order does not meet minimum items requirement")
+	ErrMaxItemsExceeded  = errors.New("order exceeds maximum items limit")
+
+	// Cliente
+	ErrCustomerTypeNotAllowed = errors.New("customer type is not allowed")
+	ErrCustomerExcluded       = errors.New("customer is excluded from invoicing")
+
+	// Ubicación
+	ErrShippingRegionNotAllowed = errors.New("shipping region is not allowed")
+
+	// Fecha
+	ErrOrderOutsideDateRange = errors.New("order is outside allowed date range")
+
+	// Config
+	ErrInvalidFilterConfig = errors.New("invalid filter configuration")
 )
 
 // Errores de sincronización

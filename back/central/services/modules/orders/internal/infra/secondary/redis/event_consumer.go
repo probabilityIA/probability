@@ -5,7 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
@@ -15,7 +16,7 @@ type OrderEventConsumer struct {
 	redisClient  redisclient.IRedis
 	logger       log.ILogger
 	channel      string
-	scoreUseCase domain.IOrderScoreUseCase
+	scoreUseCase ports.IOrderScoreUseCase
 }
 
 // IOrderEventConsumer define la interfaz para consumir eventos de órdenes
@@ -28,7 +29,7 @@ func NewOrderEventConsumer(
 	redisClient redisclient.IRedis,
 	logger log.ILogger,
 	channel string,
-	scoreUseCase domain.IOrderScoreUseCase,
+	scoreUseCase ports.IOrderScoreUseCase,
 ) IOrderEventConsumer {
 	return &OrderEventConsumer{
 		redisClient:  redisClient,
@@ -65,7 +66,7 @@ func (c *OrderEventConsumer) Start(ctx context.Context) error {
 				Msg("Event received from Redis")
 
 			// Deserializar evento
-			var event domain.OrderEvent
+			var event entities.OrderEvent
 			if err := json.Unmarshal([]byte(msg.Payload), &event); err != nil {
 				c.logger.Error(ctx).
 					Err(err).
@@ -88,9 +89,9 @@ func (c *OrderEventConsumer) Start(ctx context.Context) error {
 }
 
 // handleEvent procesa un evento según su tipo
-func (c *OrderEventConsumer) handleEvent(ctx context.Context, event *domain.OrderEvent) error {
+func (c *OrderEventConsumer) handleEvent(ctx context.Context, event *entities.OrderEvent) error {
 	switch event.Type {
-	case domain.OrderEventTypeScoreCalculationRequested:
+	case entities.OrderEventTypeScoreCalculationRequested:
 		fmt.Printf("[OrderEventConsumer] EVENTO RECIBIDO: order.score_calculation_requested para orden %s\n", event.OrderID)
 		return c.scoreUseCase.CalculateAndUpdateOrderScore(ctx, event.OrderID)
 	default:

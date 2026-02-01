@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
 // GetOrCreateProduct verifica si el producto existe, si no, lo crea
-func (uc *UseCaseOrderMapping) GetOrCreateProduct(ctx context.Context, businessID uint, itemDTO domain.ProbabilityOrderItemDTO) (*domain.Product, error) {
+func (uc *UseCaseOrderMapping) GetOrCreateProduct(ctx context.Context, businessID uint, itemDTO dtos.ProbabilityOrderItemDTO) (*entities.Product, error) {
 	if itemDTO.ProductSKU == "" {
 		return nil, fmt.Errorf("product SKU is required")
 	}
@@ -30,7 +31,7 @@ func (uc *UseCaseOrderMapping) GetOrCreateProduct(ctx context.Context, businessI
 		externalID = *itemDTO.ProductID
 	}
 
-	newProduct := &domain.Product{
+	newProduct := &entities.Product{
 		BusinessID: businessID,
 		SKU:        itemDTO.ProductSKU,
 		Name:       itemDTO.ProductName,

@@ -10,7 +10,10 @@ import (
 	"time"
 
 	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"gorm.io/datatypes"
@@ -22,21 +25,21 @@ const (
 )
 
 // OrderConsumer consume órdenes canónicas de RabbitMQ y las procesa
-// Implementa domain.IOrderConsumer
+// Implementa ports.IOrderConsumer
 type OrderConsumer struct {
 	queue          rabbitmq.IQueue
 	logger         log.ILogger
-	orderMappingUC domain.IOrderMappingUseCase
-	repo           domain.IRepository
+	orderMappingUC ports.IOrderMappingUseCase
+	repo           ports.IRepository
 }
 
 // New crea una nueva instancia del consumidor de órdenes
 func New(
 	queue rabbitmq.IQueue,
 	logger log.ILogger,
-	orderMappingUC domain.IOrderMappingUseCase,
-	repo domain.IRepository,
-) domain.IOrderConsumer {
+	orderMappingUC ports.IOrderMappingUseCase,
+	repo ports.IRepository,
+) ports.IOrderConsumer {
 	return &OrderConsumer{
 		queue:          queue,
 		logger:         logger,
@@ -82,7 +85,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		Msg("Processing order message from queue")
 
 	// Deserializar el mensaje a ProbabilityOrderDTO
-	var orderDTO domain.ProbabilityOrderDTO
+	var orderDTO dtos.ProbabilityOrderDTO
 	if err := json.Unmarshal(messageBody, &orderDTO); err != nil {
 		c.logger.Error().
 			Err(err).
@@ -140,7 +143,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 	if err != nil {
 		errStr := err.Error()
 		// Check for specific errors to discard message
-		if errors.Is(err, domain.ErrOrderAlreadyExists) {
+		if errors.Is(err, domainerrors.ErrOrderAlreadyExists) {
 			c.logger.Info().
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
@@ -245,7 +248,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 }
 
 // saveOrderError guarda un error en la tabla order_errors con el JSON original
-func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *domain.ProbabilityOrderDTO, err error, errorType string, messageBody []byte) {
+func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.ProbabilityOrderDTO, err error, errorType string, messageBody []byte) {
 	if c.repo == nil {
 		c.logger.Warn().Msg("Repository not available, cannot save order error")
 		return
@@ -299,7 +302,7 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *domain.Pro
 		}
 	}
 
-	orderError := &domain.OrderError{
+	orderError := &entities.OrderError{
 		ExternalID:      externalID,
 		IntegrationID:   integrationID,
 		BusinessID:      businessID,

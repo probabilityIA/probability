@@ -25,9 +25,13 @@ type Invoice struct {
 	BusinessID uint     `gorm:"not null;index"`
 	Business   Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
-	// Relación con InvoicingProvider
-	InvoicingProviderID uint              `gorm:"not null;index;uniqueIndex:idx_order_provider,priority:2"`
+	// Relación con InvoicingProvider (DEPRECATED - mantener temporalmente para dual-read)
+	InvoicingProviderID *uint             `gorm:"index"`
 	InvoicingProvider   InvoicingProvider `gorm:"foreignKey:InvoicingProviderID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	// Relación con Integration (nuevo - provider de facturación desde integrations/)
+	InvoicingIntegrationID *uint       `gorm:"index"`
+	InvoicingIntegration   Integration `gorm:"foreignKey:InvoicingIntegrationID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Identificadores
 	InvoiceNumber string  `gorm:"size:128;not null;index"` // Número de factura del proveedor
