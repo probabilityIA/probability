@@ -32,11 +32,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Podman
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y podman
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -47,7 +42,7 @@ jobs:
       - name: Login to ECR
         run: |
           aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-            podman login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+            docker login --username AWS --password-stdin ${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
 
       - name: Generate version
         id: version
@@ -64,7 +59,7 @@ jobs:
 
           REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-nginx"
 
-          podman build \
+          docker build \
             --platform linux/arm64 \
             -f Dockerfile \
             -t ${REPO_URL}:latest \
@@ -88,10 +83,10 @@ jobs:
           REPO_URL="${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/probability-nginx"
 
           echo "📤 Pushing tags to ECR..."
-          podman push ${REPO_URL}:latest
-          podman push ${REPO_URL}:${VERSION_FULL}
-          podman push ${REPO_URL}:${VERSION_SHORT}
-          podman push ${REPO_URL}:${SHORT_SHA}
+          docker push ${REPO_URL}:latest
+          docker push ${REPO_URL}:${VERSION_FULL}
+          docker push ${REPO_URL}:${VERSION_SHORT}
+          docker push ${REPO_URL}:${SHORT_SHA}
 
           echo "✅ 4 tags pushed successfully"
 
@@ -132,7 +127,7 @@ jobs:
       - name: Upload compose file
         run: |
           scp -o StrictHostKeyChecking=no \
-            infra/compose-prod/podman-compose.yaml \
+            infra/compose-prod/docker-compose.yaml \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
 
       - name: Deploy to server
@@ -188,25 +183,25 @@ jobs:
             # Login a ECR privado
             echo "🔐 Logging in to ECR..."
             /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
-              podman login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
+              docker login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
             # Obtener el ID de la imagen actual antes del pull
             echo "📦 Pulling image with version tag: $VERSION_FULL"
-            OLD_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || echo "")
+            OLD_IMAGE_ID=$(docker images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || echo "")
 
             # Eliminar imágenes locales para forzar nuevo pull
-            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
-            podman rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL 2>/dev/null || true
+            docker rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest 2>/dev/null || true
+            docker rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL 2>/dev/null || true
 
             # Pull image con versión específica (garantiza que es la imagen recién construida)
-            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL
+            docker pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL
 
             # Tag la imagen con versión como latest localmente
-            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL \
+            docker tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
 
             # Obtener el ID de la nueva imagen
-            NEW_IMAGE_ID=$(podman images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest)
+            NEW_IMAGE_ID=$(docker images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest)
 
             echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
             echo "📊 New image ID: $NEW_IMAGE_ID"
@@ -217,17 +212,17 @@ jobs:
 
             # 1. Detener y eliminar solo el contenedor nginx
             echo "🛑 Deteniendo nginx..."
-            podman stop -t 10 nginx_prod || true
+            docker stop -t 10 nginx_prod || true
 
             echo "🗑️  Eliminando contenedor nginx y sus dependientes..."
-            podman rm -f --depend nginx_prod || true
+            docker rm -f --depend nginx_prod || true
 
             # Verificar y eliminar cualquier contenedor nginx_prod que quede
             echo "🔍 Verificando eliminación completa..."
-            NGINX_IDS=$(podman ps -a --filter name=nginx_prod --format '{{.ID}}' 2>/dev/null || true)
+            NGINX_IDS=$(docker ps -a --filter name=nginx_prod --format '{{.ID}}' 2>/dev/null || true)
             if [ -n "$NGINX_IDS" ]; then
               echo "⚠️  Contenedores nginx encontrados, eliminando por ID con dependientes..."
-              echo "$NGINX_IDS" | xargs -r podman rm -f --depend
+              echo "$NGINX_IDS" | xargs -r docker rm -f --depend
             fi
             echo "✅ Contenedor nginx eliminado completamente"
 
@@ -240,16 +235,16 @@ jobs:
 
             # 3. Pull de la nueva imagen específica
             echo "📦 Pulling nueva imagen $VERSION_FULL..."
-            podman pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL
+            docker pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL
 
             # 4. Tag como latest localmente
             echo "🏷️  Tageando como latest..."
-            podman tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL \
+            docker tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
 
             # 5. Levantar solo el servicio nginx (contenedor: nginx_prod)
             echo "🚀 Levantando nginx con nueva imagen..."
-            podman-compose -f podman-compose.yaml up -d nginx
+            docker compose -f docker-compose.yaml up -d nginx
 
             echo "⏳ Esperando a que el contenedor inicie (10 segundos)..."
             sleep 10
@@ -260,7 +255,7 @@ jobs:
             CONTAINER_STATUS=""
 
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              CONTAINER_STATUS=$(docker inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
               echo "📋 Intento $(($RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
 
               if [ "$CONTAINER_STATUS" = "running" ]; then
@@ -276,23 +271,23 @@ jobs:
 
             # Mostrar logs antes de verificar estado final
             echo "📋 Últimos logs del contenedor:"
-            podman logs --tail 30 nginx_prod 2>/dev/null || true
+            docker logs --tail 30 nginx_prod 2>/dev/null || true
 
             # Verificar estado final
-            CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+            CONTAINER_STATUS=$(docker inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
             if [ "$CONTAINER_STATUS" != "running" ]; then
               echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
               echo "📋 Estado final: $CONTAINER_STATUS"
               echo "📋 Revisando logs de error:"
-              podman logs --tail 50 nginx_prod 2>/dev/null || true
+              docker logs --tail 50 nginx_prod 2>/dev/null || true
 
               # Intentar reiniciar manualmente
               echo "🔄 Intentando reiniciar manualmente..."
-              podman restart nginx_prod 2>/dev/null || podman start nginx_prod 2>/dev/null || true
+              docker restart nginx_prod 2>/dev/null || docker start nginx_prod 2>/dev/null || true
               sleep 5
 
               # Verificar una vez más
-              CONTAINER_STATUS=$(podman inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              CONTAINER_STATUS=$(docker inspect nginx_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
               if [ "$CONTAINER_STATUS" != "running" ]; then
                 echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
                 exit 1
@@ -304,8 +299,8 @@ jobs:
             fi
 
             # Verificar que el contenedor está usando la nueva imagen
-            CONTAINER_IMAGE_ID=$(podman inspect nginx_prod --format '{{.Image}}' 2>/dev/null || echo "")
-            NEW_IMAGE_FULL_ID=$(podman images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL | head -1)
+            CONTAINER_IMAGE_ID=$(docker inspect nginx_prod --format '{{.Image}}' 2>/dev/null || echo "")
+            NEW_IMAGE_FULL_ID=$(docker images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:$VERSION_FULL | head -1)
 
             # Remover prefijo sha256: si existe
             NEW_IMAGE_FULL_ID_CLEAN="${NEW_IMAGE_FULL_ID#sha256:}"
@@ -325,19 +320,19 @@ jobs:
 
             # Verificar contenedor final
             echo "📋 Estado final del contenedor:"
-            podman ps --filter "name=nginx" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+            docker ps --filter "name=nginx" --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 
             # Limpiar imágenes antiguas de nginx
             echo "🧹 Limpiando imágenes antiguas de nginx..."
 
-            podman images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
+            docker images --format "{{.Repository}}:{{.Tag}} {{.ID}}" | \
               grep "probability-nginx" | \
               grep -v "$VERSION_FULL" | \
               grep -v "latest" | \
               awk '{print $2}' | \
-              xargs -r podman rmi -f 2>/dev/null || true
+              xargs -r docker rmi -f 2>/dev/null || true
 
-            podman image prune -f
+            docker image prune -f
 
             echo "✅ Nginx deployed successfully with version $VERSION_FULL"
           EOF
