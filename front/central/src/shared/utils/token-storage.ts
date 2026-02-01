@@ -1,3 +1,16 @@
+/**
+ * Token Storage - Wrapper que usa CookieStorage internamente
+ *
+ * DEPRECATED: Este archivo existe solo para compatibilidad.
+ * Usa CookieStorage directamente en código nuevo.
+ *
+ * CookieStorage detecta automáticamente si estamos en iframe y usa:
+ * - Cookies con SameSite=None; Secure en iframes (Shopify)
+ * - localStorage en páginas normales
+ */
+
+import { CookieStorage } from './cookie-storage';
+
 export interface BusinessColors {
     primary?: string;
     secondary?: string;
@@ -42,99 +55,25 @@ export interface UserPermissions {
     resources: ResourcePermission[];
 }
 
-const KEYS = {
-    SESSION_TOKEN: 'session_token',
-    BUSINESS_TOKEN: 'business_token',
-    USER_DATA: 'user_data',
-    BUSINESSES_DATA: 'businesses_data',
-    ACTIVE_BUSINESS_ID: 'active_business_id',
-    PERMISSIONS: 'permissions',
-    BUSINESS_COLORS: 'business_colors',
-};
-
+/**
+ * @deprecated Use CookieStorage instead
+ *
+ * TokenStorage ahora usa CookieStorage internamente para soportar iframes de Shopify
+ */
 export const TokenStorage = {
-    getSessionToken: (): string | null => {
-        if (typeof window === 'undefined') return null;
-        return localStorage.getItem(KEYS.SESSION_TOKEN);
-    },
-
-    setSessionToken: (token: string) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(KEYS.SESSION_TOKEN, token);
-    },
-
-    getBusinessToken: (): string | null => {
-        if (typeof window === 'undefined') return null;
-        return localStorage.getItem(KEYS.BUSINESS_TOKEN);
-    },
-
-    setBusinessToken: (token: string) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(KEYS.BUSINESS_TOKEN, token);
-    },
-
-    getUser: (): UserData | null => {
-        if (typeof window === 'undefined') return null;
-        const data = localStorage.getItem(KEYS.USER_DATA);
-        return data ? JSON.parse(data) : null;
-    },
-
-    setUser: (user: UserData) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(KEYS.USER_DATA, JSON.stringify(user));
-    },
-
-    getBusinessesData: (): BusinessData[] | null => {
-        if (typeof window === 'undefined') return null;
-        const data = localStorage.getItem(KEYS.BUSINESSES_DATA);
-        return data ? JSON.parse(data) : null;
-    },
-
-    setBusinessesData: (businesses: BusinessData[]) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(KEYS.BUSINESSES_DATA, JSON.stringify(businesses));
-    },
-
-    setActiveBusiness: (id: number) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(KEYS.ACTIVE_BUSINESS_ID, id.toString());
-    },
-
-    setBusinessColors: (colors: BusinessColors) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(KEYS.BUSINESS_COLORS, JSON.stringify(colors));
-    },
-
-    getBusinessColors: (): BusinessColors | null => {
-        if (typeof window === 'undefined') return null;
-        const data = localStorage.getItem(KEYS.BUSINESS_COLORS);
-        return data ? JSON.parse(data) : null;
-    },
-
-    getPermissions: (): UserPermissions | null => {
-        if (typeof window === 'undefined') return null;
-        const data = localStorage.getItem(KEYS.PERMISSIONS);
-        return data ? JSON.parse(data) : null;
-    },
-
-    setPermissions: (permissions: UserPermissions) => {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(KEYS.PERMISSIONS, JSON.stringify(permissions));
-    },
-
-    removeUserPermissions: () => {
-        if (typeof window === 'undefined') return;
-        localStorage.removeItem(KEYS.PERMISSIONS);
-    },
-
-    clearSession: () => {
-        if (typeof window === 'undefined') return;
-        localStorage.removeItem(KEYS.SESSION_TOKEN);
-        localStorage.removeItem(KEYS.BUSINESS_TOKEN);
-        localStorage.removeItem(KEYS.USER_DATA);
-        localStorage.removeItem(KEYS.BUSINESSES_DATA);
-        localStorage.removeItem(KEYS.ACTIVE_BUSINESS_ID);
-        localStorage.removeItem(KEYS.PERMISSIONS);
-        localStorage.removeItem(KEYS.BUSINESS_COLORS);
-    }
+    getSessionToken: () => CookieStorage.getSessionToken(),
+    setSessionToken: (token: string) => CookieStorage.setSessionToken(token),
+    getBusinessToken: () => CookieStorage.getBusinessToken(),
+    setBusinessToken: (token: string) => CookieStorage.setBusinessToken(token),
+    getUser: () => CookieStorage.getUser(),
+    setUser: (user: UserData) => CookieStorage.setUser(user),
+    getBusinessesData: () => CookieStorage.getBusinessesData(),
+    setBusinessesData: (businesses: BusinessData[]) => CookieStorage.setBusinessesData(businesses),
+    setActiveBusiness: (id: number) => CookieStorage.setActiveBusiness(id),
+    setBusinessColors: (colors: BusinessColors) => CookieStorage.setBusinessColors(colors),
+    getBusinessColors: () => CookieStorage.getBusinessColors(),
+    getPermissions: () => CookieStorage.getPermissions(),
+    setPermissions: (permissions: UserPermissions) => CookieStorage.setPermissions(permissions),
+    removeUserPermissions: () => CookieStorage.removeUserPermissions(),
+    clearSession: () => CookieStorage.clearSession(),
 };
