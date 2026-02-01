@@ -37,28 +37,14 @@ function LoginContent() {
 
           if (response.ok) {
             const data = await response.json();
-            // Guardar token recibido del backend usando CookieStorage
-            // (funciona tanto en iframes como en páginas normales)
-            if (data.token) {
-              CookieStorage.setSessionToken(data.token);
-            }
+            // ✅ NO guardar token (viene en cookie HttpOnly del backend)
+            // Solo guardar datos del usuario
             if (data.user) {
               CookieStorage.setUser(data.user);
             }
 
-            // IMPORTANTE: Esperar a que las cookies se guarden completamente
-            // En iframes, esto puede tardar más debido a SameSite=None
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Verificar que las cookies se guardaron antes de redirigir
-            const tokenVerification = CookieStorage.getSessionToken();
-            if (tokenVerification) {
-              console.log('✅ Cookies guardadas exitosamente, redirigiendo...');
-              router.push('/home');
-            } else {
-              console.error('❌ Error: Cookies no se guardaron');
-              setIsAuthenticating(false);
-            }
+            console.log('✅ Login con Shopify exitoso, redirigiendo...');
+            router.push('/home');
           } else {
             console.error('Fallo login con Shopify', response.status);
             // Si falla, mostramos login normal o error

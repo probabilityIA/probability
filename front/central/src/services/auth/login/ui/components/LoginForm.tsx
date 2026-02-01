@@ -22,8 +22,8 @@ export const LoginForm = () => {
             try {
                 const response = await loginAction({ email, password });
                 if (response.success) {
-                    // Guardar token y datos del usuario
-                    TokenStorage.setSessionToken(response.data.token);
+                    // ✅ NO guardar token (viene en cookie HttpOnly del backend)
+                    // Solo guardar datos del usuario en sessionStorage
                     TokenStorage.setUser({
                         userId: response.data.user.id.toString(),
                         name: response.data.user.name,
@@ -38,9 +38,9 @@ export const LoginForm = () => {
                         TokenStorage.setBusinessesData(response.data.businesses);
                     }
 
-                    // Obtener roles y permisos
+                    // Obtener roles y permisos (cookie se envía automáticamente)
                     try {
-                        const permissionsResponse = await getRolesPermissionsAction(response.data.token);
+                        const permissionsResponse = await getRolesPermissionsAction();
                         if (permissionsResponse.success && permissionsResponse.data) {
                             TokenStorage.setPermissions({
                                 is_super: permissionsResponse.data.is_super,
@@ -65,18 +65,8 @@ export const LoginForm = () => {
                         }
                     }
 
-                    // IMPORTANTE: Esperar a que las cookies se guarden en iframe
-                    await new Promise(resolve => setTimeout(resolve, 100));
-
-                    // Verificar que las cookies se guardaron
-                    const tokenVerification = TokenStorage.getSessionToken();
-                    if (tokenVerification) {
-                        console.log('✅ Login exitoso, redirigiendo...');
-                        router.push('/home');
-                    } else {
-                        console.error('❌ Error: Sesión no se guardó correctamente');
-                        setError('Error al guardar la sesión. Por favor intenta de nuevo.');
-                    }
+                    console.log('✅ Login exitoso, redirigiendo...');
+                    router.push('/home');
                 }
             } catch (err: any) {
                 console.error(err);
