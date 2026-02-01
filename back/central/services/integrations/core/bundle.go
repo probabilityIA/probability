@@ -45,6 +45,8 @@ type IIntegrationCore interface {
 	GetIntegrationByStoreID(ctx context.Context, storeID string, integrationType int) (*Integration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	RegisterIntegration(integrationType int, integration IIntegrationContract)
+	// GetRegisteredIntegration obtiene el bundle registrado para un tipo de integración
+	GetRegisteredIntegration(integrationType int) (IIntegrationContract, bool)
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
 	SyncOrdersByBusiness(ctx context.Context, businessID uint) error

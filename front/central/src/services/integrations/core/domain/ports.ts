@@ -14,7 +14,8 @@ import {
     DeleteWebhookResponse,
     VerifyWebhooksResponse,
     CreateWebhookResponse,
-    SyncOrdersParams
+    SyncOrdersParams,
+    IntegrationCategoriesResponse
 } from './types';
 
 export interface IIntegrationRepository {
@@ -47,4 +48,7 @@ export interface IIntegrationRepository {
     createIntegrationType(data: CreateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>>;
     updateIntegrationType(id: number, data: UpdateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>>;
     deleteIntegrationType(id: number): Promise<ActionResponse>;
+
+    // Integration Categories
+    getIntegrationCategories(): Promise<IntegrationCategoriesResponse>;
 }

@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -21,7 +23,7 @@ type Repository struct {
 }
 
 // New crea una nueva instancia del repositorio
-func New(database db.IDatabase, config env.IConfig) domain.IRepository {
+func New(database db.IDatabase, config env.IConfig) ports.IRepository {
 	imageURLBase := config.Get("URL_BASE_DOMAIN_S3")
 	return &Repository{
 		db:           database,
@@ -30,7 +32,7 @@ func New(database db.IDatabase, config env.IConfig) domain.IRepository {
 }
 
 // CreateOrder crea una nueva orden en la base de datos
-func (r *Repository) CreateOrder(ctx context.Context, order *domain.ProbabilityOrder) error {
+func (r *Repository) CreateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
 	// Validaciones críticas antes de insertar
 	if order.ExternalID == "" {
 		return fmt.Errorf("error: intentando insertar orden sin external_id - OrderNumber: %s", order.OrderNumber)
@@ -48,7 +50,7 @@ func (r *Repository) CreateOrder(ctx context.Context, order *domain.ProbabilityO
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "duplicate key value violates unique constraint") &&
 			(strings.Contains(errMsg, "idx_integration_external_id") || strings.Contains(errMsg, "SQLSTATE 23505")) {
-			return domain.ErrOrderAlreadyExists
+			return domainerrors.ErrOrderAlreadyExists
 		}
 		return err
 	}
@@ -58,7 +60,7 @@ func (r *Repository) CreateOrder(ctx context.Context, order *domain.ProbabilityO
 }
 
 // GetOrderByID obtiene una orden por su ID
-func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.ProbabilityOrder, error) {
+func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
@@ -83,7 +85,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*domain.Proba
 }
 
 // GetOrderByInternalNumber obtiene una orden por su número interno
-func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*domain.ProbabilityOrder, error) {
+func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
@@ -108,7 +110,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 }
 
 // GetOrderByOrderNumber obtiene una orden por su order_number
-func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber string) (*domain.ProbabilityOrder, error) {
+func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber string) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
@@ -133,7 +135,7 @@ func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber stri
 }
 
 // ListOrders obtiene una lista paginada de órdenes con filtros
-func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.ProbabilityOrder, int64, error) {
+func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error) {
 	var dbOrders []models.Order
 	var total int64
 
@@ -271,7 +273,7 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	}
 
 	// Mapear a dominio
-	orders := make([]domain.ProbabilityOrder, len(dbOrders))
+	orders := make([]entities.ProbabilityOrder, len(dbOrders))
 	for i, dbOrder := range dbOrders {
 		orders[i] = *mappers.ToDomainOrder(&dbOrder, r.imageURLBase)
 	}
@@ -280,7 +282,7 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 }
 
 // GetOrderRaw obtiene los metadatos crudos de una orden
-func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*domain.ProbabilityOrderChannelMetadata, error) {
+func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*entities.ProbabilityOrderChannelMetadata, error) {
 	var dbMetadata models.OrderChannelMetadata
 	if err := r.db.Conn(ctx).Where("order_id = ?", id).First(&dbMetadata).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -292,7 +294,7 @@ func (r *Repository) GetOrderRaw(ctx context.Context, id string) (*domain.Probab
 }
 
 // UpdateOrder actualiza una orden existente
-func (r *Repository) UpdateOrder(ctx context.Context, order *domain.ProbabilityOrder) error {
+func (r *Repository) UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
 	dbOrder := mappers.ToDBOrder(order)
 	return r.db.Conn(ctx).Save(dbOrder).Error
 }
@@ -318,7 +320,7 @@ func (r *Repository) OrderExists(ctx context.Context, externalID string, integra
 }
 
 // GetOrderByExternalID obtiene una orden por external_id e integration_id
-func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*domain.ProbabilityOrder, error) {
+func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string, integrationID uint) (*entities.ProbabilityOrder, error) {
 	var order models.Order
 	err := r.db.Conn(ctx).
 		Preload("Business").
@@ -348,13 +350,13 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 // ───────────────────────────────────────────
 
 // CreateOrderItems crea múltiples items de orden
-func (r *Repository) CreateOrderItems(ctx context.Context, items []*domain.ProbabilityOrderItem) error {
+func (r *Repository) CreateOrderItems(ctx context.Context, items []*entities.ProbabilityOrderItem) error {
 	if len(items) == 0 {
 		return nil
 	}
 
-	// Convertir []*domain.ProbabilityOrderItem a []domain.ProbabilityOrderItem para usar el mapper
-	domainItems := make([]domain.ProbabilityOrderItem, len(items))
+	// Convertir []*entities.ProbabilityOrderItem a []entities.ProbabilityOrderItem para usar el mapper
+	domainItems := make([]entities.ProbabilityOrderItem, len(items))
 	for i, item := range items {
 		domainItems[i] = *item
 	}
@@ -372,7 +374,7 @@ func (r *Repository) CreateOrderItems(ctx context.Context, items []*domain.Proba
 }
 
 // CreateAddresses crea múltiples direcciones
-func (r *Repository) CreateAddresses(ctx context.Context, addresses []*domain.ProbabilityAddress) error {
+func (r *Repository) CreateAddresses(ctx context.Context, addresses []*entities.ProbabilityAddress) error {
 	if len(addresses) == 0 {
 		return nil
 	}
@@ -414,7 +416,7 @@ func (r *Repository) CreateAddresses(ctx context.Context, addresses []*domain.Pr
 }
 
 // CreatePayments crea múltiples pagos
-func (r *Repository) CreatePayments(ctx context.Context, payments []*domain.ProbabilityPayment) error {
+func (r *Repository) CreatePayments(ctx context.Context, payments []*entities.ProbabilityPayment) error {
 	if len(payments) == 0 {
 		return nil
 	}
@@ -454,7 +456,7 @@ func (r *Repository) CreatePayments(ctx context.Context, payments []*domain.Prob
 }
 
 // CreateShipments crea múltiples envíos
-func (r *Repository) CreateShipments(ctx context.Context, shipments []*domain.ProbabilityShipment) error {
+func (r *Repository) CreateShipments(ctx context.Context, shipments []*entities.ProbabilityShipment) error {
 	if len(shipments) == 0 {
 		return nil
 	}
@@ -505,7 +507,7 @@ func (r *Repository) CreateShipments(ctx context.Context, shipments []*domain.Pr
 }
 
 // CreateChannelMetadata crea metadata del canal
-func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *domain.ProbabilityOrderChannelMetadata) error {
+func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *entities.ProbabilityOrderChannelMetadata) error {
 	if metadata == nil {
 		return nil
 	}
@@ -520,7 +522,7 @@ func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *domain
 // ───────────────────────────────────────────
 
 // GetProductBySKU busca un producto por SKU y BusinessID
-func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*domain.Product, error) {
+func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error) {
 	var product models.Product
 	err := r.db.Conn(ctx).
 		Where("business_id = ? AND sku = ?", businessID, sku).
@@ -536,7 +538,7 @@ func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku s
 }
 
 // CreateProduct crea un nuevo producto
-func (r *Repository) CreateProduct(ctx context.Context, product *domain.Product) error {
+func (r *Repository) CreateProduct(ctx context.Context, product *entities.Product) error {
 	dbProduct := mappers.ToDBProduct(product)
 	if err := r.db.Conn(ctx).Create(dbProduct).Error; err != nil {
 		return err
@@ -546,7 +548,7 @@ func (r *Repository) CreateProduct(ctx context.Context, product *domain.Product)
 }
 
 // GetClientByEmail busca un cliente por Email y BusinessID
-func (r *Repository) GetClientByEmail(ctx context.Context, businessID uint, email string) (*domain.Client, error) {
+func (r *Repository) GetClientByEmail(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
 	var client models.Client
 	err := r.db.Conn(ctx).
 		Where("business_id = ? AND email = ?", businessID, email).
@@ -562,7 +564,7 @@ func (r *Repository) GetClientByEmail(ctx context.Context, businessID uint, emai
 }
 
 // GetClientByDNI busca un cliente por DNI y BusinessID
-func (r *Repository) GetClientByDNI(ctx context.Context, businessID uint, dni string) (*domain.Client, error) {
+func (r *Repository) GetClientByDNI(ctx context.Context, businessID uint, dni string) (*entities.Client, error) {
 	if dni == "" {
 		return nil, nil // No buscar si el DNI está vacío
 	}
@@ -582,7 +584,7 @@ func (r *Repository) GetClientByDNI(ctx context.Context, businessID uint, dni st
 }
 
 // CreateClient crea un nuevo cliente
-func (r *Repository) CreateClient(ctx context.Context, client *domain.Client) error {
+func (r *Repository) CreateClient(ctx context.Context, client *entities.Client) error {
 	dbClient := mappers.ToDBClient(client)
 	if err := r.db.Conn(ctx).Create(dbClient).Error; err != nil {
 		return err
@@ -602,7 +604,7 @@ func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (
 }
 
 // CreateOrderError guarda un error ocurrido durante el procesamiento de una orden
-func (r *Repository) CreateOrderError(ctx context.Context, orderError *domain.OrderError) error {
+func (r *Repository) CreateOrderError(ctx context.Context, orderError *entities.OrderError) error {
 	if orderError == nil {
 		return fmt.Errorf("orderError cannot be nil")
 	}

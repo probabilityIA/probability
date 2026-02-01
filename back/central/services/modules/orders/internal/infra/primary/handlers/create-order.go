@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 )
 
 // CreateOrder godoc
@@ -13,15 +13,15 @@ import (
 // @Tags         Orders
 // @Accept       json
 // @Produce      json
-// @Param        order  body      domain.CreateOrderRequest  true  "Datos de la orden"
+// @Param        order  body      dtos.CreateOrderRequest  true  "Datos de la orden"
 // @Security     BearerAuth
-// @Success      201  {object}  domain.OrderResponse
+// @Success      201  {object}  dtos.OrderResponse
 // @Failure      400  {object}  map[string]interface{}
 // @Failure      409  {object}  map[string]interface{}
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /orders [post]
 func (h *Handlers) CreateOrder(c *gin.Context) {
-	var req domain.CreateOrderRequest
+	var req dtos.CreateOrderRequest
 
 	// Validar el request body
 	if err := c.ShouldBindJSON(&req); err != nil {

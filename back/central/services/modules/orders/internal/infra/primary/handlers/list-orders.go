@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/mappers"
 )
 
 // ListOrders godoc
@@ -32,7 +33,7 @@ import (
 // @Param        sort_by           query    string  false  "Campo para ordenar (default: created_at)"
 // @Param        sort_order        query    string  false  "Orden (asc, desc) (default: desc)"
 // @Security     BearerAuth
-// @Success      200  {object}  domain.OrdersListResponse
+// @Success      200  {object}  response.OrdersList
 // @Failure      400  {object}  map[string]interface{}
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /orders [get]
@@ -152,8 +153,8 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		}
 	}
 
-	// Llamar al caso de uso
-	response, err := h.orderCRUD.ListOrders(c.Request.Context(), page, pageSize, filters)
+	// Llamar al caso de uso (retorna DTO de dominio)
+	domainResp, err := h.orderCRUD.ListOrders(c.Request.Context(), page, pageSize, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -163,13 +164,16 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		return
 	}
 
+	// ✅ Convertir Domain response → HTTP response
+	httpResp := mappers.OrdersListToResponse(domainResp)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
 		"message":     "Órdenes obtenidas exitosamente",
-		"data":        response.Data,
-		"total":       response.Total,
-		"page":        response.Page,
-		"page_size":   response.PageSize,
-		"total_pages": response.TotalPages,
+		"data":        httpResp.Data,
+		"total":       httpResp.Total,
+		"page":        httpResp.Page,
+		"page_size":   httpResp.PageSize,
+		"total_pages": httpResp.TotalPages,
 	})
 }

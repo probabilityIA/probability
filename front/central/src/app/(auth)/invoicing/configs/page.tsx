@@ -202,6 +202,12 @@ export default function InvoicingConfigsPage() {
             Define qué integraciones deben generar facturas automáticamente
           </p>
         </div>
+        <Button
+          variant="primary"
+          onClick={() => window.location.href = '/invoicing/configs/new'}
+        >
+          Nueva Configuración
+        </Button>
       </div>
 
       {configs.length === 0 ? (

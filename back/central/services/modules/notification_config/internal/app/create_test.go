@@ -30,9 +30,10 @@ func TestCreate_Success(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:    100,
@@ -118,9 +119,10 @@ func TestCreate_DuplicateConfig(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:    100,
@@ -168,9 +170,10 @@ func TestCreate_RepositoryListError(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:    100,
@@ -217,9 +220,10 @@ func TestCreate_RepositoryCreateError(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:    100,
@@ -276,9 +280,10 @@ func TestCreate_DifferentConditions_ShouldSucceed(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:    100,

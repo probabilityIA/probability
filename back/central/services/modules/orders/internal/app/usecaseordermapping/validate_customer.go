@@ -4,11 +4,12 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
 // GetOrCreateCustomer verifica si el cliente existe, si no, lo crea
-func (uc *UseCaseOrderMapping) GetOrCreateCustomer(ctx context.Context, businessID uint, dto *domain.ProbabilityOrderDTO) (*domain.Client, error) {
+func (uc *UseCaseOrderMapping) GetOrCreateCustomer(ctx context.Context, businessID uint, dto *dtos.ProbabilityOrderDTO) (*entities.Client, error) {
 	if dto.CustomerEmail == "" {
 		return nil, nil // No hay email para validar
 	}
@@ -42,7 +43,7 @@ func (uc *UseCaseOrderMapping) GetOrCreateCustomer(ctx context.Context, business
 		dni = &dto.CustomerDNI
 	}
 
-	newClient := &domain.Client{
+	newClient := &entities.Client{
 		BusinessID: businessID,
 		Name:       dto.CustomerName,
 		Email:      dto.CustomerEmail,

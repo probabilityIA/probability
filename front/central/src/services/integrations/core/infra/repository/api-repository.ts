@@ -16,7 +16,9 @@ import {
     WebhookResponse,
     VerifyWebhooksResponse,
     CreateWebhookResponse,
-    SyncOrdersParams
+    SyncOrdersParams,
+    IntegrationCategory,
+    IntegrationCategoriesResponse
 } from '../../domain/types';
 
 export class IntegrationApiRepository implements IIntegrationRepository {
@@ -279,5 +281,12 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         return this.fetch<CreateWebhookResponse>(`/integrations/${id}/webhooks/create`, {
             method: 'POST',
         });
+    }
+
+    // Integration Categories
+    async getIntegrationCategories(): Promise<IntegrationCategoriesResponse> {
+        return this.fetch<IntegrationCategoriesResponse>('/integration-categories', {
+            cache: 'force-cache', // Cache categories as they don't change frequently
+        } as any);
     }
 }

@@ -6,12 +6,14 @@ import (
 	"fmt"
 
 	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"gorm.io/datatypes"
 )
 
 // UpdateOrder actualiza una orden existente con los datos del DTO
-func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error) {
 	// Guardar el estado anterior antes de actualizar (para detectar cambios de estado)
 	previousStatus := existingOrder.Status
 
@@ -60,7 +62,7 @@ func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *d
 // ───────────────────────────────────────────
 
 // updateOrderFields actualiza todos los campos de la orden y retorna si hubo cambios
-func (uc *UseCaseOrderMapping) updateOrderFields(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateOrderFields(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	hasChanges := false
 
 	// Actualizar estados
@@ -113,7 +115,7 @@ func (uc *UseCaseOrderMapping) updateOrderFields(ctx context.Context, order *dom
 // ───────────────────────────────────────────
 
 // updateOrderStatuses actualiza los estados de la orden (OrderStatus, PaymentStatus, FulfillmentStatus)
-func (uc *UseCaseOrderMapping) updateOrderStatuses(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateOrderStatuses(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	hasChanges := false
 
 	// Actualizar OrderStatus
@@ -135,7 +137,7 @@ func (uc *UseCaseOrderMapping) updateOrderStatuses(ctx context.Context, order *d
 }
 
 // updateOrderStatus actualiza el estado general de la orden
-func (uc *UseCaseOrderMapping) updateOrderStatus(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateOrderStatus(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	// Actualizar Status
@@ -161,7 +163,7 @@ func (uc *UseCaseOrderMapping) updateOrderStatus(ctx context.Context, order *dom
 }
 
 // updatePaymentStatus actualiza el estado de pago
-func (uc *UseCaseOrderMapping) updatePaymentStatus(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updatePaymentStatus(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	// Mapear PaymentStatusID desde el DTO
@@ -186,7 +188,7 @@ func (uc *UseCaseOrderMapping) updatePaymentStatus(ctx context.Context, order *d
 }
 
 // updateFulfillmentStatus actualiza el estado de fulfillment
-func (uc *UseCaseOrderMapping) updateFulfillmentStatus(ctx context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateFulfillmentStatus(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	// Mapear FulfillmentStatusID desde el DTO
@@ -210,7 +212,7 @@ func (uc *UseCaseOrderMapping) updateFulfillmentStatus(ctx context.Context, orde
 // ───────────────────────────────────────────
 
 // updateFinancialFields actualiza los campos financieros de la orden
-func (uc *UseCaseOrderMapping) updateFinancialFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateFinancialFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	if dto.Subtotal > 0 && order.Subtotal != dto.Subtotal {
@@ -258,7 +260,7 @@ func (uc *UseCaseOrderMapping) updateFinancialFields(order *domain.ProbabilityOr
 // ───────────────────────────────────────────
 
 // updateCustomerFields actualiza la información del cliente
-func (uc *UseCaseOrderMapping) updateCustomerFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateCustomerFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	if dto.CustomerName != "" && order.CustomerName != dto.CustomerName {
@@ -301,7 +303,7 @@ func (uc *UseCaseOrderMapping) updateCustomerFields(order *domain.ProbabilityOrd
 // ───────────────────────────────────────────
 
 // updateShippingFields actualiza los campos relacionados con el envío
-func (uc *UseCaseOrderMapping) updateShippingFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateShippingFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	// Actualizar información de tracking desde Shipments
@@ -318,7 +320,7 @@ func (uc *UseCaseOrderMapping) updateShippingFields(order *domain.ProbabilityOrd
 }
 
 // updateTrackingFields actualiza los campos de tracking desde Shipments
-func (uc *UseCaseOrderMapping) updateTrackingFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateTrackingFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	if len(dto.Shipments) == 0 {
 		return false
 	}
@@ -360,7 +362,7 @@ func (uc *UseCaseOrderMapping) updateTrackingFields(order *domain.ProbabilityOrd
 }
 
 // updateShippingAddress actualiza la dirección de envío desde Addresses
-func (uc *UseCaseOrderMapping) updateShippingAddress(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateShippingAddress(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	if len(dto.Addresses) == 0 {
 		return false
 	}
@@ -423,7 +425,7 @@ func (uc *UseCaseOrderMapping) updateShippingAddress(order *domain.ProbabilityOr
 // ───────────────────────────────────────────
 
 // updatePaymentFields actualiza los campos relacionados con el pago
-func (uc *UseCaseOrderMapping) updatePaymentFields(_ context.Context, order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updatePaymentFields(_ context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	if len(dto.Payments) > 0 {
@@ -455,7 +457,7 @@ func (uc *UseCaseOrderMapping) updatePaymentFields(_ context.Context, order *dom
 // ───────────────────────────────────────────
 
 // updateFulfillmentFields actualiza los campos relacionados con fulfillment desde Shipments
-func (uc *UseCaseOrderMapping) updateFulfillmentFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateFulfillmentFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	if len(dto.Shipments) == 0 {
 		return false
 	}
@@ -498,7 +500,7 @@ func (uc *UseCaseOrderMapping) updateFulfillmentFields(order *domain.Probability
 // ───────────────────────────────────────────
 
 // updateAdditionalFields actualiza campos adicionales de la orden
-func (uc *UseCaseOrderMapping) updateAdditionalFields(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateAdditionalFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	if dto.OrderTypeID != nil && (order.OrderTypeID == nil || *order.OrderTypeID != *dto.OrderTypeID) {
@@ -572,7 +574,7 @@ func (uc *UseCaseOrderMapping) updateAdditionalFields(order *domain.ProbabilityO
 // ───────────────────────────────────────────
 
 // updateStructuredData actualiza los campos JSONB de la orden
-func (uc *UseCaseOrderMapping) updateStructuredData(order *domain.ProbabilityOrder, dto *domain.ProbabilityOrderDTO) bool {
+func (uc *UseCaseOrderMapping) updateStructuredData(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
 	// Actualizar Items si están presentes
@@ -648,8 +650,8 @@ func equalJSON(a, b datatypes.JSON) bool {
 // ───────────────────────────────────────────
 
 // publishUpdateEvents publica los eventos relacionados con la actualización de la orden
-func (uc *UseCaseOrderMapping) publishUpdateEvents(ctx context.Context, order *domain.ProbabilityOrder, previousStatus string) {
-	if uc.eventPublisher == nil {
+func (uc *UseCaseOrderMapping) publishUpdateEvents(ctx context.Context, order *entities.ProbabilityOrder, previousStatus string) {
+	if uc.redisEventPublisher == nil {
 		return
 	}
 
@@ -669,8 +671,8 @@ func (uc *UseCaseOrderMapping) publishUpdateEvents(ctx context.Context, order *d
 }
 
 // publishOrderUpdatedEvent publica el evento de orden actualizada
-func (uc *UseCaseOrderMapping) publishOrderUpdatedEvent(ctx context.Context, order *domain.ProbabilityOrder) {
-	eventData := domain.OrderEventData{
+func (uc *UseCaseOrderMapping) publishOrderUpdatedEvent(ctx context.Context, order *entities.ProbabilityOrder) {
+	eventData := entities.OrderEventData{
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,
 		ExternalID:     order.ExternalID,
@@ -681,26 +683,20 @@ func (uc *UseCaseOrderMapping) publishOrderUpdatedEvent(ctx context.Context, ord
 		Platform:       order.Platform,
 	}
 
-	event := domain.NewOrderEvent(domain.OrderEventTypeUpdated, order.ID, eventData)
+	event := entities.NewOrderEvent(entities.OrderEventTypeUpdated, order.ID, eventData)
 	event.BusinessID = order.BusinessID
 	if order.IntegrationID > 0 {
 		integrationID := order.IntegrationID
 		event.IntegrationID = &integrationID
 	}
 
-	go func() {
-		if err := uc.eventPublisher.PublishOrderEvent(ctx, event); err != nil {
-			uc.logger.Error(ctx).
-				Err(err).
-				Str("order_id", order.ID).
-				Msg("Error al publicar evento de orden actualizada")
-		}
-	}()
+	// Publicar en ambos canales (Redis + RabbitMQ) con orden completa
+	helpers.PublishEventDual(ctx, event, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 }
 
 // publishOrderStatusChangedEvent publica el evento de cambio de estado de la orden
-func (uc *UseCaseOrderMapping) publishOrderStatusChangedEvent(_ context.Context, order *domain.ProbabilityOrder, previousStatus string) {
-	eventData := domain.OrderEventData{
+func (uc *UseCaseOrderMapping) publishOrderStatusChangedEvent(_ context.Context, order *entities.ProbabilityOrder, previousStatus string) {
+	eventData := entities.OrderEventData{
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,
 		ExternalID:     order.ExternalID,
@@ -712,44 +708,19 @@ func (uc *UseCaseOrderMapping) publishOrderStatusChangedEvent(_ context.Context,
 		Platform:       order.Platform,
 	}
 
-	event := domain.NewOrderEvent(domain.OrderEventTypeStatusChanged, order.ID, eventData)
+	event := entities.NewOrderEvent(entities.OrderEventTypeStatusChanged, order.ID, eventData)
 	event.BusinessID = order.BusinessID
 	if order.IntegrationID > 0 {
 		integrationID := order.IntegrationID
 		event.IntegrationID = &integrationID
 	}
 
-	go func() {
-		bgCtx := context.Background()
-		uc.logger.Info(bgCtx).
-			Str("order_id", order.ID).
-			Str("event_type", string(event.Type)).
-			Str("previous_status", previousStatus).
-			Str("current_status", order.Status).
-			Interface("business_id", event.BusinessID).
-			Interface("integration_id", event.IntegrationID).
-			Str("order_number", order.OrderNumber).
-			Msg("📤 Publicando evento order.status_changed a Redis...")
-
-		if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
-			uc.logger.Error(bgCtx).
-				Err(err).
-				Str("order_id", order.ID).
-				Str("event_type", string(event.Type)).
-				Msg("❌ Error al publicar evento de cambio de estado")
-		} else {
-			uc.logger.Info(bgCtx).
-				Str("order_id", order.ID).
-				Str("event_type", string(event.Type)).
-				Str("previous_status", previousStatus).
-				Str("current_status", order.Status).
-				Msg("✅ Evento order.status_changed publicado exitosamente a Redis")
-		}
-	}()
+	// Publicar en ambos canales (Redis + RabbitMQ) con orden completa
+	helpers.PublishEventDual(context.Background(), event, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 }
 
 // recalculateOrderScore recalcula el score de la orden
-func (uc *UseCaseOrderMapping) recalculateOrderScore(ctx context.Context, order *domain.ProbabilityOrder) {
+func (uc *UseCaseOrderMapping) recalculateOrderScore(ctx context.Context, order *entities.ProbabilityOrder) {
 	go func() {
 		fmt.Printf("[UpdateOrder] Recalculando score directamente para orden %s (actualizada)\n", order.ID)
 		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
@@ -767,29 +738,20 @@ func (uc *UseCaseOrderMapping) recalculateOrderScore(ctx context.Context, order 
 }
 
 // publishScoreCalculationEventForUpdate publica el evento para recalcular score
-func (uc *UseCaseOrderMapping) publishScoreCalculationEventForUpdate(ctx context.Context, order *domain.ProbabilityOrder) {
-	scoreEventData := domain.OrderEventData{
+func (uc *UseCaseOrderMapping) publishScoreCalculationEventForUpdate(ctx context.Context, order *entities.ProbabilityOrder) {
+	scoreEventData := entities.OrderEventData{
 		OrderNumber:    order.OrderNumber,
 		InternalNumber: order.InternalNumber,
 		ExternalID:     order.ExternalID,
 	}
 
-	scoreEvent := domain.NewOrderEvent(domain.OrderEventTypeScoreCalculationRequested, order.ID, scoreEventData)
+	scoreEvent := entities.NewOrderEvent(entities.OrderEventTypeScoreCalculationRequested, order.ID, scoreEventData)
 	scoreEvent.BusinessID = order.BusinessID
 	if order.IntegrationID > 0 {
 		integrationID := order.IntegrationID
 		scoreEvent.IntegrationID = &integrationID
 	}
 
-	go func() {
-		fmt.Printf("[UpdateOrder] Publicando evento order.score_calculation_requested para orden %s (actualizada)\n", order.ID)
-		if err := uc.eventPublisher.PublishOrderEvent(ctx, scoreEvent); err != nil {
-			uc.logger.Error(ctx).
-				Err(err).
-				Str("order_id", order.ID).
-				Msg("Error al publicar evento de cálculo de score")
-		} else {
-			fmt.Printf("[UpdateOrder] Evento order.score_calculation_requested publicado exitosamente para orden %s\n", order.ID)
-		}
-	}()
+	// Publicar en ambos canales (Redis + RabbitMQ) con orden completa
+	helpers.PublishEventDual(ctx, scoreEvent, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 }

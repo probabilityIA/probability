@@ -7,13 +7,13 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
 // CalculateOrderScore calcula el score de una orden y sus factores negativos
-func (uc *UseCaseOrderScore) CalculateOrderScore(order *domain.ProbabilityOrder) (float64, []string) {
+func (uc *UseCaseOrderScore) CalculateOrderScore(order *entities.ProbabilityOrder) (float64, []string) {
 	// Start with 100
 	score := 100.0
 
@@ -65,7 +65,7 @@ func (uc *UseCaseOrderScore) CalculateOrderScore(order *domain.ProbabilityOrder)
 }
 
 // GetStaticNegativeFactors obtiene la lista de factores negativos estáticos
-func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *domain.ProbabilityOrder) []string {
+func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *entities.ProbabilityOrder) []string {
 	var factors []string
 
 	// 1. Validación de correo
@@ -117,15 +117,12 @@ func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *domain.ProbabilityO
 						Address2 string `json:"address2"`
 					} `json:"shipping_address"`
 				}
-				// We need to marshal/unmarshal because RawData is datatypes.JSON (byte array)
-				bytes, err := meta.RawData.MarshalJSON()
-				if err == nil {
-					if err := json.Unmarshal(bytes, &rawData); err == nil {
-						if rawData.ShippingAddress.Address2 != "" {
-							fmt.Printf("[CalculateOrderScore] Found Address2 in ChannelMetadata: '%s'\n", rawData.ShippingAddress.Address2)
-							address2 = rawData.ShippingAddress.Address2
-							break
-						}
+				// We need to unmarshal because RawData is []byte
+				if err := json.Unmarshal(meta.RawData, &rawData); err == nil {
+					if rawData.ShippingAddress.Address2 != "" {
+						fmt.Printf("[CalculateOrderScore] Found Address2 in ChannelMetadata: '%s'\n", rawData.ShippingAddress.Address2)
+						address2 = rawData.ShippingAddress.Address2
+						break
 					}
 				}
 			}
@@ -155,7 +152,7 @@ func (uc *UseCaseOrderScore) isValidEmail(email string) bool {
 }
 
 // IsCODPayment verifica si el pago es contra entrega (COD)
-func (uc *UseCaseOrderScore) IsCODPayment(order *domain.ProbabilityOrder) bool {
+func (uc *UseCaseOrderScore) IsCODPayment(order *entities.ProbabilityOrder) bool {
 	// 1. Check PaymentMethodID if we have a mapping (Placeholder)
 	// 2. Check Financial Details (Shopify)
 
@@ -188,25 +185,22 @@ func (uc *UseCaseOrderScore) IsCODPayment(order *domain.ProbabilityOrder) bool {
 		}
 
 		// Unmarshal only what we need
-		bytes, err := order.PaymentDetails.MarshalJSON()
-		if err == nil {
-			if err := json.Unmarshal(bytes, &details); err == nil {
-				// Check single gateway
-				if details.Gateway != "" {
-					gw := strings.ToLower(details.Gateway)
-					for _, kw := range keywords {
-						if strings.Contains(gw, kw) {
-							return true
-						}
+		if err := json.Unmarshal(order.PaymentDetails, &details); err == nil {
+			// Check single gateway
+			if details.Gateway != "" {
+				gw := strings.ToLower(details.Gateway)
+				for _, kw := range keywords {
+					if strings.Contains(gw, kw) {
+						return true
 					}
 				}
-				// Check gateway names array
-				for _, name := range details.PaymentGatewayNames {
-					gw := strings.ToLower(name)
-					for _, kw := range keywords {
-						if strings.Contains(gw, kw) {
-							return true
-						}
+			}
+			// Check gateway names array
+			for _, name := range details.PaymentGatewayNames {
+				gw := strings.ToLower(name)
+				for _, kw := range keywords {
+					if strings.Contains(gw, kw) {
+						return true
 					}
 				}
 			}
@@ -218,14 +212,11 @@ func (uc *UseCaseOrderScore) IsCODPayment(order *domain.ProbabilityOrder) bool {
 		var metadata struct {
 			Tags interface{} `json:"tags"` // Can be string or array in some cases, usually string in Shopify
 		}
-		bytes, err := order.Metadata.MarshalJSON()
-		if err == nil {
-			if err := json.Unmarshal(bytes, &metadata); err == nil {
-				if tagsStr, ok := metadata.Tags.(string); ok && tagsStr != "" {
-					lower := strings.ToLower(tagsStr)
-					if strings.Contains(lower, "cod") || strings.Contains(lower, "contra") {
-						return true
-					}
+		if err := json.Unmarshal(order.Metadata, &metadata); err == nil {
+			if tagsStr, ok := metadata.Tags.(string); ok && tagsStr != "" {
+				lower := strings.ToLower(tagsStr)
+				if strings.Contains(lower, "cod") || strings.Contains(lower, "contra") {
+					return true
 				}
 			}
 		}

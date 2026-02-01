@@ -18,6 +18,7 @@ const (
 	IntegrationTypeWhatsApp     = 2 // Whastap en la BD
 	IntegrationTypeMercadoLibre = 3
 	IntegrationTypeWoocommerce  = 4
+	IntegrationTypeInvoicing    = 5 // Softpymes - Facturación electrónica
 )
 
 // SyncOrdersParams contiene los parámetros opcionales para sincronizar órdenes
@@ -132,6 +133,12 @@ func (ic *integrationCore) RegisterIntegration(integrationType int, integration 
 	}
 
 	ic.logger.Info().Int("integration_type", integrationType).Msg("Integration registered successfully")
+}
+
+// GetRegisteredIntegration obtiene el bundle registrado para un tipo de integración
+func (ic *integrationCore) GetRegisteredIntegration(integrationType int) (IIntegrationContract, bool) {
+	integration, ok := ic.integrations[integrationType]
+	return integration, ok
 }
 
 func (ic *integrationCore) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {

@@ -3,9 +3,9 @@ package paymentstatus
 import (
 	"github.com/gin-gonic/gin"
 
-	"github.com/secamc93/probability/back/central/services/modules/paymentstatus/app"
-	"github.com/secamc93/probability/back/central/services/modules/paymentstatus/infra/primary/handlers"
-	"github.com/secamc93/probability/back/central/services/modules/paymentstatus/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/services/modules/paymentstatus/internal/app/usecases"
+	"github.com/secamc93/probability/back/central/services/modules/paymentstatus/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/modules/paymentstatus/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -19,7 +19,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	repo := repository.New(database, logger)
 
 	// 2. Casos de uso
-	uc := app.New(repo, logger)
+	uc := usecases.New(repo, logger)
 
 	// 3. Handlers
 	h := handlers.New(uc, logger, environment)

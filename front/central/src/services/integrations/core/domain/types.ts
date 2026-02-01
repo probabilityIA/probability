@@ -64,7 +64,8 @@ export interface GetIntegrationsParams {
     page?: number;
     page_size?: number;
     type?: string;
-    category?: string;
+    category?: string;              // Legacy string category
+    category_id?: number;           // NEW - Filter by category ID
     business_id?: number;
     is_active?: boolean;
     search?: string;
@@ -99,7 +100,9 @@ export interface IntegrationType {
     description?: string;
     icon?: string;
     image_url?: string; // URL completa de la imagen del logo
-    category: 'internal' | 'external' | string;
+    category: 'internal' | 'external' | string; // Legacy field, kept for backward compatibility
+    category_id?: number;             // NEW - FK to IntegrationCategory
+    integration_category?: IntegrationCategory;  // NEW - Populated category object
     is_active: boolean;
     config_schema?: any;
     credentials_schema?: any;
@@ -217,4 +220,29 @@ export interface IntegrationsSimpleResponse {
     success: boolean;
     message: string;
     data: IntegrationSimple[];
+}
+
+// ============================================
+// Integration Categories
+// ============================================
+
+export interface IntegrationCategory {
+    id: number;
+    code: string;                    // 'ecommerce', 'invoicing', 'messaging', 'system'
+    name: string;                    // 'E-commerce', 'Facturación', 'Mensajería', 'Sistema'
+    description?: string;
+    icon?: string;                   // Icon name (heroicons)
+    color?: string;                  // Tailwind color class or hex
+    display_order: number;           // Display order in UI
+    parent_category_id?: number;     // For nested categories (future)
+    is_active: boolean;
+    is_visible: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface IntegrationCategoriesResponse {
+    success: boolean;
+    message: string;
+    data: IntegrationCategory[];
 }

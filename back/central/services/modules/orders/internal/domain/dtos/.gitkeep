@@ -1,0 +1,10 @@
+# Esta carpeta debe contener DTOs de dominio PUROS (sin tags json/binding)
+# TODO: Mover dtos.go aquí y dividir en múltiples archivos:
+#   - create_order.go (CreateOrderRequest)
+#   - update_order.go (UpdateOrderRequest)
+#   - order_response.go (OrderResponse, OrderSummary)
+#   - probability_order_dto.go (ProbabilityOrderDTO - formato canónico)
+#   - order_item_dto.go
+#   - address_dto.go
+#   - payment_dto.go
+#   - shipment_dto.go

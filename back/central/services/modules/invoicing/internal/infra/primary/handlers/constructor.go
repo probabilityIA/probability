@@ -21,7 +21,7 @@ type IHandler interface {
 	// Notas de crédito
 	CreateCreditNote(c *gin.Context)
 
-	// Proveedores
+	// Proveedores (DEPRECATED - Migrados a integrations/core)
 	CreateProvider(c *gin.Context)
 	ListProviders(c *gin.Context)
 	GetProvider(c *gin.Context)
@@ -34,6 +34,11 @@ type IHandler interface {
 	GetConfig(c *gin.Context)
 	UpdateConfig(c *gin.Context)
 	DeleteConfig(c *gin.Context)
+
+	// Estadísticas y resúmenes
+	GetSummary(c *gin.Context)
+	GetStats(c *gin.Context)
+	GetTrends(c *gin.Context)
 }
 
 // handler implementa IHandler

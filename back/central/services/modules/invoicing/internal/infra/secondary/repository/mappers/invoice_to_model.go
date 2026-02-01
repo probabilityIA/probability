@@ -22,9 +22,10 @@ func InvoiceToModel(entity *entities.Invoice) *models.Invoice {
 			CreatedAt: entity.CreatedAt,
 			UpdatedAt: entity.UpdatedAt,
 		},
-		OrderID:             entity.OrderID,
-		BusinessID:          entity.BusinessID,
-		InvoicingProviderID: entity.InvoicingProviderID,
+		OrderID:                entity.OrderID,
+		BusinessID:             entity.BusinessID,
+		InvoicingProviderID:    entity.InvoicingProviderID,    // Direct assignment (both are *uint)
+		InvoicingIntegrationID: entity.InvoicingIntegrationID, // New field for integrationCore
 		InvoiceNumber:       entity.InvoiceNumber,
 		ExternalID:          entity.ExternalID,
 		InternalNumber:      entity.InternalNumber,

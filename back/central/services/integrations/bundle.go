@@ -3,8 +3,9 @@ package integrations
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
-	"github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify"
+	"github.com/secamc93/probability/back/central/services/integrations/events"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes"
 	whatsApp "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp"
 	"github.com/secamc93/probability/back/central/services/modules"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -21,8 +22,9 @@ var IntegrationEventService interface{}
 
 // New inicializa todos los servicios de integraciones
 // Este bundle coordina la inicialización de todos los módulos de integraciones
-// (core, WhatsApp, Shopify, etc.) sin exponer dependencias externas
-func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, moduleBundles *modules.ModuleBundles) {
+// (core, WhatsApp, Shopify, Softpymes, etc.) sin exponer dependencias externas
+// Retorna core.IIntegrationCore para que otros módulos puedan usarlo
+func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, moduleBundles *modules.ModuleBundles) core.IIntegrationCore {
 	// Inicializar módulo de eventos de integraciones
 	eventsRouter := router.Group("/integrations")
 	eventService, _ := events.New(eventsRouter, logger)
@@ -30,13 +32,26 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// Establecer instancia global para acceso desde otros módulos
 	events.SetEventService(eventService)
 
+	// Inicializar Integration Core (hub central de integraciones)
 	integrationCore := core.New(router, db, logger, config, s3)
 
-	// Inicializar WhatsApp con configuración de notificaciones
-	whatsappBundle := whatsApp.New(config, logger, db, rabbitMQ, redisClient, moduleBundles)
+	// ═══════════════════════════════════════════════════════════════
+	// REGISTRO DE INTEGRACIONES
+	// ═══════════════════════════════════════════════════════════════
 
+	// Messaging: WhatsApp
+	whatsappBundle := whatsApp.New(config, logger, db, rabbitMQ, redisClient, moduleBundles)
 	integrationCore.RegisterIntegration(core.IntegrationTypeWhatsApp, whatsappBundle)
 
+	// E-commerce: Shopify
 	shopify.New(router, logger, config, integrationCore, rabbitMQ, db)
 
+	// Invoicing: Softpymes (Facturación Electrónica)
+	softpymesBundle := softpymes.New(config, logger, db, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeInvoicing, softpymesBundle)
+
+	logger.Info().
+		Msg("All integration modules initialized successfully")
+
+	return integrationCore
 }

@@ -7,13 +7,19 @@ import (
 
 // InvoiceToResponse convierte entidad de dominio a response
 func InvoiceToResponse(invoice *entities.Invoice, includeItems bool) *response.Invoice {
+	// Convert *uint to uint (dereference with default 0 if nil)
+	var invoicingProviderID uint
+	if invoice.InvoicingProviderID != nil {
+		invoicingProviderID = *invoice.InvoicingProviderID
+	}
+
 	resp := &response.Invoice{
 		ID:                  invoice.ID,
 		CreatedAt:           invoice.CreatedAt,
 		UpdatedAt:           invoice.UpdatedAt,
 		OrderID:             invoice.OrderID,
 		BusinessID:          invoice.BusinessID,
-		InvoicingProviderID: invoice.InvoicingProviderID,
+		InvoicingProviderID: invoicingProviderID,
 		InvoiceNumber:       invoice.InvoiceNumber,
 		InternalNumber:      invoice.InternalNumber,
 		ExternalID:          invoice.ExternalID,
@@ -118,13 +124,19 @@ func ProvidersToResponse(providers []*entities.InvoicingProvider, totalCount int
 
 // ConfigToResponse convierte entidad de dominio a response
 func ConfigToResponse(config *entities.InvoicingConfig) *response.Config {
+	// Convert *uint to uint (dereference with default 0 if nil)
+	var invoicingProviderID uint
+	if config.InvoicingProviderID != nil {
+		invoicingProviderID = *config.InvoicingProviderID
+	}
+
 	return &response.Config{
 		ID:                  config.ID,
 		CreatedAt:           config.CreatedAt,
 		UpdatedAt:           config.UpdatedAt,
 		BusinessID:          config.BusinessID,
 		IntegrationID:       config.IntegrationID,
-		InvoicingProviderID: config.InvoicingProviderID,
+		InvoicingProviderID: invoicingProviderID,
 		Enabled:             config.Enabled,
 		AutoInvoice:         config.AutoInvoice,
 		Filters:             config.Filters,

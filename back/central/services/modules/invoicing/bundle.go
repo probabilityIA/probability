@@ -4,10 +4,10 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/app"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/queue/consumer"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/providers/softpymes"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -23,6 +23,7 @@ func New(
 	logger log.ILogger,
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
+	integrationCore core.IIntegrationCore,
 ) {
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("invoicing")
@@ -33,15 +34,8 @@ func New(
 	// 1. INFRAESTRUCTURA SECUNDARIA (Adaptadores de salida)
 	// ═══════════════════════════════════════════════════════════════
 
-	// Repositorios (GORM)
+	// Repositorios (GORM) - solo para invoices, configs, sync logs
 	repos := repository.New(database, moduleLogger)
-
-	// Cliente de Softpymes
-	softpymesBaseURL := config.Get("SOFTPYMES_API_URL")
-	if softpymesBaseURL == "" {
-		softpymesBaseURL = "https://api-integracion.softpymes.com.co/app/integration/"
-	}
-	softpymesClient := softpymes.New(softpymesBaseURL, moduleLogger)
 
 	// Event publisher (RabbitMQ)
 	eventPublisher := queue.NewEventPublisher(rabbitMQ, moduleLogger)
@@ -62,15 +56,13 @@ func New(
 	useCase := app.New(
 		repos.Invoice,
 		repos.InvoiceItem,
-		repos.Provider,
-		repos.ProviderType,
 		repos.Config,
 		repos.SyncLog,
 		repos.CreditNote,
-		nil,             // Order repository - se debe inyectar desde orders module
-		softpymesClient, // Provider client (Softpymes)
-		nil,             // Encryption - TODO: agregar cuando esté disponible
-		eventPublisher,  // Event publisher (RabbitMQ)
+		nil,               // Order repository - se debe inyectar desde orders module
+		integrationCore,   // Integration Core (reemplaza provider repos y client)
+		nil,               // Encryption - TODO: agregar cuando esté disponible
+		eventPublisher,    // Event publisher (RabbitMQ)
 		moduleLogger,
 	)
 

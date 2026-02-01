@@ -3,13 +3,13 @@ package mappers
 import (
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
 // ToDBProduct convierte un producto de dominio a modelo de base de datos
-func ToDBProduct(p *domain.Product) *models.Product {
+func ToDBProduct(p *entities.Product) *models.Product {
 	if p == nil {
 		return nil
 	}
@@ -26,11 +26,11 @@ func ToDBProduct(p *domain.Product) *models.Product {
 }
 
 // ToDomainProduct convierte un producto de base de datos a dominio
-func ToDomainProduct(p *models.Product) *domain.Product {
+func ToDomainProduct(p *models.Product) *entities.Product {
 	if p == nil {
 		return nil
 	}
-	return &domain.Product{
+	return &entities.Product{
 		ID:         p.ID,
 		CreatedAt:  p.CreatedAt,
 		UpdatedAt:  p.UpdatedAt,
@@ -43,7 +43,7 @@ func ToDomainProduct(p *models.Product) *domain.Product {
 }
 
 // ToDBClient convierte un cliente de dominio a modelo de base de datos
-func ToDBClient(c *domain.Client) *models.Client {
+func ToDBClient(c *entities.Client) *models.Client {
 	if c == nil {
 		return nil
 	}
@@ -63,7 +63,7 @@ func ToDBClient(c *domain.Client) *models.Client {
 }
 
 // ToDomainClient convierte un cliente de base de datos a dominio
-func ToDomainClient(c *models.Client) *domain.Client {
+func ToDomainClient(c *models.Client) *entities.Client {
 	if c == nil {
 		return nil
 	}
@@ -71,7 +71,7 @@ func ToDomainClient(c *models.Client) *domain.Client {
 	if c.DeletedAt.Valid {
 		deletedAt = &c.DeletedAt.Time
 	}
-	return &domain.Client{
+	return &entities.Client{
 		ID:         c.ID,
 		CreatedAt:  c.CreatedAt,
 		UpdatedAt:  c.UpdatedAt,

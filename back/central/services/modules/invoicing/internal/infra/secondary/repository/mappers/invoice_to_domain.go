@@ -14,12 +14,13 @@ func InvoiceToDomain(model *models.Invoice) *entities.Invoice {
 	}
 
 	entity := &entities.Invoice{
-		ID:                  model.ID,
-		CreatedAt:           model.CreatedAt,
-		UpdatedAt:           model.UpdatedAt,
-		OrderID:             model.OrderID,
-		BusinessID:          model.BusinessID,
-		InvoicingProviderID: model.InvoicingProviderID,
+		ID:                     model.ID,
+		CreatedAt:              model.CreatedAt,
+		UpdatedAt:              model.UpdatedAt,
+		OrderID:                model.OrderID,
+		BusinessID:             model.BusinessID,
+		InvoicingProviderID:    model.InvoicingProviderID,    // Direct assignment (both are *uint)
+		InvoicingIntegrationID: model.InvoicingIntegrationID, // New field for integrationCore
 		InvoiceNumber:       model.InvoiceNumber,
 		ExternalID:          model.ExternalID,
 		InternalNumber:      model.InternalNumber,

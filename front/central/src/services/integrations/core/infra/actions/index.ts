@@ -294,3 +294,16 @@ export const getIntegrationsSimpleAction = async (businessId?: number): Promise<
         };
     }
 };
+
+// ============================================
+// Integration Categories
+// ============================================
+
+export const getIntegrationCategoriesAction = async () => {
+    try {
+        return await (await getUseCases()).getIntegrationCategories();
+    } catch (error: any) {
+        console.error('Get Integration Categories Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};

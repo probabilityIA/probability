@@ -86,13 +86,62 @@ export interface InvoicingConfig {
   invoicing_provider_id: number;
   enabled: boolean;
   auto_invoice: boolean;
-  filters?: Record<string, any>;
-  invoice_config?: Record<string, any>;
+  filters?: InvoicingFilters;
+  config?: InvoicingSettings;
   description?: string;
   created_at: string;
   updated_at: string;
   integration_name?: string;
   provider_name?: string;
+}
+
+/**
+ * Filtros para determinar qué órdenes se facturan automáticamente
+ * Basado en los 15 filtros del backend
+ */
+export interface InvoicingFilters {
+  // Filtros de monto
+  min_amount?: number;
+  max_amount?: number;
+
+  // Filtros de pago
+  payment_status?: 'paid' | 'unpaid' | 'partial';
+  payment_methods?: number[];
+
+  // Filtros de orden
+  order_types?: string[];
+  exclude_statuses?: string[];
+
+  // Filtros de productos
+  exclude_products?: string[];
+  include_products_only?: string[];
+  min_items_count?: number;
+  max_items_count?: number;
+
+  // Filtros de cliente
+  customer_types?: string[];
+  exclude_customer_ids?: string[];
+
+  // Filtros de ubicación
+  shipping_regions?: string[];
+
+  // Filtros de fecha
+  date_range?: {
+    start_date?: string;
+    end_date?: string;
+  };
+}
+
+/**
+ * Configuración adicional del proveedor de facturación
+ */
+export interface InvoicingSettings {
+  include_shipping?: boolean;
+  apply_discount?: boolean;
+  default_tax_rate?: number;
+  invoice_type?: string;
+  notes?: string;
+  provider_config?: Record<string, any>;
 }
 
 // ===================================
@@ -150,17 +199,19 @@ export interface CreateConfigDTO {
   business_id: number;
   integration_id: number;
   invoicing_provider_id: number;
-  enabled: boolean;
-  auto_invoice: boolean;
-  filters?: Record<string, any>;
-  invoice_config?: Record<string, any>;
+  enabled?: boolean;
+  auto_invoice?: boolean;
+  filters?: InvoicingFilters;
+  config?: InvoicingSettings;
   description?: string;
 }
 
 export interface UpdateConfigDTO {
   enabled?: boolean;
   auto_invoice?: boolean;
-  filters?: Record<string, any>;
+  filters?: InvoicingFilters;
+  config?: InvoicingSettings;
+  invoicing_provider_id?: number;
 }
 
 export interface CreateCreditNoteDTO {
@@ -229,4 +280,50 @@ export interface ConfigFilters {
   enabled?: boolean;
   page?: number;
   page_size?: number;
+}
+
+// ===================================
+// RESPUESTAS ADICIONALES
+// ===================================
+
+export interface InvoicingConfigsResponse {
+  success: boolean;
+  message: string;
+  data: InvoicingConfig[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface InvoicingConfigResponse {
+  success: boolean;
+  message: string;
+  data: InvoicingConfig;
+}
+
+export interface InvoicingProvidersResponse {
+  success: boolean;
+  message: string;
+  data: InvoicingProvider[];
+}
+
+export interface InvoicingActionResponse {
+  success: boolean;
+  message: string;
+  error?: string;
+}
+
+export interface FilterOption {
+  value: string | number;
+  label: string;
+}
+
+export interface InvoicingStats {
+  total_invoices: number;
+  total_amount: number;
+  pending_invoices: number;
+  failed_invoices: number;
+  success_rate: number;
+  last_invoice_date?: string;
 }

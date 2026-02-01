@@ -1,806 +1,536 @@
-# Módulo de Facturación Electrónica
+# Módulo de Facturación (modules/invoicing)
 
-Módulo para gestionar facturación electrónica a través de proveedores externos (Softpymes, Siigo, etc.).
+## Propósito
 
-## 📋 Índice
+Gestión centralizada de facturas electrónicas para TODOS los proveedores de facturación (Softpymes, Alegra, Siigo, etc.).
 
-- [Descripción](#descripción)
-- [Arquitectura](#arquitectura)
-- [Características](#características)
-- [Estructura del Proyecto](#estructura-del-proyecto)
-- [Instalación](#instalación)
-- [Configuración](#configuración)
-- [Uso](#uso)
-- [API Endpoints](#api-endpoints)
-- [Eventos](#eventos)
-- [Testing](#testing)
+## Responsabilidades
 
----
+### ✅ Que SÍ hace este módulo
 
-## Descripción
+- **CRUD de facturas (Invoice)**: Crear, listar, obtener, cancelar y reintentar facturas
+- **CRUD de notas de crédito (CreditNote)**: Gestión completa de notas de crédito
+- **Gestión de configuraciones (InvoicingConfig)**: Configuraciones por integración
+- **Sincronización automática**: Consumidores de RabbitMQ para facturación automática
+- **Listado general con filtros**: Buscar facturas por negocio, estado, integración, etc.
+- **Reportes y estadísticas**: KPIs, tendencias y análisis de facturación
 
-Este módulo permite:
+### ❌ Que NO hace este módulo
 
-- ✅ Facturar automáticamente órdenes según configuración
-- ✅ Soporte para múltiples proveedores de facturación (Softpymes inicial)
-- ✅ Configuración granular por integración (Shopify, MercadoLibre, etc.)
-- ✅ Reintentos automáticos con exponential backoff
-- ✅ Cancelación de facturas
-- ✅ Notas de crédito
-- ✅ Encriptación de credenciales (AES-256)
-
----
-
-## 🔗 Relación con Integraciones
-
-**IMPORTANTE**: A partir de 2026, los proveedores de facturación se registran como **tipos de integración** en la tabla `integration_types` del módulo `integrations/core`.
-
-### Concepto Unificado
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│          CATÁLOGO UNIFICADO (integration_types)             │
-├─────────────────────────────────────────────────────────────┤
-│  📦 E-commerce         💳 Facturación       📧 Mensajería   │
-│  • Shopify             • Softpymes          • WhatsApp      │
-│  • MercadoLibre        • Alegra             • Telegram      │
-│  • Amazon              • Siigo                              │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          │ Cada negocio instala lo que necesita
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│         INSTANCIAS CONFIGURADAS (integrations)              │
-├─────────────────────────────────────────────────────────────┤
-│  Mi Tiendita (business_id=1):                               │
-│    ✓ Shopify (#1)     - Recibe órdenes                      │
-│    ✓ Softpymes (#2)   - Emite facturas                      │
-│                                                             │
-│  Tu Negocio (business_id=2):                                │
-│    ✓ Shopify (#3)     - Recibe órdenes                      │
-│    ✓ Alegra (#4)      - Emite facturas                      │
-└─────────────────────────────────────────────────────────────┘
-                          │
-                          │ Configurar qué integración factura
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│          CONFIGURACIÓN (invoicing_configs)                  │
-├─────────────────────────────────────────────────────────────┤
-│  Shopify (#1) ────factura con───→ Softpymes (#2)            │
-│  Shopify (#3) ────factura con───→ Alegra (#4)               │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Diferencias Clave
-
-| Concepto | Descripción | Ejemplo |
-|----------|-------------|---------|
-| **integration_type** | Catálogo de integraciones disponibles | `softpymes`, `alegra`, `siigo` |
-| **integration** | Instancia configurada para un negocio | "Mi Tiendita - Softpymes" con credenciales |
-| **invoicing_config** | Vincula e-commerce con facturación | Shopify (#1) → Softpymes (#2) |
-
-### Migración de Arquitectura
-
-**Antes (Separado)**:
-```sql
--- Dos catálogos separados
-invoicing_provider_types → softpymes, alegra
-integration_types → shopify, mercadolibre
-
--- Dos tablas de instancias
-invoicing_providers → credenciales de facturación
-integrations → credenciales de e-commerce
-```
-
-**Ahora (Unificado)**:
-```sql
--- Un solo catálogo con categorías
-integration_types:
-  id=1, code=shopify, category=ecommerce
-  id=4, code=softpymes, category=invoicing
-
--- Una sola tabla de instancias
-integrations:
-  id=1, type=shopify, business_id=1
-  id=2, type=softpymes, business_id=1
-
--- Configuración vincula ambos
-invoicing_configs:
-  source_integration_id=1 (Shopify)
-  invoicing_integration_id=2 (Softpymes)
-```
-
-### Ventajas del Enfoque Unificado
-
-✅ **UI Unificada**: Un solo "marketplace" de integraciones
-✅ **Reutilización**: Encriptación, test conexión, etc.
-✅ **Escalabilidad**: Agregar Alegra, Siigo es solo un registro
-✅ **Consistencia**: Mismo patrón para todas las integraciones
-
----
+- **NO gestiona credenciales de proveedores** (ver `integrations/core`)
+- **NO implementa lógica específica de proveedores** (ver `integrations/invoicing/*`)
+- **NO registra nuevos tipos de proveedores** (ver `integrations/core`)
 
 ## Arquitectura
 
-El módulo sigue **Arquitectura Hexagonal (Clean Architecture)**:
+Este módulo sigue **Arquitectura Hexagonal (Ports & Adapters)**:
 
 ```
-invoicing/
-├── bundle.go                    # Ensamblador del módulo
+modules/invoicing/
+├── bundle.go              # Ensambla el módulo
 └── internal/
-    ├── domain/                  # 🔵 DOMINIO (núcleo puro)
-    │   ├── entities/            # Entidades sin dependencias externas
-    │   ├── dtos/               # DTOs de dominio
-    │   ├── ports/              # Interfaces (contratos)
-    │   ├── errors/             # Errores de dominio
-    │   └── constants/          # Constantes
-    │
-    ├── app/                     # 🟢 APLICACIÓN (casos de uso)
+    ├── domain/            # Núcleo - Reglas de negocio
+    │   ├── entities/      # Entidades PURAS (sin tags)
+    │   ├── dtos/          # Data Transfer Objects
+    │   ├── ports/         # Interfaces (contratos)
+    │   ├── errors/        # Errores de dominio
+    │   └── constants/     # Constantes
+    ├── app/               # Casos de uso
     │   ├── constructor.go
     │   ├── create_invoice.go
-    │   ├── cancel_invoice.go
-    │   ├── retry_invoice.go
-    │   └── ...
-    │
-    └── infra/                   # 🔴 INFRAESTRUCTURA (adaptadores)
-        ├── primary/             # Adaptadores de entrada
-        │   ├── handlers/        # HTTP handlers
-        │   └── queue/          # Consumers
-        │       └── consumer/
-        │           ├── order_consumer.go
-        │           └── retry_consumer.go
-        │
-        └── secondary/           # Adaptadores de salida
-            ├── repository/      # GORM repositories
-            ├── providers/       # Clientes de API
-            │   └── softpymes/
-            ├── queue/          # Event publisher
-            └── encryption/     # Encriptación de credenciales
+    │   ├── get_summary.go      # ✨ NUEVO - Resumen de KPIs
+    │   ├── get_stats.go        # ✨ NUEVO - Estadísticas detalladas
+    │   ├── get_trends.go       # ✨ NUEVO - Tendencias temporales
+    │   └── deprecated_providers.go  # Métodos deprecados (retornan error)
+    └── infra/
+        ├── primary/       # Adaptadores de entrada
+        │   ├── handlers/  # HTTP handlers (Gin)
+        │   └── queue/     # Consumers (RabbitMQ)
+        └── secondary/     # Adaptadores de salida
+            └── repository/ # Repositorios DB (GORM)
 ```
 
-### Principios de Arquitectura Hexagonal
+## Relación con Integraciones
 
-1. **Domain** (núcleo):
-   - CERO dependencias externas
-   - Solo stdlib + tipos primitivos
-   - Define interfaces (ports)
-   - Sin tags (ni JSON, ni GORM)
+Este módulo **delega la ejecución real** a proveedores específicos mediante `integrations/core`:
 
-2. **Application**:
-   - Implementa casos de uso
-   - Solo depende de Domain
-   - Orquesta la lógica de negocio
-
-3. **Infrastructure**:
-   - Implementa los ports de Domain
-   - Contiene frameworks y librerías
-   - Adaptadores HTTP, DB, APIs externas
-
----
-
-## Características
-
-### Facturación Automática
-
-- Escucha eventos de órdenes (`order.created`, `order.paid`)
-- Valida configuración (`auto_invoice=true`, filtros)
-- Factura automáticamente según reglas
-
-### Reintentos Inteligentes
-
-- Máximo 3 intentos
-- Exponential backoff: 5 min, 15 min, 60 min
-- Consumer de reintentos (cron cada 5 min)
-
-### Seguridad
-
-- Credenciales encriptadas (AES-256)
-- Tokens con cache (60 min)
-- Validación de business_id
-
-### Extensibilidad
-
-- Soporte para múltiples proveedores
-- Nuevos proveedores: implementar `IInvoicingProviderClient`
-
----
-
-## Estructura del Proyecto
-
-### Domain Layer
-
-```go
-// entities/invoice.go - Entidad PURA (sin tags)
-type Invoice struct {
-    ID              uuid.UUID
-    InternalNumber  string
-    InvoiceNumber   string
-    OrderID         string
-    BusinessID      int
-    ProviderID      int
-    Status          string
-    TotalAmount     float64
-    // ...
-}
-
-// ports/ports.go - Interfaces
-type IInvoiceRepository interface {
-    Create(ctx context.Context, invoice *entities.Invoice) error
-    GetByID(ctx context.Context, id int) (*entities.Invoice, error)
-    List(ctx context.Context, filters ListFilters) ([]entities.Invoice, int, error)
-    Update(ctx context.Context, invoice *entities.Invoice) error
-}
-
-type IInvoicingProviderClient interface {
-    CreateInvoice(ctx context.Context, data CreateInvoiceRequest) (*InvoiceResponse, error)
-    CancelInvoice(ctx context.Context, invoiceID string) error
-    CreateCreditNote(ctx context.Context, data CreateCreditNoteRequest) (*CreditNoteResponse, error)
-}
+```
+modules/invoicing (lógica de negocio)
+        ↓ usa
+integrations/core (orquestador)
+        ↓ delega a
+integrations/invoicing/softpymes (proveedor específico)
+integrations/invoicing/alegra (futuro)
+integrations/invoicing/siigo (futuro)
 ```
 
-### Application Layer
-
-```go
-// app/create_invoice.go
-func (uc *useCase) CreateInvoice(ctx context.Context, orderID string) (*entities.Invoice, error) {
-    // 1. Obtener orden
-    // 2. Obtener config de facturación
-    // 3. Validar filtros
-    // 4. Obtener proveedor
-    // 5. Desencriptar credenciales
-    // 6. Llamar API del proveedor
-    // 7. Guardar factura
-    // 8. Publicar evento
-}
-```
-
-### Infrastructure Layer
-
-```go
-// infra/secondary/providers/softpymes/client.go
-type Client struct {
-    baseURL    string
-    httpClient *http.Client
-    tokenCache *TokenCache
-}
-
-func (c *Client) CreateInvoice(ctx context.Context, req *request.CreateInvoice) (*response.Invoice, error) {
-    // Implementación específica de Softpymes
-}
-```
-
----
-
-## Instalación
-
-### 1. Migraciones de Base de Datos
-
-```bash
-cd /back/migration
-go run . up
-```
-
-Esto crea las tablas:
-- `invoicing_provider_types`
-- `invoicing_providers`
-- `invoicing_configs`
-- `invoices`
-- `invoice_items`
-- `invoice_sync_logs`
-- `credit_notes`
-
-### 2. Seeders
-
-```bash
-# Insertar proveedores disponibles
-psql -h localhost -p 5433 -U postgres -d probability -f shared/sql/seed_invoicing_providers.sql
-```
-
----
-
-## Configuración
-
-### Variables de Entorno
-
-```env
-# Encriptación de credenciales
-ENCRYPTION_KEY=your-32-byte-encryption-key-here
-
-# API URLs (opcional, usa defaults)
-SOFTPYMES_API_URL=https://api-integracion.softpymes.com.co/app/integration/
-```
-
-### Crear Proveedor
-
-```bash
-POST /api/v1/invoicing/providers
-Content-Type: application/json
-
-{
-  "name": "Softpymes - Mi Negocio",
-  "provider_type_code": "softpymes",
-  "business_id": 1,
-  "config": {
-    "referer": "900123456",      // NIT del negocio
-    "branch_code": "001"          // Código de sucursal
-  },
-  "credentials": {
-    "api_key": "your_api_key",
-    "api_secret": "your_api_secret"
-  }
-}
-```
-
-### Configurar Integración
-
-```bash
-POST /api/v1/invoicing/configs
-Content-Type: application/json
-
-{
-  "business_id": 1,
-  "integration_id": 5,              // ID de integración (Shopify, etc.)
-  "invoicing_provider_id": 1,       // ID del proveedor creado
-  "enabled": true,
-  "auto_invoice": true,
-  "filters": {
-    "min_amount": 50000,            // Facturar solo pedidos > $50,000
-    "payment_status": "paid"        // Solo pedidos pagados
-  }
-}
-```
-
----
-
-## Uso
-
-### Facturación Manual
-
-```bash
-POST /api/v1/invoicing/invoices
-Content-Type: application/json
-
-{
-  "order_id": "550e8400-e29b-41d4-a716-446655440000",
-  "is_manual": true
-}
-```
-
-### Cancelar Factura
-
-```bash
-POST /api/v1/invoicing/invoices/{invoice_id}/cancel
-```
-
-### Reintentar Factura Fallida
-
-```bash
-POST /api/v1/invoicing/invoices/{invoice_id}/retry
-```
-
-### Crear Nota de Crédito
-
-```bash
-POST /api/v1/invoicing/invoices/{invoice_id}/credit-notes
-Content-Type: application/json
-
-{
-  "amount": 50000,
-  "reason": "Devolución parcial por producto defectuoso",
-  "note_type": "partial_refund"
-}
-```
-
-### Listar Facturas
-
-```bash
-GET /api/v1/invoicing/invoices?business_id=1&status=issued&page=1&page_size=20
-```
-
----
-
-## API Endpoints
-
-### Proveedores
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/v1/invoicing/providers` | Crear proveedor |
-| GET | `/api/v1/invoicing/providers` | Listar proveedores |
-| GET | `/api/v1/invoicing/providers/:id` | Obtener proveedor |
-| PUT | `/api/v1/invoicing/providers/:id` | Actualizar proveedor |
-| DELETE | `/api/v1/invoicing/providers/:id` | Eliminar proveedor |
-| POST | `/api/v1/invoicing/providers/:id/test` | Probar conexión |
-
-### Configuraciones
-
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| POST | `/api/v1/invoicing/configs` | Crear configuración |
-| GET | `/api/v1/invoicing/configs` | Listar configuraciones |
-| GET | `/api/v1/invoicing/configs/:id` | Obtener configuración |
-| PUT | `/api/v1/invoicing/configs/:id` | Actualizar configuración |
-| DELETE | `/api/v1/invoicing/configs/:id` | Eliminar configuración |
+## Endpoints HTTP
 
 ### Facturas
 
 | Método | Endpoint | Descripción |
 |--------|----------|-------------|
-| POST | `/api/v1/invoicing/invoices` | Crear factura |
-| GET | `/api/v1/invoicing/invoices` | Listar facturas |
-| GET | `/api/v1/invoicing/invoices/:id` | Obtener factura |
-| POST | `/api/v1/invoicing/invoices/:id/cancel` | Cancelar factura |
-| POST | `/api/v1/invoicing/invoices/:id/retry` | Reintentar factura |
-| POST | `/api/v1/invoicing/invoices/:id/credit-notes` | Crear nota de crédito |
+| `POST` | `/invoicing/invoices` | Crear factura manual |
+| `GET` | `/invoicing/invoices` | Listar facturas con filtros |
+| `GET` | `/invoicing/invoices/:id` | Obtener detalle de factura |
+| `POST` | `/invoicing/invoices/:id/cancel` | Cancelar factura |
+| `POST` | `/invoicing/invoices/:id/retry` | Reintentar emisión de factura |
+| `POST` | `/invoicing/invoices/:id/credit-notes` | Crear nota de crédito |
 
-### Filtros Disponibles
-
-```
-?business_id=1           # Filtrar por negocio
-&order_id=UUID           # Filtrar por orden
-&status=issued           # pending, issued, cancelled, failed
-&integration_id=5        # Filtrar por integración
-&page=1                  # Paginación
-&page_size=20            # Items por página
-```
-
----
-
-## Eventos
-
-### Eventos Consumidos
-
-El módulo escucha eventos de Redis:
+#### Filtros disponibles para listado
 
 ```
-probability:orders:events
+GET /invoicing/invoices?business_id=1&status=issued&integration_id=2&invoicing_integration_id=3
 ```
 
-Tipos de eventos procesados:
-- `order.created` - Orden creada
-- `order.paid` - Orden pagada
+- `business_id` (uint): Filtrar por negocio
+- `status` (string): Estados: `pending`, `issued`, `failed`, `cancelled`
+- `integration_id` (uint): Filtrar por integración origen (Shopify, MercadoLibre, etc.)
+- `invoicing_integration_id` (uint): Filtrar por proveedor de facturación (Softpymes, Alegra, etc.)
+- `order_id` (string): Buscar factura de una orden específica
+- `created_after` (date): Facturas creadas después de esta fecha
+- `created_before` (date): Facturas creadas antes de esta fecha
 
-### Eventos Publicados
+### Estadísticas y Resúmenes (✨ NUEVO)
 
-El módulo publica eventos cuando:
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/invoicing/summary` | Resumen general con KPIs principales |
+| `GET` | `/invoicing/stats` | Estadísticas detalladas para dashboards |
+| `GET` | `/invoicing/trends` | Tendencias temporales para gráficos |
+
+#### 1. Resumen general (Summary)
+
+```bash
+GET /invoicing/summary?business_id=1&period=month
+```
+
+**Query Parameters:**
+- `business_id` (uint, requerido): ID del negocio
+- `period` (string, opcional): Período a analizar
+  - `today`: Hoy
+  - `week`: Esta semana
+  - `month`: Este mes (default)
+  - `year`: Este año
+  - `all`: Últimos 10 años
+
+**Response:**
+```json
+{
+  "period": {
+    "start": "2026-01-01T00:00:00Z",
+    "end": "2026-01-31T23:59:59Z",
+    "label": "Enero 2026"
+  },
+  "totals": {
+    "total_invoices": 150,
+    "total_amount": 45000000,
+    "issued_count": 120,
+    "issued_amount": 42000000,
+    "failed_count": 20,
+    "pending_count": 10
+  },
+  "by_status": [
+    { "status": "issued", "count": 120, "amount": 42000000, "percentage": 80 },
+    { "status": "failed", "count": 20, "amount": 2000000, "percentage": 13.3 }
+  ],
+  "by_provider": [
+    { "provider_id": 5, "provider_name": "Softpymes", "count": 100, "amount": 35000000 }
+  ],
+  "recent_failures": [
+    {
+      "invoice_id": 123,
+      "order_id": "456",
+      "amount": 100000,
+      "error": "API timeout",
+      "failed_at": "2026-01-31T10:00:00Z"
+    }
+  ]
+}
+```
+
+#### 2. Estadísticas detalladas (Stats)
+
+```bash
+GET /invoicing/stats?business_id=1&start_date=2026-01-01&end_date=2026-01-31
+```
+
+**Query Parameters:**
+- `business_id` (uint, requerido): ID del negocio
+- `start_date` (string, opcional): Fecha de inicio (formato: `YYYY-MM-DD`)
+- `end_date` (string, opcional): Fecha de fin (formato: `YYYY-MM-DD`)
+- `integration_id` (uint, opcional): Filtrar por integración origen
+- `invoicing_integration_id` (uint, opcional): Filtrar por proveedor de facturación
+
+**Response:**
+```json
+{
+  "summary": {
+    "total_invoices": 500,
+    "total_amount": 150000000,
+    "avg_amount": 300000,
+    "success_rate": 85.5
+  },
+  "top_customers": [
+    { "customer_name": "Cliente A", "invoice_count": 50, "total_amount": 15000000 }
+  ],
+  "monthly_breakdown": [
+    { "month": "2026-01", "count": 150, "amount": 45000000, "success_rate": 90 }
+  ],
+  "failure_analysis": {
+    "total_failures": 72,
+    "by_reason": [
+      { "reason": "API timeout", "count": 30, "percentage": 41.7 }
+    ]
+  },
+  "processing_times": {
+    "avg_seconds": 2.5,
+    "p50_seconds": 2.0,
+    "p95_seconds": 5.0,
+    "p99_seconds": 10.0
+  }
+}
+```
+
+#### 3. Tendencias temporales (Trends)
+
+```bash
+GET /invoicing/trends?business_id=1&start_date=2026-01-01&end_date=2026-01-31&granularity=day&metric=count
+```
+
+**Query Parameters:**
+- `business_id` (uint, requerido): ID del negocio
+- `start_date` (string, requerido): Fecha de inicio (formato: `YYYY-MM-DD`)
+- `end_date` (string, requerido): Fecha de fin (formato: `YYYY-MM-DD`)
+- `granularity` (string, opcional): Granularidad de datos
+  - `day`: Por día (default)
+  - `week`: Por semana
+  - `month`: Por mes
+- `metric` (string, opcional): Métrica a visualizar
+  - `count`: Cantidad de facturas (default)
+  - `amount`: Monto total facturado
+  - `success_rate`: Tasa de éxito (%)
+
+**Response:**
+```json
+{
+  "metric": "count",
+  "granularity": "day",
+  "data_points": [
+    { "date": "2026-01-01", "value": 10, "success_rate": 90 },
+    { "date": "2026-01-02", "value": 12, "success_rate": 85 }
+  ],
+  "trend": {
+    "direction": "up",
+    "percentage_change": 15.5,
+    "comparison_period": "previous_period"
+  }
+}
+```
+
+### Configuraciones
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `POST` | `/invoicing/configs` | Crear configuración |
+| `GET` | `/invoicing/configs` | Listar configuraciones |
+| `GET` | `/invoicing/configs/:id` | Obtener configuración |
+| `PUT` | `/invoicing/configs/:id` | Actualizar configuración |
+| `DELETE` | `/invoicing/configs/:id` | Eliminar configuración |
+
+#### Sistema de Filtros Avanzados
+
+Las configuraciones de facturación incluyen un sistema de **filtros avanzados** que permite controlar qué órdenes se facturan automáticamente.
+
+**Ejemplo de configuración con filtros:**
+
+```json
+{
+  "business_id": 1,
+  "integration_id": 5,
+  "invoicing_provider_id": 10,
+  "enabled": true,
+  "auto_invoice": true,
+  "filters": {
+    "min_amount": 100000,
+    "payment_status": "paid",
+    "order_types": ["delivery"],
+    "exclude_products": ["GIFT-CARD-001"],
+    "shipping_regions": ["Bogotá", "Medellín", "Cali"]
+  }
+}
+```
+
+**Filtros disponibles:**
+
+| Categoría | Filtro | Tipo | Descripción |
+|-----------|--------|------|-------------|
+| **Monto** | `min_amount` | `float64` | Monto mínimo para facturar |
+| | `max_amount` | `float64` | Monto máximo para facturar |
+| **Pago** | `payment_status` | `string` | Estado de pago requerido (`"paid"`) |
+| | `payment_methods` | `[]uint` | IDs de métodos de pago permitidos |
+| **Orden** | `order_types` | `[]string` | Tipos de orden permitidos |
+| | `exclude_statuses` | `[]string` | Estados de orden a excluir |
+| **Productos** | `exclude_products` | `[]string` | SKUs a excluir |
+| | `include_products_only` | `[]string` | Solo estos SKUs |
+| | `min_items_count` | `int` | Mínimo de items en la orden |
+| | `max_items_count` | `int` | Máximo de items en la orden |
+| **Cliente** | `customer_types` | `[]string` | Tipos de cliente permitidos |
+| | `exclude_customer_ids` | `[]string` | IDs de clientes a excluir |
+| **Ubicación** | `shipping_regions` | `[]string` | Regiones/departamentos permitidos |
+| **Fecha** | `date_range` | `object` | Rango de fechas permitido |
+
+**Ejemplos de uso:**
+
+1. **Ecommerce básico**: Solo facturar órdenes pagadas mayores a $100.000
+```json
+{
+  "filters": {
+    "min_amount": 100000,
+    "payment_status": "paid"
+  }
+}
+```
+
+2. **Marketplace B2B**: Solo clientes empresariales, órdenes grandes con mínimo 5 productos
+```json
+{
+  "filters": {
+    "min_amount": 500000,
+    "customer_types": ["juridica"],
+    "min_items_count": 5,
+    "exclude_statuses": ["cancelled", "refunded"]
+  }
+}
+```
+
+3. **Tienda regional**: Solo delivery en ciudades específicas, sin gift cards
+```json
+{
+  "filters": {
+    "order_types": ["delivery"],
+    "exclude_products": ["GIFT-CARD-001"],
+    "shipping_regions": ["Bogotá", "Medellín", "Cali"]
+  }
+}
+```
+
+**Nota:** Los filtros se evalúan en modo AND (todos deben cumplirse). Si algún filtro falla, la orden no se factura automáticamente.
+
+### Notas de Crédito
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| `GET` | `/invoicing/credit-notes` | Listar notas de crédito |
+| `GET` | `/invoicing/credit-notes/:id` | Obtener detalle de nota de crédito |
+
+### Proveedores (⚠️ DEPRECADO)
+
+| Método | Endpoint | Descripción | Estado |
+|--------|----------|-------------|--------|
+| `POST` | `/invoicing/providers` | Crear proveedor | ⚠️ DEPRECATED |
+| `GET` | `/invoicing/providers` | Listar proveedores | ⚠️ DEPRECATED |
+| `GET` | `/invoicing/providers/:id` | Obtener proveedor | ⚠️ DEPRECATED |
+| `PUT` | `/invoicing/providers/:id` | Actualizar proveedor | ⚠️ DEPRECATED |
+| `POST` | `/invoicing/providers/:id/test` | Probar conexión | ⚠️ DEPRECATED |
+
+**⚠️ NOTA**: Estos endpoints están deprecados. Usar `integrations/core` para gestión de proveedores de facturación.
+
+## Migración: Gestión de Proveedores
+
+### ❌ Antes (Deprecado)
+
+```bash
+POST /invoicing/providers
+GET /invoicing/providers
+```
+
+### ✅ Ahora (Usar integrations/core)
+
+```bash
+GET /integrations?category=invoicing&business_id=1
+POST /integrations  # Con category_id=invoicing
+```
+
+## Estados de Factura
+
+| Estado | Descripción |
+|--------|-------------|
+| `pending` | Factura pendiente de emisión |
+| `issued` | Factura emitida exitosamente |
+| `failed` | Error al emitir la factura |
+| `cancelled` | Factura cancelada |
+
+## Casos de Uso Principales
+
+### 1. Crear factura para una orden
 
 ```go
-// Factura creada exitosamente
-{
-  "type": "invoice.created",
-  "invoice_id": 123,
-  "order_id": "uuid",
-  "business_id": 1,
-  "total_amount": 250000
-}
-
-// Factura cancelada
-{
-  "type": "invoice.cancelled",
-  "invoice_id": 123,
-  "reason": "Cancelación manual"
-}
-
-// Factura fallida (después de máx. intentos)
-{
-  "type": "invoice.failed",
-  "invoice_id": 123,
-  "error": "timeout al conectar con proveedor"
-}
+invoice, err := useCase.CreateInvoice(ctx, &dtos.CreateInvoiceDTO{
+    OrderID: "uuid-de-la-orden",
+    InvoicingIntegrationID: 5, // ID de integración de Softpymes
+})
 ```
 
----
+### 2. Listar facturas con filtros
+
+```go
+invoices, err := useCase.ListInvoices(ctx, map[string]interface{}{
+    "business_id": 1,
+    "status": "issued",
+    "integration_id": 2,
+})
+```
+
+### 3. Obtener resumen de facturación
+
+```go
+summary, err := useCase.GetSummary(ctx, businessID, "month")
+```
+
+### 4. Obtener estadísticas detalladas
+
+```go
+stats, err := useCase.GetDetailedStats(ctx, businessID, map[string]interface{}{
+    "start_date": "2026-01-01",
+    "end_date": "2026-01-31",
+})
+```
+
+### 5. Obtener tendencias temporales
+
+```go
+trends, err := useCase.GetTrends(ctx, businessID, "2026-01-01", "2026-01-31", "day", "count")
+```
+
+## Eventos Publicados (RabbitMQ)
+
+| Evento | Descripción |
+|--------|-------------|
+| `invoice.created` | Factura creada exitosamente |
+| `invoice.failed` | Error al crear factura |
+| `invoice.cancelled` | Factura cancelada |
+| `credit_note.created` | Nota de crédito creada |
+
+## Variables de Entorno
+
+```env
+# Base de datos (compartida con otros módulos)
+DB_HOST=localhost
+DB_PORT=5433
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=probability
+
+# RabbitMQ (para eventos)
+RABBITMQ_HOST=localhost
+RABBITMQ_PORT=5672
+RABBITMQ_USER=admin
+RABBITMQ_PASS=admin
+```
 
 ## Testing
 
-### Tests Unitarios
+```bash
+# Ejecutar tests del módulo
+go test ./services/modules/invoicing/...
+
+# Ejecutar tests con cobertura
+go test -cover ./services/modules/invoicing/...
+```
+
+## Ejemplos de Uso
+
+### Ejemplo 1: Obtener resumen del mes actual
 
 ```bash
-# Ejecutar tests de dominio
-go test ./internal/domain/...
-
-# Ejecutar tests de aplicación
-go test ./internal/app/...
-
-# Ejecutar todos los tests
-go test ./...
+curl "http://localhost:8080/api/v1/invoicing/summary?business_id=1&period=month"
 ```
 
-### Tests de Integración
+### Ejemplo 2: Listar facturas emitidas
 
 ```bash
-# Test de cliente Softpymes
-go test ./internal/infra/secondary/providers/softpymes/... -v
+curl "http://localhost:8080/api/v1/invoicing/invoices?business_id=1&status=issued"
 ```
 
-### Test End-to-End
+### Ejemplo 3: Obtener tendencias de los últimos 30 días
 
-1. **Configurar proveedor de prueba**
 ```bash
-POST /api/v1/invoicing/providers
-{
-  "name": "Softpymes Test",
-  "provider_type_code": "softpymes",
-  "business_id": 1,
-  "config": {"referer": "900123456", "branch_code": "001"},
-  "credentials": {"api_key": "test_key", "api_secret": "test_secret"}
-}
+curl "http://localhost:8080/api/v1/invoicing/trends?business_id=1&start_date=2026-01-01&end_date=2026-01-31&granularity=day&metric=count"
 ```
-
-2. **Configurar integración**
-```bash
-POST /api/v1/invoicing/configs
-{
-  "business_id": 1,
-  "integration_id": 5,
-  "invoicing_provider_id": 1,
-  "enabled": true,
-  "auto_invoice": true
-}
-```
-
-3. **Simular evento de orden**
-```bash
-redis-cli PUBLISH "probability:orders:events" '{
-  "type": "order.created",
-  "order_id": "550e8400-e29b-41d4-a716-446655440000",
-  "integration_id": 5,
-  "business_id": 1,
-  "total_amount": 250000
-}'
-```
-
-4. **Verificar factura creada**
-```bash
-GET /api/v1/invoicing/invoices?order_id=550e8400-e29b-41d4-a716-446655440000
-```
-
----
-
-## Flujo de Facturación Automática
-
-```mermaid
-graph TD
-    A[Orden Creada en Shopify] --> B[Evento Redis: order.created]
-    B --> C[Order Consumer]
-    C --> D{Config Habilitada?}
-    D -->|No| E[Ignorar]
-    D -->|Sí| F{Cumple Filtros?}
-    F -->|No| E
-    F -->|Sí| G[Obtener Proveedor]
-    G --> H[Desencriptar Credenciales]
-    H --> I[Autenticar con Softpymes]
-    I --> J[Crear Factura]
-    J --> K{Éxito?}
-    K -->|Sí| L[Guardar en BD]
-    L --> M[Publicar invoice.created]
-    K -->|No| N[Guardar en Sync Log]
-    N --> O[Programar Reintento]
-    O --> P[Retry Consumer]
-    P --> Q{Max Intentos?}
-    Q -->|No| I
-    Q -->|Sí| R[Marcar como Failed]
-```
-
----
-
-## Estructura de Base de Datos
-
-### Tabla: `invoices`
-
-```sql
-CREATE TABLE invoices (
-    id SERIAL PRIMARY KEY,
-    internal_number VARCHAR(50) UNIQUE NOT NULL,
-    invoice_number VARCHAR(50),
-    external_id VARCHAR(100),
-    cufe VARCHAR(500),
-    order_id UUID NOT NULL,
-    business_id INTEGER NOT NULL,
-    invoicing_provider_id INTEGER NOT NULL,
-    integration_id INTEGER,
-    status VARCHAR(20) NOT NULL,
-    subtotal DECIMAL(15,2) NOT NULL,
-    tax DECIMAL(15,2) NOT NULL,
-    discount DECIMAL(15,2) DEFAULT 0,
-    total_amount DECIMAL(15,2) NOT NULL,
-    currency VARCHAR(3) NOT NULL,
-    pdf_url TEXT,
-    xml_url TEXT,
-    issued_at TIMESTAMP,
-    cancelled_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    UNIQUE(order_id, invoicing_provider_id)
-);
-```
-
-### Estados de Factura
-
-- `pending` - Factura creada, esperando emisión
-- `issued` - Factura emitida exitosamente
-- `cancelled` - Factura cancelada
-- `failed` - Factura fallida después de reintentos
-
----
-
-## Reintentos Automáticos
-
-### Estrategia
-
-- **Intento 1**: Inmediato
-- **Intento 2**: 5 minutos después
-- **Intento 3**: 15 minutos después
-- **Intento 4**: 60 minutos después
-- **Máximo**: 3 reintentos (4 intentos totales)
-
-### Retry Consumer
-
-El consumer de reintentos se ejecuta cada 5 minutos:
-
-```go
-// infra/primary/queue/consumer/retry_consumer.go
-func (c *retryConsumer) StartCron(ctx context.Context) {
-    ticker := time.NewTicker(5 * time.Minute)
-    for range ticker.C {
-        logs := c.syncLogRepo.GetPendingRetries(ctx, 10)
-        for _, log := range logs {
-            c.useCase.RetryInvoice(ctx, log.InvoiceID)
-        }
-    }
-}
-```
-
----
-
-## Agregar Nuevo Proveedor
-
-Para agregar un nuevo proveedor (ej: Siigo):
-
-### 1. Crear Cliente
-
-```go
-// infra/secondary/providers/siigo/client.go
-package siigo
-
-type Client struct {
-    baseURL    string
-    httpClient *http.Client
-}
-
-func (c *Client) CreateInvoice(ctx context.Context, req *request.CreateInvoice) (*response.Invoice, error) {
-    // Implementación específica de Siigo
-}
-```
-
-### 2. Registrar en Bundle
-
-```go
-// bundle.go
-func New(...) {
-    // ...
-
-    // Softpymes Client
-    softpymesClient := softpymes.New(config, logger)
-
-    // Siigo Client
-    siigoClient := siigo.New(config, logger)
-
-    // Factory de proveedores
-    providerFactory := map[string]ports.IInvoicingProviderClient{
-        "softpymes": softpymesClient,
-        "siigo": siigoClient,
-    }
-
-    // ...
-}
-```
-
-### 3. Agregar a BD
-
-```sql
-INSERT INTO invoicing_provider_types (code, name) VALUES ('siigo', 'Siigo');
-```
-
----
 
 ## Troubleshooting
 
-### Factura no se crea automáticamente
+### Error: "Provider not configured"
 
-1. Verificar que la configuración esté habilitada:
+**Causa**: No existe una configuración de facturación para la integración de la orden.
+
+**Solución**:
+1. Crear configuración de facturación:
 ```bash
-GET /api/v1/invoicing/configs?business_id=1&integration_id=5
+POST /invoicing/configs
+{
+  "integration_id": 2,
+  "invoicing_integration_id": 5,
+  "enabled": true
+}
 ```
 
-2. Verificar filtros de configuración
-3. Revisar logs del Order Consumer
-4. Verificar eventos en Redis:
+### Error: "Gestión de proveedores deprecada"
+
+**Causa**: Intentando usar endpoints deprecados de `/invoicing/providers`.
+
+**Solución**: Migrar a `integrations/core`:
 ```bash
-redis-cli SUBSCRIBE "probability:orders:events"
+# En lugar de:
+POST /invoicing/providers
+
+# Usar:
+POST /integrations
+{
+  "business_id": 1,
+  "integration_type_id": 10,  # Tipo "Softpymes"
+  "category_id": 2,            # Categoría "Invoicing"
+  "credentials": { ... }
+}
 ```
 
-### Factura fallida
+## Roadmap
 
-1. Revisar `invoice_sync_logs`:
-```bash
-GET /api/v1/invoicing/invoices/{id}/logs
-```
+### ✅ Completado
 
-2. Verificar credenciales del proveedor
-3. Probar conexión:
-```bash
-POST /api/v1/invoicing/providers/{id}/test
-```
+- [x] Migración a integrations/core
+- [x] Endpoints de estadísticas y resúmenes
+- [x] Soporte para múltiples proveedores de facturación
+- [x] Sincronización automática vía RabbitMQ
 
-### Credenciales no funcionan
+### 🚧 En Progreso
 
-1. Verificar que estén encriptadas correctamente
-2. Verificar `ENCRYPTION_KEY` en variables de entorno
-3. Recrear proveedor con nuevas credenciales
+- [ ] Dashboard interactivo de facturación (frontend)
+- [ ] Exportación de reportes (PDF, Excel)
 
----
+### 📋 Planificado
 
-## Métricas y Monitoreo
-
-### Métricas Importantes
-
-- Tasa de éxito de facturación
-- Tiempo promedio de facturación
-- Número de reintentos
-- Facturas fallidas por proveedor
-
-### Logs
-
-Todos los logs incluyen:
-- `[invoicing]` prefix
-- `business_id`
-- `order_id`
-- `invoice_id`
-- Nivel (info, warn, error)
-
----
+- [ ] Soporte para facturación internacional
+- [ ] Integración con más proveedores (Alegra, Siigo, etc.)
+- [ ] Facturación recurrente/suscripciones
+- [ ] Webhooks para notificaciones en tiempo real
 
 ## Contribuir
 
-### Reglas de Arquitectura
+Al modificar este módulo, asegurarse de:
 
-1. **Dominio**:
-   - NUNCA importar frameworks
-   - Sin tags en entidades
-   - Solo stdlib + tipos primitivos
+1. Seguir arquitectura hexagonal (no mezclar capas)
+2. Mantener entidades del dominio sin tags de infraestructura
+3. Actualizar documentación si se agregan endpoints
+4. Escribir tests unitarios para nuevos casos de uso
+5. No agregar lógica específica de proveedores aquí (usar `integrations/invoicing/*`)
 
-2. **Aplicación**:
-   - Solo depender de domain
-   - Implementar lógica de negocio
-   - No conocer infraestructura
+## Última Actualización
 
-3. **Infraestructura**:
-   - Implementar ports de domain
-   - Contener detalles técnicos
-   - Adaptadores externos
+**Fecha**: 2026-01-31
 
-### Checklist para PRs
-
-- [ ] Entidades sin tags
-- [ ] Interfaces en `domain/ports`
-- [ ] Tests unitarios
-- [ ] Documentación actualizada
-- [ ] Sin dependencias cíclicas
-
----
-
-## Licencia
-
-Propiedad de Probability IA
-
----
-
-## Contacto
-
-- **Equipo**: Backend Team
-- **Documentación**: `/docs/invoicing/`
-- **Issues**: Jira Board
-
----
-
-**Última actualización**: 2026-01-31
+**Cambios recientes**:
+- ✨ Agregados endpoints de estadísticas (`/summary`, `/stats`, `/trends`)
+- 🧹 Marcados como deprecados los endpoints de gestión de proveedores
+- 📝 Documentación completa de la arquitectura y endpoints

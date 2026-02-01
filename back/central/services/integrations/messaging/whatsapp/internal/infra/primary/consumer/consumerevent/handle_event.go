@@ -50,8 +50,8 @@ func (c *consumer) handleOrderEvent(ctx context.Context, payload string) {
 		return
 	}
 
-	// 4. Obtener configs activas para este trigger (usando adaptador directo)
-	configs, err := c.notificationConfigRepo.GetActiveConfigsByIntegrationAndTrigger(
+	// 4. Obtener configs activas para este trigger desde Redis cache
+	configs, err := c.notificationConfigCache.GetActiveConfigsByIntegrationAndTrigger(
 		ctx,
 		whatsappIntegration.ID,
 		string(event.Type), // "order.created", "order.updated", "order.status_changed"
@@ -87,7 +87,7 @@ func (c *consumer) handleOrderEvent(ctx context.Context, payload string) {
 	// 6. Validar contra cada config (por prioridad)
 	for _, config := range configs {
 		// Validar condiciones - PASAR integration_id de la orden
-		if c.notificationConfigRepo.ValidateConditions(&config, order.Status, order.PaymentMethodID, order.IntegrationID) {
+		if c.notificationConfigCache.ValidateConditions(&config, order.Status, order.PaymentMethodID, order.IntegrationID) {
 			c.logger.Info().
 				Uint("config_id", config.ID).
 				Str("order_id", order.ID).

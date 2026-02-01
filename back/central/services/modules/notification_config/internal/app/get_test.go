@@ -44,9 +44,10 @@ func TestGetByID_Success(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, 1)
@@ -97,9 +98,10 @@ func TestGetByID_NotFound(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, 999)
@@ -130,9 +132,10 @@ func TestGetByID_RepositoryError(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, 1)

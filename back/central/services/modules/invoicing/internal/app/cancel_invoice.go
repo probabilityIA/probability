@@ -3,14 +3,19 @@ package app
 import (
 	"context"
 	"fmt"
-	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/constants"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 )
 
 // CancelInvoice cancela una factura emitida
+// DEPRECATED: Esta funcionalidad fue migrada a integrations/invoicing/softpymes/
+// TODO: Re-implementar usando integrationCore si es necesario
+func (uc *useCase) CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error {
+	return fmt.Errorf("CancelInvoice is deprecated and was moved to softpymes integration")
+}
+
+/* IMPLEMENTACIÓN ORIGINAL (requiere providerRepo y providerClient que ya no existen):
+
 func (uc *useCase) CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error {
 	uc.log.Info(ctx).Uint("invoice_id", dto.InvoiceID).Msg("Cancelling invoice")
 
@@ -71,3 +76,4 @@ func (uc *useCase) CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO
 	uc.log.Info(ctx).Uint("invoice_id", dto.InvoiceID).Msg("Invoice cancelled successfully")
 	return nil
 }
+*/

@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -46,18 +46,18 @@ type WhatsAppNoveltyEvent struct {
 // WhatsAppConsumer consume eventos de WhatsApp y actualiza órdenes
 type WhatsAppConsumer struct {
 	queue          rabbitmq.IQueue
-	repository     domain.IRepository
-	updateOrderUC  *usecaseorder.UseCaseOrder
-	eventPublisher domain.IOrderEventPublisher
+	repository     ports.IRepository
+	updateOrderUC  ports.IOrderUseCase // Interfaz en lugar de tipo concreto
+	eventPublisher ports.IOrderEventPublisher
 	log            log.ILogger
 }
 
 // NewWhatsAppConsumer crea un nuevo consumidor de eventos de WhatsApp
 func NewWhatsAppConsumer(
 	queue rabbitmq.IQueue,
-	updateOrderUC *usecaseorder.UseCaseOrder,
-	repository domain.IRepository,
-	eventPublisher domain.IOrderEventPublisher,
+	updateOrderUC ports.IOrderUseCase, // Interfaz en lugar de tipo concreto
+	repository ports.IRepository,
+	eventPublisher ports.IOrderEventPublisher,
 	logger log.ILogger,
 ) *WhatsAppConsumer {
 	return &WhatsAppConsumer{
@@ -206,19 +206,19 @@ func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 	// Publicar evento para notificar al equipo
 	if c.eventPublisher != nil {
 		go func() {
-			orderEvent := domain.NewOrderEvent(
-				domain.OrderEventTypeCancelled,
+			orderEvent := entities.NewOrderEvent(
+				entities.OrderEventTypeCancelled,
 				order.ID,
-				domain.OrderEventData{
+				entities.OrderEventData{
 					OrderNumber: event.OrderNumber,
 					Extra: map[string]interface{}{
-						"cancellation_source": "whatsapp",
-						"cancellation_reason": event.CancellationReason,
+						"cancellation_source":    "whatsapp",
+						"cancellation_reason":    event.CancellationReason,
 						"requires_manual_review": true,
 					},
 				},
 			)
-			if err := c.eventPublisher.PublishOrderEvent(context.Background(), orderEvent); err != nil {
+			if err := c.eventPublisher.PublishOrderEvent(context.Background(), orderEvent, order); err != nil {
 				c.log.Error().Err(err).Msg("Error publishing cancellation event")
 			}
 		}()
@@ -288,19 +288,19 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 	// Publicar evento para notificar al equipo
 	if c.eventPublisher != nil {
 		go func() {
-			orderEvent := domain.NewOrderEvent(
-				domain.OrderEventTypeUpdated,
+			orderEvent := entities.NewOrderEvent(
+				entities.OrderEventTypeUpdated,
 				order.ID,
-				domain.OrderEventData{
+				entities.OrderEventData{
 					OrderNumber: event.OrderNumber,
 					Extra: map[string]interface{}{
-						"novelty_source":        "whatsapp",
-						"novelty_type":          event.NoveltyType,
+						"novelty_source":         "whatsapp",
+						"novelty_type":           event.NoveltyType,
 						"requires_manual_action": true,
 					},
 				},
 			)
-			if err := c.eventPublisher.PublishOrderEvent(context.Background(), orderEvent); err != nil {
+			if err := c.eventPublisher.PublishOrderEvent(context.Background(), orderEvent, order); err != nil {
 				c.log.Error().Err(err).Msg("Error publishing novelty event")
 			}
 		}()

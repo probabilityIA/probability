@@ -5,12 +5,14 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
 // CreateOrder crea una nueva orden
-func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *domain.CreateOrderRequest) (*domain.OrderResponse, error) {
+func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRequest) (*dtos.OrderResponse, error) {
 	// Validar que no exista una orden con el mismo external_id para la misma integración
 	exists, err := uc.repo.OrderExists(ctx, req.ExternalID, req.IntegrationID)
 	if err != nil {
@@ -21,7 +23,7 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *domain.CreateOrder
 	}
 
 	// Crear el modelo de orden
-	order := &domain.ProbabilityOrder{
+	order := &entities.ProbabilityOrder{
 		// Identificadores de integración
 		BusinessID:      req.BusinessID,
 		IntegrationID:   req.IntegrationID,
@@ -122,36 +124,26 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *domain.CreateOrder
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
 
-	// Publicar evento de orden creada
-	if uc.eventPublisher != nil {
-		eventData := domain.OrderEventData{
-			OrderNumber:    order.OrderNumber,
-			InternalNumber: order.InternalNumber,
-			ExternalID:     order.ExternalID,
-			CurrentStatus:  order.Status,
-			CustomerEmail:  order.CustomerEmail,
-			TotalAmount:    &order.TotalAmount,
-			Currency:       order.Currency,
-			Platform:       order.Platform,
-		}
-		event := domain.NewOrderEvent(domain.OrderEventTypeCreated, order.ID, eventData)
-		event.BusinessID = order.BusinessID
-		if order.IntegrationID > 0 {
-			integrationID := order.IntegrationID
-			event.IntegrationID = &integrationID
-		}
-		// Publicar de forma asíncrona (no bloquear si falla)
-		// Usar context.Background() para evitar que el contexto cancelado afecte la publicación
-		go func() {
-			bgCtx := context.Background()
-			if err := uc.eventPublisher.PublishOrderEvent(bgCtx, event); err != nil {
-				// Log error pero no fallar la creación de la orden
-				fmt.Printf("[CreateOrder] Error al publicar evento order.created: %v\n", err)
-			} else {
-				fmt.Printf("[CreateOrder] Evento order.created publicado exitosamente para orden %s\n", order.ID)
-			}
-		}()
+	// Publicar evento de orden creada (Redis + RabbitMQ)
+	eventData := entities.OrderEventData{
+		OrderNumber:    order.OrderNumber,
+		InternalNumber: order.InternalNumber,
+		ExternalID:     order.ExternalID,
+		CurrentStatus:  order.Status,
+		CustomerEmail:  order.CustomerEmail,
+		TotalAmount:    &order.TotalAmount,
+		Currency:       order.Currency,
+		Platform:       order.Platform,
 	}
+	event := entities.NewOrderEvent(entities.OrderEventTypeCreated, order.ID, eventData)
+	event.BusinessID = order.BusinessID
+	if order.IntegrationID > 0 {
+		integrationID := order.IntegrationID
+		event.IntegrationID = &integrationID
+	}
+
+	// Publicar en ambos canales (Redis + RabbitMQ) de forma asíncrona con orden completa
+	helpers.PublishEventDual(ctx, event, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 
 	// Retornar la respuesta
 	return mapper.ToOrderResponse(order), nil
