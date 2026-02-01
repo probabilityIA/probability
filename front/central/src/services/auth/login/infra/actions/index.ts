@@ -73,9 +73,18 @@ export const generatePasswordAction = async (data: GeneratePasswordRequest, toke
 
 /**
  * Server Action para obtener roles y permisos
+ * Lee el token de la cookie HttpOnly automáticamente
  */
-export const getRolesPermissionsAction = async (token: string): Promise<UserRolesPermissionsSuccessResponse> => {
+export const getRolesPermissionsAction = async (): Promise<UserRolesPermissionsSuccessResponse> => {
     try {
+        // Leer token de cookie HttpOnly (seteada por el backend)
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value;
+
+        if (!token) {
+            throw new Error('No session token found');
+        }
+
         return await useCase.getRolesPermissions(token);
     } catch (error: any) {
         console.error('Get Roles Permissions Action Error:', error.message);
