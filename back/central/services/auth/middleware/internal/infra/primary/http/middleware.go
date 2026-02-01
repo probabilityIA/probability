@@ -25,7 +25,25 @@ func NewMiddleware(authService *app.AuthService, authUseCase domain.IAuthUseCase
 
 func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		token := c.GetHeader("Authorization")
+		// Intentar obtener token de:
+		// 1. Cookie (preferido para web apps y Shopify iframes)
+		// 2. Header Authorization (para APIs externas y móvil)
+		var token string
+
+		// Primero intentar leer de cookie
+		cookieToken, err := c.Cookie("session_token")
+		if err == nil && cookieToken != "" {
+			token = cookieToken
+			m.logger.Debug().Msg("Token obtenido de cookie HttpOnly")
+		} else {
+			// Fallback a Authorization header
+			token = c.GetHeader("Authorization")
+			if token != "" {
+				m.logger.Debug().Msg("Token obtenido de Authorization header")
+			}
+		}
+
+		// Validar token
 		authInfo, err := m.authService.ValidateBusinessToken(token)
 		if err != nil {
 			m.logger.Error().Err(err).Msg("Token inválido")

@@ -80,14 +80,31 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	// Convertir respuesta de dominio a response
 	loginResponse := mapper.ToLoginResponse(domainResponse)
 
+	// IMPORTANTE: Setear token como cookie HttpOnly para seguridad
+	// SameSite=None permite que funcione en iframes (Shopify)
+	c.SetCookie(
+		"session_token",          // name
+		domainResponse.Token,     // value
+		7*24*60*60,               // maxAge: 7 días en segundos
+		"/",                      // path
+		"",                       // domain: vacío = current domain
+		true,                     // secure: solo HTTPS
+		true,                     // httpOnly: JavaScript no puede leer (seguridad)
+	)
+	c.SetSameSite(http.SameSiteNoneMode) // Para iframes de terceros (Shopify)
+
+	// NO retornar el token en el JSON por seguridad
+	// El token solo estará en la cookie HttpOnly
+	loginResponse.Token = ""
+
 	h.logger.Info(ctx).
 		Str("email", loginRequest.Email).
 		Uint("user_id", domainResponse.User.ID).
 		Str("scope", domainResponse.Scope).
 		Bool("is_super_admin", domainResponse.IsSuperAdmin).
-		Msg("Login exitoso")
+		Msg("Login exitoso - Cookie HttpOnly seteada")
 
-	// Retornar respuesta exitosa
+	// Retornar respuesta exitosa (sin token en JSON)
 	c.JSON(http.StatusOK, response.LoginSuccessResponse{
 		Success: true,
 		Data:    *loginResponse,
