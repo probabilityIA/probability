@@ -37,8 +37,13 @@ export const LoginForm = () => {
                 const response = await loginResponse.json();
 
                 if (response.success) {
-                    // ✅ Cookie ya está seteada en el navegador por el backend
-                    // Solo guardar datos del usuario en sessionStorage
+                    // ✅ Guardar token explícitamente (para iframes donde cookies están bloqueadas)
+                    if (response.data.token) {
+                        TokenStorage.setSessionToken(response.data.token);
+                        console.log('✅ Token guardado en storage');
+                    }
+
+                    // ✅ Guardar datos del usuario en sessionStorage
                     TokenStorage.setUser({
                         userId: response.data.user.id.toString(),
                         name: response.data.user.name,

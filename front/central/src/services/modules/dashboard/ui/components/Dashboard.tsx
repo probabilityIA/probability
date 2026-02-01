@@ -80,7 +80,14 @@ export default function Dashboard() {
             const fetchBusinesses = async () => {
                 try {
                     setLoadingBusinesses(true);
-                    const response = await getBusinessesAction({ page: 1, per_page: 100 });
+
+                    // Obtener token desde sessionStorage para iframes
+                    const token = TokenStorage.getSessionToken();
+
+                    const response = await getBusinessesAction(
+                        { page: 1, per_page: 100 },
+                        token // pasar token explícitamente para iframes
+                    );
                     setBusinesses(response.data || []);
                 } catch (err: any) {
                     console.error('Error fetching businesses:', err);
@@ -97,7 +104,15 @@ export default function Dashboard() {
         try {
             setLoading(true);
             setError(null);
-            const response = await getDashboardStatsAction(selectedBusinessId);
+
+            // Obtener token desde sessionStorage para iframes (donde cookies están bloqueadas)
+            const token = TokenStorage.getSessionToken();
+
+            const response = await getDashboardStatsAction(
+                selectedBusinessId,
+                undefined, // integrationId
+                token // pasar token explícitamente para iframes
+            );
             setStats(response.data);
         } catch (err: any) {
             console.error('Error fetching dashboard stats:', err);
