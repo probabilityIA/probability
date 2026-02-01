@@ -65,7 +65,18 @@ export const LoginForm = () => {
                         }
                     }
 
-                    router.push('/home');
+                    // IMPORTANTE: Esperar a que las cookies se guarden en iframe
+                    await new Promise(resolve => setTimeout(resolve, 100));
+
+                    // Verificar que las cookies se guardaron
+                    const tokenVerification = TokenStorage.getSessionToken();
+                    if (tokenVerification) {
+                        console.log('✅ Login exitoso, redirigiendo...');
+                        router.push('/home');
+                    } else {
+                        console.error('❌ Error: Sesión no se guardó correctamente');
+                        setError('Error al guardar la sesión. Por favor intenta de nuevo.');
+                    }
                 }
             } catch (err: any) {
                 console.error(err);

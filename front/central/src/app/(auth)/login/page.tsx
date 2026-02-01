@@ -45,7 +45,20 @@ function LoginContent() {
             if (data.user) {
               CookieStorage.setUser(data.user);
             }
-            router.push('/home');
+
+            // IMPORTANTE: Esperar a que las cookies se guarden completamente
+            // En iframes, esto puede tardar más debido a SameSite=None
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Verificar que las cookies se guardaron antes de redirigir
+            const tokenVerification = CookieStorage.getSessionToken();
+            if (tokenVerification) {
+              console.log('✅ Cookies guardadas exitosamente, redirigiendo...');
+              router.push('/home');
+            } else {
+              console.error('❌ Error: Cookies no se guardaron');
+              setIsAuthenticating(false);
+            }
           } else {
             console.error('Fallo login con Shopify', response.status);
             // Si falla, mostramos login normal o error
