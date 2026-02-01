@@ -208,17 +208,17 @@ jobs:
 
             # 1. Detener y eliminar solo el contenedor backend
             echo "🛑 Deteniendo backend..."
-            docker stop -t 10 backend_prod || true
+            docker stop -t 10 central_reserve_prod || true
 
             echo "🗑️  Eliminando contenedor backend y sus dependientes..."
-            docker rm -f --depend backend_prod || true
+            docker rm -f central_reserve_prod || true
 
-            # Verificar y eliminar cualquier contenedor backend_prod que quede
+            # Verificar y eliminar cualquier contenedor central_reserve_prod que quede
             echo "🔍 Verificando eliminación completa..."
-            BACKEND_IDS=$(docker ps -a --filter name=backend_prod --format '{{.ID}}' 2>/dev/null || true)
+            BACKEND_IDS=$(docker ps -a --filter name=central_reserve_prod --format '{{.ID}}' 2>/dev/null || true)
             if [ -n "$BACKEND_IDS" ]; then
               echo "⚠️  Contenedores backend encontrados, eliminando por ID con dependientes..."
-              echo "$BACKEND_IDS" | xargs -r docker rm -f --depend
+              echo "$BACKEND_IDS" | xargs -r docker rm -f
             fi
             echo "✅ Contenedor backend eliminado completamente"
 
@@ -237,7 +237,7 @@ jobs:
             docker tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL \
                        476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:latest
 
-            # 5. Levantar solo el servicio back-central (contenedor: backend_prod)
+            # 5. Levantar solo el servicio back-central (contenedor: central_reserve_prod)
             echo "🚀 Levantando backend con nueva imagen..."
             docker compose -f docker-compose.yaml up -d back-central
 
@@ -254,7 +254,7 @@ jobs:
             CONTAINER_STATUS=""
 
             while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-              CONTAINER_STATUS=$(docker inspect backend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              CONTAINER_STATUS=$(docker inspect central_reserve_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
               echo "📋 Intento $(($RETRY_COUNT + 1))/$MAX_RETRIES - Estado del contenedor: $CONTAINER_STATUS"
 
               if [ "$CONTAINER_STATUS" = "running" ]; then
@@ -270,23 +270,23 @@ jobs:
 
             # Mostrar logs antes de verificar estado final
             echo "📋 Últimos logs del contenedor:"
-            docker logs --tail 30 backend_prod 2>/dev/null || true
+            docker logs --tail 30 central_reserve_prod 2>/dev/null || true
 
             # Verificar estado final
-            CONTAINER_STATUS=$(docker inspect backend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+            CONTAINER_STATUS=$(docker inspect central_reserve_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
             if [ "$CONTAINER_STATUS" != "running" ]; then
               echo "❌ El contenedor no está corriendo después de $MAX_RETRIES intentos"
               echo "📋 Estado final: $CONTAINER_STATUS"
               echo "📋 Revisando logs de error:"
-              docker logs --tail 50 backend_prod 2>/dev/null || true
+              docker logs --tail 50 central_reserve_prod 2>/dev/null || true
 
               # Intentar reiniciar manualmente
               echo "🔄 Intentando reiniciar manualmente..."
-              docker restart backend_prod 2>/dev/null || docker start backend_prod 2>/dev/null || true
+              docker restart central_reserve_prod 2>/dev/null || docker start central_reserve_prod 2>/dev/null || true
               sleep 10
 
               # Verificar una vez más
-              CONTAINER_STATUS=$(docker inspect backend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+              CONTAINER_STATUS=$(docker inspect central_reserve_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
               if [ "$CONTAINER_STATUS" != "running" ]; then
                 echo "❌ Error crítico: No se pudo iniciar el contenedor. Revisar logs manualmente."
                 exit 1
@@ -298,7 +298,7 @@ jobs:
             fi
 
             # Verificar que el contenedor está usando la nueva imagen
-            CONTAINER_IMAGE_ID=$(docker inspect backend_prod --format '{{.Image}}' 2>/dev/null || echo "")
+            CONTAINER_IMAGE_ID=$(docker inspect central_reserve_prod --format '{{.Image}}' 2>/dev/null || echo "")
             NEW_IMAGE_FULL_ID=$(docker images --format "{{.ID}}" --no-trunc 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend:$VERSION_FULL | head -1)
 
             # Remover prefijo sha256: si existe

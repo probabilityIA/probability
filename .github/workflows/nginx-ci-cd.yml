@@ -215,14 +215,14 @@ jobs:
             docker stop -t 10 nginx_prod || true
 
             echo "🗑️  Eliminando contenedor nginx y sus dependientes..."
-            docker rm -f --depend nginx_prod || true
+            docker rm -f nginx_prod || true
 
             # Verificar y eliminar cualquier contenedor nginx_prod que quede
             echo "🔍 Verificando eliminación completa..."
             NGINX_IDS=$(docker ps -a --filter name=nginx_prod --format '{{.ID}}' 2>/dev/null || true)
             if [ -n "$NGINX_IDS" ]; then
               echo "⚠️  Contenedores nginx encontrados, eliminando por ID con dependientes..."
-              echo "$NGINX_IDS" | xargs -r docker rm -f --depend
+              echo "$NGINX_IDS" | xargs -r docker rm -f
             fi
             echo "✅ Contenedor nginx eliminado completamente"
 

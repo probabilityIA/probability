@@ -187,14 +187,14 @@ jobs:
             docker stop -t 10 website_prod || true
 
             echo "🗑️  Eliminando contenedor website y sus dependientes..."
-            docker rm -f --depend website_prod || true
+            docker rm -f website_prod || true
 
             # Verificar y eliminar cualquier contenedor website_prod que quede
             echo "🔍 Verificando eliminación completa..."
             WEBSITE_IDS=$(docker ps -a --filter name=website_prod --format '{{.ID}}' 2>/dev/null || true)
             if [ -n "$WEBSITE_IDS" ]; then
               echo "⚠️  Contenedores website encontrados, eliminando por ID con dependientes..."
-              echo "$WEBSITE_IDS" | xargs -r docker rm -f --depend
+              echo "$WEBSITE_IDS" | xargs -r docker rm -f
             fi
             echo "✅ Contenedor website eliminado completamente"
 
