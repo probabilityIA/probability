@@ -28,14 +28,9 @@ export const loginAction = async (credentials: LoginRequest): Promise<LoginSucce
     try {
         const response = await useCase.login(credentials);
 
-        // Set cookie for server-side access
-        const cookieStore = await cookies();
-        cookieStore.set('session_token', response.data.token, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7 // 1 week
-        });
+        // ✅ NO setear cookie aquí - el backend ya la setea como HttpOnly
+        // El backend Go setea: c.SetCookie("session_token", token, ...)
+        // Next.js recibirá esa cookie automáticamente en el navegador
 
         return response;
     } catch (error: any) {
