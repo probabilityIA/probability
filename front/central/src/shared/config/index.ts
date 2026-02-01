@@ -3,7 +3,12 @@
  */
 
 export * from './env';
-export { TokenStorage } from '../utils';
-export type { BusinessColors, BusinessData } from '../utils';
-export * from '../utils';
+export { TokenStorage, CookieStorage } from '../utils';
+export type {
+    BusinessColors,
+    BusinessData,
+    UserData,
+    ResourcePermission,
+    UserPermissions
+} from '../utils';
 

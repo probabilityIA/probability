@@ -1,7 +1,8 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { TokenStorage, UserPermissions, ResourcePermission } from '../utils/token-storage';
+import { TokenStorage } from '../utils';
+import type { UserPermissions, ResourcePermission } from '../utils';
 
 // Mapeo de recursos del backend a rutas del frontend
 const RESOURCE_ROUTE_MAP: Record<string, string> = {

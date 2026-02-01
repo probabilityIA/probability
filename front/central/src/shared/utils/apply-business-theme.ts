@@ -4,7 +4,7 @@
  */
 
 import { TokenStorage } from '@/shared/config';
-import { BusinessColors } from './token-storage';
+import type { BusinessColors } from './cookie-storage';
 
 interface Business {
   primary_color: string;
