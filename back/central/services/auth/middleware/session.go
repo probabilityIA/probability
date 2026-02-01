@@ -17,6 +17,7 @@ func SetSecureCookie(c *gin.Context, name, value string, maxAge int) {
 		Name:     name,
 		Value:    value,
 		Path:     "/",
+		Domain:   ".probabilityia.com.co", // Con punto inicial para subdominios y iframes
 		MaxAge:   maxAge,
 		HttpOnly: true,
 		Secure:   secure,

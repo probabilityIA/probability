@@ -87,7 +87,7 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 		domainResponse.Token,     // value
 		7*24*60*60,               // maxAge: 7 días en segundos
 		"/",                      // path
-		"",                       // domain: vacío = current domain
+		".probabilityia.com.co",  // domain: con punto inicial para subdominios y iframes
 		true,                     // secure: solo HTTPS
 		true,                     // httpOnly: JavaScript no puede leer (seguridad)
 	)
