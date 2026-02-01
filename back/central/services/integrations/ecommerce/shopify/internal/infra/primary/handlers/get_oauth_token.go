@@ -70,7 +70,7 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 		"",
 		-1, // MaxAge negativo elimina la cookie
 		"/",
-		"",
+		".probabilityia.com.co", // Con punto inicial para subdominios y iframes
 		true,  // Secure
 		true,  // HttpOnly
 	)
