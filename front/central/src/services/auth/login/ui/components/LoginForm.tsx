@@ -20,9 +20,24 @@ export const LoginForm = () => {
 
         startTransition(async () => {
             try {
-                const response = await loginAction({ email, password });
+                // ✅ Hacer fetch directo al API público para que el navegador reciba la cookie
+                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1';
+                const loginResponse = await fetch(`${baseUrl}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password }),
+                    credentials: 'include', // IMPORTANTE: incluir cookies en la request
+                });
+
+                if (!loginResponse.ok) {
+                    const errorData = await loginResponse.json();
+                    throw new Error(errorData.error || errorData.message || 'Error al iniciar sesión');
+                }
+
+                const response = await loginResponse.json();
+
                 if (response.success) {
-                    // ✅ NO guardar token (viene en cookie HttpOnly del backend)
+                    // ✅ Cookie ya está seteada en el navegador por el backend
                     // Solo guardar datos del usuario en sessionStorage
                     TokenStorage.setUser({
                         userId: response.data.user.id.toString(),
