@@ -23,6 +23,7 @@ export * from './table';
 // IAM and Orders sidebars have been integrated into the main `sidebar` component
 export * from './user-profile-modal';
 export * from './footer';
+export * from './shopify-iframe-detector';
 
 
 // Re-exportar tipos útiles

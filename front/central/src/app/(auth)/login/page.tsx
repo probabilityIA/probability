@@ -4,8 +4,7 @@ import { LoginForm } from '@/services/auth/login/ui';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, Suspense, useState } from 'react';
 import Image from 'next/image';
-
-
+import { CookieStorage } from '@/shared/utils';
 import { useShopifyAuth } from '@/providers/ShopifyAuthProvider';
 import { useRouter } from 'next/navigation';
 
@@ -38,13 +37,15 @@ function LoginContent() {
 
           if (response.ok) {
             const data = await response.json();
-            // Guardar token recibido del backend (si aplica) o confiar en cookie httpOnly
-            // Por ahora asumimos que el backend setea cookie o devuelve token para usar.
-            // Si devuelve token:
+            // Guardar token recibido del backend usando CookieStorage
+            // (funciona tanto en iframes como en páginas normales)
             if (data.token) {
-              localStorage.setItem('token', data.token); // O cookie
+              CookieStorage.setSessionToken(data.token);
             }
-            router.push('/dashboard');
+            if (data.user) {
+              CookieStorage.setUser(data.user);
+            }
+            router.push('/home');
           } else {
             console.error('Fallo login con Shopify', response.status);
             // Si falla, mostramos login normal o error
