@@ -29,11 +29,11 @@ export function middleware(request: NextRequest) {
     const csp = [
         frameAncestors,
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.shopify.com",
         "style-src 'self' 'unsafe-inline'",
         "img-src 'self' data: https:",
         "font-src 'self' data:",
-        "connect-src 'self' https://*.probabilityia.com.co wss://*.probabilityia.com.co",
+        "connect-src 'self' https://*.probabilityia.com.co wss://*.probabilityia.com.co https://cdn.shopify.com",
         "frame-src 'self' https://admin.shopify.com",
     ].join('; ');
 
