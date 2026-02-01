@@ -2,7 +2,7 @@ services:
 
   front-central:
     platform: linux/arm64
-    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability:frontend-latest
     container_name: frontend_prod
     ports:
       - "8080:80"
@@ -34,7 +34,7 @@ services:
 
   front-website:
     platform: linux/arm64
-    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-website-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability:website-latest
     container_name: website_prod
     ports:
       - "8081:80"
@@ -63,7 +63,7 @@ services:
 
   back-central:
     platform: linux/arm64
-    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-backend-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability:backend-latest
     container_name: central_reserve_prod
     ports:
       - "127.0.0.1:3050:3050"
@@ -179,7 +179,7 @@ services:
     restart: unless-stopped
 
   nginx:
-    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx-latest
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability:nginx-latest
     container_name: nginx_prod
     ports:
       - "80:80"
