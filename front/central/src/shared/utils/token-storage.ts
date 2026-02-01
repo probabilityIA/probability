@@ -9,51 +9,13 @@
  * - localStorage en páginas normales
  */
 
-import { CookieStorage } from './cookie-storage';
-
-export interface BusinessColors {
-    primary?: string;
-    secondary?: string;
-    tertiary?: string;
-    quaternary?: string;
-}
-
-export interface BusinessData {
-    id: number;
-    name: string;
-    code: string;
-    logo_url?: string;
-    is_active?: boolean;
-    primary_color?: string;
-    secondary_color?: string;
-    tertiary_color?: string;
-    quaternary_color?: string;
-}
-
-export interface UserData {
-    userId: string;
-    name: string;
-    email: string;
-    role: string;
-    avatarUrl?: string;
-    is_super_admin?: boolean;
-    scope?: string;
-}
-
-export interface ResourcePermission {
-    resource: string;
-    actions: string[];
-    active: boolean;
-}
-
-export interface UserPermissions {
-    is_super: boolean;
-    business_id: number;
-    business_name: string;
-    role_id: number;
-    role_name: string;
-    resources: ResourcePermission[];
-}
+import {
+    CookieStorage,
+    type BusinessColors,
+    type BusinessData,
+    type UserData,
+    type UserPermissions
+} from './cookie-storage';
 
 /**
  * @deprecated Use CookieStorage instead
