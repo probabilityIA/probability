@@ -40,18 +40,12 @@ export default function AuthLayout({
     // Verificar autenticación (solo si no es login)
     if (!isLoginPage) {
       try {
-        const sessionToken = TokenStorage.getSessionToken();
+        // ✅ NO verificar token (cookie HttpOnly se envía automáticamente)
+        // Solo verificar que haya datos del usuario en sessionStorage
         const userData = TokenStorage.getUser();
 
-        // Si estamos en Shopify iframe y no hay token local, esperar token de Shopify
-        if (isShopifyEmbedded && !sessionToken && shopifySessionToken) {
-          console.log('🛍️ Using Shopify session token');
-          // TODO: Validar shopifySessionToken con el backend y obtener usuario
-          // Por ahora, continuamos con el flujo normal
-        }
-
-        if (!sessionToken || !userData) {
-          console.warn('⚠️ No session token or user data, redirecting to login');
+        if (!userData) {
+          console.warn('⚠️ No user data, redirecting to login');
           router.push('/login');
           setTimeout(() => setLoading(false), 0);
           return;
