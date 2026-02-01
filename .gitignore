@@ -79,6 +79,7 @@ probability.pem
 # Claude Code configuration and cache
 .claude
 .claude/
+.playwright-mcp/
 
 # Lock file (opcional - algunos lo versionan, otros no)
 # .terraform.lock.hcl
