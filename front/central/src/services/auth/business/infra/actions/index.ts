@@ -14,19 +14,32 @@ import {
 } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
-// Helper to get use cases with token from cookies
-async function getUseCases() {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('session_token')?.value || null;
+/**
+ * Helper to get use cases with token from cookies or explicit parameter
+ * @param explicitToken Token opcional para iframes donde cookies están bloqueadas
+ */
+async function getUseCases(explicitToken?: string | null) {
+    let token = explicitToken;
+
+    // Si no hay token explícito, intentar leer de cookies
+    if (!token) {
+        const cookieStore = await cookies();
+        token = cookieStore.get('session_token')?.value || null;
+    }
+
     const repository = new BusinessApiRepository(token);
     return new BusinessUseCases(repository);
 }
 
 // Business Actions
-// Business Actions
-export const getBusinessesAction = async (params?: GetBusinessesParams) => {
+/**
+ * Get businesses action
+ * @param params Query parameters
+ * @param token Token opcional para iframes (donde cookies están bloqueadas)
+ */
+export const getBusinessesAction = async (params?: GetBusinessesParams, token?: string | null) => {
     try {
-        return (await getUseCases()).getBusinesses(params);
+        return (await getUseCases(token)).getBusinesses(params);
     } catch (error: any) {
         console.error('Get Businesses Action Error:', error.message);
         throw new Error(error.message);

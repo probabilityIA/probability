@@ -93,18 +93,20 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	)
 	c.SetSameSite(http.SameSiteNoneMode) // Para iframes de terceros (Shopify)
 
-	// NO retornar el token en el JSON por seguridad
-	// El token solo estará en la cookie HttpOnly
-	loginResponse.Token = ""
+	// IMPORTANTE: También retornar el token en el JSON para iframes de Shopify
+	// En iframes, las cookies HttpOnly pueden estar bloqueadas por políticas de terceros
+	// El frontend usará: cookies en navegador normal (más seguro), token JSON en iframes
+	// loginResponse.Token ya contiene el token, no limpiarlo
 
 	h.logger.Info(ctx).
 		Str("email", loginRequest.Email).
 		Uint("user_id", domainResponse.User.ID).
 		Str("scope", domainResponse.Scope).
 		Bool("is_super_admin", domainResponse.IsSuperAdmin).
-		Msg("Login exitoso - Cookie HttpOnly seteada")
+		Bool("token_in_json", true).
+		Msg("Login exitoso - Cookie HttpOnly seteada y token en JSON para iframes")
 
-	// Retornar respuesta exitosa (sin token en JSON)
+	// Retornar respuesta exitosa (con token en JSON para iframes + cookie para navegador)
 	c.JSON(http.StatusOK, response.LoginSuccessResponse{
 		Success: true,
 		Data:    *loginResponse,
