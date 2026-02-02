@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { loginAction, getRolesPermissionsAction } from '../../infra/actions';
+import { loginAction, getRolesPermissionsAction, loginServerAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
 import { useRouter } from 'next/navigation';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
@@ -20,23 +20,38 @@ export const LoginForm = () => {
 
         startTransition(async () => {
             try {
-                // ✅ Hacer fetch directo al API para que el navegador reciba la cookie
-                // En desarrollo: Next.js proxy redirige /api/* a localhost:3050
-                // En producción: NEXT_PUBLIC_API_BASE_URL apunta al dominio real
-                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
-                const loginResponse = await fetch(`${baseUrl}/auth/login`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password }),
-                    credentials: 'include', // IMPORTANTE: incluir cookies en la request
-                });
+                // Detectar si estamos en desarrollo local
+                const isLocalDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
-                if (!loginResponse.ok) {
-                    const errorData = await loginResponse.json();
-                    throw new Error(errorData.error || errorData.message || 'Error al iniciar sesión');
+                let response;
+
+                if (isLocalDev) {
+                    // ✅ En desarrollo local: usar Server Action para evitar problemas de proxy con cookies
+                    const result = await loginServerAction(email, password);
+
+                    if (!result.success) {
+                        throw new Error(result.error || 'Error al iniciar sesión');
+                    }
+
+                    response = result.data;
+                } else {
+                    // ✅ En producción: hacer fetch directo para que el navegador reciba la cookie Partitioned
+                    // Esto es NECESARIO para que funcione en iframes de Shopify
+                    const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+                    const loginResponse = await fetch(`${baseUrl}/auth/login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email, password }),
+                        credentials: 'include', // IMPORTANTE: incluir cookies en la request
+                    });
+
+                    if (!loginResponse.ok) {
+                        const errorData = await loginResponse.json();
+                        throw new Error(errorData.error || errorData.message || 'Error al iniciar sesión');
+                    }
+
+                    response = await loginResponse.json();
                 }
-
-                const response = await loginResponse.json();
 
                 if (response.success) {
                     // ✅ Cookie Partitioned ya está seteada en el navegador por el backend

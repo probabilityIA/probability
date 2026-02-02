@@ -13,11 +13,10 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Headers para soportar iframes de Shopify
+  // Headers para CORS y Shopify iframes
   async headers() {
     return [
       {
-        // Aplicar a todas las rutas
         source: '/:path*',
         headers: [
           {
@@ -37,10 +36,9 @@ const nextConfig: NextConfig = {
     ];
   },
 
-  // Configuración experimental para mejorar el manejo de cookies en iframes
+  // Configuración experimental para mejorar el manejo de cookies
   experimental: {
-    // Permitir que las cookies funcionen en contextos de terceros
-    // @ts-ignore - Esta opción puede no estar en los tipos pero funciona
+    // @ts-ignore
     serverActions: {
       bodySizeLimit: '2mb',
     },

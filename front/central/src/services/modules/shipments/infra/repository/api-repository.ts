@@ -1,22 +1,27 @@
 import { IShipmentRepository } from '../../domain/ports';
 import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse } from '../../domain/types';
-import { TokenStorage } from '@/shared/config';
-import { envPublic } from '@/shared/config/env';
+import { env } from '@/shared/config/env';
 
 export class ShipmentApiRepository implements IShipmentRepository {
     private baseUrl: string;
+    private token: string | null;
 
-    constructor() {
-        this.baseUrl = envPublic.API_BASE_URL;
+    constructor(token?: string | null) {
+        // Usar env.API_BASE_URL (servidor) en lugar de envPublic (cliente)
+        // Los repositorios se usan en Server Actions que corren en el servidor
+        this.baseUrl = env.API_BASE_URL;
+        this.token = token || null;
     }
 
     private async fetch<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-        const token = TokenStorage.getSessionToken();
-        const headers = {
+        const headers: Record<string, string> = {
             'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-            ...options.headers,
+            ...options.headers as Record<string, string>,
         };
+
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
 
         const response = await fetch(`${this.baseUrl}${endpoint}`, {
             ...options,
