@@ -42,12 +42,24 @@ export const env = {
  * IMPORTANTE: NEXT_PUBLIC_* se inyectan en build time, no runtime
  */
 export const envPublic = {
-  // API Backend para cliente (solo SSE)
+  // API Backend para cliente (peticiones HTTP normales a través de Next.js proxy)
   get API_BASE_URL(): string {
     const value = process.env.NEXT_PUBLIC_API_BASE_URL;
     if (!value) {
       throw new Error(
         `❌ NEXT_PUBLIC_API_BASE_URL no está definida.\n` +
+        `Agrégala a .env.local y ejecuta: rm -rf .next && pnpm run dev`
+      );
+    }
+    return value;
+  },
+
+  // SSE Backend URL (conexión directa sin proxy)
+  get SSE_BASE_URL(): string {
+    const value = process.env.NEXT_PUBLIC_SSE_BASE_URL;
+    if (!value) {
+      throw new Error(
+        `❌ NEXT_PUBLIC_SSE_BASE_URL no está definida.\n` +
         `Agrégala a .env.local y ejecuta: rm -rf .next && pnpm run dev`
       );
     }

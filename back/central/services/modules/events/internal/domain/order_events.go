@@ -28,8 +28,11 @@ const (
 	OrderEventTypeOnHold          OrderEventType = "order.on_hold"
 	OrderEventTypeProcessing      OrderEventType = "order.processing"
 
+	// Eventos de procesamiento interno
+	OrderEventTypeScoreCalculationRequested OrderEventType = "order.score_calculation_requested"
+
 	// Eventos de notificaciones
-	OrderEventTypeNotificationSent OrderEventType = "order.notification_sent"
+	OrderEventTypeNotificationSent   OrderEventType = "order.notification_sent"
 	OrderEventTypeNotificationFailed OrderEventType = "order.notification_failed"
 )
 
@@ -40,6 +43,7 @@ func (t OrderEventType) IsValid() bool {
 		OrderEventTypeCancelled, OrderEventTypeDelivered, OrderEventTypeShipped,
 		OrderEventTypePaymentReceived, OrderEventTypeRefunded, OrderEventTypeFailed,
 		OrderEventTypeOnHold, OrderEventTypeProcessing,
+		OrderEventTypeScoreCalculationRequested,
 		OrderEventTypeNotificationSent, OrderEventTypeNotificationFailed:
 		return true
 	}
@@ -55,7 +59,7 @@ func (t OrderEventType) IsValid() bool {
 // OrderEvent representa un evento relacionado con una orden
 type OrderEvent struct {
 	ID            string                 `json:"id"`
-	Type          OrderEventType         `json:"type"`
+	Type          OrderEventType         `json:"event_type"`
 	OrderID       string                 `json:"order_id"`
 	BusinessID    *uint                  `json:"business_id,omitempty"`
 	IntegrationID *uint                  `json:"integration_id,omitempty"`
