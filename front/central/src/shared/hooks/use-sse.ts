@@ -54,7 +54,8 @@ export const useSSE = (options: UseSSEOptions = {}) => {
             params.append('business_id', businessId.toString());
         }
 
-        const baseUrl = `${envPublic.API_BASE_URL}/notify/sse/order-notify`;
+        // SSE debe ir directo al backend, no a través de Next.js proxy
+        const baseUrl = `${envPublic.SSE_BASE_URL}/notify/sse/order-notify`;
         // If businessId is provided in options, we might want to use the /sse/:businessID endpoint
         // But based on routes.go, /sse/:businessID is also supported.
         // Let's use the query param approach for flexibility as per the handler logic.

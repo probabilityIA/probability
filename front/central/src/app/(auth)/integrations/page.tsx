@@ -22,10 +22,7 @@ export default function IntegrationsPage() {
     const searchParams = useSearchParams();
     const isOAuthCallback = searchParams.get('shopify_oauth');
 
-    if (isOAuthCallback) {
-        return <ShopifyOAuthCallback />;
-    }
-
+    // Hooks deben estar antes de cualquier return condicional
     const [activeTab, setActiveTab] = useState<'integrations' | 'types'>('integrations');
     const [activeCategoryCode, setActiveCategoryCode] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -50,7 +47,12 @@ export default function IntegrationsPage() {
                 setFilterCategory(firstCategory.code);
             }
         }
-    }, [categories, categoriesLoading, activeCategoryCode]);
+    }, [categories, categoriesLoading, activeCategoryCode, setFilterCategory]);
+
+    // Return condicional después de todos los hooks
+    if (isOAuthCallback) {
+        return <ShopifyOAuthCallback />;
+    }
 
     // TODO: Obtener del contexto de usuario si es super admin
     const isSuperUser = true; // Por ahora en true, después conectar con el contexto de permisos

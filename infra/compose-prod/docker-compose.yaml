@@ -11,6 +11,8 @@ services:
       API_BASE_URL: "http://back-central:3050/api/v1"
       # NEXT_PUBLIC para cliente (browser) - debe apuntar al dominio público
       NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-https://app.probabilityia.com.co/api/v1}"
+      # SSE Backend URL (conexión directa desde el navegador)
+      NEXT_PUBLIC_SSE_BASE_URL: "${NEXT_PUBLIC_SSE_BASE_URL:-https://app.probabilityia.com.co/api/v1}"
     env_file:
     - .env
     restart: unless-stopped

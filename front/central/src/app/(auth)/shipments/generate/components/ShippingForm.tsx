@@ -565,7 +565,7 @@ export const ShippingForm = () => {
                                     <span>🤖</span> Recomendación: {aiAnalysis.recommended_carrier}
                                 </h4>
                                 <p className="text-blue-800 text-xs leading-relaxed italic">
-                                    "{aiAnalysis.reasoning}"
+                                    &quot;{aiAnalysis.reasoning}&quot;
                                 </p>
                             </div>
                         )}

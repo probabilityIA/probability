@@ -38,7 +38,7 @@ const nextConfig: NextConfig = {
 
   // Configuración experimental para mejorar el manejo de cookies
   experimental: {
-    // @ts-ignore
+    // @ts-expect-error - serverActions is experimental and may not have complete types
     serverActions: {
       bodySizeLimit: '2mb',
     },
