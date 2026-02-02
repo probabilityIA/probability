@@ -6,8 +6,13 @@ services:
     container_name: frontend_prod
     ports:
       - "8080:80"
+    environment:
+      # API Backend URL (dentro de la red Docker)
+      API_BASE_URL: "http://back-central:3050/api/v1"
+      # NEXT_PUBLIC para cliente (browser) - debe apuntar al dominio público
+      NEXT_PUBLIC_API_BASE_URL: "${NEXT_PUBLIC_API_BASE_URL:-https://app.probabilityia.com.co/api/v1}"
     env_file:
-    - .env 
+    - .env
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:80/"]
