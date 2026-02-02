@@ -131,8 +131,6 @@ func (ic *integrationCore) RegisterIntegration(integrationType int, integration 
 		ic.logger.Error().Err(err).Int("integration_type", integrationType).Msg("RegisterIntegration: error al registrar tester")
 		return
 	}
-
-	ic.logger.Info().Int("integration_type", integrationType).Msg("Integration registered successfully")
 }
 
 // GetRegisteredIntegration obtiene el bundle registrado para un tipo de integración

@@ -3,9 +3,9 @@ package cache
 import "fmt"
 
 // buildCacheKey construye la key de Redis para una configuración
-// Format: notification:configs:{integration_id}:{trigger}
-func buildCacheKey(integrationID uint, trigger string) string {
-	return fmt.Sprintf("notification:configs:%d:%s", integrationID, trigger)
+// NUEVA ESTRUCTURA: Format: notification:configs:{integration_id}:{notification_type_id}:{notification_event_type_id}
+func buildCacheKey(integrationID uint, notificationTypeID uint, notificationEventTypeID uint) string {
+	return fmt.Sprintf("notification:configs:%d:%d:%d", integrationID, notificationTypeID, notificationEventTypeID)
 }
 
 // buildIndexKey construye la key del índice inverso

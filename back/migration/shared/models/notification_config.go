@@ -50,7 +50,8 @@ type BusinessNotificationConfig struct {
 
 	// DEPRECATED: Channels - Ahora se usa NotificationType relationship
 	// Esta columna será eliminada después de la migración
-	// Channels datatypes.JSON `gorm:"type:jsonb"` // REMOVIDO
+	// TEMPORAL: Re-agregado para compatibilidad con frontend durante migración
+	Channels datatypes.JSON `gorm:"type:jsonb"`
 
 	// Filtros opcionales (JSON) - Para otros tipos de filtros (ej: min_amount, max_amount, etc.)
 	// Ya NO se usa para estados de orden (usar OrderStatuses relationship)

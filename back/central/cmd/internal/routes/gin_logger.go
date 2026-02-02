@@ -1,6 +1,8 @@
 package routes
 
 import (
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -35,13 +37,44 @@ func (gl *GinLogger) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
+// printSimpleHTTPLog imprime un log simple en consola similar a Next.js
+func printSimpleHTTPLog(method, path string, status int, latency time.Duration) {
+	// Color codes ANSI para status
+	var statusColor string
+	switch {
+	case status >= 500:
+		statusColor = "\033[31m" // Red
+	case status >= 400:
+		statusColor = "\033[33m" // Yellow
+	case status >= 300:
+		statusColor = "\033[36m" // Cyan
+	case status >= 200:
+		statusColor = "\033[32m" // Green
+	default:
+		statusColor = "\033[37m" // White
+	}
+	resetColor := "\033[0m"
+
+	// Formatear latencia en ms
+	latencyMs := float64(latency.Microseconds()) / 1000.0
+
+	// Imprimir en formato: GET /path 200 in 123ms
+	fmt.Fprintf(os.Stdout, " %s %s %s%d%s in %.0fms\n",
+		method,
+		path,
+		statusColor,
+		status,
+		resetColor,
+		latencyMs,
+	)
+	// Flush para asegurar que se imprima inmediatamente
+	os.Stdout.Sync()
+}
+
 // SetupGinLogging configura el logging de Gin y un middleware HTTP mínimo
 func SetupGinLogging(r *gin.Engine, logger log.ILogger) {
 	// Redirigir el writer de Gin a nuestro logger personalizado
 	gin.DefaultWriter = NewGinLogger(logger)
-
-	// Middleware de log de Gin
-	r.Use(gin.Logger())
 
 	// Middleware HTTP propio con latencia y status
 	r.Use(func(c *gin.Context) {
@@ -51,11 +84,18 @@ func SetupGinLogging(r *gin.Engine, logger log.ILogger) {
 		c.Next()
 		status := c.Writer.Status()
 		lat := time.Since(start)
-		logger.Info(c.Request.Context()).
-			Str("method", method).
-			Str("path", path).
-			Int("status", status).
-			Dur("latency", lat).
-			Msg("HTTP")
+
+		// Simple console log similar a Next.js
+		printSimpleHTTPLog(method, path, status, lat)
+
+		// Log estructurado para errores
+		if status >= 400 {
+			logger.Warn(c.Request.Context()).
+				Str("method", method).
+				Str("path", path).
+				Int("status", status).
+				Dur("latency", lat).
+				Msg("HTTP Error")
+		}
 	})
 }

@@ -50,8 +50,5 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	softpymesBundle := softpymes.New(config, logger, db, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeInvoicing, softpymesBundle)
 
-	logger.Info().
-		Msg("All integration modules initialized successfully")
-
 	return integrationCore
 }

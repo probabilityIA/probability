@@ -35,3 +35,18 @@ func (uc *useCase) GetNotificationEventTypeByID(ctx context.Context, id uint) (*
 
 	return eventType, nil
 }
+
+// ListAllEventTypes obtiene todos los tipos de eventos de notificación
+func (uc *useCase) ListAllEventTypes(ctx context.Context) ([]entities.NotificationEventType, error) {
+	uc.logger.Info().Msg("🔍 Fetching all notification event types from repository")
+
+	eventTypes, err := uc.notificationEventRepo.GetAll(ctx)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("❌ Error getting all event types")
+		return nil, err
+	}
+
+	uc.logger.Info().Int("count", len(eventTypes)).Msg("✅ All event types retrieved successfully")
+
+	return eventTypes, nil
+}

@@ -10,12 +10,14 @@ import (
 )
 
 // Create crea una nueva configuración de notificación
+// NUEVA ESTRUCTURA: Usa IDs de tablas normalizadas
 func (uc *useCase) Create(ctx context.Context, dto dtos.CreateNotificationConfigDTO) (*dtos.NotificationConfigResponseDTO, error) {
 	// Validar que la configuración no esté duplicada
+	// Duplicado = misma integración + mismo tipo de notificación + mismo evento
 	filters := dtos.FilterNotificationConfigDTO{
-		IntegrationID:    &dto.IntegrationID,
-		NotificationType: &dto.NotificationType,
-		Trigger:          &dto.Conditions.Trigger,
+		IntegrationID:           &dto.IntegrationID,
+		NotificationTypeID:      &dto.NotificationTypeID,
+		NotificationEventTypeID: &dto.NotificationEventTypeID,
 	}
 
 	existing, err := uc.repository.List(ctx, filters)
@@ -24,26 +26,39 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateNotificationConfig
 		return nil, err
 	}
 
-	// Validar duplicados con condiciones similares
-	for _, config := range existing {
-		if uc.areSimilarConditions(&config.Conditions, &dto.Conditions) {
+	// Si ya existe una configuración con la misma combinación, es duplicado
+	if len(existing) > 0 {
+		// Log detallado de TODAS las configuraciones existentes que coinciden
+		uc.logger.Warn().
+			Int("existing_count", len(existing)).
+			Uint("filter_integration_id", dto.IntegrationID).
+			Uint("filter_notification_type_id", dto.NotificationTypeID).
+			Uint("filter_notification_event_type_id", dto.NotificationEventTypeID).
+			Msg("🔍 Checking for duplicates - filters applied")
+
+		for i, cfg := range existing {
 			uc.logger.Warn().
-				Uint("integration_id", dto.IntegrationID).
-				Str("trigger", dto.Conditions.Trigger).
-				Msg("Similar notification config already exists")
-			return nil, errors.ErrDuplicateConfig
+				Int("index", i).
+				Uint("existing_id", cfg.ID).
+				Uint("existing_integration_id", cfg.IntegrationID).
+				Uint("existing_notification_type_id", cfg.NotificationTypeID).
+				Uint("existing_notification_event_type_id", cfg.NotificationEventTypeID).
+				Bool("existing_enabled", cfg.Enabled).
+				Msg("❌ Found duplicate config")
 		}
+
+		return nil, errors.ErrDuplicateConfig
 	}
 
-	// Crear entidad de dominio
+	// Crear entidad de dominio (nueva estructura)
 	entity := &entities.IntegrationNotificationConfig{
-		IntegrationID:    dto.IntegrationID,
-		NotificationType: dto.NotificationType,
-		IsActive:         dto.IsActive,
-		Conditions:       dto.Conditions,
-		Config:           dto.Config,
-		Description:      dto.Description,
-		Priority:         dto.Priority,
+		BusinessID:              dto.BusinessID,
+		IntegrationID:           dto.IntegrationID,
+		NotificationTypeID:      dto.NotificationTypeID,
+		NotificationEventTypeID: dto.NotificationEventTypeID,
+		Enabled:                 dto.Enabled,
+		Description:             dto.Description,
+		OrderStatusIDs:          dto.OrderStatusIDs,
 	}
 
 	// Persistir
@@ -51,12 +66,6 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateNotificationConfig
 		uc.logger.Error().Err(err).Msg("Error creating notification config")
 		return nil, err
 	}
-
-	uc.logger.Info().
-		Uint("id", entity.ID).
-		Uint("integration_id", entity.IntegrationID).
-		Str("type", entity.NotificationType).
-		Msg("Notification config created successfully")
 
 	// Cachear en Redis
 	if err := uc.cacheManager.CacheConfig(ctx, entity); err != nil {
@@ -68,42 +77,4 @@ func (uc *useCase) Create(ctx context.Context, dto dtos.CreateNotificationConfig
 	}
 
 	return mappers.ToResponseDTO(entity), nil
-}
-
-// areSimilarConditions compara si dos configuraciones tienen condiciones similares
-func (uc *useCase) areSimilarConditions(c1, c2 *entities.NotificationConditions) bool {
-	// Si tienen el mismo trigger y los mismos filtros, son duplicadas
-	if c1.Trigger != c2.Trigger {
-		return false
-	}
-
-	// Comparar statuses
-	if len(c1.Statuses) != len(c2.Statuses) {
-		return false
-	}
-	statusMap := make(map[string]bool)
-	for _, s := range c1.Statuses {
-		statusMap[s] = true
-	}
-	for _, s := range c2.Statuses {
-		if !statusMap[s] {
-			return false
-		}
-	}
-
-	// Comparar payment methods
-	if len(c1.PaymentMethods) != len(c2.PaymentMethods) {
-		return false
-	}
-	pmMap := make(map[uint]bool)
-	for _, pm := range c1.PaymentMethods {
-		pmMap[pm] = true
-	}
-	for _, pm := range c2.PaymentMethods {
-		if !pmMap[pm] {
-			return false
-		}
-	}
-
-	return true
 }

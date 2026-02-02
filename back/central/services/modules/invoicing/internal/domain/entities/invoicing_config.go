@@ -29,4 +29,8 @@ type InvoicingConfig struct {
 	Description string
 	CreatedByID uint
 	UpdatedByID *uint
+
+	// Nombres de relaciones (opcionales - populados por repo)
+	IntegrationName *string
+	ProviderName    *string
 }

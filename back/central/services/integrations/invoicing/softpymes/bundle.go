@@ -59,10 +59,6 @@ func New(
 	// 4. Inicializar handlers HTTP
 	handler := handlers.New(useCase, logger)
 
-	logger.Info(context.Background()).
-		Str("api_url", apiURL).
-		Msg("Softpymes integration module initialized")
-
 	return &Bundle{
 		useCase:        useCase,
 		handler:        handler,
@@ -76,7 +72,6 @@ func New(
 // Implementa método requerido por el patrón de integración
 func (b *Bundle) RegisterRoutes(router *gin.RouterGroup) {
 	b.handler.RegisterRoutes(router)
-	b.log.Info(context.Background()).Msg("Softpymes routes registered")
 }
 
 // ═══════════════════════════════════════════════════════════════

@@ -10,8 +10,9 @@ import (
 )
 
 // CacheConfig cachea UNA configuración después de crearla en BD
+// NUEVA ESTRUCTURA: Usa IDs en lugar de strings
 func (c *cacheManager) CacheConfig(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
-	key := buildCacheKey(config.IntegrationID, config.Conditions.Trigger)
+	key := buildCacheKey(config.IntegrationID, config.NotificationTypeID, config.NotificationEventTypeID)
 
 	// Serializar a JSON
 	cachedConfig := mappers.ToCachedConfig(config)

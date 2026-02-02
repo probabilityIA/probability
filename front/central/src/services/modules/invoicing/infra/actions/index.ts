@@ -41,6 +41,12 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   if (sessionToken) headers['Authorization'] = `Bearer ${sessionToken}`;
   if (businessToken) headers['X-Business-Token'] = businessToken;
 
+  // Log del request
+  console.log(`[INVOICING API Request] ${options.method || 'GET'} ${url}`, {
+    headers: Object.keys(headers),
+    body: options.body ? JSON.parse(options.body as string) : undefined,
+  });
+
   const response = await fetch(url, {
     ...options,
     headers,
@@ -48,10 +54,16 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`[INVOICING API Error] ${response.status} ${url}`, errorText);
     throw new Error(`HTTP ${response.status}: ${errorText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+
+  // Log de la respuesta
+  console.log(`[INVOICING API Response] ${response.status} ${url}`, data);
+
+  return data;
 }
 
 // ============================================

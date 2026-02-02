@@ -48,7 +48,6 @@ func (c *OrderEventConsumer) Start(ctx context.Context) error {
 	// Iniciar worker para procesar eventos
 	go c.processEvents(ctx)
 
-	c.logger.Info(ctx).Msg("Consumidor de eventos de órdenes iniciado")
 	return nil
 }
 

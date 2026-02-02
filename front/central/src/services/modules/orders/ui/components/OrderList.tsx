@@ -361,10 +361,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             try {
                 const response = await getOrderStatusesAction(true); // Solo estados activos
                 if (response.success && response.data) {
-                    const options = response.data.map((status) => ({
-                        value: String(status.id),
-                        label: status.name,
-                    }));
+                    const options = response.data
+                        .filter((status) => status?.name) // Filtrar registros sin nombre
+                        .map((status) => ({
+                            value: String(status.id),
+                            label: status.name,
+                        }));
                     // Ordenar por nombre
                     options.sort((a, b) => a.label.localeCompare(b.label));
                     setOrderStatusesList(options);
@@ -381,10 +383,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             try {
                 const response = await getPaymentStatusesAction(true); // Solo estados activos
                 if (response.success && response.data) {
-                    const options = response.data.map((status) => ({
-                        value: String(status.id),
-                        label: status.name,
-                    }));
+                    const options = response.data
+                        .filter((status) => status?.name) // Filtrar registros sin nombre
+                        .map((status) => ({
+                            value: String(status.id),
+                            label: status.name,
+                        }));
                     options.sort((a, b) => a.label.localeCompare(b.label));
                     setPaymentStatusesList(options);
                 }
@@ -400,10 +404,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             try {
                 const response = await getFulfillmentStatusesAction(true); // Solo estados activos
                 if (response.success && response.data) {
-                    const options = response.data.map((status) => ({
-                        value: String(status.id),
-                        label: status.name,
-                    }));
+                    const options = response.data
+                        .filter((status) => status?.name) // Filtrar registros sin nombre
+                        .map((status) => ({
+                            value: String(status.id),
+                            label: status.name,
+                        }));
                     options.sort((a, b) => a.label.localeCompare(b.label));
                     setFulfillmentStatusesList(options);
                 }
@@ -648,6 +654,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     // SSE Integration - Agregar nueva orden sin recargar toda la tabla
     useSSE({
         eventTypes: ['order.created'],
+        // Super admin (business_id=0) recibe eventos de todos los businesses
+        businessId: isSuperAdmin ? 0 : permissions?.business_id,
         onMessage: async (event) => {
             try {
                 const data = JSON.parse(event.data);

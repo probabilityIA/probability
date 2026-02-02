@@ -21,19 +21,25 @@ import (
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/notification-types/{id} [get]
 func (h *handler) GetByID(c *gin.Context) {
+	h.logger.Info().Msg("🌐 [GET /notification-types/:id] Request received")
+
 	id, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	if err != nil {
-		h.logger.Error().Err(err).Msg("Invalid ID parameter")
+		h.logger.Error().Err(err).Msg("❌ Invalid ID parameter")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
+	h.logger.Info().Uint64("id", id).Msg("🔍 Fetching notification type by ID")
+
 	entity, err := h.useCase.GetNotificationTypeByID(c.Request.Context(), uint(id))
 	if err != nil {
-		h.logger.Error().Err(err).Uint64("id", id).Msg("Error getting notification type by ID")
+		h.logger.Warn().Err(err).Uint64("id", id).Msg("⚠️ Notification type not found")
 		c.JSON(http.StatusNotFound, gin.H{"error": "Notification type not found"})
 		return
 	}
+
+	h.logger.Info().Uint64("id", id).Msg("✅ Notification type fetched successfully")
 
 	// Convertir entidad de dominio a response HTTP
 	response := mappers.DomainToResponse(*entity)

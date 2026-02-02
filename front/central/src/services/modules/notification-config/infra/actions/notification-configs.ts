@@ -54,8 +54,13 @@ export async function listConfigsAction(filter?: ConfigFilter) {
 // Action temporal con paginación (compatible con tabla global)
 export async function getConfigsAction(params?: any) {
   try {
+    console.log("🔍 [getConfigsAction] Params recibidos:", JSON.stringify(params, null, 2));
+
     const repo = await getRepository();
     const configs = await repo.list(params);
+
+    console.log("📦 [getConfigsAction] Configs del backend:", JSON.stringify(configs, null, 2));
+    console.log("📊 [getConfigsAction] Total de configs:", configs.length);
 
     // Simular paginación hasta que el backend la implemente
     const page = params?.page || 1;
@@ -66,6 +71,8 @@ export async function getConfigsAction(params?: any) {
     const end = start + pageSize;
     const paginatedData = configs.slice(start, end);
 
+    console.log("✂️ [getConfigsAction] Datos paginados:", JSON.stringify(paginatedData, null, 2));
+
     return {
       success: true,
       data: paginatedData,
@@ -75,6 +82,7 @@ export async function getConfigsAction(params?: any) {
       total_pages: totalPages,
     };
   } catch (error: any) {
+    console.error("❌ [getConfigsAction] Error:", error);
     return {
       success: false,
       error: error.message,

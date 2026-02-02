@@ -8,6 +8,7 @@ import {
   getNotificationTypesAction,
   getNotificationEventTypesAction,
   deleteNotificationEventTypeAction,
+  toggleNotificationEventTypeActiveAction,
 } from "../../infra/actions";
 import { ConfirmModal } from "@/shared/ui/confirm-modal";
 
@@ -91,6 +92,23 @@ export function NotificationEventTypeList({
     }
   };
 
+  const handleToggleActive = async (eventType: NotificationEventType) => {
+    try {
+      const result = await toggleNotificationEventTypeActiveAction(
+        eventType.id
+      );
+      if (result.success) {
+        const newStatus = result.data.is_active ? "activado" : "desactivado";
+        showToast(`Evento ${newStatus} exitosamente`, "success");
+        fetchEventTypes();
+      } else {
+        showToast(result.error || "Error al cambiar estado", "error");
+      }
+    } catch (error: any) {
+      showToast(error.message || "Error al cambiar estado", "error");
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Cargando...</div>;
   }
@@ -129,9 +147,6 @@ export function NotificationEventTypeList({
                 Evento
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Código
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Descripción
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -145,7 +160,7 @@ export function NotificationEventTypeList({
           <tbody className="bg-white divide-y divide-gray-200">
             {eventTypes.length === 0 ? (
               <tr>
-                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                   No hay eventos de notificación
                 </td>
               </tr>
@@ -161,11 +176,6 @@ export function NotificationEventTypeList({
                     <div className="text-sm font-medium text-gray-900">
                       {eventType.event_name}
                     </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <code className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded">
-                      {eventType.event_code}
-                    </code>
                   </td>
                   <td className="px-6 py-4">
                     <div className="text-sm text-gray-500">
@@ -184,6 +194,14 @@ export function NotificationEventTypeList({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Button
+                      variant={eventType.is_active ? "danger" : "outline"}
+                      size="sm"
+                      onClick={() => handleToggleActive(eventType)}
+                      className="mr-2"
+                    >
+                      {eventType.is_active ? "Desactivar" : "Activar"}
+                    </Button>
                     <Button
                       variant="outline"
                       size="sm"

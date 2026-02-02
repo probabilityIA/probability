@@ -309,6 +309,26 @@ export function NotificationConfigForm({
               </option>
             ))}
           </select>
+
+          {/* Badge de categoría seleccionada */}
+          {formData.integration_id > 0 && (() => {
+            const selectedIntegration = filteredIntegrations.find(i => i.id === formData.integration_id);
+            if (selectedIntegration && selectedIntegration.category_name) {
+              return (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-600">Categoría:</span>
+                  <span
+                    className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+                    style={{ backgroundColor: selectedIntegration.category_color || '#6B7280' }}
+                  >
+                    {selectedIntegration.category_name}
+                  </span>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
           <p className="text-xs text-gray-500">
             La integración que genera los eventos (ej: Shopify - Mi Tiendita)
           </p>

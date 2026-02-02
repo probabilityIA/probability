@@ -579,48 +579,48 @@ func (uc *UseCaseOrderMapping) updateStructuredData(order *entities.ProbabilityO
 
 	// Actualizar Items si están presentes
 	if len(dto.Items) > 0 {
-		if len(order.Items) == 0 || !equalJSON(order.Items, dto.Items) {
-			order.Items = dto.Items
+		if len(order.Items) == 0 || !equalJSON(order.Items, datatypes.JSON(dto.Items)) {
+			order.Items = datatypes.JSON(dto.Items)
 			changed = true
 		}
 	}
 
 	// Actualizar Metadata si está presente
 	if len(dto.Metadata) > 0 {
-		if len(order.Metadata) == 0 || !equalJSON(order.Metadata, dto.Metadata) {
-			order.Metadata = dto.Metadata
+		if len(order.Metadata) == 0 || !equalJSON(order.Metadata, datatypes.JSON(dto.Metadata)) {
+			order.Metadata = datatypes.JSON(dto.Metadata)
 			changed = true
 		}
 	}
 
 	// Actualizar FinancialDetails si está presente
 	if len(dto.FinancialDetails) > 0 {
-		if len(order.FinancialDetails) == 0 || !equalJSON(order.FinancialDetails, dto.FinancialDetails) {
-			order.FinancialDetails = dto.FinancialDetails
+		if len(order.FinancialDetails) == 0 || !equalJSON(order.FinancialDetails, datatypes.JSON(dto.FinancialDetails)) {
+			order.FinancialDetails = datatypes.JSON(dto.FinancialDetails)
 			changed = true
 		}
 	}
 
 	// Actualizar ShippingDetails si está presente
 	if len(dto.ShippingDetails) > 0 {
-		if len(order.ShippingDetails) == 0 || !equalJSON(order.ShippingDetails, dto.ShippingDetails) {
-			order.ShippingDetails = dto.ShippingDetails
+		if len(order.ShippingDetails) == 0 || !equalJSON(order.ShippingDetails, datatypes.JSON(dto.ShippingDetails)) {
+			order.ShippingDetails = datatypes.JSON(dto.ShippingDetails)
 			changed = true
 		}
 	}
 
 	// Actualizar PaymentDetails si está presente
 	if len(dto.PaymentDetails) > 0 {
-		if len(order.PaymentDetails) == 0 || !equalJSON(order.PaymentDetails, dto.PaymentDetails) {
-			order.PaymentDetails = dto.PaymentDetails
+		if len(order.PaymentDetails) == 0 || !equalJSON(order.PaymentDetails, datatypes.JSON(dto.PaymentDetails)) {
+			order.PaymentDetails = datatypes.JSON(dto.PaymentDetails)
 			changed = true
 		}
 	}
 
 	// Actualizar FulfillmentDetails si está presente
 	if len(dto.FulfillmentDetails) > 0 {
-		if len(order.FulfillmentDetails) == 0 || !equalJSON(order.FulfillmentDetails, dto.FulfillmentDetails) {
-			order.FulfillmentDetails = dto.FulfillmentDetails
+		if len(order.FulfillmentDetails) == 0 || !equalJSON(order.FulfillmentDetails, datatypes.JSON(dto.FulfillmentDetails)) {
+			order.FulfillmentDetails = datatypes.JSON(dto.FulfillmentDetails)
 			changed = true
 		}
 	}

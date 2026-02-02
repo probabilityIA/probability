@@ -57,8 +57,4 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// 9. Register Routes
 	routes.RegisterRoutes(router)
-
-	logger.Info(context.Background()).
-		Str("redis_channel", redisChannel).
-		Msg("Módulo de eventos inicializado correctamente")
 }

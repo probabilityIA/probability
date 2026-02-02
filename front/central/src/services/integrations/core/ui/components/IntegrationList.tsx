@@ -821,8 +821,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             </div>
         ),
         category: (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-500 text-white">
-                {integration.category || 'Sin categoría'}
+            <span
+                className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
+                style={{ backgroundColor: integration.category_color || '#6B7280' }}
+            >
+                {integration.category_name || integration.category || 'Sin categoría'}
             </span>
         ),
         status: (

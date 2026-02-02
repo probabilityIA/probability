@@ -9,6 +9,7 @@ import (
 // NotificationEventTypeRepositoryMock - Mock del repositorio de tipos de eventos de notificación
 type NotificationEventTypeRepositoryMock struct {
 	GetByNotificationTypeFn func(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error)
+	GetAllFn                func(ctx context.Context) ([]entities.NotificationEventType, error)
 	GetByIDFn               func(ctx context.Context, id uint) (*entities.NotificationEventType, error)
 	CreateFn                func(ctx context.Context, eventType *entities.NotificationEventType) error
 	UpdateFn                func(ctx context.Context, eventType *entities.NotificationEventType) error
@@ -18,6 +19,13 @@ type NotificationEventTypeRepositoryMock struct {
 func (m *NotificationEventTypeRepositoryMock) GetByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error) {
 	if m.GetByNotificationTypeFn != nil {
 		return m.GetByNotificationTypeFn(ctx, notificationTypeID)
+	}
+	return []entities.NotificationEventType{}, nil
+}
+
+func (m *NotificationEventTypeRepositoryMock) GetAll(ctx context.Context) ([]entities.NotificationEventType, error) {
+	if m.GetAllFn != nil {
+		return m.GetAllFn(ctx)
 	}
 	return []entities.NotificationEventType{}, nil
 }

@@ -13,6 +13,11 @@ type Config struct {
 	Enabled             bool                   `json:"enabled"`
 	AutoInvoice         bool                   `json:"auto_invoice"`
 	Filters             map[string]interface{} `json:"filters,omitempty"`
+
+	// Nombres de relaciones (para frontend)
+	IntegrationName *string `json:"integration_name,omitempty"`
+	ProviderName    *string `json:"provider_name,omitempty"`
+	Description     *string `json:"description,omitempty"`
 }
 
 // ConfigList es la respuesta de listado de configuraciones

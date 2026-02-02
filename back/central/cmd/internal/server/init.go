@@ -29,7 +29,14 @@ func Init(ctx context.Context) error {
 	s3Service := storage.New(environment, logger)
 
 	// Initialize RabbitMQ
-	rabbitMQ, _ := rabbitmq.New(logger, environment)
+	rabbitMQ, err := rabbitmq.New(logger, environment)
+	if err != nil {
+		logger.Error(ctx).
+			Err(err).
+			Msg("Failed to initialize RabbitMQ - consumers will be disabled")
+	} else {
+		logger.Info(ctx).Msg("✅ RabbitMQ initialized successfully")
+	}
 
 	// Initialize Redis
 	redisClient := redis.New(logger, environment)

@@ -77,8 +77,6 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 	var orderPublisher domain.OrderPublisher
 	if rabbitMQ != nil {
 		orderPublisher = queue.New(rabbitMQ, logger, config)
-		logger.Info(context.Background()).
-			Msg("RabbitMQ publisher initialized for Shopify integration")
 	} else {
 		logger.Warn(context.Background()).
 			Msg("RabbitMQ not available, Shopify orders will not be published to queue")

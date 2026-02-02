@@ -130,7 +130,7 @@ func ConfigToResponse(config *entities.InvoicingConfig) *response.Config {
 		invoicingProviderID = *config.InvoicingProviderID
 	}
 
-	return &response.Config{
+	resp := &response.Config{
 		ID:                  config.ID,
 		CreatedAt:           config.CreatedAt,
 		UpdatedAt:           config.UpdatedAt,
@@ -141,6 +141,21 @@ func ConfigToResponse(config *entities.InvoicingConfig) *response.Config {
 		AutoInvoice:         config.AutoInvoice,
 		Filters:             config.Filters,
 	}
+
+	// Incluir nombres de relaciones si están disponibles
+	if config.IntegrationName != nil {
+		resp.IntegrationName = config.IntegrationName
+	}
+
+	if config.ProviderName != nil {
+		resp.ProviderName = config.ProviderName
+	}
+
+	if config.Description != "" {
+		resp.Description = &config.Description
+	}
+
+	return resp
 }
 
 // ConfigsToResponse convierte lista de entidades a response

@@ -5,10 +5,10 @@ import "time"
 // OrderEventType representa el tipo de evento de orden
 type OrderEventType string
 
-// OrderEvent representa un evento de orden desde Redis
+// OrderEvent representa un evento de orden desde RabbitMQ
 type OrderEvent struct {
 	ID            string                 `json:"id"`
-	Type          OrderEventType         `json:"type"`
+	Type          OrderEventType         `json:"event_type"`
 	OrderID       string                 `json:"order_id"`
 	BusinessID    *uint                  `json:"business_id,omitempty"`
 	IntegrationID *uint                  `json:"integration_id,omitempty"`

@@ -84,34 +84,43 @@ func (r *repository) GetByID(ctx context.Context, id uint) (*entities.Integratio
 }
 
 // List obtiene una lista de configuraciones con filtros opcionales
+// NUEVA ESTRUCTURA: Filtra por IDs de tablas normalizadas + Preload de relaciones
 func (r *repository) List(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error) {
 	query := r.db.Conn(ctx).Model(&mappers.IntegrationNotificationConfigModel{})
 
-	// Aplicar filtros
+	// PRELOAD de relaciones para traer datos completos
+	query = query.Preload("NotificationType").Preload("NotificationEventType")
+
+	// Log de filtros aplicados para debug
+	logEvent := r.logger.Debug()
 	if filters.IntegrationID != nil {
+		logEvent = logEvent.Uint("filter_integration_id", *filters.IntegrationID)
 		query = query.Where("integration_id = ?", *filters.IntegrationID)
 	}
-
-	if filters.NotificationType != nil {
-		query = query.Where("notification_type = ?", *filters.NotificationType)
+	if filters.NotificationTypeID != nil {
+		logEvent = logEvent.Uint("filter_notification_type_id", *filters.NotificationTypeID)
+		query = query.Where("notification_type_id = ?", *filters.NotificationTypeID)
 	}
-
-	if filters.IsActive != nil {
-		query = query.Where("is_active = ?", *filters.IsActive)
+	if filters.NotificationEventTypeID != nil {
+		logEvent = logEvent.Uint("filter_notification_event_type_id", *filters.NotificationEventTypeID)
+		query = query.Where("notification_event_type_id = ?", *filters.NotificationEventTypeID)
 	}
-
-	if filters.Trigger != nil {
-		query = query.Where("conditions->>'trigger' = ?", *filters.Trigger)
+	if filters.Enabled != nil {
+		logEvent = logEvent.Bool("filter_enabled", *filters.Enabled)
+		query = query.Where("enabled = ?", *filters.Enabled)
 	}
+	logEvent.Msg("🔎 Repository List - Filters applied")
 
-	// Ordenar por prioridad descendente
-	query = query.Order("priority DESC, created_at DESC")
+	// Ordenar por fecha de creación descendente
+	query = query.Order("created_at DESC")
 
 	var models []mappers.IntegrationNotificationConfigModel
 	if err := query.Find(&models).Error; err != nil {
 		r.logger.Error().Err(err).Msg("Error listing notification configs")
 		return nil, err
 	}
+
+	r.logger.Debug().Int("results_count", len(models)).Msg("🔎 Repository List - Results found")
 
 	entities, err := mappers.ToDomainList(models)
 	if err != nil {

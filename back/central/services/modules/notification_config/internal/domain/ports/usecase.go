@@ -26,7 +26,8 @@ type IUseCase interface {
 	Delete(ctx context.Context, id uint) error
 
 	// ValidateConditions valida si una orden cumple las condiciones de una configuración
-	ValidateConditions(config *entities.IntegrationNotificationConfig, orderStatus string, paymentMethodID uint) bool
+	// NUEVA ESTRUCTURA: Usa orderStatusID (uint) en lugar de orderStatus (string)
+	ValidateConditions(config *entities.IntegrationNotificationConfig, orderStatusID uint, paymentMethodID uint) bool
 
 	// ========== Notification Types ==========
 	// GetNotificationTypes obtiene todos los tipos de notificaciones
@@ -50,6 +51,9 @@ type IUseCase interface {
 	// ========== Notification Event Types ==========
 	// GetEventTypesByNotificationType obtiene todos los tipos de eventos de un tipo de notificación
 	GetEventTypesByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error)
+
+	// ListAllEventTypes obtiene todos los tipos de eventos de notificación sin filtros
+	ListAllEventTypes(ctx context.Context) ([]entities.NotificationEventType, error)
 
 	// GetNotificationEventTypeByID obtiene un tipo de evento de notificación por su ID
 	GetNotificationEventTypeByID(ctx context.Context, id uint) (*entities.NotificationEventType, error)

@@ -28,8 +28,6 @@ func New(
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("invoicing")
 
-	moduleLogger.Info(ctx).Msg("Initializing invoicing module")
-
 	// ═══════════════════════════════════════════════════════════════
 	// 1. INFRAESTRUCTURA SECUNDARIA (Adaptadores de salida)
 	// ═══════════════════════════════════════════════════════════════
@@ -92,11 +90,7 @@ func New(
 
 		// Iniciar Retry Consumer (cron de reintentos cada 5 minutos)
 		go consumers.Retry.Start(ctx)
-
-		moduleLogger.Info(ctx).Msg("Consumers started successfully")
 	} else {
 		moduleLogger.Warn(ctx).Msg("RabbitMQ not available - consumers not started")
 	}
-
-	moduleLogger.Info(ctx).Msg("Invoicing module initialized successfully")
 }

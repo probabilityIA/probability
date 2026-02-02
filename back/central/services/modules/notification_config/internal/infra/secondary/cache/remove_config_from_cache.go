@@ -18,9 +18,9 @@ func (c *cacheManager) RemoveConfigFromCache(ctx context.Context, config *entiti
 			Uint("config_id", config.ID).
 			Msg("⚠️  Error obteniendo índice inverso - usando key conocida")
 
-		// Continuar con key conocida
+		// Continuar con key conocida (nueva estructura)
 		keys = map[string]string{
-			buildCacheKey(config.IntegrationID, config.Conditions.Trigger): "1",
+			buildCacheKey(config.IntegrationID, config.NotificationTypeID, config.NotificationEventTypeID): "1",
 		}
 	}
 

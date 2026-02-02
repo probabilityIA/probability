@@ -170,6 +170,16 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 		entity.DeletedAt = &model.DeletedAt.Time
 	}
 
+	// Extraer nombre de la integración de e-commerce si está preloaded
+	if model.Integration.ID > 0 && model.Integration.Name != "" {
+		entity.IntegrationName = &model.Integration.Name
+	}
+
+	// Extraer nombre de la integración de facturación (Softpymes) si está preloaded
+	if model.InvoicingIntegration.ID > 0 && model.InvoicingIntegration.Name != "" {
+		entity.ProviderName = &model.InvoicingIntegration.Name
+	}
+
 	// Convertir JSONB a map
 	if model.Filters != nil {
 		var filters map[string]interface{}

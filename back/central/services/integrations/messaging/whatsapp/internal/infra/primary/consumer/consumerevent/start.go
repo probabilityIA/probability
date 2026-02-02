@@ -4,10 +4,6 @@ import "context"
 
 // Start inicia el consumidor de eventos
 func (c *consumer) Start(ctx context.Context) error {
-	c.logger.Info().
-		Str("channel", c.channel).
-		Msg("Starting WhatsApp order event consumer")
-
 	pubsub := c.redisClient.Client(ctx).Subscribe(ctx, c.channel)
 	defer pubsub.Close()
 

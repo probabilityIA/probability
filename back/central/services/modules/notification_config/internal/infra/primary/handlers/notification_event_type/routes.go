@@ -10,6 +10,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		events.GET("", h.List) // Soporta ?notification_type_id=X
 		events.GET("/:id", h.GetByID)
 		events.PUT("/:id", h.Update)
+		events.PATCH("/:id/toggle-active", h.ToggleActive)
 		events.DELETE("/:id", h.Delete)
 	}
 }

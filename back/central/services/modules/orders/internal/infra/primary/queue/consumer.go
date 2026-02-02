@@ -68,10 +68,6 @@ func (c *OrderConsumer) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to start consumer: %w", err)
 	}
 
-	c.logger.Info().
-		Str("queue", OrdersCanonicalQueueName).
-		Msg("Order consumer started successfully")
-
 	return nil
 }
 
