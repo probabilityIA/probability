@@ -81,9 +81,8 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	// Convertir respuesta de dominio a response
 	loginResponse := mapper.ToLoginResponse(domainResponse)
 
-	// IMPORTANTE: Setear token como cookie HttpOnly con Partitioned para iframes
-	// Partitioned: Nueva feature que permite cookies third-party en iframes
-	// SameSite=None + Partitioned: Funciona en iframes de Shopify
+	// Setear cookie HttpOnly con Partitioned para soporte de iframes
+	// Partitioned permite cookies third-party en iframes (Shopify, etc.)
 	cookieValue := fmt.Sprintf(
 		"%s=%s; Max-Age=%d; Path=%s; Domain=%s; Secure; HttpOnly; SameSite=None; Partitioned",
 		"session_token",
@@ -94,8 +93,7 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	)
 	c.Header("Set-Cookie", cookieValue)
 
-	// NO retornar el token en el JSON - solo en cookie Partitioned
-	// Si Partitioned funciona, este es el enfoque más seguro
+	// No retornar token en JSON por seguridad (solo en cookie HttpOnly)
 	loginResponse.Token = ""
 
 	h.logger.Info(ctx).
@@ -103,10 +101,8 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 		Uint("user_id", domainResponse.User.ID).
 		Str("scope", domainResponse.Scope).
 		Bool("is_super_admin", domainResponse.IsSuperAdmin).
-		Bool("partitioned_cookie", true).
-		Msg("Login exitoso - Cookie HttpOnly con Partitioned seteada para iframes")
+		Msg("Login exitoso - Cookie Partitioned seteada")
 
-	// Retornar respuesta exitosa (con token en JSON para iframes + cookie para navegador)
 	c.JSON(http.StatusOK, response.LoginSuccessResponse{
 		Success: true,
 		Data:    *loginResponse,
