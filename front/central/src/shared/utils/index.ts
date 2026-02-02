@@ -10,8 +10,8 @@ export { SimpleCookieStorage } from './cookie-storage-simple';
 // API Client - Cliente universal para fetch directo (iframes)
 export { apiClient, UniversalApiClient } from './api-client';
 
-// Server Auth - Helper para Server Actions
-export { getAuthToken, requireAuthToken } from './server-auth';
+// Server Auth - NO exportar aquí (usa next/headers, solo para Server Actions)
+// Importar directamente: import { getAuthToken } from '@/shared/utils/server-auth';
 
 // Tipos - Exportar desde un solo lugar para evitar duplicados
 export type {
