@@ -7,6 +7,12 @@ export { TokenStorage } from './token-storage';
 export { CookieStorage } from './cookie-storage';
 export { SimpleCookieStorage } from './cookie-storage-simple';
 
+// API Client - Cliente universal para fetch directo (iframes)
+export { apiClient, UniversalApiClient } from './api-client';
+
+// Server Auth - Helper para Server Actions
+export { getAuthToken, requireAuthToken } from './server-auth';
+
 // Tipos - Exportar desde un solo lugar para evitar duplicados
 export type {
     BusinessColors,

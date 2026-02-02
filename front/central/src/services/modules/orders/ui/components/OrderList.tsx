@@ -13,6 +13,7 @@ import { useSSE } from '@/shared/hooks/use-sse';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { playNotificationSound } from '@/shared/utils';
+import { useAuthToken } from '@/shared/hooks/use-auth-token';
 import RawOrderModal from './RawOrderModal';
 
 // Componente memoizado para las filas de la tabla
@@ -281,6 +282,7 @@ interface OrderListProps {
 
 export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey, onCreate, onTestGuide }: OrderListProps) {
     const { isSuperAdmin, permissions } = usePermissions();
+    const token = useAuthToken(); // Para iframes de Shopify
     const [orders, setOrders] = useState<Order[]>([]);
     const [initialLoading, setInitialLoading] = useState(true);
     const [tableLoading, setTableLoading] = useState(false);
