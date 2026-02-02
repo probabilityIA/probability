@@ -21,23 +21,31 @@ import (
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/integrations/notification-configs/{id} [get]
 func (h *handler) GetByID(c *gin.Context) {
+	h.logger.Info().Msg("🌐 [GET /notification-configs/:id] Request received")
+
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
+		h.logger.Error().Err(err).Str("id_param", idStr).Msg("❌ Invalid ID parameter")
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ID"})
 		return
 	}
 
+	h.logger.Info().Uint64("id", id).Msg("🔍 Fetching notification config by ID")
+
 	result, err := h.useCase.GetByID(c.Request.Context(), uint(id))
 	if err != nil {
 		if err == errors.ErrNotificationConfigNotFound {
+			h.logger.Warn().Uint64("id", id).Msg("⚠️ Notification config not found")
 			c.JSON(http.StatusNotFound, gin.H{"error": "Notification config not found"})
 			return
 		}
-		h.logger.Error().Err(err).Msg("Error getting notification config")
+		h.logger.Error().Err(err).Uint64("id", id).Msg("❌ Error getting notification config")
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal server error"})
 		return
 	}
+
+	h.logger.Info().Uint64("id", id).Msg("✅ Notification config fetched successfully")
 
 	// Convertir DTO de dominio a response HTTP usando mapper
 	response := mappers.DomainToResponse(*result)

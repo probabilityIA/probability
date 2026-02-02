@@ -145,8 +145,10 @@ export function ConfigListTable({ onEdit, onCreate, refreshKey = 0 }: ConfigList
     {
       key: 'event_type',
       label: 'Tipo de Evento',
-      render: (value) => (
-        <span className="font-mono text-sm text-gray-900">{value as string}</span>
+      render: (_, row) => (
+        <span className="font-medium text-sm text-gray-900">
+          {row.notification_event_name || row.event_type || '-'}
+        </span>
       ),
     },
     {

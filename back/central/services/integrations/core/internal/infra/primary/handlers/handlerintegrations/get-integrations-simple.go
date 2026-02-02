@@ -70,16 +70,30 @@ func (h *IntegrationHandler) GetIntegrationsSimpleHandler(c *gin.Context) {
 	for _, integration := range integrations {
 		// Obtener el código del tipo de integración
 		typeCode := ""
+		categoryCode := ""
+		categoryName := ""
+		categoryColor := ""
+
 		if integration.IntegrationType != nil {
 			typeCode = integration.IntegrationType.Code
+
+			// Extraer categoría desde IntegrationType.Category
+			if integration.IntegrationType.Category != nil {
+				categoryCode = integration.IntegrationType.Category.Code
+				categoryName = integration.IntegrationType.Category.Name
+				categoryColor = integration.IntegrationType.Category.Color
+			}
 		}
 
 		simpleIntegrations = append(simpleIntegrations, response.IntegrationSimpleResponse{
-			ID:         integration.ID,
-			Name:       integration.Name,
-			Type:       typeCode,
-			BusinessID: integration.BusinessID,
-			IsActive:   integration.IsActive,
+			ID:            integration.ID,
+			Name:          integration.Name,
+			Type:          typeCode,
+			Category:      categoryCode,
+			CategoryName:  categoryName,
+			CategoryColor: categoryColor,
+			BusinessID:    integration.BusinessID,
+			IsActive:      integration.IsActive,
 		})
 	}
 

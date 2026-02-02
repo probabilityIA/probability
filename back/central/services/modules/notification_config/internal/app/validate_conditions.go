@@ -5,50 +5,37 @@ import (
 )
 
 // ValidateConditions valida si una orden cumple las condiciones de una configuración
+// NUEVA ESTRUCTURA: Usa OrderStatusIDs en lugar de nested Conditions
 func (uc *useCase) ValidateConditions(
 	config *entities.IntegrationNotificationConfig,
-	orderStatus string,
+	orderStatusID uint,
 	paymentMethodID uint,
 ) bool {
-	// 1. Validar statuses (si hay filtro configurado)
-	if len(config.Conditions.Statuses) > 0 {
+	// 1. Validar order statuses (si hay filtro configurado)
+	// Si OrderStatusIDs está vacío, se aceptan todos los estados
+	if len(config.OrderStatusIDs) > 0 {
 		statusMatch := false
-		for _, allowedStatus := range config.Conditions.Statuses {
-			if orderStatus == allowedStatus {
+		for _, allowedStatusID := range config.OrderStatusIDs {
+			if orderStatusID == allowedStatusID {
 				statusMatch = true
 				break
 			}
 		}
 		if !statusMatch {
 			uc.logger.Debug().
-				Str("order_status", orderStatus).
-				Strs("allowed_statuses", config.Conditions.Statuses).
+				Uint("order_status_id", orderStatusID).
+				Uints("allowed_status_ids", config.OrderStatusIDs).
 				Msg("Order status does not match allowed statuses")
 			return false
 		}
 	}
 
-	// 2. Validar payment_methods (si hay filtro configurado)
-	if len(config.Conditions.PaymentMethods) > 0 {
-		paymentMatch := false
-		for _, pmID := range config.Conditions.PaymentMethods {
-			if paymentMethodID == pmID {
-				paymentMatch = true
-				break
-			}
-		}
-		if !paymentMatch {
-			uc.logger.Debug().
-				Uint("payment_method_id", paymentMethodID).
-				Uints("allowed_payment_methods", config.Conditions.PaymentMethods).
-				Msg("Payment method does not match allowed payment methods")
-			return false
-		}
-	}
+	// 2. Validar payment_methods - TODO: Implementar cuando se migre payment_methods a nueva estructura
+	// Por ahora, aceptamos todos los métodos de pago
 
 	uc.logger.Debug().
 		Uint("config_id", config.ID).
-		Str("order_status", orderStatus).
+		Uint("order_status_id", orderStatusID).
 		Uint("payment_method_id", paymentMethodID).
 		Msg("Order matches notification config conditions")
 

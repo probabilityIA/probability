@@ -10,8 +10,6 @@ import (
 
 // Start inicia el consumidor de órdenes
 func (c *consumer) Start(ctx context.Context) error {
-	c.log.Info().Msg("Starting order confirmation consumer")
-
 	// Declarar cola durable
 	queueName := "orders.confirmation.requested"
 	if err := c.queue.DeclareQueue(queueName, true); err != nil {
@@ -28,10 +26,6 @@ func (c *consumer) Start(ctx context.Context) error {
 			c.log.Error().Err(err).Msg("Error consuming order confirmation queue")
 		}
 	}()
-
-	c.log.Info().
-		Str("queue", queueName).
-		Msg("Order confirmation consumer started successfully")
 
 	return nil
 }

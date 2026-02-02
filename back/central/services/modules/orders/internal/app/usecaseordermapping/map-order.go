@@ -494,12 +494,12 @@ func (uc *UseCaseOrderMapping) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, c
 		OrderStatusURL:  dto.OrderStatusURL,
 
 		// Datos estructurados (JSONB)
-		Items:              dto.Items,
-		Metadata:           dto.Metadata,
-		FinancialDetails:   dto.FinancialDetails,
-		ShippingDetails:    dto.ShippingDetails,
-		PaymentDetails:     dto.PaymentDetails,
-		FulfillmentDetails: dto.FulfillmentDetails,
+		Items:              datatypes.JSON(dto.Items),
+		Metadata:           datatypes.JSON(dto.Metadata),
+		FinancialDetails:   datatypes.JSON(dto.FinancialDetails),
+		ShippingDetails:    datatypes.JSON(dto.ShippingDetails),
+		PaymentDetails:     datatypes.JSON(dto.PaymentDetails),
+		FulfillmentDetails: datatypes.JSON(dto.FulfillmentDetails),
 
 		// Timestamps
 		OccurredAt: dto.OccurredAt,

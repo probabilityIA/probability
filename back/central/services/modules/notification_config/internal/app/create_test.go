@@ -15,6 +15,8 @@ import (
 func TestCreate_Success(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
+	businessID := uint(10)
+
 	mockRepo := &mocks.RepositoryMock{
 		ListFn: func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error) {
 			// No hay configuraciones existentes
@@ -30,26 +32,23 @@ func TestCreate_Success(t *testing.T) {
 	}
 	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
 	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
-	mockCacheManager := &mocks.CacheManagerMock{}
+	mockCacheManager := &mocks.CacheManagerMock{
+		CacheConfigFn: func(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
+			return nil
+		},
+	}
 	mockLogger := mocks.NewLoggerMock()
 
 	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		IsActive:         true,
-		Conditions: entities.NotificationConditions{
-			Trigger:  "order.created",
-			Statuses: []string{"pending"},
-		},
-		Config: entities.NotificationConfig{
-			TemplateName:  "confirmacion_pedido",
-			RecipientType: "customer",
-			Language:      "es",
-		},
-		Description: "Notificación de confirmación de pedido",
-		Priority:    1,
+		BusinessID:              &businessID,
+		IntegrationID:           100,
+		NotificationTypeID:      1, // WhatsApp
+		NotificationEventTypeID: 5, // order.created
+		Enabled:                 true,
+		Description:             "Notificación de confirmación de pedido",
+		OrderStatusIDs:          []uint{1, 2}, // pending, processing
 	}
 
 	// Act
@@ -72,20 +71,20 @@ func TestCreate_Success(t *testing.T) {
 		t.Errorf("expected IntegrationID %d, got %d", dto.IntegrationID, result.IntegrationID)
 	}
 
-	if result.NotificationType != dto.NotificationType {
-		t.Errorf("expected NotificationType %s, got %s", dto.NotificationType, result.NotificationType)
+	if result.NotificationTypeID != dto.NotificationTypeID {
+		t.Errorf("expected NotificationTypeID %d, got %d", dto.NotificationTypeID, result.NotificationTypeID)
 	}
 
-	if result.IsActive != dto.IsActive {
-		t.Errorf("expected IsActive %v, got %v", dto.IsActive, result.IsActive)
+	if result.NotificationEventTypeID != dto.NotificationEventTypeID {
+		t.Errorf("expected NotificationEventTypeID %d, got %d", dto.NotificationEventTypeID, result.NotificationEventTypeID)
+	}
+
+	if result.Enabled != dto.Enabled {
+		t.Errorf("expected Enabled %v, got %v", dto.Enabled, result.Enabled)
 	}
 
 	if result.Description != dto.Description {
 		t.Errorf("expected Description %s, got %s", dto.Description, result.Description)
-	}
-
-	if result.Priority != dto.Priority {
-		t.Errorf("expected Priority %d, got %d", dto.Priority, result.Priority)
 	}
 }
 
@@ -94,26 +93,18 @@ func TestCreate_DuplicateConfig(t *testing.T) {
 	ctx := context.Background()
 
 	existingConfig := entities.IntegrationNotificationConfig{
-		ID:               1,
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		IsActive:         true,
-		Conditions: entities.NotificationConditions{
-			Trigger:  "order.created",
-			Statuses: []string{"pending"},
-		},
-		Config: entities.NotificationConfig{
-			TemplateName:  "confirmacion_pedido",
-			RecipientType: "customer",
-			Language:      "es",
-		},
-		Description: "Configuración existente",
-		Priority:    1,
+		ID:                      1,
+		IntegrationID:           100,
+		NotificationTypeID:      1, // WhatsApp
+		NotificationEventTypeID: 5, // order.created
+		Enabled:                 true,
+		Description:             "Configuración existente",
+		OrderStatusIDs:          []uint{1},
 	}
 
 	mockRepo := &mocks.RepositoryMock{
 		ListFn: func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error) {
-			// Retornar configuración existente con condiciones similares
+			// Retornar configuración existente con la misma combinación
 			return []entities.IntegrationNotificationConfig{existingConfig}, nil
 		},
 	}
@@ -125,20 +116,12 @@ func TestCreate_DuplicateConfig(t *testing.T) {
 	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		IsActive:         true,
-		Conditions: entities.NotificationConditions{
-			Trigger:  "order.created",
-			Statuses: []string{"pending"}, // Mismas condiciones
-		},
-		Config: entities.NotificationConfig{
-			TemplateName:  "otro_template",
-			RecipientType: "customer",
-			Language:      "es",
-		},
-		Description: "Intento de duplicado",
-		Priority:    2,
+		IntegrationID:           100,
+		NotificationTypeID:      1, // Mismo tipo
+		NotificationEventTypeID: 5, // Mismo evento
+		Enabled:                 true,
+		Description:             "Intento de duplicado",
+		OrderStatusIDs:          []uint{2}, // Diferente estado, pero aún es duplicado
 	}
 
 	// Act
@@ -176,16 +159,10 @@ func TestCreate_RepositoryListError(t *testing.T) {
 	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		IsActive:         true,
-		Conditions: entities.NotificationConditions{
-			Trigger: "order.created",
-		},
-		Config: entities.NotificationConfig{
-			TemplateName: "template",
-		},
-		Priority: 1,
+		IntegrationID:           100,
+		NotificationTypeID:      1,
+		NotificationEventTypeID: 5,
+		Enabled:                 true,
 	}
 
 	// Act
@@ -226,16 +203,10 @@ func TestCreate_RepositoryCreateError(t *testing.T) {
 	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
-		IntegrationID:    100,
-		NotificationType: "email",
-		IsActive:         true,
-		Conditions: entities.NotificationConditions{
-			Trigger: "order.updated",
-		},
-		Config: entities.NotificationConfig{
-			TemplateName: "update_template",
-		},
-		Priority: 2,
+		IntegrationID:           100,
+		NotificationTypeID:      2, // Email
+		NotificationEventTypeID: 6, // order.updated
+		Enabled:                 true,
 	}
 
 	// Act
@@ -255,22 +226,73 @@ func TestCreate_RepositoryCreateError(t *testing.T) {
 	}
 }
 
-func TestCreate_DifferentConditions_ShouldSucceed(t *testing.T) {
+func TestCreate_CacheErrorShouldNotFail(t *testing.T) {
+	// Arrange
+	ctx := context.Background()
+	cacheErr := errors.New("redis connection failed")
+
+	mockRepo := &mocks.RepositoryMock{
+		ListFn: func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error) {
+			return []entities.IntegrationNotificationConfig{}, nil
+		},
+		CreateFn: func(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
+			config.ID = 1
+			return nil
+		},
+	}
+	mockNotificationTypeRepo := &mocks.NotificationTypeRepositoryMock{}
+	mockEventTypeRepo := &mocks.NotificationEventTypeRepositoryMock{}
+	mockCacheManager := &mocks.CacheManagerMock{
+		CacheConfigFn: func(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
+			return cacheErr // Error en cache
+		},
+	}
+	mockLogger := mocks.NewLoggerMock()
+
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+
+	dto := dtos.CreateNotificationConfigDTO{
+		IntegrationID:           100,
+		NotificationTypeID:      1,
+		NotificationEventTypeID: 5,
+		Enabled:                 true,
+	}
+
+	// Act
+	result, err := useCase.Create(ctx, dto)
+
+	// Assert - No debe fallar si el cache falla (cache es secundario)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	if result == nil {
+		t.Fatal("expected result, got nil")
+	}
+
+	if result.ID == 0 {
+		t.Error("expected ID to be set")
+	}
+}
+
+func TestCreate_DifferentIntegration_ShouldSucceed(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
 
 	existingConfig := entities.IntegrationNotificationConfig{
-		ID:               1,
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		Conditions: entities.NotificationConditions{
-			Trigger:  "order.created",
-			Statuses: []string{"pending"},
-		},
+		ID:                      1,
+		IntegrationID:           100,
+		NotificationTypeID:      1,
+		NotificationEventTypeID: 5,
+		Enabled:                 true,
 	}
 
 	mockRepo := &mocks.RepositoryMock{
 		ListFn: func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error) {
+			// Filtro por integración diferente, no retorna nada
+			if filters.IntegrationID != nil && *filters.IntegrationID == 200 {
+				return []entities.IntegrationNotificationConfig{}, nil
+			}
 			return []entities.IntegrationNotificationConfig{existingConfig}, nil
 		},
 		CreateFn: func(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
@@ -286,17 +308,10 @@ func TestCreate_DifferentConditions_ShouldSucceed(t *testing.T) {
 	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		IsActive:         true,
-		Conditions: entities.NotificationConditions{
-			Trigger:  "order.created",
-			Statuses: []string{"processing"}, // Diferente status
-		},
-		Config: entities.NotificationConfig{
-			TemplateName: "processing_template",
-		},
-		Priority: 1,
+		IntegrationID:           200, // Diferente integración
+		NotificationTypeID:      1,
+		NotificationEventTypeID: 5,
+		Enabled:                 true,
 	}
 
 	// Act

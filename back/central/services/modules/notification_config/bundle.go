@@ -33,8 +33,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 		logger.Error().
 			Err(err).
 			Msg("❌ Error en warmup de cache de notification configs - sistema continuará sin cache")
-	} else {
-		logger.Info().Msg("✅ Cache de notification configs inicializado exitosamente")
 	}
 
 	// 2. Capa de aplicación (casos de uso) - inyectar cache manager
@@ -49,6 +47,4 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	configHandler.RegisterRoutes(router)
 	typeHandler.RegisterRoutes(router)
 	eventTypeHandler.RegisterRoutes(router)
-
-	logger.Info().Msg("Notification config module initialized")
 }

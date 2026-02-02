@@ -19,7 +19,9 @@ export interface Integration {
     code: string;
     integration_type_id: number;
     type: 'whatsapp' | 'shopify' | 'mercado_libre' | string;
-    category: 'internal' | 'external' | string;
+    category: string; // Código de la categoría (ej: 'ecommerce', 'messaging')
+    category_name?: string; // Nombre de la categoría (ej: 'E-commerce', 'Mensajería')
+    category_color?: string; // Color hexadecimal de la categoría (ej: '#3B82F6')
     business_id: number | null;
     store_id?: string; // Identificador externo (ej: shop domain para Shopify)
     is_active: boolean;
@@ -212,6 +214,9 @@ export interface IntegrationSimple {
     id: number;
     name: string;
     type: string;
+    category: string; // Código de la categoría (ej: 'ecommerce', 'messaging')
+    category_name: string; // Nombre de la categoría (ej: 'E-commerce', 'Mensajería')
+    category_color?: string; // Color hexadecimal de la categoría (ej: '#3B82F6')
     business_id: number | null;
     is_active: boolean;
 }

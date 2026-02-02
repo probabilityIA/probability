@@ -128,7 +128,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, queueName string, message []byte
 		return fmt.Errorf("failed to publish message: %w", err)
 	}
 
-	r.logger.Info().
+	r.logger.Debug().
 		Str("queue", queueName).
 		Int("message_size", len(message)).
 		Msg("Message published to queue")
@@ -137,11 +137,27 @@ func (r *rabbitMQ) Publish(ctx context.Context, queueName string, message []byte
 }
 
 func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([]byte) error) error {
-	if r.channel == nil {
-		return fmt.Errorf("rabbitmq channel is not initialized")
+	if r.conn == nil {
+		return fmt.Errorf("rabbitmq connection is not initialized")
 	}
 
-	msgs, err := r.channel.Consume(
+	// Crear un channel SEPARADO para este consumer
+	// Esto evita el error "unexpected command received" cuando múltiples consumers
+	// intentan usar el mismo channel
+	consumerChannel, err := r.conn.Channel()
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("queue", queueName).
+			Msg("Failed to create channel for consumer")
+		return fmt.Errorf("failed to create consumer channel: %w", err)
+	}
+
+	r.logger.Info().
+		Str("queue", queueName).
+		Msg("Created dedicated channel for consumer")
+
+	msgs, err := consumerChannel.Consume(
 		queueName, // queue
 		"",        // consumer
 		false,     // auto-ack
@@ -151,16 +167,13 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 		nil,       // args
 	)
 	if err != nil {
+		consumerChannel.Close()
 		r.logger.Error().
 			Err(err).
 			Str("queue", queueName).
 			Msg("Failed to register consumer")
 		return fmt.Errorf("failed to register consumer: %w", err)
 	}
-
-	r.logger.Info().
-		Str("queue", queueName).
-		Msg("Started consuming messages from queue")
 
 	go func() {
 		for {
@@ -205,11 +218,23 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 }
 
 func (r *rabbitMQ) DeclareQueue(queueName string, durable bool) error {
-	if r.channel == nil {
-		return fmt.Errorf("rabbitmq channel is not initialized")
+	if r.conn == nil {
+		return fmt.Errorf("rabbitmq connection is not initialized")
 	}
 
-	_, err := r.channel.QueueDeclare(
+	// Crear un channel temporal para declarar la cola
+	// Esto evita conflictos con otros channels que puedan estar en uso
+	ch, err := r.conn.Channel()
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("queue", queueName).
+			Msg("Failed to create channel for queue declaration")
+		return fmt.Errorf("failed to create channel: %w", err)
+	}
+	defer ch.Close()
+
+	_, err = ch.QueueDeclare(
 		queueName, // name
 		durable,   // durable
 		false,     // delete when unused
@@ -227,7 +252,7 @@ func (r *rabbitMQ) DeclareQueue(queueName string, durable bool) error {
 		return fmt.Errorf("failed to declare queue: %w", err)
 	}
 
-	r.logger.Info().
+	r.logger.Debug().
 		Str("queue", queueName).
 		Bool("durable", durable).
 		Msg("Queue declared successfully")

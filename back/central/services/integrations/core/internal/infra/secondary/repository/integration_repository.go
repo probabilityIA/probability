@@ -403,6 +403,7 @@ func (r *Repository) toModel(integration *domain.Integration) *models.Integratio
 		},
 		Name:              integration.Name,
 		Code:              integration.Code,
+		// Category NO se mapea - se deriva de IntegrationType.Category.Code
 		IntegrationTypeID: integration.IntegrationTypeID,
 		BusinessID:        integration.BusinessID,
 		StoreID:           integration.StoreID,
@@ -431,6 +432,7 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 		ID:                model.ID,
 		Name:              model.Name,
 		Code:              model.Code,
+		Category:          model.Category, // Mapear campo category desde modelo
 		IntegrationTypeID: model.IntegrationTypeID,
 		BusinessID:        businessID,
 		StoreID:           model.StoreID,

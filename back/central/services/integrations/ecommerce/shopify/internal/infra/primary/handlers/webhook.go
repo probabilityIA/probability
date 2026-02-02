@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -11,6 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/primary/handlers/request"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/primary/handlers/response"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/client/mappers"
+	clientresponse "github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/client/response"
 )
 
 // WebhookHandler maneja las peticiones de webhook de Shopify
@@ -29,6 +33,7 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 	h.logger.Info().
 		Str("topic", headers.Topic).
 		Str("shop_domain", headers.ShopDomain).
+		Str("hmac", headers.Hmac).
 		Msg("Webhook recibido de Shopify")
 
 	bodyBytes, err := io.ReadAll(c.Request.Body)
@@ -41,17 +46,44 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 		return
 	}
 
+	// Log del payload recibido (primeros 500 caracteres para no saturar logs)
+	payloadPreview := string(bodyBytes)
+	if len(payloadPreview) > 500 {
+		payloadPreview = payloadPreview[:500] + "..."
+	}
+	h.logger.Info().
+		Str("topic", headers.Topic).
+		Str("shop_domain", headers.ShopDomain).
+		Int("payload_size", len(bodyBytes)).
+		Str("payload_preview", payloadPreview).
+		Msg("📦 Payload del webhook")
+
 	// HMAC Validation
 	shopifySecret := os.Getenv("SHOPIFY_API_SECRET")
+	h.logger.Info().
+		Bool("has_secret", shopifySecret != "").
+		Str("secret_prefix", func() string {
+			if shopifySecret != "" && len(shopifySecret) > 4 {
+				return shopifySecret[:4] + "..."
+			}
+			return "NO_SECRET"
+		}()).
+		Msg("🔐 Verificando HMAC")
+
 	if shopifySecret != "" {
 		if !VerifyWebhookHMAC(bodyBytes, headers.Hmac, shopifySecret) {
-			h.logger.Error().Msg("Firma HMAC inválida")
+			h.logger.Error().
+				Str("hmac_header", headers.Hmac).
+				Msg("❌ Firma HMAC inválida")
 			c.JSON(http.StatusUnauthorized, response.WebhookResponse{
 				Success: false,
 				Message: "Firma HMAC inválida",
 			})
 			return
 		}
+		h.logger.Info().Msg("✅ HMAC válido")
+	} else {
+		h.logger.Warn().Msg("⚠️ SHOPIFY_API_SECRET no configurado - omitiendo validación HMAC")
 	}
 
 	// Respond 200 OK as fast as possible as required by Shopify
@@ -60,9 +92,102 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 		Message: "Recibido",
 	})
 
-	// TODO: En el futuro, si se requiere procesar el payload (ej. orders/create),
-	// se debería hacer de forma asíncrona (Goroutine o Queue) para no bloquear la respuesta.
-	h.logger.Debug().Str("topic", headers.Topic).Msg("Webhook aceptado (procesamiento asíncrono no implementado)")
+	// Procesar el webhook de forma asíncrona para no bloquear la respuesta
+	go h.processWebhookAsync(headers.Topic, headers.ShopDomain, bodyBytes)
+}
+
+// processWebhookAsync procesa el webhook de forma asíncrona
+func (h *ShopifyHandler) processWebhookAsync(topic string, shopDomain string, bodyBytes []byte) {
+	ctx := context.Background()
+
+	h.logger.Info().
+		Str("topic", topic).
+		Str("shop_domain", shopDomain).
+		Msg("🔄 Iniciando procesamiento asíncrono del webhook")
+
+	// Parsear el payload a Order de Shopify
+	var orderResp clientresponse.Order
+	if err := json.Unmarshal(bodyBytes, &orderResp); err != nil {
+		h.logger.Error(ctx).
+			Err(err).
+			Str("topic", topic).
+			Str("shop_domain", shopDomain).
+			Msg("❌ Error al parsear payload de Shopify a Order")
+		return
+	}
+
+	// Mapear la orden de Shopify a dominio
+	mapped := mappers.MapOrderResponseToShopifyOrder(orderResp, bodyBytes, nil, 0, "shopify")
+	shopifyOrder := &mapped
+
+	// Procesar según el topic del webhook
+	var err error
+	switch topic {
+	case "orders/create":
+		h.logger.Info(ctx).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("📦 Procesando orden nueva (orders/create)")
+		err = h.useCase.CreateOrder(ctx, shopDomain, shopifyOrder, bodyBytes)
+
+	case "orders/paid":
+		h.logger.Info(ctx).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("💰 Procesando orden pagada (orders/paid)")
+		err = h.useCase.ProcessOrderPaid(ctx, shopDomain, shopifyOrder)
+
+	case "orders/updated":
+		h.logger.Info(ctx).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("🔄 Procesando orden actualizada (orders/updated)")
+		err = h.useCase.ProcessOrderUpdated(ctx, shopDomain, shopifyOrder)
+
+	case "orders/cancelled":
+		h.logger.Info(ctx).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("❌ Procesando orden cancelada (orders/cancelled)")
+		err = h.useCase.ProcessOrderCancelled(ctx, shopDomain, shopifyOrder)
+
+	case "orders/fulfilled":
+		h.logger.Info(ctx).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("✅ Procesando orden cumplida (orders/fulfilled)")
+		err = h.useCase.ProcessOrderFulfilled(ctx, shopDomain, shopifyOrder)
+
+	case "orders/partially_fulfilled":
+		h.logger.Info(ctx).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("📦 Procesando orden parcialmente cumplida (orders/partially_fulfilled)")
+		err = h.useCase.ProcessOrderPartiallyFulfilled(ctx, shopDomain, shopifyOrder)
+
+	default:
+		h.logger.Info(ctx).
+			Str("topic", topic).
+			Str("shop_domain", shopDomain).
+			Msg("ℹ️ Topic no manejado, ignorando webhook")
+		return
+	}
+
+	// Log del resultado
+	if err != nil {
+		h.logger.Error(ctx).
+			Err(err).
+			Str("topic", topic).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("❌ Error al procesar webhook de Shopify")
+	} else {
+		h.logger.Info(ctx).
+			Str("topic", topic).
+			Str("shop_domain", shopDomain).
+			Str("order_id", orderResp.Name).
+			Msg("✅ Webhook procesado exitosamente")
+	}
 }
 
 // VerifyWebhookHMAC validates the Shopify HMAC signature

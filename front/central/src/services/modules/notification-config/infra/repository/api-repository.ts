@@ -84,17 +84,27 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
             if (filter.notification_event_type_id) params.append("notification_event_type_id", filter.notification_event_type_id.toString());
         }
 
-        const response = await fetch(`${this.baseUrl}/notification-configs?${params.toString()}`, {
+        const url = `${this.baseUrl}/notification-configs?${params.toString()}`;
+        console.log("🌐 [Repository] URL completa:", url);
+        console.log("🔑 [Repository] Token presente:", this.token ? "Sí" : "No");
+
+        const response = await fetch(url, {
             headers: {
                 Authorization: `Bearer ${this.token}`,
             },
         });
 
+        console.log("📡 [Repository] Status HTTP:", response.status, response.statusText);
+
         if (!response.ok) {
             const error = await response.json();
+            console.error("❌ [Repository] Error del backend:", error);
             throw new Error(error.error || "Failed to list notification configs");
         }
 
-        return response.json();
+        const data = await response.json();
+        console.log("✅ [Repository] Datos recibidos del backend:", JSON.stringify(data, null, 2));
+
+        return data;
     }
 }

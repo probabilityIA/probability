@@ -46,10 +46,6 @@ func (s *OrderEventSubscriber) Start(ctx context.Context) error {
 	// Suscribirse al canal
 	s.pubsub = client.Subscribe(ctx, s.channel)
 
-	s.logger.Info(ctx).
-		Str("channel", s.channel).
-		Msg("Suscriptor Redis iniciado para eventos de órdenes")
-
 	// Iniciar goroutine para procesar mensajes
 	go s.processMessages(ctx)
 

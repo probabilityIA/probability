@@ -44,10 +44,6 @@ func (c *OrderEventConsumer) Start(ctx context.Context) error {
 	pubsub := c.redisClient.Client(ctx).Subscribe(ctx, c.channel)
 	defer pubsub.Close()
 
-	c.logger.Info(ctx).
-		Str("channel", c.channel).
-		Msg("Order event consumer started, listening for events...")
-
 	ch := pubsub.Channel()
 
 	for {

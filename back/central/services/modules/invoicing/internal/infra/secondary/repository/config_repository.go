@@ -53,6 +53,8 @@ func (r *InvoicingConfigRepository) List(ctx context.Context, businessID uint) (
 	var models []*models.InvoicingConfig
 
 	if err := r.db.Conn(ctx).
+		Preload("Integration").             // Cargar integración de e-commerce
+		Preload("InvoicingIntegration").   // Cargar integración de facturación (Softpymes)
 		Where("business_id = ?", businessID).
 		Order("created_at DESC").
 		Find(&models).Error; err != nil {

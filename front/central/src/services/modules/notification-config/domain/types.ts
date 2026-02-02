@@ -87,6 +87,10 @@ export interface NotificationConfig {
     notification_event_type?: NotificationEventType;
     order_status_ids?: number[]; // IDs de estados de orden a notificar
 
+    // Campos adicionales enviados por el backend (para evitar cargar relaciones completas)
+    notification_type_name?: string; // Nombre del canal (ej: "WhatsApp")
+    notification_event_name?: string; // Nombre del evento (ej: "Nueva Orden")
+
     // Campos DEPRECADOS (mantener para compatibilidad)
     event_type?: string; // DEPRECATED
     channels?: string[]; // DEPRECATED

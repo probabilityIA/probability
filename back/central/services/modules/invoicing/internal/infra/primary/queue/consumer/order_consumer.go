@@ -34,7 +34,6 @@ const (
 
 // Start inicia el consumo de eventos de órdenes
 func (c *OrderConsumer) Start(ctx context.Context) error {
-	c.log.Info(ctx).Str("queue", QueueOrderEvents).Msg("Starting order consumer")
 
 	// Declarar la cola si no existe
 	if err := c.queue.DeclareQueue(QueueOrderEvents, true); err != nil {
@@ -48,7 +47,6 @@ func (c *OrderConsumer) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to start consuming: %w", err)
 	}
 
-	c.log.Info(ctx).Msg("Order consumer started successfully")
 	return nil
 }
 

@@ -24,7 +24,8 @@ type BusinessNotificationConfig struct {
 	OrderStatusIDs        []uint // IDs de OrderStatus a notificar (relación M2M)
 
 	// Campos deprecados (mantener para migración, pero NO usar en nueva lógica)
-	EventTypeDeprecated string // DEPRECATED - ahora se usa NotificationEventType
+	EventTypeDeprecated string   // DEPRECATED - ahora se usa NotificationEventType
+	Channels            []string // DEPRECATED - ahora se usa NotificationType (temporal para frontend)
 }
 
 // OrderStatus representa un estado de orden (entidad relacionada)

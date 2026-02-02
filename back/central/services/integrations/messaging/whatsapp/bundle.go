@@ -97,8 +97,6 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 				logger.Error().Err(err).Msg("Error starting order confirmation consumer")
 			}
 		}()
-
-		logger.Info().Msg("Order confirmation consumer initialized")
 	}
 
 	// 5. Inicializar consumidor de eventos Redis → RabbitMQ (si Redis y RabbitMQ están disponibles)
@@ -133,8 +131,6 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 				logger.Error().Err(err).Msg("Error starting WhatsApp order event consumer")
 			}
 		}()
-
-		logger.Info().Msg("WhatsApp order event consumer initialized")
 	}
 
 	return &bundle{

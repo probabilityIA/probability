@@ -55,6 +55,9 @@ type INotificationEventTypeRepository interface {
 	// GetByNotificationType obtiene todos los tipos de eventos de un tipo de notificación
 	GetByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error)
 
+	// GetAll obtiene todos los tipos de eventos sin filtros
+	GetAll(ctx context.Context) ([]entities.NotificationEventType, error)
+
 	// GetByID obtiene un tipo de evento de notificación por su ID
 	GetByID(ctx context.Context, id uint) (*entities.NotificationEventType, error)
 

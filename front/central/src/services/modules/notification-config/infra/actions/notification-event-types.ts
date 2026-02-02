@@ -19,12 +19,19 @@ export async function getNotificationEventTypesAction(
   notificationTypeId?: number
 ) {
   try {
+    console.log("🔍 [getNotificationEventTypesAction] Inicio");
+    console.log("📋 [getNotificationEventTypesAction] notificationTypeId:", notificationTypeId);
+
     const cookieStore = await cookies();
     const token = cookieStore.get("token")?.value || "";
+
+    console.log("🔑 [getNotificationEventTypesAction] Token presente:", token ? "Sí" : "No");
 
     const url = notificationTypeId
       ? `${env.API_BASE_URL}/notification-event-types?notification_type_id=${notificationTypeId}`
       : `${env.API_BASE_URL}/notification-event-types`;
+
+    console.log("🌐 [getNotificationEventTypesAction] URL:", url);
 
     const response = await fetch(url, {
       headers: {
@@ -34,14 +41,19 @@ export async function getNotificationEventTypesAction(
       cache: "no-store",
     });
 
+    console.log("📡 [getNotificationEventTypesAction] Response status:", response.status);
+
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
     const data: NotificationEventType[] = await response.json();
+    console.log("✅ [getNotificationEventTypesAction] Data recibida:", JSON.stringify(data, null, 2));
+    console.log("📊 [getNotificationEventTypesAction] Total de registros:", data.length);
+
     return { success: true, data };
   } catch (error: any) {
-    console.error("Error getting notification event types:", error);
+    console.error("❌ [getNotificationEventTypesAction] Error:", error);
     return { success: false, error: error.message, data: [] };
   }
 }
@@ -181,6 +193,40 @@ export async function deleteNotificationEventTypeAction(id: number) {
     return { success: true };
   } catch (error: any) {
     console.error("Error deleting notification event type:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Activar/Desactivar un evento de notificación
+ */
+export async function toggleNotificationEventTypeActiveAction(id: number) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value || "";
+
+    const response = await fetch(
+      `${env.API_BASE_URL}/notification-event-types/${id}/toggle-active`,
+      {
+        method: "PATCH",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(
+        errorData.error || `HTTP error! status: ${response.status}`
+      );
+    }
+
+    const data: NotificationEventType = await response.json();
+    return { success: true, data };
+  } catch (error: any) {
+    console.error("Error toggling notification event type:", error);
     return { success: false, error: error.message };
   }
 }

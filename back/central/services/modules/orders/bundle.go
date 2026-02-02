@@ -32,7 +32,6 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// (order_statuses, payment_statuses, fulfillment_statuses) replicados localmente.
 	// NO se comparten repositorios entre módulos - solo consultas SQL directas.
 	repo := repository.New(database, environment)
-	logger.Info(context.Background()).Msg("Order repository initialized")
 
 	// 2. Inicializar Publishers
 	eventPublisher := initRedisPublisher(redisClient, logger, environment)
@@ -43,12 +42,10 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	orderCRUD := usecaseorder.New(repo, eventPublisher, rabbitPublisher, logger, scoreUseCase)
 	orderMapping := usecaseordermapping.New(repo, logger, eventPublisher, rabbitPublisher)
 	requestConfirmationUC := initRequestConfirmationUseCase(repo, rabbitPublisher, logger)
-	logger.Info(context.Background()).Msg("Order use cases initialized")
 
 	// 4. Inicializar Handlers y Registrar Rutas
 	h := handlers.New(orderCRUD, orderMapping, requestConfirmationUC)
 	h.RegisterRoutes(router)
-	logger.Info(context.Background()).Msg("Order handlers registered")
 
 	// 5. Inicializar Consumers (background goroutines)
 	startRedisEventConsumer(redisClient, logger, environment, scoreUseCase)
@@ -67,9 +64,6 @@ func initRedisPublisher(redisClient redisclient.IRedis, logger log.ILogger, envi
 
 	channel := getRedisChannel(environment)
 	publisher := redisevents.NewOrderEventPublisher(redisClient, logger, channel)
-	logger.Info(context.Background()).
-		Str("channel", channel).
-		Msg("Order event publisher initialized")
 
 	return publisher
 }
@@ -82,7 +76,6 @@ func initRabbitPublisher(rabbitMQ rabbitmq.IQueue, logger log.ILogger) ports.IOr
 	}
 
 	publisher := rabbitqueue.NewOrderRabbitPublisher(rabbitMQ, logger)
-	logger.Info(context.Background()).Msg("Order RabbitMQ publisher initialized")
 
 	return publisher
 }
@@ -95,7 +88,6 @@ func initRequestConfirmationUseCase(repo ports.IRepository, rabbitPublisher port
 	}
 
 	useCase := usecaseorder.NewRequestConfirmationUseCase(repo, rabbitPublisher, logger)
-	logger.Info(context.Background()).Msg("Request confirmation use case initialized")
 
 	return useCase
 }
@@ -111,10 +103,6 @@ func startRedisEventConsumer(redisClient redisclient.IRedis, logger log.ILogger,
 	consumer := redisevents.NewOrderEventConsumer(redisClient, logger, channel, scoreUseCase)
 
 	go func() {
-		logger.Info(context.Background()).
-			Str("channel", channel).
-			Msg("Starting Redis event consumer for score calculation")
-
 		if err := consumer.Start(context.Background()); err != nil {
 			logger.Error().
 				Err(err).
@@ -126,19 +114,22 @@ func startRedisEventConsumer(redisClient redisclient.IRedis, logger log.ILogger,
 // startRabbitMQConsumer inicia el consumer de RabbitMQ para órdenes
 func startRabbitMQConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, orderMapping ports.IOrderMappingUseCase, repo ports.IRepository) {
 	if rabbitMQ == nil {
-		logger.Warn(context.Background()).Msg("RabbitMQ not available, order consumer disabled")
+		logger.Warn(context.Background()).Msg("❌ RabbitMQ not available, order consumer disabled")
 		return
 	}
 
+	logger.Info(context.Background()).Msg("🚀 Starting RabbitMQ Order Consumer...")
 	consumer := queue.New(rabbitMQ, logger, orderMapping, repo)
 
 	go func() {
-		logger.Info(context.Background()).Msg("Starting RabbitMQ order consumer")
+		logger.Info(context.Background()).
+			Str("queue", "probability.orders.canonical").
+			Msg("📥 Order Consumer started - waiting for messages...")
 
 		if err := consumer.Start(context.Background()); err != nil {
 			logger.Error().
 				Err(err).
-				Msg("Order consumer stopped with error")
+				Msg("❌ Order consumer stopped with error")
 		}
 	}()
 }
@@ -153,8 +144,6 @@ func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, orderCR
 	consumer := queue.NewWhatsAppConsumer(rabbitMQ, orderCRUD, repo, eventPublisher, logger)
 
 	go func() {
-		logger.Info(context.Background()).Msg("Starting WhatsApp consumer for order confirmations")
-
 		if err := consumer.Start(context.Background()); err != nil {
 			logger.Error().
 				Err(err).

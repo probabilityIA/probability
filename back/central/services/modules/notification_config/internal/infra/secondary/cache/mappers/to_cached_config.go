@@ -5,46 +5,29 @@ import (
 )
 
 // CachedNotificationConfig representa una configuración de notificación en Redis
-// Estructura plana para facilitar serialización JSON
+// NUEVA ESTRUCTURA: Usa IDs de tablas normalizadas
 type CachedNotificationConfig struct {
-	ID               uint     `json:"id"`
-	IntegrationID    uint     `json:"integration_id"`
-	NotificationType string   `json:"notification_type"`
-	IsActive         bool     `json:"is_active"`
-	Priority         int      `json:"priority"`
-	Description      string   `json:"description"`
-
-	// Conditions (aplanadas)
-	Trigger             string   `json:"trigger"`
-	Statuses            []string `json:"statuses"`
-	PaymentMethods      []uint   `json:"payment_methods"`
-	SourceIntegrationID *uint    `json:"source_integration_id"`
-
-	// Config (aplanadas)
-	TemplateName  string `json:"template_name"`
-	RecipientType string `json:"recipient_type"`
-	Language      string `json:"language"`
+	ID                      uint   `json:"id"`
+	BusinessID              *uint  `json:"business_id,omitempty"`
+	IntegrationID           uint   `json:"integration_id"`
+	NotificationTypeID      uint   `json:"notification_type_id"`
+	NotificationEventTypeID uint   `json:"notification_event_type_id"`
+	Enabled                 bool   `json:"enabled"`
+	Description             string `json:"description"`
+	OrderStatusIDs          []uint `json:"order_status_ids"`
 }
 
 // ToCachedConfig convierte una entidad de dominio a estructura cacheada
+// NUEVA ESTRUCTURA: Usa IDs en lugar de strings y nested objects
 func ToCachedConfig(entity *entities.IntegrationNotificationConfig) *CachedNotificationConfig {
 	return &CachedNotificationConfig{
-		ID:               entity.ID,
-		IntegrationID:    entity.IntegrationID,
-		NotificationType: entity.NotificationType,
-		IsActive:         entity.IsActive,
-		Priority:         entity.Priority,
-		Description:      entity.Description,
-
-		// Conditions
-		Trigger:             entity.Conditions.Trigger,
-		Statuses:            entity.Conditions.Statuses,
-		PaymentMethods:      entity.Conditions.PaymentMethods,
-		SourceIntegrationID: entity.Conditions.SourceIntegrationID,
-
-		// Config
-		TemplateName:  entity.Config.TemplateName,
-		RecipientType: entity.Config.RecipientType,
-		Language:      entity.Config.Language,
+		ID:                      entity.ID,
+		BusinessID:              entity.BusinessID,
+		IntegrationID:           entity.IntegrationID,
+		NotificationTypeID:      entity.NotificationTypeID,
+		NotificationEventTypeID: entity.NotificationEventTypeID,
+		Enabled:                 entity.Enabled,
+		Description:             entity.Description,
+		OrderStatusIDs:          entity.OrderStatusIDs,
 	}
 }

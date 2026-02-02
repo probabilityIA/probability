@@ -7,11 +7,12 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 )
 
-// UpdateConfigInCache actualiza una config en cache (puede cambiar integration_id o trigger)
+// UpdateConfigInCache actualiza una config en cache (puede cambiar IDs)
+// NUEVA ESTRUCTURA: Usa IDs en lugar de strings
 func (c *cacheManager) UpdateConfigInCache(ctx context.Context, oldConfig, newConfig *entities.IntegrationNotificationConfig) error {
-	// 1. Si cambió integration_id o trigger, eliminar de ubicación vieja
-	oldKey := buildCacheKey(oldConfig.IntegrationID, oldConfig.Conditions.Trigger)
-	newKey := buildCacheKey(newConfig.IntegrationID, newConfig.Conditions.Trigger)
+	// 1. Si cambió algún ID de ubicación, eliminar de ubicación vieja
+	oldKey := buildCacheKey(oldConfig.IntegrationID, oldConfig.NotificationTypeID, oldConfig.NotificationEventTypeID)
+	newKey := buildCacheKey(newConfig.IntegrationID, newConfig.NotificationTypeID, newConfig.NotificationEventTypeID)
 
 	if oldKey != newKey {
 		// Eliminar de ubicación vieja

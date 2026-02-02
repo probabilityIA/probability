@@ -105,7 +105,8 @@ func (r *notificationEventTypeRepository) Update(ctx context.Context, eventType 
 
 // Delete elimina un evento de notificación por su ID (soft delete)
 func (r *notificationEventTypeRepository) Delete(ctx context.Context, id uint) error {
-	result := r.db.Conn(ctx).Delete(&models.NotificationEventType{}, id)
+	// Unscoped() hace que la eliminación sea permanente (hard delete) en lugar de soft delete
+	result := r.db.Conn(ctx).Unscoped().Delete(&models.NotificationEventType{}, id)
 
 	if result.Error != nil {
 		r.logger.Error().Err(result.Error).Uint("id", id).Msg("Error deleting notification event type")
@@ -117,4 +118,26 @@ func (r *notificationEventTypeRepository) Delete(ctx context.Context, id uint) e
 	}
 
 	return nil
+}
+
+// GetAll obtiene todos los eventos de notificación sin filtros
+func (r *notificationEventTypeRepository) GetAll(ctx context.Context) ([]entities.NotificationEventType, error) {
+	r.logger.Info().Msg("🔍 [Repository] Fetching all notification event types from DB")
+
+	var models []models.NotificationEventType
+
+	if err := r.db.Conn(ctx).Preload("NotificationType").Find(&models).Error; err != nil {
+		r.logger.Error().Err(err).Msg("❌ [Repository] Error getting all notification event types from DB")
+		return nil, err
+	}
+
+	r.logger.Info().Int("count", len(models)).Msg("✅ [Repository] All notification event types fetched from DB")
+
+	entities, err := mappers.NotificationEventTypeToDomainList(models)
+	if err != nil {
+		r.logger.Error().Err(err).Msg("❌ [Repository] Error converting models to entities")
+		return nil, err
+	}
+
+	return entities, nil
 }

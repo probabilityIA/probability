@@ -1,36 +1,45 @@
 package mappers
 
 import (
-	"encoding/json"
-
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
-	"gorm.io/datatypes"
+	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
 // ToModel convierte una entidad IntegrationNotificationConfig a modelo de BD
+// NUEVA ESTRUCTURA: Usa IDs de tablas normalizadas
 func ToModel(entity *entities.IntegrationNotificationConfig) (*IntegrationNotificationConfigModel, error) {
 	if entity == nil {
 		return nil, nil
 	}
 
-	conditionsJSON, err := json.Marshal(entity.Conditions)
-	if err != nil {
-		return nil, err
+	model := &IntegrationNotificationConfigModel{
+		IntegrationID:           &entity.IntegrationID,
+		NotificationTypeID:      &entity.NotificationTypeID,
+		NotificationEventTypeID: &entity.NotificationEventTypeID,
+		Enabled:                 entity.Enabled,
+		Description:             entity.Description,
 	}
 
-	configJSON, err := json.Marshal(entity.Config)
-	if err != nil {
-		return nil, err
+	// Asignar BusinessID si no es nil
+	if entity.BusinessID != nil {
+		model.BusinessID = *entity.BusinessID
 	}
 
-	return &IntegrationNotificationConfigModel{
-		ID:               entity.ID,
-		IntegrationID:    entity.IntegrationID,
-		NotificationType: entity.NotificationType,
-		IsActive:         entity.IsActive,
-		Conditions:       datatypes.JSON(conditionsJSON),
-		Config:           datatypes.JSON(configJSON),
-		Description:      entity.Description,
-		Priority:         entity.Priority,
-	}, nil
+	// Asignar ID si existe (para updates)
+	if entity.ID > 0 {
+		model.ID = entity.ID
+	}
+
+	// Mapear OrderStatusIDs a relación M2M (si se proporcionan)
+	// Solo asignar si hay IDs, para evitar sobrescribir relaciones existentes
+	if len(entity.OrderStatusIDs) > 0 {
+		orderStatuses := make([]models.OrderStatus, len(entity.OrderStatusIDs))
+		for i, statusID := range entity.OrderStatusIDs {
+			// Solo asignar el ID, GORM se encargará de la relación
+			orderStatuses[i].ID = statusID
+		}
+		model.OrderStatuses = orderStatuses
+	}
+
+	return model, nil
 }

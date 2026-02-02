@@ -1,8 +1,6 @@
 package events
 
 import (
-	"context"
-
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/events/internal/app"
 	"github.com/secamc93/probability/back/central/services/integrations/events/internal/domain"
@@ -28,9 +26,6 @@ func New(router *gin.RouterGroup, logger log.ILogger) (domain.IIntegrationEventS
 
 	// 5. Register Routes
 	routes.RegisterRoutes(router)
-
-	logger.Info(context.Background()).
-		Msg("Módulo de eventos de integraciones inicializado correctamente")
 
 	return eventService, eventManager
 }

@@ -27,7 +27,9 @@ type IntegrationResponse struct {
 	Code              string                 `json:"code" example:"whatsapp_platform"`
 	IntegrationTypeID uint                   `json:"integration_type_id" example:"1"`
 	IntegrationType   *IntegrationTypeInfo   `json:"integration_type,omitempty"` // Información del tipo si está cargado
-	Category          string                 `json:"category" example:"internal"`
+	Category          string                 `json:"category" example:"ecommerce"` // Código de la categoría
+	CategoryName      string                 `json:"category_name,omitempty" example:"E-commerce"` // Nombre de la categoría
+	CategoryColor     string                 `json:"category_color,omitempty" example:"#3B82F6"` // Color de la categoría
 	BusinessID        *uint                  `json:"business_id" example:"16"`
 	StoreID           string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)
 	IsActive          bool                   `json:"is_active" example:"true"`

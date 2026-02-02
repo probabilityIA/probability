@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/dtos"
 	domainErrors "github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/errors"
@@ -18,28 +19,60 @@ func (uc *useCase) DeleteNotificationEventType(ctx context.Context, id uint) err
 	}
 
 	// Verificar que no haya configuraciones activas usando este evento
-	// Buscamos en la tabla de configuraciones si hay alguna referencia a este trigger
+	// NUEVA ESTRUCTURA: Buscar por NotificationEventTypeID
+	notificationEventTypeID := id
 	filters := dtos.FilterNotificationConfigDTO{
-		Trigger: &eventType.EventCode,
+		NotificationEventTypeID: &notificationEventTypeID,
 	}
 	configs, err := uc.repository.List(ctx, filters)
 	if err == nil && len(configs) > 0 {
 		// Verificar si alguna configuración está activa
-		hasActive := false
+		activeConfigs := []string{}
 		for _, config := range configs {
-			if config.IsActive {
-				hasActive = true
-				break
+			if config.Enabled {
+				// Construir descripción de la configuración
+				configDesc := ""
+
+				// Usar descripción si existe
+				if config.Description != "" {
+					configDesc = config.Description
+				} else {
+					// Si no hay descripción, usar el tipo de notificación si está disponible
+					if config.NotificationType != nil {
+						configDesc = fmt.Sprintf("Configuración #%d (%s)", config.ID, config.NotificationType.Name)
+					} else {
+						configDesc = fmt.Sprintf("Configuración #%d", config.ID)
+					}
+				}
+
+				activeConfigs = append(activeConfigs, configDesc)
 			}
 		}
 
-		if hasActive {
+		if len(activeConfigs) > 0 {
 			uc.logger.Warn().
 				Uint("id", id).
 				Str("event_code", eventType.EventCode).
-				Int("active_configs_count", len(configs)).
+				Int("active_configs_count", len(activeConfigs)).
+				Strs("active_configs", activeConfigs).
 				Msg("Cannot delete notification event type: has active configurations using it")
-			return errors.New("cannot delete notification event type: has active configurations using this event")
+
+			// Construir mensaje de error descriptivo
+			configList := ""
+			for i, cfg := range activeConfigs {
+				if i > 0 {
+					configList += ", "
+				}
+				configList += cfg
+				// Limitar a 3 ejemplos para no hacer el mensaje muy largo
+				if i >= 2 && len(activeConfigs) > 3 {
+					configList += "..."
+					break
+				}
+			}
+			return errors.New("no se puede eliminar el evento porque está siendo usado por " +
+				fmt.Sprintf("%d configuración(es) activa(s): %s. Desactiva o elimina estas configuraciones primero",
+				len(activeConfigs), configList))
 		}
 	}
 

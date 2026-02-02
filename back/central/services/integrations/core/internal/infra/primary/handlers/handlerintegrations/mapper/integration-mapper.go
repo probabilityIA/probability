@@ -92,11 +92,24 @@ func ToIntegrationResponse(integration *domain.Integration, imageURLBase string)
 		}
 	}
 
+	// Derivar category, category_name y category_color desde IntegrationType.Category (no usar campo directo)
+	categoryCode := ""
+	categoryName := ""
+	categoryColor := ""
+	if integration.IntegrationType != nil && integration.IntegrationType.Category != nil {
+		categoryCode = integration.IntegrationType.Category.Code
+		categoryName = integration.IntegrationType.Category.Name
+		categoryColor = integration.IntegrationType.Category.Color
+	}
+
 	resp := response.IntegrationResponse{
 		ID:                integration.ID,
 		Name:              integration.Name,
 		Code:              integration.Code,
 		IntegrationTypeID: integration.IntegrationTypeID,
+		Category:          categoryCode, // Derivado de IntegrationType.Category.Code
+		CategoryName:      categoryName, // Derivado de IntegrationType.Category.Name
+		CategoryColor:     categoryColor, // Derivado de IntegrationType.Category.Color
 		BusinessID:        integration.BusinessID,
 		StoreID:           integration.StoreID,
 		IsActive:          integration.IsActive,

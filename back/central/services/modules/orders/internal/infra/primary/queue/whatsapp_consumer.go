@@ -71,8 +71,6 @@ func NewWhatsAppConsumer(
 
 // Start inicia el consumidor de eventos de WhatsApp
 func (c *WhatsAppConsumer) Start(ctx context.Context) error {
-	c.log.Info().Msg("Starting WhatsApp consumer for order confirmations")
-
 	// Declarar colas
 	queues := []string{
 		"orders.whatsapp.confirmed",
@@ -109,7 +107,6 @@ func (c *WhatsAppConsumer) Start(ctx context.Context) error {
 		}
 	}()
 
-	c.log.Info().Msg("WhatsApp consumer started successfully")
 	return nil
 }
 

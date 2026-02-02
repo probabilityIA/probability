@@ -21,6 +21,7 @@ export {
   createNotificationEventTypeAction,
   updateNotificationEventTypeAction,
   deleteNotificationEventTypeAction,
+  toggleNotificationEventTypeActiveAction,
 } from "./notification-event-types";
 
 // Re-export notification config actions

@@ -34,10 +34,6 @@ func (c *RetryConsumer) Start(ctx context.Context) {
 	interval := 5 * time.Minute
 	c.ticker = time.NewTicker(interval)
 
-	c.log.Info(ctx).
-		Dur("interval", interval).
-		Msg("Starting retry consumer")
-
 	// Primera ejecución inmediata
 	c.processRetries(ctx)
 
