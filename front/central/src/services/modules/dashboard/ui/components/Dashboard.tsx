@@ -81,12 +81,8 @@ export default function Dashboard() {
                 try {
                     setLoadingBusinesses(true);
 
-                    // Obtener token desde sessionStorage para iframes
-                    const token = TokenStorage.getSessionToken();
-
                     const response = await getBusinessesAction(
-                        { page: 1, per_page: 100 },
-                        token // pasar token explícitamente para iframes
+                        { page: 1, per_page: 100 }
                     );
                     setBusinesses(response.data || []);
                 } catch (err: any) {
@@ -105,13 +101,9 @@ export default function Dashboard() {
             setLoading(true);
             setError(null);
 
-            // Obtener token desde sessionStorage para iframes (donde cookies están bloqueadas)
-            const token = TokenStorage.getSessionToken();
-
             const response = await getDashboardStatsAction(
                 selectedBusinessId,
-                undefined, // integrationId
-                token // pasar token explícitamente para iframes
+                undefined // integrationId
             );
             setStats(response.data);
         } catch (err: any) {
