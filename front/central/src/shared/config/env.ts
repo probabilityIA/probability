@@ -8,9 +8,13 @@
  * Obtiene una variable de entorno requerida (servidor)
  * Lanza error si no existe
  */
-function getRequiredEnv(key: string): string {
+function getRequiredEnv(key: string, fallback?: string): string {
   const value = process.env[key];
   if (!value) {
+    if (fallback) {
+      console.warn(`⚠️ Variable de entorno ${key} no encontrada, usando fallback: ${fallback}`);
+      return fallback;
+    }
     throw new Error(
       `❌ Variable de entorno requerida no encontrada: ${key}\n` +
       `Por favor, configúrala en tu archivo .env.local`
@@ -26,7 +30,10 @@ export const env = {
   // API Backend (privada - solo servidor)
   // REQUERIDA para hacer peticiones al backend
   get API_BASE_URL(): string {
-    return getRequiredEnv('API_BASE_URL');
+    // Intentar API_BASE_URL primero, luego NEXT_PUBLIC_API_BASE_URL, luego fallback
+    return process.env.API_BASE_URL ||
+           process.env.NEXT_PUBLIC_API_BASE_URL ||
+           'http://localhost:3050/api/v1';
   },
 } as const;
 
