@@ -9,85 +9,70 @@ import {
     UpdateOrderDTO
 } from '../../domain/types';
 
-/**
- * Helper para obtener use cases con token desde cookie o parámetro explícito
- * @param explicitToken Token opcional para iframes donde cookies están bloqueadas
- */
-async function getUseCases(explicitToken?: string | null) {
-    const token = await getAuthToken(explicitToken);
+async function getUseCases() {
+    const token = await getAuthToken();
     const repository = new OrderApiRepository(token);
     return new OrderUseCases(repository);
 }
 
-/**
- * Get orders action
- * @param params Query parameters
- * @param token Token opcional para iframes (donde cookies están bloqueadas)
- */
-export const getOrdersAction = async (params?: GetOrdersParams, token?: string | null) => {
+export const getOrdersAction = async (params?: GetOrdersParams) => {
     try {
-        return await (await getUseCases(token)).getOrders(params);
+        return await (await getUseCases()).getOrders(params);
     } catch (error: any) {
         console.error('Get Orders Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-/**
- * Get order by ID action
- * @param id Order ID
- * @param token Token opcional para iframes (donde cookies están bloqueadas)
- */
-export const getOrderByIdAction = async (id: string, token?: string | null) => {
+export const getOrderByIdAction = async (id: string) => {
     try {
-        return await (await getUseCases(token)).getOrderById(id);
+        return await (await getUseCases()).getOrderById(id);
     } catch (error: any) {
         console.error('Get Order By Id Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const createOrderAction = async (data: CreateOrderDTO, token?: string | null) => {
+export const createOrderAction = async (data: CreateOrderDTO) => {
     try {
-        return await (await getUseCases(token)).createOrder(data);
+        return await (await getUseCases()).createOrder(data);
     } catch (error: any) {
         console.error('Create Order Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const updateOrderAction = async (id: string, data: UpdateOrderDTO, token?: string | null) => {
+export const updateOrderAction = async (id: string, data: UpdateOrderDTO) => {
     try {
-        return await (await getUseCases(token)).updateOrder(id, data);
+        return await (await getUseCases()).updateOrder(id, data);
     } catch (error: any) {
         console.error('Update Order Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const deleteOrderAction = async (id: string, token?: string | null) => {
+export const deleteOrderAction = async (id: string) => {
     try {
-        return await (await getUseCases(token)).deleteOrder(id);
+        return await (await getUseCases()).deleteOrder(id);
     } catch (error: any) {
         console.error('Delete Order Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getOrderRawAction = async (id: string, token?: string | null) => {
+export const getOrderRawAction = async (id: string) => {
     try {
-        return await (await getUseCases(token)).getOrderRaw(id);
+        return await (await getUseCases()).getOrderRaw(id);
     } catch (error: any) {
         console.error('Get Order Raw Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getAIRecommendationAction = async (origin: string, destination: string, token?: string | null) => {
+export const getAIRecommendationAction = async (origin: string, destination: string) => {
     try {
-        return await (await getUseCases(token)).getAIRecommendation(origin, destination);
+        return await (await getUseCases()).getAIRecommendation(origin, destination);
     } catch (error: any) {
-        // No lanzar error, retornar null para que el componente maneje silenciosamente
         console.warn('AI Recommendation no disponible:', error.message);
         return null;
     }

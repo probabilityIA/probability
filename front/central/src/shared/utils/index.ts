@@ -2,18 +2,15 @@ export * from './http-logger';
 export * from './apply-business-theme';
 export * from './sound';
 
-// Storage - Solo exportar los objetos, no las interfaces duplicadas
+// Storage
 export { TokenStorage } from './token-storage';
 export { CookieStorage } from './cookie-storage';
 export { SimpleCookieStorage } from './cookie-storage-simple';
 
-// API Client - Cliente universal para fetch directo (iframes)
-export { apiClient, UniversalApiClient } from './api-client';
-
 // Server Auth - NO exportar aquí (usa next/headers, solo para Server Actions)
 // Importar directamente: import { getAuthToken } from '@/shared/utils/server-auth';
 
-// Tipos - Exportar desde un solo lugar para evitar duplicados
+// Tipos
 export type {
     BusinessColors,
     BusinessData,

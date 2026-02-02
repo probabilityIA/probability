@@ -1,6 +1,6 @@
 'use server';
 
-import { cookies } from 'next/headers';
+import { getAuthToken } from '@/shared/utils/server-auth';
 import { BusinessApiRepository } from '../repository/api-repository';
 import { BusinessUseCases } from '../../app/use-cases';
 import {
@@ -14,32 +14,16 @@ import {
 } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
-/**
- * Helper to get use cases with token from cookies or explicit parameter
- * @param explicitToken Token opcional para iframes donde cookies están bloqueadas
- */
-async function getUseCases(explicitToken?: string | null) {
-    let token = explicitToken;
-
-    // Si no hay token explícito, intentar leer de cookies
-    if (!token) {
-        const cookieStore = await cookies();
-        token = cookieStore.get('session_token')?.value || null;
-    }
-
+async function getUseCases() {
+    const token = await getAuthToken();
     const repository = new BusinessApiRepository(token);
     return new BusinessUseCases(repository);
 }
 
 // Business Actions
-/**
- * Get businesses action
- * @param params Query parameters
- * @param token Token opcional para iframes (donde cookies están bloqueadas)
- */
-export const getBusinessesAction = async (params?: GetBusinessesParams, token?: string | null) => {
+export const getBusinessesAction = async (params?: GetBusinessesParams) => {
     try {
-        return (await getUseCases(token)).getBusinesses(params);
+        return (await getUseCases()).getBusinesses(params);
     } catch (error: any) {
         console.error('Get Businesses Action Error:', error.message);
         throw new Error(error.message);
@@ -171,8 +155,7 @@ export const deleteBusinessTypeAction = async (id: number) => {
 
 export const getBusinessesSimpleAction = async (): Promise<BusinessesSimpleResponse> => {
     try {
-        const cookieStore = await cookies();
-        const token = cookieStore.get('session_token')?.value || '';
+        const token = await getAuthToken();
 
         const response = await fetch(`${env.API_BASE_URL}/businesses/simple`, {
             method: 'GET',
