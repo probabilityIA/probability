@@ -36,6 +36,7 @@ go.work.sum
 back/central/main
 back/central/central_reserve
 back/central/probability-back-central
+back/integrationTest/integrationTest
 
 # ===========================================
 # Terraform - Archivos pesados y sensibles
