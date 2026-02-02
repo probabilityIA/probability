@@ -3,6 +3,16 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  // Proxy para desarrollo local - evita problemas de CORS
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'http://localhost:3050/api/:path*',
+      },
+    ];
+  },
+
   // Headers para soportar iframes de Shopify
   async headers() {
     return [

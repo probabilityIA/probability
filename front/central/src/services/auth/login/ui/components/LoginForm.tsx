@@ -20,8 +20,10 @@ export const LoginForm = () => {
 
         startTransition(async () => {
             try {
-                // ✅ Hacer fetch directo al API público para que el navegador reciba la cookie
-                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
+                // ✅ Hacer fetch directo al API para que el navegador reciba la cookie
+                // En desarrollo: Next.js proxy redirige /api/* a localhost:3050
+                // En producción: NEXT_PUBLIC_API_BASE_URL apunta al dominio real
+                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
                 const loginResponse = await fetch(`${baseUrl}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
