@@ -21,7 +21,7 @@ export const LoginForm = () => {
         startTransition(async () => {
             try {
                 // ✅ Hacer fetch directo al API público para que el navegador reciba la cookie
-                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1';
+                const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
                 const loginResponse = await fetch(`${baseUrl}/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
