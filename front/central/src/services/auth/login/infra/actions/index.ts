@@ -87,4 +87,63 @@ export const getRolesPermissionsAction = async (): Promise<UserRolesPermissionsS
     }
 };
 
+/**
+ * Server Action para login en desarrollo local.
+ *
+ * En producción, el login se hace con fetch directo desde el cliente para
+ * que el navegador reciba la cookie Partitioned directamente (necesario para Shopify iframe).
+ *
+ * En desarrollo local, este Server Action se usa para evitar problemas de proxy con cookies.
+ */
+export async function loginServerAction(email: string, password: string) {
+    try {
+        const response = await fetch('http://localhost:3050/api/v1/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password }),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            return {
+                success: false,
+                error: errorData.error || errorData.message || 'Error al iniciar sesión',
+            };
+        }
+
+        // Extraer Set-Cookie header del backend
+        const setCookieHeader = response.headers.get('set-cookie');
+
+        if (setCookieHeader) {
+            // Parsear el cookie manualmente
+            const tokenMatch = setCookieHeader.match(/session_token=([^;]+)/);
+            const maxAgeMatch = setCookieHeader.match(/Max-Age=(\d+)/);
+
+            if (tokenMatch && tokenMatch[1]) {
+                const cookieStore = await cookies();
+
+                // Setear cookie usando Next.js cookies API
+                cookieStore.set('session_token', tokenMatch[1], {
+                    maxAge: maxAgeMatch ? parseInt(maxAgeMatch[1]) : 7 * 24 * 60 * 60, // 7 días por defecto
+                    path: '/',
+                    httpOnly: true,
+                    secure: false, // En local dev no usamos HTTPS
+                    sameSite: 'lax', // En local dev no necesitamos 'none'
+                });
+            }
+        }
+
+        const data = await response.json();
+        return {
+            success: true,
+            data,
+        };
+    } catch (error: any) {
+        return {
+            success: false,
+            error: error.message || 'Error al conectar con el servidor',
+        };
+    }
+}
+
 

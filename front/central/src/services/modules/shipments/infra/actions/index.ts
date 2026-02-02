@@ -1,11 +1,13 @@
 'use server';
 
+import { getAuthToken } from '@/shared/utils/server-auth';
 import { ShipmentApiRepository } from '../repository/api-repository';
 import { ShipmentUseCases } from '../../app/use-cases';
 import { GetShipmentsParams } from '../../domain/types';
 
 const getUseCases = async () => {
-    const repository = new ShipmentApiRepository();
+    const token = await getAuthToken();
+    const repository = new ShipmentApiRepository(token);
     return new ShipmentUseCases(repository);
 };
 

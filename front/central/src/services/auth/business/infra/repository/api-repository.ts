@@ -1,4 +1,4 @@
-import { envPublic } from '@/shared/config/env';
+import { env } from '@/shared/config/env';
 import {
     IBusinessRepository,
 } from '../../domain/ports';
@@ -23,7 +23,9 @@ export class BusinessApiRepository implements IBusinessRepository {
     private token: string | null;
 
     constructor(token?: string | null) {
-        this.baseUrl = envPublic.API_BASE_URL;
+        // Usar env.API_BASE_URL (servidor) en lugar de envPublic (cliente)
+        // Los repositorios se usan en Server Actions que corren en el servidor
+        this.baseUrl = env.API_BASE_URL;
         this.token = token || null;
     }
 
