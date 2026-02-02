@@ -363,15 +363,18 @@ func (h *ShopifyHandler) GetConfigHandler(c *gin.Context) {
 	clientID := h.config.Get("SHOPIFY_CLIENT_ID")
 
 	if clientID == "" {
-		h.logger.Error().Msg("SHOPIFY_CLIENT_ID no configurado")
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Configuración de Shopify no disponible",
+		h.logger.Warn().Msg("SHOPIFY_CLIENT_ID no configurado - OAuth de Shopify no disponible")
+		// Retornar 200 OK con configuración vacía (no es un error, simplemente no está configurado)
+		c.JSON(http.StatusOK, gin.H{
+			"shopify_client_id": nil,
+			"configured":        false,
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"shopify_client_id": clientID,
+		"configured":        true,
 	})
 }
 
