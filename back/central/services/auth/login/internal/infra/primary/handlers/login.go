@@ -2,6 +2,7 @@ package authhandler
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -80,31 +81,30 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	// Convertir respuesta de dominio a response
 	loginResponse := mapper.ToLoginResponse(domainResponse)
 
-	// IMPORTANTE: Setear token como cookie HttpOnly para seguridad
-	// SameSite=None permite que funcione en iframes (Shopify)
-	c.SetCookie(
-		"session_token",          // name
-		domainResponse.Token,     // value
-		7*24*60*60,               // maxAge: 7 días en segundos
-		"/",                      // path
-		".probabilityia.com.co",  // domain: con punto inicial para subdominios y iframes
-		true,                     // secure: solo HTTPS
-		true,                     // httpOnly: JavaScript no puede leer (seguridad)
+	// IMPORTANTE: Setear token como cookie HttpOnly con Partitioned para iframes
+	// Partitioned: Nueva feature que permite cookies third-party en iframes
+	// SameSite=None + Partitioned: Funciona en iframes de Shopify
+	cookieValue := fmt.Sprintf(
+		"%s=%s; Max-Age=%d; Path=%s; Domain=%s; Secure; HttpOnly; SameSite=None; Partitioned",
+		"session_token",
+		domainResponse.Token,
+		7*24*60*60,
+		"/",
+		".probabilityia.com.co",
 	)
-	c.SetSameSite(http.SameSiteNoneMode) // Para iframes de terceros (Shopify)
+	c.Header("Set-Cookie", cookieValue)
 
-	// IMPORTANTE: También retornar el token en el JSON para iframes de Shopify
-	// En iframes, las cookies HttpOnly pueden estar bloqueadas por políticas de terceros
-	// El frontend usará: cookies en navegador normal (más seguro), token JSON en iframes
-	// loginResponse.Token ya contiene el token, no limpiarlo
+	// NO retornar el token en el JSON - solo en cookie Partitioned
+	// Si Partitioned funciona, este es el enfoque más seguro
+	loginResponse.Token = ""
 
 	h.logger.Info(ctx).
 		Str("email", loginRequest.Email).
 		Uint("user_id", domainResponse.User.ID).
 		Str("scope", domainResponse.Scope).
 		Bool("is_super_admin", domainResponse.IsSuperAdmin).
-		Bool("token_in_json", true).
-		Msg("Login exitoso - Cookie HttpOnly seteada y token en JSON para iframes")
+		Bool("partitioned_cookie", true).
+		Msg("Login exitoso - Cookie HttpOnly con Partitioned seteada para iframes")
 
 	// Retornar respuesta exitosa (con token en JSON para iframes + cookie para navegador)
 	c.JSON(http.StatusOK, response.LoginSuccessResponse{
