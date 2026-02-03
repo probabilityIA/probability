@@ -37,7 +37,7 @@ export default function ShopifyOAuthCallback() {
                     setMessage('Obteniendo credenciales de forma segura...');
 
                     // Obtener token desde endpoint seguro (cookie)
-                    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
+                    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
                     const sessionToken = localStorage.getItem('session_token');
 
                     const tokenResponse = await fetch(

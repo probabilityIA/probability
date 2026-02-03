@@ -19,12 +19,12 @@ func TestGetByIDHandler_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	expectedConfig := &dtos.NotificationConfigResponseDTO{
-		ID:               1,
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		IsActive:         true,
-		Description:      "Test config",
-		Priority:         1,
+		ID:                      1,
+		IntegrationID:           100,
+		NotificationTypeID:      1,
+		NotificationEventTypeID: 1,
+		Enabled:                 true,
+		Description:             "Test config",
 	}
 
 	mockUseCase := &mocks.UseCaseMock{

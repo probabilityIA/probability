@@ -15,7 +15,7 @@ type UseCaseMock struct {
 	GetByIDFn            func(ctx context.Context, id uint) (*dtos.NotificationConfigResponseDTO, error)
 	ListFn               func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]dtos.NotificationConfigResponseDTO, error)
 	DeleteFn             func(ctx context.Context, id uint) error
-	ValidateConditionsFn func(config *entities.IntegrationNotificationConfig, orderStatus string, paymentMethodID uint) bool
+	ValidateConditionsFn func(config *entities.IntegrationNotificationConfig, orderStatusID uint, paymentMethodID uint) bool
 
 	// Notification Types
 	GetNotificationTypesFn      func(ctx context.Context) ([]entities.NotificationType, error)
@@ -27,6 +27,7 @@ type UseCaseMock struct {
 
 	// Notification Event Types
 	GetEventTypesByNotificationTypeFn func(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error)
+	ListAllEventTypesFn               func(ctx context.Context) ([]entities.NotificationEventType, error)
 	GetNotificationEventTypeByIDFn    func(ctx context.Context, id uint) (*entities.NotificationEventType, error)
 	CreateNotificationEventTypeFn     func(ctx context.Context, eventType *entities.NotificationEventType) error
 	UpdateNotificationEventTypeFn     func(ctx context.Context, eventType *entities.NotificationEventType) error
@@ -69,9 +70,9 @@ func (m *UseCaseMock) Delete(ctx context.Context, id uint) error {
 	return nil
 }
 
-func (m *UseCaseMock) ValidateConditions(config *entities.IntegrationNotificationConfig, orderStatus string, paymentMethodID uint) bool {
+func (m *UseCaseMock) ValidateConditions(config *entities.IntegrationNotificationConfig, orderStatusID uint, paymentMethodID uint) bool {
 	if m.ValidateConditionsFn != nil {
-		return m.ValidateConditionsFn(config, orderStatus, paymentMethodID)
+		return m.ValidateConditionsFn(config, orderStatusID, paymentMethodID)
 	}
 	return false
 }
@@ -123,6 +124,13 @@ func (m *UseCaseMock) DeleteNotificationType(ctx context.Context, id uint) error
 func (m *UseCaseMock) GetEventTypesByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error) {
 	if m.GetEventTypesByNotificationTypeFn != nil {
 		return m.GetEventTypesByNotificationTypeFn(ctx, notificationTypeID)
+	}
+	return []entities.NotificationEventType{}, nil
+}
+
+func (m *UseCaseMock) ListAllEventTypes(ctx context.Context) ([]entities.NotificationEventType, error) {
+	if m.ListAllEventTypesFn != nil {
+		return m.ListAllEventTypesFn(ctx)
 	}
 	return []entities.NotificationEventType{}, nil
 }

@@ -20,12 +20,12 @@ func TestUpdateHandler_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	expectedResponse := &dtos.NotificationConfigResponseDTO{
-		ID:               1,
-		IntegrationID:    100,
-		NotificationType: "email", // Actualizado
-		IsActive:         false,   // Actualizado
-		Description:      "Updated config",
-		Priority:         2,
+		ID:                      1,
+		IntegrationID:           100,
+		NotificationTypeID:      1,
+		NotificationEventTypeID: 1,
+		Enabled:                 false,
+		Description:             "Updated config",
 	}
 
 	mockUseCase := &mocks.UseCaseMock{
@@ -71,8 +71,8 @@ func TestUpdateHandler_Success(t *testing.T) {
 		t.Errorf("expected ID %d, got %v", expectedResponse.ID, response["id"])
 	}
 
-	if response["notification_type"].(string) != expectedResponse.NotificationType {
-		t.Errorf("expected NotificationType %s, got %v", expectedResponse.NotificationType, response["notification_type"])
+	if response["enabled"].(bool) != expectedResponse.Enabled {
+		t.Errorf("expected Enabled %v, got %v", expectedResponse.Enabled, response["enabled"])
 	}
 }
 
