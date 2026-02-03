@@ -59,6 +59,7 @@ export default function ShopifyOAuthForm({
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${TokenStorage.getSessionToken()}`
                 },
                 credentials: 'include', // Enviar cookies de sesión (HttpOnly)
                 body: JSON.stringify({
