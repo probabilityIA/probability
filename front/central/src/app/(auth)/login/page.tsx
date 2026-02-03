@@ -86,14 +86,14 @@ function LoginContent() {
         </div>
       </div>
 
-      {/* Right Side - Dashboard Preview */}
+      {/* Right Side*/}
       <div
         className="hidden md:flex md:w-[50vw] h-full items-center justify-center relative overflow-hidden rounded-l-3xl z-2"
         style={{ boxShadow: '-2px 0 50px rgba(0,0,0,0.12)' }}
       >
 
         <Image
-          src="/banner.webp"
+          src="/banner2.webp"
           alt="características de probability"
           fill
           className="object-cover"
