@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -65,14 +66,21 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 	}
 
 	// Borrar la cookie inmediatamente después de leerla (one-time use)
+	// Determinar dominio para borrado de cookie
+	host := c.Request.Host
+	domainName := ".probabilityia.com.co"
+	if strings.Contains(host, "localhost") || strings.Contains(host, "127.0.0.1") {
+		domainName = ""
+	}
+
 	c.SetCookie(
 		"shopify_temp_token",
 		"",
 		-1, // MaxAge negativo elimina la cookie
 		"/",
-		".probabilityia.com.co", // Con punto inicial para subdominios y iframes
-		true,  // Secure
-		true,  // HttpOnly
+		domainName,
+		true, // Secure
+		true, // HttpOnly
 	)
 
 	h.logger.Info().

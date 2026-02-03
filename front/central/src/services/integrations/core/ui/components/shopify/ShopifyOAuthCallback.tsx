@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { Alert } from '@/shared/ui';
@@ -10,9 +10,13 @@ export default function ShopifyOAuthCallback() {
     const searchParams = useSearchParams();
     const [status, setStatus] = useState<'processing' | 'success' | 'error'>('processing');
     const [message, setMessage] = useState('Procesando autorización de Shopify...');
+    const hasRun = useRef(false);
 
     useEffect(() => {
+        if (hasRun.current) return;
+
         const handleOAuthCallback = async () => {
+            hasRun.current = true;
             const oauthStatus = searchParams.get('shopify_oauth');
 
             if (oauthStatus === 'success') {
@@ -33,7 +37,7 @@ export default function ShopifyOAuthCallback() {
                     setMessage('Obteniendo credenciales de forma segura...');
 
                     // Obtener token desde endpoint seguro (cookie)
-                    const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+                    const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
                     const sessionToken = localStorage.getItem('session_token');
 
                     const tokenResponse = await fetch(

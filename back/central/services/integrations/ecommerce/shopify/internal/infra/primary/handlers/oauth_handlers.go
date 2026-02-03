@@ -24,6 +24,9 @@ type OAuthStateData struct {
 	UserID          uint
 	BusinessID      uint
 	Expiry          time.Time
+	// Custom App Credentials (optional)
+	ClientID     string
+	ClientSecret string
 }
 
 // OAuthStateStore almacena temporalmente los estados CSRF para validación
@@ -36,6 +39,14 @@ type InitiateOAuthRequest struct {
 	ShopDomain      string `json:"shop_domain" binding:"required"`
 }
 
+// InitiateCustomOAuthRequest representa la solicitud para iniciar OAuth con credenciales personalizadas
+type InitiateCustomOAuthRequest struct {
+	IntegrationName string `json:"integration_name" binding:"required"`
+	ShopDomain      string `json:"shop_domain" binding:"required"`
+	ClientID        string `json:"client_id" binding:"required"`
+	ClientSecret    string `json:"client_secret" binding:"required"`
+}
+
 // InitiateOAuthResponse representa la respuesta con la URL de autorización
 type InitiateOAuthResponse struct {
 	Success          bool   `json:"success"`
@@ -45,10 +56,10 @@ type InitiateOAuthResponse struct {
 	Error            string `json:"error,omitempty"`
 }
 
-// InitiateOAuthHandler inicia el flujo OAuth de Shopify
+// InitiateOAuthHandler inicia el flujo OAuth de Shopify (App Pública/Default)
 //
-//	@Summary		Iniciar OAuth con Shopify
-//	@Description	Genera la URL de autorización para que el usuario autorice la app en Shopify
+//	@Summary		Iniciar OAuth con Shopify (Default)
+//	@Description	Genera la URL de autorización usando credenciales de entorno
 //	@Tags			Shopify OAuth
 //	@Accept			json
 //	@Produce		json
@@ -71,6 +82,40 @@ func (h *ShopifyHandler) InitiateOAuthHandler(c *gin.Context) {
 		return
 	}
 
+	h.initiateOAuthProcess(c, req.IntegrationName, req.ShopDomain, "", "")
+}
+
+// InitiateCustomOAuthHandler inicia el flujo OAuth de Shopify con credenciales personalizadas
+//
+//	@Summary		Iniciar OAuth con Shopify (Custom App)
+//	@Description	Genera la URL de autorización usando credenciales proporcionadas en el body
+//	@Tags			Shopify OAuth
+//	@Accept			json
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Param			request	body		InitiateCustomOAuthRequest	true	"Datos y credenciales para iniciar OAuth"
+//	@Success		200		{object}	InitiateOAuthResponse
+//	@Failure		400		{object}	InitiateOAuthResponse
+//	@Failure		401		{object}	InitiateOAuthResponse
+//	@Failure		500		{object}	InitiateOAuthResponse
+//	@Router			/integrations/shopify/connect/custom [post]
+func (h *ShopifyHandler) InitiateCustomOAuthHandler(c *gin.Context) {
+	var req InitiateCustomOAuthRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error().Err(err).Msg("Error al validar datos de entrada para Custom OAuth")
+		c.JSON(http.StatusBadRequest, InitiateOAuthResponse{
+			Success: false,
+			Message: "Datos de entrada inválidos",
+			Error:   err.Error(),
+		})
+		return
+	}
+
+	h.initiateOAuthProcess(c, req.IntegrationName, req.ShopDomain, req.ClientID, req.ClientSecret)
+}
+
+// initiateOAuthProcess encapsula la lógica común de inicio de OAuth
+func (h *ShopifyHandler) initiateOAuthProcess(c *gin.Context, integrationName, shopDomainParam, customClientID, customClientSecret string) {
 	// Validar que el usuario esté autenticado
 	userID, exists := middleware.GetUserID(c)
 	if !exists {
@@ -87,7 +132,7 @@ func (h *ShopifyHandler) InitiateOAuthHandler(c *gin.Context) {
 	businessID := c.GetUint("business_id")
 
 	// Normalizar el dominio de la tienda
-	shopDomain := normalizeShopDomain(req.ShopDomain)
+	shopDomain := normalizeShopDomain(shopDomainParam)
 
 	// Generar state CSRF
 	state, err := generateState()
@@ -103,24 +148,39 @@ func (h *ShopifyHandler) InitiateOAuthHandler(c *gin.Context) {
 
 	// Almacenar state con metadata (expira en 10 minutos)
 	oauthStateStore[state] = &OAuthStateData{
-		IntegrationName: req.IntegrationName,
+		IntegrationName: integrationName,
 		ShopDomain:      shopDomain,
 		UserID:          userID,
 		BusinessID:      businessID,
 		Expiry:          time.Now().Add(10 * time.Minute),
+		ClientID:        customClientID,
+		ClientSecret:    customClientSecret,
 	}
 
-	// Obtener configuración de OAuth desde variables de entorno
-	clientID := h.config.Get("SHOPIFY_CLIENT_ID")
-	redirectURI := h.config.Get("SHOPIFY_REDIRECT_URI")
-	scopes := h.config.Get("SHOPIFY_SCOPES")
+	// Determinar credenciales a usar
+	var clientID, redirectURI, scopes string
+
+	if customClientID != "" {
+		// Usar credenciales custom
+		clientID = customClientID
+		// Redirect URI debe ser la misma configurada en la app de Shopify
+		// Asumimos que el usuario configuró la URL base por defecto de nuestra app
+		redirectURI = h.config.Get("SHOPIFY_REDIRECT_URI")
+		// Scopes por defecto si no se especifican (o podríamos pedirlos en el request también)
+		scopes = h.config.Get("SHOPIFY_SCOPES")
+	} else {
+		// Usar credenciales de entorno (legacy/public app)
+		clientID = h.config.Get("SHOPIFY_CLIENT_ID")
+		redirectURI = h.config.Get("SHOPIFY_REDIRECT_URI")
+		scopes = h.config.Get("SHOPIFY_SCOPES")
+	}
 
 	if clientID == "" || redirectURI == "" || scopes == "" {
 		h.logger.Error().Msg("Configuración OAuth incompleta")
 		c.JSON(http.StatusInternalServerError, InitiateOAuthResponse{
 			Success: false,
 			Message: "Configuración OAuth incompleta",
-			Error:   "SHOPIFY_CLIENT_ID, SHOPIFY_REDIRECT_URI o SHOPIFY_SCOPES no configurados",
+			Error:   "CLIENT_ID, REDIRECT_URI o SCOPES faltantes",
 		})
 		return
 	}
@@ -139,6 +199,7 @@ func (h *ShopifyHandler) InitiateOAuthHandler(c *gin.Context) {
 		Uint("user_id", userID).
 		Str("shop_domain", shopDomain).
 		Str("state", state).
+		Bool("is_custom", customClientID != "").
 		Msg("OAuth iniciado exitosamente")
 
 	c.JSON(http.StatusOK, InitiateOAuthResponse{
@@ -195,7 +256,13 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	delete(oauthStateStore, state)
 
 	// Validar HMAC
-	if !h.validateHMAC(c.Request.URL.Query(), hmacParam) {
+	// Nota: Si usamos custom credentials, necesitamos el secret CORRECTO para validar el HMAC.
+	clientSecret := h.config.Get("SHOPIFY_CLIENT_SECRET") // Default
+	if stateData.ClientSecret != "" {
+		clientSecret = stateData.ClientSecret // Custom
+	}
+
+	if !h.validateHMACWithSecret(c.Request.URL.Query(), hmacParam, clientSecret) {
 		h.logger.Error().Msg("HMAC inválido en callback OAuth")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -205,8 +272,10 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	}
 
 	// Intercambiar código por access token
-	clientID := h.config.Get("SHOPIFY_CLIENT_ID")
-	clientSecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+	clientID := h.config.Get("SHOPIFY_CLIENT_ID") // Default
+	if stateData.ClientID != "" {
+		clientID = stateData.ClientID
+	}
 
 	accessToken, scope, err := h.exchangeCodeForToken(shop, code, clientID, clientSecret)
 	if err != nil {
@@ -311,10 +380,13 @@ func normalizeShopDomain(domain string) string {
 	return domain
 }
 
-// validateHMAC valida la firma HMAC de Shopify
+// validateHMAC valida la firma HMAC de Shopify usando el secret por defecto
 func (h *ShopifyHandler) validateHMAC(queryParams url.Values, receivedHMAC string) bool {
-	clientSecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+	return h.validateHMACWithSecret(queryParams, receivedHMAC, h.config.Get("SHOPIFY_CLIENT_SECRET"))
+}
 
+// validateHMACWithSecret valida la firma HMAC de Shopify usando un secret específico
+func (h *ShopifyHandler) validateHMACWithSecret(queryParams url.Values, receivedHMAC, clientSecret string) bool {
 	// Crear una copia de los parámetros sin el HMAC
 	params := url.Values{}
 	for k, v := range queryParams {

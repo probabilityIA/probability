@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Input, Button, Alert } from '@/shared/ui';
-import { TokenStorage } from '@/shared/config';
+import { TokenStorage } from '@/shared/utils';
 
 interface ShopifyOAuthFormProps {
     onCancel?: () => void;
@@ -33,6 +33,8 @@ export default function ShopifyOAuthForm({
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
         shop_domain: initialData?.store_id || '',
+        client_id: '',
+        client_secret: ''
     });
 
     const [loading, setLoading] = useState(false);
@@ -41,15 +43,8 @@ export default function ShopifyOAuthForm({
     const handleConnectShopify = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!formData.name || !formData.shop_domain) {
+        if (!formData.name || !formData.shop_domain || !formData.client_id || !formData.client_secret) {
             setError('Por favor completa todos los campos');
-            return;
-        }
-
-        const token = TokenStorage.getSessionToken();
-
-        if (!token) {
-            setError('No se encontró token de autenticación. Por favor, inicia sesión de nuevo.');
             return;
         }
 
@@ -57,17 +52,19 @@ export default function ShopifyOAuthForm({
         setError(null);
 
         try {
-            // Llamar al backend para iniciar el flujo OAuth
+            // Llamar al backend para iniciar el flujo OAuth Custom
             const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
-            const response = await fetch(`${apiBaseUrl}/integrations/shopify/connect`, {
+            const response = await fetch(`${apiBaseUrl}/integrations/shopify/connect/custom`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
                 },
+                credentials: 'include', // Enviar cookies de sesión (HttpOnly)
                 body: JSON.stringify({
                     shop_domain: formData.shop_domain,
-                    integration_name: formData.name
+                    integration_name: formData.name,
+                    client_id: formData.client_id,
+                    client_secret: formData.client_secret
                 })
             });
 
@@ -105,11 +102,11 @@ export default function ShopifyOAuthForm({
                             <span className="text-2xl">ℹ️</span>
                             <div>
                                 <p className="text-sm font-medium text-blue-900 mb-1">
-                                    Conexión OAuth con Shopify
+                                    Conexión Shopify Custom App
                                 </p>
                                 <p className="text-xs text-blue-700">
-                                    Serás redirigido a Shopify para autorizar la conexión.
-                                    No necesitas ingresar tokens manualmente.
+                                    Ingresa las credenciales de tu Custom App creada en el Shopify Partner Dashboard.
+                                    Serás redirigido a Shopify para autorizar.
                                 </p>
                             </div>
                         </div>
@@ -141,14 +138,41 @@ export default function ShopifyOAuthForm({
                         <Input
                             type="text"
                             required
-                            placeholder="mystore.myshopify.com"
+                            placeholder="tienda.myshopify.com"
                             value={formData.shop_domain}
                             onChange={(e) => setFormData({ ...formData, shop_domain: e.target.value })}
                             className="w-full"
                         />
-                        <p className="text-xs text-gray-500 mt-1">
-                            El dominio de tu tienda Shopify (ej: mitienda.myshopify.com)
-                        </p>
+                    </div>
+
+                    {/* Client ID */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Client ID (API Key) *
+                        </label>
+                        <Input
+                            type="text"
+                            required
+                            placeholder="Pegar Client ID aquí"
+                            value={formData.client_id}
+                            onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                            className="w-full"
+                        />
+                    </div>
+
+                    {/* Client Secret */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Client Secret *
+                        </label>
+                        <Input
+                            type="password"
+                            required
+                            placeholder="Pegar Client Secret aquí"
+                            value={formData.client_secret}
+                            onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
+                            className="w-full"
+                        />
                     </div>
                 </div>
             </div>
@@ -167,7 +191,7 @@ export default function ShopifyOAuthForm({
                 )}
                 <Button
                     type="submit"
-                    disabled={loading || !formData.name || !formData.shop_domain}
+                    disabled={loading || !formData.name || !formData.shop_domain || !formData.client_id || !formData.client_secret}
                     loading={loading}
                     variant="primary"
                 >

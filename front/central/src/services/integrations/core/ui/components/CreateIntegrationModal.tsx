@@ -9,6 +9,7 @@ import { createIntegrationAction, testConnectionRawAction } from '../../infra/ac
 
 // Importar formularios específicos por tipo de integración
 import { SoftpymesConfigForm } from '@/services/integrations/invoicing/softpymes/ui/components';
+import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 
 interface CreateIntegrationModalProps {
     isOpen: boolean;
@@ -139,9 +140,13 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            // TODO: Agregar más formularios específicos aquí
-            // case 'shopify':
-            //     return <ShopifyConfigForm onSuccess={onSuccess} onCancel={onBack} />;
+            case 'shopify':
+                return (
+                    <ShopifyIntegrationForm
+                        onSubmit={async () => onSuccess()}
+                        onCancel={onBack}
+                    />
+                );
             // case 'whatsapp':
             //     return <WhatsAppConfigForm onSuccess={onSuccess} onCancel={onBack} />;
             // case 'mercadolibre':
