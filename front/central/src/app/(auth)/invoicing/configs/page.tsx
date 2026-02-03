@@ -6,6 +6,8 @@
 import { ConfigsClient } from './ConfigsClient';
 import { getConfigsAction } from '@/services/modules/invoicing/infra/actions';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
+import { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
+import { Business } from '@/services/auth/business/domain/types';
 
 interface PageProps {
   searchParams: Promise<{ business_id?: string }>;
@@ -21,7 +23,7 @@ export default async function InvoicingConfigsPage({ searchParams }: PageProps) 
   // Fetch de configuraciones (SE EJECUTA EN EL SERVIDOR)
   // El backend filtra según los permisos del token
   console.log('🔍 [SERVER] Fetching invoicing configs with filters:', filters);
-  let configs = [];
+  let configs: InvoicingConfig[] = [];
   try {
     const response = await getConfigsAction(filters);
     configs = response.data || [];
@@ -31,7 +33,7 @@ export default async function InvoicingConfigsPage({ searchParams }: PageProps) 
   }
 
   // Cargar businesses para el dropdown (el backend retorna según permisos)
-  let businesses = [];
+  let businesses: Business[] = [];
   try {
     const businessesResponse = await getBusinessesAction({});
     businesses = businessesResponse.data || [];
