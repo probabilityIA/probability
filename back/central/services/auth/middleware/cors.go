@@ -13,6 +13,8 @@ func CorsMiddleware() gin.HandlerFunc {
 		allowedOrigins := []string{
 			"https://app.probabilityia.com.co",
 			"https://admin.shopify.com",
+			"http://localhost:3000",
+			"http://localhost:3001",
 		}
 
 		// Permitir *.myshopify.com dinámicamente
