@@ -188,7 +188,7 @@ export default function NotificationConfigPage() {
                 title={selectedChannel ? "Editar Canal" : "Nuevo Canal"}
             >
                 <NotificationTypeForm
-                    notificationType={selectedChannel}
+                    type={selectedChannel}
                     onSuccess={handleChannelSuccess}
                     onCancel={() => setIsChannelModalOpen(false)}
                 />
