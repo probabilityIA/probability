@@ -53,7 +53,8 @@ export default function ShopifyOAuthForm({
 
         try {
             // Llamar al backend para iniciar el flujo OAuth Custom
-            const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
+            // Usar ruta relativa para que funcione tanto en dev (vía rewrite) como en producción
+            const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
             const response = await fetch(`${apiBaseUrl}/integrations/shopify/connect/custom`, {
                 method: 'POST',
                 headers: {
