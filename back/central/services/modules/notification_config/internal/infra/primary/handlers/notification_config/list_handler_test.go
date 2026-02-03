@@ -19,18 +19,18 @@ func TestListHandler_Success_NoFilters(t *testing.T) {
 
 	expectedConfigs := []dtos.NotificationConfigResponseDTO{
 		{
-			ID:               1,
-			IntegrationID:    100,
-			NotificationType: "whatsapp",
-			IsActive:         true,
-			Priority:         1,
+			ID:                      1,
+			IntegrationID:           100,
+			NotificationTypeID:      1,
+			NotificationEventTypeID: 1,
+			Enabled:                 true,
 		},
 		{
-			ID:               2,
-			IntegrationID:    200,
-			NotificationType: "email",
-			IsActive:         false,
-			Priority:         2,
+			ID:                      2,
+			IntegrationID:           200,
+			NotificationTypeID:      2,
+			NotificationEventTypeID: 2,
+			Enabled:                 false,
 		},
 	}
 
@@ -70,11 +70,11 @@ func TestListHandler_Success_WithFilters(t *testing.T) {
 
 	expectedConfigs := []dtos.NotificationConfigResponseDTO{
 		{
-			ID:               1,
-			IntegrationID:    100,
-			NotificationType: "whatsapp",
-			IsActive:         true,
-			Priority:         1,
+			ID:                      1,
+			IntegrationID:           100,
+			NotificationTypeID:      1,
+			NotificationEventTypeID: 1,
+			Enabled:                 true,
 		},
 	}
 
@@ -84,8 +84,8 @@ func TestListHandler_Success_WithFilters(t *testing.T) {
 			if filters.IntegrationID != nil && *filters.IntegrationID != 100 {
 				t.Errorf("expected IntegrationID 100, got %d", *filters.IntegrationID)
 			}
-			if filters.NotificationType != nil && *filters.NotificationType != "whatsapp" {
-				t.Errorf("expected NotificationType whatsapp, got %s", *filters.NotificationType)
+			if filters.NotificationTypeID != nil && *filters.NotificationTypeID != 1 {
+				t.Errorf("expected NotificationTypeID 1, got %d", *filters.NotificationTypeID)
 			}
 			return expectedConfigs, nil
 		},
@@ -94,7 +94,7 @@ func TestListHandler_Success_WithFilters(t *testing.T) {
 
 	handler := New(mockUseCase, mockLogger)
 
-	req := httptest.NewRequest(http.MethodGet, "/notification-configs?integration_id=100&notification_type=whatsapp&is_active=true", nil)
+	req := httptest.NewRequest(http.MethodGet, "/notification-configs?integration_id=100&notification_type_id=1&enabled=true", nil)
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req

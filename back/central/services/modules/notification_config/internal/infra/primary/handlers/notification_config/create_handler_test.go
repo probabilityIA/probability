@@ -20,12 +20,12 @@ func TestCreateHandler_Success(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	expectedResponse := &dtos.NotificationConfigResponseDTO{
-		ID:               1,
-		IntegrationID:    100,
-		NotificationType: "whatsapp",
-		IsActive:         true,
-		Description:      "Test config",
-		Priority:         1,
+		ID:                      1,
+		IntegrationID:           100,
+		NotificationTypeID:      1,
+		NotificationEventTypeID: 1,
+		Enabled:                 true,
+		Description:             "Test config",
 	}
 
 	mockUseCase := &mocks.UseCaseMock{
@@ -38,19 +38,12 @@ func TestCreateHandler_Success(t *testing.T) {
 	handler := New(mockUseCase, mockLogger)
 
 	requestBody := map[string]interface{}{
-		"integration_id":    100,
-		"notification_type": "whatsapp",
-		"is_active":         true,
-		"conditions": map[string]interface{}{
-			"trigger": "order.created",
-		},
-		"config": map[string]interface{}{
-			"template_name":  "confirmacion",
-			"recipient_type": "customer",
-			"language":       "es",
-		},
-		"description": "Test config",
-		"priority":    1,
+		"integration_id":             100,
+		"notification_type_id":       1,
+		"notification_event_type_id": 1,
+		"enabled":                    true,
+		"description":                "Test config",
+		"order_status_ids":           []uint{1},
 	}
 
 	body, _ := json.Marshal(requestBody)
@@ -129,18 +122,11 @@ func TestCreateHandler_DuplicateConfig(t *testing.T) {
 	handler := New(mockUseCase, mockLogger)
 
 	requestBody := map[string]interface{}{
-		"integration_id":    100,
-		"notification_type": "whatsapp",
-		"is_active":         true,
-		"conditions": map[string]interface{}{
-			"trigger": "order.created",
-		},
-		"config": map[string]interface{}{
-			"template_name":  "template",
-			"recipient_type": "customer",
-			"language":       "es",
-		},
-		"priority": 1,
+		"integration_id":             100,
+		"notification_type_id":       1,
+		"notification_event_type_id": 1,
+		"enabled":                    true,
+		"description":                "Test config",
 	}
 
 	body, _ := json.Marshal(requestBody)
@@ -181,18 +167,11 @@ func TestCreateHandler_UseCaseError(t *testing.T) {
 	handler := New(mockUseCase, mockLogger)
 
 	requestBody := map[string]interface{}{
-		"integration_id":    100,
-		"notification_type": "email",
-		"is_active":         true,
-		"conditions": map[string]interface{}{
-			"trigger": "order.updated",
-		},
-		"config": map[string]interface{}{
-			"template_name":  "template",
-			"recipient_type": "customer",
-			"language":       "es",
-		},
-		"priority": 1,
+		"integration_id":             100,
+		"notification_type_id":       1,
+		"notification_event_type_id": 1,
+		"enabled":                    true,
+		"description":                "Test config",
 	}
 
 	body, _ := json.Marshal(requestBody)
