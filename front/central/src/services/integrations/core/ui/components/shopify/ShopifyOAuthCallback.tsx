@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createIntegrationAction } from '@/services/integrations/core/infra/actions';
 import { Alert } from '@/shared/ui';
+import { TokenStorage } from '@/shared/utils';
 
 export default function ShopifyOAuthCallback() {
     const router = useRouter();
@@ -36,9 +37,9 @@ export default function ShopifyOAuthCallback() {
                 try {
                     setMessage('Obteniendo credenciales de forma segura...');
 
-                    // Obtener token desde endpoint seguro (cookie)
+                    // Obtener token desde storage unificado (soporta iframes/cookies/localstorage)
                     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
-                    const sessionToken = localStorage.getItem('session_token');
+                    const sessionToken = TokenStorage.getSessionToken();
 
                     const tokenResponse = await fetch(
                         `${apiBaseUrl}/integrations/shopify/oauth/token?state=${state}&shop=${shop}&integration_name=${integrationName}&integration_code=${integrationCode}`,
