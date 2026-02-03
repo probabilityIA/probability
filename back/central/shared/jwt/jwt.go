@@ -58,7 +58,7 @@ func (j *JWTService) GenerateToken(userID, businessID, businessTypeID, roleID ui
 		BusinessTypeID: businessTypeID,
 		RoleID:         roleID,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(168 * time.Hour)), // 7 días para coincidir con el login cookie
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 			NotBefore: jwt.NewNumericDate(time.Now()),
 			Issuer:    "central-reserve-api",
@@ -78,7 +78,10 @@ func (j *JWTService) GenerateToken(userID, businessID, businessTypeID, roleID ui
 
 // ValidateToken valida y decodifica un token JWT
 func (j *JWTService) ValidateToken(tokenString string) (*JWTClaims, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+	// Usar un parser con margen de gracia (leeway) para manejar drift de reloj en producción
+	parser := jwt.NewParser(jwt.WithLeeway(5 * time.Minute))
+
+	token, err := parser.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("método de firma inesperado: %v", token.Header["alg"])
 		}
