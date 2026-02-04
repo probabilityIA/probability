@@ -60,6 +60,13 @@ export default function ShopifyOAuthCallback() {
                     const clientId = tokenData.client_id;
                     const clientSecret = tokenData.client_secret;
 
+                    console.log('📦 Credenciales recuperadas:', {
+                        shop,
+                        accessTokenPrefix: accessToken ? `${accessToken.substring(0, 5)}...` : 'null',
+                        hasClientId: !!clientId,
+                        hasClientSecret: !!clientSecret
+                    });
+
                     if (!accessToken) {
                         throw new Error('Token de acceso no recibido');
                     }

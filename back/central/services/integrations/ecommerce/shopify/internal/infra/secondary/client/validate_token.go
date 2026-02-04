@@ -34,6 +34,10 @@ func (c *shopifyClient) ValidateToken(ctx context.Context, storeName, accessToke
 	}
 
 	// Mensajes de error descriptivos según el código de estado
+	if resp.StatusCode() != http.StatusOK {
+		fmt.Printf("🔍 Shopify ValidateToken Fail: Status=%d, Body=%s, Store=%s\n", resp.StatusCode(), resp.String(), storeName)
+	}
+
 	switch resp.StatusCode() {
 	case http.StatusUnauthorized: // 401
 		return false, nil, fmt.Errorf("token de acceso inválido o expirado. Verifica que el Access Token sea correcto")
