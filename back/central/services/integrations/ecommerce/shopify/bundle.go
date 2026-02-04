@@ -94,7 +94,11 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 	useCase := usecases.New(integrationService, shopifyClient, orderPublisher, database)
 
 	// Registrar observador para crear webhook automáticamente cuando se crea una integración de Shopify
-	baseURL := config.Get("URL_BASE_SWAGGER")
+	baseURL := config.Get("WEBHOOK_BASE_URL")
+	if baseURL == "" {
+		baseURL = config.Get("URL_BASE_SWAGGER")
+	}
+
 	if baseURL != "" {
 		coreIntegration.RegisterObserverForType(core.IntegrationTypeShopify, func(obsCtx context.Context, integration *core.Integration) {
 			// Crear webhook de forma asíncrona para no bloquear la respuesta
@@ -116,7 +120,7 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 		})
 	} else {
 		logger.Warn(context.Background()).
-			Msg("URL_BASE_SWAGGER no está configurada, no se crearán webhooks automáticamente para Shopify")
+			Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER están configuradas, no se crearán webhooks automáticamente para Shopify")
 	}
 
 	shopifyHandler := handlers.New(useCase, logger, coreIntegration, config)
