@@ -87,7 +87,7 @@ export default function ShopifyOAuthCallback() {
                             client_secret: clientSecret, // GUARDAR EL SECRETO PARA VALIDAR WEBHOOKS
                         },
                         business_id: businessId ? parseInt(businessId) : null,
-                    });
+                    }, sessionToken || undefined);
 
                     if (response.success) {
                         setStatus('success');
