@@ -327,7 +327,8 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	}
 	credsJSON, _ := json.Marshal(creds)
 
-	middleware.SetSecureCookie(c, "shopify_temp_token", string(credsJSON), 300)
+	// Usar url.QueryEscape para que caracteres como { } " sean seguros en la cookie
+	middleware.SetSecureCookie(c, "shopify_temp_token", url.QueryEscape(string(credsJSON)), 300)
 
 	// Redirigir al frontend SIN el token en la URL (seguro)
 	frontendURL := h.config.Get("WEBHOOK_BASE_URL")

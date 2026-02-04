@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -64,6 +65,13 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 		return
 	}
 
+	// URL-decode la cookie ya que fue escapada para ser segura en el header
+	decodedData, err := url.QueryUnescape(cookieData)
+	if err != nil {
+		h.logger.Warn().Err(err).Msg("Error al de-escapar cookie de token, intentando usar raw")
+		decodedData = cookieData
+	}
+
 	// Decodificar JSON de la cookie (si es JSON)
 	var creds struct {
 		AccessToken  string `json:"access_token"`
@@ -71,15 +79,15 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 		ClientSecret string `json:"client_secret"`
 	}
 
-	if strings.HasPrefix(cookieData, "{") {
-		if err := json.Unmarshal([]byte(cookieData), &creds); err != nil {
+	if strings.HasPrefix(decodedData, "{") {
+		if err := json.Unmarshal([]byte(decodedData), &creds); err != nil {
 			h.logger.Error().Err(err).Msg("Error al decodificar JSON de credenciales")
 			// Fallback: tratar como token simple si falla el unmarshal
-			creds.AccessToken = cookieData
+			creds.AccessToken = decodedData
 		}
 	} else {
 		// Compatible con versiones anteriores que guardaban solo el token
-		creds.AccessToken = cookieData
+		creds.AccessToken = decodedData
 	}
 
 	// Borrar la cookie inmediatamente después de leerla (one-time use)
