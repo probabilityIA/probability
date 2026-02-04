@@ -57,6 +57,8 @@ export default function ShopifyOAuthCallback() {
 
                     const tokenData = await tokenResponse.json();
                     const accessToken = tokenData.access_token;
+                    const clientId = tokenData.client_id;
+                    const clientSecret = tokenData.client_secret;
 
                     if (!accessToken) {
                         throw new Error('Token de acceso no recibido');
@@ -77,9 +79,12 @@ export default function ShopifyOAuthCallback() {
                             store_name: shop,
                             api_version: '2024-10',
                             webhook_configured: false,
+                            client_id: clientId, // Guardar ID para referencia
                         },
                         credentials: {
                             access_token: accessToken,
+                            client_id: clientId,
+                            client_secret: clientSecret, // GUARDAR EL SECRETO PARA VALIDAR WEBHOOKS
                         },
                         business_id: businessId ? parseInt(businessId) : null,
                     });

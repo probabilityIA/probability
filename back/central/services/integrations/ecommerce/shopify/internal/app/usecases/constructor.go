@@ -29,6 +29,7 @@ type IShopifyUseCase interface {
 	CreateWebhook(ctx context.Context, integrationID string, baseURL string) (*domain.CreateWebhookResult, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]domain.WebhookInfo, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+	GetClientSecretByShopDomain(ctx context.Context, shopDomain string) (string, error)
 }
 
 // New crea una nueva instancia de IShopifyUseCase

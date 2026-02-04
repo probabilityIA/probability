@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"os"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/primary/handlers/request"
@@ -59,31 +58,46 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 		Msg("📦 Payload del webhook")
 
 	// HMAC Validation
-	shopifySecret := os.Getenv("SHOPIFY_API_SECRET")
-	h.logger.Info().
+	// Recuperar el secreto específico de esta tienda para validar el HMAC
+	shopifySecret, err := h.useCase.GetClientSecretByShopDomain(c.Request.Context(), headers.ShopDomain)
+	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Str("shop_domain", headers.ShopDomain).
+			Msg("⚠️ No se pudo recuperar el secreto específico de la tienda, intentando fallback global")
+
+		// Fallback al secreto global (opcional, para apps públicas)
+		shopifySecret = h.config.Get("SHOPIFY_CLIENT_SECRET")
+		if shopifySecret == "" {
+			shopifySecret = h.config.Get("SHOPIFY_API_SECRET")
+		}
+	}
+
+	h.logger.Debug().
 		Bool("has_secret", shopifySecret != "").
-		Str("secret_prefix", func() string {
-			if shopifySecret != "" && len(shopifySecret) > 4 {
-				return shopifySecret[:4] + "..."
-			}
-			return "NO_SECRET"
-		}()).
-		Msg("🔐 Verificando HMAC")
+		Str("shop_domain", headers.ShopDomain).
+		Msg("🔐 Verificando HMAC dinámico")
 
 	if shopifySecret != "" {
 		if !VerifyWebhookHMAC(bodyBytes, headers.Hmac, shopifySecret) {
 			h.logger.Error().
+				Str("shop_domain", headers.ShopDomain).
 				Str("hmac_header", headers.Hmac).
-				Msg("❌ Firma HMAC inválida")
+				Msg("❌ Firma HMAC inválida para esta tienda")
 			c.JSON(http.StatusUnauthorized, response.WebhookResponse{
 				Success: false,
 				Message: "Firma HMAC inválida",
 			})
 			return
 		}
-		h.logger.Info().Msg("✅ HMAC válido")
+		h.logger.Info().Str("shop_domain", headers.ShopDomain).Msg("✅ HMAC válido")
 	} else {
-		h.logger.Warn().Msg("⚠️ SHOPIFY_API_SECRET no configurado - omitiendo validación HMAC")
+		h.logger.Error().Str("shop_domain", headers.ShopDomain).Msg("❌ No hay secreto configurado para validar HMAC de esta tienda")
+		c.JSON(http.StatusUnauthorized, response.WebhookResponse{
+			Success: false,
+			Message: "Configuración de seguridad faltante para esta tienda",
+		})
+		return
 	}
 
 	// Respond 200 OK as fast as possible as required by Shopify

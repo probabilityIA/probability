@@ -31,7 +31,7 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 		fmt.Printf("[GetOrders] Fetched %d orders. NextURL: %s\n", len(orders), fetchedNextURL)
 
 		// #region agent log
-		if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		if f, errFile := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); errFile == nil {
 			logData, _ := json.Marshal(map[string]interface{}{
 				"sessionId":    "debug-session",
 				"runId":        "run1",
@@ -71,7 +71,7 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 			mapper.EnrichOrderWithDetails(probabilityOrder, order.RawData)
 
 			// #region agent log
-			if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			if f, errFile := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); errFile == nil {
 				logData, _ := json.Marshal(map[string]interface{}{
 					"sessionId":    "debug-session",
 					"runId":        "run1",
@@ -93,7 +93,7 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 			if err := uc.orderPublisher.Publish(ctx, probabilityOrder); err != nil {
 				fmt.Printf("[GetOrders] Error publishing order: %v. \n", err)
 				// #region agent log
-				if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+				if f, errFile := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); errFile == nil {
 					logData, _ := json.Marshal(map[string]interface{}{
 						"sessionId":    "debug-session",
 						"runId":        "run1",
@@ -116,7 +116,7 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 				continue
 			}
 			// #region agent log
-			if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+			if f, errFile := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); errFile == nil {
 				logData, _ := json.Marshal(map[string]interface{}{
 					"sessionId":    "debug-session",
 					"runId":        "run1",
@@ -139,7 +139,7 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 		}
 
 		// #region agent log
-		if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+		if f, errFile := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); errFile == nil {
 			logData, _ := json.Marshal(map[string]interface{}{
 				"sessionId":    "debug-session",
 				"runId":        "run1",
@@ -167,7 +167,7 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 
 	fmt.Printf("[GetOrders] Completed: %d orders processed\n", totalOrders)
 	// #region agent log
-	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
+	if f, errFile := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); errFile == nil {
 		logData, _ := json.Marshal(map[string]interface{}{
 			"sessionId":    "debug-session",
 			"runId":        "run1",

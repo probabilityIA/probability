@@ -34,17 +34,30 @@ func (h *ShopifyHandler) ComplianceWebhookHandler(c *gin.Context) {
 
 	// Validar HMAC (OBLIGATORIO para compliance)
 	hmacHeader := c.GetHeader("X-Shopify-Hmac-Sha256")
-	shopifySecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+	shopDomain := c.GetHeader("X-Shopify-Shop-Domain")
 
-	// Siempre requerir HMAC para webhooks de compliance
+	// Recuperar el secreto específico de esta tienda
+	shopifySecret, err := h.useCase.GetClientSecretByShopDomain(c.Request.Context(), shopDomain)
+	if err != nil {
+		h.logger.Warn().
+			Err(err).
+			Str("shop_domain", shopDomain).
+			Msg("⚠️ No se pudo recuperar el secreto específico para webhook de compliance, intentando global")
+
+		shopifySecret = h.config.Get("SHOPIFY_CLIENT_SECRET")
+	}
+
 	if shopifySecret == "" {
-		h.logger.Error().Str("topic", topic).Msg("SHOPIFY_CLIENT_SECRET no configurado")
+		h.logger.Error().Str("topic", topic).Msg("No hay secreto configurado para validar compliance webhook")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Webhook signature validation not configured"})
 		return
 	}
 
 	if !VerifyWebhookHMAC(bodyBytes, hmacHeader, shopifySecret) {
-		h.logger.Error().Str("topic", topic).Msg("HMAC inválido en compliance webhook")
+		h.logger.Error().
+			Str("topic", topic).
+			Str("shop_domain", shopDomain).
+			Msg("HMAC inválido en compliance webhook")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid HMAC signature"})
 		return
 	}
@@ -93,13 +106,12 @@ func (h *ShopifyHandler) ComplianceWebhookHandler(c *gin.Context) {
 	}()
 }
 
-
 // CustomerDataRequestPayload representa la estructura del webhook customers/data_request
 type CustomerDataRequestPayload struct {
-	ShopID       int64  `json:"shop_id"`
-	ShopDomain   string `json:"shop_domain"`
+	ShopID          int64   `json:"shop_id"`
+	ShopDomain      string  `json:"shop_domain"`
 	OrdersRequested []int64 `json:"orders_requested"`
-	Customer     struct {
+	Customer        struct {
 		ID    int64  `json:"id"`
 		Email string `json:"email"`
 		Phone string `json:"phone"`
@@ -108,9 +120,9 @@ type CustomerDataRequestPayload struct {
 
 // CustomerRedactPayload representa la estructura del webhook customers/redact
 type CustomerRedactPayload struct {
-	ShopID       int64  `json:"shop_id"`
-	ShopDomain   string `json:"shop_domain"`
-	Customer     struct {
+	ShopID     int64  `json:"shop_id"`
+	ShopDomain string `json:"shop_domain"`
+	Customer   struct {
 		ID    int64  `json:"id"`
 		Email string `json:"email"`
 		Phone string `json:"phone"`
@@ -148,10 +160,15 @@ func (h *ShopifyHandler) CustomerDataRequestHandler(c *gin.Context) {
 
 	// Validar HMAC
 	hmacHeader := c.GetHeader("X-Shopify-Hmac-Sha256")
-	shopifySecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+	shopDomain := c.GetHeader("X-Shopify-Shop-Domain")
+
+	shopifySecret, err := h.useCase.GetClientSecretByShopDomain(c.Request.Context(), shopDomain)
+	if err != nil {
+		shopifySecret = h.config.Get("SHOPIFY_CLIENT_SECRET")
+	}
 
 	if shopifySecret != "" && !VerifyWebhookHMAC(bodyBytes, hmacHeader, shopifySecret) {
-		h.logger.Error().Msg("HMAC inválido en customers/data_request")
+		h.logger.Error().Str("shop_domain", shopDomain).Msg("HMAC inválido en customers/data_request")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid HMAC signature"})
 		return
 	}
@@ -213,10 +230,15 @@ func (h *ShopifyHandler) CustomerRedactHandler(c *gin.Context) {
 
 	// Validar HMAC
 	hmacHeader := c.GetHeader("X-Shopify-Hmac-Sha256")
-	shopifySecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+	shopDomain := c.GetHeader("X-Shopify-Shop-Domain")
+
+	shopifySecret, err := h.useCase.GetClientSecretByShopDomain(c.Request.Context(), shopDomain)
+	if err != nil {
+		shopifySecret = h.config.Get("SHOPIFY_CLIENT_SECRET")
+	}
 
 	if shopifySecret != "" && !VerifyWebhookHMAC(bodyBytes, hmacHeader, shopifySecret) {
-		h.logger.Error().Msg("HMAC inválido en customers/redact")
+		h.logger.Error().Str("shop_domain", shopDomain).Msg("HMAC inválido en customers/redact")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid HMAC signature"})
 		return
 	}
@@ -278,10 +300,15 @@ func (h *ShopifyHandler) ShopRedactHandler(c *gin.Context) {
 
 	// Validar HMAC
 	hmacHeader := c.GetHeader("X-Shopify-Hmac-Sha256")
-	shopifySecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+	shopDomain := c.GetHeader("X-Shopify-Shop-Domain")
+
+	shopifySecret, err := h.useCase.GetClientSecretByShopDomain(c.Request.Context(), shopDomain)
+	if err != nil {
+		shopifySecret = h.config.Get("SHOPIFY_CLIENT_SECRET")
+	}
 
 	if shopifySecret != "" && !VerifyWebhookHMAC(bodyBytes, hmacHeader, shopifySecret) {
-		h.logger.Error().Msg("HMAC inválido en shop/redact")
+		h.logger.Error().Str("shop_domain", shopDomain).Msg("HMAC inválido en shop/redact")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid HMAC signature"})
 		return
 	}
