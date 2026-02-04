@@ -307,6 +307,12 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 		Str("shop", shop).
 		Str("scope", scope).
 		Str("integration_name", stateData.IntegrationName).
+		Str("access_token_prefix", func() string {
+			if len(accessToken) > 5 {
+				return accessToken[:5] + "..."
+			}
+			return "too-short"
+		}()).
 		Msg("Token de acceso obtenido exitosamente")
 
 	// Codificar datos para el frontend
