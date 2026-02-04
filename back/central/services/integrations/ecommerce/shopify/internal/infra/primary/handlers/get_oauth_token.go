@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 	"strings"
 
@@ -11,6 +12,8 @@ import (
 type GetOAuthTokenResponse struct {
 	Success         bool   `json:"success"`
 	AccessToken     string `json:"access_token,omitempty"`
+	ClientID        string `json:"client_id,omitempty"`
+	ClientSecret    string `json:"client_secret,omitempty"`
 	Shop            string `json:"shop,omitempty"`
 	IntegrationName string `json:"integration_name,omitempty"`
 	IntegrationCode string `json:"integration_code,omitempty"`
@@ -38,10 +41,6 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 	integrationName := c.Query("integration_name")
 	integrationCode := c.Query("integration_code")
 
-	// Validar state (debe existir en el store aunque ya fue usado)
-	// En el flujo normal, el state ya fue eliminado por el callback
-	// pero los datos están en los query params del redirect
-
 	if state == "" || shop == "" {
 		h.logger.Error().Msg("State o shop faltantes en petición de token")
 		c.JSON(http.StatusBadRequest, GetOAuthTokenResponse{
@@ -51,8 +50,8 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 		return
 	}
 
-	// Leer cookie temporal con el token
-	tokenCookie, err := c.Cookie("shopify_temp_token")
+	// Leer cookie temporal con el token o JSON de credenciales
+	cookieData, err := c.Cookie("shopify_temp_token")
 	if err != nil {
 		h.logger.Error().
 			Err(err).
@@ -65,8 +64,25 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 		return
 	}
 
+	// Decodificar JSON de la cookie (si es JSON)
+	var creds struct {
+		AccessToken  string `json:"access_token"`
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+	}
+
+	if strings.HasPrefix(cookieData, "{") {
+		if err := json.Unmarshal([]byte(cookieData), &creds); err != nil {
+			h.logger.Error().Err(err).Msg("Error al decodificar JSON de credenciales")
+			// Fallback: tratar como token simple si falla el unmarshal
+			creds.AccessToken = cookieData
+		}
+	} else {
+		// Compatible con versiones anteriores que guardaban solo el token
+		creds.AccessToken = cookieData
+	}
+
 	// Borrar la cookie inmediatamente después de leerla (one-time use)
-	// Determinar dominio para borrado de cookie
 	host := c.Request.Host
 	domainName := ".probabilityia.com.co"
 	if strings.Contains(host, "localhost") || strings.Contains(host, "127.0.0.1") {
@@ -86,11 +102,13 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 	h.logger.Info().
 		Str("shop", shop).
 		Str("integration_name", integrationName).
-		Msg("Token OAuth recuperado exitosamente desde cookie")
+		Msg("Credenciales OAuth recuperadas exitosamente")
 
 	c.JSON(http.StatusOK, GetOAuthTokenResponse{
 		Success:         true,
-		AccessToken:     tokenCookie,
+		AccessToken:     creds.AccessToken,
+		ClientID:        creds.ClientID,
+		ClientSecret:    creds.ClientSecret,
 		Shop:            shop,
 		IntegrationName: integrationName,
 		IntegrationCode: integrationCode,
