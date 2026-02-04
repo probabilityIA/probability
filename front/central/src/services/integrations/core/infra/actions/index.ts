@@ -24,7 +24,7 @@ async function getUseCases(tokenOverride?: string | null) {
     return new IntegrationUseCases(repository);
 }
 
-export const getIntegrationsAction = async (params?: GetIntegrationsParams, token?: string) => {
+export const getIntegrationsAction = async (params?: GetIntegrationsParams, token?: string | null) => {
     try {
         return await (await getUseCases(token)).getIntegrations(params);
     } catch (error: any) {
@@ -41,25 +41,25 @@ export const getIntegrationsAction = async (params?: GetIntegrationsParams, toke
     }
 };
 
-export const getIntegrationByIdAction = async (id: number) => {
+export const getIntegrationByIdAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).getIntegrationById(id);
+        return await (await getUseCases(token)).getIntegrationById(id);
     } catch (error: any) {
         console.error('Get Integration By Id Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getIntegrationByTypeAction = async (type: string, businessId?: number) => {
+export const getIntegrationByTypeAction = async (type: string, businessId?: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).getIntegrationByType(type, businessId);
+        return await (await getUseCases(token)).getIntegrationByType(type, businessId);
     } catch (error: any) {
         console.error('Get Integration By Type Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const createIntegrationAction = async (data: CreateIntegrationDTO, token?: string) => {
+export const createIntegrationAction = async (data: CreateIntegrationDTO, token?: string | null) => {
     try {
         return await (await getUseCases(token)).createIntegration(data);
     } catch (error: any) {
@@ -72,90 +72,90 @@ export const createIntegrationAction = async (data: CreateIntegrationDTO, token?
     }
 };
 
-export const updateIntegrationAction = async (id: number, data: UpdateIntegrationDTO) => {
+export const updateIntegrationAction = async (id: number, data: UpdateIntegrationDTO, token?: string | null) => {
     try {
-        return await (await getUseCases()).updateIntegration(id, data);
+        return await (await getUseCases(token)).updateIntegration(id, data);
     } catch (error: any) {
         console.error('Update Integration Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const deleteIntegrationAction = async (id: number) => {
+export const deleteIntegrationAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).deleteIntegration(id);
+        return await (await getUseCases(token)).deleteIntegration(id);
     } catch (error: any) {
         console.error('Delete Integration Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const testConnectionAction = async (id: number) => {
+export const testConnectionAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).testConnection(id);
+        return await (await getUseCases(token)).testConnection(id);
     } catch (error: any) {
         console.error('Test Connection Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const activateIntegrationAction = async (id: number) => {
+export const activateIntegrationAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).activateIntegration(id);
+        return await (await getUseCases(token)).activateIntegration(id);
     } catch (error: any) {
         console.error('Activate Integration Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const deactivateIntegrationAction = async (id: number) => {
+export const deactivateIntegrationAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).deactivateIntegration(id);
+        return await (await getUseCases(token)).deactivateIntegration(id);
     } catch (error: any) {
         console.error('Deactivate Integration Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const setAsDefaultAction = async (id: number) => {
+export const setAsDefaultAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).setAsDefault(id);
+        return await (await getUseCases(token)).setAsDefault(id);
     } catch (error: any) {
         console.error('Set As Default Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const syncOrdersAction = async (id: number, params?: SyncOrdersParams) => {
+export const syncOrdersAction = async (id: number, params?: SyncOrdersParams, token?: string | null) => {
     try {
-        return await (await getUseCases()).syncOrders(id, params);
+        return await (await getUseCases(token)).syncOrders(id, params);
     } catch (error: any) {
         console.error('Sync Orders Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getSyncStatusAction = async (id: number, businessId?: number) => {
+export const getSyncStatusAction = async (id: number, businessId?: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).getSyncStatus(id, businessId);
+        return await (await getUseCases(token)).getSyncStatus(id, businessId);
     } catch (error: any) {
         console.error('Get Sync Status Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const testIntegrationAction = async (id: number) => {
+export const testIntegrationAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).testIntegration(id);
+        return await (await getUseCases(token)).testIntegration(id);
     } catch (error: any) {
         console.error('Test Integration Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const testConnectionRawAction = async (typeCode: string, config: any, credentials: any) => {
+export const testConnectionRawAction = async (typeCode: string, config: any, credentials: any, token?: string | null) => {
     try {
-        return await (await getUseCases()).testConnectionRaw(typeCode, config, credentials);
+        return await (await getUseCases(token)).testConnectionRaw(typeCode, config, credentials);
     } catch (error: any) {
         console.error('Test Connection Raw Action Error:', error.message);
         throw new Error(error.message);
@@ -163,108 +163,108 @@ export const testConnectionRawAction = async (typeCode: string, config: any, cre
 };
 
 // Integration Types
-export const getIntegrationTypesAction = async () => {
+export const getIntegrationTypesAction = async (token?: string | null) => {
     try {
-        return await (await getUseCases()).getIntegrationTypes();
+        return await (await getUseCases(token)).getIntegrationTypes();
     } catch (error: any) {
         console.error('Get Integration Types Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getActiveIntegrationTypesAction = async () => {
+export const getActiveIntegrationTypesAction = async (token?: string | null) => {
     try {
-        return await (await getUseCases()).getActiveIntegrationTypes();
+        return await (await getUseCases(token)).getActiveIntegrationTypes();
     } catch (error: any) {
         console.error('Get Active Integration Types Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getIntegrationTypeByIdAction = async (id: number) => {
+export const getIntegrationTypeByIdAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).getIntegrationTypeById(id);
+        return await (await getUseCases(token)).getIntegrationTypeById(id);
     } catch (error: any) {
         console.error('Get Integration Type By Id Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getIntegrationTypeByCodeAction = async (code: string) => {
+export const getIntegrationTypeByCodeAction = async (code: string, token?: string | null) => {
     try {
-        return await (await getUseCases()).getIntegrationTypeByCode(code);
+        return await (await getUseCases(token)).getIntegrationTypeByCode(code);
     } catch (error: any) {
         console.error('Get Integration Type By Code Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const createIntegrationTypeAction = async (data: CreateIntegrationTypeDTO) => {
+export const createIntegrationTypeAction = async (data: CreateIntegrationTypeDTO, token?: string | null) => {
     try {
-        return await (await getUseCases()).createIntegrationType(data);
+        return await (await getUseCases(token)).createIntegrationType(data);
     } catch (error: any) {
         console.error('Create Integration Type Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const updateIntegrationTypeAction = async (id: number, data: UpdateIntegrationTypeDTO) => {
+export const updateIntegrationTypeAction = async (id: number, data: UpdateIntegrationTypeDTO, token?: string | null) => {
     try {
-        return await (await getUseCases()).updateIntegrationType(id, data);
+        return await (await getUseCases(token)).updateIntegrationType(id, data);
     } catch (error: any) {
         console.error('Update Integration Type Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const deleteIntegrationTypeAction = async (id: number) => {
+export const deleteIntegrationTypeAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).deleteIntegrationType(id);
+        return await (await getUseCases(token)).deleteIntegrationType(id);
     } catch (error: any) {
         console.error('Delete Integration Type Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getWebhookUrlAction = async (id: number) => {
+export const getWebhookUrlAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).getWebhookUrl(id);
+        return await (await getUseCases(token)).getWebhookUrl(id);
     } catch (error: any) {
         console.error('Get Webhook URL Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const listWebhooksAction = async (id: number) => {
+export const listWebhooksAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).listWebhooks(id);
+        return await (await getUseCases(token)).listWebhooks(id);
     } catch (error: any) {
         console.error('List Webhooks Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const deleteWebhookAction = async (id: number, webhookId: string) => {
+export const deleteWebhookAction = async (id: number, webhookId: string, token?: string | null) => {
     try {
-        return await (await getUseCases()).deleteWebhook(id, webhookId);
+        return await (await getUseCases(token)).deleteWebhook(id, webhookId);
     } catch (error: any) {
         console.error('Delete Webhook Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const verifyWebhooksAction = async (id: number) => {
+export const verifyWebhooksAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).verifyWebhooks(id);
+        return await (await getUseCases(token)).verifyWebhooks(id);
     } catch (error: any) {
         console.error('Verify Webhooks Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const createWebhookAction = async (id: number) => {
+export const createWebhookAction = async (id: number, token?: string | null) => {
     try {
-        return await (await getUseCases()).createWebhook(id);
+        return await (await getUseCases(token)).createWebhook(id);
     } catch (error: any) {
         console.error('Create Webhook Action Error:', error.message);
         throw new Error(error.message);
@@ -315,9 +315,9 @@ export const getIntegrationsSimpleAction = async (businessId?: number): Promise<
 // Integration Categories
 // ============================================
 
-export const getIntegrationCategoriesAction = async () => {
+export const getIntegrationCategoriesAction = async (token?: string | null) => {
     try {
-        return await (await getUseCases()).getIntegrationCategories();
+        return await (await getUseCases(token)).getIntegrationCategories();
     } catch (error: any) {
         console.error('Get Integration Categories Action Error:', error.message);
         throw new Error(error.message);
