@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { 
-    PlayIcon, 
-    ArrowPathIcon, 
-    PencilIcon, 
-    PowerIcon, 
-    TrashIcon 
+import {
+    PlayIcon,
+    ArrowPathIcon,
+    PencilIcon,
+    PowerIcon,
+    TrashIcon
 } from '@heroicons/react/24/outline';
 import { useIntegrations } from '../hooks/useIntegrations';
 import { useIntegrationEvents } from '../hooks/useIntegrationEvents';
@@ -77,7 +77,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     useEffect(() => {
         const fetchIntegrationTypes = async () => {
             try {
-                const response = await getActiveIntegrationTypesAction();
+                const token = TokenStorage.getSessionToken();
+                const response = await getActiveIntegrationTypesAction(token);
                 if (response.success && response.data) {
                     const options = response.data.map((type) => ({
                         value: type.code || type.name.toLowerCase().replace(/\s+/g, '_'),
@@ -100,7 +101,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     });
     const [syncFilters, setSyncFilters] = useState<SyncOrdersParams>(initialSyncFilters);
     const [syncing, setSyncing] = useState(false);
-    
+
     // Estados para el progreso de sincronización en tiempo real
     const [syncProgress, setSyncProgress] = useState<{
         total: number;
@@ -116,7 +117,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             timestamp: Date;
         }>;
     } | null>(null);
-    
+
     // Estados para las opciones de filtros dinámicos desde la BD
     const [orderStatusOptions, setOrderStatusOptions] = useState<Array<{ value: string; label: string; mappedStatus?: string }>>([]);
     const [financialStatusOptions, setFinancialStatusOptions] = useState<Array<{ value: string; label: string; mappedStatus?: string }>>([]);
@@ -128,13 +129,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
     // Obtener businessId del usuario actual
     const [currentBusinessId, setCurrentBusinessId] = useState<number | undefined>(undefined);
-    
+
     useEffect(() => {
         const businessesData = TokenStorage.getBusinessesData();
         if (businessesData && businessesData.length > 0) {
             // Usar el primer business o el activo si existe
             const activeBusinessId = localStorage.getItem('active_business_id');
-            const businessId = activeBusinessId 
+            const businessId = activeBusinessId
                 ? parseInt(activeBusinessId, 10)
                 : businessesData[0].id;
             setCurrentBusinessId(businessId);
@@ -161,16 +162,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 console.log('✅ [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
                 return;
             }
-            
+
             // El evento puede tener los datos en event.data directamente o en event.data.data
             const eventData = event.data?.data || event.data || {};
             const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
             const orderId = eventData.order_id || event.metadata?.order_id;
             const createdAt = eventData.created_at || eventData.synced_at || event.metadata?.created_at || null;
             const orderStatus = eventData.status || event.metadata?.status || null;
-            
+
             console.log('✅ [IntegrationList] Actualizando progreso para orden creada:', orderNumber);
-            
+
             // Actualizar progreso
             setSyncProgress(prev => {
                 console.log('✅ [IntegrationList] Estado anterior del progreso:', prev);
@@ -206,10 +207,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 console.log('✅ [IntegrationList] Nuevo estado (con prev):', newState);
                 return newState;
             });
-            
+
             // Reproducir sonido de notificación
             playNotificationSound();
-            
+
             // Mostrar toast de éxito
             showToast(
                 `✅ Orden creada: #${orderNumber}`,
@@ -230,7 +231,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     runId: 'run1',
                     hypothesisId: 'G'
                 })
-            }).catch(() => {});
+            }).catch(() => { });
             // #endregion
             console.log('🔄 [IntegrationList] Evento order.updated recibido:', event);
             // Solo procesar si es de la integración que está sincronizando
@@ -248,21 +249,21 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         runId: 'run1',
                         hypothesisId: 'G'
                     })
-                }).catch(() => {});
+                }).catch(() => { });
                 // #endregion
                 console.log('🔄 [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
                 return;
             }
-            
+
             // El evento puede tener los datos en event.data directamente o en event.data.data
             const eventData = event.data?.data || event.data || {};
             const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
             const orderId = eventData.order_id || event.metadata?.order_id;
             const createdAt = eventData.created_at || eventData.updated_at || event.metadata?.created_at || null;
             const orderStatus = eventData.status || event.metadata?.status || null;
-            
+
             console.log('🔄 [IntegrationList] Actualizando progreso para orden actualizada:', orderNumber);
-            
+
             // Actualizar progreso
             setSyncProgress(prev => {
                 console.log('🔄 [IntegrationList] Estado anterior del progreso:', prev);
@@ -298,10 +299,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 console.log('🔄 [IntegrationList] Nuevo estado (con prev):', newState);
                 return newState;
             });
-            
+
             // Reproducir sonido de notificación
             playNotificationSound();
-            
+
             // Mostrar toast de éxito
             showToast(
                 `🔄 Orden actualizada: #${orderNumber}`,
@@ -315,7 +316,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 console.log('❌ [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
                 return;
             }
-            
+
             // El evento puede tener los datos en event.data directamente o en event.data.data
             const eventData = event.data?.data || event.data || {};
             const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
@@ -323,9 +324,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             const error = eventData.error || event.metadata?.error || '';
             const createdAt = eventData.created_at || eventData.rejected_at || event.metadata?.created_at || null;
             const orderStatus = eventData.status || event.metadata?.status || null;
-            
+
             console.log('❌ [IntegrationList] Actualizando progreso para orden rechazada:', orderNumber);
-            
+
             // Actualizar progreso
             setSyncProgress(prev => {
                 console.log('❌ [IntegrationList] Estado anterior del progreso:', prev);
@@ -363,10 +364,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 console.log('❌ [IntegrationList] Nuevo estado (con prev):', newState);
                 return newState;
             });
-            
+
             // Reproducir sonido de notificación
             playNotificationSound();
-            
+
             // Mostrar toast de error
             showToast(
                 `❌ Orden rechazada: #${orderNumber} - ${reason}${error ? `: ${error}` : ''}`,
@@ -380,13 +381,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 console.log('🔄 [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
                 return;
             }
-            
+
             const integrationId = event.integration_id;
             const integration = integrations.find(i => i.id === integrationId);
             const integrationName = integration?.name || `Integración ${integrationId}`;
-            
+
             console.log('🔄 [IntegrationList] Inicializando progreso para sincronización:', integrationName);
-            
+
             // Inicializar progreso
             setSyncProgress({
                 total: 0,
@@ -395,7 +396,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 updated: 0,
                 orders: []
             });
-            
+
             showToast(
                 `🔄 Sincronización iniciada: ${integrationName}`,
                 'info'
@@ -404,7 +405,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         onSyncCompleted: (event) => {
             // Solo procesar si es de la integración que está sincronizando
             if (syncModal.id && event.integration_id !== syncModal.id) return;
-            
+
             const integrationId = event.integration_id;
             const integration = integrations.find(i => i.id === integrationId);
             const integrationName = integration?.name || `Integración ${integrationId}`;
@@ -414,7 +415,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             const createdOrders = Number(eventData.created_orders) || 0;
             const updatedOrders = Number(eventData.updated_orders) || 0;
             const rejectedOrders = Number(eventData.rejected_orders) || 0;
-            
+
             // Actualizar progreso final
             setSyncProgress(prev => {
                 if (!prev) {
@@ -435,13 +436,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     orders: prev.orders
                 };
             });
-            
+
             // Marcar como completado (pero no cerrar el modal automáticamente)
             setSyncing(false);
-            
+
             // Reproducir sonido de notificación
             playNotificationSound();
-            
+
             showToast(
                 `✅ Sincronización completada: ${integrationName} - Total: ${totalOrders}, Creadas: ${createdOrders}, Actualizadas: ${updatedOrders}, Rechazadas: ${rejectedOrders}`,
                 'success'
@@ -450,20 +451,20 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         onSyncFailed: (event) => {
             // Solo procesar si es de la integración que está sincronizando
             if (syncModal.id && event.integration_id !== syncModal.id) return;
-            
+
             const integrationId = event.integration_id;
             const integration = integrations.find(i => i.id === integrationId);
             const integrationName = integration?.name || `Integración ${integrationId}`;
             // El evento puede tener los datos en event.data directamente o en event.data.data
             const eventData = event.data?.data || event.data || {};
             const error = eventData.error || event.metadata?.error || 'Error desconocido';
-            
+
             // Limpiar progreso
             setSyncProgress(null);
-            
+
             // Reproducir sonido de notificación
             playNotificationSound();
-            
+
             showToast(
                 `❌ Sincronización fallida: ${integrationName} - ${error}`,
                 'error'
@@ -594,18 +595,18 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     const loadStatusMappings = async (integrationTypeId: number) => {
         setLoadingMappings(true);
         try {
-            const response = await getOrderStatusMappingsAction({ 
+            const response = await getOrderStatusMappingsAction({
                 integration_type_id: integrationTypeId,
-                is_active: true 
+                is_active: true
             });
-            
+
             // El backend devuelve { data: [...], total: number }
             // Puede venir con o sin el campo success dependiendo del endpoint
             const mappings: OrderStatusMapping[] = (response as any).data || response.data || [];
-            
+
             console.log('Status mappings response:', response);
             console.log('Status mappings loaded:', mappings);
-            
+
             if (mappings && mappings.length > 0) {
                 // Agrupar por tipo de estado
                 const orderStatusMap = mappings
@@ -615,7 +616,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         label: `${m.original_status}${m.order_status ? ` → ${m.order_status.name}` : ''}`,
                         mappedStatus: m.order_status?.code
                     }));
-                
+
                 const financialStatusMap = mappings
                     .filter(m => SHOPIFY_FINANCIAL_STATUSES.includes(m.original_status))
                     .map(m => ({
@@ -623,7 +624,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         label: `${m.original_status}${m.order_status ? ` → ${m.order_status.name}` : ''}`,
                         mappedStatus: m.order_status?.code
                     }));
-                
+
                 const fulfillmentStatusMap = mappings
                     .filter(m => SHOPIFY_FULFILLMENT_STATUSES.includes(m.original_status))
                     .map(m => ({
@@ -631,18 +632,18 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         label: `${m.original_status}${m.order_status ? ` → ${m.order_status.name}` : ''}`,
                         mappedStatus: m.order_status?.code
                     }));
-                
+
                 console.log('Order status options:', orderStatusMap);
                 console.log('Financial status options:', financialStatusMap);
                 console.log('Fulfillment status options:', fulfillmentStatusMap);
-                
+
                 // Agregar opción "Todos" solo si no existe ya
                 const hasAnyInOrder = orderStatusMap.some(opt => opt.value === 'any');
                 const hasAnyInFinancial = financialStatusMap.some(opt => opt.value === 'any');
                 const hasAnyInFulfillment = fulfillmentStatusMap.some(opt => opt.value === 'any');
-                
+
                 setOrderStatusOptions(
-                    orderStatusMap.length > 0 
+                    orderStatusMap.length > 0
                         ? (hasAnyInOrder ? orderStatusMap : [{ value: 'any', label: 'Todos' }, ...orderStatusMap])
                         : [{ value: 'any', label: 'Todos' }]
                 );
@@ -682,18 +683,19 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             alert('Error: No se encontró la integración');
             return;
         }
-        
+
         const integrationTypeId = integration.integration_type_id;
-        
+
         setSyncModal({ show: true, id, name, integrationTypeId });
-        
+
         // Cargar mapeos de estados
         await loadStatusMappings(integrationTypeId);
-        
+
         // Consultar si hay una sincronización en curso
         try {
             const { getSyncStatusAction } = await import('../../infra/actions');
-            const syncStatus = await getSyncStatusAction(id, currentBusinessId);
+            const token = TokenStorage.getSessionToken();
+            const syncStatus = await getSyncStatusAction(id, currentBusinessId, token);
             if (syncStatus.success && syncStatus.in_progress && syncStatus.sync_state) {
                 // Hay una sincronización en curso, mostrar el estado actual
                 setSyncing(true);
@@ -710,7 +712,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             console.error('Error al consultar estado de sincronización:', error);
             // Continuar normalmente si hay error
         }
-        
+
         // Establecer fecha mínima por defecto a 30 días atrás
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -868,11 +870,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 )}
                 <button
                     onClick={() => toggleActive(integration.id, integration.is_active)}
-                    className={`p-2 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2 ${
-                        integration.is_active
-                            ? 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500'
-                            : 'bg-gray-500 hover:bg-gray-600 text-white focus:ring-gray-500'
-                    }`}
+                    className={`p-2 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2 ${integration.is_active
+                        ? 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500'
+                        : 'bg-gray-500 hover:bg-gray-600 text-white focus:ring-gray-500'
+                        }`}
                     title={integration.is_active ? 'Desactivar integración' : 'Activar integración'}
                     aria-label={integration.is_active ? 'Desactivar integración' : 'Activar integración'}
                 >
@@ -1080,21 +1081,21 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                         <div className="flex justify-between items-center mb-2">
                                             <h4 className="text-sm font-semibold text-gray-700">Progreso de Sincronización</h4>
                                             <span className="text-xs text-gray-500">
-                                                {syncProgress.total > 0 
+                                                {syncProgress.total > 0
                                                     ? `${syncProgress.created + syncProgress.rejected + syncProgress.updated} / ${syncProgress.total}`
                                                     : 'Iniciando...'}
                                             </span>
                                         </div>
-                                        
+
                                         {/* Barra de progreso total con colores */}
                                         <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden flex">
                                             {syncProgress.total > 0 && (
                                                 <>
                                                     {/* Porción verde (creadas) */}
                                                     {syncProgress.created > 0 && (
-                                                        <div 
+                                                        <div
                                                             className="h-full bg-green-500 transition-all duration-300"
-                                                            style={{ 
+                                                            style={{
                                                                 width: `${(syncProgress.created / syncProgress.total) * 100}%`
                                                             }}
                                                             title={`${syncProgress.created} órdenes creadas`}
@@ -1102,9 +1103,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                     )}
                                                     {/* Porción roja (rechazadas) */}
                                                     {syncProgress.rejected > 0 && (
-                                                        <div 
+                                                        <div
                                                             className="h-full bg-red-500 transition-all duration-300"
-                                                            style={{ 
+                                                            style={{
                                                                 width: `${(syncProgress.rejected / syncProgress.total) * 100}%`
                                                             }}
                                                             title={`${syncProgress.rejected} órdenes rechazadas`}
@@ -1112,9 +1113,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                     )}
                                                     {/* Porción amarilla (actualizadas) */}
                                                     {syncProgress.updated > 0 && (
-                                                        <div 
+                                                        <div
                                                             className="h-full bg-yellow-500 transition-all duration-300"
-                                                            style={{ 
+                                                            style={{
                                                                 width: `${(syncProgress.updated / syncProgress.total) * 100}%`
                                                             }}
                                                             title={`${syncProgress.updated} órdenes actualizadas`}
@@ -1123,7 +1124,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                 </>
                                             )}
                                             {syncProgress.total === 0 && (
-                                                <div 
+                                                <div
                                                     className="h-full bg-blue-500 animate-pulse"
                                                     style={{ width: '10%' }}
                                                 ></div>
@@ -1157,24 +1158,22 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                             </div>
                                             <div className="divide-y divide-gray-100">
                                                 {syncProgress.orders.slice(0, 50).map((order, index) => (
-                                                    <div 
+                                                    <div
                                                         key={index}
-                                                        className={`p-3 text-xs ${
-                                                            order.status === 'created' 
-                                                                ? 'bg-green-50 hover:bg-green-100' 
-                                                                : order.status === 'updated'
+                                                        className={`p-3 text-xs ${order.status === 'created'
+                                                            ? 'bg-green-50 hover:bg-green-100'
+                                                            : order.status === 'updated'
                                                                 ? 'bg-blue-50 hover:bg-blue-100'
                                                                 : 'bg-red-50 hover:bg-red-100'
-                                                        } transition-colors`}
+                                                            } transition-colors`}
                                                     >
                                                         <div className="flex items-start justify-between gap-2">
                                                             <div className="flex-1 min-w-0">
                                                                 <div className="flex items-center gap-2 mb-1">
-                                                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                                                        order.status === 'created' ? 'bg-green-500' 
+                                                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${order.status === 'created' ? 'bg-green-500'
                                                                         : order.status === 'updated' ? 'bg-blue-500'
-                                                                        : 'bg-red-500'
-                                                                    }`}></div>
+                                                                            : 'bg-red-500'
+                                                                        }`}></div>
                                                                     <span className="font-medium text-gray-800">
                                                                         #{order.orderNumber}
                                                                     </span>
@@ -1189,8 +1188,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                         Creada: {(() => {
                                                                             try {
                                                                                 const date = new Date(order.createdAt);
-                                                                                return isNaN(date.getTime()) 
-                                                                                    ? order.createdAt 
+                                                                                return isNaN(date.getTime())
+                                                                                    ? order.createdAt
                                                                                     : date.toLocaleString('es-ES', {
                                                                                         year: 'numeric',
                                                                                         month: '2-digit',

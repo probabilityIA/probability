@@ -11,6 +11,7 @@ import {
     syncOrdersAction
 } from '../../infra/actions';
 import { Integration, SyncOrdersParams } from '../../domain/types';
+import { TokenStorage } from '@/shared/utils/token-storage';
 
 export const useIntegrations = () => {
     const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -28,13 +29,14 @@ export const useIntegrations = () => {
         setLoading(true);
         setError(null);
         try {
+            const token = TokenStorage.getSessionToken();
             const response = await getIntegrationsAction({
                 page,
                 page_size: 10,
                 search: search || undefined,
                 type: filterType || undefined,
                 category: filterCategory || undefined,
-            });
+            }, token);
             setIntegrations(response.data || []);
             setTotalPages(response.total_pages);
         } catch (err: any) {
@@ -47,7 +49,8 @@ export const useIntegrations = () => {
 
     const deleteIntegration = async (id: number) => {
         try {
-            await deleteIntegrationAction(id);
+            const token = TokenStorage.getSessionToken();
+            await deleteIntegrationAction(id, token);
             fetchIntegrations();
             return true;
         } catch (err: any) {
@@ -59,10 +62,11 @@ export const useIntegrations = () => {
 
     const toggleActive = async (id: number, isActive: boolean) => {
         try {
+            const token = TokenStorage.getSessionToken();
             if (isActive) {
-                await deactivateIntegrationAction(id);
+                await deactivateIntegrationAction(id, token);
             } else {
-                await activateIntegrationAction(id);
+                await activateIntegrationAction(id, token);
             }
             fetchIntegrations();
             return true;
@@ -75,7 +79,8 @@ export const useIntegrations = () => {
 
     const setAsDefault = async (id: number) => {
         try {
-            await setAsDefaultAction(id);
+            const token = TokenStorage.getSessionToken();
+            await setAsDefaultAction(id, token);
             fetchIntegrations();
             return true;
         } catch (err: any) {
@@ -87,7 +92,8 @@ export const useIntegrations = () => {
 
     const testConnection = async (id: number) => {
         try {
-            const res = await testConnectionAction(id);
+            const token = TokenStorage.getSessionToken();
+            const res = await testConnectionAction(id, token);
             return res;
         } catch (err: any) {
             console.error('Error testing connection:', err);
@@ -97,7 +103,8 @@ export const useIntegrations = () => {
 
     const syncOrders = async (id: number, params?: SyncOrdersParams) => {
         try {
-            const res = await syncOrdersAction(id, params);
+            const token = TokenStorage.getSessionToken();
+            const res = await syncOrdersAction(id, params, token);
             return res;
         } catch (err: any) {
             console.error('Error syncing orders:', err);
