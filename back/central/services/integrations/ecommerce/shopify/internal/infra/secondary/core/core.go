@@ -87,6 +87,8 @@ func (s *ShopifyCore) TestConnection(ctx context.Context, config map[string]inte
 		return fmt.Errorf("el token de acceso (access_token) es requerido")
 	}
 
+	fmt.Printf("🧪 Testing Shopify Connection: Store=%s, TokenLen=%d\n", storeName, len(accessToken))
+
 	valid, _, err := s.client.ValidateToken(ctx, storeName, accessToken)
 	if err != nil {
 		return err // El error ya viene con mensaje descriptivo en español
