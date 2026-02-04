@@ -13,19 +13,31 @@ import {
 } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
-async function getUseCases() {
+async function getUseCases(tokenOverride?: string | null) {
     const cookieStore = await cookies();
-    const token = cookieStore.get('session_token')?.value || null;
+    const token = tokenOverride || cookieStore.get('session_token')?.value || null;
+
+    if (!token) {
+        throw new Error('No se encontró sesión activa (Token ausente)');
+    }
     const repository = new IntegrationApiRepository(token);
     return new IntegrationUseCases(repository);
 }
 
-export const getIntegrationsAction = async (params?: GetIntegrationsParams) => {
+export const getIntegrationsAction = async (params?: GetIntegrationsParams, token?: string) => {
     try {
-        return await (await getUseCases()).getIntegrations(params);
+        return await (await getUseCases(token)).getIntegrations(params);
     } catch (error: any) {
         console.error('Get Integrations Action Error:', error.message);
-        throw new Error(error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al obtener integraciones',
+            data: [],
+            total: 0,
+            page: 1,
+            page_size: 10,
+            total_pages: 0
+        };
     }
 };
 
@@ -47,12 +59,16 @@ export const getIntegrationByTypeAction = async (type: string, businessId?: numb
     }
 };
 
-export const createIntegrationAction = async (data: CreateIntegrationDTO) => {
+export const createIntegrationAction = async (data: CreateIntegrationDTO, token?: string) => {
     try {
-        return await (await getUseCases()).createIntegration(data);
+        return await (await getUseCases(token)).createIntegration(data);
     } catch (error: any) {
         console.error('Create Integration Action Error:', error.message);
-        throw new Error(error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al crear la integración',
+            data: null as any
+        };
     }
 };
 
