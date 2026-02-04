@@ -161,26 +161,42 @@ func (h *ShopifyHandler) initiateOAuthProcess(c *gin.Context, integrationName, s
 	var clientID, redirectURI, scopes string
 
 	if customClientID != "" {
-		// Usar credenciales custom
+		// Usar credenciales custom proporcionadas por el usuario
 		clientID = customClientID
-		// Redirect URI debe ser la misma configurada en la app de Shopify
-		// Asumimos que el usuario configuró la URL base por defecto de nuestra app
 		redirectURI = h.config.Get("SHOPIFY_REDIRECT_URI")
-		// Scopes por defecto si no se especifican (o podríamos pedirlos en el request también)
 		scopes = h.config.Get("SHOPIFY_SCOPES")
 	} else {
-		// Usar credenciales de entorno (legacy/public app)
+		// Usar credenciales globales configuradas por el administrador
 		clientID = h.config.Get("SHOPIFY_CLIENT_ID")
 		redirectURI = h.config.Get("SHOPIFY_REDIRECT_URI")
 		scopes = h.config.Get("SHOPIFY_SCOPES")
 	}
 
-	if clientID == "" || redirectURI == "" || scopes == "" {
-		h.logger.Error().Msg("Configuración OAuth incompleta")
+	// 1. Fallback para Scopes: si no están configurados, usar los mínimos necesarios
+	if scopes == "" {
+		scopes = "read_customers,read_fulfillments,read_orders,write_orders,read_products"
+		h.logger.Info().Msg("SHOPIFY_SCOPES no configurado, usando valores por defecto")
+	}
+
+	// 2. Fallback para Redirect URI: si no está configurada, generarla dinámicamente
+	if redirectURI == "" {
+		scheme := "https"
+		// Si estamos en desarrollo y no hay TLS, usar http
+		if h.config.Get("APP_ENV") == "development" {
+			scheme = "http"
+		}
+		// Construir URL: esquema://host_actual/api/v1/shopify/callback
+		redirectURI = fmt.Sprintf("%s://%s/api/v1/shopify/callback", scheme, c.Request.Host)
+		h.logger.Info().Str("redirect_uri", redirectURI).Msg("SHOPIFY_REDIRECT_URI no configurado, generada URL dinámica")
+	}
+
+	// 3. Validar Client ID (crítico)
+	if clientID == "" {
+		h.logger.Error().Msg("Faltan credenciales críticas para Shopify OAuth (Client ID)")
 		c.JSON(http.StatusInternalServerError, InitiateOAuthResponse{
 			Success: false,
-			Message: "Configuración OAuth incompleta",
-			Error:   "CLIENT_ID, REDIRECT_URI o SCOPES faltantes",
+			Message: "Error de configuración: falta el Client ID de Shopify",
+			Error:   "SHOPIFY_CLIENT_ID is missing",
 		})
 		return
 	}
@@ -296,8 +312,16 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	// Codificar datos para el frontend
 	integrationCode := generateIntegrationCode(stateData.IntegrationName)
 
-	// Almacenar access token en cookie segura (5 minutos de validez)
-	middleware.SetSecureCookie(c, "shopify_temp_token", accessToken, 300)
+	// Almacenar credenciales completas en cookie segura (5 minutos de validez)
+	// Guardamos token, client_id y client_secret para persistirlos después
+	creds := map[string]string{
+		"access_token":  accessToken,
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+	}
+	credsJSON, _ := json.Marshal(creds)
+
+	middleware.SetSecureCookie(c, "shopify_temp_token", string(credsJSON), 300)
 
 	// Redirigir al frontend SIN el token en la URL (seguro)
 	frontendURL := h.config.Get("WEBHOOK_BASE_URL")
@@ -378,11 +402,6 @@ func normalizeShopDomain(domain string) string {
 	}
 
 	return domain
-}
-
-// validateHMAC valida la firma HMAC de Shopify usando el secret por defecto
-func (h *ShopifyHandler) validateHMAC(queryParams url.Values, receivedHMAC string) bool {
-	return h.validateHMACWithSecret(queryParams, receivedHMAC, h.config.Get("SHOPIFY_CLIENT_SECRET"))
 }
 
 // validateHMACWithSecret valida la firma HMAC de Shopify usando un secret específico

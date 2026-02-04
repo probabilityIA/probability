@@ -30,7 +30,7 @@ func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string,
 	mapper.EnrichOrderWithDetails(probabilityOrder, rawPayload)
 
 	// Agregar channel metadata con el payload original si está disponible
-	if rawPayload != nil && len(rawPayload) > 0 {
+	if len(rawPayload) > 0 {
 		now := time.Now()
 		probabilityOrder.ChannelMetadata = &domain.ProbabilityChannelMetadataDTO{
 			ChannelSource: "shopify",
