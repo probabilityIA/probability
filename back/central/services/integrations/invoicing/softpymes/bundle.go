@@ -7,8 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/app"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -38,10 +38,12 @@ func New(
 
 	// 1. Inicializar cliente HTTP de Softpymes
 	apiURL := config.Get("SOFTPYMES_API_URL")
+	logger.Info(context.Background()).
+		Str("api_url", apiURL).
+		Str("env_var", "SOFTPYMES_API_URL").
+		Msg("🔍 DEBUG: Softpymes API URL loaded from environment")
 	if apiURL == "" {
-		apiURL = "https://api.softpymes.com" // Default
-		logger.Warn(context.Background()).
-			Msg("SOFTPYMES_API_URL not configured, using default URL")
+		panic("SOFTPYMES_API_URL not configured")
 	}
 	softpymesClient := client.New(apiURL, logger)
 
@@ -60,11 +62,11 @@ func New(
 	handler := handlers.New(useCase, logger)
 
 	return &Bundle{
-		useCase:        useCase,
-		handler:        handler,
-		client:         softpymesClient,
+		useCase:         useCase,
+		handler:         handler,
+		client:          softpymesClient,
 		coreIntegration: coreIntegration,
-		log:            logger,
+		log:             logger,
 	}
 }
 

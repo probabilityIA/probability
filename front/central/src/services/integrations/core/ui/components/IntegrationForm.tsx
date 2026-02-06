@@ -6,6 +6,7 @@ import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
 import { Alert } from '@/shared/ui';
 import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
+import { SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
 
 // IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
@@ -13,6 +14,7 @@ const INTEGRATION_TYPE_IDS = {
     WHATSAPP: 2,
     MERCADO_LIBRE: 3,
     WOOCOMMERCE: 4,
+    SOFTPYMES: 5,
 } as const;
 
 interface IntegrationFormProps {
@@ -259,6 +261,24 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                     }}
                     onTestConnection={handleWhatsAppTest}
                     onRefresh={onSuccess}
+                />
+            );
+        }
+
+        // Show edit form for Softpymes
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SOFTPYMES) {
+            console.log('✅ Usando SoftpymesEditForm');
+            return (
+                <SoftpymesEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
                 />
             );
         }
