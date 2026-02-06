@@ -57,7 +57,7 @@ func New(
 		repos.Config,
 		repos.SyncLog,
 		repos.CreditNote,
-		nil,               // Order repository - se debe inyectar desde orders module
+		repos.Order,       // Order repository - implementado localmente
 		integrationCore,   // Integration Core (reemplaza provider repos y client)
 		nil,               // Encryption - TODO: agregar cuando esté disponible
 		eventPublisher,    // Event publisher (RabbitMQ)

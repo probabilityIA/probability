@@ -21,6 +21,7 @@ type Repositories struct {
 	Config          ports.IInvoicingConfigRepository
 	SyncLog         ports.IInvoiceSyncLogRepository
 	CreditNote      ports.ICreditNoteRepository
+	Order           ports.IOrderRepository
 }
 
 // New crea una nueva instancia de todos los repositorios
@@ -38,5 +39,6 @@ func New(database db.IDatabase, logger log.ILogger) *Repositories {
 		Config:       NewInvoicingConfigRepository(baseRepo),
 		SyncLog:      NewInvoiceSyncLogRepository(baseRepo),
 		CreditNote:   NewCreditNoteRepository(baseRepo),
+		Order:        NewOrderRepository(baseRepo),
 	}
 }
