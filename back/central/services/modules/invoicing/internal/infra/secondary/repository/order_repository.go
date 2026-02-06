@@ -176,3 +176,94 @@ func (r *OrderRepository) parseOrderItems(itemsJSON []byte) ([]ports.OrderItemDa
 
 	return items, nil
 }
+
+// GetInvoiceableOrders obtiene órdenes facturables paginadas
+// Filtra por:
+// - business_id (multi-tenant isolation)
+//   - Si businessID = 0 (super admin): retorna órdenes de TODOS los businesses
+//   - Si businessID != 0 (usuario normal): retorna solo órdenes de ese business
+// - invoiceable = true
+// - invoice_id IS NULL (no facturadas previamente)
+func (r *OrderRepository) GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*ports.OrderData, int64, error) {
+	var orders []models.Order
+	var total int64
+
+	// Validar parámetros de paginación
+	if page < 1 {
+		page = 1
+	}
+	if pageSize < 1 || pageSize > 100 {
+		pageSize = 20
+	}
+
+	// Construir query base
+	countQuery := r.db.Conn(ctx).Model(&models.Order{}).
+		Where("invoiceable = ?", true).
+		Where("invoice_id IS NULL")
+
+	// Super admin (businessID = 0): ver todas las órdenes de todos los businesses
+	// Usuario normal: solo su business
+	if businessID != 0 {
+		countQuery = countQuery.Where("business_id = ?", businessID)
+		r.log.Debug(ctx).
+			Uint("business_id", businessID).
+			Msg("Filtering by specific business (normal user)")
+	} else {
+		r.log.Debug(ctx).
+			Msg("Super admin mode: listing orders from ALL businesses")
+	}
+
+	if err := countQuery.Count(&total).Error; err != nil {
+		r.log.Error(ctx).
+			Err(err).
+			Uint("business_id", businessID).
+			Msg("Failed to count invoiceable orders")
+		return nil, 0, fmt.Errorf("failed to count invoiceable orders: %w", err)
+	}
+
+	// Si no hay órdenes, retornar inmediatamente
+	if total == 0 {
+		return []*ports.OrderData{}, 0, nil
+	}
+
+	// Construir query de resultados
+	offset := (page - 1) * pageSize
+	resultsQuery := r.db.Conn(ctx).
+		Where("invoiceable = ?", true).
+		Where("invoice_id IS NULL").
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(pageSize)
+
+	// Aplicar filtro de business si no es super admin
+	if businessID != 0 {
+		resultsQuery = resultsQuery.Where("business_id = ?", businessID)
+	}
+
+	err := resultsQuery.Find(&orders).Error
+
+	if err != nil {
+		r.log.Error(ctx).
+			Err(err).
+			Uint("business_id", businessID).
+			Msg("Failed to get invoiceable orders")
+		return nil, 0, fmt.Errorf("failed to get invoiceable orders: %w", err)
+	}
+
+	// Mapear a OrderData
+	orderDataList := make([]*ports.OrderData, len(orders))
+	for i, order := range orders {
+		orderDataList[i] = r.mapToOrderData(&order)
+	}
+
+	r.log.Info(ctx).
+		Uint("business_id", businessID).
+		Bool("is_super_admin", businessID == 0).
+		Int64("total", total).
+		Int("page", page).
+		Int("page_size", pageSize).
+		Int("returned", len(orderDataList)).
+		Msg("Retrieved invoiceable orders")
+
+	return orderDataList, total, nil
+}

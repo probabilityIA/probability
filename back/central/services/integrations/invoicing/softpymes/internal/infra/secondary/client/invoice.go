@@ -39,7 +39,8 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 		return fmt.Errorf("api_secret not found in credentials")
 	}
 
-	// Extraer referer del config
+	// Extraer referer del config de la integración
+	// El config contiene: api_url, referer, company_nit, company_name, test_mode
 	config, ok := invoiceData["config"].(map[string]interface{})
 	if !ok {
 		return fmt.Errorf("config not found in invoice data")
@@ -58,10 +59,10 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 
 	// Preparar request de factura (simplificado por ahora)
 	invoiceReq := map[string]interface{}{
-		"customer":    invoiceData["customer"],
-		"items":       invoiceData["items"],
-		"total":       invoiceData["total"],
-		"order_id":    invoiceData["order_id"],
+		"customer": invoiceData["customer"],
+		"items":    invoiceData["items"],
+		"total":    invoiceData["total"],
+		"order_id": invoiceData["order_id"],
 	}
 
 	var invoiceResp InvoiceResponse
@@ -70,9 +71,11 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetAuthToken(token).
+		SetHeader("Referer", referer). // Header requerido por Softpymes
 		SetBody(invoiceReq).
 		SetResult(&invoiceResp).
-		Post("/sales_invoice/")
+		SetDebug(true).
+		Post("/app/integration/sales_invoice/") // URL correcta según documentación
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to create invoice")

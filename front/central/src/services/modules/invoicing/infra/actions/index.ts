@@ -21,6 +21,9 @@ import type {
   InvoiceFilters,
   ProviderFilters,
   ConfigFilters,
+  PaginatedInvoiceableOrders,
+  BulkCreateInvoicesDTO,
+  BulkCreateResult,
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -209,5 +212,57 @@ export async function updateConfigAction(id: number, data: UpdateConfigDTO): Pro
 export async function deleteConfigAction(id: number): Promise<void> {
   return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}`, {
     method: 'DELETE',
+  });
+}
+
+// ============================================
+// BULK INVOICES
+// ============================================
+
+/**
+ * Obtiene órdenes facturables (invoiceable=true, invoice_id IS NULL)
+ *
+ * @param page - Número de página (default: 1)
+ * @param pageSize - Tamaño de página (default: 100)
+ * @param businessId - Filtro por business (opcional). Solo aplica para super admin (business_id=0)
+ *
+ * Super admin (business_id = 0):
+ *   - Sin businessId: lista órdenes de TODOS los businesses
+ *   - Con businessId: filtra solo ese business específico
+ * Usuario normal:
+ *   - Ignora businessId, siempre filtra por su business_id del JWT
+ */
+export async function getInvoiceableOrdersAction(
+  page: number = 1,
+  pageSize: number = 100,
+  businessId?: number | null
+): Promise<PaginatedInvoiceableOrders> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+
+  // Si se especifica un businessId, agregarlo al query string
+  if (businessId !== null && businessId !== undefined) {
+    params.append('business_id', businessId.toString());
+  }
+
+  return fetchWithAuth(
+    `${API_BASE_URL}/invoicing/invoices/invoiceable-orders?${params.toString()}`,
+    { cache: 'no-store' }
+  );
+}
+
+/**
+ * Crea facturas masivamente
+ * NOTA: Esta es una Server Action, solo usar desde Server Components
+ * Para Client Components, usar el repository bulk-invoices-repository.ts
+ */
+export async function createBulkInvoicesAction(
+  dto: BulkCreateInvoicesDTO
+): Promise<BulkCreateResult> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/bulk`, {
+    method: 'POST',
+    body: JSON.stringify(dto),
   });
 }

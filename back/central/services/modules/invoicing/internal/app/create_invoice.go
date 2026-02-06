@@ -93,8 +93,8 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	invoice := &entities.Invoice{
 		OrderID:                order.ID,
 		BusinessID:             order.BusinessID,
-		InvoicingProviderID:    &integrationID, // Mantener para dual-read
-		InvoicingIntegrationID: &integrationID, // Nuevo campo
+		InvoicingProviderID:    nil,            // NULL - campo legacy deprecado (FK hacia invoicing_providers)
+		InvoicingIntegrationID: &integrationID, // Campo actual (FK hacia integrations)
 		Subtotal:               order.Subtotal,
 		Tax:                    order.Tax,
 		Discount:               order.Discount,
@@ -220,17 +220,17 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	invoiceData := map[string]interface{}{
-		"credentials":    credentialsMap,
-		"customer":       customerData,
-		"items":          invoiceItems2,
-		"total":          invoice.TotalAmount,
-		"subtotal":       invoice.Subtotal,
-		"tax":            invoice.Tax,
-		"discount":       invoice.Discount,
-		"shipping_cost":  invoice.ShippingCost,
-		"currency":       invoice.Currency,
-		"order_id":       invoice.OrderID,
-		"invoice_config": config.InvoiceConfig,
+		"credentials":  credentialsMap,
+		"customer":     customerData,
+		"items":        invoiceItems2,
+		"total":        invoice.TotalAmount,
+		"subtotal":     invoice.Subtotal,
+		"tax":          invoice.Tax,
+		"discount":     invoice.Discount,
+		"shipping_cost": invoice.ShippingCost,
+		"currency":     invoice.Currency,
+		"order_id":     invoice.OrderID,
+		"config":       integration.Config, // Config de la integración (contiene referer, api_url, etc)
 	}
 
 	// 16. Enviar factura al proveedor usando el bundle de Softpymes
