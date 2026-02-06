@@ -39,18 +39,24 @@ type IHandler interface {
 	GetSummary(c *gin.Context)
 	GetStats(c *gin.Context)
 	GetTrends(c *gin.Context)
+
+	// Creación masiva de facturas
+	ListInvoiceableOrders(c *gin.Context)
+	BulkCreateInvoices(c *gin.Context)
 }
 
 // handler implementa IHandler
 type handler struct {
-	useCase ports.IUseCase
-	log     log.ILogger
+	useCase   ports.IUseCase
+	orderRepo ports.IOrderRepository
+	log       log.ILogger
 }
 
 // New crea un nuevo handler de facturación
-func New(useCase ports.IUseCase, logger log.ILogger) IHandler {
+func New(useCase ports.IUseCase, orderRepo ports.IOrderRepository, logger log.ILogger) IHandler {
 	return &handler{
-		useCase: useCase,
-		log:     logger.WithModule("invoicing.handler"),
+		useCase:   useCase,
+		orderRepo: orderRepo,
+		log:       logger.WithModule("invoicing.handler"),
 	}
 }

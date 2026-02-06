@@ -328,3 +328,41 @@ export interface InvoicingStats {
   success_rate: number;
   last_invoice_date?: string;
 }
+
+// ===================================
+// CREACIÓN MASIVA DE FACTURAS
+// ===================================
+
+export interface InvoiceableOrder {
+  id: string;
+  business_id: number;
+  order_number: string;
+  customer_name: string;
+  total_amount: number;
+  currency: string;
+  created_at: string;
+}
+
+export interface PaginatedInvoiceableOrders {
+  data: InvoiceableOrder[];
+  total: number;
+  page: number;
+  page_size: number;
+}
+
+export interface BulkCreateInvoicesDTO {
+  order_ids: string[];
+}
+
+export interface BulkCreateResult {
+  created: number;
+  failed: number;
+  results: BulkInvoiceResult[];
+}
+
+export interface BulkInvoiceResult {
+  order_id: string;
+  success: boolean;
+  invoice_id?: number;
+  error?: string;
+}

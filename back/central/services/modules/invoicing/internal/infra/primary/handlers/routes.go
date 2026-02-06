@@ -18,6 +18,10 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice) // Cancelar factura
 			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)   // Reintentar factura
 			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote) // Crear nota de crédito
+
+			// Creación masiva de facturas
+			invoices.GET("/invoiceable-orders", middleware.JWT(), h.ListInvoiceableOrders) // Listar órdenes facturables
+			invoices.POST("/bulk", middleware.JWT(), h.BulkCreateInvoices)                 // Crear facturas masivamente
 		}
 
 		// Proveedores de facturación (DEPRECADO - Migrado a integrations/core)

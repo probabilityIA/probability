@@ -2,6 +2,7 @@ package mappers
 
 import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
 )
 
@@ -192,5 +193,18 @@ func CreditNoteToResponse(note *entities.CreditNote) *response.CreditNote {
 		PDFURL:           note.PDFURL,
 		XMLURL:           note.XMLURL,
 		Metadata:         note.Metadata,
+	}
+}
+
+// ToInvoiceableOrderResponse convierte OrderData a InvoiceableOrder response
+func ToInvoiceableOrderResponse(order *ports.OrderData) response.InvoiceableOrder {
+	return response.InvoiceableOrder{
+		ID:           order.ID,
+		BusinessID:   order.BusinessID,
+		OrderNumber:  order.OrderNumber,
+		CustomerName: order.CustomerName,
+		TotalAmount:  order.TotalAmount,
+		Currency:     order.Currency,
+		CreatedAt:    order.CreatedAt,
 	}
 }

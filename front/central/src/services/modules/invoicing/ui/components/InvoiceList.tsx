@@ -11,6 +11,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Spinner } from '@/shared/ui/spinner';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
+import { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
 import { getInvoicesAction, cancelInvoiceAction, retryInvoiceAction } from '../../infra/actions';
 import type { Invoice, InvoiceFilters } from '../../domain/types';
 
@@ -25,6 +26,7 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
   const [loading, setLoading] = useState(true);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showBulkModal, setShowBulkModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   const loadInvoices = async () => {
@@ -199,6 +201,17 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
 
   return (
     <>
+      {/* Header con botón de creación masiva */}
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Facturas Electrónicas</h2>
+        <Button
+          variant="primary"
+          onClick={() => setShowBulkModal(true)}
+        >
+          + Crear Facturas desde Órdenes
+        </Button>
+      </div>
+
       <Table
         data={invoices}
         columns={columns}
@@ -214,6 +227,15 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
         confirmText="Sí, cancelar"
         cancelText="No, volver"
         type="danger"
+      />
+
+      <BulkCreateInvoiceModal
+        isOpen={showBulkModal}
+        onClose={() => setShowBulkModal(false)}
+        onSuccess={() => {
+          // Recargar lista de facturas después de crear
+          loadInvoices();
+        }}
       />
     </>
   );

@@ -226,6 +226,7 @@ type OrderItemData struct {
 type IOrderRepository interface {
 	GetByID(ctx context.Context, orderID string) (*OrderData, error)
 	UpdateInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error
+	GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*OrderData, int64, error)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -272,4 +273,7 @@ type IUseCase interface {
 	GetSummary(ctx context.Context, businessID uint, period string) (*entities.InvoiceSummary, error)
 	GetDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error)
 	GetTrends(ctx context.Context, businessID uint, startDate, endDate, granularity, metric string) (*entities.TrendData, error)
+
+	// Creación masiva de facturas
+	BulkCreateInvoices(ctx context.Context, dto *dtos.BulkCreateInvoicesDTO) (*dtos.BulkCreateResult, error)
 }
