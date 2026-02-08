@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { CookieStorage } from '@/shared/utils/cookie-storage';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
@@ -35,6 +35,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   // Bulk job progress tracking (SSE)
   const [bulkProgress, setBulkProgress] = useState<InvoiceSSEEventData | null>(null);
   const [bulkCompleted, setBulkCompleted] = useState(false);
+  const submittingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Super admin filters
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -51,6 +52,11 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   }, []);
 
   const handleBulkJobCompleted = useCallback((data: InvoiceSSEEventData) => {
+    // Clear timeout when SSE event arrives
+    if (submittingTimeoutRef.current) {
+      clearTimeout(submittingTimeoutRef.current);
+      submittingTimeoutRef.current = null;
+    }
     setBulkProgress(data);
     setBulkCompleted(true);
     setSubmitting(false);
@@ -77,6 +83,12 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       setSelectedBusinessId(null);
       setBulkProgress(null);
       setBulkCompleted(false);
+      setSubmitting(false);
+      // Clear timeout if modal closes
+      if (submittingTimeoutRef.current) {
+        clearTimeout(submittingTimeoutRef.current);
+        submittingTimeoutRef.current = null;
+      }
     }
   }, [isOpen, hasLoadedOnce]);
 
@@ -175,11 +187,24 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
         order_ids: selectedOrderIds,
         ...(isSuperAdmin && selectedBusinessId ? { business_id: selectedBusinessId } : {}),
       });
+
       // Async job started - SSE will track progress in real-time
+      // Set a fallback timeout in case SSE events don't arrive (connection issues, etc.)
+      submittingTimeoutRef.current = setTimeout(() => {
+        console.warn('SSE bulk_job.completed event did not arrive within 30 seconds - resetting UI state');
+        setSubmitting(false);
+        setBulkCompleted(true);
+        // Show a message to user that they should check the invoice list
+        alert('El proceso de facturación se ha iniciado. Revisa la lista de facturas para ver el resultado.');
+      }, 30000); // 30 seconds timeout
+
       // Don't close modal yet, let the progress bar show
     } catch (err) {
+      console.error('Error creating bulk invoices:', err);
       alert(err instanceof Error ? err.message : 'Error al crear facturas');
       setSubmitting(false);
+      setBulkProgress(null);
+      setBulkCompleted(false);
     }
   };
 
