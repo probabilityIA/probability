@@ -72,7 +72,7 @@ func (h *handler) ListInvoiceableOrders(c *gin.Context) {
 		Msg("Listing invoiceable orders")
 
 	// Obtener órdenes facturables del repositorio
-	orders, total, err := h.orderRepo.GetInvoiceableOrders(ctx, filterBusinessID, page, pageSize)
+	orders, total, err := h.repo.GetInvoiceableOrders(ctx, filterBusinessID, page, pageSize)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Msg("Failed to get invoiceable orders")
 		c.JSON(500, gin.H{"error": "Failed to get invoiceable orders"})

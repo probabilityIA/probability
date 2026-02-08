@@ -2,16 +2,15 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 )
 
 // CancelInvoice cancela una factura emitida
-// DEPRECATED: Esta funcionalidad fue migrada a integrations/invoicing/softpymes/
-// TODO: Re-implementar usando integrationCore si es necesario
+// NOT IMPLEMENTED: Pendiente de re-implementar usando integrationCore + softpymes bundle
 func (uc *useCase) CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error {
-	return fmt.Errorf("CancelInvoice is deprecated and was moved to softpymes integration")
+	return errors.ErrCancelNotImplemented
 }
 
 /* IMPLEMENTACIÓN ORIGINAL (requiere providerRepo y providerClient que ya no existen):
@@ -20,7 +19,7 @@ func (uc *useCase) CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO
 	uc.log.Info(ctx).Uint("invoice_id", dto.InvoiceID).Msg("Cancelling invoice")
 
 	// 1. Obtener factura
-	invoice, err := uc.invoiceRepo.GetByID(ctx, dto.InvoiceID)
+	invoice, err := uc.repo.GetInvoiceByID(ctx, dto.InvoiceID)
 	if err != nil {
 		return errors.ErrInvoiceNotFound
 	}
@@ -63,7 +62,7 @@ func (uc *useCase) CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO
 	invoice.Status = constants.InvoiceStatusCancelled
 	invoice.CancelledAt = &now
 
-	if err := uc.invoiceRepo.Update(ctx, invoice); err != nil {
+	if err := uc.repo.UpdateInvoice(ctx, invoice); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to update invoice")
 		return err
 	}

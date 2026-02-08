@@ -2,37 +2,33 @@ package repository
 
 import (
 	"context"
+	
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"encoding/json"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-type OrderRepository struct {
-	*Repository
-}
 
-func NewOrderRepository(base *Repository) ports.IOrderRepository {
-	return &OrderRepository{Repository: base}
-}
 
 // OrderItemJSON representa un item de orden parseado desde JSON
+// Los campos usan PascalCase porque así se almacenan en el JSONB de la tabla orders
 type OrderItemJSON struct {
-	ProductID   *string  `json:"product_id"`
-	SKU         string   `json:"sku"`
-	Name        string   `json:"name"`
-	Description *string  `json:"description"`
-	Quantity    int      `json:"quantity"`
-	UnitPrice   float64  `json:"unit_price"`
-	TotalPrice  float64  `json:"total_price"`
-	Tax         float64  `json:"tax"`
-	TaxRate     *float64 `json:"tax_rate"`
-	Discount    float64  `json:"discount"`
+	ProductID   *string  `json:"ProductID"`
+	SKU         string   `json:"ProductSKU"`
+	Name        string   `json:"ProductName"`
+	Description *string  `json:"ProductTitle"`
+	Quantity    int      `json:"Quantity"`
+	UnitPrice   float64  `json:"UnitPrice"`
+	TotalPrice  float64  `json:"TotalPrice"`
+	Tax         float64  `json:"Tax"`
+	TaxRate     *float64 `json:"TaxRate"`
+	Discount    float64  `json:"Discount"`
 }
 
 // GetByID obtiene una orden por su ID y la mapea a OrderData
-func (r *OrderRepository) GetByID(ctx context.Context, orderID string) (*ports.OrderData, error) {
+func (r *Repository) GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error) {
 	var order models.Order
 
 	// Consultar orden (sin preloads innecesarios)
@@ -51,7 +47,7 @@ func (r *OrderRepository) GetByID(ctx context.Context, orderID string) (*ports.O
 }
 
 // UpdateInvoiceInfo actualiza la información de factura en una orden
-func (r *OrderRepository) UpdateInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error {
+func (r *Repository) UpdateOrderInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error {
 	result := r.db.Conn(ctx).Model(&models.Order{}).
 		Where("id = ?", orderID).
 		Updates(map[string]interface{}{
@@ -76,12 +72,12 @@ func (r *OrderRepository) UpdateInvoiceInfo(ctx context.Context, orderID string,
 }
 
 // mapToOrderData convierte un modelo GORM Order a OrderData del dominio
-func (r *OrderRepository) mapToOrderData(order *models.Order) *ports.OrderData {
+func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 	if order == nil {
 		return nil
 	}
 
-	orderData := &ports.OrderData{
+	orderData := &dtos.OrderData{
 		ID:              order.ID,
 		BusinessID:      uint(0),
 		IntegrationID:   order.IntegrationID,
@@ -140,7 +136,7 @@ func (r *OrderRepository) mapToOrderData(order *models.Order) *ports.OrderData {
 			Err(err).
 			Str("order_id", order.ID).
 			Msg("Failed to parse order items from JSON, using empty items")
-		items = []ports.OrderItemData{}
+		items = []dtos.OrderItemData{}
 	}
 	orderData.Items = items
 
@@ -148,9 +144,9 @@ func (r *OrderRepository) mapToOrderData(order *models.Order) *ports.OrderData {
 }
 
 // parseOrderItems parsea el campo Items (JSON) a OrderItemData
-func (r *OrderRepository) parseOrderItems(itemsJSON []byte) ([]ports.OrderItemData, error) {
+func (r *Repository) parseOrderItems(itemsJSON []byte) ([]dtos.OrderItemData, error) {
 	if len(itemsJSON) == 0 {
-		return []ports.OrderItemData{}, nil
+		return []dtos.OrderItemData{}, nil
 	}
 
 	var jsonItems []OrderItemJSON
@@ -158,9 +154,9 @@ func (r *OrderRepository) parseOrderItems(itemsJSON []byte) ([]ports.OrderItemDa
 		return nil, fmt.Errorf("failed to unmarshal items JSON: %w", err)
 	}
 
-	items := make([]ports.OrderItemData, len(jsonItems))
+	items := make([]dtos.OrderItemData, len(jsonItems))
 	for i, jsonItem := range jsonItems {
-		items[i] = ports.OrderItemData{
+		items[i] = dtos.OrderItemData{
 			ProductID:   jsonItem.ProductID,
 			SKU:         jsonItem.SKU,
 			Name:        jsonItem.Name,
@@ -184,7 +180,7 @@ func (r *OrderRepository) parseOrderItems(itemsJSON []byte) ([]ports.OrderItemDa
 //   - Si businessID != 0 (usuario normal): retorna solo órdenes de ese business
 // - invoiceable = true
 // - invoice_id IS NULL (no facturadas previamente)
-func (r *OrderRepository) GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*ports.OrderData, int64, error) {
+func (r *Repository) GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error) {
 	var orders []models.Order
 	var total int64
 
@@ -223,7 +219,7 @@ func (r *OrderRepository) GetInvoiceableOrders(ctx context.Context, businessID u
 
 	// Si no hay órdenes, retornar inmediatamente
 	if total == 0 {
-		return []*ports.OrderData{}, 0, nil
+		return []*dtos.OrderData{}, 0, nil
 	}
 
 	// Construir query de resultados
@@ -251,7 +247,7 @@ func (r *OrderRepository) GetInvoiceableOrders(ctx context.Context, businessID u
 	}
 
 	// Mapear a OrderData
-	orderDataList := make([]*ports.OrderData, len(orders))
+	orderDataList := make([]*dtos.OrderData, len(orders))
 	for i, order := range orders {
 		orderDataList[i] = r.mapToOrderData(&order)
 	}

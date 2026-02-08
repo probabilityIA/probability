@@ -17,6 +17,9 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.GET("/:id", middleware.JWT(), h.GetInvoice)           // Obtener factura
 			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice) // Cancelar factura
 			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)   // Reintentar factura
+			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)       // Cancelar reintentos pendientes
+			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)          // Habilitar reintentos automáticos
+			invoices.GET("/:id/sync-logs", middleware.JWT(), h.GetInvoiceSyncLogs) // Historial de sincronización
 			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote) // Crear nota de crédito
 
 			// Creación masiva de facturas
@@ -50,5 +53,12 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		invoicing.GET("/summary", middleware.JWT(), h.GetSummary) // Resumen general con KPIs
 		invoicing.GET("/stats", middleware.JWT(), h.GetStats)     // Estadísticas detalladas
 		invoicing.GET("/trends", middleware.JWT(), h.GetTrends)   // Tendencias temporales
+
+		// Jobs de facturación masiva (NUEVO - Asíncrono)
+		bulkJobs := invoicing.Group("/bulk-jobs")
+		{
+			bulkJobs.GET("", middleware.JWT(), h.ListBulkJobs)        // Listar jobs
+			bulkJobs.GET("/:id", middleware.JWT(), h.GetBulkJobStatus) // Estado de job
+		}
 	}
 }

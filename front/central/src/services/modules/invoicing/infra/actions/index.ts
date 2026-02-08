@@ -24,6 +24,7 @@ import type {
   PaginatedInvoiceableOrders,
   BulkCreateInvoicesDTO,
   BulkCreateResult,
+  SyncLog,
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -110,6 +111,23 @@ export async function retryInvoiceAction(id: number): Promise<Invoice> {
   return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/retry`, {
     method: 'POST',
   });
+}
+
+export async function cancelRetryAction(id: number): Promise<void> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/retry`, {
+    method: 'DELETE',
+  });
+}
+
+export async function enableRetryAction(id: number): Promise<void> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/retry`, {
+    method: 'PUT',
+  });
+}
+
+export async function getInvoiceSyncLogsAction(id: number): Promise<SyncLog[]> {
+  const response = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/sync-logs`);
+  return response.sync_logs || [];
 }
 
 // ============================================

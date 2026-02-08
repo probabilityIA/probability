@@ -3,12 +3,12 @@ package mappers
 import (
 	"time"
 
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/providers/softpymes/request"
 )
 
 // ToInvoiceRequest convierte un InvoiceRequest de dominio a request de Softpymes
-func ToInvoiceRequest(req *ports.InvoiceRequest) *request.InvoiceRequest {
+func ToInvoiceRequest(req *dtos.InvoiceRequest) *request.InvoiceRequest {
 	// Extraer configuración del proveedor
 	referer := ""
 	branchCode := "001" // Por defecto
@@ -66,7 +66,7 @@ func ToInvoiceRequest(req *ports.InvoiceRequest) *request.InvoiceRequest {
 }
 
 // ToCreditNoteRequest convierte un CreditNoteRequest de dominio a request de Softpymes
-func ToCreditNoteRequest(req *ports.CreditNoteRequest) *request.CreditNoteRequest {
+func ToCreditNoteRequest(req *dtos.CreditNoteRequest) *request.CreditNoteRequest {
 	// Extraer configuración del proveedor
 	referer := ""
 	if req.Provider.Config != nil {

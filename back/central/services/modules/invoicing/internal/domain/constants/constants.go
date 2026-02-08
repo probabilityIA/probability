@@ -32,6 +32,7 @@ const (
 	SyncStatusProcessing = "processing"
 	SyncStatusSuccess    = "success"
 	SyncStatusFailed     = "failed"
+	SyncStatusCancelled  = "cancelled" // Reintento cancelado manualmente
 )
 
 // Tipos de operación de sincronización

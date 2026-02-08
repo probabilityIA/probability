@@ -5,20 +5,13 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-type CreditNoteRepository struct {
-	*Repository
-}
 
-func NewCreditNoteRepository(repo *Repository) ports.ICreditNoteRepository {
-	return &CreditNoteRepository{Repository: repo}
-}
 
-func (r *CreditNoteRepository) Create(ctx context.Context, note *entities.CreditNote) error {
+func (r *Repository) CreateCreditNote(ctx context.Context, note *entities.CreditNote) error {
 	model := mappers.CreditNoteToModel(note)
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -30,7 +23,7 @@ func (r *CreditNoteRepository) Create(ctx context.Context, note *entities.Credit
 	return nil
 }
 
-func (r *CreditNoteRepository) GetByID(ctx context.Context, id uint) (*entities.CreditNote, error) {
+func (r *Repository) GetCreditNoteByID(ctx context.Context, id uint) (*entities.CreditNote, error) {
 	var model models.CreditNote
 
 	if err := r.db.Conn(ctx).First(&model, id).Error; err != nil {
@@ -40,7 +33,7 @@ func (r *CreditNoteRepository) GetByID(ctx context.Context, id uint) (*entities.
 	return mappers.CreditNoteToDomain(&model), nil
 }
 
-func (r *CreditNoteRepository) GetByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.CreditNote, error) {
+func (r *Repository) GetCreditNotesByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.CreditNote, error) {
 	var models []*models.CreditNote
 
 	if err := r.db.Conn(ctx).
@@ -53,7 +46,7 @@ func (r *CreditNoteRepository) GetByInvoiceID(ctx context.Context, invoiceID uin
 	return mappers.CreditNoteListToDomain(models), nil
 }
 
-func (r *CreditNoteRepository) List(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error) {
+func (r *Repository) ListCreditNotes(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error) {
 	var modelsList []*models.CreditNote
 
 	query := r.db.Conn(ctx).Model(&models.CreditNote{})
@@ -86,7 +79,7 @@ func (r *CreditNoteRepository) List(ctx context.Context, filters map[string]inte
 	return mappers.CreditNoteListToDomain(modelsList), nil
 }
 
-func (r *CreditNoteRepository) Update(ctx context.Context, note *entities.CreditNote) error {
+func (r *Repository) UpdateCreditNote(ctx context.Context, note *entities.CreditNote) error {
 	model := mappers.CreditNoteToModel(note)
 
 	if err := r.db.Conn(ctx).Save(model).Error; err != nil {

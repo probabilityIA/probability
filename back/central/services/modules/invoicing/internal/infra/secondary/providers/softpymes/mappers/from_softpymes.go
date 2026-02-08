@@ -1,19 +1,19 @@
 package mappers
 
 import (
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/providers/softpymes/response"
 )
 
 // FromInvoiceResponse convierte una respuesta de Softpymes a InvoiceResponse de dominio
-func FromInvoiceResponse(resp *response.InvoiceResponse) *ports.InvoiceResponse {
+func FromInvoiceResponse(resp *response.InvoiceResponse) *dtos.InvoiceResponse {
 	if resp == nil || resp.Data == nil {
 		return nil
 	}
 
 	issuedAt := resp.Data.IssuedAt.Format("2006-01-02T15:04:05Z07:00")
 
-	return &ports.InvoiceResponse{
+	return &dtos.InvoiceResponse{
 		InvoiceNumber: resp.Data.InvoiceNumber,
 		ExternalID:    resp.Data.InvoiceID,
 		InvoiceURL:    &resp.Data.InvoiceURL,
@@ -32,14 +32,14 @@ func FromInvoiceResponse(resp *response.InvoiceResponse) *ports.InvoiceResponse 
 }
 
 // FromCreditNoteResponse convierte una respuesta de Softpymes a CreditNoteResponse de dominio
-func FromCreditNoteResponse(resp *response.CreditNoteResponse) *ports.CreditNoteResponse {
+func FromCreditNoteResponse(resp *response.CreditNoteResponse) *dtos.CreditNoteResponse {
 	if resp == nil || resp.Data == nil {
 		return nil
 	}
 
 	issuedAt := resp.Data.IssuedAt.Format("2006-01-02T15:04:05Z07:00")
 
-	return &ports.CreditNoteResponse{
+	return &dtos.CreditNoteResponse{
 		CreditNoteNumber: resp.Data.NoteNumber,
 		ExternalID:       resp.Data.NoteID,
 		NoteURL:          &resp.Data.NoteURL,

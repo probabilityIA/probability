@@ -17,6 +17,8 @@ type IHandler interface {
 	GetInvoice(c *gin.Context)
 	CancelInvoice(c *gin.Context)
 	RetryInvoice(c *gin.Context)
+	CancelRetry(c *gin.Context)
+	GetInvoiceSyncLogs(c *gin.Context)
 
 	// Notas de crédito
 	CreateCreditNote(c *gin.Context)
@@ -47,16 +49,16 @@ type IHandler interface {
 
 // handler implementa IHandler
 type handler struct {
-	useCase   ports.IUseCase
-	orderRepo ports.IOrderRepository
-	log       log.ILogger
+	useCase ports.IUseCase
+	repo    ports.IRepository
+	log     log.ILogger
 }
 
 // New crea un nuevo handler de facturación
-func New(useCase ports.IUseCase, orderRepo ports.IOrderRepository, logger log.ILogger) IHandler {
+func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger) IHandler {
 	return &handler{
-		useCase:   useCase,
-		orderRepo: orderRepo,
-		log:       logger.WithModule("invoicing.handler"),
+		useCase: useCase,
+		repo:    repo,
+		log:     logger.WithModule("invoicing.handler"),
 	}
 }
