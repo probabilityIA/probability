@@ -12,7 +12,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 )
 
 // CreateInvoice crea una factura electrónica para una orden
@@ -20,7 +19,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	uc.log.Info(ctx).Str("order_id", dto.OrderID).Msg("Creating invoice for order")
 
 	// 1. Obtener datos de la orden
-	order, err := uc.orderRepo.GetByID(ctx, dto.OrderID)
+	order, err := uc.repo.GetOrderByID(ctx, dto.OrderID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get order")
 		return nil, fmt.Errorf("failed to get order: %w", err)
@@ -33,7 +32,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	// 3. Obtener configuración de facturación para la integración
-	config, err := uc.configRepo.GetByIntegration(ctx, order.IntegrationID)
+	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get invoicing config")
 		return nil, errors.ErrProviderNotConfigured
@@ -61,7 +60,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	// 5. Verificar si ya existe una factura para esta orden e integración
-	exists, err := uc.invoiceRepo.ExistsForOrder(ctx, order.ID, integrationID)
+	exists, err := uc.repo.InvoiceExistsForOrder(ctx, order.ID, integrationID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to check if invoice exists")
 		return nil, fmt.Errorf("failed to check invoice existence: %w", err)
@@ -131,7 +130,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	// 11. Guardar factura en BD (estado pending)
-	if err := uc.invoiceRepo.Create(ctx, invoice); err != nil {
+	if err := uc.repo.CreateInvoice(ctx, invoice); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to create invoice in database")
 		return nil, fmt.Errorf("failed to create invoice: %w", err)
 	}
@@ -139,9 +138,13 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	// 12. Guardar items de factura
 	for _, item := range invoiceItems {
 		item.InvoiceID = invoice.ID
-		if err := uc.invoiceItemRepo.Create(ctx, item); err != nil {
-			uc.log.Error(ctx).Err(err).Msg("Failed to create invoice item")
-			// No retornamos error aquí, intentamos continuar
+		if err := uc.repo.CreateInvoiceItem(ctx, item); err != nil {
+			uc.log.Error(ctx).Err(err).Msg("Failed to create invoice item - cleaning up invoice")
+			// Cleanup: eliminar la factura incompleta para evitar items parciales
+			if delErr := uc.repo.DeleteInvoice(ctx, invoice.ID); delErr != nil {
+				uc.log.Error(ctx).Err(delErr).Msg("Failed to cleanup invoice after item creation failure")
+			}
+			return nil, fmt.Errorf("failed to create invoice items: %w", err)
 		}
 	}
 
@@ -162,7 +165,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		syncLog.TriggeredBy = constants.TriggerAuto
 	}
 
-	if err := uc.syncLogRepo.Create(ctx, syncLog); err != nil {
+	if err := uc.repo.CreateInvoiceSyncLog(ctx, syncLog); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to create sync log")
 		// Continuamos aunque falle el log
 	}
@@ -180,14 +183,14 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	apiKey, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_key")
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to decrypt api_key")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err)
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, nil)
 		return nil, errors.ErrDecryptionFailed
 	}
 
 	apiSecret, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_secret")
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to decrypt api_secret")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err)
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, nil)
 		return nil, errors.ErrDecryptionFailed
 	}
 
@@ -237,14 +240,14 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	// Obtener el bundle registrado desde integrationCore
 	if integration.IntegrationType != integrationCore.IntegrationTypeInvoicing {
 		uc.log.Error(ctx).Msg("Integration is not an invoicing type")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("integration type mismatch"))
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("integration type mismatch"), nil)
 		return nil, errors.ErrProviderNotFound
 	}
 
 	integrationBundle, ok := uc.integrationCore.GetRegisteredIntegration(integrationCore.IntegrationTypeInvoicing)
 	if !ok {
 		uc.log.Error(ctx).Msg("Invoicing integration bundle not registered")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invoicing bundle not found"))
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invoicing bundle not found"), nil)
 		return nil, errors.ErrProviderNotFound
 	}
 
@@ -252,14 +255,14 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	softpymes, ok := integrationBundle.(*softpymesBundle.Bundle)
 	if !ok {
 		uc.log.Error(ctx).Msg("Failed to cast integration to softpymes bundle")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invalid bundle type"))
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invalid bundle type"), nil)
 		return nil, errors.ErrProviderNotFound
 	}
 
 	err = softpymes.CreateInvoice(ctx, invoiceData)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to create invoice with provider")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err)
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, invoiceData)
 		return nil, errors.ErrProviderAPIError
 	}
 
@@ -294,10 +297,9 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		}
 	}
 
-	// 18. Actualizar factura en BD
-	if err := uc.invoiceRepo.Update(ctx, invoice); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to update invoice")
-		// No retornamos error, la factura ya fue creada exitosamente
+	// 18. Actualizar factura en BD (con reintentos para evitar factura fantasma)
+	if err := uc.updateInvoiceWithRetry(ctx, invoice, syncLog, invoiceData); err != nil {
+		return nil, err
 	}
 
 	// 19. Actualizar log de sincronización como exitoso
@@ -306,11 +308,13 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	syncLog.Status = constants.SyncStatusSuccess
 	syncLog.CompletedAt = &completedAt
 	syncLog.Duration = &duration
-	syncLog.ResponseStatus = 200
 	// La respuesta completa está ahora en invoiceData
 	invoice.ProviderResponse = invoiceData
 
-	if err := uc.syncLogRepo.Update(ctx, syncLog); err != nil {
+	// Extraer audit data del invoiceData (capturada por el cliente Softpymes)
+	uc.populateSyncLogAudit(syncLog, invoiceData)
+
+	if err := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to update sync log")
 	}
 
@@ -319,13 +323,18 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	if invoice.InvoiceURL != nil {
 		invoiceURL = *invoice.InvoiceURL
 	}
-	if err := uc.orderRepo.UpdateInvoiceInfo(ctx, order.ID, invoice.InvoiceNumber, invoiceURL); err != nil {
+	if err := uc.repo.UpdateOrderInvoiceInfo(ctx, order.ID, invoice.InvoiceNumber, invoiceURL); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to update order invoice info")
 	}
 
-	// 21. Publicar evento de factura creada
+	// 21. Publicar evento de factura creada (RabbitMQ)
 	if err := uc.eventPublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created event")
+	}
+
+	// 22. Publicar evento SSE en tiempo real (Redis Pub/Sub)
+	if err := uc.ssePublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
+		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created SSE event")
 	}
 
 	uc.log.Info(ctx).Uint("invoice_id", invoice.ID).Str("invoice_number", invoice.InvoiceNumber).Msg("Invoice created successfully")
@@ -333,7 +342,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 }
 
 // validateInvoicingFilters valida que la orden cumpla con los filtros de configuración
-func (uc *useCase) validateInvoicingFilters(order *ports.OrderData, config *entities.InvoicingConfig) error {
+func (uc *useCase) validateInvoicingFilters(order *dtos.OrderData, config *entities.InvoicingConfig) error {
 	ctx := context.Background()
 
 	// 1. Parsear configuración de filtros desde JSON
@@ -378,11 +387,11 @@ func (uc *useCase) parseFilterConfig(filtersMap map[string]interface{}) (*entiti
 }
 
 // handleInvoiceCreationError maneja errores durante la creación de factura
-func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, err error) {
+func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, err error, invoiceData map[string]interface{}) {
 
 	// Actualizar estado de factura a failed
 	invoice.Status = constants.InvoiceStatusFailed
-	if updateErr := uc.invoiceRepo.Update(ctx, invoice); updateErr != nil {
+	if updateErr := uc.repo.UpdateInvoice(ctx, invoice); updateErr != nil {
 		uc.log.Error(ctx).Err(updateErr).Msg("Failed to update invoice status to failed")
 	}
 
@@ -395,18 +404,78 @@ func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *enti
 	errorMsg := err.Error()
 	syncLog.ErrorMessage = &errorMsg
 
-	// Programar reintento si no se excedió el máximo
-	if syncLog.RetryCount < syncLog.MaxRetries {
+	// Extraer audit data si existe
+	uc.populateSyncLogAudit(syncLog, invoiceData)
+
+	// Programar reintento si no se excedió el máximo y no fue cancelado previamente
+	if syncLog.RetryCount < syncLog.MaxRetries && syncLog.Status != constants.SyncStatusCancelled {
 		nextRetry := time.Now().Add(time.Duration(constants.DefaultRetryIntervalMin) * time.Minute)
 		syncLog.NextRetryAt = &nextRetry
 	}
 
-	if updateErr := uc.syncLogRepo.Update(ctx, syncLog); updateErr != nil {
+	if updateErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); updateErr != nil {
 		uc.log.Error(ctx).Err(updateErr).Msg("Failed to update sync log")
 	}
 
-	// Publicar evento de factura fallida
+	// Publicar evento de factura fallida (RabbitMQ)
 	if publishErr := uc.eventPublisher.PublishInvoiceFailed(ctx, invoice, err.Error()); publishErr != nil {
 		uc.log.Error(ctx).Err(publishErr).Msg("Failed to publish invoice failed event")
+	}
+
+	// Publicar evento SSE en tiempo real (Redis Pub/Sub)
+	if publishErr := uc.ssePublisher.PublishInvoiceFailed(ctx, invoice, err.Error()); publishErr != nil {
+		uc.log.Error(ctx).Err(publishErr).Msg("Failed to publish invoice failed SSE event")
+	}
+}
+
+// updateInvoiceWithRetry reintenta UpdateInvoice hasta 3 veces tras éxito del proveedor.
+// Si falla todas las veces, guarda los datos del proveedor en el sync log como fallback
+// para recuperación manual, evitando facturas fantasma.
+func (uc *useCase) updateInvoiceWithRetry(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, invoiceData map[string]interface{}) error {
+	var updateErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		updateErr = uc.repo.UpdateInvoice(ctx, invoice)
+		if updateErr == nil {
+			return nil
+		}
+		uc.log.Warn(ctx).Err(updateErr).Int("attempt", attempt+1).Msg("UpdateInvoice failed, retrying...")
+		time.Sleep(time.Duration(attempt+1) * 100 * time.Millisecond)
+	}
+
+	// Todas las reintentos fallaron - guardar datos del proveedor en sync log como fallback
+	uc.log.Error(ctx).Err(updateErr).Msg("CRITICAL: Invoice created at provider but DB update failed after 3 attempts")
+	criticalMsg := "CRITICAL: Invoice created at provider but DB update failed"
+	syncLog.ErrorMessage = &criticalMsg
+	syncLog.ResponseBody = invoiceData
+	syncLog.Status = constants.SyncStatusFailed
+	if logErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); logErr != nil {
+		uc.log.Error(ctx).Err(logErr).Msg("Failed to save fallback data in sync log")
+	}
+	return fmt.Errorf("invoice created at provider but failed to save: %w", updateErr)
+}
+
+// populateSyncLogAudit extrae audit data del invoiceData y la almacena en el sync log
+func (uc *useCase) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog, invoiceData map[string]interface{}) {
+	if invoiceData == nil {
+		return
+	}
+	auditData, ok := invoiceData["_audit"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	if reqURL, ok := auditData["request_url"].(string); ok {
+		syncLog.RequestURL = reqURL
+	}
+	if reqPayload, ok := auditData["request_payload"].(map[string]interface{}); ok {
+		syncLog.RequestPayload = reqPayload
+	}
+	if respStatus, ok := auditData["response_status"].(int); ok {
+		syncLog.ResponseStatus = respStatus
+	}
+	if respBody, ok := auditData["response_body"].(string); ok {
+		var bodyMap map[string]interface{}
+		if json.Unmarshal([]byte(respBody), &bodyMap) == nil {
+			syncLog.ResponseBody = bodyMap
+		}
 	}
 }

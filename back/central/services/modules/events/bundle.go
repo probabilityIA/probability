@@ -38,7 +38,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		logger,
 	)
 
-	// 6. Iniciar consumidor Redis en background
+	// 6. Iniciar consumidor Redis de órdenes en background
 	go func() {
 		ctx := context.Background()
 		if err := orderEventConsumer.Start(ctx); err != nil {
@@ -46,6 +46,31 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 				Err(err).
 				Str("channel", redisChannel).
 				Msg("Error al iniciar consumidor de eventos de órdenes")
+		}
+	}()
+
+	// 7. Init Invoice Event Subscriber y Consumer (facturación en tiempo real)
+	invoiceRedisChannel := environment.Get("REDIS_INVOICE_EVENTS_CHANNEL")
+	if invoiceRedisChannel == "" {
+		invoiceRedisChannel = "probability:invoicing:events"
+	}
+
+	invoiceEventSubscriber := redis.NewInvoiceEventSubscriber(redisClient, logger, invoiceRedisChannel)
+
+	invoiceEventConsumer := app.NewInvoiceEventConsumer(
+		invoiceEventSubscriber,
+		eventManager,
+		logger,
+	)
+
+	// 8. Iniciar consumidor Redis de facturación en background
+	go func() {
+		ctx := context.Background()
+		if err := invoiceEventConsumer.Start(ctx); err != nil {
+			logger.Error(ctx).
+				Err(err).
+				Str("channel", invoiceRedisChannel).
+				Msg("Error al iniciar consumidor de eventos de facturación")
 		}
 	}()
 

@@ -48,6 +48,7 @@ interface TableProps<T = Record<string, unknown>> {
   emptyMessage?: string;
   loading?: boolean;
   onRowClick?: (row: T, index: number) => void;
+  onRowDoubleClick?: (row: T, index: number) => void;
   pagination?: PaginationProps;
   filters?: TableFiltersProps;
 }
@@ -59,6 +60,7 @@ export function Table<T = Record<string, unknown>>({
   emptyMessage = 'No hay datos disponibles',
   loading = false,
   onRowClick,
+  onRowDoubleClick,
   pagination,
   filters,
 }: TableProps<T>) {
@@ -200,8 +202,9 @@ export function Table<T = Record<string, unknown>>({
               data.map((row, rowIndex) => (
                 <tr
                   key={keyExtractor(row, rowIndex)}
-                  className={`transition-colors ${onRowClick ? 'cursor-pointer' : ''}`}
+                  className={`transition-colors ${onRowClick || onRowDoubleClick ? 'cursor-pointer' : ''}`}
                   onClick={() => onRowClick?.(row, rowIndex)}
+                  onDoubleClick={() => onRowDoubleClick?.(row, rowIndex)}
                 >
                   {columns.map((column) => (
                     <td

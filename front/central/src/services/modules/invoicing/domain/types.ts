@@ -330,6 +330,31 @@ export interface InvoicingStats {
 }
 
 // ===================================
+// SYNC LOGS (Historial de reintentos)
+// ===================================
+
+export interface SyncLog {
+  id: number;
+  invoice_id: number;
+  operation_type: string;
+  status: 'pending' | 'processing' | 'success' | 'failed' | 'cancelled';
+  error_message?: string;
+  error_code?: string;
+  retry_count: number;
+  max_retries: number;
+  next_retry_at?: string;
+  triggered_by: string;
+  duration_ms?: number;
+  started_at: string;
+  completed_at?: string;
+  created_at: string;
+  request_payload?: Record<string, unknown>;
+  request_url?: string;
+  response_status?: number;
+  response_body?: Record<string, unknown>;
+}
+
+// ===================================
 // CREACIÓN MASIVA DE FACTURAS
 // ===================================
 
@@ -352,6 +377,7 @@ export interface PaginatedInvoiceableOrders {
 
 export interface BulkCreateInvoicesDTO {
   order_ids: string[];
+  business_id?: number;
 }
 
 export interface BulkCreateResult {
@@ -365,4 +391,47 @@ export interface BulkInvoiceResult {
   success: boolean;
   invoice_id?: number;
   error?: string;
+}
+
+// ===================================
+// SSE EVENTS (Tiempo Real)
+// ===================================
+
+export type InvoiceSSEEventType =
+  | 'invoice.created'
+  | 'invoice.failed'
+  | 'invoice.cancelled'
+  | 'credit_note.created'
+  | 'bulk_job.progress'
+  | 'bulk_job.completed';
+
+export interface InvoiceSSEEvent {
+  id: string;
+  type: string;
+  business_id: string;
+  timestamp: string;
+  data: InvoiceSSEEventData;
+  metadata: Record<string, any>;
+}
+
+export interface InvoiceSSEEventData {
+  invoice_id?: number;
+  order_id?: string;
+  invoice_number?: string;
+  total_amount?: number;
+  currency?: string;
+  status?: string;
+  customer_name?: string;
+  error_message?: string;
+  external_url?: string;
+  credit_note_id?: number;
+  credit_note_number?: string;
+  amount?: number;
+  reason?: string;
+  job_id?: string;
+  total_orders?: number;
+  processed?: number;
+  successful?: number;
+  failed?: number;
+  progress?: number;
 }

@@ -4,13 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/providers/softpymes/mappers"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/providers/softpymes/response"
 )
 
 // CreateCreditNote crea una nota de crédito en Softpymes
-func (c *Client) CreateCreditNote(ctx context.Context, token string, request *ports.CreditNoteRequest) (*ports.CreditNoteResponse, error) {
+func (c *Client) CreateCreditNote(ctx context.Context, token string, request *dtos.CreditNoteRequest) (*dtos.CreditNoteResponse, error) {
 	c.log.Info(ctx).
 		Uint("invoice_id", request.Invoice.ID).
 		Str("note_type", request.CreditNote.NoteType).

@@ -47,7 +47,7 @@ func (uc *useCase) GetTrends(ctx context.Context, businessID uint, startDate, en
 	}
 
 	// Obtener tendencias desde el repositorio
-	trends, err := uc.invoiceRepo.GetTrends(ctx, businessID, start, end, granularity, metric)
+	trends, err := uc.repo.GetInvoiceTrends(ctx, businessID, start, end, granularity, metric)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get trends")
 		return nil, err

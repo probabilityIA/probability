@@ -97,6 +97,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.InvoiceItem{},
 		&models.InvoiceSyncLog{},
 		&models.CreditNote{},
+
+		// Bulk Invoice Jobs (Async Bulk Invoicing)
+		&models.BulkInvoiceJob{},
+		&models.BulkInvoiceJobItem{},
 	); err != nil {
 		return err
 	}

@@ -6,17 +6,25 @@ import (
 )
 
 // InvoiceResponse representa la respuesta de creación de factura de Softpymes
+// La API retorna los datos de la factura dentro de un campo "data"
 type InvoiceResponse struct {
-	Success       bool   `json:"success"`
-	Message       string `json:"message"`
-	Error         string `json:"error"`
+	Success bool            `json:"success"`
+	Message string          `json:"message,omitempty"`
+	Error   string          `json:"error,omitempty"`
+	Data    *InvoiceRespData `json:"data,omitempty"`
+}
+
+// InvoiceRespData contiene los datos de la factura creada por Softpymes
+type InvoiceRespData struct {
+	InvoiceID     string `json:"invoice_id"`
 	InvoiceNumber string `json:"invoice_number"`
-	ExternalID    string `json:"external_id"`
-	InvoiceURL    string `json:"invoice_url"`
+	CUFE          string `json:"cufe"`
 	PDFURL        string `json:"pdf_url"`
 	XMLURL        string `json:"xml_url"`
-	CUFE          string `json:"cufe"`
+	InvoiceURL    string `json:"invoice_url"`
 	IssuedAt      string `json:"issued_at"`
+	Status        string `json:"status"`
+	QRCode        string `json:"qr_code,omitempty"`
 }
 
 // CreateInvoice crea una factura electrónica en Softpymes
@@ -68,6 +76,7 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 	var invoiceResp InvoiceResponse
 
 	// Hacer llamado a la API
+	requestURL := "/app/integration/sales_invoice/"
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetAuthToken(token).
@@ -75,7 +84,18 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 		SetBody(invoiceReq).
 		SetResult(&invoiceResp).
 		SetDebug(true).
-		Post("/app/integration/sales_invoice/") // URL correcta según documentación
+		Post(requestURL) // URL correcta según documentación
+
+	// Capturar audit data para sync logs (siempre, independiente del resultado)
+	auditData := map[string]interface{}{
+		"request_url":     requestURL,
+		"request_payload": invoiceReq,
+	}
+	if resp != nil {
+		auditData["response_status"] = resp.StatusCode()
+		auditData["response_body"] = string(resp.Body())
+	}
+	invoiceData["_audit"] = auditData
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to create invoice")
@@ -106,18 +126,25 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 		return fmt.Errorf("invoice creation unsuccessful: %s", invoiceResp.Message)
 	}
 
+	if invoiceResp.Data == nil {
+		c.log.Warn(ctx).Msg("Invoice created but no data returned")
+		return nil
+	}
+
 	c.log.Info(ctx).
-		Str("invoice_number", invoiceResp.InvoiceNumber).
-		Str("cufe", invoiceResp.CUFE).
+		Str("invoice_number", invoiceResp.Data.InvoiceNumber).
+		Str("cufe", invoiceResp.Data.CUFE).
+		Str("pdf_url", invoiceResp.Data.PDFURL).
 		Msg("Invoice created successfully in Softpymes")
 
 	// Actualizar invoiceData con los datos de respuesta
-	invoiceData["external_id"] = invoiceResp.ExternalID
-	invoiceData["invoice_number"] = invoiceResp.InvoiceNumber
-	invoiceData["cufe"] = invoiceResp.CUFE
-	invoiceData["invoice_url"] = invoiceResp.InvoiceURL
-	invoiceData["pdf_url"] = invoiceResp.PDFURL
-	invoiceData["xml_url"] = invoiceResp.XMLURL
+	invoiceData["external_id"] = invoiceResp.Data.InvoiceID
+	invoiceData["invoice_number"] = invoiceResp.Data.InvoiceNumber
+	invoiceData["cufe"] = invoiceResp.Data.CUFE
+	invoiceData["invoice_url"] = invoiceResp.Data.InvoiceURL
+	invoiceData["pdf_url"] = invoiceResp.Data.PDFURL
+	invoiceData["xml_url"] = invoiceResp.Data.XMLURL
+	invoiceData["issued_at"] = invoiceResp.Data.IssuedAt
 
 	return nil
 }

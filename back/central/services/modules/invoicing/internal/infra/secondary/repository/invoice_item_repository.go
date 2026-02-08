@@ -5,20 +5,13 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-type InvoiceItemRepository struct {
-	*Repository
-}
 
-func NewInvoiceItemRepository(repo *Repository) ports.IInvoiceItemRepository {
-	return &InvoiceItemRepository{Repository: repo}
-}
 
-func (r *InvoiceItemRepository) Create(ctx context.Context, item *entities.InvoiceItem) error {
+func (r *Repository) CreateInvoiceItem(ctx context.Context, item *entities.InvoiceItem) error {
 	model := mappers.InvoiceItemToModel(item)
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -29,7 +22,7 @@ func (r *InvoiceItemRepository) Create(ctx context.Context, item *entities.Invoi
 	return nil
 }
 
-func (r *InvoiceItemRepository) GetByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.InvoiceItem, error) {
+func (r *Repository) GetInvoiceItemsByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.InvoiceItem, error) {
 	var models []*models.InvoiceItem
 
 	if err := r.db.Conn(ctx).Where("invoice_id = ?", invoiceID).Find(&models).Error; err != nil {
@@ -39,7 +32,7 @@ func (r *InvoiceItemRepository) GetByInvoiceID(ctx context.Context, invoiceID ui
 	return mappers.InvoiceItemListToDomain(models), nil
 }
 
-func (r *InvoiceItemRepository) UpdateBatch(ctx context.Context, items []*entities.InvoiceItem) error {
+func (r *Repository) UpdateInvoiceItemsBatch(ctx context.Context, items []*entities.InvoiceItem) error {
 	for _, item := range items {
 		model := mappers.InvoiceItemToModel(item)
 		if err := r.db.Conn(ctx).Save(model).Error; err != nil {

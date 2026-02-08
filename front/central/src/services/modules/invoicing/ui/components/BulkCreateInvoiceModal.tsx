@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 import { CookieStorage } from '@/shared/utils/cookie-storage';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
@@ -8,12 +8,14 @@ import {
   getInvoiceableOrdersAction,
   createBulkInvoicesAction,
 } from '../../infra/actions';
-import type { InvoiceableOrder } from '../../domain/types';
+import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
+import type { InvoiceableOrder, InvoiceSSEEventData } from '../../domain/types';
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  businessId?: number;
 }
 
 interface Business {
@@ -21,7 +23,7 @@ interface Business {
   name: string;
 }
 
-export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess }: Props) {
+export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId: propBusinessId }: Props) {
   const [orders, setOrders] = useState<InvoiceableOrder[]>([]);
   const [selectedOrderIds, setSelectedOrderIds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -30,11 +32,35 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
 
+  // Bulk job progress tracking (SSE)
+  const [bulkProgress, setBulkProgress] = useState<InvoiceSSEEventData | null>(null);
+  const [bulkCompleted, setBulkCompleted] = useState(false);
+
   // Super admin filters
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
+
+  // Get businessId for SSE connection
+  const currentBusinessId = propBusinessId ?? selectedBusinessId ?? 0;
+
+  // SSE: Real-time progress for bulk invoice jobs
+  const handleBulkJobProgress = useCallback((data: InvoiceSSEEventData) => {
+    setBulkProgress(data);
+  }, []);
+
+  const handleBulkJobCompleted = useCallback((data: InvoiceSSEEventData) => {
+    setBulkProgress(data);
+    setBulkCompleted(true);
+    setSubmitting(false);
+  }, []);
+
+  useInvoiceSSE({
+    businessId: currentBusinessId,
+    onBulkJobProgress: handleBulkJobProgress,
+    onBulkJobCompleted: handleBulkJobCompleted,
+  });
 
   useEffect(() => {
     if (isOpen && !hasLoadedOnce) {
@@ -49,6 +75,8 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess }: Props) {
       setError(null);
       setHasLoadedOnce(false);
       setSelectedBusinessId(null);
+      setBulkProgress(null);
+      setBulkCompleted(false);
     }
   }, [isOpen, hasLoadedOnce]);
 
@@ -139,27 +167,25 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess }: Props) {
     }
 
     setSubmitting(true);
+    setBulkProgress(null);
+    setBulkCompleted(false);
+
     try {
-      const result = await createBulkInvoicesAction({
+      await createBulkInvoicesAction({
         order_ids: selectedOrderIds,
+        ...(isSuperAdmin && selectedBusinessId ? { business_id: selectedBusinessId } : {}),
       });
-
-      if (result.created > 0) {
-        const message = result.failed === 0
-          ? `✓ ${result.created} factura(s) creada(s) exitosamente`
-          : `✓ ${result.created} creada(s), ${result.failed} fallida(s)`;
-
-        alert(message);
-        onSuccess();
-        onClose();
-      } else {
-        alert(`No se crearon facturas. ${result.failed} orden(es) fallaron`);
-      }
+      // Async job started - SSE will track progress in real-time
+      // Don't close modal yet, let the progress bar show
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Error al crear facturas');
-    } finally {
       setSubmitting(false);
     }
+  };
+
+  const handleCloseAfterCompletion = () => {
+    onSuccess();
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -212,7 +238,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess }: Props) {
                   </div>
                 ) : (
                   <button
-                    onClick={loadOrders}
+                    onClick={() => loadOrders()}
                     className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
                   >
                     Reintentar
@@ -354,24 +380,67 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess }: Props) {
             )}
           </div>
 
+          {/* Bulk Progress Bar (SSE real-time) */}
+          {(submitting || bulkCompleted) && bulkProgress && (
+            <div className="px-6 py-4 border-t bg-gray-50">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {bulkCompleted ? 'Procesamiento completado' : 'Procesando facturas...'}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {bulkProgress.processed ?? 0}/{bulkProgress.total_orders ?? 0}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-3">
+                <div
+                  className={`h-3 rounded-full transition-all duration-300 ${
+                    bulkCompleted ? 'bg-green-500' : 'bg-blue-600'
+                  }`}
+                  style={{ width: `${Math.min(bulkProgress.progress ?? 0, 100)}%` }}
+                />
+              </div>
+              <div className="flex gap-4 mt-2 text-xs text-gray-500">
+                <span className="text-green-600">
+                  Exitosas: {bulkProgress.successful ?? 0}
+                </span>
+                {(bulkProgress.failed ?? 0) > 0 && (
+                  <span className="text-red-600">
+                    Fallidas: {bulkProgress.failed}
+                  </span>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Footer */}
           <div className="flex justify-end gap-3 p-6 border-t">
-            <button
-              onClick={onClose}
-              disabled={submitting}
-              className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSubmit}
-              disabled={submitting || selectedOrderIds.length === 0 || loading}
-              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {submitting
-                ? 'Creando facturas...'
-                : `Crear ${selectedOrderIds.length} Factura(s)`}
-            </button>
+            {bulkCompleted ? (
+              <button
+                onClick={handleCloseAfterCompletion}
+                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                Cerrar
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={onClose}
+                  disabled={submitting}
+                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSubmit}
+                  disabled={submitting || selectedOrderIds.length === 0 || loading}
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {submitting
+                    ? 'Creando facturas...'
+                    : `Crear ${selectedOrderIds.length} Factura(s)`}
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>

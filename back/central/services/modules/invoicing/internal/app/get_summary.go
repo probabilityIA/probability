@@ -15,7 +15,7 @@ func (uc *useCase) GetSummary(ctx context.Context, businessID uint, period strin
 	start, end := calculatePeriod(period)
 
 	// Obtener resumen desde el repositorio
-	summary, err := uc.invoiceRepo.GetSummary(ctx, businessID, start, end)
+	summary, err := uc.repo.GetInvoiceSummary(ctx, businessID, start, end)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get invoice summary")
 		return nil, err

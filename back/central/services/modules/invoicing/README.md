@@ -38,16 +38,23 @@ modules/invoicing/
     ├── app/               # Casos de uso
     │   ├── constructor.go
     │   ├── create_invoice.go
-    │   ├── get_summary.go      # ✨ NUEVO - Resumen de KPIs
-    │   ├── get_stats.go        # ✨ NUEVO - Estadísticas detalladas
-    │   ├── get_trends.go       # ✨ NUEVO - Tendencias temporales
-    │   └── deprecated_providers.go  # Métodos deprecados (retornan error)
+    │   ├── bulk_create_invoices_async.go
+    │   ├── get_summary.go
+    │   ├── get_stats.go
+    │   ├── get_trends.go
+    │   └── deprecated_providers.go
     └── infra/
         ├── primary/       # Adaptadores de entrada
         │   ├── handlers/  # HTTP handlers (Gin)
         │   └── queue/     # Consumers (RabbitMQ)
+        │       └── consumer/
+        │           ├── retry_consumer.go
+        │           └── bulk_invoice_consumer.go
         └── secondary/     # Adaptadores de salida
-            └── repository/ # Repositorios DB (GORM)
+            ├── repository/ # Repositorios DB (GORM)
+            ├── queue/      # Publishers (RabbitMQ)
+            └── redis/      # SSE Publisher (Redis Pub/Sub)
+                └── sse_publisher.go
 ```
 
 ## Relación con Integraciones
@@ -403,7 +410,9 @@ stats, err := useCase.GetDetailedStats(ctx, businessID, map[string]interface{}{
 trends, err := useCase.GetTrends(ctx, businessID, "2026-01-01", "2026-01-31", "day", "count")
 ```
 
-## Eventos Publicados (RabbitMQ)
+## Eventos Publicados
+
+### RabbitMQ (Procesamiento Asíncrono)
 
 | Evento | Descripción |
 |--------|-------------|
@@ -411,6 +420,110 @@ trends, err := useCase.GetTrends(ctx, businessID, "2026-01-01", "2026-01-31", "d
 | `invoice.failed` | Error al crear factura |
 | `invoice.cancelled` | Factura cancelada |
 | `credit_note.created` | Nota de crédito creada |
+
+### Redis Pub/Sub → SSE (Notificaciones en Tiempo Real)
+
+Además de RabbitMQ, el módulo publica eventos a **Redis Pub/Sub** para que el frontend reciba actualizaciones en tiempo real via **Server-Sent Events (SSE)**.
+
+| Evento | Descripción |
+|--------|-------------|
+| `invoice.created` | Factura emitida exitosamente |
+| `invoice.failed` | Error al emitir factura (con mensaje de error) |
+| `invoice.cancelled` | Factura cancelada |
+| `credit_note.created` | Nota de crédito creada |
+| `bulk_job.progress` | Progreso de job de facturación masiva |
+| `bulk_job.completed` | Job de facturación masiva finalizado |
+
+**Canal Redis:** `probability:invoicing:events` (configurable via env)
+
+## Flujo SSE (Notificaciones en Tiempo Real)
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    FLUJO DE EVENTOS SSE                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  CreateInvoice / CancelInvoice / BulkJob                        │
+│       │                                                         │
+│       ├─→ RabbitMQ (procesamiento asíncrono, sin cambios)       │
+│       │                                                         │
+│       └─→ Redis Pub/Sub ──→ Events Module suscribe              │
+│               │                  │                              │
+│               │                  ├─→ InvoiceEventSubscriber     │
+│               │                  │     (lee del canal Redis)    │
+│               │                  │                              │
+│               │                  ├─→ InvoiceEventConsumer       │
+│               │                  │     (convierte a Event)      │
+│               │                  │                              │
+│               │                  └─→ EventManager broadcast     │
+│               │                        │                        │
+│               │                        └─→ SSE connections      │
+│               │                              │                  │
+│               │                              └─→ Frontend       │
+│               │                                   useInvoiceSSE │
+│               │                                                 │
+│  Canal: probability:invoicing:events                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Arquitectura del Publisher SSE
+
+El módulo utiliza `IInvoiceSSEPublisher` (definido en `domain/ports/ports.go`) con dos implementaciones:
+
+- **`SSEPublisher`** (`infra/secondary/redis/sse_publisher.go`): Publica a Redis Pub/Sub de forma no-bloqueante (goroutine). Si falla, solo registra un log de error sin afectar el flujo principal.
+- **`noopSSEPublisher`**: Implementación vacía para cuando Redis no está disponible. El módulo funciona normalmente sin SSE.
+
+### Formato del Evento JSON
+
+```json
+{
+  "id": "20260208143025-a7b3c9d2",
+  "event_type": "invoice.created",
+  "business_id": 5,
+  "timestamp": "2026-02-08T14:30:25Z",
+  "data": {
+    "invoice_id": 123,
+    "order_id": "ord-456",
+    "invoice_number": "FV-001",
+    "total_amount": 150.50,
+    "currency": "COP",
+    "status": "issued",
+    "customer_name": "Juan Pérez",
+    "external_url": "https://..."
+  }
+}
+```
+
+Para eventos de bulk job (`bulk_job.progress` / `bulk_job.completed`):
+
+```json
+{
+  "id": "20260208143030-b8c4d0e3",
+  "event_type": "bulk_job.progress",
+  "business_id": 5,
+  "timestamp": "2026-02-08T14:30:30Z",
+  "data": {
+    "job_id": 42,
+    "total_orders": 100,
+    "processed": 45,
+    "successful": 40,
+    "failed": 5,
+    "progress": 45,
+    "status": "processing"
+  }
+}
+```
+
+### Integración Frontend
+
+El frontend usa el hook `useInvoiceSSE` que se conecta al endpoint SSE existente del módulo Events:
+
+```
+GET /api/v1/notify/sse/order-notify?business_id=1&event_types=invoice.created,invoice.failed,bulk_job.progress,bulk_job.completed
+```
+
+- **InvoiceList**: Escucha `invoice.created`, `invoice.failed`, `invoice.cancelled` para refrescar la lista y mostrar toasts.
+- **BulkCreateInvoiceModal**: Escucha `bulk_job.progress` y `bulk_job.completed` para mostrar una barra de progreso en tiempo real.
 
 ## Variables de Entorno
 
@@ -427,6 +540,9 @@ RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
 RABBITMQ_USER=admin
 RABBITMQ_PASS=admin
+
+# Redis SSE (notificaciones en tiempo real)
+REDIS_INVOICE_EVENTS_CHANNEL=probability:invoicing:events
 ```
 
 ## Testing
@@ -503,6 +619,9 @@ POST /integrations
 - [x] Endpoints de estadísticas y resúmenes
 - [x] Soporte para múltiples proveedores de facturación
 - [x] Sincronización automática vía RabbitMQ
+- [x] Notificaciones en tiempo real via SSE (Redis Pub/Sub → Events Module → Frontend)
+- [x] Facturación masiva asíncrona con progreso en tiempo real
+- [x] Creación masiva de facturas desde órdenes (bulk)
 
 ### 🚧 En Progreso
 
@@ -514,7 +633,6 @@ POST /integrations
 - [ ] Soporte para facturación internacional
 - [ ] Integración con más proveedores (Alegra, Siigo, etc.)
 - [ ] Facturación recurrente/suscripciones
-- [ ] Webhooks para notificaciones en tiempo real
 
 ## Contribuir
 
@@ -528,9 +646,10 @@ Al modificar este módulo, asegurarse de:
 
 ## Última Actualización
 
-**Fecha**: 2026-01-31
+**Fecha**: 2026-02-08
 
 **Cambios recientes**:
-- ✨ Agregados endpoints de estadísticas (`/summary`, `/stats`, `/trends`)
-- 🧹 Marcados como deprecados los endpoints de gestión de proveedores
-- 📝 Documentación completa de la arquitectura y endpoints
+- Notificaciones en tiempo real via SSE (Redis Pub/Sub)
+- Facturación masiva asíncrona con barra de progreso en frontend
+- Hook `useInvoiceSSE` para integración frontend
+- Noop publisher para degradación elegante sin Redis

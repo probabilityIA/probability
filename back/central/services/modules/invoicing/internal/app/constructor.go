@@ -8,18 +8,14 @@ import (
 
 // useCase implementa todos los casos de uso del módulo de facturación
 type useCase struct {
-	// Repositorios
-	invoiceRepo     ports.IInvoiceRepository
-	invoiceItemRepo ports.IInvoiceItemRepository
-	configRepo      ports.IInvoicingConfigRepository
-	syncLogRepo     ports.IInvoiceSyncLogRepository
-	creditNoteRepo  ports.ICreditNoteRepository
-	orderRepo       ports.IOrderRepository
+	// Repositorio único (implementa TODAS las operaciones de persistencia)
+	repo ports.IRepository
 
 	// Servicios externos
 	integrationCore core.IIntegrationCore // Reemplaza providerRepo, providerTypeRepo y providerClient
 	encryption      ports.IEncryptionService
 	eventPublisher  ports.IEventPublisher
+	ssePublisher    ports.IInvoiceSSEPublisher
 
 	// Logger
 	log log.ILogger
@@ -27,27 +23,19 @@ type useCase struct {
 
 // New crea una nueva instancia del use case de facturación
 func New(
-	invoiceRepo ports.IInvoiceRepository,
-	invoiceItemRepo ports.IInvoiceItemRepository,
-	configRepo ports.IInvoicingConfigRepository,
-	syncLogRepo ports.IInvoiceSyncLogRepository,
-	creditNoteRepo ports.ICreditNoteRepository,
-	orderRepo ports.IOrderRepository,
+	repo ports.IRepository,
 	integrationCore core.IIntegrationCore,
 	encryption ports.IEncryptionService,
 	eventPublisher ports.IEventPublisher,
+	ssePublisher ports.IInvoiceSSEPublisher,
 	logger log.ILogger,
 ) ports.IUseCase {
 	return &useCase{
-		invoiceRepo:     invoiceRepo,
-		invoiceItemRepo: invoiceItemRepo,
-		configRepo:      configRepo,
-		syncLogRepo:     syncLogRepo,
-		creditNoteRepo:  creditNoteRepo,
-		orderRepo:       orderRepo,
+		repo:            repo,
 		integrationCore: integrationCore,
 		encryption:      encryption,
 		eventPublisher:  eventPublisher,
+		ssePublisher:    ssePublisher,
 		log:             logger.WithModule("invoicing.usecase"),
 	}
 }

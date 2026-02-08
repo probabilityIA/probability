@@ -2,7 +2,7 @@ package mappers
 
 import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
 )
 
@@ -30,6 +30,8 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool) *response.I
 		Tax:                 invoice.Tax,
 		Discount:            invoice.Discount,
 		Currency:            invoice.Currency,
+		CustomerName:        invoice.CustomerName,
+		CustomerEmail:       invoice.CustomerEmail,
 		IssuedAt:            invoice.IssuedAt,
 		CancelledAt:         invoice.CancelledAt,
 		CUFE:                invoice.CUFE,
@@ -196,8 +198,41 @@ func CreditNoteToResponse(note *entities.CreditNote) *response.CreditNote {
 	}
 }
 
+// SyncLogToResponse convierte entidad de dominio a response
+func SyncLogToResponse(log *entities.InvoiceSyncLog) response.SyncLog {
+	return response.SyncLog{
+		ID:             log.ID,
+		InvoiceID:      log.InvoiceID,
+		OperationType:  log.OperationType,
+		Status:         log.Status,
+		ErrorMessage:   log.ErrorMessage,
+		ErrorCode:      log.ErrorCode,
+		RetryCount:     log.RetryCount,
+		MaxRetries:     log.MaxRetries,
+		NextRetryAt:    log.NextRetryAt,
+		TriggeredBy:    log.TriggeredBy,
+		Duration:       log.Duration,
+		StartedAt:      log.StartedAt,
+		CompletedAt:    log.CompletedAt,
+		CreatedAt:      log.CreatedAt,
+		RequestPayload: log.RequestPayload,
+		RequestURL:     log.RequestURL,
+		ResponseStatus: log.ResponseStatus,
+		ResponseBody:   log.ResponseBody,
+	}
+}
+
+// SyncLogsToResponse convierte lista de entidades a response
+func SyncLogsToResponse(logs []*entities.InvoiceSyncLog) []response.SyncLog {
+	items := make([]response.SyncLog, 0, len(logs))
+	for _, log := range logs {
+		items = append(items, SyncLogToResponse(log))
+	}
+	return items
+}
+
 // ToInvoiceableOrderResponse convierte OrderData a InvoiceableOrder response
-func ToInvoiceableOrderResponse(order *ports.OrderData) response.InvoiceableOrder {
+func ToInvoiceableOrderResponse(order *dtos.OrderData) response.InvoiceableOrder {
 	return response.InvoiceableOrder{
 		ID:           order.ID,
 		BusinessID:   order.BusinessID,
