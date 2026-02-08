@@ -135,12 +135,16 @@ func (r *Repository) DeleteInvoice(ctx context.Context, id uint) error {
 	return nil
 }
 
-// InvoiceExistsForOrder verifica si existe una factura para una orden e integración
+// InvoiceExistsForOrder verifica si existe una factura VÁLIDA para una orden e integración
+// Solo considera facturas con status pending, issued o draft (excluye failed y cancelled)
 func (r *Repository) InvoiceExistsForOrder(ctx context.Context, orderID string, integrationID uint) (bool, error) {
 	var count int64
 
+	// Solo contar facturas válidas (no fallidas ni canceladas)
+	// Las facturas con status "failed" o "cancelled" NO bloquean crear una nueva factura
 	if err := r.db.Conn(ctx).Model(&models.Invoice{}).
 		Where("order_id = ? AND (invoicing_integration_id = ? OR invoicing_provider_id = ?)", orderID, integrationID, integrationID).
+		Where("status NOT IN (?)", []string{"failed", "cancelled"}).
 		Count(&count).Error; err != nil {
 		return false, fmt.Errorf("failed to check invoice existence: %w", err)
 	}
