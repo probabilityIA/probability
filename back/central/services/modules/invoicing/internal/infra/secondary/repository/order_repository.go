@@ -2,37 +2,21 @@ package repository
 
 import (
 	"context"
-	
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
-	"encoding/json"
 	"fmt"
 
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
-
-
-
-// OrderItemJSON representa un item de orden parseado desde JSON
-// Los campos usan PascalCase porque así se almacenan en el JSONB de la tabla orders
-type OrderItemJSON struct {
-	ProductID   *string  `json:"ProductID"`
-	SKU         string   `json:"ProductSKU"`
-	Name        string   `json:"ProductName"`
-	Description *string  `json:"ProductTitle"`
-	Quantity    int      `json:"Quantity"`
-	UnitPrice   float64  `json:"UnitPrice"`
-	TotalPrice  float64  `json:"TotalPrice"`
-	Tax         float64  `json:"Tax"`
-	TaxRate     *float64 `json:"TaxRate"`
-	Discount    float64  `json:"Discount"`
-}
 
 // GetByID obtiene una orden por su ID y la mapea a OrderData
 func (r *Repository) GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error) {
 	var order models.Order
 
-	// Consultar orden (sin preloads innecesarios)
+	// Consultar orden CON Preload de OrderItems para obtener los product_id correctos
+	// IMPORTANTE: OrderItems tiene los product_id de la tabla products (PRD_xxx)
+	// mientras que el JSONB Items tiene los IDs externos de las plataformas (Shopify, etc)
 	err := r.db.Conn(ctx).
+		Preload("OrderItems.Product").  // Preload items y productos
 		Where("id = ?", orderID).
 		First(&order).Error
 
@@ -129,48 +113,39 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 		orderData.OrderTypeName = order.OrderTypeName
 	}
 
-	// Parsear items desde JSON
-	items, err := r.parseOrderItems(order.Items)
-	if err != nil {
-		r.log.Warn(context.Background()).
-			Err(err).
-			Str("order_id", order.ID).
-			Msg("Failed to parse order items from JSON, using empty items")
-		items = []dtos.OrderItemData{}
+	// Mapear items desde la tabla normalizada order_items (NO desde JSONB)
+	// IMPORTANTE: order_items contiene los product_id correctos de la tabla products
+	// mientras que el JSONB Items contiene IDs externos de las plataformas
+	items := make([]dtos.OrderItemData, 0, len(order.OrderItems))
+	for _, orderItem := range order.OrderItems {
+		item := dtos.OrderItemData{
+			ProductID:   orderItem.ProductID,  // ✅ ID correcto de tabla products (PRD_xxx)
+			SKU:         "",                    // Se obtendrá del Product si existe
+			Name:        "",                    // Se obtendrá del Product si existe
+			Description: nil,
+			Quantity:    orderItem.Quantity,
+			UnitPrice:   orderItem.UnitPrice,
+			TotalPrice:  orderItem.TotalPrice,
+			Tax:         orderItem.Tax,
+			TaxRate:     orderItem.TaxRate,
+			Discount:    orderItem.Discount,
+		}
+
+		// Obtener información del producto desde la relación (si existe y no está soft-deleted)
+		if orderItem.Product.ID != "" {
+			item.SKU = orderItem.Product.SKU
+			item.Name = orderItem.Product.Name
+			if orderItem.Product.Description != "" {
+				desc := orderItem.Product.Description
+				item.Description = &desc
+			}
+		}
+
+		items = append(items, item)
 	}
 	orderData.Items = items
 
 	return orderData
-}
-
-// parseOrderItems parsea el campo Items (JSON) a OrderItemData
-func (r *Repository) parseOrderItems(itemsJSON []byte) ([]dtos.OrderItemData, error) {
-	if len(itemsJSON) == 0 {
-		return []dtos.OrderItemData{}, nil
-	}
-
-	var jsonItems []OrderItemJSON
-	if err := json.Unmarshal(itemsJSON, &jsonItems); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal items JSON: %w", err)
-	}
-
-	items := make([]dtos.OrderItemData, len(jsonItems))
-	for i, jsonItem := range jsonItems {
-		items[i] = dtos.OrderItemData{
-			ProductID:   jsonItem.ProductID,
-			SKU:         jsonItem.SKU,
-			Name:        jsonItem.Name,
-			Description: jsonItem.Description,
-			Quantity:    jsonItem.Quantity,
-			UnitPrice:   jsonItem.UnitPrice,
-			TotalPrice:  jsonItem.TotalPrice,
-			Tax:         jsonItem.Tax,
-			TaxRate:     jsonItem.TaxRate,
-			Discount:    jsonItem.Discount,
-		}
-	}
-
-	return items, nil
 }
 
 // GetInvoiceableOrders obtiene órdenes facturables paginadas
