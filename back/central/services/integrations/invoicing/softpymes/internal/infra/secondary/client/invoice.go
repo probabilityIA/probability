@@ -6,25 +6,28 @@ import (
 )
 
 // InvoiceResponse representa la respuesta de creación de factura de Softpymes
-// La API retorna los datos de la factura dentro de un campo "data"
+// Según documentación oficial: https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostSaleInvoice
 type InvoiceResponse struct {
-	Success bool            `json:"success"`
-	Message string          `json:"message,omitempty"`
-	Error   string          `json:"error,omitempty"`
-	Data    *InvoiceRespData `json:"data,omitempty"`
+	Message string      `json:"message"` // "Se ha creado la factura de venta en Pymes+ correctamente!"
+	Info    *InvoiceInfo `json:"info,omitempty"`
 }
 
-// InvoiceRespData contiene los datos de la factura creada por Softpymes
-type InvoiceRespData struct {
-	InvoiceID     string `json:"invoice_id"`
-	InvoiceNumber string `json:"invoice_number"`
-	CUFE          string `json:"cufe"`
-	PDFURL        string `json:"pdf_url"`
-	XMLURL        string `json:"xml_url"`
-	InvoiceURL    string `json:"invoice_url"`
-	IssuedAt      string `json:"issued_at"`
-	Status        string `json:"status"`
-	QRCode        string `json:"qr_code,omitempty"`
+// InvoiceInfo contiene los datos de la factura creada por Softpymes
+type InvoiceInfo struct {
+	Date           string  `json:"date"`           // "2023-10-25T10:39:13.000Z"
+	DocumentNumber string  `json:"documentNumber"` // "ABC0000000000"
+	Subtotal       float64 `json:"subtotal"`
+	Discount       float64 `json:"discount"`
+	IVA            float64 `json:"iva"`
+	Withholding    float64 `json:"withholding"`
+	Total          float64 `json:"total"`
+	DocsFe         *DocsFe `json:"docsFe,omitempty"`
+}
+
+// DocsFe contiene información de validación de la factura electrónica
+type DocsFe struct {
+	Status  bool   `json:"status"`  // true = válido
+	Message string `json:"message"` // "Documento válido enviado al proveedor tecnológico"
 }
 
 // CreateInvoice crea una factura electrónica en Softpymes
@@ -106,7 +109,7 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 	if resp.IsError() {
 		c.log.Error(ctx).
 			Int("status", resp.StatusCode()).
-			Str("error", invoiceResp.Error).
+			Str("response", string(resp.Body())).
 			Msg("Invoice creation failed")
 
 		// Si es 401, el token expiró
@@ -115,36 +118,45 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 			return fmt.Errorf("authentication token expired")
 		}
 
-		return fmt.Errorf("invoice creation failed: %s", invoiceResp.Error)
+		return fmt.Errorf("invoice creation failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
-	// Verificar respuesta
-	if !invoiceResp.Success {
-		c.log.Error(ctx).
+	// Verificar que haya info en la respuesta
+	if invoiceResp.Info == nil {
+		c.log.Warn(ctx).
 			Str("message", invoiceResp.Message).
-			Msg("Invoice creation unsuccessful")
-		return fmt.Errorf("invoice creation unsuccessful: %s", invoiceResp.Message)
-	}
-
-	if invoiceResp.Data == nil {
-		c.log.Warn(ctx).Msg("Invoice created but no data returned")
-		return nil
+			Msg("Invoice response has no info")
+		return fmt.Errorf("invoice response has no info: %s", invoiceResp.Message)
 	}
 
 	c.log.Info(ctx).
-		Str("invoice_number", invoiceResp.Data.InvoiceNumber).
-		Str("cufe", invoiceResp.Data.CUFE).
-		Str("pdf_url", invoiceResp.Data.PDFURL).
+		Str("document_number", invoiceResp.Info.DocumentNumber).
+		Str("date", invoiceResp.Info.Date).
+		Float64("total", invoiceResp.Info.Total).
+		Str("message", invoiceResp.Message).
 		Msg("Invoice created successfully in Softpymes")
 
 	// Actualizar invoiceData con los datos de respuesta
-	invoiceData["external_id"] = invoiceResp.Data.InvoiceID
-	invoiceData["invoice_number"] = invoiceResp.Data.InvoiceNumber
-	invoiceData["cufe"] = invoiceResp.Data.CUFE
-	invoiceData["invoice_url"] = invoiceResp.Data.InvoiceURL
-	invoiceData["pdf_url"] = invoiceResp.Data.PDFURL
-	invoiceData["xml_url"] = invoiceResp.Data.XMLURL
-	invoiceData["issued_at"] = invoiceResp.Data.IssuedAt
+	// Nota: Softpymes retorna el documentNumber pero no un ID único de factura
+	invoiceData["external_id"] = invoiceResp.Info.DocumentNumber // Usar documentNumber como ID
+	invoiceData["invoice_number"] = invoiceResp.Info.DocumentNumber
+	invoiceData["issued_at"] = invoiceResp.Info.Date
+
+	// Información adicional del provider
+	providerInfo := map[string]interface{}{
+		"subtotal":    invoiceResp.Info.Subtotal,
+		"discount":    invoiceResp.Info.Discount,
+		"iva":         invoiceResp.Info.IVA,
+		"withholding": invoiceResp.Info.Withholding,
+		"total":       invoiceResp.Info.Total,
+	}
+
+	if invoiceResp.Info.DocsFe != nil {
+		providerInfo["dian_status"] = invoiceResp.Info.DocsFe.Status
+		providerInfo["dian_message"] = invoiceResp.Info.DocsFe.Message
+	}
+
+	invoiceData["provider_info"] = providerInfo
 
 	return nil
 }
