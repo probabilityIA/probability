@@ -112,6 +112,20 @@ func (c *BulkInvoiceConsumer) handleMessage(message []byte) error {
 func (c *BulkInvoiceConsumer) handleInvoiceError(ctx context.Context, jobID, orderID string, err error) {
 	errMsg := err.Error()
 
+	// Buscar invoice fallida en BD (puede existir con status "failed")
+	invoice, getErr := c.repo.GetInvoiceByOrderID(ctx, orderID)
+	if getErr == nil && invoice != nil {
+		// Publicar evento individual de factura fallida
+		if pubErr := c.ssePublisher.PublishInvoiceFailed(ctx, invoice, errMsg); pubErr != nil {
+			c.log.Error(ctx).Err(pubErr).Msg("Failed to publish invoice.failed SSE")
+		}
+	} else {
+		c.log.Warn(ctx).
+			Err(getErr).
+			Str("order_id", orderID).
+			Msg("Invoice not found in DB after failure - skipping individual SSE event")
+	}
+
 	// Actualizar item como failed
 	if updateErr := c.updateItemStatus(ctx, jobID, orderID, entities.JobItemStatusFailed, &errMsg); updateErr != nil {
 		c.log.Error(ctx).Err(updateErr).Str("job_id", jobID).Str("order_id", orderID).Msg("Failed to update item to failed")
@@ -134,6 +148,17 @@ func (c *BulkInvoiceConsumer) handleInvoiceError(ctx context.Context, jobID, ord
 
 // handleInvoiceSuccess maneja cuando la creación de factura tiene éxito
 func (c *BulkInvoiceConsumer) handleInvoiceSuccess(ctx context.Context, jobID, orderID string, invoiceID uint) {
+	// Obtener factura completa para publicar SSE individual
+	invoice, err := c.repo.GetInvoiceByID(ctx, invoiceID)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to get invoice for SSE event")
+	} else {
+		// Publicar evento individual de factura creada
+		if pubErr := c.ssePublisher.PublishInvoiceCreated(ctx, invoice); pubErr != nil {
+			c.log.Error(ctx).Err(pubErr).Msg("Failed to publish invoice.created SSE")
+		}
+	}
+
 	// Actualizar item como success
 	now := time.Now()
 	items, err := c.repo.GetJobItems(ctx, jobID)

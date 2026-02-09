@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { XMarkIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { CookieStorage } from '@/shared/utils/cookie-storage';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import {
@@ -37,6 +37,14 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   const [bulkCompleted, setBulkCompleted] = useState(false);
   const submittingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Individual order processing status
+  interface OrderProcessingStatus {
+    status: 'pending' | 'processing' | 'success' | 'failed';
+    error_message?: string;
+    invoice_id?: number;
+  }
+  const [orderStatuses, setOrderStatuses] = useState<Record<string, OrderProcessingStatus>>({});
+
   // Super admin filters
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -62,10 +70,37 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     setSubmitting(false);
   }, []);
 
+  // Individual invoice events during bulk job
+  const handleInvoiceCreated = useCallback((data: InvoiceSSEEventData) => {
+    if (data.order_id && selectedOrderIds.includes(data.order_id)) {
+      setOrderStatuses((prev) => ({
+        ...prev,
+        [data.order_id!]: {
+          status: 'success',
+          invoice_id: data.invoice_id,
+        },
+      }));
+    }
+  }, [selectedOrderIds]);
+
+  const handleInvoiceFailed = useCallback((data: InvoiceSSEEventData) => {
+    if (data.order_id && selectedOrderIds.includes(data.order_id)) {
+      setOrderStatuses((prev) => ({
+        ...prev,
+        [data.order_id!]: {
+          status: 'failed',
+          error_message: data.error_message,
+        },
+      }));
+    }
+  }, [selectedOrderIds]);
+
   useInvoiceSSE({
     businessId: currentBusinessId,
     onBulkJobProgress: handleBulkJobProgress,
     onBulkJobCompleted: handleBulkJobCompleted,
+    onInvoiceCreated: handleInvoiceCreated,
+    onInvoiceFailed: handleInvoiceFailed,
   });
 
   useEffect(() => {
@@ -84,6 +119,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       setBulkProgress(null);
       setBulkCompleted(false);
       setSubmitting(false);
+      setOrderStatuses({});
       // Clear timeout if modal closes
       if (submittingTimeoutRef.current) {
         clearTimeout(submittingTimeoutRef.current);
@@ -181,6 +217,13 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     setSubmitting(true);
     setBulkProgress(null);
     setBulkCompleted(false);
+
+    // Resetear estados de órdenes a "pending"
+    const initialStatuses: Record<string, OrderProcessingStatus> = {};
+    selectedOrderIds.forEach((orderId) => {
+      initialStatuses[orderId] = { status: 'pending' };
+    });
+    setOrderStatuses(initialStatuses);
 
     try {
       await createBulkInvoicesAction({
@@ -343,57 +386,97 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
 
                 {/* Orders List */}
                 <div className="border border-gray-200 rounded max-h-96 overflow-y-auto">
-                  {filteredOrders.map((order) => (
-                    <div
-                      key={order.id}
-                      onClick={() => handleToggleOrder(order.id)}
-                      className={`p-4 border-b last:border-b-0 cursor-pointer hover:bg-gray-50 transition-colors ${
-                        selectedOrderIds.includes(order.id)
-                          ? 'bg-blue-50 border-blue-200'
-                          : ''
-                      }`}
-                    >
-                      <div className="flex items-start gap-3">
-                        <input
-                          type="checkbox"
-                          checked={selectedOrderIds.includes(order.id)}
-                          onChange={() => {}}
-                          className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-gray-900">
-                              {order.order_number}
-                            </span>
-                            <span className="font-semibold text-gray-900">
-                              {formatCurrency(order.total_amount, order.currency)}
-                            </span>
-                          </div>
-                          <p className="text-sm text-gray-600">
-                            {order.customer_name}
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <p className="text-xs text-gray-500">
-                              {new Date(order.created_at).toLocaleDateString('es-CO', {
-                                year: 'numeric',
-                                month: 'short',
-                                day: 'numeric',
-                              })}
-                            </p>
-                            {/* Mostrar Business ID para super admin */}
-                            {isSuperAdmin && (
-                              <>
-                                <span className="text-xs text-gray-400">•</span>
-                                <span className="text-xs text-blue-600 font-medium">
-                                  Business #{order.business_id}
+                  {filteredOrders.map((order) => {
+                    const orderStatus = orderStatuses[order.id];
+
+                    // Color de fondo según estado
+                    const getBgColor = () => {
+                      if (!submitting && !bulkCompleted) {
+                        return selectedOrderIds.includes(order.id) ? 'bg-blue-50 border-blue-200' : '';
+                      }
+                      if (!orderStatus || orderStatus.status === 'pending') return 'bg-gray-50';
+                      if (orderStatus.status === 'processing') return 'bg-yellow-50 border-yellow-200';
+                      if (orderStatus.status === 'success') return 'bg-green-50 border-green-200';
+                      if (orderStatus.status === 'failed') return 'bg-red-50 border-red-200';
+                      return '';
+                    };
+
+                    // Ícono de estado
+                    const StatusIcon = () => {
+                      if (!orderStatus) return null;
+                      if (orderStatus.status === 'processing') {
+                        return <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-600" />;
+                      }
+                      if (orderStatus.status === 'success') {
+                        return <CheckCircleIcon className="w-5 h-5 text-green-600" />;
+                      }
+                      if (orderStatus.status === 'failed') {
+                        return <XCircleIcon className="w-5 h-5 text-red-600" />;
+                      }
+                      return null;
+                    };
+
+                    return (
+                      <div
+                        key={order.id}
+                        onClick={() => !submitting && !bulkCompleted && handleToggleOrder(order.id)}
+                        className={`p-4 border-b last:border-b-0 ${
+                          submitting || bulkCompleted ? '' : 'cursor-pointer hover:bg-gray-50'
+                        } transition-colors ${getBgColor()}`}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedOrderIds.includes(order.id)}
+                            disabled={submitting || bulkCompleted}
+                            onChange={() => {}}
+                            className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-1">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium text-gray-900">
+                                  {order.order_number}
                                 </span>
-                              </>
+                                <StatusIcon />
+                              </div>
+                              <span className="font-semibold text-gray-900">
+                                {formatCurrency(order.total_amount, order.currency)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-600">
+                              {order.customer_name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <p className="text-xs text-gray-500">
+                                {new Date(order.created_at).toLocaleDateString('es-CO', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric',
+                                })}
+                              </p>
+                              {/* Mostrar Business ID para super admin */}
+                              {isSuperAdmin && (
+                                <>
+                                  <span className="text-xs text-gray-400">•</span>
+                                  <span className="text-xs text-blue-600 font-medium">
+                                    Business #{order.business_id}
+                                  </span>
+                                </>
+                              )}
+                            </div>
+
+                            {/* Error message */}
+                            {orderStatus?.status === 'failed' && orderStatus.error_message && (
+                              <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700">
+                                <span className="font-semibold">Error:</span> {orderStatus.error_message}
+                              </div>
                             )}
                           </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
 
                 <div className="mt-4 text-sm text-gray-600">
