@@ -71,8 +71,36 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
         : { ...filters, business_id: businessId, page, page_size: size };
 
       const response = await getInvoicesAction(finalFilters);
-      setInvoices(response.data || []);
-      setTotalCount(response.total || 0);
+
+      // AGRUPAR: Mostrar solo UNA factura por orden
+      // Prioridad: 1) Facturas con status != failed, 2) La más reciente
+      const grouped = (response.data || []).reduce((acc, invoice) => {
+        const existing = acc.get(invoice.order_id);
+
+        if (!existing) {
+          // Si no existe, agregar
+          acc.set(invoice.order_id, invoice);
+        } else {
+          // Si existe, reemplazar solo si:
+          // - La actual NO es failed y la existente SÍ es failed, O
+          // - Ambas son failed/non-failed y la actual es más reciente
+          const currentIsFailed = invoice.status === 'failed';
+          const existingIsFailed = existing.status === 'failed';
+
+          if ((!currentIsFailed && existingIsFailed) ||
+              (currentIsFailed === existingIsFailed &&
+               new Date(invoice.created_at) > new Date(existing.created_at))) {
+            acc.set(invoice.order_id, invoice);
+          }
+        }
+
+        return acc;
+      }, new Map<string, Invoice>());
+
+      const uniqueInvoices = Array.from(grouped.values());
+
+      setInvoices(uniqueInvoices);
+      setTotalCount(uniqueInvoices.length); // Actualizar total con facturas únicas
     } catch (error: any) {
       showToast('Error al cargar facturas: ' + error.message, 'error');
       setInvoices([]);
@@ -219,9 +247,9 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
         <div>
           <h2 className="text-2xl font-bold">Facturas Electrónicas</h2>
           <p className="text-sm text-gray-500 mt-1">
-            {totalCount} factura{totalCount !== 1 ? 's' : ''} en total
+            {totalCount} {totalCount === 1 ? 'orden facturada' : 'órdenes facturadas'}
             <span className="ml-2 text-xs text-gray-400">
-              (doble clic en una fila para ver detalle)
+              (doble clic para ver reintentos y detalle)
             </span>
           </p>
         </div>
