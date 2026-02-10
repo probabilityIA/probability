@@ -1,10 +1,36 @@
 package mappers
 
 import (
+	"strings"
+
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
 )
+
+// buildImageURL construye la URL completa de una imagen desde su ruta relativa
+func buildImageURL(relativePath string, baseURL string, fallbackBucket string) string {
+	if relativePath == "" {
+		return ""
+	}
+
+	// Si ya es una URL completa, retornarla directamente
+	if strings.HasPrefix(relativePath, "http://") || strings.HasPrefix(relativePath, "https://") {
+		return relativePath
+	}
+
+	// Usar URL base de S3 desde config
+	if baseURL != "" {
+		return strings.TrimRight(baseURL, "/") + "/" + strings.TrimLeft(relativePath, "/")
+	}
+
+	// Fallback a formato por defecto de S3
+	if fallbackBucket != "" {
+		return "https://" + fallbackBucket + ".s3.amazonaws.com/" + strings.TrimLeft(relativePath, "/")
+	}
+
+	return relativePath
+}
 
 // InvoiceToResponse convierte entidad de dominio a response
 func InvoiceToResponse(invoice *entities.Invoice, includeItems bool) *response.Invoice {
@@ -126,7 +152,7 @@ func ProvidersToResponse(providers []*entities.InvoicingProvider, totalCount int
 }
 
 // ConfigToResponse convierte entidad de dominio a response
-func ConfigToResponse(config *entities.InvoicingConfig) *response.Config {
+func ConfigToResponse(config *entities.InvoicingConfig, baseURL string, bucket string) *response.Config {
 	// Convert *uint to uint (dereference with default 0 if nil)
 	var invoicingProviderID uint
 	if config.InvoicingProviderID != nil {
@@ -154,6 +180,11 @@ func ConfigToResponse(config *entities.InvoicingConfig) *response.Config {
 		resp.ProviderName = config.ProviderName
 	}
 
+	if config.ProviderImageURL != nil {
+		fullImageURL := buildImageURL(*config.ProviderImageURL, baseURL, bucket)
+		resp.ProviderImageURL = &fullImageURL
+	}
+
 	if config.Description != "" {
 		resp.Description = &config.Description
 	}
@@ -162,10 +193,10 @@ func ConfigToResponse(config *entities.InvoicingConfig) *response.Config {
 }
 
 // ConfigsToResponse convierte lista de entidades a response
-func ConfigsToResponse(configs []*entities.InvoicingConfig, totalCount int64, page, pageSize int) *response.ConfigList {
+func ConfigsToResponse(configs []*entities.InvoicingConfig, totalCount int64, page, pageSize int, baseURL string, bucket string) *response.ConfigList {
 	items := make([]response.Config, 0, len(configs))
 	for _, config := range configs {
-		items = append(items, *ConfigToResponse(config))
+		items = append(items, *ConfigToResponse(config, baseURL, bucket))
 	}
 
 	return &response.ConfigList{

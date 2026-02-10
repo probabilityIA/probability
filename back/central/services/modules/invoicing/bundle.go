@@ -35,8 +35,12 @@ func New(
 	// 1. INFRAESTRUCTURA SECUNDARIA (Adaptadores de salida)
 	// ═══════════════════════════════════════════════════════════════
 
+	// Servicio de caché para configuraciones de facturación
+	configCache := invoicingRedis.NewConfigCache(redisClient, config, moduleLogger)
+
 	// Repositorio único (GORM) - implementa TODAS las interfaces
-	repo := repository.New(database, moduleLogger)
+	// Usa el servicio de caché para configuraciones de facturación
+	repo := repository.New(database, configCache, moduleLogger)
 
 	// Event publisher (RabbitMQ)
 	eventPublisher := queue.New(rabbitMQ, moduleLogger)
@@ -49,9 +53,14 @@ func New(
 	var ssePublisher = invoicingRedis.NewNoopSSEPublisher()
 	if redisClient != nil {
 		ssePublisher = invoicingRedis.NewSSEPublisher(redisClient, moduleLogger, sseChannel)
-		moduleLogger.Info(ctx).Str("channel", sseChannel).Msg("Invoice SSE publisher initialized")
+
+		// ═══════════════════════════════════════════════════════════════
+		// REGISTRAR PREFIJOS DE CACHÉ Y CANALES PARA STARTUP LOGS
+		// ═══════════════════════════════════════════════════════════════
+		redisClient.RegisterCachePrefix("probability:invoicing:config:*")
+		redisClient.RegisterChannel(sseChannel)
 	} else {
-		moduleLogger.Warn(ctx).Msg("Redis not available - Invoice SSE publisher disabled")
+		moduleLogger.Warn(ctx).Msg("Redis no disponible - SSE deshabilitado")
 	}
 
 	// Encryption service (para credenciales)
@@ -81,7 +90,7 @@ func New(
 	// ═══════════════════════════════════════════════════════════════
 
 	// HTTP Handlers
-	handler := handlers.New(useCase, repo, moduleLogger)
+	handler := handlers.New(useCase, repo, config, moduleLogger)
 	handler.RegisterRoutes(router)
 
 	// Consumers (RabbitMQ)
@@ -97,22 +106,22 @@ func New(
 		// Iniciar Order Consumer (escucha events de órdenes)
 		go func() {
 			if err := consumers.Order.Start(ctx); err != nil {
-				moduleLogger.Error(ctx).Err(err).Msg("Failed to start order consumer")
+				moduleLogger.Error(ctx).Err(err).Msg("Error al iniciar consumer de órdenes")
 			}
 		}()
 
 		// Iniciar Retry Consumer (cron de reintentos cada 5 minutos)
 		go consumers.Retry.Start(ctx)
 
-		// NUEVO: Iniciar Bulk Invoice Consumer (procesa facturas masivas)
+		// Iniciar Bulk Invoice Consumer (procesa facturas masivas)
 		go func() {
 			if err := consumers.BulkInvoice.Start(ctx); err != nil {
-				moduleLogger.Error(ctx).Err(err).Msg("Failed to start bulk invoice consumer")
+				moduleLogger.Error(ctx).Err(err).Msg("Error al iniciar consumer de facturación masiva")
 			}
 		}()
 
-		moduleLogger.Info(ctx).Msg("All consumers started successfully")
+		moduleLogger.Info(ctx).Msg("📄 Consumers de facturación iniciados: orders, retry, bulk")
 	} else {
-		moduleLogger.Warn(ctx).Msg("RabbitMQ not available - consumers not started")
+		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de facturación deshabilitados")
 	}
 }

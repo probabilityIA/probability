@@ -233,6 +233,30 @@ export async function deleteConfigAction(id: number): Promise<void> {
   });
 }
 
+export async function enableConfigAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/enable`, {
+    method: 'POST',
+  });
+}
+
+export async function disableConfigAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/disable`, {
+    method: 'POST',
+  });
+}
+
+export async function enableAutoInvoiceAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/enable-auto-invoice`, {
+    method: 'POST',
+  });
+}
+
+export async function disableAutoInvoiceAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/disable-auto-invoice`, {
+    method: 'POST',
+  });
+}
+
 // ============================================
 // BULK INVOICES
 // ============================================

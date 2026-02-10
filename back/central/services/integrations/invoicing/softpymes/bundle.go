@@ -38,10 +38,6 @@ func New(
 
 	// 1. Inicializar cliente HTTP de Softpymes
 	apiURL := config.Get("SOFTPYMES_API_URL")
-	logger.Info(context.Background()).
-		Str("api_url", apiURL).
-		Str("env_var", "SOFTPYMES_API_URL").
-		Msg("🔍 DEBUG: Softpymes API URL loaded from environment")
 	if apiURL == "" {
 		panic("SOFTPYMES_API_URL not configured")
 	}

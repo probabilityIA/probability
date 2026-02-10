@@ -16,31 +16,44 @@ import (
 
 // CreateInvoice crea una factura electrónica para una orden
 func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO) (*entities.Invoice, error) {
-	uc.log.Info(ctx).Str("order_id", dto.OrderID).Msg("Creating invoice for order")
-
 	// 1. Obtener datos de la orden
 	order, err := uc.repo.GetOrderByID(ctx, dto.OrderID)
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to get order")
+		uc.log.Error(ctx).Err(err).Msg("Error al obtener orden")
 		return nil, fmt.Errorf("failed to get order: %w", err)
 	}
 
 	// 2. Validar que la orden sea facturable
 	if !order.Invoiceable {
-		uc.log.Warn(ctx).Msg("Order is not invoiceable")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Orden no es facturable")
 		return nil, errors.ErrOrderNotInvoiceable
 	}
 
 	// 3. Obtener configuración de facturación para la integración
 	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to get invoicing config")
+		uc.log.Error(ctx).Err(err).Msg("Error al obtener configuración de facturación")
 		return nil, errors.ErrProviderNotConfigured
 	}
 
 	if !config.Enabled {
-		uc.log.Warn(ctx).Msg("Invoicing config is not enabled")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Configuración de facturación deshabilitada")
 		return nil, errors.ErrConfigNotEnabled
+	}
+
+	// Validar auto_invoice solo para facturas automáticas
+	if !dto.IsManual && !config.AutoInvoice {
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Facturación automática deshabilitada")
+		return nil, errors.ErrAutoInvoiceNotEnabled
 	}
 
 	// 4. Determinar integración de facturación
@@ -62,17 +75,24 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	// 5. Verificar si ya existe una factura para esta orden e integración
 	exists, err := uc.repo.InvoiceExistsForOrder(ctx, order.ID, integrationID)
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to check if invoice exists")
+		uc.log.Error(ctx).Err(err).Msg("Error al verificar factura existente")
 		return nil, fmt.Errorf("failed to check invoice existence: %w", err)
 	}
 	if exists {
-		uc.log.Warn(ctx).Msg("Invoice already exists for order")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Ya existe factura para esta orden")
 		return nil, errors.ErrOrderAlreadyInvoiced
 	}
 
 	// 6. Validar filtros de configuración
 	if err := uc.validateInvoicingFilters(order, config); err != nil {
-		uc.log.Warn(ctx).Msg("Order does not meet invoicing criteria")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Err(err).
+			Msg("❌ Orden no cumple criterios de facturación")
 		return nil, err
 	}
 
@@ -337,7 +357,6 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created SSE event")
 	}
 
-	uc.log.Info(ctx).Uint("invoice_id", invoice.ID).Str("invoice_number", invoice.InvoiceNumber).Msg("Invoice created successfully")
 	return invoice, nil
 }
 

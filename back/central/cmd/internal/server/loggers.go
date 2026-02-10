@@ -9,7 +9,7 @@ import (
 )
 
 // LogStartupInfo muestra información de inicio del servidor y conexiones
-func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig) {
+func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig, queueRegistry *QueueRegistry, redisRegistry *RedisRegistry) {
 	// No mostrar nombre de función en logs de startup
 	ctx = log.WithSkipFunctionCtx(ctx)
 
@@ -54,6 +54,17 @@ func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig) {
 		rabbitURL := fmt.Sprintf("amqp://%s:%s%s", rabbitHost, rabbitPort, rabbitVHost)
 		coloredRabbit := fmt.Sprintf("\033[32;4m%s\033[0m", rabbitURL) // verde subrayado
 		logger.Info(ctx).Msgf(" 🐰 RabbitMQ: %s", coloredRabbit)
+
+		// Mostrar colas declaradas dinámicamente
+		if queueRegistry != nil {
+			queues := queueRegistry.GetQueues()
+			if len(queues) > 0 {
+				logger.Info(ctx).Msg("    📥 Colas activas:")
+				for _, queue := range queues {
+					logger.Info(ctx).Msgf("       • %s", queue)
+				}
+			}
+		}
 		logger.Info(ctx).Msg(" ")
 	}
 
@@ -70,6 +81,27 @@ func LogStartupInfo(ctx context.Context, logger log.ILogger, e env.IConfig) {
 		redisURL := fmt.Sprintf("redis://%s:%s", redisHost, redisPort)
 		coloredRedis := fmt.Sprintf("\033[31;4m%s\033[0m", redisURL) // rojo subrayado
 		logger.Info(ctx).Msgf(" 🔴 Redis: %s", coloredRedis)
+
+		// Mostrar prefijos de caché y canales registrados dinámicamente
+		if redisRegistry != nil {
+			cachePrefixes := redisRegistry.GetCachePrefixes()
+			channels := redisRegistry.GetChannels()
+
+			if len(cachePrefixes) > 0 {
+				logger.Info(ctx).Msg("    💾 Prefijos de caché:")
+				for _, prefix := range cachePrefixes {
+					logger.Info(ctx).Msgf("       • %s", prefix)
+				}
+			}
+
+			if len(channels) > 0 {
+				logger.Info(ctx).Msg("    📡 Canales pub/sub:")
+				for _, channel := range channels {
+					logger.Info(ctx).Msgf("       • %s", channel)
+				}
+			}
+		}
+
 		logger.Info(ctx).Msg(" ")
 	}
 

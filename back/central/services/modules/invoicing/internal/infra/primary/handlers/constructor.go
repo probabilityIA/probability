@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -36,6 +37,10 @@ type IHandler interface {
 	GetConfig(c *gin.Context)
 	UpdateConfig(c *gin.Context)
 	DeleteConfig(c *gin.Context)
+	EnableConfig(c *gin.Context)
+	DisableConfig(c *gin.Context)
+	EnableAutoInvoice(c *gin.Context)
+	DisableAutoInvoice(c *gin.Context)
 
 	// Estadísticas y resúmenes
 	GetSummary(c *gin.Context)
@@ -51,14 +56,23 @@ type IHandler interface {
 type handler struct {
 	useCase ports.IUseCase
 	repo    ports.IRepository
+	config  env.IConfig
 	log     log.ILogger
 }
 
 // New crea un nuevo handler de facturación
-func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger) IHandler {
+func New(useCase ports.IUseCase, repo ports.IRepository, config env.IConfig, logger log.ILogger) IHandler {
 	return &handler{
 		useCase: useCase,
 		repo:    repo,
+		config:  config,
 		log:     logger.WithModule("invoicing.handler"),
 	}
+}
+
+// getS3Config retorna la URL base y bucket de S3 desde la configuración
+func (h *handler) getS3Config() (string, string) {
+	baseURL := h.config.Get("URL_BASE_DOMAIN_S3")
+	bucket := h.config.Get("S3_BUCKET")
+	return baseURL, bucket
 }

@@ -2,10 +2,15 @@ package log
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/rs/zerolog"
 )
 
@@ -34,14 +39,50 @@ var defaultLogger *logger
 
 func New() ILogger {
 	if defaultLogger == nil {
+		// CARGAR .env ANTES de leer variables de entorno
+		_ = godotenv.Load(".env")
+
 		// Configurar el logger con formato de consola bonito
 		consoleWriter := zerolog.ConsoleWriter{
-			Out:        os.Stdout,        // Cambiar a stdout para que se vea en consola
+			Out:        os.Stdout,        // Escribir a stdout para que se vea en consola
 			TimeFormat: "01-02 15:04:05", // Fecha corta (mes-día) y hora
 		}
 
+		// Crear logger base con consola
+		var baseLogger zerolog.Logger
+
+		// Si está habilitado el logging a archivo, usar multi-writer con filtro de nivel
+		if os.Getenv("ENABLE_DEBUG_FILE_LOGGING") == "true" {
+			fileWriter, err := createFileWriter()
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "⚠️  Failed to create log file writer: %v\n", err)
+				// Solo consola si falla el archivo
+				baseLogger = zerolog.New(consoleWriter)
+			} else {
+				logDir := os.Getenv("LOG_DIRECTORY")
+				if logDir == "" {
+					logDir = "./log"
+				}
+				today := time.Now().Format("2006-01-02")
+				fmt.Printf("✅ Debug file logging enabled: %s/app-%s.log (Debug level only)\n", logDir, today)
+
+				// Crear writer filtrado que SOLO escribe logs de Debug
+				debugWriter := &debugOnlyWriter{writer: fileWriter}
+
+				// MultiLevelWriter: consola recibe todos, archivo solo Debug
+				multiWriter := zerolog.MultiLevelWriter(
+					consoleWriter,  // Todos los niveles
+					debugWriter,    // Solo Debug
+				)
+				baseLogger = zerolog.New(multiWriter)
+			}
+		} else {
+			// Solo consola
+			baseLogger = zerolog.New(consoleWriter)
+		}
+
 		defaultLogger = &logger{
-			log: zerolog.New(consoleWriter).
+			log: baseLogger.
 				With().
 				Timestamp().
 				Logger().
@@ -65,6 +106,33 @@ func New() ILogger {
 		zerolog.DefaultContextLogger = &defaultLogger.log
 	}
 	return defaultLogger
+}
+
+// createFileWriter crea un writer que escribe logs en formato JSON a un archivo
+// con rotación diaria (app-YYYY-MM-DD.log)
+func createFileWriter() (io.Writer, error) {
+	// Obtener directorio de logs desde variable de entorno
+	logDir := os.Getenv("LOG_DIRECTORY")
+	if logDir == "" {
+		logDir = "./log"
+	}
+
+	// Crear directorio si no existe
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return nil, fmt.Errorf("failed to create log directory: %w", err)
+	}
+
+	// Generar nombre de archivo con fecha actual (rotación diaria)
+	today := time.Now().Format("2006-01-02")
+	logFilePath := filepath.Join(logDir, fmt.Sprintf("app-%s.log", today))
+
+	// Abrir archivo en modo APPEND (como estaba originalmente)
+	file, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open log file: %w", err)
+	}
+
+	return file, nil
 }
 
 // NewWithContext crea un logger con contexto automático de servicio y módulo
@@ -305,6 +373,24 @@ func getFunctionName() string {
 		}
 	}
 	return "unknown"
+}
+
+// debugOnlyWriter filtra y solo escribe logs de nivel Debug
+type debugOnlyWriter struct {
+	writer io.Writer
+}
+
+func (w *debugOnlyWriter) Write(p []byte) (n int, err error) {
+	return w.writer.Write(p)
+}
+
+func (w *debugOnlyWriter) WriteLevel(level zerolog.Level, p []byte) (n int, err error) {
+	// Solo escribir si es nivel Debug
+	if level == zerolog.DebugLevel {
+		return w.writer.Write(p)
+	}
+	// Ignorar otros niveles
+	return len(p), nil
 }
 
 type tracingHook struct{}

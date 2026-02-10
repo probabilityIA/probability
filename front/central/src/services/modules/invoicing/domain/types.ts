@@ -94,6 +94,7 @@ export interface InvoicingConfig {
   updated_at: string;
   integration_name?: string;
   provider_name?: string;
+  provider_image_url?: string; // URL del logo del proveedor
 }
 
 /**

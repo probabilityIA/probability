@@ -10,6 +10,12 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
+// CacheRegistryCallback es un callback para registrar prefijos de caché usados
+type CacheRegistryCallback func(prefix string)
+
+// ChannelRegistryCallback es un callback para registrar canales pub/sub activos
+type ChannelRegistryCallback func(channel string)
+
 // IRedis define la interfaz para la conexión a Redis
 type IRedis interface {
 	Connect(ctx context.Context) error
@@ -29,13 +35,19 @@ type IRedis interface {
 	HSet(ctx context.Context, key string, values ...interface{}) error
 	HGetAll(ctx context.Context, key string) (map[string]string, error)
 	HDel(ctx context.Context, key string, fields ...string) error
+
+	// Métodos de registro para tracking
+	RegisterCachePrefix(prefix string)
+	RegisterChannel(channel string)
 }
 
 // redisClient implementa la interfaz IRedis
 type redisClient struct {
-	client *redis.Client
-	log    log.ILogger
-	config env.IConfig
+	client          *redis.Client
+	log             log.ILogger
+	config          env.IConfig
+	cacheRegistry   CacheRegistryCallback
+	channelRegistry ChannelRegistryCallback
 }
 
 // New crea una nueva instancia de Redis y conecta automáticamente
@@ -54,6 +66,30 @@ func New(logger log.ILogger, config env.IConfig) IRedis {
 	}
 
 	return r
+}
+
+// SetCacheRegistry establece un callback para registrar prefijos de caché
+func (r *redisClient) SetCacheRegistry(callback CacheRegistryCallback) {
+	r.cacheRegistry = callback
+}
+
+// SetChannelRegistry establece un callback para registrar canales pub/sub
+func (r *redisClient) SetChannelRegistry(callback ChannelRegistryCallback) {
+	r.channelRegistry = callback
+}
+
+// RegisterCachePrefix registra un prefijo de caché usado (para mostrar en startup logs)
+func (r *redisClient) RegisterCachePrefix(prefix string) {
+	if r.cacheRegistry != nil {
+		r.cacheRegistry(prefix)
+	}
+}
+
+// RegisterChannel registra un canal pub/sub activo (para mostrar en startup logs)
+func (r *redisClient) RegisterChannel(channel string) {
+	if r.channelRegistry != nil {
+		r.channelRegistry(channel)
+	}
 }
 
 // Connect establece la conexión con Redis
@@ -88,10 +124,7 @@ func (r *redisClient) Connect(ctx context.Context) error {
 		return fmt.Errorf("error al conectar a Redis: %w", err)
 	}
 
-	r.log.Info(ctx).
-		Str("addr", addr).
-		Msg("Conexión Redis establecida correctamente")
-
+	// Redis info mostrada en LogStartupInfo() - no duplicar aquí
 	return nil
 }
 
@@ -129,10 +162,7 @@ func (r *redisClient) Ping(ctx context.Context) error {
 		return err
 	}
 
-	r.log.Debug(ctx).
-		Dur("duration", duration).
-		Msg("Redis Ping")
-
+	// Ping exitoso - no logueamos para reducir ruido en debug logs
 	return nil
 }
 
@@ -159,11 +189,7 @@ func (r *redisClient) Get(ctx context.Context, key string) (string, error) {
 		return "", err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Dur("duration", duration).
-		Msg("Redis Get")
-
+	// Get exitoso - no logueamos para reducir ruido en debug logs
 	return val, nil
 }
 
@@ -183,12 +209,7 @@ func (r *redisClient) Set(ctx context.Context, key string, value interface{}, ex
 		return err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Dur("expiration", expiration).
-		Dur("duration", duration).
-		Msg("Redis Set")
-
+	// Set exitoso - no logueamos para reducir ruido en debug logs
 	return nil
 }
 
@@ -207,11 +228,7 @@ func (r *redisClient) Delete(ctx context.Context, keys ...string) error {
 		return err
 	}
 
-	r.log.Debug(ctx).
-		Strs("keys", keys).
-		Dur("duration", duration).
-		Msg("Redis Delete")
-
+	// Delete exitoso - no logueamos para reducir ruido en debug logs
 	return nil
 }
 
@@ -230,12 +247,7 @@ func (r *redisClient) Exists(ctx context.Context, keys ...string) (int64, error)
 		return 0, err
 	}
 
-	r.log.Debug(ctx).
-		Strs("keys", keys).
-		Int64("count", count).
-		Dur("duration", duration).
-		Msg("Redis Exists")
-
+	// Exists exitoso - no logueamos para reducir ruido en debug logs
 	return count, nil
 }
 
@@ -255,12 +267,7 @@ func (r *redisClient) Expire(ctx context.Context, key string, expiration time.Du
 		return err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Dur("expiration", expiration).
-		Dur("duration", duration).
-		Msg("Redis Expire")
-
+	// Expire exitoso - no logueamos para reducir ruido en debug logs
 	return nil
 }
 
@@ -279,12 +286,7 @@ func (r *redisClient) TTL(ctx context.Context, key string) (time.Duration, error
 		return 0, err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Dur("ttl", ttl).
-		Dur("duration", duration).
-		Msg("Redis TTL")
-
+	// TTL exitoso - no logueamos para reducir ruido en debug logs
 	return ttl, nil
 }
 
@@ -303,12 +305,7 @@ func (r *redisClient) Keys(ctx context.Context, pattern string) ([]string, error
 		return nil, err
 	}
 
-	r.log.Debug(ctx).
-		Str("pattern", pattern).
-		Int("count", len(keys)).
-		Dur("duration", duration).
-		Msg("Redis Keys")
-
+	// Keys exitoso - no logueamos para reducir ruido en debug logs
 	return keys, nil
 }
 
@@ -327,12 +324,7 @@ func (r *redisClient) Incr(ctx context.Context, key string) (int64, error) {
 		return 0, err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Int64("value", val).
-		Dur("duration", duration).
-		Msg("Redis Incr")
-
+	// Incr exitoso - no logueamos para reducir ruido en debug logs
 	return val, nil
 }
 
@@ -351,12 +343,7 @@ func (r *redisClient) Decr(ctx context.Context, key string) (int64, error) {
 		return 0, err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Int64("value", val).
-		Dur("duration", duration).
-		Msg("Redis Decr")
-
+	// Decr exitoso - no logueamos para reducir ruido en debug logs
 	return val, nil
 }
 
@@ -385,12 +372,7 @@ func (r *redisClient) HGet(ctx context.Context, key, field string) (string, erro
 		return "", err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Str("field", field).
-		Dur("duration", duration).
-		Msg("Redis HGet")
-
+	// HGet exitoso - no logueamos para reducir ruido en debug logs
 	return val, nil
 }
 
@@ -409,11 +391,7 @@ func (r *redisClient) HSet(ctx context.Context, key string, values ...interface{
 		return err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Dur("duration", duration).
-		Msg("Redis HSet")
-
+	// HSet exitoso - no logueamos para reducir ruido en debug logs
 	return nil
 }
 
@@ -432,12 +410,7 @@ func (r *redisClient) HGetAll(ctx context.Context, key string) (map[string]strin
 		return nil, err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Int("fields", len(val)).
-		Dur("duration", duration).
-		Msg("Redis HGetAll")
-
+	// HGetAll exitoso - no logueamos para reducir ruido en debug logs
 	return val, nil
 }
 
@@ -457,11 +430,6 @@ func (r *redisClient) HDel(ctx context.Context, key string, fields ...string) er
 		return err
 	}
 
-	r.log.Debug(ctx).
-		Str("key", key).
-		Strs("fields", fields).
-		Dur("duration", duration).
-		Msg("Redis HDel")
-
+	// HDel exitoso - no logueamos para reducir ruido en debug logs
 	return nil
 }

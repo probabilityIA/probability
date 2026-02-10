@@ -8,6 +8,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/env"
+	"github.com/secamc93/probability/back/central/shared/log"
 )
 
 // integrationServiceAdapter adapta core.IIntegrationCore a domain.IIntegrationService
@@ -62,13 +64,13 @@ type ShopifyCore struct {
 	client          domain.ShopifyClient
 }
 
-func New(coreIntegration core.IIntegrationCore, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, database db.IDatabase) *ShopifyCore {
+func New(coreIntegration core.IIntegrationCore, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, database db.IDatabase, config env.IConfig, logger log.ILogger) *ShopifyCore {
 	// Crear adaptador que implementa domain.IIntegrationService
 	integrationService := &integrationServiceAdapter{
 		coreIntegration: coreIntegration,
 	}
 
-	useCase := usecases.New(integrationService, shopifyClient, orderPublisher, database)
+	useCase := usecases.New(integrationService, shopifyClient, orderPublisher, database, logger)
 	return &ShopifyCore{
 		coreIntegration: coreIntegration,
 		useCase:         useCase,

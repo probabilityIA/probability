@@ -8,6 +8,9 @@ type UpdateConfigDTO struct {
 	// Si se debe facturar automáticamente
 	AutoInvoice *bool
 
+	// ID de la integración de facturación (FK a integrations)
+	InvoicingIntegrationID *uint
+
 	// Filtros de configuración
 	Filters map[string]interface{}
 }

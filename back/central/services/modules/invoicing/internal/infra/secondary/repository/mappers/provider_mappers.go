@@ -176,9 +176,14 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 		entity.IntegrationName = &model.Integration.Name
 	}
 
-	// Extraer nombre de la integración de facturación (Softpymes) si está preloaded
+	// Extraer nombre y logo de la integración de facturación (Softpymes) si está preloaded
 	if model.InvoicingIntegration.ID > 0 && model.InvoicingIntegration.Name != "" {
 		entity.ProviderName = &model.InvoicingIntegration.Name
+
+		// Extraer logo del IntegrationType si está preloaded
+		if model.InvoicingIntegration.IntegrationType.ID > 0 && model.InvoicingIntegration.IntegrationType.ImageURL != "" {
+			entity.ProviderImageURL = &model.InvoicingIntegration.IntegrationType.ImageURL
+		}
 	}
 
 	// Convertir JSONB a map

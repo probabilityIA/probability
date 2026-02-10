@@ -58,7 +58,8 @@ func (h *handler) CreateConfig(c *gin.Context) {
 		return
 	}
 
-	resp := mappers.ConfigToResponse(config)
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigToResponse(config, baseURL, bucket)
 
 	h.log.Info(ctx).
 		Uint("config_id", config.ID).
@@ -124,7 +125,8 @@ func (h *handler) ListConfigs(c *gin.Context) {
 		return
 	}
 
-	resp := mappers.ConfigsToResponse(configs, int64(len(configs)), page, pageSize)
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigsToResponse(configs, int64(len(configs)), page, pageSize, baseURL, bucket)
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -154,7 +156,8 @@ func (h *handler) GetConfig(c *gin.Context) {
 		return
 	}
 
-	resp := mappers.ConfigToResponse(config)
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigToResponse(config, baseURL, bucket)
 	c.JSON(http.StatusOK, resp)
 }
 
@@ -196,7 +199,8 @@ func (h *handler) UpdateConfig(c *gin.Context) {
 		return
 	}
 
-	resp := mappers.ConfigToResponse(config)
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.ConfigToResponse(config, baseURL, bucket)
 
 	h.log.Info(ctx).Uint("config_id", config.ID).Msg("Config updated successfully")
 

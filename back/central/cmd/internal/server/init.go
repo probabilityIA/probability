@@ -29,17 +29,33 @@ func Init(ctx context.Context) error {
 	s3Service := storage.New(environment, logger)
 
 	// Initialize RabbitMQ
+	queueRegistry := NewQueueRegistry()
 	rabbitMQ, err := rabbitmq.New(logger, environment)
 	if err != nil {
 		logger.Error(ctx).
 			Err(err).
 			Msg("Failed to initialize RabbitMQ - consumers will be disabled")
 	} else {
-		logger.Info(ctx).Msg("✅ RabbitMQ initialized successfully")
+		// RabbitMQ info mostrada en LogStartupInfo() - no duplicar aquí
+		// Configurar registry para registrar colas declaradas
+		if rmq, ok := rabbitMQ.(interface{ SetQueueRegistry(rabbitmq.QueueRegistryCallback) }); ok {
+			rmq.SetQueueRegistry(queueRegistry.Register)
+		}
 	}
 
 	// Initialize Redis
+	redisRegistry := NewRedisRegistry()
 	redisClient := redis.New(logger, environment)
+	if redisClient != nil {
+		// Configurar registry para registrar prefijos y canales
+		if rc, ok := redisClient.(interface {
+			SetCacheRegistry(redis.CacheRegistryCallback)
+			SetChannelRegistry(redis.ChannelRegistryCallback)
+		}); ok {
+			rc.SetCacheRegistry(redisRegistry.RegisterCachePrefix)
+			rc.SetChannelRegistry(redisRegistry.RegisterChannel)
+		}
+	}
 
 	middleware.InitFromEnv(environment, logger)
 	r := routes.BuildRouter(ctx, logger, environment)
@@ -61,7 +77,7 @@ func Init(ctx context.Context) error {
 	// Pass integrationCore to moduleBundles for modules that need it (like invoicing)
 	moduleBundles.SetIntegrationCore(integrationCore)
 
-	LogStartupInfo(ctx, logger, environment)
+	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 
 	port := environment.Get("HTTP_PORT")
 

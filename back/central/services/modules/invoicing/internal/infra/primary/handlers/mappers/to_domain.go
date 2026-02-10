@@ -98,6 +98,10 @@ func UpdateConfigRequestToDTO(req *request.UpdateConfig) *dtos.UpdateConfigDTO {
 		dto.AutoInvoice = req.AutoInvoice
 	}
 
+	if req.InvoicingIntegrationID != nil {
+		dto.InvoicingIntegrationID = req.InvoicingIntegrationID
+	}
+
 	if req.Filters != nil {
 		dto.Filters = *req.Filters
 	}

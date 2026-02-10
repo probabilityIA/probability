@@ -13,7 +13,10 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import {
   deleteConfigAction,
-  updateConfigAction,
+  enableConfigAction,
+  disableConfigAction,
+  enableAutoInvoiceAction,
+  disableAutoInvoiceAction,
 } from '@/services/modules/invoicing/infra/actions';
 import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
 import type { Business } from '@/services/auth/business/domain/types';
@@ -28,6 +31,7 @@ interface ConfigsClientProps {
 export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: ConfigsClientProps) {
   const { showToast } = useToast();
   const router = useRouter();
+  const [configs, setConfigs] = useState<InvoicingConfig[]>(initialConfigs);
   const [selectedConfig, setSelectedConfig] = useState<InvoicingConfig | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
@@ -35,13 +39,32 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
   const handleToggleEnabled = async (config: InvoicingConfig) => {
     try {
       setActionLoading(true);
-      await updateConfigAction(config.id, { enabled: !config.enabled });
-      showToast(
-        config.enabled ? 'Facturación desactivada' : 'Facturación activada',
-        'success'
+
+      // Actualizar estado local INMEDIATAMENTE (optimista)
+      setConfigs(prevConfigs =>
+        prevConfigs.map(c =>
+          c.id === config.id ? { ...c, enabled: !c.enabled } : c
+        )
       );
-      router.refresh(); // Refrescar Server Component
+
+      // Llamar al servidor en background
+      if (config.enabled) {
+        await disableConfigAction(config.id);
+        showToast('Configuración desactivada exitosamente', 'success');
+      } else {
+        await enableConfigAction(config.id);
+        showToast('Configuración activada exitosamente', 'success');
+      }
+
+      // Sincronizar con servidor (sin recargar página)
+      router.refresh();
     } catch (error: any) {
+      // Si falla, revertir el cambio optimista
+      setConfigs(prevConfigs =>
+        prevConfigs.map(c =>
+          c.id === config.id ? { ...c, enabled: config.enabled } : c
+        )
+      );
       showToast('Error al actualizar configuración: ' + error.message, 'error');
     } finally {
       setActionLoading(false);
@@ -51,16 +74,33 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
   const handleToggleAutoInvoice = async (config: InvoicingConfig) => {
     try {
       setActionLoading(true);
-      await updateConfigAction(config.id, { auto_invoice: !config.auto_invoice });
-      showToast(
-        config.auto_invoice
-          ? 'Facturación automática desactivada'
-          : 'Facturación automática activada',
-        'success'
+
+      // Actualizar estado local INMEDIATAMENTE (optimista)
+      setConfigs(prevConfigs =>
+        prevConfigs.map(c =>
+          c.id === config.id ? { ...c, auto_invoice: !c.auto_invoice } : c
+        )
       );
-      router.refresh(); // Refrescar Server Component
+
+      // Llamar al servidor en background
+      if (config.auto_invoice) {
+        await disableAutoInvoiceAction(config.id);
+        showToast('Facturación automática desactivada', 'success');
+      } else {
+        await enableAutoInvoiceAction(config.id);
+        showToast('Facturación automática activada', 'success');
+      }
+
+      // Sincronizar con servidor (sin recargar página)
+      router.refresh();
     } catch (error: any) {
-      showToast('Error al actualizar configuración: ' + error.message, 'error');
+      // Si falla, revertir el cambio optimista
+      setConfigs(prevConfigs =>
+        prevConfigs.map(c =>
+          c.id === config.id ? { ...c, auto_invoice: config.auto_invoice } : c
+        )
+      );
+      showToast('Error al actualizar facturación automática: ' + error.message, 'error');
     } finally {
       setActionLoading(false);
     }
@@ -72,9 +112,13 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
     try {
       setActionLoading(true);
       await deleteConfigAction(selectedConfig.id);
+
+      // Actualizar estado local INMEDIATAMENTE
+      setConfigs(prevConfigs => prevConfigs.filter(c => c.id !== selectedConfig.id));
+
       showToast('Configuración eliminada exitosamente', 'success');
       setShowDeleteModal(false);
-      router.refresh(); // Refrescar Server Component
+      router.refresh();
     } catch (error: any) {
       showToast('Error al eliminar configuración: ' + error.message, 'error');
     } finally {
@@ -91,16 +135,27 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
   };
 
   const columns = [
-    // Columna de Negocio solo para super admins
-    ...(isSuperAdmin ? [{
+    // Columna de Negocio
+    {
       key: 'business',
       label: 'Negocio',
-      render: (_: unknown, config: InvoicingConfig) => (
-        <div className="text-sm text-gray-700">
-          <Badge color="purple">ID: {config.business_id}</Badge>
-        </div>
-      ),
-    }] : []),
+      render: (_: unknown, config: InvoicingConfig) => {
+        if (!isSuperAdmin) {
+          return <span className="text-sm font-medium text-gray-700">Mi Negocio</span>;
+        }
+
+        const business = businesses?.find(b => b.id === config.business_id);
+        return (
+          <div className="text-sm text-gray-700">
+            {business ? (
+              <span className="font-medium">{business.name}</span>
+            ) : (
+              <Badge type="warning">ID: {config.business_id}</Badge>
+            )}
+          </div>
+        );
+      },
+    },
     {
       key: 'integration',
       label: 'Integración',
@@ -116,41 +171,46 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
     {
       key: 'provider',
       label: 'Proveedor',
-      render: (_: unknown, config: InvoicingConfig) => (
-        <div className="text-sm text-gray-700">
-          {config.provider_name || `ID: ${config.invoicing_provider_id}`}
-        </div>
-      ),
-    },
-    {
-      key: 'enabled',
-      label: 'Habilitado',
-      render: (_: unknown, config: InvoicingConfig) => (
-        <button
-          onClick={() => handleToggleEnabled(config)}
-          disabled={actionLoading}
-          className="cursor-pointer"
-        >
-          <Badge color={config.enabled ? 'green' : 'gray'}>
-            {config.enabled ? 'Sí' : 'No'}
-          </Badge>
-        </button>
-      ),
-    },
-    {
-      key: 'auto_invoice',
-      label: 'Auto-facturar',
-      render: (_: unknown, config: InvoicingConfig) => (
-        <button
-          onClick={() => handleToggleAutoInvoice(config)}
-          disabled={actionLoading}
-          className="cursor-pointer"
-        >
-          <Badge color={config.auto_invoice ? 'blue' : 'gray'}>
-            {config.auto_invoice ? 'Automático' : 'Manual'}
-          </Badge>
-        </button>
-      ),
+      render: (_: unknown, config: InvoicingConfig) => {
+        if (config.provider_image_url) {
+          // Mostrar solo el logo si está disponible
+          return (
+            <div className="flex items-center justify-center">
+              <img
+                src={config.provider_image_url}
+                alt={config.provider_name || 'Proveedor'}
+                className="h-8 w-auto object-contain"
+                title={config.provider_name || 'Proveedor'}
+              />
+            </div>
+          );
+        }
+
+        // Fallback: mostrar inicial con color si no hay logo
+        const providerName = config.provider_name || `ID: ${config.invoicing_provider_id}`;
+        const firstLetter = providerName.charAt(0).toUpperCase();
+
+        const providerColors: Record<string, string> = {
+          'softpymes': 'bg-blue-500',
+          'alegra': 'bg-green-500',
+          'siigo': 'bg-purple-500',
+          'default': 'bg-gray-500'
+        };
+
+        const providerKey = providerName.toLowerCase();
+        const bgColor = providerColors[providerKey] || providerColors['default'];
+
+        return (
+          <div className="flex items-center justify-center">
+            <div
+              className={`w-10 h-10 ${bgColor} rounded-full flex items-center justify-center text-white font-bold text-sm`}
+              title={providerName}
+            >
+              {firstLetter}
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'created_at',
@@ -159,6 +219,34 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
         <div className="text-sm text-gray-600">
           {new Date(config.created_at).toLocaleDateString('es-CO')}
         </div>
+      ),
+    },
+    {
+      key: 'status',
+      label: 'Estado',
+      render: (_: unknown, config: InvoicingConfig) => (
+        <Button
+          variant={config.enabled ? 'success' : 'danger'}
+          size="sm"
+          onClick={() => handleToggleEnabled(config)}
+          disabled={actionLoading}
+        >
+          {config.enabled ? 'Activo' : 'Inactivo'}
+        </Button>
+      ),
+    },
+    {
+      key: 'auto_invoice',
+      label: 'Facturación Automática',
+      render: (_: unknown, config: InvoicingConfig) => (
+        <Button
+          variant={config.auto_invoice ? 'success' : 'danger'}
+          size="sm"
+          onClick={() => handleToggleAutoInvoice(config)}
+          disabled={actionLoading}
+        >
+          {config.auto_invoice ? 'Sí' : 'No'}
+        </Button>
       ),
     },
     {
@@ -217,7 +305,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
         </div>
       )}
 
-      {!initialConfigs || initialConfigs.length === 0 ? (
+      {!configs || configs.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <svg
             className="mx-auto h-12 w-12 text-gray-400"
@@ -250,7 +338,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
             </p>
           </div>
           <Table
-            data={initialConfigs}
+            data={configs}
             columns={columns}
             emptyMessage="No hay configuraciones para mostrar"
           />

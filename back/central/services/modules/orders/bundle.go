@@ -65,6 +65,9 @@ func initRedisPublisher(redisClient redisclient.IRedis, logger log.ILogger, envi
 	channel := getRedisChannel(environment)
 	publisher := redisevents.NewOrderEventPublisher(redisClient, logger, channel)
 
+	// Registrar canal para mostrar en startup logs
+	redisClient.RegisterChannel(channel)
+
 	return publisher
 }
 
@@ -75,9 +78,45 @@ func initRabbitPublisher(rabbitMQ rabbitmq.IQueue, logger log.ILogger) ports.IOr
 		return nil
 	}
 
+	// Configurar exchange y bindings para distribuir eventos a múltiples consumers
+	setupOrdersExchange(rabbitMQ, logger)
+
 	publisher := rabbitqueue.NewOrderRabbitPublisher(rabbitMQ, logger)
 
 	return publisher
+}
+
+// setupOrdersExchange configura el exchange de órdenes y sus bindings
+func setupOrdersExchange(rabbitMQ rabbitmq.IQueue, logger log.ILogger) {
+	ctx := context.Background()
+	exchangeName := "orders.events"
+
+	// 1. Declarar exchange tipo fanout (envía a TODAS las colas bindeadas)
+	if err := rabbitMQ.DeclareExchange(exchangeName, "fanout", true); err != nil {
+		logger.Error(ctx).Err(err).Msg("Error al declarar exchange de órdenes")
+		return
+	}
+
+	// 2. Declarar y bindear las 3 colas destino
+	queues := []string{
+		"orders.events.invoicing",
+		"orders.events.whatsapp",
+		"orders.events.score",
+	}
+
+	for _, queueName := range queues {
+		if err := rabbitMQ.DeclareQueue(queueName, true); err != nil {
+			logger.Error(ctx).Err(err).Str("queue", queueName).Msg("Error al declarar cola")
+			continue
+		}
+
+		if err := rabbitMQ.BindQueue(queueName, exchangeName, ""); err != nil {
+			logger.Error(ctx).Err(err).Str("queue", queueName).Msg("Error al bindear cola")
+			continue
+		}
+	}
+
+	// Exchange configurado - las colas se muestran en LogStartupInfo()
 }
 
 // initRequestConfirmationUseCase inicializa el caso de uso de confirmación por WhatsApp
@@ -114,22 +153,17 @@ func startRedisEventConsumer(redisClient redisclient.IRedis, logger log.ILogger,
 // startRabbitMQConsumer inicia el consumer de RabbitMQ para órdenes
 func startRabbitMQConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, orderMapping ports.IOrderMappingUseCase, repo ports.IRepository) {
 	if rabbitMQ == nil {
-		logger.Warn(context.Background()).Msg("❌ RabbitMQ not available, order consumer disabled")
+		logger.Warn(context.Background()).Msg("❌ RabbitMQ no disponible, consumer de órdenes deshabilitado")
 		return
 	}
 
-	logger.Info(context.Background()).Msg("🚀 Starting RabbitMQ Order Consumer...")
 	consumer := queue.New(rabbitMQ, logger, orderMapping, repo)
 
 	go func() {
-		logger.Info(context.Background()).
-			Str("queue", "probability.orders.canonical").
-			Msg("📥 Order Consumer started - waiting for messages...")
-
 		if err := consumer.Start(context.Background()); err != nil {
 			logger.Error().
 				Err(err).
-				Msg("❌ Order consumer stopped with error")
+				Msg("❌ Consumer de órdenes detenido con error")
 		}
 	}()
 }

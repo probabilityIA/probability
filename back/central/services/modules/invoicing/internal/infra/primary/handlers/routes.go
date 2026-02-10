@@ -42,11 +42,15 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		// Configuraciones de facturación
 		configs := invoicing.Group("/configs")
 		{
-			configs.POST("", middleware.JWT(), h.CreateConfig)       // Crear configuración
-			configs.GET("", middleware.JWT(), h.ListConfigs)         // Listar configuraciones
-			configs.GET("/:id", middleware.JWT(), h.GetConfig)       // Obtener configuración
-			configs.PUT("/:id", middleware.JWT(), h.UpdateConfig)    // Actualizar configuración
-			configs.DELETE("/:id", middleware.JWT(), h.DeleteConfig) // Eliminar configuración
+			configs.POST("", middleware.JWT(), h.CreateConfig)          // Crear configuración
+			configs.GET("", middleware.JWT(), h.ListConfigs)            // Listar configuraciones
+			configs.GET("/:id", middleware.JWT(), h.GetConfig)          // Obtener configuración
+			configs.PUT("/:id", middleware.JWT(), h.UpdateConfig)       // Actualizar configuración
+			configs.DELETE("/:id", middleware.JWT(), h.DeleteConfig)    // Eliminar configuración
+			configs.POST("/:id/enable", middleware.JWT(), h.EnableConfig)   // Activar configuración
+			configs.POST("/:id/disable", middleware.JWT(), h.DisableConfig) // Desactivar configuración
+			configs.POST("/:id/enable-auto-invoice", middleware.JWT(), h.EnableAutoInvoice)   // Activar facturación automática
+			configs.POST("/:id/disable-auto-invoice", middleware.JWT(), h.DisableAutoInvoice) // Desactivar facturación automática
 		}
 
 		// Estadísticas y resúmenes (NUEVO)

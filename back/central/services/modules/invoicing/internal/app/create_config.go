@@ -77,6 +77,10 @@ func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateCo
 		config.AutoInvoice = *dto.AutoInvoice
 	}
 
+	if dto.InvoicingIntegrationID != nil {
+		config.InvoicingIntegrationID = dto.InvoicingIntegrationID
+	}
+
 	if dto.Filters != nil {
 		config.Filters = dto.Filters
 	}

@@ -91,8 +91,8 @@ func (r *repository) List(ctx context.Context, filters dtos.FilterNotificationCo
 	// PRELOAD de relaciones para traer datos completos
 	query = query.Preload("NotificationType").Preload("NotificationEventType")
 
-	// Log de filtros aplicados para debug
-	logEvent := r.logger.Debug()
+	// Log de filtros aplicados
+	logEvent := r.logger.Info()
 	if filters.IntegrationID != nil {
 		logEvent = logEvent.Uint("filter_integration_id", *filters.IntegrationID)
 		query = query.Where("integration_id = ?", *filters.IntegrationID)
@@ -109,7 +109,6 @@ func (r *repository) List(ctx context.Context, filters dtos.FilterNotificationCo
 		logEvent = logEvent.Bool("filter_enabled", *filters.Enabled)
 		query = query.Where("enabled = ?", *filters.Enabled)
 	}
-	logEvent.Msg("🔎 Repository List - Filters applied")
 
 	// Ordenar por fecha de creación descendente
 	query = query.Order("created_at DESC")
@@ -119,8 +118,6 @@ func (r *repository) List(ctx context.Context, filters dtos.FilterNotificationCo
 		r.logger.Error().Err(err).Msg("Error listing notification configs")
 		return nil, err
 	}
-
-	r.logger.Debug().Int("results_count", len(models)).Msg("🔎 Repository List - Results found")
 
 	entities, err := mappers.ToDomainList(models)
 	if err != nil {
