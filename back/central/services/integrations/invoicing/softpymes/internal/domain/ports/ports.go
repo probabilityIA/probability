@@ -44,4 +44,9 @@ type ISoftpymesClient interface {
 
 	// CreateCreditNote crea una nota crédito en Softpymes
 	CreateCreditNote(ctx context.Context, creditNoteData map[string]interface{}) error
+
+	// GetDocumentByNumber obtiene un documento completo por su número
+	// Usado para consulta posterior después de crear factura (esperar procesamiento DIAN)
+	// Retorna el documento con todos sus detalles (items, totales, información de envío)
+	GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber string) (map[string]interface{}, error)
 }

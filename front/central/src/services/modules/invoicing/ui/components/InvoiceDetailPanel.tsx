@@ -327,6 +327,150 @@ export function InvoiceDetailModal({
               </div>
             )}
 
+            {/* Documento completo del proveedor (Softpymes) */}
+            {invoice.provider_response?.full_document && (
+              <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-xs text-blue-600 uppercase tracking-wide font-semibold mb-3">
+                  Documento Completo (Softpymes)
+                </p>
+                <details className="group">
+                  <summary className="text-xs text-gray-700 cursor-pointer hover:text-blue-600 font-medium flex items-center gap-2">
+                    <span>Ver detalles del documento</span>
+                    <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
+                  </summary>
+                  <div className="mt-3 space-y-3">
+                    {/* Info básica del documento */}
+                    <div className="grid grid-cols-2 gap-3">
+                      {invoice.provider_response.full_document.documentNumber && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Número de Documento</p>
+                          <p className="text-xs font-mono font-medium text-gray-700">
+                            {invoice.provider_response.full_document.documentNumber}
+                          </p>
+                        </div>
+                      )}
+                      {invoice.provider_response.full_document.documentDate && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Fecha</p>
+                          <p className="text-xs font-medium text-gray-700">
+                            {invoice.provider_response.full_document.documentDate}
+                          </p>
+                        </div>
+                      )}
+                      {invoice.provider_response.full_document.customerName && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Cliente</p>
+                          <p className="text-xs font-medium text-gray-700">
+                            {invoice.provider_response.full_document.customerName}
+                          </p>
+                        </div>
+                      )}
+                      {invoice.provider_response.full_document.customerIdentification && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Identificación</p>
+                          <p className="text-xs font-mono font-medium text-gray-700">
+                            {invoice.provider_response.full_document.customerIdentification}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Totales */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white/60 rounded">
+                      {invoice.provider_response.full_document.total && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Total</p>
+                          <p className="text-xs font-semibold text-gray-900">
+                            ${invoice.provider_response.full_document.total}
+                          </p>
+                        </div>
+                      )}
+                      {invoice.provider_response.full_document.totalIva && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">IVA</p>
+                          <p className="text-xs font-medium text-gray-700">
+                            ${invoice.provider_response.full_document.totalIva}
+                          </p>
+                        </div>
+                      )}
+                      {invoice.provider_response.full_document.totalDiscount && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Descuento</p>
+                          <p className="text-xs font-medium text-gray-700">
+                            ${invoice.provider_response.full_document.totalDiscount}
+                          </p>
+                        </div>
+                      )}
+                      {invoice.provider_response.full_document.totalWithholdingTax && (
+                        <div>
+                          <p className="text-xs text-gray-500 mb-0.5">Retención</p>
+                          <p className="text-xs font-medium text-gray-700">
+                            ${invoice.provider_response.full_document.totalWithholdingTax}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Items del documento */}
+                    {invoice.provider_response.full_document.details && invoice.provider_response.full_document.details.length > 0 && (
+                      <div>
+                        <p className="text-xs text-gray-500 mb-2">Items ({invoice.provider_response.full_document.details.length})</p>
+                        <div className="space-y-2">
+                          {invoice.provider_response.full_document.details.map((detail: any, idx: number) => (
+                            <div key={idx} className="p-2 bg-white/80 rounded text-xs border border-gray-200">
+                              <div className="flex justify-between items-start mb-1">
+                                <span className="font-medium text-gray-900">{detail.itemName || detail.itemCode}</span>
+                                <span className="font-semibold text-gray-900">${detail.value}</span>
+                              </div>
+                              <div className="flex gap-3 text-gray-600">
+                                <span>Cant: {detail.quantity}</span>
+                                {detail.iva && <span>IVA: ${detail.iva}</span>}
+                                {detail.discount && detail.discount !== '0' && detail.discount !== '0.00' && (
+                                  <span>Desc: ${detail.discount}</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Información de envío */}
+                    {invoice.provider_response.full_document.shipInformation && (
+                      <div className="p-3 bg-white/60 rounded">
+                        <p className="text-xs text-gray-500 mb-2 font-medium">Información de Envío</p>
+                        <div className="space-y-1 text-xs text-gray-700">
+                          {invoice.provider_response.full_document.shipInformation.shipAddress && (
+                            <p>📍 {invoice.provider_response.full_document.shipInformation.shipAddress}</p>
+                          )}
+                          {invoice.provider_response.full_document.shipInformation.shipCity && (
+                            <p>🏙️ {invoice.provider_response.full_document.shipInformation.shipCity}, {invoice.provider_response.full_document.shipInformation.shipDepartment}</p>
+                          )}
+                          {invoice.provider_response.full_document.shipInformation.shipPhone && (
+                            <p>📞 {invoice.provider_response.full_document.shipInformation.shipPhone}</p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* JSON completo (colapsado) */}
+                    <details className="mt-3">
+                      <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-1">
+                        <span>Ver JSON completo</span>
+                        <CopyButton
+                          text={JSON.stringify(invoice.provider_response.full_document, null, 2)}
+                          fieldId="full-document-json"
+                        />
+                      </summary>
+                      <pre className="mt-2 text-xs bg-white/80 rounded p-3 overflow-x-auto max-h-64 border border-gray-200 font-mono text-gray-700">
+                        {JSON.stringify(invoice.provider_response.full_document, null, 2)}
+                      </pre>
+                    </details>
+                  </div>
+                </details>
+              </div>
+            )}
+
             {/* Error message si existe */}
             {invoice.error_message && (
               <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">

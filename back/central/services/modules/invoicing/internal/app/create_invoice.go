@@ -322,6 +322,72 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		return nil, err
 	}
 
+	// 18.5. CONSULTA POSTERIOR DEL DOCUMENTO COMPLETO
+	// Fase 1: Solo guardar documento completo, extracción de campos en fase posterior
+	uc.log.Info(ctx).
+		Str("invoice_number", invoice.InvoiceNumber).
+		Msg("⏳ Waiting 3 seconds for DIAN processing")
+
+	time.Sleep(3 * time.Second)
+
+	uc.log.Info(ctx).
+		Str("invoice_number", invoice.InvoiceNumber).
+		Msg("📥 Fetching full document from Softpymes")
+
+	// Consultar documento completo usando el invoice_number
+	fullDocument, err := softpymes.GetDocumentByNumber(
+		ctx,
+		apiKey,
+		apiSecret,
+		credentialsMap["referer"].(string),
+		invoice.InvoiceNumber,
+	)
+
+	if err != nil {
+		// WARNING: No fallar factura si consulta posterior falla
+		uc.log.Warn(ctx).
+			Err(err).
+			Str("invoice_number", invoice.InvoiceNumber).
+			Msg("⚠️ Failed to fetch full document - will have NULL URLs/CUFE")
+
+		uc.log.Debug(ctx).
+			Err(err).
+			Str("invoice_number", invoice.InvoiceNumber).
+			Msg("📋 Document fetch failed - invoice created without enrichment")
+	} else {
+		// ÉXITO: Guardar documento completo en ProviderResponse
+		uc.log.Info(ctx).
+			Str("invoice_number", invoice.InvoiceNumber).
+			Msg("✅ Full document retrieved - saving to ProviderResponse")
+
+		// Asegurar que ProviderResponse existe y guardar documento completo
+		if invoice.ProviderResponse == nil {
+			invoice.ProviderResponse = make(map[string]interface{})
+		}
+
+		// Guardar documento completo y timestamp directamente
+		invoice.ProviderResponse["full_document"] = fullDocument
+		invoice.ProviderResponse["document_fetch_timestamp"] = time.Now().Format(time.RFC3339)
+
+		// Log detallado del documento para investigación
+		uc.log.Debug(ctx).
+			Interface("full_document", fullDocument).
+			Str("invoice_number", invoice.InvoiceNumber).
+			Msg("📋 Full document saved - review structure for field extraction in phase 2")
+
+		// NOTA: Extracción de campos específicos (PDF URL, XML URL, CUFE)
+		// se implementará en Fase 2 después de confirmar nombres exactos
+		// revisando el documento guardado en BD
+
+		// Actualizar invoice en BD con el documento completo
+		if err := uc.updateInvoiceWithRetry(ctx, invoice, syncLog, invoiceData); err != nil {
+			uc.log.Warn(ctx).
+				Err(err).
+				Str("invoice_number", invoice.InvoiceNumber).
+				Msg("⚠️ Failed to save full document to DB - continuing without it")
+		}
+	}
+
 	// 19. Actualizar log de sincronización como exitoso
 	completedAt := time.Now()
 	duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())

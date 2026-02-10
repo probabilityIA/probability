@@ -64,6 +64,7 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool) *response.I
 		PDFURL:              invoice.PDFURL,
 		XMLURL:              invoice.XMLURL,
 		Metadata:            invoice.Metadata,
+		ProviderResponse:    invoice.ProviderResponse, // Incluir respuesta completa del proveedor
 	}
 
 	// Incluir items si se solicita

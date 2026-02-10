@@ -27,6 +27,7 @@ type Invoice struct {
 	PDFURL              *string                `json:"pdf_url,omitempty"`
 	XMLURL              *string                `json:"xml_url,omitempty"`
 	Metadata            map[string]interface{} `json:"metadata,omitempty"`
+	ProviderResponse    map[string]interface{} `json:"provider_response,omitempty"` // Respuesta completa del proveedor (incluye full_document)
 	Items               []InvoiceItem          `json:"items,omitempty"`
 }
 

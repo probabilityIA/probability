@@ -31,6 +31,7 @@ export interface Invoice {
   cancelled_at?: string;
   error_message?: string;
   metadata?: Record<string, any>;
+  provider_response?: Record<string, any>; // Respuesta completa del proveedor (incluye full_document)
   created_at: string;
   updated_at: string;
   items?: InvoiceItem[];

@@ -169,6 +169,20 @@ func (b *Bundle) CreateCreditNote(ctx context.Context, creditNoteData map[string
 	return b.client.CreateCreditNote(ctx, creditNoteData)
 }
 
+// GetDocumentByNumber consulta un documento completo por su número
+// Usado para consulta posterior después de crear factura (esperar procesamiento DIAN ~3seg)
+// Retorna el documento completo con todos sus detalles (items, totales, información de envío)
+//
+// Este método es llamado por modules/invoicing después de crear una factura exitosamente
+// para enriquecer la factura con información completa del documento procesado
+func (b *Bundle) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber string) (map[string]interface{}, error) {
+	b.log.Info(ctx).
+		Str("document_number", documentNumber).
+		Msg("📄 Getting document by number via bundle")
+
+	return b.client.GetDocumentByNumber(ctx, apiKey, apiSecret, referer, documentNumber)
+}
+
 // GetProviderByID obtiene un proveedor por ID
 // Método de conveniencia para acceso externo
 func (b *Bundle) GetProviderByID(ctx context.Context, providerID uint) (interface{}, error) {
