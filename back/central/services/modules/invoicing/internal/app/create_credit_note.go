@@ -21,7 +21,11 @@ func (uc *useCase) CreateCreditNote(ctx context.Context, dto *dtos.CreateCreditN
 	uc.log.Info(ctx).Uint("invoice_id", dto.InvoiceID).Msg("Creating credit note")
 
 	// 1. Obtener factura
+<<<<<<< HEAD
 	invoice, err := uc.invoiceRepo.GetByID(ctx, dto.InvoiceID)
+=======
+	invoice, err := uc.repo.GetInvoiceByID(ctx, dto.InvoiceID)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
 		return nil, errors.ErrInvoiceNotFound
 	}
@@ -69,13 +73,21 @@ func (uc *useCase) CreateCreditNote(ctx context.Context, dto *dtos.CreateCreditN
 	}
 
 	// 8. Guardar en BD
+<<<<<<< HEAD
 	if err := uc.creditNoteRepo.Create(ctx, creditNote); err != nil {
+=======
+	if err := uc.repo.CreateInvoice(ctx, creditNote); err != nil {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(err).Msg("Failed to create credit note")
 		return nil, err
 	}
 
 	// 9. Crear nota en el proveedor
+<<<<<<< HEAD
 	request := &ports.CreditNoteRequest{
+=======
+	request := &dtos.CreditNoteRequest{
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		Invoice:    invoice,
 		CreditNote: creditNote,
 		Provider:   provider,
@@ -85,7 +97,11 @@ func (uc *useCase) CreateCreditNote(ctx context.Context, dto *dtos.CreateCreditN
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to create credit note with provider")
 		creditNote.Status = constants.CreditNoteStatusFailed
+<<<<<<< HEAD
 		uc.creditNoteRepo.Update(ctx, creditNote)
+=======
+		uc.repo.UpdateInvoice(ctx, creditNote)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		return nil, errors.ErrProviderAPIError
 	}
 
@@ -107,7 +123,11 @@ func (uc *useCase) CreateCreditNote(ctx context.Context, dto *dtos.CreateCreditN
 	}
 
 	// 11. Actualizar en BD
+<<<<<<< HEAD
 	if err := uc.creditNoteRepo.Update(ctx, creditNote); err != nil {
+=======
+	if err := uc.repo.UpdateInvoice(ctx, creditNote); err != nil {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(err).Msg("Failed to update credit note")
 	}
 
@@ -122,6 +142,7 @@ func (uc *useCase) CreateCreditNote(ctx context.Context, dto *dtos.CreateCreditN
 
 // GetCreditNote obtiene una nota de crédito por ID
 func (uc *useCase) GetCreditNote(ctx context.Context, id uint) (*entities.CreditNote, error) {
+<<<<<<< HEAD
 	return uc.creditNoteRepo.GetByID(ctx, id)
 }
 
@@ -138,4 +159,22 @@ func (uc *useCase) GetCreditNote(ctx context.Context, id uint) (*entities.Credit
 // ListCreditNotes lista notas de crédito con filtros (kept - still uses creditNoteRepo)
 func (uc *useCase) ListCreditNotes(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error) {
 	return uc.creditNoteRepo.List(ctx, filters)
+=======
+	return uc.repo.GetInvoiceByID(ctx, id)
+}
+
+func (uc *useCase) ListCreditNotes(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error) {
+	return uc.repo.ListInvoices(ctx, filters)
+}
+*/
+
+// GetCreditNote obtiene una nota de crédito por ID
+func (uc *useCase) GetCreditNote(ctx context.Context, id uint) (*entities.CreditNote, error) {
+	return uc.repo.GetCreditNoteByID(ctx, id)
+}
+
+// ListCreditNotes lista notas de crédito con filtros
+func (uc *useCase) ListCreditNotes(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error) {
+	return uc.repo.ListCreditNotes(ctx, filters)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 }

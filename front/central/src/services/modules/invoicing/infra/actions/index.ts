@@ -21,6 +21,13 @@ import type {
   InvoiceFilters,
   ProviderFilters,
   ConfigFilters,
+<<<<<<< HEAD
+=======
+  PaginatedInvoiceableOrders,
+  BulkCreateInvoicesDTO,
+  BulkCreateResult,
+  SyncLog,
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -109,6 +116,26 @@ export async function retryInvoiceAction(id: number): Promise<Invoice> {
   });
 }
 
+<<<<<<< HEAD
+=======
+export async function cancelRetryAction(id: number): Promise<void> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/retry`, {
+    method: 'DELETE',
+  });
+}
+
+export async function enableRetryAction(id: number): Promise<void> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/retry`, {
+    method: 'PUT',
+  });
+}
+
+export async function getInvoiceSyncLogsAction(id: number): Promise<SyncLog[]> {
+  const response = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/sync-logs`);
+  return response.sync_logs || [];
+}
+
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 // ============================================
 // PROVIDERS
 // ============================================
@@ -211,3 +238,58 @@ export async function deleteConfigAction(id: number): Promise<void> {
     method: 'DELETE',
   });
 }
+<<<<<<< HEAD
+=======
+
+// ============================================
+// BULK INVOICES
+// ============================================
+
+/**
+ * Obtiene órdenes facturables (invoiceable=true, invoice_id IS NULL)
+ *
+ * @param page - Número de página (default: 1)
+ * @param pageSize - Tamaño de página (default: 100)
+ * @param businessId - Filtro por business (opcional). Solo aplica para super admin (business_id=0)
+ *
+ * Super admin (business_id = 0):
+ *   - Sin businessId: lista órdenes de TODOS los businesses
+ *   - Con businessId: filtra solo ese business específico
+ * Usuario normal:
+ *   - Ignora businessId, siempre filtra por su business_id del JWT
+ */
+export async function getInvoiceableOrdersAction(
+  page: number = 1,
+  pageSize: number = 100,
+  businessId?: number | null
+): Promise<PaginatedInvoiceableOrders> {
+  const params = new URLSearchParams({
+    page: page.toString(),
+    page_size: pageSize.toString(),
+  });
+
+  // Si se especifica un businessId, agregarlo al query string
+  if (businessId !== null && businessId !== undefined) {
+    params.append('business_id', businessId.toString());
+  }
+
+  return fetchWithAuth(
+    `${API_BASE_URL}/invoicing/invoices/invoiceable-orders?${params.toString()}`,
+    { cache: 'no-store' }
+  );
+}
+
+/**
+ * Crea facturas masivamente
+ * NOTA: Esta es una Server Action, solo usar desde Server Components
+ * Para Client Components, usar el repository bulk-invoices-repository.ts
+ */
+export async function createBulkInvoicesAction(
+  dto: BulkCreateInvoicesDTO
+): Promise<BulkCreateResult> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/bulk`, {
+    method: 'POST',
+    body: JSON.stringify(dto),
+  });
+}
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e

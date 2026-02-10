@@ -1,0 +1,193 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Precios - probabilityIA">
+	<Header />
+	<main>
+		<!-- Hero Section -->
+		<section class="relative bg-[#0A0A0F] py-20 px-20 overflow-hidden">
+			<div class="max-w-6xl mx-auto text-center">
+				<div class="inline-flex items-center gap-2 bg-[#8B5CF620] border border-[#8B5CF650] rounded-full px-4 py-2 mb-6">
+					<span class="text-[#8B5CF6] font-medium text-sm">PLANES Y PRECIOS</span>
+				</div>
+				<h1 class="text-6xl font-bold text-white mb-6">
+					Planes que se ajustan a tu negocio
+				</h1>
+				<p class="text-xl text-[#A1A1AA] max-w-3xl mx-auto">
+					Desde startups hasta empresas grandes, tenemos un plan perfecto para ti
+				</p>
+			</div>
+		</section>
+
+		<!-- Pricing Cards -->
+		<section class="bg-[#0A0A0F] py-25 px-20">
+			<div class="max-w-6xl mx-auto">
+				<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+					<!-- Starter Plan -->
+					<div class="bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-colors duration-300">
+						<h3 class="text-2xl font-bold text-white mb-2">Starter</h3>
+						<p class="text-[#A1A1AA] mb-6">Para nuevos emprendimientos</p>
+						<div class="mb-6">
+							<span class="text-5xl font-bold text-white">$99</span>
+							<span class="text-[#A1A1AA] ml-2">/mes</span>
+						</div>
+						<a href="/demo" class="block w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white py-3 rounded-lg font-semibold mb-8 transition-colors text-center">
+							Comenzar Prueba Gratis
+						</a>
+						<ul class="space-y-4 text-[#A1A1AA]">
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Hasta 1,000 predicciones/mes
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								1 integración
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Dashboard básico
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Email support
+							</li>
+							<li class="flex items-center gap-3 opacity-50">
+								<svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+								Análisis de imágenes
+							</li>
+						</ul>
+					</div>
+
+					<!-- Professional Plan (Recommended) -->
+					<div class="bg-[#0F0F14] border-2 border-[#8B5CF6] rounded-xl p-8 relative transform md:scale-105 hover:shadow-2xl transition-all">
+						<div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+							<span class="bg-[#8B5CF6] text-white px-4 py-1 rounded-full text-sm font-semibold">RECOMENDADO</span>
+						</div>
+						<h3 class="text-2xl font-bold text-white mb-2">Professional</h3>
+						<p class="text-[#A1A1AA] mb-6">Para empresas en crecimiento</p>
+						<div class="mb-6">
+							<span class="text-5xl font-bold text-white">$299</span>
+							<span class="text-[#A1A1AA] ml-2">/mes</span>
+						</div>
+						<a href="/demo" class="block w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white py-3 rounded-lg font-semibold mb-8 transition-colors text-center">
+							Comenzar Prueba Gratis
+						</a>
+						<ul class="space-y-4 text-[#A1A1AA]">
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Hasta 50,000 predicciones/mes
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Integraciones ilimitadas
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Dashboard avanzado
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Análisis de imágenes
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Soporte por email y chat
+							</li>
+						</ul>
+					</div>
+
+					<!-- Enterprise Plan -->
+					<div class="bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-colors duration-300">
+						<h3 class="text-2xl font-bold text-white mb-2">Enterprise</h3>
+						<p class="text-[#A1A1AA] mb-6">Para grandes operaciones</p>
+						<div class="mb-6">
+							<span class="text-4xl font-bold text-white">Personalizado</span>
+						</div>
+						<button class="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white py-3 rounded-lg font-semibold mb-8 transition-colors">
+							Contáctanos
+						</button>
+						<ul class="space-y-4 text-[#A1A1AA]">
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Predicciones ilimitadas
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Integraciones personalizadas
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								API personalizada
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								Soporte 24/7 dedicado
+							</li>
+							<li class="flex items-center gap-3">
+								<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+								SLA garantizado
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- FAQ Section -->
+		<section class="bg-[#0F0F14] py-25 px-20">
+			<div class="max-w-4xl mx-auto">
+				<h2 class="text-4xl font-bold text-white text-center mb-16">Preguntas Frecuentes</h2>
+				<div class="space-y-4">
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							¿Hay período de prueba gratis?
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Sí, todos los planes incluyen 14 días de prueba gratis sin necesidad de tarjeta de crédito.</p>
+					</details>
+
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							¿Puedo cambiar de plan en cualquier momento?
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Claro, puedes cambiar o cancelar tu plan sin costo alguno en cualquier momento.</p>
+					</details>
+
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							¿Qué pasa si excedo mi límite mensual?
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Te notificaremos cuando estés cerca del límite. Puedes actualizar tu plan o comprar predicciones adicionales por un costo reducido.</p>
+					</details>
+				</div>
+			</div>
+		</section>
+
+		<!-- CTA Section -->
+		<section class="bg-[#0A0A0F] py-25 px-20">
+			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#6D28D9] to-[#4C1D95] rounded-2xl p-20 text-center border border-[#8B5CF650]">
+				<h2 class="text-4xl font-bold text-white mb-6">
+					¿No estás seguro cuál elegir?
+				</h2>
+				<p class="text-white text-opacity-90 mb-10 text-lg">
+					Habla con nuestro equipo para encontrar el plan perfecto para tu negocio
+				</p>
+				<a href="/demo" class="inline-block bg-white text-[#8B5CF6] hover:bg-gray-100 px-10 py-4 rounded-lg font-bold text-lg transition-colors">
+					Agendar Consulta Gratis
+				</a>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>

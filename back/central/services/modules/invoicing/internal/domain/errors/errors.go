@@ -21,6 +21,10 @@ var (
 	ErrInvoiceAlreadyIssued   = errors.New("invoice already issued")
 	ErrInvoiceAlreadyCancelled = errors.New("invoice already cancelled")
 	ErrInvoiceCannotBeCancelled = errors.New("invoice cannot be cancelled")
+<<<<<<< HEAD
+=======
+	ErrCancelNotImplemented     = errors.New("cancel invoice is not yet implemented")
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	ErrOrderNotInvoiceable    = errors.New("order is not invoiceable")
 	ErrOrderAlreadyInvoiced   = errors.New("order already has an invoice")
 )
@@ -85,6 +89,11 @@ var (
 	ErrMaxRetriesExceeded     = errors.New("maximum retries exceeded")
 	ErrRetryNotAllowed        = errors.New("retry not allowed")
 	ErrSyncInProgress         = errors.New("synchronization already in progress")
+<<<<<<< HEAD
+=======
+	ErrSyncLogNotFound        = errors.New("sync log not found")
+	ErrNoRetriesToCancel      = errors.New("no pending retries found to cancel")
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 )
 
 // Errores de notas de crédito

@@ -41,6 +41,12 @@ WORKDIR /app
 # Copiar binario desde build stage
 COPY --from=builder /workspace/central/probability-back-central .
 
+<<<<<<< HEAD
+=======
+# Copiar archivos de recursos necesarios
+COPY --from=builder /workspace/central/services/modules/ai/resources/ ./services/modules/ai/resources/
+
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 # Instalar certificados SSL y configurar zona horaria
 RUN apk update && apk add --no-cache \
     ca-certificates \

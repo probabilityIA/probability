@@ -5,7 +5,7 @@ services:
     image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
     container_name: frontend_prod
     ports:
-      - "8080:80"
+      - "8080:3000"
     environment:
       # API Backend URL (dentro de la red Docker)
       API_BASE_URL: "http://back-central:3050/api/v1"
@@ -17,7 +17,7 @@ services:
     - .env
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -116,6 +116,8 @@ services:
       RABBITMQ_PASS:      "${RABBITMQ_PASS:-admin}"
       RABBITMQ_VHOST:     "${RABBITMQ_VHOST:-/}"
       RABBITMQ_ORDERS_CREATE: "${RABBITMQ_ORDERS_CREATE:-orders.create}"
+      # Softpymes (Facturación Electrónica)
+      SOFTPYMES_API_URL:  "${SOFTPYMES_API_URL:-https://api-integracion.softpymes.com.co}"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]

@@ -6,11 +6,15 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
+<<<<<<< HEAD
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+=======
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
+<<<<<<< HEAD
 type InvoiceSyncLogRepository struct {
 	*Repository
 }
@@ -20,6 +24,11 @@ func NewInvoiceSyncLogRepository(repo *Repository) ports.IInvoiceSyncLogReposito
 }
 
 func (r *InvoiceSyncLogRepository) Create(ctx context.Context, log *entities.InvoiceSyncLog) error {
+=======
+
+
+func (r *Repository) CreateInvoiceSyncLog(ctx context.Context, log *entities.InvoiceSyncLog) error {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	model := mappers.SyncLogToModel(log)
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -30,7 +39,11 @@ func (r *InvoiceSyncLogRepository) Create(ctx context.Context, log *entities.Inv
 	return nil
 }
 
+<<<<<<< HEAD
 func (r *InvoiceSyncLogRepository) GetByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.InvoiceSyncLog, error) {
+=======
+func (r *Repository) GetSyncLogsByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.InvoiceSyncLog, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var models []*models.InvoiceSyncLog
 
 	if err := r.db.Conn(ctx).
@@ -43,7 +56,11 @@ func (r *InvoiceSyncLogRepository) GetByInvoiceID(ctx context.Context, invoiceID
 	return mappers.SyncLogListToDomain(models), nil
 }
 
+<<<<<<< HEAD
 func (r *InvoiceSyncLogRepository) GetPendingRetries(ctx context.Context, limit int) ([]*entities.InvoiceSyncLog, error) {
+=======
+func (r *Repository) GetPendingSyncLogRetries(ctx context.Context, limit int) ([]*entities.InvoiceSyncLog, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var models []*models.InvoiceSyncLog
 
 	now := time.Now()
@@ -59,7 +76,11 @@ func (r *InvoiceSyncLogRepository) GetPendingRetries(ctx context.Context, limit 
 	return mappers.SyncLogListToDomain(models), nil
 }
 
+<<<<<<< HEAD
 func (r *InvoiceSyncLogRepository) Update(ctx context.Context, log *entities.InvoiceSyncLog) error {
+=======
+func (r *Repository) UpdateInvoiceSyncLog(ctx context.Context, log *entities.InvoiceSyncLog) error {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	model := mappers.SyncLogToModel(log)
 
 	if err := r.db.Conn(ctx).Save(model).Error; err != nil {

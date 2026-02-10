@@ -153,6 +153,7 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 	}
 
 	entity := &entities.InvoicingConfig{
+<<<<<<< HEAD
 		ID:                  model.ID,
 		CreatedAt:           model.CreatedAt,
 		UpdatedAt:           model.UpdatedAt,
@@ -164,6 +165,20 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 		Description:         model.Description,
 		CreatedByID:         model.CreatedByID,
 		UpdatedByID:         model.UpdatedByID,
+=======
+		ID:                     model.ID,
+		CreatedAt:              model.CreatedAt,
+		UpdatedAt:              model.UpdatedAt,
+		BusinessID:             model.BusinessID,
+		IntegrationID:          model.IntegrationID,
+		InvoicingProviderID:    model.InvoicingProviderID,    // Campo deprecado (legacy)
+		InvoicingIntegrationID: model.InvoicingIntegrationID, // Campo nuevo (actual)
+		Enabled:                model.Enabled,
+		AutoInvoice:            model.AutoInvoice,
+		Description:            model.Description,
+		CreatedByID:            model.CreatedByID,
+		UpdatedByID:            model.UpdatedByID,
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	}
 
 	if model.DeletedAt.Valid {
@@ -209,6 +224,7 @@ func ConfigToModel(entity *entities.InvoicingConfig) *models.InvoicingConfig {
 			CreatedAt: entity.CreatedAt,
 			UpdatedAt: entity.UpdatedAt,
 		},
+<<<<<<< HEAD
 		BusinessID:          entity.BusinessID,
 		IntegrationID:       entity.IntegrationID,
 		InvoicingProviderID: entity.InvoicingProviderID,
@@ -217,6 +233,17 @@ func ConfigToModel(entity *entities.InvoicingConfig) *models.InvoicingConfig {
 		Description:         entity.Description,
 		CreatedByID:         entity.CreatedByID,
 		UpdatedByID:         entity.UpdatedByID,
+=======
+		BusinessID:             entity.BusinessID,
+		IntegrationID:          entity.IntegrationID,
+		InvoicingProviderID:    entity.InvoicingProviderID,    // Campo deprecado (legacy)
+		InvoicingIntegrationID: entity.InvoicingIntegrationID, // Campo nuevo (actual)
+		Enabled:                entity.Enabled,
+		AutoInvoice:            entity.AutoInvoice,
+		Description:            entity.Description,
+		CreatedByID:            entity.CreatedByID,
+		UpdatedByID:            entity.UpdatedByID,
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	}
 
 	if entity.DeletedAt != nil {

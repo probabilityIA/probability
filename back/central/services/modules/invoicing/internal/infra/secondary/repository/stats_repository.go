@@ -12,7 +12,11 @@ import (
 // ═══════════════════════════════════════════════════════════════
 
 // GetSummary obtiene un resumen general de facturas con KPIs principales
+<<<<<<< HEAD
 func (r *InvoiceRepository) GetSummary(ctx context.Context, businessID uint, start, end time.Time) (*entities.InvoiceSummary, error) {
+=======
+func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, start, end time.Time) (*entities.InvoiceSummary, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var summary entities.InvoiceSummary
 
 	// Query 1: Totals (métricas totales)
@@ -118,7 +122,11 @@ func (r *InvoiceRepository) GetSummary(ctx context.Context, businessID uint, sta
 }
 
 // GetDetailedStats obtiene estadísticas detalladas para dashboards
+<<<<<<< HEAD
 func (r *InvoiceRepository) GetDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error) {
+=======
+func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var stats entities.DetailedStats
 
 	// Extraer fechas de filtros (si existen)
@@ -256,7 +264,11 @@ func (r *InvoiceRepository) GetDetailedStats(ctx context.Context, businessID uin
 }
 
 // GetTrends obtiene datos de tendencias temporales para gráficos
+<<<<<<< HEAD
 func (r *InvoiceRepository) GetTrends(ctx context.Context, businessID uint, start, end time.Time, granularity, metric string) (*entities.TrendData, error) {
+=======
+func (r *Repository) GetInvoiceTrends(ctx context.Context, businessID uint, start, end time.Time, granularity, metric string) (*entities.TrendData, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var trendData entities.TrendData
 
 	trendData.Metric = metric

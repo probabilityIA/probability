@@ -1,0 +1,197 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Contacto - probabilityIA">
+	<Header />
+	<main>
+		<!-- Hero Section -->
+		<section class="relative bg-[#0A0A0F] py-20 px-20 overflow-hidden">
+			<div class="max-w-6xl mx-auto text-center">
+				<h1 class="text-6xl font-bold text-white mb-6">
+					Ponte en contacto con nosotros
+				</h1>
+				<p class="text-xl text-[#A1A1AA] max-w-3xl mx-auto">
+					Estamos aquí para responder tus preguntas y ayudarte a encontrar la solución perfecta
+				</p>
+			</div>
+		</section>
+
+		<!-- Contact Form & Info -->
+		<section class="bg-[#0A0A0F] py-25 px-20">
+			<div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
+				<!-- Contact Info -->
+				<div class="md:col-span-1">
+					<h2 class="text-2xl font-bold text-white mb-12">Información de Contacto</h2>
+
+					<div class="space-y-8">
+						<!-- Email -->
+						<div>
+							<div class="flex items-center gap-4 mb-3">
+								<div class="w-10 h-10 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+									<svg class="w-5 h-5 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+								</div>
+								<div>
+									<p class="text-[#A1A1AA] text-sm">Email</p>
+									<a href="mailto:contacto@probabilityia.com" class="text-white font-semibold hover:text-[#8B5CF6] transition-colors">
+										contacto@probabilityia.com
+									</a>
+								</div>
+							</div>
+						</div>
+
+						<!-- Phone -->
+						<div>
+							<div class="flex items-center gap-4 mb-3">
+								<div class="w-10 h-10 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+									<svg class="w-5 h-5 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+								</div>
+								<div>
+									<p class="text-[#A1A1AA] text-sm">Teléfono</p>
+									<a href="tel:+573001234567" class="text-white font-semibold hover:text-[#8B5CF6] transition-colors">
+										+57 (300) 123-4567
+									</a>
+								</div>
+							</div>
+						</div>
+
+						<!-- Location -->
+						<div>
+							<div class="flex items-center gap-4 mb-3">
+								<div class="w-10 h-10 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+									<svg class="w-5 h-5 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+								</div>
+								<div>
+									<p class="text-[#A1A1AA] text-sm">Ubicación</p>
+									<p class="text-white font-semibold">
+										Medellín, Colombia
+									</p>
+								</div>
+							</div>
+						</div>
+
+						<!-- Hours -->
+						<div>
+							<div class="flex items-center gap-4 mb-3">
+								<div class="w-10 h-10 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+									<svg class="w-5 h-5 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+								</div>
+								<div>
+									<p class="text-[#A1A1AA] text-sm">Horarios</p>
+									<p class="text-white font-semibold">
+										Lunes - Viernes: 9AM - 6PM<br/>
+										<span class="text-sm text-[#A1A1AA]">Soporte 24/7 para clientes</span>
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Social Links -->
+					<div class="mt-12 pt-8 border-t border-[#27272A]">
+						<p class="text-[#A1A1AA] text-sm mb-4">Síguenos en redes sociales</p>
+						<div class="flex gap-4">
+							<a href="#" class="w-10 h-10 rounded-lg bg-[#8B5CF620] flex items-center justify-center text-[#8B5CF6] hover:bg-[#8B5CF6] hover:text-white transition-colors">
+								<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M23 3a10.9 10.9 0 01-3.14 1.53 4.48 4.48 0 00-7.86 3v1A10.66 10.66 0 013 4s-4 9 5 13a11.64 11.64 0 01-7 2s9 5 20 5a9.5 9.5 0 00-9-5.5c4.75 2.25 7-7 7-7"></path></svg>
+							</a>
+							<a href="#" class="w-10 h-10 rounded-lg bg-[#8B5CF620] flex items-center justify-center text-[#8B5CF6] hover:bg-[#8B5CF6] hover:text-white transition-colors">
+								<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M16 8a6 6 0 016 6v7h-4v-7a2 2 0 00-2-2 2 2 0 00-2 2v7h-4v-7a6 6 0 016-6zM2 9h4v12H2z"></path><circle cx="4" cy="4" r="2"></circle></svg>
+							</a>
+							<a href="#" class="w-10 h-10 rounded-lg bg-[#8B5CF620] flex items-center justify-center text-[#8B5CF6] hover:bg-[#8B5CF6] hover:text-white transition-colors">
+								<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"></path></svg>
+							</a>
+						</div>
+					</div>
+				</div>
+
+				<!-- Contact Form -->
+				<div class="md:col-span-2 bg-[#0F0F14] border border-[#27272A] rounded-xl p-12">
+					<h2 class="text-2xl font-bold text-white mb-8">Envíanos un mensaje</h2>
+					<form class="space-y-6">
+						<!-- Name -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Nombre Completo</label>
+							<input type="text" placeholder="Tu nombre" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+						</div>
+
+						<!-- Email -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Email</label>
+							<input type="email" placeholder="tu@email.com" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+						</div>
+
+						<!-- Company -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Empresa</label>
+							<input type="text" placeholder="Tu empresa" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+						</div>
+
+						<!-- Subject -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Asunto</label>
+							<select class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+								<option>Selecciona un asunto</option>
+								<option>Consulta sobre precios</option>
+								<option>Soporte técnico</option>
+								<option>Integración personalizada</option>
+								<option>Otro</option>
+							</select>
+						</div>
+
+						<!-- Message -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Mensaje</label>
+							<textarea rows="6" placeholder="Tu mensaje..." class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors resize-none"></textarea>
+						</div>
+
+						<!-- Submit -->
+						<button type="submit" class="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white py-3 rounded-lg font-semibold transition-colors">
+							Enviar Mensaje
+						</button>
+					</form>
+				</div>
+			</div>
+		</section>
+
+		<!-- FAQ Section -->
+		<section class="bg-[#0F0F14] py-25 px-20">
+			<div class="max-w-4xl mx-auto">
+				<h2 class="text-4xl font-bold text-white text-center mb-16">Preguntas Frecuentes</h2>
+				<div class="space-y-4">
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							¿Cuál es el tiempo de respuesta?
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Respondemos a todos los mensajes en máximo 24 horas hábiles. Para clientes empresariales, el soporte es 24/7.</p>
+					</details>
+
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							¿Cómo puedo solicitar una demo?
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Puedes solicitar una demo completando el formulario arriba o enviándonos un email a contacto@probabilityia.com. Nuestro equipo se pondrá en contacto pronto.</p>
+					</details>
+
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							¿Ofrecen capacitación?
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Sí, ofrecemos capacitación gratuita para todos nuestros clientes. El equipo de soporte te guiará en el proceso.</p>
+					</details>
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>

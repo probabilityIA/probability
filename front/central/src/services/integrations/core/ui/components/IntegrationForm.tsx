@@ -6,6 +6,10 @@ import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
 import { Alert } from '@/shared/ui';
 import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
+<<<<<<< HEAD
+=======
+import { SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 // IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
@@ -13,6 +17,10 @@ const INTEGRATION_TYPE_IDS = {
     WHATSAPP: 2,
     MERCADO_LIBRE: 3,
     WOOCOMMERCE: 4,
+<<<<<<< HEAD
+=======
+    SOFTPYMES: 5,
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 } as const;
 
 interface IntegrationFormProps {
@@ -263,6 +271,27 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
+<<<<<<< HEAD
+=======
+        // Show edit form for Softpymes
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SOFTPYMES) {
+            console.log('✅ Usando SoftpymesEditForm');
+            return (
+                <SoftpymesEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
         // For other types that don't have a specific form yet
         return (
             <Alert type="info">

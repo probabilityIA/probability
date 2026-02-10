@@ -2,6 +2,10 @@ package mappers
 
 import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
+<<<<<<< HEAD
+=======
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
 )
 
@@ -29,6 +33,11 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool) *response.I
 		Tax:                 invoice.Tax,
 		Discount:            invoice.Discount,
 		Currency:            invoice.Currency,
+<<<<<<< HEAD
+=======
+		CustomerName:        invoice.CustomerName,
+		CustomerEmail:       invoice.CustomerEmail,
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		IssuedAt:            invoice.IssuedAt,
 		CancelledAt:         invoice.CancelledAt,
 		CUFE:                invoice.CUFE,
@@ -194,3 +203,52 @@ func CreditNoteToResponse(note *entities.CreditNote) *response.CreditNote {
 		Metadata:         note.Metadata,
 	}
 }
+<<<<<<< HEAD
+=======
+
+// SyncLogToResponse convierte entidad de dominio a response
+func SyncLogToResponse(log *entities.InvoiceSyncLog) response.SyncLog {
+	return response.SyncLog{
+		ID:             log.ID,
+		InvoiceID:      log.InvoiceID,
+		OperationType:  log.OperationType,
+		Status:         log.Status,
+		ErrorMessage:   log.ErrorMessage,
+		ErrorCode:      log.ErrorCode,
+		RetryCount:     log.RetryCount,
+		MaxRetries:     log.MaxRetries,
+		NextRetryAt:    log.NextRetryAt,
+		TriggeredBy:    log.TriggeredBy,
+		Duration:       log.Duration,
+		StartedAt:      log.StartedAt,
+		CompletedAt:    log.CompletedAt,
+		CreatedAt:      log.CreatedAt,
+		RequestPayload: log.RequestPayload,
+		RequestURL:     log.RequestURL,
+		ResponseStatus: log.ResponseStatus,
+		ResponseBody:   log.ResponseBody,
+	}
+}
+
+// SyncLogsToResponse convierte lista de entidades a response
+func SyncLogsToResponse(logs []*entities.InvoiceSyncLog) []response.SyncLog {
+	items := make([]response.SyncLog, 0, len(logs))
+	for _, log := range logs {
+		items = append(items, SyncLogToResponse(log))
+	}
+	return items
+}
+
+// ToInvoiceableOrderResponse convierte OrderData a InvoiceableOrder response
+func ToInvoiceableOrderResponse(order *dtos.OrderData) response.InvoiceableOrder {
+	return response.InvoiceableOrder{
+		ID:           order.ID,
+		BusinessID:   order.BusinessID,
+		OrderNumber:  order.OrderNumber,
+		CustomerName: order.CustomerName,
+		TotalAmount:  order.TotalAmount,
+		Currency:     order.Currency,
+		CreatedAt:    order.CreatedAt,
+	}
+}
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e

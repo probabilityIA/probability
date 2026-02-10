@@ -13,7 +13,11 @@ func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) 
 	uc.log.Info(ctx).Uint("integration_id", dto.IntegrationID).Msg("Creating invoicing config")
 
 	// 1. Verificar que no existe config para esta integración
+<<<<<<< HEAD
 	exists, err := uc.configRepo.ExistsForIntegration(ctx, dto.IntegrationID)
+=======
+	exists, err := uc.repo.ConfigExistsForIntegration(ctx, dto.IntegrationID)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
 		return nil, err
 	}
@@ -49,7 +53,11 @@ func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) 
 	}
 
 	// 4. Guardar en BD
+<<<<<<< HEAD
 	if err := uc.configRepo.Create(ctx, config); err != nil {
+=======
+	if err := uc.repo.CreateInvoicingConfig(ctx, config); err != nil {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(err).Msg("Failed to create config")
 		return nil, err
 	}
@@ -63,7 +71,11 @@ func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateCo
 	uc.log.Info(ctx).Uint("config_id", id).Msg("Updating invoicing config")
 
 	// Obtener config existente
+<<<<<<< HEAD
 	config, err := uc.configRepo.GetByID(ctx, id)
+=======
+	config, err := uc.repo.GetInvoicingConfigByID(ctx, id)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
 		return nil, errors.ErrConfigNotFound
 	}
@@ -82,7 +94,11 @@ func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateCo
 	}
 
 	// Guardar cambios
+<<<<<<< HEAD
 	if err := uc.configRepo.Update(ctx, config); err != nil {
+=======
+	if err := uc.repo.UpdateInvoicingConfig(ctx, config); err != nil {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(err).Msg("Failed to update config")
 		return nil, err
 	}
@@ -93,10 +109,18 @@ func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateCo
 
 // GetConfig obtiene una configuración por ID
 func (uc *useCase) GetConfig(ctx context.Context, id uint) (*entities.InvoicingConfig, error) {
+<<<<<<< HEAD
 	return uc.configRepo.GetByID(ctx, id)
+=======
+	return uc.repo.GetInvoicingConfigByID(ctx, id)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 }
 
 // ListConfigs lista configuraciones de un negocio
 func (uc *useCase) ListConfigs(ctx context.Context, businessID uint) ([]*entities.InvoicingConfig, error) {
+<<<<<<< HEAD
 	return uc.configRepo.List(ctx, businessID)
+=======
+	return uc.repo.ListInvoicingConfigs(ctx, businessID)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 }

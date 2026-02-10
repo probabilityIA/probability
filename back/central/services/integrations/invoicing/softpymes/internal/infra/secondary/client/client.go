@@ -1,6 +1,10 @@
 package client
 
 import (
+<<<<<<< HEAD
+=======
+	"context"
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
@@ -18,6 +22,13 @@ type Client struct {
 
 // New crea un nuevo cliente de Softpymes
 func New(baseURL string, logger log.ILogger) ports.ISoftpymesClient {
+<<<<<<< HEAD
+=======
+	logger.Info(context.Background()).
+		Str("base_url", baseURL).
+		Msg("🔍 DEBUG: Creating Softpymes HTTP client with URL")
+
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	// Configurar cliente HTTP usando el cliente compartido
 	httpConfig := httpclient.HTTPClientConfig{
 		BaseURL:    baseURL,

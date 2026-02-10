@@ -1,0 +1,236 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Solicitar Demo - probabilityIA">
+	<Header />
+	<main>
+		<!-- Hero Section -->
+		<section class="relative bg-[#0A0A0F] py-20 px-20 overflow-hidden">
+			<div class="max-w-4xl mx-auto text-center">
+				<div class="inline-flex items-center gap-2 bg-[#8B5CF620] border border-[#8B5CF650] rounded-full px-4 py-2 mb-6">
+					<span class="text-[#8B5CF6] font-medium text-sm">DEMO GRATUITA</span>
+				</div>
+				<h1 class="text-6xl font-bold text-white mb-6">
+					Ve ProbabilityIA en acción
+				</h1>
+				<p class="text-xl text-[#A1A1AA] max-w-2xl mx-auto">
+					Agendar una demostración personalizada con nuestro equipo. Sin compromiso, sin tarjeta de crédito.
+				</p>
+			</div>
+		</section>
+
+		<!-- Demo Form Section -->
+		<section class="bg-[#0A0A0F] py-25 px-20">
+			<div class="max-w-2xl mx-auto">
+				<div class="bg-[#0F0F14] border border-[#27272A] rounded-2xl p-12">
+					<form class="space-y-6">
+						<!-- Name -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Nombre Completo *</label>
+							<input type="text" required placeholder="Tu nombre" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+						</div>
+
+						<!-- Email -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Email *</label>
+							<input type="email" required placeholder="tu@email.com" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+						</div>
+
+						<!-- Company -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Empresa *</label>
+							<input type="text" required placeholder="Tu empresa" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+						</div>
+
+						<!-- Phone -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Teléfono</label>
+							<input type="tel" placeholder="+57 (300) 123-4567" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+						</div>
+
+						<!-- Industry -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Industria *</label>
+							<select required class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+								<option>Selecciona tu industria</option>
+								<option>eCommerce</option>
+								<option>Retail</option>
+								<option>Logística</option>
+								<option>Manufactura</option>
+								<option>Otra</option>
+							</select>
+						</div>
+
+						<!-- Platform -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">¿Cuál es tu plataforma? *</label>
+							<select required class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+								<option>Selecciona tu plataforma</option>
+								<option>Shopify</option>
+								<option>Mercado Libre</option>
+								<option>WooCommerce</option>
+								<option>Amazon</option>
+								<option>Magento</option>
+								<option>Otra</option>
+							</select>
+						</div>
+
+						<!-- Monthly Orders -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">¿Cuántos pedidos mensuales tienes?</label>
+							<select class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+								<option>Selecciona un rango</option>
+								<option>Menos de 100</option>
+								<option>100 - 500</option>
+								<option>500 - 1,000</option>
+								<option>1,000 - 5,000</option>
+								<option>Más de 5,000</option>
+							</select>
+						</div>
+
+						<!-- Interested Features -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-4">¿Qué te interesa? (Selecciona múltiples)</label>
+							<div class="space-y-3">
+								<label class="flex items-center gap-3 cursor-pointer">
+									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
+									<span class="text-white">Predicción de devoluciones</span>
+								</label>
+								<label class="flex items-center gap-3 cursor-pointer">
+									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
+									<span class="text-white">Análisis de imágenes</span>
+								</label>
+								<label class="flex items-center gap-3 cursor-pointer">
+									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
+									<span class="text-white">Optimización de transportadoras</span>
+								</label>
+								<label class="flex items-center gap-3 cursor-pointer">
+									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
+									<span class="text-white">Dashboard y reportes</span>
+								</label>
+								<label class="flex items-center gap-3 cursor-pointer">
+									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
+									<span class="text-white">Integraciones personalizadas</span>
+								</label>
+							</div>
+						</div>
+
+						<!-- Preferred Time -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">¿Cuándo prefieres la demo?</label>
+							<select class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+								<option>Selecciona un horario</option>
+								<option>Mañana (9AM - 12PM)</option>
+								<option>Tarde (12PM - 3PM)</option>
+								<option>Tarde tarde (3PM - 6PM)</option>
+								<option>Flexible</option>
+							</select>
+						</div>
+
+						<!-- Message -->
+						<div>
+							<label class="block text-[#A1A1AA] font-semibold mb-2">Mensaje adicional</label>
+							<textarea rows="4" placeholder="Cuéntanos sobre tus desafíos específicos..." class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors resize-none"></textarea>
+						</div>
+
+						<!-- Checkbox -->
+						<label class="flex items-start gap-3 cursor-pointer">
+							<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6] mt-1"/>
+							<span class="text-[#A1A1AA] text-sm">
+								Acepto recibir información y actualizaciones de ProbabilityIA
+							</span>
+						</label>
+
+						<!-- Submit -->
+						<button type="submit" class="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white py-4 rounded-lg font-bold text-lg transition-colors mt-8">
+							Agendar Demo Gratuita
+						</button>
+
+						<p class="text-center text-[#71717A] text-sm">
+							Nos pondremos en contacto en máximo 24 horas para confirmar tu demo
+						</p>
+					</form>
+				</div>
+
+				<!-- Benefits -->
+				<div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+					<div class="text-center">
+						<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] border border-[#8B5CF650] flex items-center justify-center mx-auto mb-4">
+							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+						</div>
+						<h3 class="text-white font-semibold mb-2">Personalizada</h3>
+						<p class="text-[#A1A1AA] text-sm">Demo adaptada a tu industria y necesidades específicas</p>
+					</div>
+
+					<div class="text-center">
+						<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] border border-[#8B5CF650] flex items-center justify-center mx-auto mb-4">
+							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+						</div>
+						<h3 class="text-white font-semibold mb-2">30 Minutos</h3>
+						<p class="text-[#A1A1AA] text-sm">Demo rápida y efectiva con nuestro equipo experto</p>
+					</div>
+
+					<div class="text-center">
+						<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] border border-[#8B5CF650] flex items-center justify-center mx-auto mb-4">
+							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+						</div>
+						<h3 class="text-white font-semibold mb-2">Sin Compromiso</h3>
+						<p class="text-[#A1A1AA] text-sm">Conócenos primero, sin obligación de compra</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- FAQ Section -->
+		<section class="bg-[#0F0F14] py-25 px-20">
+			<div class="max-w-4xl mx-auto">
+				<h2 class="text-3xl font-bold text-white text-center mb-12">¿Qué esperar en la demo?</h2>
+				<div class="space-y-4">
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							Introducción a ProbabilityIA
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Te mostraremos cómo funciona nuestra plataforma y cómo puede beneficiar tu negocio específicamente.</p>
+					</details>
+
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							Tour del Dashboard
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Te enseñaremos todas las características del dashboard, reportes y análisis que ofrece nuestra plataforma.</p>
+					</details>
+
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							Demostración en Tiempo Real
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Verás en vivo cómo nuestros algoritmos de IA analizan pedidos y generan predicciones.</p>
+					</details>
+
+					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-white">
+							Próximos Pasos
+							<span class="group-open:rotate-180 transition-transform">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+							</span>
+						</summary>
+						<p class="text-[#A1A1AA] mt-4">Discutiremos cómo integrar ProbabilityIA con tu plataforma y responderemos todas tus preguntas.</p>
+					</details>
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>

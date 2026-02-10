@@ -17,6 +17,11 @@ type IHandler interface {
 	GetInvoice(c *gin.Context)
 	CancelInvoice(c *gin.Context)
 	RetryInvoice(c *gin.Context)
+<<<<<<< HEAD
+=======
+	CancelRetry(c *gin.Context)
+	GetInvoiceSyncLogs(c *gin.Context)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 	// Notas de crédito
 	CreateCreditNote(c *gin.Context)
@@ -39,18 +44,36 @@ type IHandler interface {
 	GetSummary(c *gin.Context)
 	GetStats(c *gin.Context)
 	GetTrends(c *gin.Context)
+<<<<<<< HEAD
+=======
+
+	// Creación masiva de facturas
+	ListInvoiceableOrders(c *gin.Context)
+	BulkCreateInvoices(c *gin.Context)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 }
 
 // handler implementa IHandler
 type handler struct {
 	useCase ports.IUseCase
+<<<<<<< HEAD
+=======
+	repo    ports.IRepository
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	log     log.ILogger
 }
 
 // New crea un nuevo handler de facturación
+<<<<<<< HEAD
 func New(useCase ports.IUseCase, logger log.ILogger) IHandler {
 	return &handler{
 		useCase: useCase,
+=======
+func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger) IHandler {
+	return &handler{
+		useCase: useCase,
+		repo:    repo,
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		log:     logger.WithModule("invoicing.handler"),
 	}
 }

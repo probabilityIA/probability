@@ -5,11 +5,15 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
+<<<<<<< HEAD
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+=======
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository/mappers"
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
+<<<<<<< HEAD
 type CreditNoteRepository struct {
 	*Repository
 }
@@ -19,6 +23,11 @@ func NewCreditNoteRepository(repo *Repository) ports.ICreditNoteRepository {
 }
 
 func (r *CreditNoteRepository) Create(ctx context.Context, note *entities.CreditNote) error {
+=======
+
+
+func (r *Repository) CreateCreditNote(ctx context.Context, note *entities.CreditNote) error {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	model := mappers.CreditNoteToModel(note)
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -30,7 +39,11 @@ func (r *CreditNoteRepository) Create(ctx context.Context, note *entities.Credit
 	return nil
 }
 
+<<<<<<< HEAD
 func (r *CreditNoteRepository) GetByID(ctx context.Context, id uint) (*entities.CreditNote, error) {
+=======
+func (r *Repository) GetCreditNoteByID(ctx context.Context, id uint) (*entities.CreditNote, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var model models.CreditNote
 
 	if err := r.db.Conn(ctx).First(&model, id).Error; err != nil {
@@ -40,7 +53,11 @@ func (r *CreditNoteRepository) GetByID(ctx context.Context, id uint) (*entities.
 	return mappers.CreditNoteToDomain(&model), nil
 }
 
+<<<<<<< HEAD
 func (r *CreditNoteRepository) GetByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.CreditNote, error) {
+=======
+func (r *Repository) GetCreditNotesByInvoiceID(ctx context.Context, invoiceID uint) ([]*entities.CreditNote, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var models []*models.CreditNote
 
 	if err := r.db.Conn(ctx).
@@ -53,7 +70,11 @@ func (r *CreditNoteRepository) GetByInvoiceID(ctx context.Context, invoiceID uin
 	return mappers.CreditNoteListToDomain(models), nil
 }
 
+<<<<<<< HEAD
 func (r *CreditNoteRepository) List(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error) {
+=======
+func (r *Repository) ListCreditNotes(ctx context.Context, filters map[string]interface{}) ([]*entities.CreditNote, error) {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var modelsList []*models.CreditNote
 
 	query := r.db.Conn(ctx).Model(&models.CreditNote{})
@@ -86,7 +107,11 @@ func (r *CreditNoteRepository) List(ctx context.Context, filters map[string]inte
 	return mappers.CreditNoteListToDomain(modelsList), nil
 }
 
+<<<<<<< HEAD
 func (r *CreditNoteRepository) Update(ctx context.Context, note *entities.CreditNote) error {
+=======
+func (r *Repository) UpdateCreditNote(ctx context.Context, note *entities.CreditNote) error {
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	model := mappers.CreditNoteToModel(note)
 
 	if err := r.db.Conn(ctx).Save(model).Error; err != nil {

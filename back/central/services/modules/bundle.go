@@ -30,6 +30,10 @@ type ModuleBundles struct {
 	logger          log.ILogger
 	environment     env.IConfig
 	rabbitMQ        rabbitmq.IQueue
+<<<<<<< HEAD
+=======
+	redisClient     redis.IRedis
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	integrationCore core.IIntegrationCore
 }
 
@@ -85,6 +89,10 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		logger:      logger,
 		environment: environment,
 		rabbitMQ:    rabbitMQ,
+<<<<<<< HEAD
+=======
+		redisClient: redisClient,
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	}
 }
 
@@ -93,5 +101,9 @@ func (mb *ModuleBundles) SetIntegrationCore(integrationCore core.IIntegrationCor
 	mb.integrationCore = integrationCore
 
 	// Inicializar módulo de invoicing (requiere integrationCore)
+<<<<<<< HEAD
 	invoicing.New(mb.router, mb.database, mb.logger, mb.environment, mb.rabbitMQ, integrationCore)
+=======
+	invoicing.New(mb.router, mb.database, mb.logger, mb.environment, mb.rabbitMQ, mb.redisClient, integrationCore)
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 }

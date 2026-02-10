@@ -38,7 +38,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		logger,
 	)
 
+<<<<<<< HEAD
 	// 6. Iniciar consumidor Redis en background
+=======
+	// 6. Iniciar consumidor Redis de órdenes en background
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	go func() {
 		ctx := context.Background()
 		if err := orderEventConsumer.Start(ctx); err != nil {
@@ -49,6 +53,34 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		}
 	}()
 
+<<<<<<< HEAD
+=======
+	// 7. Init Invoice Event Subscriber y Consumer (facturación en tiempo real)
+	invoiceRedisChannel := environment.Get("REDIS_INVOICE_EVENTS_CHANNEL")
+	if invoiceRedisChannel == "" {
+		invoiceRedisChannel = "probability:invoicing:events"
+	}
+
+	invoiceEventSubscriber := redis.NewInvoiceEventSubscriber(redisClient, logger, invoiceRedisChannel)
+
+	invoiceEventConsumer := app.NewInvoiceEventConsumer(
+		invoiceEventSubscriber,
+		eventManager,
+		logger,
+	)
+
+	// 8. Iniciar consumidor Redis de facturación en background
+	go func() {
+		ctx := context.Background()
+		if err := invoiceEventConsumer.Start(ctx); err != nil {
+			logger.Error(ctx).
+				Err(err).
+				Str("channel", invoiceRedisChannel).
+				Msg("Error al iniciar consumidor de eventos de facturación")
+		}
+	}()
+
+>>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	// 7. Init SSE Handler (adaptado a Gin)
 	sseHandler := handlers.New(eventManager, logger)
 

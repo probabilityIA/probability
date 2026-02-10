@@ -1,0 +1,203 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<Layout title="Integraciones - probabilityIA">
+	<Header />
+	<main>
+		<!-- Hero Section -->
+		<section class="relative bg-[#0A0A0F] py-20 px-20 overflow-hidden">
+			<div class="max-w-6xl mx-auto text-center">
+				<div class="inline-flex items-center gap-2 bg-[#8B5CF620] border border-[#8B5CF650] rounded-full px-4 py-2 mb-6">
+					<span class="text-[#8B5CF6] font-medium text-sm">INTEGRACIONES</span>
+				</div>
+				<h1 class="text-6xl font-bold text-white mb-6">
+					Conecta con tus herramientas favoritas
+				</h1>
+				<p class="text-xl text-[#A1A1AA] max-w-3xl mx-auto">
+					Integramos con las plataformas de eCommerce más populares del mundo
+				</p>
+			</div>
+		</section>
+
+		<!-- Integrations Grid -->
+		<section class="bg-[#0A0A0F] py-25 px-20">
+			<div class="max-w-6xl mx-auto">
+				<div class="text-center mb-16">
+					<h2 class="text-4xl font-bold text-white mb-4">Plataformas Soportadas</h2>
+					<p class="text-[#A1A1AA] text-lg">Encuentra tu plataforma y comienza a integrar hoy</p>
+				</div>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+					<!-- Shopify -->
+					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
+						<div class="w-16 h-16 rounded-lg bg-[#96BE4D] flex items-center justify-center mb-6">
+							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M13.22 6.1c-.27-.65-.77-1.42-1.72-1.42-.95 0-1.45.77-1.72 1.42L7.93 14.08c-.31.82.43 1.53 1.25 1.27l1.63-.51.71-2.54h3.76l.71 2.54 1.63.51c.82.26 1.56-.45 1.25-1.27l-2.84-7.98zm-2.9 2.98l.56-1.92.56 1.92h-1.12z"></path>
+							</svg>
+						</div>
+						<h3 class="text-xl font-bold text-white mb-2">Shopify</h3>
+						<p class="text-[#A1A1AA] mb-6">La plataforma de eCommerce más popular del mundo</p>
+						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
+							Integrar
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+						</button>
+					</div>
+
+					<!-- Mercado Libre -->
+					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
+						<div class="w-16 h-16 rounded-lg bg-[#FFE600] flex items-center justify-center mb-6">
+							<svg class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
+							</svg>
+						</div>
+						<h3 class="text-xl font-bold text-white mb-2">Mercado Libre</h3>
+						<p class="text-[#A1A1AA] mb-6">El marketplace líder en América Latina</p>
+						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
+							Integrar
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+						</button>
+					</div>
+
+					<!-- WooCommerce -->
+					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
+						<div class="w-16 h-16 rounded-lg bg-[#96588A] flex items-center justify-center mb-6">
+							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+							</svg>
+						</div>
+						<h3 class="text-xl font-bold text-white mb-2">WooCommerce</h3>
+						<p class="text-[#A1A1AA] mb-6">La plataforma de WordPress para eCommerce</p>
+						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
+							Integrar
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+						</button>
+					</div>
+
+					<!-- Amazon -->
+					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
+						<div class="w-16 h-16 rounded-lg bg-[#FF9900] flex items-center justify-center mb-6">
+							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M6 6h12v12H6z"></path>
+							</svg>
+						</div>
+						<h3 class="text-xl font-bold text-white mb-2">Amazon</h3>
+						<p class="text-[#A1A1AA] mb-6">El marketplace más grande del mundo</p>
+						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
+							Integrar
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+						</button>
+					</div>
+
+					<!-- Magento -->
+					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
+						<div class="w-16 h-16 rounded-lg bg-[#EB5202] flex items-center justify-center mb-6">
+							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
+								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"></path>
+							</svg>
+						</div>
+						<h3 class="text-xl font-bold text-white mb-2">Magento</h3>
+						<p class="text-[#A1A1AA] mb-6">Plataforma empresarial de eCommerce</p>
+						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
+							Integrar
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+						</button>
+					</div>
+
+					<!-- API Custom -->
+					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
+						<div class="w-16 h-16 rounded-lg bg-[#8B5CF6] flex items-center justify-center mb-6">
+							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+								<polyline points="12 3 20 7.5 20 16.5 12 21 4 16.5 4 7.5 12 3"></polyline>
+								<line x1="12" y1="12" x2="20" y2="7.5"></line>
+								<line x1="12" y1="12" x2="12" y2="21"></line>
+								<line x1="12" y1="12" x2="4" y2="7.5"></line>
+							</svg>
+						</div>
+						<h3 class="text-xl font-bold text-white mb-2">API Personalizada</h3>
+						<p class="text-[#A1A1AA] mb-6">Integración mediante API REST para cualquier plataforma</p>
+						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
+							Documentación
+							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+						</button>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- Integration Features -->
+		<section class="bg-[#0F0F14] py-25 px-20">
+			<div class="max-w-6xl mx-auto">
+				<h2 class="text-4xl font-bold text-white text-center mb-16">¿Qué obtiene con cada integración?</h2>
+
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+						<div class="flex items-center gap-4 mb-6">
+							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+							</div>
+							<h3 class="text-xl font-bold text-white">Sincronización Automática</h3>
+						</div>
+						<p class="text-[#A1A1AA]">
+							Los datos de tus pedidos se sincronizan automáticamente en tiempo real sin intervención manual
+						</p>
+					</div>
+
+					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+						<div class="flex items-center gap-4 mb-6">
+							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+							</div>
+							<h3 class="text-xl font-bold text-white">Predicciones en Tiempo Real</h3>
+						</div>
+						<p class="text-[#A1A1AA]">
+							Recibe análisis predictivos instantáneos para cada nuevo pedido en tu plataforma
+						</p>
+					</div>
+
+					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+						<div class="flex items-center gap-4 mb-6">
+							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+							</div>
+							<h3 class="text-xl font-bold text-white">Alertas Inteligentes</h3>
+						</div>
+						<p class="text-[#A1A1AA]">
+							Recibe notificaciones cuando se detecten riesgos altos de devolución en tus pedidos
+						</p>
+					</div>
+
+					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+						<div class="flex items-center gap-4 mb-6">
+							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+							</div>
+							<h3 class="text-xl font-bold text-white">Webhooks Personalizados</h3>
+						</div>
+						<p class="text-[#A1A1AA]">
+							Integra nuestros datos con tus workflows automáticos mediante webhooks
+						</p>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- CTA Section -->
+		<section class="bg-[#0A0A0F] py-25 px-20">
+			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#6D28D9] to-[#4C1D95] rounded-2xl p-20 text-center border border-[#8B5CF650]">
+				<h2 class="text-4xl font-bold text-white mb-6">
+					¿Tu plataforma no está en la lista?
+				</h2>
+				<p class="text-white text-opacity-90 mb-10 text-lg">
+					Contáctanos para una integración personalizada
+				</p>
+				<a href="/demo" class="inline-block bg-white text-[#8B5CF6] hover:bg-gray-100 px-10 py-4 rounded-lg font-bold text-lg transition-colors">
+					Solicitar Integración
+				</a>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>
