@@ -61,6 +61,7 @@ type IRepository interface {
 	GetInvoicingConfigByID(ctx context.Context, id uint) (*entities.InvoicingConfig, error)
 	GetConfigByIntegration(ctx context.Context, integrationID uint) (*entities.InvoicingConfig, error)
 	ListInvoicingConfigs(ctx context.Context, businessID uint) ([]*entities.InvoicingConfig, error)
+	ListAllActiveConfigs(ctx context.Context) ([]*entities.InvoicingConfig, error)
 	UpdateInvoicingConfig(ctx context.Context, config *entities.InvoicingConfig) error
 	DeleteInvoicingConfig(ctx context.Context, id uint) error
 	ConfigExistsForIntegration(ctx context.Context, integrationID uint) (bool, error)
@@ -159,6 +160,12 @@ type IInvoiceSSEPublisher interface {
 	PublishBulkJobCompleted(ctx context.Context, job *entities.BulkInvoiceJob) error
 }
 
+// IInvoiceRequestPublisher publica solicitudes de facturación a colas específicas de proveedores
+// Los proveedores (Softpymes, Siigo, Factus) consumen estas solicitudes y publican respuestas
+type IInvoiceRequestPublisher interface {
+	PublishInvoiceRequest(ctx context.Context, request *dtos.InvoiceRequestMessage) error
+}
+
 // ═══════════════════════════════════════════════════════════════
 // REPOSITORIO DE ÓRDENES (Secondary Port - Dependencia externa)
 // ═══════════════════════════════════════════════════════════════
@@ -176,6 +183,9 @@ type IOrderRepository interface {
 
 // IUseCase define todos los casos de uso del módulo de facturación
 type IUseCase interface {
+	// Cache warming
+	WarmConfigCache(ctx context.Context) error
+
 	// Facturas
 	CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO) (*entities.Invoice, error)
 	CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error

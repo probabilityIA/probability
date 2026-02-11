@@ -81,10 +81,60 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 	}
 	// Si UpdatedByID es 0, no actualizamos el campo (mantiene el valor existente o NULL)
 
+	// ✅ NUEVO - Invalidar cache antes de actualizar
+	if err := uc.cache.InvalidateIntegration(ctx, id); err != nil {
+		uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate cache")
+	}
+
 	// Guardar cambios
 	if err := uc.repo.UpdateIntegration(ctx, id, existing); err != nil {
 		uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al actualizar integración")
 		return nil, fmt.Errorf("error al actualizar integración: %w", err)
+	}
+
+	// ✅ NUEVO - Re-cachear metadata actualizada
+	integrationType, _ := uc.repo.GetIntegrationTypeByID(ctx, existing.IntegrationTypeID)
+
+	configMap := make(map[string]interface{})
+	if len(existing.Config) > 0 {
+		json.Unmarshal(existing.Config, &configMap)
+	}
+
+	integrationTypeCode := ""
+	if integrationType != nil {
+		integrationTypeCode = integrationType.Code
+	}
+
+	cachedMeta := &domain.CachedIntegration{
+		ID:                  existing.ID,
+		Name:                existing.Name,
+		Code:                existing.Code,
+		Category:            existing.Category,
+		IntegrationTypeID:   existing.IntegrationTypeID,
+		IntegrationTypeCode: integrationTypeCode,
+		BusinessID:          existing.BusinessID,
+		StoreID:             existing.StoreID,
+		IsActive:            existing.IsActive,
+		IsDefault:           existing.IsDefault,
+		Config:              configMap,
+		Description:         existing.Description,
+		CreatedAt:           existing.CreatedAt,
+		UpdatedAt:           existing.UpdatedAt,
+	}
+
+	if err := uc.cache.SetIntegration(ctx, cachedMeta); err != nil {
+		uc.log.Warn(ctx).Err(err).Msg("Failed to cache updated metadata")
+	}
+
+	// ✅ NUEVO - Re-cachear credentials si cambiaron
+	if dto.Credentials != nil {
+		cachedCreds := &domain.CachedCredentials{
+			IntegrationID: existing.ID,
+			Credentials:   *dto.Credentials, // Ya están desencriptadas en el DTO
+		}
+		if err := uc.cache.SetCredentials(ctx, cachedCreds); err != nil {
+			uc.log.Warn(ctx).Err(err).Msg("Failed to cache updated credentials")
+		}
 	}
 
 	uc.log.Info(ctx).Uint("id", id).Msg("Integración actualizada exitosamente")

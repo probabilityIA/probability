@@ -72,10 +72,7 @@ func Init(ctx context.Context) error {
 	moduleBundles := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, Softpymes, etc.)
-	integrationCore := integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, moduleBundles)
-
-	// Pass integrationCore to moduleBundles for modules that need it (like invoicing)
-	moduleBundles.SetIntegrationCore(integrationCore)
+	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, moduleBundles)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

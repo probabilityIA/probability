@@ -27,21 +27,24 @@ type IIntegrationUseCase interface {
 	SetAsDefault(ctx context.Context, id uint) error
 	UpdateLastSync(ctx context.Context, integrationID string) error
 	RegisterObserver(observer IntegrationCreatedObserver)
+	WarmCache(ctx context.Context) error // ✅ NUEVO - Pre-carga cache al iniciar
 }
 
 type IntegrationUseCase struct {
 	repo       domain.IRepository
 	encryption domain.IEncryptionService
+	cache      domain.IIntegrationCache
 	testerReg  *IntegrationTesterRegistry
 	log        log.ILogger
 	observers  []IntegrationCreatedObserver
 }
 
 // New crea una nueva instancia del caso de uso de integraciones
-func New(repo domain.IRepository, encryption domain.IEncryptionService, logger log.ILogger) IIntegrationUseCase {
+func New(repo domain.IRepository, encryption domain.IEncryptionService, cache domain.IIntegrationCache, logger log.ILogger) IIntegrationUseCase {
 	return &IntegrationUseCase{
 		repo:       repo,
 		encryption: encryption,
+		cache:      cache,
 		testerReg:  NewIntegrationTesterRegistry(),
 		log:        logger,
 		observers:  make([]IntegrationCreatedObserver, 0),

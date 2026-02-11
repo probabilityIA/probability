@@ -151,3 +151,20 @@ func (r *Repository) ConfigExistsForIntegration(ctx context.Context, integration
 
 	return count > 0, nil
 }
+
+// ListAllActiveConfigs lista todas las configuraciones de facturación activas (enabled=true)
+// de todos los negocios. Usado para cache warming al iniciar el servidor.
+func (r *Repository) ListAllActiveConfigs(ctx context.Context) ([]*entities.InvoicingConfig, error) {
+	var configModels []*models.InvoicingConfig
+
+	if err := r.db.Conn(ctx).
+		Where("enabled = ?", true).
+		Where("deleted_at IS NULL").
+		Order("created_at DESC").
+		Find(&configModels).Error; err != nil {
+		r.log.Error(ctx).Err(err).Msg("Failed to list all active configs")
+		return nil, fmt.Errorf("failed to list all active configs: %w", err)
+	}
+
+	return mappers.ConfigListToDomain(configModels), nil
+}

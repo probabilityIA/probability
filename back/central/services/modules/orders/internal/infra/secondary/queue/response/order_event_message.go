@@ -31,10 +31,17 @@ type OrderSnapshot struct {
 	PaymentMethodID uint    `json:"payment_method_id"`
 	PaymentStatusID *uint   `json:"payment_status_id,omitempty"`
 
+	// Información financiera detallada (para facturación)
+	Subtotal     float64 `json:"subtotal"`
+	Tax          float64 `json:"tax"`
+	Discount     float64 `json:"discount"`
+	ShippingCost float64 `json:"shipping_cost"`
+
 	// Información del cliente
 	CustomerName  string `json:"customer_name"`
 	CustomerEmail string `json:"customer_email,omitempty"`
 	CustomerPhone string `json:"customer_phone,omitempty"`
+	CustomerDNI   string `json:"customer_dni,omitempty"`
 
 	// Información de origen
 	Platform      string `json:"platform"`
@@ -44,6 +51,9 @@ type OrderSnapshot struct {
 	OrderStatusID       *uint `json:"order_status_id,omitempty"`
 	FulfillmentStatusID *uint `json:"fulfillment_status_id,omitempty"`
 
+	// Items detallados (para facturación e inventario)
+	Items []OrderItemSnapshot `json:"items,omitempty"`
+
 	// Items y envío (información adicional para mensajes)
 	ItemsSummary    string `json:"items_summary,omitempty"`
 	ShippingAddress string `json:"shipping_address,omitempty"`
@@ -51,4 +61,33 @@ type OrderSnapshot struct {
 	// Timestamps
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
+}
+
+// OrderItemSnapshot representa un item de una orden en un snapshot
+// Incluye toda la información necesaria para facturación, inventario y reportes
+// sin necesidad de consultar la base de datos
+type OrderItemSnapshot struct {
+	// Identificadores
+	ProductID *string `json:"product_id,omitempty"`
+	SKU       string  `json:"sku"`
+	VariantID *string `json:"variant_id,omitempty"`
+
+	// Información del producto
+	Name        string `json:"name"`
+	Title       string `json:"title,omitempty"` // Título alternativo (ProductTitle en BD)
+	Description string `json:"description,omitempty"`
+
+	// Cantidades y precios
+	Quantity   int     `json:"quantity"`
+	UnitPrice  float64 `json:"unit_price"`
+	TotalPrice float64 `json:"total_price"`
+
+	// Impuestos y descuentos
+	Tax      float64  `json:"tax"`
+	TaxRate  *float64 `json:"tax_rate,omitempty"`
+	Discount float64  `json:"discount"`
+
+	// Información adicional
+	ImageURL   *string `json:"image_url,omitempty"`
+	ProductURL *string `json:"product_url,omitempty"`
 }

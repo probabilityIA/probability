@@ -145,6 +145,12 @@ export interface InvoicingSettings {
   invoice_type?: string;
   notes?: string;
   provider_config?: Record<string, any>;
+
+  // Softpymes-specific fields
+  default_customer_nit?: string;  // NIT por defecto cuando el cliente no tiene DNI
+  resolution_id?: number;          // ID de resolución de Softpymes (requerido)
+  branch_code?: string;            // Código de sucursal (default: "001")
+  seller_nit?: string;             // NIT del vendedor (opcional)
 }
 
 // ===================================

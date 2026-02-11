@@ -13,14 +13,24 @@ import (
 func (uc *IntegrationUseCase) GetIntegrationByIDWithCredentials(ctx context.Context, id uint) (*domain.IntegrationWithCredentials, error) {
 	ctx = log.WithFunctionCtx(ctx, "GetIntegrationByIDWithCredentials")
 
-	// Obtener integración
-	integration, err := uc.repo.GetIntegrationByID(ctx, id)
+	// 1. Obtener metadata de integración (con cache)
+	integration, err := uc.GetIntegrationByID(ctx, id)
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al obtener integración")
 		return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationNotFound, err)
 	}
 
-	// Desencriptar credenciales
+	// 2. ✅ NUEVO - Intentar leer credentials de cache
+	cachedCreds, err := uc.cache.GetCredentials(ctx, id)
+	if err == nil {
+		uc.log.Debug(ctx).Uint("id", id).Msg("✅ Cache hit - credentials")
+		return &domain.IntegrationWithCredentials{
+			Integration:          *integration,
+			DecryptedCredentials: cachedCreds.Credentials,
+		}, nil
+	}
+
+	// 3. Cache miss - Desencriptar credenciales de DB
+	uc.log.Debug(ctx).Uint("id", id).Msg("⚠️ Cache miss credentials - decrypting")
 	var decryptedCredentials domain.DecryptedCredentials
 	if len(integration.Credentials) > 0 {
 		// Procesamos credenciales sin loguearlas (seguridad)
@@ -43,6 +53,15 @@ func (uc *IntegrationUseCase) GetIntegrationByIDWithCredentials(ctx context.Cont
 
 		// Credenciales desencriptadas exitosamente (no logueamos keys por seguridad)
 		decryptedCredentials = decrypted
+
+		// ✅ NUEVO - Cachear credentials para próxima vez
+		cachedCreds := &domain.CachedCredentials{
+			IntegrationID: id,
+			Credentials:   decryptedCredentials,
+		}
+		if err := uc.cache.SetCredentials(ctx, cachedCreds); err != nil {
+			uc.log.Warn(ctx).Err(err).Msg("Failed to cache credentials")
+		}
 	}
 
 	return &domain.IntegrationWithCredentials{

@@ -157,6 +157,45 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		return nil, fmt.Errorf("error al crear integración: %w", err)
 	}
 
+	// ✅ NUEVO - Cachear metadata
+	configMap := make(map[string]interface{})
+	if len(integration.Config) > 0 {
+		json.Unmarshal(integration.Config, &configMap)
+	}
+
+	cachedMeta := &domain.CachedIntegration{
+		ID:                  integration.ID,
+		Name:                integration.Name,
+		Code:                integration.Code,
+		Category:            integration.Category,
+		IntegrationTypeID:   integration.IntegrationTypeID,
+		IntegrationTypeCode: integrationType.Code,
+		BusinessID:          integration.BusinessID,
+		StoreID:             integration.StoreID,
+		IsActive:            integration.IsActive,
+		IsDefault:           integration.IsDefault,
+		Config:              configMap,
+		Description:         integration.Description,
+		CreatedAt:           integration.CreatedAt,
+		UpdatedAt:           integration.UpdatedAt,
+	}
+
+	if err := uc.cache.SetIntegration(ctx, cachedMeta); err != nil {
+		uc.log.Warn(ctx).Err(err).Msg("Failed to cache integration metadata")
+	}
+
+	// ✅ NUEVO - Cachear credentials desencriptadas
+	if len(dto.Credentials) > 0 {
+		cachedCreds := &domain.CachedCredentials{
+			IntegrationID: integration.ID,
+			Credentials:   dto.Credentials, // Ya están desencriptadas en el DTO
+		}
+
+		if err := uc.cache.SetCredentials(ctx, cachedCreds); err != nil {
+			uc.log.Warn(ctx).Err(err).Msg("Failed to cache credentials")
+		}
+	}
+
 	uc.log.Info(ctx).
 		Uint("id", integration.ID).
 		Uint("integration_type_id", integration.IntegrationTypeID).

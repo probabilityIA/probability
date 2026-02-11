@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
@@ -12,10 +11,10 @@ type useCase struct {
 	repo ports.IRepository
 
 	// Servicios externos
-	integrationCore core.IIntegrationCore // Reemplaza providerRepo, providerTypeRepo y providerClient
-	encryption      ports.IEncryptionService
-	eventPublisher  ports.IEventPublisher
-	ssePublisher    ports.IInvoiceSSEPublisher
+	encryption            ports.IEncryptionService
+	eventPublisher        ports.IEventPublisher
+	ssePublisher          ports.IInvoiceSSEPublisher
+	invoiceRequestPub     ports.IInvoiceRequestPublisher // Publisher para requests a proveedores
 
 	// Logger
 	log log.ILogger
@@ -24,18 +23,18 @@ type useCase struct {
 // New crea una nueva instancia del use case de facturación
 func New(
 	repo ports.IRepository,
-	integrationCore core.IIntegrationCore,
 	encryption ports.IEncryptionService,
 	eventPublisher ports.IEventPublisher,
 	ssePublisher ports.IInvoiceSSEPublisher,
+	invoiceRequestPub ports.IInvoiceRequestPublisher,
 	logger log.ILogger,
 ) ports.IUseCase {
 	return &useCase{
-		repo:            repo,
-		integrationCore: integrationCore,
-		encryption:      encryption,
-		eventPublisher:  eventPublisher,
-		ssePublisher:    ssePublisher,
-		log:             logger.WithModule("invoicing.usecase"),
+		repo:              repo,
+		encryption:        encryption,
+		eventPublisher:    eventPublisher,
+		ssePublisher:      ssePublisher,
+		invoiceRequestPub: invoiceRequestPub,
+		log:               logger.WithModule("invoicing.usecase"),
 	}
 }

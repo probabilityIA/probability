@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/app"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/queue/consumer"
@@ -26,7 +25,6 @@ func New(
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redis.IRedis,
-	integrationCore core.IIntegrationCore,
 ) {
 	ctx := context.Background()
 	moduleLogger := logger.WithModule("invoicing")
@@ -44,6 +42,9 @@ func New(
 
 	// Event publisher (RabbitMQ)
 	eventPublisher := queue.New(rabbitMQ, moduleLogger)
+
+	// Invoice Request Publisher (RabbitMQ) - publica requests a proveedores
+	invoiceRequestPublisher := queue.NewInvoiceRequestPublisher(rabbitMQ, moduleLogger)
 
 	// SSE publisher (Redis Pub/Sub) para notificaciones en tiempo real
 	sseChannel := config.Get("REDIS_INVOICE_EVENTS_CHANNEL")
@@ -77,13 +78,26 @@ func New(
 	// ═══════════════════════════════════════════════════════════════
 
 	useCase := app.New(
-		repo,              // IRepository único (implementa TODAS las interfaces)
-		integrationCore,   // Integration Core (reemplaza provider repos y client)
-		nil,               // Encryption - TODO: agregar cuando esté disponible
-		eventPublisher,    // Event publisher (RabbitMQ)
-		ssePublisher,      // SSE publisher (Redis Pub/Sub)
+		repo,                    // IRepository único (implementa TODAS las interfaces)
+		nil,                     // Encryption - TODO: agregar cuando esté disponible
+		eventPublisher,          // Event publisher (RabbitMQ)
+		ssePublisher,            // SSE publisher (Redis Pub/Sub)
+		invoiceRequestPublisher, // Invoice Request Publisher (RabbitMQ)
 		moduleLogger,
 	)
+
+	// ═══════════════════════════════════════════════════════════════
+	// 2.1 CACHE WARMING (Pre-carga configuraciones activas)
+	// ═══════════════════════════════════════════════════════════════
+	go func() {
+		bgCtx := context.Background()
+		moduleLogger.Info(bgCtx).Msg("🔥 Starting invoicing config cache warming in background...")
+		if err := useCase.WarmConfigCache(bgCtx); err != nil {
+			moduleLogger.Error(bgCtx).Err(err).Msg("❌ Invoicing config cache warming failed")
+		} else {
+			moduleLogger.Info(bgCtx).Msg("✅ Invoicing config cache warming completed successfully")
+		}
+	}()
 
 	// ═══════════════════════════════════════════════════════════════
 	// 3. INFRAESTRUCTURA PRIMARIA (Adaptadores de entrada)
@@ -100,6 +114,7 @@ func New(
 			useCase,
 			repo, // IRepository único
 			ssePublisher,
+			eventPublisher, // Event publisher para ResponseConsumer
 			moduleLogger,
 		)
 
@@ -120,7 +135,14 @@ func New(
 			}
 		}()
 
-		moduleLogger.Info(ctx).Msg("📄 Consumers de facturación iniciados: orders, retry, bulk")
+		// Iniciar Response Consumer (procesa responses de proveedores)
+		go func() {
+			if err := consumers.Response.Start(ctx); err != nil {
+				moduleLogger.Error(ctx).Err(err).Msg("Error al iniciar consumer de responses")
+			}
+		}()
+
+		moduleLogger.Info(ctx).Msg("📄 Consumers de facturación iniciados: orders, retry, bulk, responses")
 	} else {
 		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de facturación deshabilitados")
 	}

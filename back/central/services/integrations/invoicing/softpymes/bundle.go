@@ -6,75 +6,90 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/app"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/primary/consumer"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/client"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/repository"
-	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // Bundle implementa core.IIntegrationContract para Softpymes
+// Este bundle NO tiene base de datos propia - es un cliente HTTP puro + async RabbitMQ consumer
 type Bundle struct {
-	useCase         app.IUseCase
-	handler         handlers.IHandler
 	client          ports.ISoftpymesClient
 	coreIntegration core.IIntegrationCore
 	log             log.ILogger
 }
 
 // New crea una nueva instancia del módulo Softpymes
-// Este bundle se registra en integrationCore y proporciona funcionalidades
-// de gestión de proveedores de facturación electrónica
+// Este bundle funciona completamente sin base de datos:
+// - Cliente HTTP para comunicarse con API de Softpymes
+// - Consumer de RabbitMQ async para facturación
+// - IntegrationCore para obtener credenciales y config
 func New(
 	config env.IConfig,
 	logger log.ILogger,
-	database db.IDatabase,
+	rabbit rabbitmq.IQueue,
 	coreIntegration core.IIntegrationCore,
 ) *Bundle {
 	logger = logger.WithModule("softpymes")
 
-	// 1. Inicializar cliente HTTP de Softpymes
+	// 1. Cliente HTTP de Softpymes
 	apiURL := config.Get("SOFTPYMES_API_URL")
 	if apiURL == "" {
 		panic("SOFTPYMES_API_URL not configured")
 	}
-	softpymesClient := client.New(apiURL, logger)
+	// Create concrete HTTP client
+	httpClient := client.New(apiURL, logger)
+	logger.Info(context.Background()).
+		Str("api_url", apiURL).
+		Msg("✅ Softpymes HTTP client initialized")
 
-	// 2. Inicializar repositorios
-	repos := repository.New(database, logger)
+	// 2. Response Publisher (RabbitMQ)
+	responsePublisher := queue.NewResponsePublisher(rabbit, logger)
+	logger.Info(context.Background()).Msg("✅ Response publisher initialized")
 
-	// 3. Inicializar casos de uso
-	useCase := app.New(
-		repos.Provider,
-		repos.ProviderType,
-		softpymesClient,
+	// 3. Invoice Request Consumer (ÚNICO consumer - procesa requests desde Invoicing Module)
+	invoiceRequestConsumer := consumer.NewInvoiceRequestConsumer(
+		rabbit,
+		coreIntegration,
+		httpClient, // Concrete *client.Client type
+		responsePublisher,
 		logger,
 	)
+	logger.Info(context.Background()).Msg("✅ Invoice request consumer initialized")
 
-	// 4. Inicializar handlers HTTP
-	handler := handlers.New(useCase, logger)
+	// 4. Iniciar consumer en goroutine
+	go func() {
+		ctx := context.Background()
+		logger.Info(ctx).Msg("🚀 Starting Softpymes invoice request consumer in background...")
+		if err := invoiceRequestConsumer.Start(ctx); err != nil {
+			logger.Error(ctx).Err(err).Msg("❌ Invoice request consumer failed to start or stopped with error")
+		}
+	}()
+
+	logger.Info(context.Background()).Msg("✅ Softpymes bundle initialized (HTTP client + RabbitMQ async consumer)")
 
 	return &Bundle{
-		useCase:         useCase,
-		handler:         handler,
-		client:          softpymesClient,
+		client:          httpClient, // Implicitly converts to ports.ISoftpymesClient
 		coreIntegration: coreIntegration,
 		log:             logger,
 	}
 }
 
-// RegisterRoutes registra las rutas HTTP del módulo Softpymes
-// Implementa método requerido por el patrón de integración
-func (b *Bundle) RegisterRoutes(router *gin.RouterGroup) {
-	b.handler.RegisterRoutes(router)
-}
-
 // ═══════════════════════════════════════════════════════════════
 // MÉTODOS DE IIntegrationContract (OBLIGATORIOS)
 // ═══════════════════════════════════════════════════════════════
+
+// RegisterRoutes registra las rutas HTTP del módulo Softpymes
+// Como este módulo ya no tiene CRUD propio (se maneja desde IntegrationCore),
+// este método es un stub vacío que cumple con la interfaz
+func (b *Bundle) RegisterRoutes(router *gin.RouterGroup) {
+	b.log.Info(context.Background()).Msg("ℹ️ Softpymes has no HTTP routes (uses IntegrationCore for CRUD)")
+	// No hay rutas - el CRUD de integraciones se maneja desde IntegrationCore
+}
 
 // TestConnection prueba la conexión con Softpymes usando credenciales
 // Implementa core.IIntegrationContract
@@ -181,16 +196,4 @@ func (b *Bundle) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, ref
 		Msg("📄 Getting document by number via bundle")
 
 	return b.client.GetDocumentByNumber(ctx, apiKey, apiSecret, referer, documentNumber)
-}
-
-// GetProviderByID obtiene un proveedor por ID
-// Método de conveniencia para acceso externo
-func (b *Bundle) GetProviderByID(ctx context.Context, providerID uint) (interface{}, error) {
-	return b.useCase.GetProvider(ctx, providerID)
-}
-
-// TestProviderConnection prueba la conexión de un proveedor específico
-// Método de conveniencia para acceso externo
-func (b *Bundle) TestProviderConnection(ctx context.Context, providerID uint) error {
-	return b.useCase.TestProviderConnection(ctx, providerID)
 }

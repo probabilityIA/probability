@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	integrationCore "github.com/secamc93/probability/back/central/services/integrations/core"
-	softpymesBundle "github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes"
+	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/constants"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 )
@@ -101,35 +101,8 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		return errors.ErrProviderNotConfigured
 	}
 
-	// 10. Obtener integración y credenciales
-	integrationIDStr := fmt.Sprintf("%d", integrationID)
-	integration, err := uc.integrationCore.GetIntegrationByID(ctx, integrationIDStr)
-	if err != nil {
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotFound, nil)
-		return errors.ErrProviderNotFound
-	}
-
-	credentialsMap := make(map[string]interface{})
-	if integration.Config != nil {
-		if configMap, ok := integration.Config.(map[string]interface{}); ok {
-			credentialsMap = configMap
-		}
-	}
-
-	apiKey, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_key")
-	if err != nil {
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrDecryptionFailed, nil)
-		return errors.ErrDecryptionFailed
-	}
-
-	apiSecret, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_secret")
-	if err != nil {
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrDecryptionFailed, nil)
-		return errors.ErrDecryptionFailed
-	}
-
-	credentialsMap["api_key"] = apiKey
-	credentialsMap["api_secret"] = apiSecret
+	// 10. Determinar proveedor
+	provider := dtos.ProviderSoftpymes // Por ahora solo Softpymes
 
 	// 11. Construir invoiceData con items de la orden
 	items := make([]map[string]interface{}, 0, len(order.Items))
@@ -148,9 +121,15 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		})
 	}
 
+	// Config específico de facturación
+	invoiceConfigData := make(map[string]interface{})
+	if config.InvoiceConfig != nil {
+		invoiceConfigData = config.InvoiceConfig
+	}
+
 	invoiceData := map[string]interface{}{
-		"credentials":   credentialsMap,
-		"customer":      map[string]interface{}{
+		"integration_id": integrationID, // El proveedor obtiene config+credentials de cache
+		"customer": map[string]interface{}{
 			"name":  invoice.CustomerName,
 			"email": invoice.CustomerEmail,
 			"phone": invoice.CustomerPhone,
@@ -164,103 +143,59 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		"shipping_cost": invoice.ShippingCost,
 		"currency":      invoice.Currency,
 		"order_id":      invoice.OrderID,
-		"config":        integration.Config,
+		"config":        invoiceConfigData,
 	}
 
-	// 12. Obtener bundle del proveedor y llamar
-	if integration.IntegrationType != integrationCore.IntegrationTypeInvoicing {
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("integration type mismatch"), nil)
-		return errors.ErrProviderNotFound
+	// 12. Generar correlation ID
+	correlationID := uuid.New().String()
+
+	// 13. Construir mensaje de retry request
+	requestMessage := &dtos.InvoiceRequestMessage{
+		InvoiceID:     invoice.ID,
+		Provider:      provider,
+		Operation:     dtos.OperationRetry,
+		InvoiceData:   invoiceData,
+		CorrelationID: correlationID,
+		Timestamp:     time.Now(),
 	}
 
-	integrationBundle, ok := uc.integrationCore.GetRegisteredIntegration(integrationCore.IntegrationTypeInvoicing)
-	if !ok {
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invoicing bundle not found"), nil)
-		return errors.ErrProviderNotFound
-	}
+	// 14. Publicar retry request a RabbitMQ (async)
+	if err := uc.invoiceRequestPub.PublishInvoiceRequest(ctx, requestMessage); err != nil {
+		uc.log.Error(ctx).
+			Err(err).
+			Uint("invoice_id", invoice.ID).
+			Str("provider", provider).
+			Msg("Failed to publish retry request to queue")
 
-	softpymes, ok := integrationBundle.(*softpymesBundle.Bundle)
-	if !ok {
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invalid bundle type"), nil)
-		return errors.ErrProviderNotFound
-	}
+		// Marcar syncLog como failed
+		failedAt := time.Now()
+		duration := int(failedAt.Sub(syncLog.StartedAt).Milliseconds())
+		syncLog.Status = constants.SyncStatusFailed
+		syncLog.CompletedAt = &failedAt
+		syncLog.Duration = &duration
+		errorMsg := "Failed to publish retry to queue: " + err.Error()
+		syncLog.ErrorMessage = &errorMsg
 
-	err = softpymes.CreateInvoice(ctx, invoiceData)
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Retry failed - provider error")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, invoiceData)
-		return errors.ErrProviderAPIError
-	}
-
-	// 13. Éxito - Actualizar factura con datos del proveedor
-	if invoiceNumber, ok := invoiceData["invoice_number"].(string); ok {
-		invoice.InvoiceNumber = invoiceNumber
-	}
-	if externalID, ok := invoiceData["external_id"].(string); ok {
-		invoice.ExternalID = &externalID
-	}
-	if invoiceURL, ok := invoiceData["invoice_url"].(string); ok {
-		invoice.InvoiceURL = &invoiceURL
-	}
-	if pdfURL, ok := invoiceData["pdf_url"].(string); ok {
-		invoice.PDFURL = &pdfURL
-	}
-	if xmlURL, ok := invoiceData["xml_url"].(string); ok {
-		invoice.XMLURL = &xmlURL
-	}
-	if cufe, ok := invoiceData["cufe"].(string); ok {
-		invoice.CUFE = &cufe
-	}
-
-	invoice.Status = constants.InvoiceStatusIssued
-
-	if issuedAtStr, ok := invoiceData["issued_at"].(string); ok && issuedAtStr != "" {
-		issuedAt, err := time.Parse(time.RFC3339, issuedAtStr)
-		if err == nil {
-			invoice.IssuedAt = &issuedAt
+		if updateErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); updateErr != nil {
+			uc.log.Error(ctx).Err(updateErr).Msg("Failed to update sync log")
 		}
-	}
 
-	if err := uc.updateInvoiceWithRetry(ctx, invoice, syncLog, invoiceData); err != nil {
-		return err
-	}
+		// Revertir invoice a failed
+		invoice.Status = constants.InvoiceStatusFailed
+		if updateErr := uc.repo.UpdateInvoice(ctx, invoice); updateErr != nil {
+			uc.log.Error(ctx).Err(updateErr).Msg("Failed to revert invoice status")
+		}
 
-	// 14. Actualizar sync log como exitoso
-	completedAt := time.Now()
-	duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
-	syncLog.Status = constants.SyncStatusSuccess
-	syncLog.CompletedAt = &completedAt
-	syncLog.Duration = &duration
-	invoice.ProviderResponse = invoiceData
-
-	uc.populateSyncLogAudit(syncLog, invoiceData)
-
-	if err := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to update sync log after retry success")
-	}
-
-	// 15. Actualizar información de factura en la orden
-	invoiceURL := ""
-	if invoice.InvoiceURL != nil {
-		invoiceURL = *invoice.InvoiceURL
-	}
-	if err := uc.repo.UpdateOrderInvoiceInfo(ctx, order.ID, invoice.InvoiceNumber, invoiceURL); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to update order invoice info after retry")
-	}
-
-	// 16. Publicar eventos
-	if err := uc.eventPublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created event after retry")
-	}
-	if err := uc.ssePublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created SSE event after retry")
+		return fmt.Errorf("failed to publish retry request: %w", err)
 	}
 
 	uc.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).
-		Str("invoice_number", invoice.InvoiceNumber).
+		Str("provider", provider).
+		Str("correlation_id", correlationID).
 		Int("retry_count", syncLog.RetryCount).
-		Msg("Invoice retry completed successfully")
+		Msg("📤 Retry request published - waiting for provider response")
 
+	// 15. Retornar éxito (invoice queda en pending, consumer lo actualizará)
 	return nil
 }

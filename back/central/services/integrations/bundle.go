@@ -33,7 +33,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	events.SetEventService(eventService)
 
 	// Inicializar Integration Core (hub central de integraciones)
-	integrationCore := core.New(router, db, logger, config, s3)
+	integrationCore := core.New(router, db, redisClient, logger, config, s3)
 
 	// ═══════════════════════════════════════════════════════════════
 	// REGISTRO DE INTEGRACIONES
@@ -47,7 +47,8 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	shopify.New(router, logger, config, integrationCore, rabbitMQ, db)
 
 	// Invoicing: Softpymes (Facturación Electrónica)
-	softpymesBundle := softpymes.New(config, logger, db, integrationCore)
+	// NOTA: Softpymes NO usa base de datos - es un cliente HTTP puro + async RabbitMQ consumer
+	softpymesBundle := softpymes.New(config, logger, rabbitMQ, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeInvoicing, softpymesBundle)
 
 	return integrationCore
