@@ -81,6 +81,7 @@ probability.pem
 .claude
 .claude/
 .playwright-mcp/
+.vscode/
 
 # Lock file (opcional - algunos lo versionan, otros no)
 # .terraform.lock.hcl
