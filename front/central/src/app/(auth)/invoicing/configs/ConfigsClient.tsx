@@ -11,6 +11,7 @@ import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
+import { InvoicingHeader } from '@/services/modules/invoicing/ui/components/InvoicingHeader';
 import {
   deleteConfigAction,
   enableConfigAction,
@@ -270,20 +271,20 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
 
   return (
     <div className="p-8">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Configuración de Facturación</h1>
-          <p className="text-gray-600 mt-2">
-            Define qué integraciones deben generar facturas automáticamente
-          </p>
-        </div>
-        <Button
-          variant="primary"
+      <InvoicingHeader
+        title="Configuración de Facturación"
+        description="Define qué integraciones deben generar facturas automáticamente"
+      >
+        <button
           onClick={() => router.push('/invoicing/configs/new')}
+          className="px-6 py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
         >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
           Nueva Configuración
-        </Button>
-      </div>
+        </button>
+      </InvoicingHeader>
 
       {/* Dropdown de Business para Super Admins */}
       {isSuperAdmin && businesses && businesses.length > 0 && (
@@ -331,7 +332,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="configsTable">
           <div className="mb-4">
             <p className="text-sm text-gray-600">
               <strong>Tip:</strong> Haz clic en los badges para activar/desactivar rápidamente
@@ -342,6 +343,87 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
             columns={columns}
             emptyMessage="No hay configuraciones para mostrar"
           />
+
+          <style jsx>{`
+            /* Tabla mejorada similar a Facturas */
+            .configsTable :global(.table) {
+              border-collapse: separate;
+              border-spacing: 0 10px;
+              background: transparent;
+            }
+
+            /* Quitar el borde del contenedor global de Table */
+            .configsTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+              border: none !important;
+              background: transparent !important;
+            }
+
+            .configsTable :global(.table th) {
+              background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+              color: #fff;
+              position: sticky;
+              top: 0;
+              z-index: 1;
+            }
+
+            /* Header más llamativo + bordes redondeados */
+            .configsTable :global(.table thead th) {
+              padding-top: 18px;
+              padding-bottom: 18px;
+              font-size: 0.875rem;
+              font-weight: 800;
+              letter-spacing: 0.06em;
+              text-transform: uppercase;
+              box-shadow: 0 10px 25px rgba(124, 58, 237, 0.18);
+            }
+
+            .configsTable :global(.table thead th:first-child) {
+              border-top-left-radius: 14px;
+              border-bottom-left-radius: 14px;
+            }
+
+            .configsTable :global(.table thead th:last-child) {
+              border-top-right-radius: 14px;
+              border-bottom-right-radius: 14px;
+            }
+
+            .configsTable :global(.table tbody tr) {
+              background: rgba(255, 255, 255, 0.95);
+              box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
+              transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+            }
+
+            /* Zebra suave en morado */
+            .configsTable :global(.table tbody tr:nth-child(even)) {
+              background: rgba(124, 58, 237, 0.03);
+            }
+
+            .configsTable :global(.table tbody tr:hover) {
+              background: rgba(124, 58, 237, 0.06);
+              box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
+              transform: translateY(-1px);
+            }
+
+            .configsTable :global(.table td) {
+              border-top: none;
+            }
+
+            /* Redondeo de cada fila */
+            .configsTable :global(.table tbody td:first-child) {
+              border-top-left-radius: 12px;
+              border-bottom-left-radius: 12px;
+            }
+            .configsTable :global(.table tbody td:last-child) {
+              border-top-right-radius: 12px;
+              border-bottom-right-radius: 12px;
+            }
+
+            /* Acciones: focus consistente */
+            .configsTable :global(a),
+            .configsTable :global(button) {
+              outline-color: rgba(124, 58, 237, 0.35);
+            }
+          `}</style>
         </div>
       )}
 

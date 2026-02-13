@@ -261,27 +261,38 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
-        {/* Backdrop */}
+        {/* Backdrop con blur */}
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+          className="fixed inset-0 backdrop-blur-sm bg-white/10 transition-opacity"
           onClick={onClose}
         />
 
-        {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] flex flex-col">
-          {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-2xl font-bold">Crear Facturas desde Órdenes</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <XMarkIcon className="w-6 h-6" />
-            </button>
+        {/* Modal 80% del ancho */}
+        <div className="relative bg-white rounded-xl shadow-2xl w-[80%] max-h-[90vh] flex flex-col overflow-hidden">
+          {/* Header con gradiente morado */}
+          <div className="flex items-center justify-between p-8 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9]">
+            <div>
+              <h2 className="text-3xl font-bold text-white">Crear Facturas</h2>
+              <p className="text-purple-100 text-sm mt-1">Selecciona las órdenes para generar facturas electrónicas</p>
+            </div>
+            <div className="flex items-center gap-4">
+              {/* Contador de órdenes seleccionadas */}
+              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+                <span className="text-white font-semibold text-lg">
+                  {selectedOrderIds.length} seleccionada{selectedOrderIds.length !== 1 ? 's' : ''}
+                </span>
+              </div>
+              <button
+                onClick={onClose}
+                className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200"
+              >
+                <XMarkIcon className="w-6 h-6" />
+              </button>
+            </div>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
+          <div className="flex-1 overflow-y-auto p-8 bg-white">
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
@@ -357,14 +368,14 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 )}
 
                 {/* Búsqueda */}
-                <div className="mb-4 relative">
-                  <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <div className="mb-6 relative">
+                  <MagnifyingGlassIcon className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     placeholder="Buscar orden por número o cliente..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] transition-all duration-200"
                   />
                 </div>
 
@@ -384,8 +395,8 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   </span>
                 </div>
 
-                {/* Orders List */}
-                <div className="border border-gray-200 rounded max-h-96 overflow-y-auto">
+                {/* Orders List con scroll suave */}
+                <div className="border border-gray-200 rounded-lg max-h-96 overflow-y-auto scroll-smooth">
                   {filteredOrders.map((order) => {
                     const orderStatus = orderStatuses[order.id];
 
@@ -521,11 +532,11 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           )}
 
           {/* Footer */}
-          <div className="flex justify-end gap-3 p-6 border-t">
+          <div className="flex justify-end gap-3 p-6 border-t bg-gray-50">
             {bulkCompleted ? (
               <button
                 onClick={handleCloseAfterCompletion}
-                className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                className="px-6 py-2.5 bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold rounded-full hover:shadow-lg transition-all duration-200 hover:scale-105"
               >
                 Cerrar
               </button>
@@ -534,14 +545,14 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 <button
                   onClick={onClose}
                   disabled={submitting}
-                  className="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                  className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-100 disabled:opacity-50 transition-all duration-200"
                 >
                   Cancelar
                 </button>
                 <button
                   onClick={handleSubmit}
                   disabled={submitting || selectedOrderIds.length === 0 || loading}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-6 py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white font-semibold rounded-full hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
                 >
                   {submitting
                     ? 'Creando facturas...'
