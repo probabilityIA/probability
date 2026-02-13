@@ -10,7 +10,7 @@ import { DynamicFilters, FilterOption, ActiveFilter } from './dynamic-filters';
 
 export interface TableColumn<T = Record<string, unknown>> {
   key: string;
-  label: string;
+  label: string | ReactNode;
   render?: (value: unknown, row: T, index: number) => ReactNode;
   width?: string;
   align?: 'left' | 'center' | 'right';
