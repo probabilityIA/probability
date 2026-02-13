@@ -39,7 +39,14 @@ func New(
 	// 1. Cliente HTTP de Softpymes
 	apiURL := config.Get("SOFTPYMES_API_URL")
 	if apiURL == "" {
-		panic("SOFTPYMES_API_URL not configured")
+		apiURL = "https://api.softpymes.com" // Default
+		logger.Warn(context.Background()).
+			Msg("SOFTPYMES_API_URL not configured, using default URL")
+	} else {
+		logger.Info(context.Background()).
+			Str("api_url", apiURL).
+			Str("env_var", "SOFTPYMES_API_URL").
+			Msg("🔍 DEBUG: Softpymes API URL loaded from environment")
 	}
 	// Create concrete HTTP client
 	httpClient := client.New(apiURL, logger)

@@ -75,9 +75,9 @@ func (r *Repository) ListInvoicingConfigs(ctx context.Context, businessID uint) 
 	var configModels []*models.InvoicingConfig
 
 	if err := r.db.Conn(ctx).
-		Preload("Integration").                            // Cargar integración de e-commerce
-		Preload("InvoicingIntegration").                   // Cargar integración de facturación (Softpymes)
-		Preload("InvoicingIntegration.IntegrationType").  // Cargar tipo para obtener el logo
+		Preload("Integration").                          // Cargar integración de e-commerce
+		Preload("InvoicingIntegration").                 // Cargar integración de facturación (Softpymes)
+		Preload("InvoicingIntegration.IntegrationType"). // Cargar tipo para obtener el logo
 		Where("business_id = ?", businessID).
 		Order("created_at DESC").
 		Find(&configModels).Error; err != nil {

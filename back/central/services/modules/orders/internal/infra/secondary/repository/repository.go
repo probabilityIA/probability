@@ -59,6 +59,22 @@ func (r *Repository) CreateOrder(ctx context.Context, order *entities.Probabilit
 	return nil
 }
 
+// GetFirstIntegrationIDByBusinessID obtiene la primera integración disponible para un negocio
+func (r *Repository) GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
+	var integration models.Integration
+	err := r.db.Conn(ctx).
+		Where("business_id = ?", businessID).
+		Or("business_id IS NULL"). // Algunas integraciones pueden ser globales
+		Order("business_id DESC, is_default DESC, id ASC").
+		First(&integration).Error
+
+	if err != nil {
+		return 0, fmt.Errorf("error finding integration for business %d: %w", businessID, err)
+	}
+
+	return integration.ID, nil
+}
+
 // GetOrderByID obtiene una orden por su ID
 func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.ProbabilityOrder, error) {
 	var order models.Order
@@ -601,6 +617,30 @@ func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (
 		Where("customer_id = ?", clientID).
 		Count(&count).Error
 	return count, err
+}
+
+// GetLastManualOrderNumber obtiene el último número de secuencia para órdenes manuales
+func (r *Repository) GetLastManualOrderNumber(ctx context.Context, businessID uint) (int, error) {
+	var lastOrder models.Order
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND platform = 'manual' AND order_number LIKE 'prob-%'", businessID).
+		Order("order_number DESC").
+		First(&lastOrder).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	// Parsear el número de 'prob-XXXX'
+	var num int
+	_, err = fmt.Sscanf(lastOrder.OrderNumber, "prob-%d", &num)
+	if err != nil {
+		return 0, nil // Si no se puede parsear, empezamos de nuevo
+	}
+	return num, nil
 }
 
 // CreateOrderError guarda un error ocurrido durante el procesamiento de una orden

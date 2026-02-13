@@ -27,3 +27,27 @@ export const getShipmentsAction = async (params?: GetShipmentsParams) => {
         };
     }
 };
+
+export const trackShipmentAction = async (trackingNumber: string) => {
+    try {
+        return await (await getUseCases()).trackShipment(trackingNumber);
+    } catch (error: any) {
+        console.error('Track Shipment Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al rastrear envío',
+        };
+    }
+};
+
+export const cancelShipmentAction = async (id: string) => {
+    try {
+        return await (await getUseCases()).cancelShipment(id);
+    } catch (error: any) {
+        console.error('Cancel Shipment Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al cancelar envío',
+        };
+    }
+};

@@ -63,6 +63,8 @@ export interface Order {
     // Información del cliente
     customer_id?: number;
     customer_name: string;
+    customer_first_name?: string;
+    customer_last_name?: string;
     customer_email: string;
     customer_phone: string;
     customer_dni: string;
@@ -225,6 +227,8 @@ export interface CreateOrderDTO {
     // Información del cliente
     customer_id?: number;
     customer_name?: string;
+    customer_first_name?: string;
+    customer_last_name?: string;
     customer_email?: string;
     customer_phone?: string;
     customer_dni?: string;
@@ -309,6 +313,8 @@ export interface UpdateOrderDTO {
 
     // Información del cliente
     customer_name?: string;
+    customer_first_name?: string;
+    customer_last_name?: string;
     customer_email?: string;
     customer_phone?: string;
     customer_dni?: string;

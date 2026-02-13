@@ -88,8 +88,8 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
           const existingIsFailed = existing.status === 'failed';
 
           if ((!currentIsFailed && existingIsFailed) ||
-              (currentIsFailed === existingIsFailed &&
-               new Date(invoice.created_at) > new Date(existing.created_at))) {
+            (currentIsFailed === existingIsFailed &&
+              new Date(invoice.created_at) > new Date(existing.created_at))) {
             acc.set(invoice.order_id, invoice);
           }
         }

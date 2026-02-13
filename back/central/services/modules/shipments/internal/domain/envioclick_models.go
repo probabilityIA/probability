@@ -69,3 +69,27 @@ type EnvioClickGenerateData struct {
 	LabelURL         string `json:"url"` // Matches API response key "url"
 	MyGuideReference string `json:"myGuideReference"`
 }
+
+type EnvioClickTrackingResponse struct {
+	Status string                 `json:"status"`
+	Data   EnvioClickTrackingData `json:"data"`
+}
+
+type EnvioClickTrackingData struct {
+	TrackingNumber string                   `json:"trackingNumber"`
+	Carrier        string                   `json:"carrier"`
+	Status         string                   `json:"status"`
+	Events         []EnvioClickTrackHistory `json:"history"`
+}
+
+type EnvioClickTrackHistory struct {
+	Date        string `json:"date"`
+	Status      string `json:"status"`
+	Description string `json:"description"`
+	Location    string `json:"location"`
+}
+
+type EnvioClickCancelResponse struct {
+	Status  string `json:"status"`
+	Message string `json:"message"`
+}

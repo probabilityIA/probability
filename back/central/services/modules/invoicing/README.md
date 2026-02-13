@@ -38,11 +38,11 @@ modules/invoicing/
     ├── app/               # Casos de uso
     │   ├── constructor.go
     │   ├── create_invoice.go
-    │   ├── bulk_create_invoices_async.go
-    │   ├── get_summary.go
-    │   ├── get_stats.go
-    │   ├── get_trends.go
-    │   └── deprecated_providers.go
+    │   ├── bulk_create_invoices_async.go # ✨ NUEVO - Procesamiento asíncrono
+    │   ├── get_summary.go      # ✨ NUEVO - Resumen de KPIs
+    │   ├── get_stats.go        # ✨ NUEVO - Estadísticas detalladas
+    │   ├── get_trends.go       # ✨ NUEVO - Tendencias temporales
+    │   └── deprecated_providers.go  # Métodos deprecados (retornan error)
     └── infra/
         ├── primary/       # Adaptadores de entrada
         │   ├── handlers/  # HTTP handlers (Gin)
@@ -540,7 +540,6 @@ RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
 RABBITMQ_USER=admin
 RABBITMQ_PASS=admin
-
 # Redis SSE (notificaciones en tiempo real)
 REDIS_INVOICE_EVENTS_CHANNEL=probability:invoicing:events
 ```
@@ -615,9 +614,6 @@ POST /integrations
 
 ### ✅ Completado
 
-- [x] Migración a integrations/core
-- [x] Endpoints de estadísticas y resúmenes
-- [x] Soporte para múltiples proveedores de facturación
 - [x] Sincronización automática vía RabbitMQ
 - [x] Notificaciones en tiempo real via SSE (Redis Pub/Sub → Events Module → Frontend)
 - [x] Facturación masiva asíncrona con progreso en tiempo real
@@ -633,6 +629,7 @@ POST /integrations
 - [ ] Soporte para facturación internacional
 - [ ] Integración con más proveedores (Alegra, Siigo, etc.)
 - [ ] Facturación recurrente/suscripciones
+- [ ] Webhooks para notificaciones en tiempo real
 
 ## Contribuir
 

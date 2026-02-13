@@ -22,6 +22,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		// EnvioClick Integration
 		shipments.POST("/quote", h.QuoteShipment)
 		shipments.POST("/generate", h.GenerateGuide)
+		shipments.POST("/tracking/:tracking_number/track", h.TrackEnvioclickShipment)
+		shipments.POST("/:id/cancel", h.CancelEnvioclickShipment)
 	}
 
 }

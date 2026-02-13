@@ -459,11 +459,11 @@ func (r *Repository) migrateIntegrationTypesToCategories(ctx context.Context) er
 		typeCode   string
 		categoryID uint
 	}{
-		{"shopify", 1},        // ecommerce
-		{"mercadolibre", 1},   // ecommerce
-		{"amazon", 1},         // ecommerce
-		{"whatsapp", 3},       // messaging
-		{"whatsap", 3},        // messaging (typo histórico)
+		{"shopify", 1},      // ecommerce
+		{"mercadolibre", 1}, // ecommerce
+		{"amazon", 1},       // ecommerce
+		{"whatsapp", 3},     // messaging
+		{"whatsap", 3},      // messaging (typo histórico)
 	}
 
 	for _, m := range migrations {

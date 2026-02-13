@@ -1,5 +1,5 @@
 import { IShipmentRepository } from '../../domain/ports';
-import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse } from '../../domain/types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
 export class ShipmentApiRepository implements IShipmentRepository {
@@ -60,6 +60,18 @@ export class ShipmentApiRepository implements IShipmentRepository {
         return this.fetch<EnvioClickGenerateResponse>('/shipments/generate', {
             method: 'POST',
             body: JSON.stringify(req),
+        });
+    }
+
+    async trackShipment(trackingNumber: string): Promise<EnvioClickTrackingResponse> {
+        return this.fetch<EnvioClickTrackingResponse>(`/shipments/tracking/${trackingNumber}/track`, {
+            method: 'POST',
+        });
+    }
+
+    async cancelShipment(id: string): Promise<EnvioClickCancelResponse> {
+        return this.fetch<EnvioClickCancelResponse>(`/shipments/${id}/cancel`, {
+            method: 'POST',
         });
     }
 }

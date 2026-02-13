@@ -63,11 +63,13 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		CurrencyPresentment:     order.CurrencyPresentment,
 
 		// Información del cliente
-		CustomerID:    order.CustomerID,
-		CustomerName:  order.CustomerName,
-		CustomerEmail: order.CustomerEmail,
-		CustomerPhone: order.CustomerPhone,
-		CustomerDNI:   order.CustomerDNI,
+		CustomerID:        order.CustomerID,
+		CustomerName:      order.CustomerName,
+		CustomerFirstName: order.CustomerFirstName,
+		CustomerLastName:  order.CustomerLastName,
+		CustomerEmail:     order.CustomerEmail,
+		CustomerPhone:     order.CustomerPhone,
+		CustomerDNI:       order.CustomerDNI,
 
 		// Dirección de envío (desnormalizado)
 		ShippingStreet:     order.ShippingStreet,
@@ -184,6 +186,8 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		TotalAmountPresentment: order.TotalAmountPresentment,
 		CurrencyPresentment:    order.CurrencyPresentment,
 		CustomerName:           order.CustomerName,
+		CustomerFirstName:      order.CustomerFirstName,
+		CustomerLastName:       order.CustomerLastName,
 		CustomerEmail:          order.CustomerEmail,
 		Status:                 order.Status,
 		ItemsCount:             len(order.Items),

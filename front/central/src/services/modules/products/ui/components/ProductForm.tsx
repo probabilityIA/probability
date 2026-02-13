@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Product, CreateProductDTO, UpdateProductDTO } from '../../domain/types';
 import { createProductAction, updateProductAction } from '../../infra/actions';
 import { Button, Alert, Input, Select } from '@/shared/ui';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 
 interface ProductFormProps {
     product?: Product;
@@ -12,8 +13,11 @@ interface ProductFormProps {
 }
 
 export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
+    const { permissions } = usePermissions();
+    const defaultBusinessId = permissions?.business_id || 0;
+
     const [formData, setFormData] = useState<CreateProductDTO>({
-        business_id: product?.business_id || 0,
+        business_id: product?.business_id || defaultBusinessId,
         sku: product?.sku || '',
         name: product?.name || '',
         description: product?.description || '',

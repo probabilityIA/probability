@@ -11,10 +11,10 @@ import (
 
 // RetryConsumer procesa reintentos de facturas fallidas
 type RetryConsumer struct {
-	repo ports.IRepository
-	useCase     ports.IUseCase
-	log         log.ILogger
-	ticker      *time.Ticker
+	repo    ports.IRepository
+	useCase ports.IUseCase
+	log     log.ILogger
+	ticker  *time.Ticker
 }
 
 // NewRetryConsumer crea un nuevo retry consumer
@@ -24,9 +24,9 @@ func NewRetryConsumer(
 	logger log.ILogger,
 ) *RetryConsumer {
 	return &RetryConsumer{
-		repo: repo,
-		useCase:     useCase,
-		log:         logger.WithModule("invoicing.retry_consumer"),
+		repo:    repo,
+		useCase: useCase,
+		log:     logger.WithModule("invoicing.retry_consumer"),
 	}
 }
 
@@ -128,4 +128,3 @@ func (c *RetryConsumer) retryInvoice(ctx context.Context, invoiceID uint) error 
 
 	return nil
 }
-

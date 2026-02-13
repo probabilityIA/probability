@@ -53,9 +53,9 @@ interface TableProps<T = Record<string, unknown>> {
   filters?: TableFiltersProps;
 }
 
-export function Table<T = Record<string, unknown>>({ 
-  columns, 
-  data, 
+export function Table<T = Record<string, unknown>>({
+  columns,
+  data,
   keyExtractor = (_, i) => i,
   emptyMessage = 'No hay datos disponibles',
   loading = false,
@@ -166,54 +166,54 @@ export function Table<T = Record<string, unknown>>({
       <div className={`overflow-hidden w-full rounded-lg border border-gray-200 bg-white m-0 p-0 ${filters ? 'rounded-t-none border-t-0' : ''}`}>
         <div className="overflow-x-auto w-full m-0 p-0">
           <table className="table w-full m-0 p-0">
-          {/* Header */}
-          <thead>
-            <tr>
-              {columns.map((column) => (
-                <th
-                  key={column.key}
-                  className={alignClass[column.align || 'left']}
-                  style={{ width: column.width }}
-                >
-                  {column.label}
-                </th>
-              ))}
-            </tr>
-          </thead>
+            {/* Header */}
+            <thead>
+              <tr>
+                {columns.map((column) => (
+                  <th
+                    key={column.key}
+                    className={alignClass[column.align || 'left']}
+                    style={{ width: column.width }}
+                  >
+                    {column.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-          {/* Body */}
-          <tbody>
-            {loading ? (
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
-                  <div className="flex justify-center items-center gap-3">
-                    <div className="spinner"></div>
-                    <span>Cargando...</span>
-                  </div>
-                </td>
-              </tr>
-            ) : data.length === 0 ? (
-              <tr>
-                <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
-                  {emptyMessage}
-                </td>
-              </tr>
-            ) : (
-              data.map((row, rowIndex) => (
-                <tr
-                  key={keyExtractor(row, rowIndex)}
-                  className={`transition-colors ${onRowClick || onRowDoubleClick ? 'cursor-pointer' : ''}`}
-                  onClick={() => onRowClick?.(row, rowIndex)}
-                  onDoubleClick={() => onRowDoubleClick?.(row, rowIndex)}
-                >
-                  {columns.map((column) => (
-                    <td
-                      key={column.key}
-                      className={alignClass[column.align || 'left']}
-                    >
-                      {column.render 
-                        ? column.render(row[column.key as keyof T], row, rowIndex)
-                        : (() => {
+            {/* Body */}
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
+                    <div className="flex justify-center items-center gap-3">
+                      <div className="spinner"></div>
+                      <span>Cargando...</span>
+                    </div>
+                  </td>
+                </tr>
+              ) : data.length === 0 ? (
+                <tr>
+                  <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
+                    {emptyMessage}
+                  </td>
+                </tr>
+              ) : (
+                data.map((row, rowIndex) => (
+                  <tr
+                    key={keyExtractor(row, rowIndex)}
+                    className={`transition-colors ${onRowClick || onRowDoubleClick ? 'cursor-pointer' : ''}`}
+                    onClick={() => onRowClick?.(row, rowIndex)}
+                    onDoubleClick={() => onRowDoubleClick?.(row, rowIndex)}
+                  >
+                    {columns.map((column) => (
+                      <td
+                        key={column.key}
+                        className={alignClass[column.align || 'left']}
+                      >
+                        {column.render
+                          ? column.render(row[column.key as keyof T], row, rowIndex)
+                          : (() => {
                             const value = row[column.key as keyof T];
                             // Si es un elemento React (JSX), lo renderizamos directamente
                             if (React.isValidElement(value)) {
@@ -226,14 +226,14 @@ export function Table<T = Record<string, unknown>>({
                             // Para otros valores, los convertimos a string
                             return String(value);
                           })()}
-                    </td>
-                  ))}
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
         {/* Paginación integrada */}
         {renderPagination()}
       </div>
@@ -243,4 +243,3 @@ export function Table<T = Record<string, unknown>>({
 
 // Re-exportar tipos de filtros para facilitar el uso
 export type { FilterOption, ActiveFilter } from './dynamic-filters';
-

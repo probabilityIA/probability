@@ -49,6 +49,8 @@ func ToDBOrder(o *entities.ProbabilityOrder) *models.Order {
 		CurrencyPresentment:     o.CurrencyPresentment,
 		CustomerID:              o.CustomerID,
 		CustomerName:            o.CustomerName,
+		CustomerFirstName:       o.CustomerFirstName,
+		CustomerLastName:        o.CustomerLastName,
 		CustomerEmail:           o.CustomerEmail,
 		CustomerPhone:           o.CustomerPhone,
 		CustomerDNI:             o.CustomerDNI,
@@ -162,6 +164,8 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 		CurrencyPresentment:     o.CurrencyPresentment,
 		CustomerID:              o.CustomerID,
 		CustomerName:            o.CustomerName,
+		CustomerFirstName:       o.CustomerFirstName,
+		CustomerLastName:        o.CustomerLastName,
 		CustomerEmail:           o.CustomerEmail,
 		CustomerPhone:           o.CustomerPhone,
 		CustomerDNI:             o.CustomerDNI,
@@ -717,6 +721,5 @@ func ToDomainChannelMetadata(m *models.OrderChannelMetadata) *entities.Probabili
 		ProcessedAt:   m.ProcessedAt,
 		IsLatest:      m.IsLatest,
 		LastSyncedAt:  m.LastSyncedAt,
-		SyncStatus:    m.SyncStatus,
 	}
 }

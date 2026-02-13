@@ -3,8 +3,8 @@ package mappers
 import (
 	"strings"
 
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
 )
 

@@ -34,6 +34,7 @@ export const useIntegrationsSimple = (options?: UseIntegrationsSimpleOptions) =>
 
     useEffect(() => {
         fetchIntegrations();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [options?.businessId]);
 
     return {

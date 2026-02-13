@@ -7,8 +7,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/app"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/queue/consumer"
-	invoicingRedis "github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/queue"
+	invoicingRedis "github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -104,7 +104,7 @@ func New(
 	// ═══════════════════════════════════════════════════════════════
 
 	// HTTP Handlers
-	handler := handlers.New(useCase, repo, config, moduleLogger)
+	handler := handlers.New(useCase, repo, moduleLogger)
 	handler.RegisterRoutes(router)
 
 	// Consumers (RabbitMQ)

@@ -8,7 +8,7 @@ import (
 // InvoiceResponse representa la respuesta de creación de factura de Softpymes
 // Según documentación oficial: https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostSaleInvoice
 type InvoiceResponse struct {
-	Message string      `json:"message"` // "Se ha creado la factura de venta en Pymes+ correctamente!"
+	Message string       `json:"message"` // "Se ha creado la factura de venta en Pymes+ correctamente!"
 	Info    *InvoiceInfo `json:"info,omitempty"`
 }
 

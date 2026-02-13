@@ -103,7 +103,6 @@ type IRepository interface {
 	GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error)
 }
 
-
 // ═══════════════════════════════════════════════════════════════
 // CLIENTE DE PROVEEDOR (Secondary Port - Driven Adapter)
 // ═══════════════════════════════════════════════════════════════
