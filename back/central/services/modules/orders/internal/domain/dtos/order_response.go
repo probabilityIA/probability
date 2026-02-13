@@ -44,11 +44,13 @@ type OrderResponse struct {
 	CurrencyPresentment     string
 
 	// Información del cliente
-	CustomerID    *uint
-	CustomerName  string
-	CustomerEmail string
-	CustomerPhone string
-	CustomerDNI   string
+	CustomerID        *uint
+	CustomerName      string
+	CustomerFirstName string
+	CustomerLastName  string
+	CustomerEmail     string
+	CustomerPhone     string
+	CustomerDNI       string
 
 	// Dirección de envío
 	ShippingStreet     string

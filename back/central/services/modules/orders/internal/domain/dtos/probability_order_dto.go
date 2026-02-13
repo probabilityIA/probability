@@ -40,6 +40,8 @@ type ProbabilityOrderDTO struct {
 	// Información del cliente
 	CustomerID         *uint   `json:"customer_id,omitempty"`
 	CustomerName       string  `json:"customer_name"`
+	CustomerFirstName  string  `json:"customer_first_name"`
+	CustomerLastName   string  `json:"customer_last_name"`
 	CustomerEmail      string  `json:"customer_email"`
 	CustomerPhone      string  `json:"customer_phone"`
 	CustomerDNI        string  `json:"customer_dni"`
@@ -96,27 +98,27 @@ type ProbabilityOrderDTO struct {
 
 // ProbabilityOrderItemDTO representa un item/producto de la orden
 type ProbabilityOrderItemDTO struct {
-	ProductID    *string `json:"product_id,omitempty"`
-	ProductSKU   string  `json:"product_sku"`
-	ProductName  string  `json:"product_name"`
-	ProductTitle string  `json:"product_title"`
-	VariantID    *string `json:"variant_id,omitempty"`
-	Quantity     int     `json:"quantity"`
-	UnitPrice    float64 `json:"unit_price"`
-	TotalPrice   float64 `json:"total_price"`
-	Currency     string  `json:"currency"`
-	Discount     float64 `json:"discount"`
-	Tax          float64 `json:"tax"`
+	ProductID    *string  `json:"product_id,omitempty"`
+	ProductSKU   string   `json:"product_sku"`
+	ProductName  string   `json:"product_name"`
+	ProductTitle string   `json:"product_title"`
+	VariantID    *string  `json:"variant_id,omitempty"`
+	Quantity     int      `json:"quantity"`
+	UnitPrice    float64  `json:"unit_price"`
+	TotalPrice   float64  `json:"total_price"`
+	Currency     string   `json:"currency"`
+	Discount     float64  `json:"discount"`
+	Tax          float64  `json:"tax"`
 	TaxRate      *float64 `json:"tax_rate,omitempty"`
 
 	// Precios en moneda presentment (presentment_money - moneda local)
-	UnitPricePresentment  float64 `json:"unit_price_presentment"`
-	TotalPricePresentment float64 `json:"total_price_presentment"`
-	DiscountPresentment   float64 `json:"discount_presentment"`
-	TaxPresentment        float64 `json:"tax_presentment"`
-	ImageURL              *string `json:"image_url,omitempty"`
-	ProductURL            *string `json:"product_url,omitempty"`
-	Weight                *float64 `json:"weight,omitempty"`
+	UnitPricePresentment  float64         `json:"unit_price_presentment"`
+	TotalPricePresentment float64         `json:"total_price_presentment"`
+	DiscountPresentment   float64         `json:"discount_presentment"`
+	TaxPresentment        float64         `json:"tax_presentment"`
+	ImageURL              *string         `json:"image_url,omitempty"`
+	ProductURL            *string         `json:"product_url,omitempty"`
+	Weight                *float64        `json:"weight,omitempty"`
 	Metadata              json.RawMessage `json:"metadata,omitempty"`
 }
 

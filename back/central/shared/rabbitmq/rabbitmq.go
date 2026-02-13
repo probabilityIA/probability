@@ -11,8 +11,11 @@ import (
 
 // IQueue define la interfaz para manejar colas (RabbitMQ, etc.)
 type IQueue interface {
-	// Publish publica un mensaje en una cola específica
+	// Publish publica un mensaje en una cola específica (legacy - usar PublishToExchange)
 	Publish(ctx context.Context, queueName string, message []byte) error
+
+	// PublishToExchange publica un mensaje a un exchange
+	PublishToExchange(ctx context.Context, exchangeName string, routingKey string, message []byte) error
 
 	// Consume consume mensajes de una cola específica
 	// El handler se ejecuta para cada mensaje recibido
@@ -24,15 +27,25 @@ type IQueue interface {
 	// DeclareQueue declara/crea una cola si no existe
 	DeclareQueue(queueName string, durable bool) error
 
+	// DeclareExchange declara/crea un exchange si no existe
+	DeclareExchange(exchangeName string, exchangeType string, durable bool) error
+
+	// BindQueue vincula una cola a un exchange con un routing key
+	BindQueue(queueName string, exchangeName string, routingKey string) error
+
 	// Ping verifica que la conexión esté activa
 	Ping() error
 }
 
+// QueueRegistryCallback es un callback para registrar colas declaradas
+type QueueRegistryCallback func(queueName string)
+
 type rabbitMQ struct {
-	conn    *amqp.Connection
-	channel *amqp.Channel
-	logger  log.ILogger
-	config  env.IConfig
+	conn           *amqp.Connection
+	channel        *amqp.Channel
+	logger         log.ILogger
+	config         env.IConfig
+	queueRegistry  QueueRegistryCallback
 }
 
 // New crea una nueva instancia de RabbitMQ y conecta automáticamente
@@ -47,6 +60,11 @@ func New(logger log.ILogger, config env.IConfig) (IQueue, error) {
 	}
 
 	return r, nil
+}
+
+// SetQueueRegistry establece un callback para registrar colas declaradas
+func (r *rabbitMQ) SetQueueRegistry(callback QueueRegistryCallback) {
+	r.queueRegistry = callback
 }
 
 func (r *rabbitMQ) connect() error {
@@ -75,12 +93,7 @@ func (r *rabbitMQ) connect() error {
 
 	url := fmt.Sprintf("amqp://%s:%s@%s:%s%s", user, pass, host, port, vhost)
 
-	r.logger.Debug().
-		Str("host", host).
-		Str("port", port).
-		Str("vhost", vhost).
-		Msg("Connecting to RabbitMQ")
-
+	// Conexión silenciosa - info mostrada en LogStartupInfo()
 	var err error
 	r.conn, err = amqp.Dial(url)
 	if err != nil {
@@ -98,7 +111,7 @@ func (r *rabbitMQ) connect() error {
 		return fmt.Errorf("failed to open channel: %w", err)
 	}
 
-	r.logger.Debug().Msg("Successfully connected to RabbitMQ")
+	// Conexión exitosa - info mostrada en LogStartupInfo()
 	return nil
 }
 
@@ -128,7 +141,7 @@ func (r *rabbitMQ) Publish(ctx context.Context, queueName string, message []byte
 		return fmt.Errorf("failed to publish message: %w", err)
 	}
 
-	r.logger.Debug().
+	r.logger.Info().
 		Str("queue", queueName).
 		Int("message_size", len(message)).
 		Msg("Message published to queue")
@@ -153,10 +166,6 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 		return fmt.Errorf("failed to create consumer channel: %w", err)
 	}
 
-	r.logger.Info().
-		Str("queue", queueName).
-		Msg("Created dedicated channel for consumer")
-
 	msgs, err := consumerChannel.Consume(
 		queueName, // queue
 		"",        // consumer
@@ -171,7 +180,7 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 		r.logger.Error().
 			Err(err).
 			Str("queue", queueName).
-			Msg("Failed to register consumer")
+			Msg("Error al registrar consumer")
 		return fmt.Errorf("failed to register consumer: %w", err)
 	}
 
@@ -191,24 +200,30 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 					return
 				}
 
+				// Log del mensaje recibido
 				r.logger.Debug().
 					Str("queue", queueName).
 					Int("message_size", len(msg.Body)).
-					Msg("Received message from queue")
+					Msg("📨 Message received from queue - processing")
 
+				// Procesamos el mensaje
 				if err := handler(msg.Body); err != nil {
 					r.logger.Error().
 						Err(err).
 						Str("queue", queueName).
 						Msg("Error processing message")
+					r.logger.Debug().
+						Err(err).
+						Str("queue", queueName).
+						Msg("❌ Message processing FAILED - will be requeued")
 					// Nack the message so it can be requeued
 					msg.Nack(false, true)
 				} else {
-					// Ack the message
-					msg.Ack(false)
 					r.logger.Debug().
 						Str("queue", queueName).
-						Msg("Message processed successfully")
+						Msg("✅ Message processed successfully - ACK sent")
+					// Ack the message
+					msg.Ack(false)
 				}
 			}
 		}
@@ -229,7 +244,7 @@ func (r *rabbitMQ) DeclareQueue(queueName string, durable bool) error {
 		r.logger.Error().
 			Err(err).
 			Str("queue", queueName).
-			Msg("Failed to create channel for queue declaration")
+			Msg("Error al crear channel para declarar cola")
 		return fmt.Errorf("failed to create channel: %w", err)
 	}
 	defer ch.Close()
@@ -248,14 +263,14 @@ func (r *rabbitMQ) DeclareQueue(queueName string, durable bool) error {
 			Err(err).
 			Str("queue", queueName).
 			Bool("durable", durable).
-			Msg("Failed to declare queue")
+			Msg("Error al declarar cola")
 		return fmt.Errorf("failed to declare queue: %w", err)
 	}
 
-	r.logger.Debug().
-		Str("queue", queueName).
-		Bool("durable", durable).
-		Msg("Queue declared successfully")
+	// Registrar cola declarada exitosamente
+	if r.queueRegistry != nil {
+		r.queueRegistry(queueName)
+	}
 
 	return nil
 }
@@ -267,6 +282,121 @@ func (r *rabbitMQ) Ping() error {
 	if r.channel == nil {
 		return fmt.Errorf("rabbitmq channel is not initialized")
 	}
+	return nil
+}
+
+func (r *rabbitMQ) PublishToExchange(ctx context.Context, exchangeName string, routingKey string, message []byte) error {
+	if r.channel == nil {
+		return fmt.Errorf("rabbitmq channel is not initialized")
+	}
+
+	err := r.channel.PublishWithContext(
+		ctx,
+		exchangeName, // exchange
+		routingKey,   // routing key (vacío para fanout)
+		false,        // mandatory
+		false,        // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        message,
+		},
+	)
+
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("exchange", exchangeName).
+			Str("routing_key", routingKey).
+			Int("message_size", len(message)).
+			Msg("Failed to publish message to exchange")
+		return fmt.Errorf("failed to publish message: %w", err)
+	}
+
+	r.logger.Info().
+		Str("exchange", exchangeName).
+		Str("routing_key", routingKey).
+		Int("message_size", len(message)).
+		Msg("Message published to exchange")
+
+	return nil
+}
+
+func (r *rabbitMQ) DeclareExchange(exchangeName string, exchangeType string, durable bool) error {
+	if r.conn == nil {
+		return fmt.Errorf("rabbitmq connection is not initialized")
+	}
+
+	// Crear un channel temporal para declarar el exchange
+	ch, err := r.conn.Channel()
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("exchange", exchangeName).
+			Msg("Error al crear channel para declarar exchange")
+		return fmt.Errorf("failed to create channel: %w", err)
+	}
+	defer ch.Close()
+
+	err = ch.ExchangeDeclare(
+		exchangeName, // name
+		exchangeType, // type (fanout, direct, topic, headers)
+		durable,      // durable
+		false,        // auto-deleted
+		false,        // internal
+		false,        // no-wait
+		nil,          // arguments
+	)
+
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("exchange", exchangeName).
+			Str("type", exchangeType).
+			Bool("durable", durable).
+			Msg("Error al declarar exchange")
+		return fmt.Errorf("failed to declare exchange: %w", err)
+	}
+
+	// Silencioso - solo loguear errores
+	return nil
+}
+
+func (r *rabbitMQ) BindQueue(queueName string, exchangeName string, routingKey string) error {
+	if r.conn == nil {
+		return fmt.Errorf("rabbitmq connection is not initialized")
+	}
+
+	// Crear un channel temporal para hacer el binding
+	ch, err := r.conn.Channel()
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("queue", queueName).
+			Str("exchange", exchangeName).
+			Msg("Failed to create channel for queue binding")
+		return fmt.Errorf("failed to create channel: %w", err)
+	}
+	defer ch.Close()
+
+	err = ch.QueueBind(
+		queueName,    // queue name
+		routingKey,   // routing key (vacío para fanout)
+		exchangeName, // exchange
+		false,        // no-wait
+		nil,          // arguments
+	)
+
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("queue", queueName).
+			Str("exchange", exchangeName).
+			Str("routing_key", routingKey).
+			Msg("Error al bindear cola a exchange")
+		return fmt.Errorf("failed to bind queue: %w", err)
+	}
+
+	// Silencioso - solo loguear errores
 	return nil
 }
 

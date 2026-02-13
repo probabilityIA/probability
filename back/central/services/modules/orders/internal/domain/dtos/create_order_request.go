@@ -1,106 +1,111 @@
 package dtos
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // CreateOrderRequest representa la solicitud para crear una orden
-// ✅ DTO PURO - SIN TAGS (ni json, ni binding, ni gorm)
+// ✅ DTO HTTP/DOMAIN - CON TAGS
 type CreateOrderRequest struct {
 	// Identificadores de integración
-	BusinessID      *uint
-	IntegrationID   uint
-	IntegrationType string
+	BusinessID      *uint  `json:"business_id"`
+	IntegrationID   uint   `json:"integration_id"`
+	IntegrationType string `json:"integration_type"`
 
 	// Identificadores de la orden
-	Platform       string
-	ExternalID     string
-	OrderNumber    string
-	InternalNumber string
+	Platform       string `json:"platform"`
+	ExternalID     string `json:"external_id"`
+	OrderNumber    string `json:"order_number"`
+	InternalNumber string `json:"internal_number"`
 
 	// Información financiera
-	Subtotal     float64
-	Tax          float64
-	Discount     float64
-	ShippingCost float64
-	TotalAmount  float64
-	Currency     string
-	CodTotal     *float64
+	Subtotal     float64  `json:"subtotal"`
+	Tax          float64  `json:"tax"`
+	Discount     float64  `json:"discount"`
+	ShippingCost float64  `json:"shipping_cost"`
+	TotalAmount  float64  `json:"total_amount"`
+	Currency     string   `json:"currency"`
+	CodTotal     *float64 `json:"cod_total,omitempty"`
 
 	// Información del cliente
-	CustomerID    *uint
-	CustomerName  string
-	CustomerEmail string
-	CustomerPhone string
-	CustomerDNI   string
+	CustomerID        *uint  `json:"customer_id,omitempty"`
+	CustomerName      string `json:"customer_name"`
+	CustomerFirstName string `json:"customer_first_name"`
+	CustomerLastName  string `json:"customer_last_name"`
+	CustomerEmail     string `json:"customer_email"`
+	CustomerPhone     string `json:"customer_phone"`
+	CustomerDNI       string `json:"customer_dni"`
 
 	// Dirección de envío
-	ShippingStreet     string
-	ShippingCity       string
-	ShippingState      string
-	ShippingCountry    string
-	ShippingPostalCode string
-	ShippingLat        *float64
-	ShippingLng        *float64
+	ShippingStreet     string   `json:"shipping_street"`
+	ShippingCity       string   `json:"shipping_city"`
+	ShippingState      string   `json:"shipping_state"`
+	ShippingCountry    string   `json:"shipping_country"`
+	ShippingPostalCode string   `json:"shipping_postal_code"`
+	ShippingLat        *float64 `json:"shipping_lat,omitempty"`
+	ShippingLng        *float64 `json:"shipping_lng,omitempty"`
 
 	// Información de pago
-	PaymentMethodID uint
-	IsPaid          bool
-	PaidAt          *time.Time
+	PaymentMethodID uint       `json:"payment_method_id"`
+	IsPaid          bool       `json:"is_paid"`
+	PaidAt          *time.Time `json:"paid_at,omitempty"`
 
 	// Información de envío/logística
-	TrackingNumber *string
-	TrackingLink   *string
-	GuideID        *string
-	GuideLink      *string
-	DeliveryDate   *time.Time
-	DeliveredAt    *time.Time
+	TrackingNumber *string    `json:"tracking_number,omitempty"`
+	TrackingLink   *string    `json:"tracking_link,omitempty"`
+	GuideID        *string    `json:"guide_id,omitempty"`
+	GuideLink      *string    `json:"guide_link,omitempty"`
+	DeliveryDate   *time.Time `json:"delivery_date,omitempty"`
+	DeliveredAt    *time.Time `json:"delivered_at,omitempty"`
 
 	// Información de fulfillment
-	WarehouseID   *uint
-	WarehouseName string
-	DriverID      *uint
-	DriverName    string
-	IsLastMile    bool
+	WarehouseID   *uint  `json:"warehouse_id,omitempty"`
+	WarehouseName string `json:"warehouse_name"`
+	DriverID      *uint  `json:"driver_id,omitempty"`
+	DriverName    string `json:"driver_name"`
+	IsLastMile    bool   `json:"is_last_mile"`
 
 	// Dimensiones y peso
-	Weight *float64
-	Height *float64
-	Width  *float64
-	Length *float64
-	Boxes  *string
+	Weight *float64 `json:"weight,omitempty"`
+	Height *float64 `json:"height,omitempty"`
+	Width  *float64 `json:"width,omitempty"`
+	Length *float64 `json:"length,omitempty"`
+	Boxes  *string  `json:"boxes,omitempty"`
 
 	// Tipo y estado
-	OrderTypeID    *uint
-	OrderTypeName  string
-	Status         string
-	OriginalStatus string
-	StatusID       *uint
+	OrderTypeID    *uint  `json:"order_type_id,omitempty"`
+	OrderTypeName  string `json:"order_type_name"`
+	Status         string `json:"status"`
+	OriginalStatus string `json:"original_status"`
+	StatusID       *uint  `json:"status_id,omitempty"`
 
 	// Estados independientes
-	PaymentStatusID     *uint
-	FulfillmentStatusID *uint
+	PaymentStatusID     *uint `json:"payment_status_id,omitempty"`
+	FulfillmentStatusID *uint `json:"fulfillment_status_id,omitempty"`
 
 	// Información adicional
-	Notes    *string
-	Coupon   *string
-	Approved *bool
-	UserID   *uint
-	UserName string
+	Notes    *string `json:"notes,omitempty"`
+	Coupon   *string `json:"coupon,omitempty"`
+	Approved *bool   `json:"approved,omitempty"`
+	UserID   *uint   `json:"user_id,omitempty"`
+	UserName string  `json:"user_name"`
 
 	// Facturación
-	Invoiceable     bool
-	InvoiceURL      *string
-	InvoiceID       *string
-	InvoiceProvider *string
+	Invoiceable     bool    `json:"invoiceable"`
+	InvoiceURL      *string `json:"invoice_url,omitempty"`
+	InvoiceID       *string `json:"invoice_id,omitempty"`
+	InvoiceProvider *string `json:"invoice_provider,omitempty"`
 
-	// Datos estructurados (JSONB) - almacenados como []byte
-	Items              []byte
-	Metadata           []byte
-	FinancialDetails   []byte
-	ShippingDetails    []byte
-	PaymentDetails     []byte
-	FulfillmentDetails []byte
+	// Datos estructurados (JSON) - json.RawMessage para preservar el formato
+	Items              json.RawMessage `json:"items,omitempty"`
+	Metadata           json.RawMessage `json:"metadata,omitempty"`
+	FinancialDetails   json.RawMessage `json:"financial_details,omitempty"`
+	ShippingDetails    json.RawMessage `json:"shipping_details,omitempty"`
+	PaymentDetails     json.RawMessage `json:"payment_details,omitempty"`
+	FulfillmentDetails json.RawMessage `json:"fulfillment_details,omitempty"`
 
 	// Timestamps
-	OccurredAt time.Time
-	ImportedAt time.Time
+	OccurredAt time.Time `json:"occurred_at"`
+	ImportedAt time.Time `json:"imported_at"`
 }

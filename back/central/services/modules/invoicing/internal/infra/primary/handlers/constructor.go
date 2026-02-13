@@ -3,6 +3,7 @@ package handlers
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -17,11 +18,9 @@ type IHandler interface {
 	GetInvoice(c *gin.Context)
 	CancelInvoice(c *gin.Context)
 	RetryInvoice(c *gin.Context)
-<<<<<<< HEAD
-=======
 	CancelRetry(c *gin.Context)
+	EnableRetry(c *gin.Context)
 	GetInvoiceSyncLogs(c *gin.Context)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 	// Notas de crédito
 	CreateCreditNote(c *gin.Context)
@@ -39,41 +38,45 @@ type IHandler interface {
 	GetConfig(c *gin.Context)
 	UpdateConfig(c *gin.Context)
 	DeleteConfig(c *gin.Context)
+	EnableConfig(c *gin.Context)
+	DisableConfig(c *gin.Context)
+	EnableAutoInvoice(c *gin.Context)
+	DisableAutoInvoice(c *gin.Context)
 
 	// Estadísticas y resúmenes
 	GetSummary(c *gin.Context)
 	GetStats(c *gin.Context)
 	GetTrends(c *gin.Context)
-<<<<<<< HEAD
-=======
 
 	// Creación masiva de facturas
 	ListInvoiceableOrders(c *gin.Context)
 	BulkCreateInvoices(c *gin.Context)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
+
+	// Jobs de facturación masiva
+	ListBulkJobs(c *gin.Context)
+	GetBulkJobStatus(c *gin.Context)
 }
 
 // handler implementa IHandler
 type handler struct {
 	useCase ports.IUseCase
-<<<<<<< HEAD
-=======
 	repo    ports.IRepository
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
+	config  env.IConfig
 	log     log.ILogger
 }
 
 // New crea un nuevo handler de facturación
-<<<<<<< HEAD
-func New(useCase ports.IUseCase, logger log.ILogger) IHandler {
-	return &handler{
-		useCase: useCase,
-=======
 func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger) IHandler {
 	return &handler{
 		useCase: useCase,
 		repo:    repo,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		log:     logger.WithModule("invoicing.handler"),
 	}
+}
+
+// getS3Config retorna la URL base y bucket de S3 desde la configuración
+func (h *handler) getS3Config() (string, string) {
+	baseURL := h.config.Get("URL_BASE_DOMAIN_S3")
+	bucket := h.config.Get("S3_BUCKET")
+	return baseURL, bucket
 }

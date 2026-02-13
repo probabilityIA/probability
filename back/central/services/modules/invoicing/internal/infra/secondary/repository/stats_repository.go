@@ -11,12 +11,8 @@ import (
 // IMPLEMENTACIÓN DE ESTADÍSTICAS Y RESÚMENES
 // ═══════════════════════════════════════════════════════════════
 
-// GetSummary obtiene un resumen general de facturas con KPIs principales
-<<<<<<< HEAD
-func (r *InvoiceRepository) GetSummary(ctx context.Context, businessID uint, start, end time.Time) (*entities.InvoiceSummary, error) {
-=======
+// GetInvoiceSummary obtiene un resumen general de facturas con KPIs principales
 func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, start, end time.Time) (*entities.InvoiceSummary, error) {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var summary entities.InvoiceSummary
 
 	// Query 1: Totals (métricas totales)
@@ -121,12 +117,8 @@ func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, sta
 	return &summary, nil
 }
 
-// GetDetailedStats obtiene estadísticas detalladas para dashboards
-<<<<<<< HEAD
-func (r *InvoiceRepository) GetDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error) {
-=======
+// GetInvoiceDetailedStats obtiene estadísticas detalladas para dashboards
 func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uint, filters map[string]interface{}) (*entities.DetailedStats, error) {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var stats entities.DetailedStats
 
 	// Extraer fechas de filtros (si existen)
@@ -263,12 +255,8 @@ func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uin
 	return &stats, nil
 }
 
-// GetTrends obtiene datos de tendencias temporales para gráficos
-<<<<<<< HEAD
-func (r *InvoiceRepository) GetTrends(ctx context.Context, businessID uint, start, end time.Time, granularity, metric string) (*entities.TrendData, error) {
-=======
+// GetInvoiceTrends obtiene datos de tendencias temporales para gráficos
 func (r *Repository) GetInvoiceTrends(ctx context.Context, businessID uint, start, end time.Time, granularity, metric string) (*entities.TrendData, error) {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	var trendData entities.TrendData
 
 	trendData.Metric = metric
@@ -308,8 +296,8 @@ func (r *Repository) GetInvoiceTrends(ctx context.Context, businessID uint, star
 	query := r.db.Conn(ctx).
 		Table("invoices").
 		Select(`
-			TO_CHAR(created_at, '` + dateFormat + `') as date,
-			` + selectClause + `,
+			TO_CHAR(created_at, '`+dateFormat+`') as date,
+			`+selectClause+`,
 			CASE
 				WHEN COUNT(*) > 0 THEN (COUNT(CASE WHEN status = 'issued' THEN 1 END) * 100.0 / COUNT(*))
 				ELSE 0

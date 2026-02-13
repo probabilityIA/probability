@@ -99,7 +99,7 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 	// Configurar headers para SSE (DEBE IR ANTES DE ESCRIBIR CUALQUIER RESPUESTA)
 	h.setupSSEHeaders(c.Writer)
 
-	h.logger.Debug(c.Request.Context()).
+	h.logger.Info(c.Request.Context()).
 		Uint("business_id", businessID).
 		Interface("filter", filter).
 		Msg("Headers SSE configurados, estableciendo conexión...")

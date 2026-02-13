@@ -1,23 +1,9 @@
 /**
-<<<<<<< HEAD
- * Componente para listar facturas
-=======
  * Componente para listar facturas con paginación y detalle en modal
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
  */
 
 'use client';
 
-<<<<<<< HEAD
-import { useState, useEffect } from 'react';
-import { Table } from '@/shared/ui/table';
-import { Button } from '@/shared/ui/button';
-import { Badge } from '@/shared/ui/badge';
-import { Spinner } from '@/shared/ui/spinner';
-import { useToast } from '@/shared/providers/toast-provider';
-import { ConfirmModal } from '@/shared/ui/confirm-modal';
-import { getInvoicesAction, cancelInvoiceAction, retryInvoiceAction } from '../../infra/actions';
-=======
 import { useState, useEffect, useCallback } from 'react';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { Table } from '@/shared/ui/table';
@@ -32,7 +18,6 @@ import {
   cancelInvoiceAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 import type { Invoice, InvoiceFilters } from '../../domain/types';
 
 interface InvoiceListProps {
@@ -40,48 +25,12 @@ interface InvoiceListProps {
   filters?: InvoiceFilters;
 }
 
-<<<<<<< HEAD
-=======
 const PAGE_SIZE_DEFAULT = 20;
 
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
   const { showToast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
-<<<<<<< HEAD
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
-
-  const loadInvoices = async () => {
-    try {
-      setLoading(true);
-      // Super admin (businessId = 0): no filtra por business_id, ve todas las facturas
-      // Usuario normal: filtra por su business_id
-      const isSuperAdmin = !businessId || businessId === 0;
-      const finalFilters = isSuperAdmin
-        ? { ...filters }
-        : { ...filters, business_id: businessId };
-
-      const response = await getInvoicesAction(finalFilters);
-      setInvoices(response.data || []);
-    } catch (error: any) {
-      showToast('Error al cargar facturas: ' + error.message, 'error');
-      setInvoices([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadInvoices();
-  }, [businessId, JSON.stringify(filters)]);
-
-  const handleCancelInvoice = async () => {
-    if (!selectedInvoice) return;
-
-=======
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(PAGE_SIZE_DEFAULT);
@@ -139,8 +88,8 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
           const existingIsFailed = existing.status === 'failed';
 
           if ((!currentIsFailed && existingIsFailed) ||
-              (currentIsFailed === existingIsFailed &&
-               new Date(invoice.created_at) > new Date(existing.created_at))) {
+            (currentIsFailed === existingIsFailed &&
+              new Date(invoice.created_at) > new Date(existing.created_at))) {
             acc.set(invoice.order_id, invoice);
           }
         }
@@ -179,17 +128,12 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
 
   const handleCancelInvoice = async () => {
     if (!selectedInvoice) return;
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
     try {
       setActionLoading(true);
       await cancelInvoiceAction(selectedInvoice.id);
       showToast('Factura cancelada exitosamente', 'success');
       setShowCancelModal(false);
-<<<<<<< HEAD
-      loadInvoices();
-=======
       loadInvoices(currentPage, pageSize);
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
     } catch (error: any) {
       showToast('Error al cancelar factura: ' + error.message, 'error');
     } finally {
@@ -197,40 +141,6 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
     }
   };
 
-<<<<<<< HEAD
-  const handleRetryInvoice = async (invoice: Invoice) => {
-    try {
-      setActionLoading(true);
-      await retryInvoiceAction(invoice.id);
-      showToast('Factura reintentada exitosamente', 'success');
-      loadInvoices();
-    } catch (error: any) {
-      showToast('Error al reintentar factura: ' + error.message, 'error');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const getStatusBadge = (status: string) => {
-    const statusConfig: Record<string, { label: string; color: 'green' | 'yellow' | 'red' | 'gray' }> = {
-      issued: { label: 'Emitida', color: 'green' },
-      pending: { label: 'Pendiente', color: 'yellow' },
-      cancelled: { label: 'Cancelada', color: 'red' },
-      failed: { label: 'Fallida', color: 'red' },
-    };
-
-    const config = statusConfig[status] || { label: status, color: 'gray' as const };
-    return <Badge color={config.color}>{config.label}</Badge>;
-  };
-
-  if (loading) {
-    return (
-      <div className="flex justify-center items-center py-12">
-        <Spinner />
-      </div>
-    );
-  }
-=======
   const handleRowDoubleClick = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
     setShowDetailModal(true);
@@ -248,36 +158,25 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
   };
 
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
   const columns = [
     {
       key: 'invoice_number',
-<<<<<<< HEAD
-      label: 'Número',
-      render: (_: unknown, invoice: Invoice) => (
-        <div className="font-medium">{invoice.invoice_number || 'N/A'}</div>
-=======
       label: 'Factura',
       render: (_: unknown, invoice: Invoice) => (
         <div>
           <div className="font-medium">{invoice.invoice_number || 'Sin número'}</div>
           <div className="text-xs text-gray-500">ID: {invoice.id}</div>
         </div>
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
       ),
     },
     {
       key: 'order_id',
       label: 'Orden',
       render: (_: unknown, invoice: Invoice) => (
-<<<<<<< HEAD
-        <div className="text-sm text-gray-600">{invoice.order_id}</div>
-=======
         <div className="text-sm text-gray-600 font-mono">
           {invoice.order_id.substring(0, 8)}...
         </div>
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
       ),
     },
     {
@@ -285,11 +184,7 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
       label: 'Cliente',
       render: (_: unknown, invoice: Invoice) => (
         <div>
-<<<<<<< HEAD
-          <div className="font-medium">{invoice.customer_name}</div>
-=======
           <div className="font-medium">{invoice.customer_name || '-'}</div>
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
           {invoice.customer_email && (
             <div className="text-xs text-gray-500">{invoice.customer_email}</div>
           )}
@@ -314,15 +209,6 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
       render: (_: unknown, invoice: Invoice) => getStatusBadge(invoice.status),
     },
     {
-<<<<<<< HEAD
-      key: 'issued_at',
-      label: 'Fecha',
-      render: (_: unknown, invoice: Invoice) => (
-        <div className="text-sm text-gray-600">
-          {invoice.issued_at
-            ? new Date(invoice.issued_at).toLocaleDateString('es-CO')
-            : 'Pendiente'}
-=======
       key: 'created_at',
       label: 'Fecha',
       render: (_: unknown, invoice: Invoice) => (
@@ -332,50 +218,11 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
             month: 'short',
             year: 'numeric',
           })}
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
         </div>
       ),
     },
     {
       key: 'actions',
-<<<<<<< HEAD
-      label: 'Acciones',
-      render: (_: unknown, invoice: Invoice) => (
-        <div className="flex gap-2">
-          {invoice.pdf_url && (
-            <Button
-              variant="secondary"
-              size="sm"
-              onClick={() => window.open(invoice.pdf_url, '_blank')}
-            >
-              Ver PDF
-            </Button>
-          )}
-          {invoice.status === 'failed' && (
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => handleRetryInvoice(invoice)}
-              disabled={actionLoading}
-            >
-              Reintentar
-            </Button>
-          )}
-          {invoice.status === 'issued' && (
-            <Button
-              variant="danger"
-              size="sm"
-              onClick={() => {
-                setSelectedInvoice(invoice);
-                setShowCancelModal(true);
-              }}
-              disabled={actionLoading}
-            >
-              Cancelar
-            </Button>
-          )}
-        </div>
-=======
       label: '',
       width: '50px',
       render: (_: unknown, invoice: Invoice) => (
@@ -389,21 +236,12 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
         >
           <EyeIcon className="w-5 h-5" />
         </button>
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
       ),
     },
   ];
 
   return (
     <>
-<<<<<<< HEAD
-      <Table
-        data={invoices}
-        columns={columns}
-        emptyMessage="No hay facturas para mostrar"
-      />
-
-=======
       {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -455,7 +293,6 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
       />
 
       {/* Modal de confirmación de cancelación */}
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
       <ConfirmModal
         isOpen={showCancelModal}
         onClose={() => setShowCancelModal(false)}
@@ -466,8 +303,6 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
         cancelText="No, volver"
         type="danger"
       />
-<<<<<<< HEAD
-=======
 
       {/* Modal de creación masiva */}
       <BulkCreateInvoiceModal
@@ -476,7 +311,6 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
         onSuccess={() => loadInvoices(currentPage, pageSize)}
         businessId={businessId}
       />
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
     </>
   );
 }

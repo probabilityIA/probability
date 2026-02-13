@@ -15,9 +15,10 @@ type Config struct {
 	Filters             map[string]interface{} `json:"filters,omitempty"`
 
 	// Nombres de relaciones (para frontend)
-	IntegrationName *string `json:"integration_name,omitempty"`
-	ProviderName    *string `json:"provider_name,omitempty"`
-	Description     *string `json:"description,omitempty"`
+	IntegrationName  *string `json:"integration_name,omitempty"`
+	ProviderName     *string `json:"provider_name,omitempty"`
+	ProviderImageURL *string `json:"provider_image_url,omitempty"`
+	Description      *string `json:"description,omitempty"`
 }
 
 // ConfigList es la respuesta de listado de configuraciones

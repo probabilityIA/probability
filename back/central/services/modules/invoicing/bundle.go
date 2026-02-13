@@ -8,20 +8,14 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/app"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/queue/consumer"
-<<<<<<< HEAD
-=======
-	invoicingRedis "github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/redis"
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/queue"
+	invoicingRedis "github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
-<<<<<<< HEAD
-=======
 	"github.com/secamc93/probability/back/central/shared/redis"
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 )
 
 // New inicializa el módulo de facturación
@@ -31,10 +25,7 @@ func New(
 	logger log.ILogger,
 	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
-<<<<<<< HEAD
-=======
 	redisClient redis.IRedis,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	integrationCore core.IIntegrationCore,
 ) {
 	ctx := context.Background()
@@ -44,15 +35,12 @@ func New(
 	// 1. INFRAESTRUCTURA SECUNDARIA (Adaptadores de salida)
 	// ═══════════════════════════════════════════════════════════════
 
-<<<<<<< HEAD
-	// Repositorios (GORM) - solo para invoices, configs, sync logs
-	repos := repository.New(database, moduleLogger)
+	// Servicio de caché para configuraciones de facturación
+	configCache := invoicingRedis.NewConfigCache(redisClient, config, moduleLogger)
 
-	// Event publisher (RabbitMQ)
-	eventPublisher := queue.NewEventPublisher(rabbitMQ, moduleLogger)
-=======
 	// Repositorio único (GORM) - implementa TODAS las interfaces
-	repo := repository.New(database, moduleLogger)
+	// Usa el servicio de caché para configuraciones de facturación
+	repo := repository.New(database, configCache, moduleLogger)
 
 	// Event publisher (RabbitMQ)
 	eventPublisher := queue.New(rabbitMQ, moduleLogger)
@@ -65,11 +53,15 @@ func New(
 	var ssePublisher = invoicingRedis.NewNoopSSEPublisher()
 	if redisClient != nil {
 		ssePublisher = invoicingRedis.NewSSEPublisher(redisClient, moduleLogger, sseChannel)
-		moduleLogger.Info(ctx).Str("channel", sseChannel).Msg("Invoice SSE publisher initialized")
+
+		// ═══════════════════════════════════════════════════════════════
+		// REGISTRAR PREFIJOS DE CACHÉ Y CANALES PARA STARTUP LOGS
+		// ═══════════════════════════════════════════════════════════════
+		redisClient.RegisterCachePrefix("probability:invoicing:config:*")
+		redisClient.RegisterChannel(sseChannel)
 	} else {
-		moduleLogger.Warn(ctx).Msg("Redis not available - Invoice SSE publisher disabled")
+		moduleLogger.Warn(ctx).Msg("Redis no disponible - SSE deshabilitado")
 	}
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 	// Encryption service (para credenciales)
 	encryptionKey := config.Get("ENCRYPTION_KEY")
@@ -85,23 +77,11 @@ func New(
 	// ═══════════════════════════════════════════════════════════════
 
 	useCase := app.New(
-<<<<<<< HEAD
-		repos.Invoice,
-		repos.InvoiceItem,
-		repos.Config,
-		repos.SyncLog,
-		repos.CreditNote,
-		nil,               // Order repository - se debe inyectar desde orders module
-		integrationCore,   // Integration Core (reemplaza provider repos y client)
-		nil,               // Encryption - TODO: agregar cuando esté disponible
-		eventPublisher,    // Event publisher (RabbitMQ)
-=======
-		repo,              // IRepository único (implementa TODAS las interfaces)
-		integrationCore,   // Integration Core (reemplaza provider repos y client)
-		nil,               // Encryption - TODO: agregar cuando esté disponible
-		eventPublisher,    // Event publisher (RabbitMQ)
-		ssePublisher,      // SSE publisher (Redis Pub/Sub)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
+		repo,            // IRepository único (implementa TODAS las interfaces)
+		integrationCore, // Integration Core (reemplaza provider repos y client)
+		nil,             // Encryption - TODO: agregar cuando esté disponible
+		eventPublisher,  // Event publisher (RabbitMQ)
+		ssePublisher,    // SSE publisher (Redis Pub/Sub)
 		moduleLogger,
 	)
 
@@ -110,11 +90,7 @@ func New(
 	// ═══════════════════════════════════════════════════════════════
 
 	// HTTP Handlers
-<<<<<<< HEAD
-	handler := handlers.New(useCase, moduleLogger)
-=======
 	handler := handlers.New(useCase, repo, moduleLogger)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	handler.RegisterRoutes(router)
 
 	// Consumers (RabbitMQ)
@@ -122,37 +98,30 @@ func New(
 		consumers := consumer.NewConsumers(
 			rabbitMQ,
 			useCase,
-<<<<<<< HEAD
-			repos.SyncLog,
-=======
 			repo, // IRepository único
 			ssePublisher,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 			moduleLogger,
 		)
 
 		// Iniciar Order Consumer (escucha events de órdenes)
 		go func() {
 			if err := consumers.Order.Start(ctx); err != nil {
-				moduleLogger.Error(ctx).Err(err).Msg("Failed to start order consumer")
+				moduleLogger.Error(ctx).Err(err).Msg("Error al iniciar consumer de órdenes")
 			}
 		}()
 
 		// Iniciar Retry Consumer (cron de reintentos cada 5 minutos)
 		go consumers.Retry.Start(ctx)
-<<<<<<< HEAD
-=======
 
-		// NUEVO: Iniciar Bulk Invoice Consumer (procesa facturas masivas)
+		// Iniciar Bulk Invoice Consumer (procesa facturas masivas)
 		go func() {
 			if err := consumers.BulkInvoice.Start(ctx); err != nil {
-				moduleLogger.Error(ctx).Err(err).Msg("Failed to start bulk invoice consumer")
+				moduleLogger.Error(ctx).Err(err).Msg("Error al iniciar consumer de facturación masiva")
 			}
 		}()
 
 		moduleLogger.Info(ctx).Msg("All consumers started successfully")
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	} else {
-		moduleLogger.Warn(ctx).Msg("RabbitMQ not available - consumers not started")
+		moduleLogger.Warn(ctx).Msg("RabbitMQ no disponible - consumers de facturación deshabilitados")
 	}
 }

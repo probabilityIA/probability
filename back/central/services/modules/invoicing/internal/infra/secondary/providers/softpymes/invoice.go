@@ -4,21 +4,13 @@ import (
 	"context"
 	"fmt"
 
-<<<<<<< HEAD
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
-=======
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/providers/softpymes/mappers"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/providers/softpymes/response"
 )
 
 // CreateInvoice crea una factura electrónica en Softpymes
-<<<<<<< HEAD
-func (c *Client) CreateInvoice(ctx context.Context, token string, request *ports.InvoiceRequest) (*ports.InvoiceResponse, error) {
-=======
 func (c *Client) CreateInvoice(ctx context.Context, token string, request *dtos.InvoiceRequest) (*dtos.InvoiceResponse, error) {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	c.log.Info(ctx).
 		Str("order_id", request.Invoice.OrderID).
 		Msg("Creating invoice in Softpymes")

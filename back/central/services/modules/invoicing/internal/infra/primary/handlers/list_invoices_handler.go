@@ -67,11 +67,7 @@ func (h *handler) ListInvoices(c *gin.Context) {
 		Msg("Listing invoices")
 
 	// Llamar caso de uso
-<<<<<<< HEAD
-	invoices, err := h.useCase.ListInvoices(ctx, filters)
-=======
 	invoices, total, err := h.useCase.ListInvoices(ctx, filters)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
 		h.log.Error(ctx).Err(err).Msg("Failed to list invoices")
 		c.JSON(http.StatusInternalServerError, response.Error{
@@ -82,11 +78,7 @@ func (h *handler) ListInvoices(c *gin.Context) {
 	}
 
 	// Convertir a response
-<<<<<<< HEAD
-	resp := mappers.InvoicesToResponse(invoices, int64(len(invoices)), page, pageSize)
-=======
 	resp := mappers.InvoicesToResponse(invoices, total, page, pageSize)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 	c.JSON(http.StatusOK, resp)
 }

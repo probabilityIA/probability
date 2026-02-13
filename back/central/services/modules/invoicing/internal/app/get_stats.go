@@ -15,11 +15,7 @@ func (uc *useCase) GetDetailedStats(ctx context.Context, businessID uint, filter
 	processedFilters := processStatsFilters(filters)
 
 	// Obtener estadísticas desde el repositorio
-<<<<<<< HEAD
-	stats, err := uc.invoiceRepo.GetDetailedStats(ctx, businessID, processedFilters)
-=======
 	stats, err := uc.repo.GetInvoiceDetailedStats(ctx, businessID, processedFilters)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get detailed stats")
 		return nil, err

@@ -24,7 +24,7 @@ export function InvoicingConfigList({
   onEdit,
   onRefresh,
 }: InvoicingConfigListProps) {
-  const { deleteConfig, toggleConfig, loading } = useInvoicingConfig();
+  const { deleteConfig, toggleConfig, toggleAutoInvoice, loading } = useInvoicingConfig();
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const handleDelete = async (id: number) => {
@@ -41,8 +41,16 @@ export function InvoicingConfigList({
     }
   };
 
-  const handleToggle = async (id: number, currentState: boolean) => {
+  const handleToggleEnabled = async (id: number, currentState: boolean) => {
     const result = await toggleConfig(id, !currentState);
+
+    if (result.success) {
+      onRefresh?.();
+    }
+  };
+
+  const handleToggleAutoInvoice = async (id: number, currentState: boolean) => {
+    const result = await toggleAutoInvoice(id, !currentState);
 
     if (result.success) {
       onRefresh?.();
@@ -91,23 +99,37 @@ export function InvoicingConfigList({
                     Integración #{config.integration_id}
                   </h3>
 
-                  {/* Badge de auto-facturación */}
-                  {config.auto_invoice && (
-                    <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
-                      Auto
-                    </span>
-                  )}
-
-                  {/* Badge de estado */}
-                  <span
-                    className={`px-2 py-1 text-xs rounded-full ${
-                      config.enabled
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-600'
+                  {/* Badge de auto-facturación - CLICKEABLE */}
+                  <button
+                    onClick={() =>
+                      config.id && handleToggleAutoInvoice(config.id, config.auto_invoice)
+                    }
+                    disabled={loading || !config.id}
+                    className={`px-2 py-1 text-xs rounded-full transition-colors disabled:opacity-50 hover:opacity-80 ${
+                      config.auto_invoice
+                        ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                     }`}
+                    title={config.auto_invoice ? 'Click para desactivar auto-facturación' : 'Click para activar auto-facturación'}
+                  >
+                    {config.auto_invoice ? 'Automático' : 'Manual'}
+                  </button>
+
+                  {/* Badge de estado - CLICKEABLE */}
+                  <button
+                    onClick={() =>
+                      config.id && handleToggleEnabled(config.id, config.enabled)
+                    }
+                    disabled={loading || !config.id}
+                    className={`px-2 py-1 text-xs rounded-full transition-colors disabled:opacity-50 hover:opacity-80 ${
+                      config.enabled
+                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                    title={config.enabled ? 'Click para desactivar' : 'Click para activar'}
                   >
                     {config.enabled ? 'Activo' : 'Inactivo'}
-                  </span>
+                  </button>
                 </div>
 
                 {/* Detalles */}
@@ -173,7 +195,7 @@ export function InvoicingConfigList({
                 {/* Toggle estado */}
                 <button
                   onClick={() =>
-                    config.id && handleToggle(config.id, config.enabled)
+                    config.id && handleToggleEnabled(config.id, config.enabled)
                   }
                   disabled={loading || !config.id}
                   className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"

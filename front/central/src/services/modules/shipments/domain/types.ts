@@ -117,3 +117,30 @@ export interface EnvioClickQuoteResponse {
         rates: EnvioClickRate[];
     };
 }
+
+export interface EnvioClickTrackHistory {
+    date: string;
+    status: string;
+    description: string;
+    location: string;
+}
+
+export interface EnvioClickTrackingResponse {
+    success: boolean;
+    message: string;
+    data: {
+        trackingNumber: string;
+        carrier: string;
+        status: string;
+        history: EnvioClickTrackHistory[];
+    };
+}
+
+export interface EnvioClickCancelResponse {
+    success: boolean;
+    message: string;
+    data: {
+        status: string;
+        message: string;
+    };
+}

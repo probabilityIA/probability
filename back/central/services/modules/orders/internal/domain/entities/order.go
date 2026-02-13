@@ -42,6 +42,8 @@ type ProbabilityOrder struct {
 	// Información del cliente
 	CustomerID    *uint
 	CustomerName  string
+	CustomerFirstName string
+	CustomerLastName  string
 	CustomerEmail string
 	CustomerPhone string
 	CustomerDNI   string

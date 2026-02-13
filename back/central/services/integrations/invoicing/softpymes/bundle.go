@@ -7,13 +7,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/app"
-<<<<<<< HEAD
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/primary/handlers"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
-=======
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/primary/handlers"
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -43,20 +38,17 @@ func New(
 
 	// 1. Inicializar cliente HTTP de Softpymes
 	apiURL := config.Get("SOFTPYMES_API_URL")
-<<<<<<< HEAD
 	if apiURL == "" {
 		apiURL = "https://api.softpymes.com" // Default
 		logger.Warn(context.Background()).
 			Msg("SOFTPYMES_API_URL not configured, using default URL")
-=======
-	logger.Info(context.Background()).
-		Str("api_url", apiURL).
-		Str("env_var", "SOFTPYMES_API_URL").
-		Msg("🔍 DEBUG: Softpymes API URL loaded from environment")
-	if apiURL == "" {
-		panic("SOFTPYMES_API_URL not configured")
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
+	} else {
+		logger.Info(context.Background()).
+			Str("api_url", apiURL).
+			Str("env_var", "SOFTPYMES_API_URL").
+			Msg("🔍 DEBUG: Softpymes API URL loaded from environment")
 	}
+
 	softpymesClient := client.New(apiURL, logger)
 
 	// 2. Inicializar repositorios
@@ -74,19 +66,11 @@ func New(
 	handler := handlers.New(useCase, logger)
 
 	return &Bundle{
-<<<<<<< HEAD
-		useCase:        useCase,
-		handler:        handler,
-		client:         softpymesClient,
-		coreIntegration: coreIntegration,
-		log:            logger,
-=======
 		useCase:         useCase,
 		handler:         handler,
 		client:          softpymesClient,
 		coreIntegration: coreIntegration,
 		log:             logger,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	}
 }
 

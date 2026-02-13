@@ -2,10 +2,7 @@ package consumer
 
 import (
 	"context"
-<<<<<<< HEAD
-=======
 	"math/rand"
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
@@ -14,48 +11,30 @@ import (
 
 // RetryConsumer procesa reintentos de facturas fallidas
 type RetryConsumer struct {
-<<<<<<< HEAD
-	syncLogRepo ports.IInvoiceSyncLogRepository
-=======
-	repo ports.IRepository
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
-	useCase     ports.IUseCase
-	log         log.ILogger
-	ticker      *time.Ticker
+	repo    ports.IRepository
+	useCase ports.IUseCase
+	log     log.ILogger
+	ticker  *time.Ticker
 }
 
 // NewRetryConsumer crea un nuevo retry consumer
 func NewRetryConsumer(
-<<<<<<< HEAD
-	syncLogRepo ports.IInvoiceSyncLogRepository,
-=======
 	repo ports.IRepository,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	useCase ports.IUseCase,
 	logger log.ILogger,
 ) *RetryConsumer {
 	return &RetryConsumer{
-<<<<<<< HEAD
-		syncLogRepo: syncLogRepo,
-=======
-		repo: repo,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
-		useCase:     useCase,
-		log:         logger.WithModule("invoicing.retry_consumer"),
+		repo:    repo,
+		useCase: useCase,
+		log:     logger.WithModule("invoicing.retry_consumer"),
 	}
 }
 
-<<<<<<< HEAD
-// Start inicia el procesamiento de reintentos (cada 5 minutos)
-func (c *RetryConsumer) Start(ctx context.Context) {
-	interval := 5 * time.Minute
-=======
 // Start inicia el procesamiento de reintentos (cada ~5 minutos con jitter)
 func (c *RetryConsumer) Start(ctx context.Context) {
 	// Agregar jitter aleatorio (0-60s) para evitar thundering herd en múltiples instancias
 	jitter := time.Duration(rand.Intn(60)) * time.Second
 	interval := 5*time.Minute + jitter
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	c.ticker = time.NewTicker(interval)
 
 	// Primera ejecución inmediata
@@ -85,24 +64,17 @@ func (c *RetryConsumer) Stop() {
 
 // processRetries procesa todos los reintentos pendientes
 func (c *RetryConsumer) processRetries(ctx context.Context) {
-	c.log.Debug(ctx).Msg("Processing pending retries")
-
 	// Obtener logs con reintentos pendientes
 	// - status = failed
 	// - retry_count < max_retries (3)
 	// - next_retry_at <= now
-<<<<<<< HEAD
-	logs, err := c.syncLogRepo.GetPendingRetries(ctx, 50) // Máximo 50 por batch
-=======
 	logs, err := c.repo.GetPendingSyncLogRetries(ctx, 50) // Máximo 50 por batch
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to get pending retries")
+		c.log.Error(ctx).Err(err).Msg("Error al obtener reintentos pendientes")
 		return
 	}
 
 	if len(logs) == 0 {
-		c.log.Debug(ctx).Msg("No pending retries found")
 		return
 	}
 
@@ -156,4 +128,3 @@ func (c *RetryConsumer) retryInvoice(ctx context.Context, invoiceID uint) error 
 
 	return nil
 }
-

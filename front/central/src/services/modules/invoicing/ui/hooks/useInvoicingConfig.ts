@@ -158,6 +158,33 @@ export function useInvoicingConfig(businessId?: number) {
     }
   };
 
+  /**
+   * Activar/desactivar auto-facturación
+   */
+  const toggleAutoInvoice = async (id: number, autoInvoice: boolean) => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      await updateConfigAction(id, { auto_invoice: autoInvoice });
+
+      // Actualizar estado local
+      setConfigs((prev) =>
+        prev.map((config) =>
+          config.id === id ? { ...config, auto_invoice: autoInvoice } : config
+        )
+      );
+      return { success: true };
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : 'Error desconocido';
+      setError(errorMessage);
+      return { success: false, error: errorMessage };
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Cargar datos iniciales
   useEffect(() => {
     if (businessId) {
@@ -177,5 +204,6 @@ export function useInvoicingConfig(businessId?: number) {
     updateConfig,
     deleteConfig,
     toggleConfig,
+    toggleAutoInvoice,
   };
 }

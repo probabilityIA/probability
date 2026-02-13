@@ -21,13 +21,10 @@ import type {
   InvoiceFilters,
   ProviderFilters,
   ConfigFilters,
-<<<<<<< HEAD
-=======
   PaginatedInvoiceableOrders,
   BulkCreateInvoicesDTO,
   BulkCreateResult,
   SyncLog,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -116,8 +113,6 @@ export async function retryInvoiceAction(id: number): Promise<Invoice> {
   });
 }
 
-<<<<<<< HEAD
-=======
 export async function cancelRetryAction(id: number): Promise<void> {
   return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/retry`, {
     method: 'DELETE',
@@ -135,7 +130,6 @@ export async function getInvoiceSyncLogsAction(id: number): Promise<SyncLog[]> {
   return response.sync_logs || [];
 }
 
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 // ============================================
 // PROVIDERS
 // ============================================
@@ -238,8 +232,30 @@ export async function deleteConfigAction(id: number): Promise<void> {
     method: 'DELETE',
   });
 }
-<<<<<<< HEAD
-=======
+
+export async function enableConfigAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/enable`, {
+    method: 'POST',
+  });
+}
+
+export async function disableConfigAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/disable`, {
+    method: 'POST',
+  });
+}
+
+export async function enableAutoInvoiceAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/enable-auto-invoice`, {
+    method: 'POST',
+  });
+}
+
+export async function disableAutoInvoiceAction(id: number): Promise<InvoicingConfig> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}/disable-auto-invoice`, {
+    method: 'POST',
+  });
+}
 
 // ============================================
 // BULK INVOICES
@@ -292,4 +308,3 @@ export async function createBulkInvoicesAction(
     body: JSON.stringify(dto),
   });
 }
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e

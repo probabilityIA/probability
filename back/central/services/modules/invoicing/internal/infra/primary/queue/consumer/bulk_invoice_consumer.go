@@ -47,8 +47,6 @@ func (c *BulkInvoiceConsumer) Start(ctx context.Context) error {
 	// Declarar cola (idempotente)
 	c.queue.DeclareQueue(QueueBulkInvoiceJobs, true)
 
-	c.log.Info(ctx).Str("queue", QueueBulkInvoiceJobs).Msg("Starting bulk invoice consumer")
-
 	// Consumir mensajes
 	return c.queue.Consume(ctx, QueueBulkInvoiceJobs, c.handleMessage)
 }

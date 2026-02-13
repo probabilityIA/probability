@@ -36,27 +36,38 @@ ENV NODE_ENV=production
 RUN npm run build
 
 # ============================================
-# Stage 3: Runner con Nginx
+# Stage 3: Runner con Node.js (SSR)
 # ============================================
-FROM --platform=linux/arm64 nginx:alpine AS runner
+FROM --platform=linux/arm64 node:20-alpine AS runner
 
 WORKDIR /app
 
-# Copiar archivos estáticos generados por Astro
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copiar solo las dependencias necesarias en producción
+COPY --from=builder /app/node_modules ./node_modules
 
-# Copiar configuración personalizada de nginx
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Copiar la aplicación compilada (server + client)
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/package.json ./package.json
 
-# Crear usuario no-root para nginx (ya existe en nginx:alpine)
-# nginx:alpine ya usa un usuario no-root por defecto
+# Variables de entorno
+ENV NODE_ENV=production
+ENV HOST=0.0.0.0
+ENV PORT=80
 
-# Exponer puerto (8080 para evitar problemas de permisos en rootless)
-EXPOSE 8080
+# Crear usuario no-root
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+
+# Cambiar propiedad de la carpeta
+RUN chown -R nodejs:nodejs /app
+
+USER nodejs
+
+# Exponer puerto
+EXPOSE 80
 
 # Healthcheck
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:8080/ || exit 1
+  CMD node -e "require('http').get('http://localhost:80/website/', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
 
-# Comando de inicio
-CMD ["nginx", "-g", "daemon off;"]
+# Comando de inicio - Ejecutar el servidor Astro SSR
+CMD ["node", "./dist/server/entry.mjs"]

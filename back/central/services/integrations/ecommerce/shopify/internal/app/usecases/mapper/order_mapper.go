@@ -207,6 +207,9 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		ShippingCostPresentment: s.ShippingCostPresentment,
 		TotalAmountPresentment:  s.TotalAmountPresentment,
 		CurrencyPresentment:     s.CurrencyPresentment,
+		// Facturación - Por defecto todas las órdenes de Shopify son facturables
+		// Esto puede ser modificado por filtros y reglas de facturación
+		Invoiceable:             true,
 	}
 
 	if len(s.RawData) > 0 {

@@ -67,6 +67,47 @@ func (c *Client) Generate(req domain.EnvioClickQuoteRequest) (*domain.EnvioClick
 	return &resp, nil
 }
 
+func (c *Client) Track(trackingNumber string) (*domain.EnvioClickTrackingResponse, error) {
+	url := fmt.Sprintf("%s/track", BaseURL)
+	payload := map[string]string{"trackingCode": trackingNumber}
+
+	bodyBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+
+	respBytes, err := c.doRawRequest("POST", url, bodyBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp domain.EnvioClickTrackingResponse
+	if err := json.Unmarshal(respBytes, &resp); err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
+func (c *Client) Cancel(idShipment string) (*domain.EnvioClickCancelResponse, error) {
+	url := fmt.Sprintf("%s/shipment/%s", BaseURL, idShipment)
+
+	respBytes, err := c.doRawRequest("DELETE", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	var resp domain.EnvioClickCancelResponse
+	if err := json.Unmarshal(respBytes, &resp); err != nil {
+		if strings.Contains(strings.ToLower(string(respBytes)), "success") {
+			return &domain.EnvioClickCancelResponse{Status: "success", Message: "Cancelación exitosa"}, nil
+		}
+		return nil, err
+	}
+
+	return &resp, nil
+}
+
 func (c *Client) doRequest(url string, payload interface{}) (*domain.EnvioClickQuoteResponse, error) {
 	bodyBytes, err := json.Marshal(payload)
 	if err != nil {

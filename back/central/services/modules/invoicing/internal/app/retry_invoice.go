@@ -3,20 +3,6 @@ package app
 import (
 	"context"
 	"fmt"
-<<<<<<< HEAD
-
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/constants"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
-)
-
-// RetryInvoice reintenta la creación de una factura fallida
-func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
-	uc.log.Info(ctx).Uint("invoice_id", invoiceID).Msg("Retrying invoice creation")
-
-	// 1. Obtener factura
-	invoice, err := uc.invoiceRepo.GetByID(ctx, invoiceID)
-=======
 	"time"
 
 	integrationCore "github.com/secamc93/probability/back/central/services/integrations/core"
@@ -32,24 +18,15 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 
 	// 1. Obtener factura existente (NO se elimina)
 	invoice, err := uc.repo.GetInvoiceByID(ctx, invoiceID)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
 		return errors.ErrInvoiceNotFound
 	}
 
-<<<<<<< HEAD
-	// 2. Validar que esté en estado failed
-=======
 	// 2. Validar que esté en estado failed (solo se puede reintentar desde failed)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if invoice.Status != constants.InvoiceStatusFailed {
 		return errors.ErrRetryNotAllowed
 	}
 
-<<<<<<< HEAD
-	// 3. Obtener logs de sincronización
-	logs, err := uc.syncLogRepo.GetByInvoiceID(ctx, invoiceID)
-=======
 	// 2.5. Lock optimista: marcar invoice como pending ANTES de llamar al proveedor.
 	// Si el RetryConsumer o un retry manual concurrente intenta procesar la misma factura,
 	// verá status != failed y saldrá con ErrRetryNotAllowed (paso 2).
@@ -60,38 +37,17 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 
 	// 3. Obtener logs de sincronización para verificar reintentos
 	logs, err := uc.repo.GetSyncLogsByInvoiceID(ctx, invoiceID)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil || len(logs) == 0 {
 		return fmt.Errorf("no sync logs found for invoice")
 	}
 
-<<<<<<< HEAD
-	lastLog := logs[len(logs)-1]
-=======
 	lastLog := logs[0] // Ordenados por created_at DESC
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 	// 4. Validar que no se haya excedido el máximo de reintentos
 	if lastLog.RetryCount >= lastLog.MaxRetries {
 		return errors.ErrMaxRetriesExceeded
 	}
 
-<<<<<<< HEAD
-	// 5. Reintentar creación usando CreateInvoice
-	dto := &dtos.CreateInvoiceDTO{
-		OrderID:  invoice.OrderID,
-		Notes:    invoice.Notes,
-		IsManual: true, // Los reintentos se consideran manuales
-	}
-
-	_, err = uc.CreateInvoice(ctx, dto)
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Retry failed")
-		return err
-	}
-
-	uc.log.Info(ctx).Uint("invoice_id", invoiceID).Msg("Invoice retry successful")
-=======
 	// 5. Cancelar reintentos automáticos pendientes
 	for _, l := range logs {
 		if l.Status == constants.SyncStatusFailed && l.NextRetryAt != nil {
@@ -193,8 +149,8 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	}
 
 	invoiceData := map[string]interface{}{
-		"credentials":   credentialsMap,
-		"customer":      map[string]interface{}{
+		"credentials": credentialsMap,
+		"customer": map[string]interface{}{
 			"name":  invoice.CustomerName,
 			"email": invoice.CustomerEmail,
 			"phone": invoice.CustomerPhone,
@@ -306,6 +262,5 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		Int("retry_count", syncLog.RetryCount).
 		Msg("Invoice retry completed successfully")
 
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	return nil
 }

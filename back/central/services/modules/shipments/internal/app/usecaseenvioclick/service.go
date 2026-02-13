@@ -32,3 +32,13 @@ func (uc *UseCaseEnvioClick) GenerateGuide(ctx context.Context, req domain.Envio
 	// For now we just pass through to the client
 	return uc.envioclickClient.Generate(req)
 }
+
+func (uc *UseCaseEnvioClick) TrackShipment(ctx context.Context, trackingNumber string) (*domain.EnvioClickTrackingResponse, error) {
+	uc.logger.Info().Str("tracking_number", trackingNumber).Msg("Tracking shipment with EnvioClick")
+	return uc.envioclickClient.Track(trackingNumber)
+}
+
+func (uc *UseCaseEnvioClick) CancelShipment(ctx context.Context, idShipment string) (*domain.EnvioClickCancelResponse, error) {
+	uc.logger.Info().Str("id_shipment", idShipment).Msg("Canceling shipment with EnvioClick")
+	return uc.envioclickClient.Cancel(idShipment)
+}

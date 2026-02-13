@@ -1,22 +1,13 @@
 package app
 
 import (
-<<<<<<< HEAD
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
-=======
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 )
 
 // FilterValidator define la interfaz para validadores de filtros
 type FilterValidator interface {
-<<<<<<< HEAD
-	Validate(order *ports.OrderData) error
-=======
 	Validate(order *dtos.OrderData) error
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -27,11 +18,7 @@ type MinAmountValidator struct {
 	MinAmount float64
 }
 
-<<<<<<< HEAD
-func (v *MinAmountValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *MinAmountValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if order.TotalAmount < v.MinAmount {
 		return errors.ErrOrderBelowMinAmount
 	}
@@ -42,11 +29,7 @@ type MaxAmountValidator struct {
 	MaxAmount float64
 }
 
-<<<<<<< HEAD
-func (v *MaxAmountValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *MaxAmountValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if order.TotalAmount > v.MaxAmount {
 		return errors.ErrOrderAboveMaxAmount
 	}
@@ -61,11 +44,7 @@ type PaymentStatusValidator struct {
 	RequiredStatus string
 }
 
-<<<<<<< HEAD
-func (v *PaymentStatusValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *PaymentStatusValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if v.RequiredStatus == "paid" && !order.IsPaid {
 		return errors.ErrOrderNotPaid
 	}
@@ -76,11 +55,7 @@ type PaymentMethodsValidator struct {
 	AllowedMethods []uint
 }
 
-<<<<<<< HEAD
-func (v *PaymentMethodsValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *PaymentMethodsValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if len(v.AllowedMethods) == 0 {
 		return nil // Sin restricción
 	}
@@ -101,11 +76,7 @@ type OrderTypesValidator struct {
 	AllowedTypes []string
 }
 
-<<<<<<< HEAD
-func (v *OrderTypesValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *OrderTypesValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if len(v.AllowedTypes) == 0 {
 		return nil
 	}
@@ -122,11 +93,7 @@ type ExcludeStatusesValidator struct {
 	ExcludedStatuses []string
 }
 
-<<<<<<< HEAD
-func (v *ExcludeStatusesValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *ExcludeStatusesValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	for _, excludedStatus := range v.ExcludedStatuses {
 		if excludedStatus == order.Status {
 			return errors.ErrOrderStatusExcluded
@@ -143,11 +110,7 @@ type ExcludeProductsValidator struct {
 	ExcludedSKUs []string
 }
 
-<<<<<<< HEAD
-func (v *ExcludeProductsValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *ExcludeProductsValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	for _, item := range order.Items {
 		for _, excludedSKU := range v.ExcludedSKUs {
 			if item.SKU == excludedSKU {
@@ -162,11 +125,7 @@ type IncludeProductsOnlyValidator struct {
 	AllowedSKUs []string
 }
 
-<<<<<<< HEAD
-func (v *IncludeProductsOnlyValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *IncludeProductsOnlyValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if len(v.AllowedSKUs) == 0 {
 		return nil
 	}
@@ -191,11 +150,7 @@ type ItemsCountValidator struct {
 	MaxCount *int
 }
 
-<<<<<<< HEAD
-func (v *ItemsCountValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *ItemsCountValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	itemCount := len(order.Items)
 
 	if v.MinCount != nil && itemCount < *v.MinCount {
@@ -217,11 +172,7 @@ type CustomerTypesValidator struct {
 	AllowedTypes []string
 }
 
-<<<<<<< HEAD
-func (v *CustomerTypesValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *CustomerTypesValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if len(v.AllowedTypes) == 0 || order.CustomerType == nil {
 		return nil
 	}
@@ -238,11 +189,7 @@ type ExcludeCustomersValidator struct {
 	ExcludedCustomerIDs []string
 }
 
-<<<<<<< HEAD
-func (v *ExcludeCustomersValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *ExcludeCustomersValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if order.CustomerID == nil {
 		return nil
 	}
@@ -263,11 +210,7 @@ type ShippingRegionsValidator struct {
 	AllowedRegions []string
 }
 
-<<<<<<< HEAD
-func (v *ShippingRegionsValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *ShippingRegionsValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if len(v.AllowedRegions) == 0 || order.ShippingState == nil {
 		return nil
 	}
@@ -289,11 +232,7 @@ type DateRangeValidator struct {
 	EndDate   *string
 }
 
-<<<<<<< HEAD
-func (v *DateRangeValidator) Validate(order *ports.OrderData) error {
-=======
 func (v *DateRangeValidator) Validate(order *dtos.OrderData) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	// Si no hay restricciones de fecha, pasar
 	if v.StartDate == nil && v.EndDate == nil {
 		return nil

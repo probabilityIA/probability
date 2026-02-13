@@ -5,6 +5,7 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/log"
 )
 
 type SyncOrdersUseCase struct {
@@ -12,6 +13,7 @@ type SyncOrdersUseCase struct {
 	shopifyClient      domain.ShopifyClient
 	orderPublisher     domain.OrderPublisher
 	db                 db.IDatabase
+	log                log.ILogger
 }
 
 // IShopifyUseCase define la interfaz para los casos de uso de Shopify
@@ -33,11 +35,12 @@ type IShopifyUseCase interface {
 }
 
 // New crea una nueva instancia de IShopifyUseCase
-func New(integrationService domain.IIntegrationService, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, database db.IDatabase) IShopifyUseCase {
+func New(integrationService domain.IIntegrationService, shopifyClient domain.ShopifyClient, orderPublisher domain.OrderPublisher, database db.IDatabase, logger log.ILogger) IShopifyUseCase {
 	return &SyncOrdersUseCase{
 		integrationService: integrationService,
 		shopifyClient:      shopifyClient,
 		orderPublisher:     orderPublisher,
 		db:                 database,
+		log:                logger.WithModule("shopify.usecase"),
 	}
 }

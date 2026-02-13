@@ -153,19 +153,6 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 	}
 
 	entity := &entities.InvoicingConfig{
-<<<<<<< HEAD
-		ID:                  model.ID,
-		CreatedAt:           model.CreatedAt,
-		UpdatedAt:           model.UpdatedAt,
-		BusinessID:          model.BusinessID,
-		IntegrationID:       model.IntegrationID,
-		InvoicingProviderID: model.InvoicingProviderID,
-		Enabled:             model.Enabled,
-		AutoInvoice:         model.AutoInvoice,
-		Description:         model.Description,
-		CreatedByID:         model.CreatedByID,
-		UpdatedByID:         model.UpdatedByID,
-=======
 		ID:                     model.ID,
 		CreatedAt:              model.CreatedAt,
 		UpdatedAt:              model.UpdatedAt,
@@ -178,7 +165,6 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 		Description:            model.Description,
 		CreatedByID:            model.CreatedByID,
 		UpdatedByID:            model.UpdatedByID,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	}
 
 	if model.DeletedAt.Valid {
@@ -190,9 +176,14 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 		entity.IntegrationName = &model.Integration.Name
 	}
 
-	// Extraer nombre de la integración de facturación (Softpymes) si está preloaded
+	// Extraer nombre y logo de la integración de facturación (Softpymes) si está preloaded
 	if model.InvoicingIntegration.ID > 0 && model.InvoicingIntegration.Name != "" {
 		entity.ProviderName = &model.InvoicingIntegration.Name
+
+		// Extraer logo del IntegrationType si está preloaded
+		if model.InvoicingIntegration.IntegrationType.ID > 0 && model.InvoicingIntegration.IntegrationType.ImageURL != "" {
+			entity.ProviderImageURL = &model.InvoicingIntegration.IntegrationType.ImageURL
+		}
 	}
 
 	// Convertir JSONB a map
@@ -224,16 +215,6 @@ func ConfigToModel(entity *entities.InvoicingConfig) *models.InvoicingConfig {
 			CreatedAt: entity.CreatedAt,
 			UpdatedAt: entity.UpdatedAt,
 		},
-<<<<<<< HEAD
-		BusinessID:          entity.BusinessID,
-		IntegrationID:       entity.IntegrationID,
-		InvoicingProviderID: entity.InvoicingProviderID,
-		Enabled:             entity.Enabled,
-		AutoInvoice:         entity.AutoInvoice,
-		Description:         entity.Description,
-		CreatedByID:         entity.CreatedByID,
-		UpdatedByID:         entity.UpdatedByID,
-=======
 		BusinessID:             entity.BusinessID,
 		IntegrationID:          entity.IntegrationID,
 		InvoicingProviderID:    entity.InvoicingProviderID,    // Campo deprecado (legacy)
@@ -243,7 +224,6 @@ func ConfigToModel(entity *entities.InvoicingConfig) *models.InvoicingConfig {
 		Description:            entity.Description,
 		CreatedByID:            entity.CreatedByID,
 		UpdatedByID:            entity.UpdatedByID,
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	}
 
 	if entity.DeletedAt != nil {

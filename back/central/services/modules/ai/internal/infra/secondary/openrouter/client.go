@@ -48,12 +48,10 @@ func (c *Client) loadTransportData() {
 
 	var data []byte
 	var err error
-	var foundPath string
 
 	for _, p := range positions {
 		data, err = os.ReadFile(p)
 		if err == nil {
-			foundPath = p
 			break
 		}
 	}
@@ -62,7 +60,7 @@ func (c *Client) loadTransportData() {
 		c.logger.Error().Err(err).Msg("Failed to load transportadoras.json from any known path")
 		return
 	}
-	c.logger.Info().Str("path", foundPath).Msg("Loaded transportadoras.json")
+	// Archivo cargado correctamente - no loguear para reducir ruido en startup
 
 	var result map[string]interface{}
 	if err := json.Unmarshal(data, &result); err != nil {

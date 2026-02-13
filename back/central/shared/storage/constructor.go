@@ -64,13 +64,7 @@ func New(env env.IConfig, logger log.ILogger) IS3Service {
 	s3Region := env.Get("S3_REGION")
 	s3Bucket := env.Get("S3_BUCKET")
 
-	// Debug: verificar qué valores se están leyendo
-	logger.Debug(context.Background()).
-		Str("s3_key", maskString(s3Key)).
-		Str("s3_secret", maskString(s3Secret)).
-		Str("s3_region", s3Region).
-		Str("s3_bucket", s3Bucket).
-		Msg("S3 configuration loaded")
+	// S3 info mostrada en LogStartupInfo() - no duplicar aquí
 
 	// Validar que las credenciales no estén vacías
 	if s3Key == "" || s3Secret == "" {

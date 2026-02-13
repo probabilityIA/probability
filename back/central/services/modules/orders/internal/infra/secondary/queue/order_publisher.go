@@ -233,22 +233,41 @@ func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, queue string,
 		return fmt.Errorf("error marshaling event: %w", err)
 	}
 
-	// Publicar a RabbitMQ
-	if err := p.rabbit.Publish(ctx, queue, payload); err != nil {
+	// Publicar al exchange "orders.events" que distribuye a las 3 colas:
+	// - orders.events.invoicing
+	// - orders.events.whatsapp
+	// - orders.events.score
+	exchangeName := "orders.events"
+	routingKey := "" // Vacío porque es fanout (envía a todas las colas bindeadas)
+
+	p.log.Debug().
+		Str("order_id", message.OrderID).
+		Str("event_type", message.EventType).
+		Str("exchange", exchangeName).
+		Int("payload_size", len(payload)).
+		Msg("📤 Publishing order event to exchange (fanout distribution)")
+
+	if err := p.rabbit.PublishToExchange(ctx, exchangeName, routingKey, payload); err != nil {
 		p.log.Error().
 			Err(err).
 			Str("order_id", message.OrderID).
 			Str("event_type", message.EventType).
-			Str("queue", queue).
-			Msg("Error publishing order event to RabbitMQ")
-		return fmt.Errorf("error publishing to RabbitMQ: %w", err)
+			Str("exchange", exchangeName).
+			Msg("Error publishing order event to exchange")
+		return fmt.Errorf("error publishing to exchange: %w", err)
 	}
 
 	p.log.Info().
 		Str("order_id", message.OrderID).
 		Str("event_type", message.EventType).
-		Str("queue", queue).
-		Msg("✅ Order event published to RabbitMQ")
+		Str("exchange", exchangeName).
+		Msg("✅ Order event published to exchange (will be distributed to invoicing, whatsapp, score)")
+
+	p.log.Debug().
+		Str("order_id", message.OrderID).
+		Str("event_type", message.EventType).
+		Str("exchange", exchangeName).
+		Msg("✅ Event sent to exchange - RabbitMQ will distribute to 3 bound queues")
 
 	return nil
 }

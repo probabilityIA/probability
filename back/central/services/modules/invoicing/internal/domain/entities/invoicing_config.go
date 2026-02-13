@@ -31,6 +31,7 @@ type InvoicingConfig struct {
 	UpdatedByID *uint
 
 	// Nombres de relaciones (opcionales - populados por repo)
-	IntegrationName *string
-	ProviderName    *string
+	IntegrationName  *string
+	ProviderName     *string
+	ProviderImageURL *string // URL del logo del proveedor de facturación
 }

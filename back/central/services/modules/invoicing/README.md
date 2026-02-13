@@ -38,26 +38,15 @@ modules/invoicing/
     ├── app/               # Casos de uso
     │   ├── constructor.go
     │   ├── create_invoice.go
-<<<<<<< HEAD
+    │   ├── bulk_create_invoices_async.go # ✨ NUEVO - Procesamiento asíncrono
     │   ├── get_summary.go      # ✨ NUEVO - Resumen de KPIs
     │   ├── get_stats.go        # ✨ NUEVO - Estadísticas detalladas
     │   ├── get_trends.go       # ✨ NUEVO - Tendencias temporales
     │   └── deprecated_providers.go  # Métodos deprecados (retornan error)
-=======
-    │   ├── bulk_create_invoices_async.go
-    │   ├── get_summary.go
-    │   ├── get_stats.go
-    │   ├── get_trends.go
-    │   └── deprecated_providers.go
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
     └── infra/
         ├── primary/       # Adaptadores de entrada
         │   ├── handlers/  # HTTP handlers (Gin)
         │   └── queue/     # Consumers (RabbitMQ)
-<<<<<<< HEAD
-        └── secondary/     # Adaptadores de salida
-            └── repository/ # Repositorios DB (GORM)
-=======
         │       └── consumer/
         │           ├── retry_consumer.go
         │           └── bulk_invoice_consumer.go
@@ -66,7 +55,6 @@ modules/invoicing/
             ├── queue/      # Publishers (RabbitMQ)
             └── redis/      # SSE Publisher (Redis Pub/Sub)
                 └── sse_publisher.go
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 ```
 
 ## Relación con Integraciones
@@ -422,13 +410,9 @@ stats, err := useCase.GetDetailedStats(ctx, businessID, map[string]interface{}{
 trends, err := useCase.GetTrends(ctx, businessID, "2026-01-01", "2026-01-31", "day", "count")
 ```
 
-<<<<<<< HEAD
-## Eventos Publicados (RabbitMQ)
-=======
 ## Eventos Publicados
 
 ### RabbitMQ (Procesamiento Asíncrono)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 | Evento | Descripción |
 |--------|-------------|
@@ -437,8 +421,6 @@ trends, err := useCase.GetTrends(ctx, businessID, "2026-01-01", "2026-01-31", "d
 | `invoice.cancelled` | Factura cancelada |
 | `credit_note.created` | Nota de crédito creada |
 
-<<<<<<< HEAD
-=======
 ### Redis Pub/Sub → SSE (Notificaciones en Tiempo Real)
 
 Además de RabbitMQ, el módulo publica eventos a **Redis Pub/Sub** para que el frontend reciba actualizaciones en tiempo real via **Server-Sent Events (SSE)**.
@@ -543,7 +525,6 @@ GET /api/v1/notify/sse/order-notify?business_id=1&event_types=invoice.created,in
 - **InvoiceList**: Escucha `invoice.created`, `invoice.failed`, `invoice.cancelled` para refrescar la lista y mostrar toasts.
 - **BulkCreateInvoiceModal**: Escucha `bulk_job.progress` y `bulk_job.completed` para mostrar una barra de progreso en tiempo real.
 
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 ## Variables de Entorno
 
 ```env
@@ -559,12 +540,8 @@ RABBITMQ_HOST=localhost
 RABBITMQ_PORT=5672
 RABBITMQ_USER=admin
 RABBITMQ_PASS=admin
-<<<<<<< HEAD
-=======
-
 # Redis SSE (notificaciones en tiempo real)
 REDIS_INVOICE_EVENTS_CHANNEL=probability:invoicing:events
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 ```
 
 ## Testing
@@ -637,16 +614,10 @@ POST /integrations
 
 ### ✅ Completado
 
-- [x] Migración a integrations/core
-- [x] Endpoints de estadísticas y resúmenes
-- [x] Soporte para múltiples proveedores de facturación
 - [x] Sincronización automática vía RabbitMQ
-<<<<<<< HEAD
-=======
 - [x] Notificaciones en tiempo real via SSE (Redis Pub/Sub → Events Module → Frontend)
 - [x] Facturación masiva asíncrona con progreso en tiempo real
 - [x] Creación masiva de facturas desde órdenes (bulk)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 ### 🚧 En Progreso
 
@@ -658,10 +629,7 @@ POST /integrations
 - [ ] Soporte para facturación internacional
 - [ ] Integración con más proveedores (Alegra, Siigo, etc.)
 - [ ] Facturación recurrente/suscripciones
-<<<<<<< HEAD
 - [ ] Webhooks para notificaciones en tiempo real
-=======
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 
 ## Contribuir
 
@@ -675,14 +643,6 @@ Al modificar este módulo, asegurarse de:
 
 ## Última Actualización
 
-<<<<<<< HEAD
-**Fecha**: 2026-01-31
-
-**Cambios recientes**:
-- ✨ Agregados endpoints de estadísticas (`/summary`, `/stats`, `/trends`)
-- 🧹 Marcados como deprecados los endpoints de gestión de proveedores
-- 📝 Documentación completa de la arquitectura y endpoints
-=======
 **Fecha**: 2026-02-08
 
 **Cambios recientes**:
@@ -690,4 +650,3 @@ Al modificar este módulo, asegurarse de:
 - Facturación masiva asíncrona con barra de progreso en frontend
 - Hook `useInvoiceSSE` para integración frontend
 - Noop publisher para degradación elegante sin Redis
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e

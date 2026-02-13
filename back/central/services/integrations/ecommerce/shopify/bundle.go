@@ -84,14 +84,14 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 		orderPublisher = queue.NewNoOpPublisher(logger)
 	}
 
-	shopifyCore := shopifycore.New(coreIntegration, shopifyClient, orderPublisher, database)
+	shopifyCore := shopifycore.New(coreIntegration, shopifyClient, orderPublisher, database, config, logger)
 	coreIntegration.RegisterIntegration(core.IntegrationTypeShopify, shopifyCore)
 
 	integrationService := &integrationServiceAdapter{
 		coreIntegration: coreIntegration,
 	}
 
-	useCase := usecases.New(integrationService, shopifyClient, orderPublisher, database)
+	useCase := usecases.New(integrationService, shopifyClient, orderPublisher, database, logger)
 
 	// Registrar observador para crear webhook automáticamente cuando se crea una integración de Shopify
 	baseURL := config.Get("WEBHOOK_BASE_URL")

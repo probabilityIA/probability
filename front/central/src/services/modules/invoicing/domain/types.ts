@@ -94,6 +94,7 @@ export interface InvoicingConfig {
   updated_at: string;
   integration_name?: string;
   provider_name?: string;
+  provider_image_url?: string; // URL del logo del proveedor
 }
 
 /**
@@ -328,8 +329,6 @@ export interface InvoicingStats {
   success_rate: number;
   last_invoice_date?: string;
 }
-<<<<<<< HEAD
-=======
 
 // ===================================
 // SYNC LOGS (Historial de reintentos)
@@ -437,4 +436,3 @@ export interface InvoiceSSEEventData {
   failed?: number;
   progress?: number;
 }
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e

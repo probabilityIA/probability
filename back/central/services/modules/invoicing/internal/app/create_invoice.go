@@ -12,47 +12,48 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
-<<<<<<< HEAD
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
-=======
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 )
 
 // CreateInvoice crea una factura electrónica para una orden
 func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO) (*entities.Invoice, error) {
-	uc.log.Info(ctx).Str("order_id", dto.OrderID).Msg("Creating invoice for order")
-
 	// 1. Obtener datos de la orden
-<<<<<<< HEAD
-	order, err := uc.orderRepo.GetByID(ctx, dto.OrderID)
-=======
 	order, err := uc.repo.GetOrderByID(ctx, dto.OrderID)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to get order")
+		uc.log.Error(ctx).Err(err).Msg("Error al obtener orden")
 		return nil, fmt.Errorf("failed to get order: %w", err)
 	}
 
 	// 2. Validar que la orden sea facturable
 	if !order.Invoiceable {
-		uc.log.Warn(ctx).Msg("Order is not invoiceable")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Orden no es facturable")
 		return nil, errors.ErrOrderNotInvoiceable
 	}
 
 	// 3. Obtener configuración de facturación para la integración
-<<<<<<< HEAD
-	config, err := uc.configRepo.GetByIntegration(ctx, order.IntegrationID)
-=======
 	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to get invoicing config")
+		uc.log.Error(ctx).Err(err).Msg("Error al obtener configuración de facturación")
 		return nil, errors.ErrProviderNotConfigured
 	}
 
 	if !config.Enabled {
-		uc.log.Warn(ctx).Msg("Invoicing config is not enabled")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Configuración de facturación deshabilitada")
 		return nil, errors.ErrConfigNotEnabled
+	}
+
+	// Validar auto_invoice solo para facturas automáticas
+	if !dto.IsManual && !config.AutoInvoice {
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Facturación automática deshabilitada")
+		return nil, errors.ErrAutoInvoiceNotEnabled
 	}
 
 	// 4. Determinar integración de facturación
@@ -72,23 +73,26 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	// 5. Verificar si ya existe una factura para esta orden e integración
-<<<<<<< HEAD
-	exists, err := uc.invoiceRepo.ExistsForOrder(ctx, order.ID, integrationID)
-=======
 	exists, err := uc.repo.InvoiceExistsForOrder(ctx, order.ID, integrationID)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to check if invoice exists")
+		uc.log.Error(ctx).Err(err).Msg("Error al verificar factura existente")
 		return nil, fmt.Errorf("failed to check invoice existence: %w", err)
 	}
 	if exists {
-		uc.log.Warn(ctx).Msg("Invoice already exists for order")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("❌ Ya existe factura para esta orden")
 		return nil, errors.ErrOrderAlreadyInvoiced
 	}
 
 	// 6. Validar filtros de configuración
 	if err := uc.validateInvoicingFilters(order, config); err != nil {
-		uc.log.Warn(ctx).Msg("Order does not meet invoicing criteria")
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Err(err).
+			Msg("❌ Orden no cumple criterios de facturación")
 		return nil, err
 	}
 
@@ -108,13 +112,8 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	invoice := &entities.Invoice{
 		OrderID:                order.ID,
 		BusinessID:             order.BusinessID,
-<<<<<<< HEAD
-		InvoicingProviderID:    &integrationID, // Mantener para dual-read
-		InvoicingIntegrationID: &integrationID, // Nuevo campo
-=======
 		InvoicingProviderID:    nil,            // NULL - campo legacy deprecado (FK hacia invoicing_providers)
 		InvoicingIntegrationID: &integrationID, // Campo actual (FK hacia integrations)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		Subtotal:               order.Subtotal,
 		Tax:                    order.Tax,
 		Discount:               order.Discount,
@@ -151,11 +150,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	// 11. Guardar factura en BD (estado pending)
-<<<<<<< HEAD
-	if err := uc.invoiceRepo.Create(ctx, invoice); err != nil {
-=======
 	if err := uc.repo.CreateInvoice(ctx, invoice); err != nil {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(err).Msg("Failed to create invoice in database")
 		return nil, fmt.Errorf("failed to create invoice: %w", err)
 	}
@@ -163,11 +158,6 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	// 12. Guardar items de factura
 	for _, item := range invoiceItems {
 		item.InvoiceID = invoice.ID
-<<<<<<< HEAD
-		if err := uc.invoiceItemRepo.Create(ctx, item); err != nil {
-			uc.log.Error(ctx).Err(err).Msg("Failed to create invoice item")
-			// No retornamos error aquí, intentamos continuar
-=======
 		if err := uc.repo.CreateInvoiceItem(ctx, item); err != nil {
 			uc.log.Error(ctx).Err(err).Msg("Failed to create invoice item - cleaning up invoice")
 			// Cleanup: eliminar la factura incompleta para evitar items parciales
@@ -175,7 +165,6 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 				uc.log.Error(ctx).Err(delErr).Msg("Failed to cleanup invoice after item creation failure")
 			}
 			return nil, fmt.Errorf("failed to create invoice items: %w", err)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		}
 	}
 
@@ -196,11 +185,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		syncLog.TriggeredBy = constants.TriggerAuto
 	}
 
-<<<<<<< HEAD
-	if err := uc.syncLogRepo.Create(ctx, syncLog); err != nil {
-=======
 	if err := uc.repo.CreateInvoiceSyncLog(ctx, syncLog); err != nil {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(err).Msg("Failed to create sync log")
 		// Continuamos aunque falle el log
 	}
@@ -218,22 +203,14 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	apiKey, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_key")
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to decrypt api_key")
-<<<<<<< HEAD
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err)
-=======
 		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, nil)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		return nil, errors.ErrDecryptionFailed
 	}
 
 	apiSecret, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_secret")
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to decrypt api_secret")
-<<<<<<< HEAD
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err)
-=======
 		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, nil)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		return nil, errors.ErrDecryptionFailed
 	}
 
@@ -266,53 +243,31 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	invoiceData := map[string]interface{}{
-<<<<<<< HEAD
-		"credentials":    credentialsMap,
-		"customer":       customerData,
-		"items":          invoiceItems2,
-		"total":          invoice.TotalAmount,
-		"subtotal":       invoice.Subtotal,
-		"tax":            invoice.Tax,
-		"discount":       invoice.Discount,
-		"shipping_cost":  invoice.ShippingCost,
-		"currency":       invoice.Currency,
-		"order_id":       invoice.OrderID,
-		"invoice_config": config.InvoiceConfig,
-=======
-		"credentials":  credentialsMap,
-		"customer":     customerData,
-		"items":        invoiceItems2,
-		"total":        invoice.TotalAmount,
-		"subtotal":     invoice.Subtotal,
-		"tax":          invoice.Tax,
-		"discount":     invoice.Discount,
+		"credentials":   credentialsMap,
+		"customer":      customerData,
+		"items":         invoiceItems2,
+		"total":         invoice.TotalAmount,
+		"subtotal":      invoice.Subtotal,
+		"tax":           invoice.Tax,
+		"discount":      invoice.Discount,
 		"shipping_cost": invoice.ShippingCost,
-		"currency":     invoice.Currency,
-		"order_id":     invoice.OrderID,
-		"config":       integration.Config, // Config de la integración (contiene referer, api_url, etc)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
+		"currency":      invoice.Currency,
+		"order_id":      invoice.OrderID,
+		"config":        integration.Config, // Config de la integración (contiene referer, api_url, etc)
 	}
 
 	// 16. Enviar factura al proveedor usando el bundle de Softpymes
 	// Obtener el bundle registrado desde integrationCore
 	if integration.IntegrationType != integrationCore.IntegrationTypeInvoicing {
 		uc.log.Error(ctx).Msg("Integration is not an invoicing type")
-<<<<<<< HEAD
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("integration type mismatch"))
-=======
 		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("integration type mismatch"), nil)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		return nil, errors.ErrProviderNotFound
 	}
 
 	integrationBundle, ok := uc.integrationCore.GetRegisteredIntegration(integrationCore.IntegrationTypeInvoicing)
 	if !ok {
 		uc.log.Error(ctx).Msg("Invoicing integration bundle not registered")
-<<<<<<< HEAD
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invoicing bundle not found"))
-=======
 		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invoicing bundle not found"), nil)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		return nil, errors.ErrProviderNotFound
 	}
 
@@ -320,22 +275,14 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	softpymes, ok := integrationBundle.(*softpymesBundle.Bundle)
 	if !ok {
 		uc.log.Error(ctx).Msg("Failed to cast integration to softpymes bundle")
-<<<<<<< HEAD
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invalid bundle type"))
-=======
 		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invalid bundle type"), nil)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		return nil, errors.ErrProviderNotFound
 	}
 
 	err = softpymes.CreateInvoice(ctx, invoiceData)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to create invoice with provider")
-<<<<<<< HEAD
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err)
-=======
 		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, invoiceData)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		return nil, errors.ErrProviderAPIError
 	}
 
@@ -370,16 +317,9 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		}
 	}
 
-<<<<<<< HEAD
-	// 18. Actualizar factura en BD
-	if err := uc.invoiceRepo.Update(ctx, invoice); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to update invoice")
-		// No retornamos error, la factura ya fue creada exitosamente
-=======
 	// 18. Actualizar factura en BD (con reintentos para evitar factura fantasma)
 	if err := uc.updateInvoiceWithRetry(ctx, invoice, syncLog, invoiceData); err != nil {
 		return nil, err
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	}
 
 	// 19. Actualizar log de sincronización como exitoso
@@ -388,13 +328,6 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	syncLog.Status = constants.SyncStatusSuccess
 	syncLog.CompletedAt = &completedAt
 	syncLog.Duration = &duration
-<<<<<<< HEAD
-	syncLog.ResponseStatus = 200
-	// La respuesta completa está ahora en invoiceData
-	invoice.ProviderResponse = invoiceData
-
-	if err := uc.syncLogRepo.Update(ctx, syncLog); err != nil {
-=======
 	// La respuesta completa está ahora en invoiceData
 	invoice.ProviderResponse = invoiceData
 
@@ -402,7 +335,6 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	uc.populateSyncLogAudit(syncLog, invoiceData)
 
 	if err := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(err).Msg("Failed to update sync log")
 	}
 
@@ -411,41 +343,26 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	if invoice.InvoiceURL != nil {
 		invoiceURL = *invoice.InvoiceURL
 	}
-<<<<<<< HEAD
-	if err := uc.orderRepo.UpdateInvoiceInfo(ctx, order.ID, invoice.InvoiceNumber, invoiceURL); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to update order invoice info")
-	}
-
-	// 21. Publicar evento de factura creada
-=======
 	if err := uc.repo.UpdateOrderInvoiceInfo(ctx, order.ID, invoice.InvoiceNumber, invoiceURL); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to update order invoice info")
 	}
 
 	// 21. Publicar evento de factura creada (RabbitMQ)
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	if err := uc.eventPublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created event")
 	}
 
-<<<<<<< HEAD
-=======
 	// 22. Publicar evento SSE en tiempo real (Redis Pub/Sub)
 	if err := uc.ssePublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created SSE event")
 	}
 
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	uc.log.Info(ctx).Uint("invoice_id", invoice.ID).Str("invoice_number", invoice.InvoiceNumber).Msg("Invoice created successfully")
 	return invoice, nil
 }
 
 // validateInvoicingFilters valida que la orden cumpla con los filtros de configuración
-<<<<<<< HEAD
-func (uc *useCase) validateInvoicingFilters(order *ports.OrderData, config *entities.InvoicingConfig) error {
-=======
 func (uc *useCase) validateInvoicingFilters(order *dtos.OrderData, config *entities.InvoicingConfig) error {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	ctx := context.Background()
 
 	// 1. Parsear configuración de filtros desde JSON
@@ -490,19 +407,11 @@ func (uc *useCase) parseFilterConfig(filtersMap map[string]interface{}) (*entiti
 }
 
 // handleInvoiceCreationError maneja errores durante la creación de factura
-<<<<<<< HEAD
-func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, err error) {
-
-	// Actualizar estado de factura a failed
-	invoice.Status = constants.InvoiceStatusFailed
-	if updateErr := uc.invoiceRepo.Update(ctx, invoice); updateErr != nil {
-=======
 func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, err error, invoiceData map[string]interface{}) {
 
 	// Actualizar estado de factura a failed
 	invoice.Status = constants.InvoiceStatusFailed
 	if updateErr := uc.repo.UpdateInvoice(ctx, invoice); updateErr != nil {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		uc.log.Error(ctx).Err(updateErr).Msg("Failed to update invoice status to failed")
 	}
 
@@ -515,30 +424,15 @@ func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *enti
 	errorMsg := err.Error()
 	syncLog.ErrorMessage = &errorMsg
 
-<<<<<<< HEAD
-	// Programar reintento si no se excedió el máximo
-	if syncLog.RetryCount < syncLog.MaxRetries {
-=======
 	// Extraer audit data si existe
 	uc.populateSyncLogAudit(syncLog, invoiceData)
 
 	// Programar reintento si no se excedió el máximo y no fue cancelado previamente
 	if syncLog.RetryCount < syncLog.MaxRetries && syncLog.Status != constants.SyncStatusCancelled {
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 		nextRetry := time.Now().Add(time.Duration(constants.DefaultRetryIntervalMin) * time.Minute)
 		syncLog.NextRetryAt = &nextRetry
 	}
 
-<<<<<<< HEAD
-	if updateErr := uc.syncLogRepo.Update(ctx, syncLog); updateErr != nil {
-		uc.log.Error(ctx).Err(updateErr).Msg("Failed to update sync log")
-	}
-
-	// Publicar evento de factura fallida
-	if publishErr := uc.eventPublisher.PublishInvoiceFailed(ctx, invoice, err.Error()); publishErr != nil {
-		uc.log.Error(ctx).Err(publishErr).Msg("Failed to publish invoice failed event")
-	}
-=======
 	if updateErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); updateErr != nil {
 		uc.log.Error(ctx).Err(updateErr).Msg("Failed to update sync log")
 	}
@@ -604,5 +498,4 @@ func (uc *useCase) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog, invoic
 			syncLog.ResponseBody = bodyMap
 		}
 	}
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 }

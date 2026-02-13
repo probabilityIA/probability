@@ -97,13 +97,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.InvoiceItem{},
 		&models.InvoiceSyncLog{},
 		&models.CreditNote{},
-<<<<<<< HEAD
-=======
 
 		// Bulk Invoice Jobs (Async Bulk Invoicing)
 		&models.BulkInvoiceJob{},
 		&models.BulkInvoiceJobItem{},
->>>>>>> 7b7c2054fa8e6cf0840b58d299ba6b7ca4e6b49e
 	); err != nil {
 		return err
 	}
@@ -462,11 +459,11 @@ func (r *Repository) migrateIntegrationTypesToCategories(ctx context.Context) er
 		typeCode   string
 		categoryID uint
 	}{
-		{"shopify", 1},        // ecommerce
-		{"mercadolibre", 1},   // ecommerce
-		{"amazon", 1},         // ecommerce
-		{"whatsapp", 3},       // messaging
-		{"whatsap", 3},        // messaging (typo histórico)
+		{"shopify", 1},      // ecommerce
+		{"mercadolibre", 1}, // ecommerce
+		{"amazon", 1},       // ecommerce
+		{"whatsapp", 3},     // messaging
+		{"whatsap", 3},      // messaging (typo histórico)
 	}
 
 	for _, m := range migrations {
