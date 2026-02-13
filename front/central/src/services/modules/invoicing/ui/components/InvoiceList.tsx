@@ -261,7 +261,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         </button>
       ),
       width: '50px',
-      align: 'right',
+      align: 'right' as const,
       render: (_: unknown, invoice: Invoice) => (
         <button
           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
