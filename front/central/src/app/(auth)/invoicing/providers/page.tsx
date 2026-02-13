@@ -13,6 +13,7 @@ import { Badge } from '@/shared/ui/badge';
 import { Spinner } from '@/shared/ui/spinner';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { InvoicingHeader } from '@/services/modules/invoicing/ui/components/InvoicingHeader';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import type { Integration } from '@/services/integrations/core/domain/types';
 
@@ -71,7 +72,7 @@ export default function InvoicingProvidersPage() {
       key: 'integration_type',
       label: 'Tipo',
       render: (_: unknown, provider: Integration) => (
-        <Badge color="blue">
+        <Badge type="warning">
           {provider.integration_type?.name || provider.integration_type?.code || 'N/A'}
         </Badge>
       ),
@@ -80,7 +81,7 @@ export default function InvoicingProvidersPage() {
       key: 'is_active',
       label: 'Estado',
       render: (_: unknown, provider: Integration) => (
-        <Badge color={provider.is_active ? 'green' : 'gray'}>
+        <Badge type="success">
           {provider.is_active ? 'Activo' : 'Inactivo'}
         </Badge>
       ),
@@ -116,27 +117,108 @@ export default function InvoicingProvidersPage() {
 
   return (
     <div className="p-8">
-      <div className="mb-6 flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Proveedores de Facturación</h1>
-          <p className="text-gray-600 mt-2">
-            Configura los proveedores de facturación electrónica para tu negocio
-          </p>
-        </div>
-        <Button
-          variant="primary"
+      <InvoicingHeader
+        title="Proveedores de Facturación"
+        description="Configura los proveedores de facturación electrónica para tu negocio"
+      >
+        <button
           onClick={() => window.location.href = '/integrations'}
+          className="px-6 py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
         >
-          + Nuevo Proveedor
-        </Button>
-      </div>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo Proveedor
+        </button>
+      </InvoicingHeader>
 
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="providersTable">
         <Table
           data={providers}
           columns={columns}
           emptyMessage="No hay proveedores configurados. Crea uno desde Integraciones → Facturación Electrónica."
         />
+
+        <style jsx>{`
+          /* Tabla mejorada similar a Facturas */
+          .providersTable :global(.table) {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            background: transparent;
+          }
+
+          /* Quitar el borde del contenedor global de Table */
+          .providersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+            border: none !important;
+            background: transparent !important;
+          }
+
+          .providersTable :global(.table th) {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+          }
+
+          /* Header más llamativo + bordes redondeados */
+          .providersTable :global(.table thead th) {
+            padding-top: 18px;
+            padding-bottom: 18px;
+            font-size: 0.875rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.18);
+          }
+
+          .providersTable :global(.table thead th:first-child) {
+            border-top-left-radius: 14px;
+            border-bottom-left-radius: 14px;
+          }
+
+          .providersTable :global(.table thead th:last-child) {
+            border-top-right-radius: 14px;
+            border-bottom-right-radius: 14px;
+          }
+
+          .providersTable :global(.table tbody tr) {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
+            transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+          }
+
+          /* Zebra suave en morado */
+          .providersTable :global(.table tbody tr:nth-child(even)) {
+            background: rgba(124, 58, 237, 0.03);
+          }
+
+          .providersTable :global(.table tbody tr:hover) {
+            background: rgba(124, 58, 237, 0.06);
+            box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
+            transform: translateY(-1px);
+          }
+
+          .providersTable :global(.table td) {
+            border-top: none;
+          }
+
+          /* Redondeo de cada fila */
+          .providersTable :global(.table tbody td:first-child) {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+          }
+          .providersTable :global(.table tbody td:last-child) {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+          }
+
+          /* Acciones: focus consistente */
+          .providersTable :global(a),
+          .providersTable :global(button) {
+            outline-color: rgba(124, 58, 237, 0.35);
+          }
+        `}</style>
       </div>
     </div>
   );

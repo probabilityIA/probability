@@ -456,121 +456,33 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Facturación (Finanzas) - Solo si tiene permiso */}
+              {/* Item Facturación - Link directo sin submenu */}
               {canAccessInvoicing && (
                 <li>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setInvoicingOpen(v => {
-                          const nv = !v;
-                          if (nv) {
-                            setOrdersOpen(false);
-                            setIamOpen(false);
-                          }
-                          return nv;
-                        })}
-                        aria-expanded={invoicingOpen}
-                        aria-controls="invoicing-submenu"
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 text-left w-full
-                          ${pathname.startsWith('/invoicing')
-                            ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
-                          }
-                        `}
-                      >
-                        {pathname.startsWith('/invoicing') && (
-                          <div
-                            className="absolute left-0 w-1 h-8 rounded-r-full"
-                            style={{ backgroundColor: 'var(--color-tertiary)' }}
-                          />
-                        )}
-
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
-                        </svg>
-                        {primaryExpanded && (
-                          <>
-                            <span className="text-sm font-medium transition-opacity duration-300">Facturación</span>
-                            <svg
-                              className={`w-4 h-4 transform transition-transform duration-150 ml-auto select-none ${invoicingOpen ? '-rotate-90' : 'rotate-90'}`}
-                              viewBox="0 0 20 20"
-                              fill="none"
-                              stroke="currentColor"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l6 4-6 4" />
-                            </svg>
-                          </>
-                        )}
-                      </button>
-
-                      {primaryExpanded && (
-                        <Link
-                          href={getInvoicingEntryRoute()}
-                          className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                          title="Ir a Facturación"
-                        >
-
-                        </Link>
-                      )}
-                    </div>
-
-                    {/* Submenu: mostrar solo cuando se haga click para expandir */}
-                    {primaryExpanded && invoicingOpen && (
-                      <div id="invoicing-submenu" className="mt-2 pl-8 pr-2">
-                        {/* FACTURAS */}
-                        {canViewInvoices && (
-                          <div className="mb-3">
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">FACTURAS</h4>
-                            <ul className="space-y-1">
-                              <li>
-                                <Link
-                                  href="/invoicing/invoices"
-                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/invoicing/invoices') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
-                                >
-                                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                  </svg>
-                                  <span>Facturas</span>
-                                </Link>
-                              </li>
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* CONFIGURACIÓN */}
-                        {(canViewInvoicingProviders || canViewInvoicingConfigs) && (
-                          <div>
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CONFIGURACIÓN</h4>
-                            <ul className="space-y-1">
-                              {canViewInvoicingProviders && (
-                                <li>
-                                  <Link href="/invoicing/providers" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/invoicing/providers') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
-                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                                    </svg>
-                                    <span>Proveedores</span>
-                                  </Link>
-                                </li>
-                              )}
-                              {canViewInvoicingConfigs && (
-                                <li>
-                                  <Link href="/invoicing/configs" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/invoicing/configs') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
-                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <span>Configuraciones</span>
-                                  </Link>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
+                  <Link
+                    href="/invoicing/invoices"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/invoicing')
+                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/invoicing') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
                     )}
-                  </div>
+
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2zM10 8.5a.5.5 0 11-1 0 .5.5 0 011 0zm5 5a.5.5 0 11-1 0 .5.5 0 011 0z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Facturación</span>
+                    )}
+                  </Link>
                 </li>
               )}
 

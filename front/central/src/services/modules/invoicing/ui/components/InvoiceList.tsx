@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { Table } from '@/shared/ui/table';
 import { Button } from '@/shared/ui/button';
@@ -23,11 +23,15 @@ import type { Invoice, InvoiceFilters } from '../../domain/types';
 interface InvoiceListProps {
   businessId: number;
   filters?: InvoiceFilters;
+  onOpenBulkModal?: () => void;
 }
 
 const PAGE_SIZE_DEFAULT = 20;
 
-export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
+export const InvoiceList = forwardRef(function InvoiceList(
+  { businessId, filters = {} }: InvoiceListProps,
+  ref
+) {
   const { showToast } = useToast();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,6 +43,28 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  useImperativeHandle(ref, () => ({
+    openBulkModal: () => setShowBulkModal(true),
+  }));
+
+  useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/4dbf3696-4a46-47a8-86ba-70e3d0546d6b', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sessionId: 'debug-session',
+        runId: 'invoice-table-ui-v1',
+        hypothesisId: 'H1',
+        location: 'InvoiceList.tsx:mount',
+        message: 'InvoiceList mounted',
+        data: { businessIdIsZero: businessId === 0 },
+        timestamp: Date.now(),
+      }),
+    }).catch(() => { });
+    // #endregion
+  }, [businessId]);
 
   // SSE: Escuchar eventos en tiempo real
   useInvoiceSSE({
@@ -223,8 +249,19 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
     },
     {
       key: 'actions',
-      label: '',
+      label: (
+        <button
+          onClick={() => setShowBulkModal(true)}
+          className="p-1.5 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Crear Facturas"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      ),
       width: '50px',
+      align: 'right',
       render: (_: unknown, invoice: Invoice) => (
         <button
           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
@@ -242,41 +279,116 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
 
   return (
     <>
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h2 className="text-2xl font-bold">Facturas Electrónicas</h2>
-          <p className="text-sm text-gray-500 mt-1">
-            {totalCount} {totalCount === 1 ? 'orden facturada' : 'órdenes facturadas'}
-            <span className="ml-2 text-xs text-gray-400">
-              (doble clic para ver reintentos y detalle)
-            </span>
-          </p>
-        </div>
-        <Button variant="primary" onClick={() => setShowBulkModal(true)}>
-          + Crear Facturas desde Órdenes
-        </Button>
-      </div>
-
       {/* Tabla con paginación */}
-      <Table
-        data={invoices}
-        columns={columns}
-        loading={loading}
-        emptyMessage="No hay facturas para mostrar"
-        keyExtractor={(invoice: Invoice) => invoice.id}
-        onRowDoubleClick={handleRowDoubleClick}
-        pagination={{
-          currentPage,
-          totalPages,
-          totalItems: totalCount,
-          itemsPerPage: pageSize,
-          onPageChange: handlePageChange,
-          onItemsPerPageChange: handlePageSizeChange,
-          showItemsPerPageSelector: true,
-          itemsPerPageOptions: [10, 20, 50],
-        }}
-      />
+      <div className="invoiceTable">
+        <Table
+          data={invoices}
+          columns={columns}
+          loading={loading}
+          emptyMessage="No hay facturas para mostrar"
+          keyExtractor={(invoice: Invoice) => invoice.id}
+          onRowDoubleClick={handleRowDoubleClick}
+          pagination={{
+            currentPage,
+            totalPages,
+            totalItems: totalCount,
+            itemsPerPage: pageSize,
+            onPageChange: handlePageChange,
+            onItemsPerPageChange: handlePageSizeChange,
+            showItemsPerPageSelector: true,
+            itemsPerPageOptions: [10, 20, 50],
+          }}
+        />
+
+        <style jsx>{`
+          /* CTA morado (solo esta pantalla) */
+          .invoiceHeader :global(.btn-primary) {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+          }
+          .invoiceHeader :global(.btn-primary:hover) {
+            filter: brightness(1.05);
+          }
+
+          /* Tabla más “card-like” fila por fila (solo Facturas Electrónicas) */
+          .invoiceTable :global(.table) {
+            border-collapse: separate;
+            border-spacing: 0 10px; /* separación entre filas */
+            background: transparent;
+          }
+
+          /* Quitar el borde del contenedor global de Table SOLO aquí */
+          .invoiceTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+            border: none !important;
+            background: transparent !important;
+          }
+
+          .invoiceTable :global(.table th) {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+          }
+
+          /* Header más llamativo + bordes redondeados */
+          .invoiceTable :global(.table thead th) {
+            padding-top: 10px;
+            padding-bottom: 10px;
+            font-size: 0.75rem; /* más pequeño */
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.18);
+          }
+
+          .invoiceTable :global(.table thead th:first-child) {
+            border-top-left-radius: 14px;
+            border-bottom-left-radius: 14px;
+          }
+
+          .invoiceTable :global(.table thead th:last-child) {
+            border-top-right-radius: 14px;
+            border-bottom-right-radius: 14px;
+          }
+
+          .invoiceTable :global(.table tbody tr) {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
+            transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+          }
+
+          /* Zebra suave en morado */
+          .invoiceTable :global(.table tbody tr:nth-child(even)) {
+            background: rgba(124, 58, 237, 0.03);
+          }
+
+          .invoiceTable :global(.table tbody tr:hover) {
+            background: rgba(124, 58, 237, 0.06);
+            box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
+            transform: translateY(-1px);
+          }
+
+          .invoiceTable :global(.table td) {
+            border-top: none;
+          }
+
+          /* Redondeo de cada fila */
+          .invoiceTable :global(.table tbody td:first-child) {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+          }
+          .invoiceTable :global(.table tbody td:last-child) {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+          }
+
+          /* Acciones: focus consistente */
+          .invoiceTable :global(a),
+          .invoiceTable :global(button) {
+            outline-color: rgba(124, 58, 237, 0.35);
+          }
+        `}</style>
+      </div>
 
       {/* Modal de detalle de factura */}
       <InvoiceDetailModal
@@ -313,4 +425,4 @@ export function InvoiceList({ businessId, filters = {} }: InvoiceListProps) {
       />
     </>
   );
-}
+});
