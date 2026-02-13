@@ -64,11 +64,13 @@ type Order struct {
 	// ============================================
 	// INFORMACIÓN DEL CLIENTE (Desnormalizado)
 	// ============================================
-	CustomerID    *uint  `gorm:"index"`          // ID del cliente (referencia opcional)
-	CustomerName  string `gorm:"size:255"`       // Nombre completo
-	CustomerEmail string `gorm:"size:255;index"` // Email
-	CustomerPhone string `gorm:"size:32"`        // Teléfono
-	CustomerDNI   string `gorm:"size:64"`        // DNI/Identificación
+	CustomerID        *uint  `gorm:"index"`          // ID del cliente (referencia opcional)
+	CustomerName      string `gorm:"size:255"`       // Nombre completo
+	CustomerFirstName string `gorm:"size:128"`       // Nombre (Principalmente para órdenes manuales)
+	CustomerLastName  string `gorm:"size:128"`       // Apellido (Principalmente para órdenes manuales)
+	CustomerEmail     string `gorm:"size:255;index"` // Email
+	CustomerPhone     string `gorm:"size:32"`        // Teléfono
+	CustomerDNI       string `gorm:"size:64"`        // DNI/Identificación
 
 	// ============================================
 	// DIRECCIÓN DE ENVÍO (Desnormalizado)

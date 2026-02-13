@@ -2,7 +2,6 @@ package modules
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
@@ -25,13 +24,12 @@ import (
 
 // ModuleBundles contiene referencias a los bundles de módulos que otros servicios pueden necesitar
 type ModuleBundles struct {
-	router          *gin.RouterGroup
-	database        db.IDatabase
-	logger          log.ILogger
-	environment     env.IConfig
-	rabbitMQ        rabbitmq.IQueue
-	redisClient     redis.IRedis
-	integrationCore core.IIntegrationCore
+	router      *gin.RouterGroup
+	database    db.IDatabase
+	logger      log.ILogger
+	environment env.IConfig
+	rabbitMQ    rabbitmq.IQueue
+	redisClient redis.IRedis
 }
 
 // New inicializa todos los módulos (excepto invoicing que requiere integrationCore)
@@ -77,7 +75,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de wallet
 	wallet.New(router, database, logger, environment)
 
-	// NOTA: invoicing se inicializa en SetIntegrationCore() porque depende de integrationCore
+	// Inicializar módulo de invoicing
+	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
 
 	// Retornar referencias a bundles compartidos
 	return &ModuleBundles{
@@ -88,12 +87,4 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		rabbitMQ:    rabbitMQ,
 		redisClient: redisClient,
 	}
-}
-
-// SetIntegrationCore establece el integrationCore y luego inicializa módulos que lo requieren
-func (mb *ModuleBundles) SetIntegrationCore(integrationCore core.IIntegrationCore) {
-	mb.integrationCore = integrationCore
-
-	// Inicializar módulo de invoicing (requiere integrationCore)
-	invoicing.New(mb.router, mb.database, mb.logger, mb.environment, mb.rabbitMQ, mb.redisClient, integrationCore)
 }

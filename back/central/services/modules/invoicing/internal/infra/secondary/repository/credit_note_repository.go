@@ -9,8 +9,6 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-
-
 func (r *Repository) CreateCreditNote(ctx context.Context, note *entities.CreditNote) error {
 	model := mappers.CreditNoteToModel(note)
 

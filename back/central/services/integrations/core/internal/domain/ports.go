@@ -71,3 +71,51 @@ type IS3Service interface {
 	GetFileURL(ctx context.Context, filename string) (string, error)
 	UploadImage(ctx context.Context, file *multipart.FileHeader, folder string) (string, error)
 }
+
+// ============================================
+// INTEGRATION CACHE
+// ============================================
+
+// CachedIntegration representa los datos de integración en cache
+type CachedIntegration struct {
+	ID                  uint                   `json:"id"`
+	Name                string                 `json:"name"`
+	Code                string                 `json:"code"`
+	Category            string                 `json:"category"`
+	IntegrationTypeID   uint                   `json:"integration_type_id"`
+	IntegrationTypeCode string                 `json:"integration_type_code"`
+	BusinessID          *uint                  `json:"business_id"`
+	StoreID             string                 `json:"store_id"`
+	IsActive            bool                   `json:"is_active"`
+	IsDefault           bool                   `json:"is_default"`
+	Config              map[string]interface{} `json:"config"`
+	Description         string                 `json:"description"`
+	CreatedAt           time.Time              `json:"created_at"`
+	UpdatedAt           time.Time              `json:"updated_at"`
+}
+
+// CachedCredentials representa credenciales desencriptadas en cache
+type CachedCredentials struct {
+	IntegrationID uint                   `json:"integration_id"`
+	Credentials   map[string]interface{} `json:"credentials"` // DESENCRIPTADAS
+	CachedAt      time.Time              `json:"cached_at"`
+}
+
+// IIntegrationCache define operaciones de cache para integraciones
+type IIntegrationCache interface {
+	// Metadata (TTL: 24h)
+	SetIntegration(ctx context.Context, integration *CachedIntegration) error
+	GetIntegration(ctx context.Context, integrationID uint) (*CachedIntegration, error)
+
+	// Credentials (TTL: 1h - sensibles)
+	SetCredentials(ctx context.Context, creds *CachedCredentials) error
+	GetCredentials(ctx context.Context, integrationID uint) (*CachedCredentials, error)
+	GetCredentialField(ctx context.Context, integrationID uint, field string) (string, error)
+
+	// Invalidación
+	InvalidateIntegration(ctx context.Context, integrationID uint) error
+
+	// Búsquedas indexadas
+	GetByCode(ctx context.Context, code string) (*CachedIntegration, error)
+	GetByBusinessAndType(ctx context.Context, businessID, integrationTypeID uint) (*CachedIntegration, error)
+}

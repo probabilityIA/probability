@@ -8,7 +8,7 @@ import (
 // InvoiceResponse representa la respuesta de creación de factura de Softpymes
 // Según documentación oficial: https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostSaleInvoice
 type InvoiceResponse struct {
-	Message string      `json:"message"` // "Se ha creado la factura de venta en Pymes+ correctamente!"
+	Message string       `json:"message"` // "Se ha creado la factura de venta en Pymes+ correctamente!"
 	Info    *InvoiceInfo `json:"info,omitempty"`
 }
 
@@ -68,13 +68,130 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 		return fmt.Errorf("authentication failed: %w", err)
 	}
 
-	// Preparar request de factura (simplificado por ahora)
-	invoiceReq := map[string]interface{}{
-		"customer": invoiceData["customer"],
-		"items":    invoiceData["items"],
-		"total":    invoiceData["total"],
-		"order_id": invoiceData["order_id"],
+	// Preparar request de factura según documentación oficial de Softpymes
+	// https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostSaleInvoice
+
+	// Extraer datos del cliente
+	customer, _ := invoiceData["customer"].(map[string]interface{})
+	customerNit := ""
+	if customer != nil {
+		if dni, ok := customer["dni"].(string); ok && dni != "" {
+			customerNit = dni
+		}
 	}
+
+	// Si el customer no tiene NIT, intentar obtener uno por defecto del config
+	if customerNit == "" {
+		if defaultNit, ok := config["default_customer_nit"].(string); ok && defaultNit != "" {
+			customerNit = defaultNit
+			c.log.Info(ctx).
+				Str("default_nit", defaultNit).
+				Msg("Using default customer NIT from config")
+		} else {
+			// Si no hay NIT ni en el customer ni en el config, log error y retornar
+			c.log.Error(ctx).
+				Msg("❌ customerNit is required but not provided. Configure default_customer_nit in integration config or ensure customers have DNI")
+			return fmt.Errorf("customerNit is required: customer has no DNI and no default_customer_nit configured")
+		}
+	}
+
+	// Obtener branch_code del config (default "001" si no existe)
+	branchCode := "001" // Default
+	if branch, ok := config["branch_code"].(string); ok && branch != "" {
+		branchCode = branch
+	}
+
+	// Obtener seller_nit del config (usualmente es el referer/NIT de la empresa)
+	sellerNit := referer // Por defecto usar el referer (NIT de la empresa)
+	if seller, ok := config["seller_nit"].(string); ok && seller != "" {
+		sellerNit = seller
+	}
+
+	// Obtener resolution_id del config
+	// IMPORTANTE: resolutionId debe ser un ID válido obtenido desde /app/integration/resolutions
+	// Si es 0, Softpymes puede rechazar la factura
+	resolutionID := 0
+	if resID, ok := config["resolution_id"].(float64); ok {
+		resolutionID = int(resID)
+	} else if resID, ok := config["resolution_id"].(int); ok {
+		resolutionID = resID
+	}
+
+	// Log warning si resolution_id es 0
+	if resolutionID == 0 {
+		c.log.Warn(ctx).
+			Msg("⚠️ resolutionId is 0 - Softpymes may reject this invoice. Configure a valid resolution_id in integration config")
+	}
+
+	// Mapear items al formato de Softpymes
+	items, _ := invoiceData["items"].([]map[string]interface{})
+	softpymesItems := make([]map[string]interface{}, 0, len(items))
+	for _, item := range items {
+		// Extraer datos del item
+		itemCode := ""
+		if sku, ok := item["sku"].(string); ok {
+			itemCode = sku
+		} else if productID, ok := item["product_id"].(string); ok {
+			itemCode = productID
+		}
+
+		quantity := 0.0
+		if q, ok := item["quantity"].(int); ok {
+			quantity = float64(q)
+		} else if q, ok := item["quantity"].(float64); ok {
+			quantity = q
+		}
+
+		discount := 0.0
+		if d, ok := item["discount"].(float64); ok {
+			discount = d
+		} else if d, ok := item["discount"].(int); ok {
+			discount = float64(d)
+		}
+
+		// unitCode por defecto "UND" (unidad)
+		unitCode := "UND"
+		if unit, ok := item["unit_code"].(string); ok && unit != "" {
+			unitCode = unit
+		}
+
+		softpymesItem := map[string]interface{}{
+			"itemCode": itemCode,
+			"quantity": quantity,
+			"discount": discount,
+			"unitCode": unitCode,
+		}
+		softpymesItems = append(softpymesItems, softpymesItem)
+	}
+
+	// Obtener currency (default COP)
+	currency := "COP"
+	if curr, ok := invoiceData["currency"].(string); ok && curr != "" {
+		currency = curr
+	}
+
+	// Construir request según formato de Softpymes
+	invoiceReq := map[string]interface{}{
+		"currencyCode": currency,
+		"exchangeRate": 1.0, // Por ahora siempre 1.0 (moneda local)
+		"branchCode":   branchCode,
+		"customerNit":  customerNit,
+		"sellerNit":    sellerNit,
+		"termDays":     0, // Por ahora siempre contado (0 días)
+		"resolutionId": resolutionID,
+		"comment":      "", // Opcional
+		"items":        softpymesItems,
+	}
+
+	// Log detallado del request para debugging
+	c.log.Info(ctx).
+		Str("currency", currency).
+		Str("customer_nit", customerNit).
+		Str("seller_nit", sellerNit).
+		Str("branch_code", branchCode).
+		Int("resolution_id", resolutionID).
+		Int("items_count", len(softpymesItems)).
+		Msg("📤 Sending invoice request to Softpymes with validated format")
 
 	var invoiceResp InvoiceResponse
 

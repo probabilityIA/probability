@@ -23,6 +23,8 @@ type OrderSummary struct {
 	TotalAmountPresentment float64
 	CurrencyPresentment    string
 	CustomerName           string
+	CustomerFirstName      string
+	CustomerLastName       string
 	CustomerEmail          string
 	Status                 string
 	ItemsCount             int

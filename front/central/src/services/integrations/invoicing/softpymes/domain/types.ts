@@ -6,6 +6,7 @@ export interface SoftpymesConfig {
     referer: string;              // Identificación de instancia del cliente (requerido para header Referer)
     api_url: string;              // URL de la API de Softpymes
     test_mode?: boolean;          // Modo de pruebas
+    default_customer_nit?: string; // NIT por defecto para clientes sin DNI (consumidor final: 222222222222)
 }
 
 export interface SoftpymesCredentials {

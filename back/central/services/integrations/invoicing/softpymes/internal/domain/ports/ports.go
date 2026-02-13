@@ -2,32 +2,8 @@ package ports
 
 import (
 	"context"
-
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/entities"
+	"time"
 )
-
-// ═══════════════════════════════════════════════════════════════
-// REPOSITORIOS (Secondary Ports - Driven Adapters)
-// ═══════════════════════════════════════════════════════════════
-
-// IProviderRepository define las operaciones de persistencia para proveedores
-type IProviderRepository interface {
-	Create(ctx context.Context, provider *entities.Provider) error
-	GetByID(ctx context.Context, id uint) (*entities.Provider, error)
-	GetByBusinessAndType(ctx context.Context, businessID uint, providerTypeCode string) (*entities.Provider, error)
-	GetDefaultByBusiness(ctx context.Context, businessID uint) (*entities.Provider, error)
-	List(ctx context.Context, filters *dtos.ProviderFiltersDTO) ([]*entities.Provider, error)
-	Update(ctx context.Context, provider *entities.Provider) error
-	Delete(ctx context.Context, id uint) error
-}
-
-// IProviderTypeRepository define las operaciones de persistencia para tipos de proveedor
-type IProviderTypeRepository interface {
-	GetByCode(ctx context.Context, code string) (*entities.ProviderType, error)
-	List(ctx context.Context) ([]*entities.ProviderType, error)
-	GetActive(ctx context.Context) ([]*entities.ProviderType, error)
-}
 
 // ═══════════════════════════════════════════════════════════════
 // CLIENTE DE SOFTPYMES (Secondary Port - Driven Adapter)
@@ -49,4 +25,71 @@ type ISoftpymesClient interface {
 	// Usado para consulta posterior después de crear factura (esperar procesamiento DIAN)
 	// Retorna el documento con todos sus detalles (items, totales, información de envío)
 	GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber string) (map[string]interface{}, error)
+}
+
+// ═══════════════════════════════════════════════════════════════
+// USE CASE DE FACTURACIÓN AUTOMÁTICA (Primary Port - Driving Adapter)
+// ═══════════════════════════════════════════════════════════════
+
+// IInvoiceUseCase define el caso de uso para procesar órdenes y crear facturas automáticamente
+// Este use case es consumido por el OrderConsumer (RabbitMQ) y NO requiere base de datos
+type IInvoiceUseCase interface {
+	// ProcessOrderForInvoicing procesa un evento de orden para determinar si debe facturarse
+	// Valida filtros, verifica duplicados y crea la factura en Softpymes si corresponde
+	ProcessOrderForInvoicing(ctx context.Context, event *OrderEventMessage) error
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ESTRUCTURAS DE EVENTOS (Replicadas localmente)
+// ═══════════════════════════════════════════════════════════════
+
+// OrderEventMessage representa el payload de eventos de órdenes en RabbitMQ
+type OrderEventMessage struct {
+	EventID       string                 `json:"event_id"`
+	EventType     string                 `json:"event_type"`
+	OrderID       string                 `json:"order_id"`
+	BusinessID    *uint                  `json:"business_id"`
+	IntegrationID *uint                  `json:"integration_id"`
+	Timestamp     time.Time              `json:"timestamp"`
+	Order         *OrderSnapshot         `json:"order"`
+	Changes       map[string]interface{} `json:"changes,omitempty"`
+	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+}
+
+// OrderSnapshot representa un snapshot completo de una orden
+type OrderSnapshot struct {
+	ID              string                `json:"id"`
+	OrderNumber     string                `json:"order_number"`
+	InternalNumber  string                `json:"internal_number"`
+	ExternalID      string                `json:"external_id"`
+	TotalAmount     float64               `json:"total_amount"`
+	Currency        string                `json:"currency"`
+	PaymentMethodID uint                  `json:"payment_method_id"`
+	PaymentStatusID *uint                 `json:"payment_status_id,omitempty"`
+	Subtotal        float64               `json:"subtotal"`
+	Tax             float64               `json:"tax"`
+	Discount        float64               `json:"discount"`
+	ShippingCost    float64               `json:"shipping_cost"`
+	CustomerName    string                `json:"customer_name"`
+	CustomerEmail   string                `json:"customer_email,omitempty"`
+	CustomerPhone   string                `json:"customer_phone,omitempty"`
+	CustomerDNI     string                `json:"customer_dni,omitempty"`
+	Platform        string                `json:"platform"`
+	IntegrationID   uint                  `json:"integration_id"`
+	Items           []OrderItemSnapshot   `json:"items,omitempty"`
+	CreatedAt       time.Time             `json:"created_at"`
+	UpdatedAt       time.Time             `json:"updated_at"`
+}
+
+// OrderItemSnapshot representa un item de orden
+type OrderItemSnapshot struct {
+	ProductID  *string  `json:"product_id,omitempty"`
+	SKU        string   `json:"sku"`
+	Name       string   `json:"name"`
+	Quantity   int      `json:"quantity"`
+	UnitPrice  float64  `json:"unit_price"`
+	TotalPrice float64  `json:"total_price"`
+	Tax        float64  `json:"tax"`
+	TaxRate    *float64 `json:"tax_rate,omitempty"`
+	Discount   float64  `json:"discount"`
 }

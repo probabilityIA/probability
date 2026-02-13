@@ -9,8 +9,6 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-
-
 func (r *Repository) CreateInvoiceItem(ctx context.Context, item *entities.InvoiceItem) error {
 	model := mappers.InvoiceItemToModel(item)
 

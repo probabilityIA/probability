@@ -9,8 +9,6 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-
-
 func (r *Repository) GetProviderTypeByCode(ctx context.Context, code string) (*entities.InvoicingProviderType, error) {
 	var model models.InvoicingProviderType
 

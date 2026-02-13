@@ -38,7 +38,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		logger,
 	)
 
-	// 6. Iniciar consumidor Redis de órdenes en background
+	// 6. Iniciar consumidor Redis en background
 	go func() {
 		ctx := context.Background()
 		if err := orderEventConsumer.Start(ctx); err != nil {
@@ -74,10 +74,10 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		}
 	}()
 
-	// 7. Init SSE Handler (adaptado a Gin)
+	// 9. Init SSE Handler (adaptado a Gin)
 	sseHandler := handlers.New(eventManager, logger)
 
-	// 8. Init Routes (adaptado a Gin)
+	// 10. Init Routes (adaptado a Gin)
 	routes := primary.New(sseHandler)
 
 	// 9. Register Routes

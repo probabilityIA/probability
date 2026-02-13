@@ -76,6 +76,16 @@ func (m *RepositoryMock) CountOrdersByClientID(ctx context.Context, clientID uin
 	return args.Get(0).(int64), args.Error(1)
 }
 
+func (m *RepositoryMock) GetLastManualOrderNumber(ctx context.Context, businessID uint) (int, error) {
+	args := m.Called(ctx, businessID)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *RepositoryMock) GetFirstIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
+	args := m.Called(ctx, businessID)
+	return args.Get(0).(uint), args.Error(1)
+}
+
 // ============================================
 // VALIDATION
 // ============================================

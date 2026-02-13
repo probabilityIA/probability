@@ -3,8 +3,8 @@ package app
 import (
 	"testing"
 
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
-	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -151,7 +151,7 @@ func TestExcludeProductsValidator(t *testing.T) {
 
 	t.Run("Sin productos excluidos - debe pasar", func(t *testing.T) {
 		order := &dtos.OrderData{
-			Items: []ports.OrderItemData{
+			Items: []dtos.OrderItemData{
 				{SKU: "PROD-A"},
 				{SKU: "PROD-B"},
 			},
@@ -162,7 +162,7 @@ func TestExcludeProductsValidator(t *testing.T) {
 
 	t.Run("Con producto excluido - debe fallar", func(t *testing.T) {
 		order := &dtos.OrderData{
-			Items: []ports.OrderItemData{
+			Items: []dtos.OrderItemData{
 				{SKU: "PROD-A"},
 				{SKU: "GIFT-CARD-001"},
 			},
@@ -177,7 +177,7 @@ func TestIncludeProductsOnlyValidator(t *testing.T) {
 
 	t.Run("Solo productos permitidos - debe pasar", func(t *testing.T) {
 		order := &dtos.OrderData{
-			Items: []ports.OrderItemData{
+			Items: []dtos.OrderItemData{
 				{SKU: "PROD-A"},
 				{SKU: "PROD-B"},
 			},
@@ -188,7 +188,7 @@ func TestIncludeProductsOnlyValidator(t *testing.T) {
 
 	t.Run("Productos fuera de la lista - debe fallar", func(t *testing.T) {
 		order := &dtos.OrderData{
-			Items: []ports.OrderItemData{
+			Items: []dtos.OrderItemData{
 				{SKU: "PROD-A"},
 				{SKU: "PROD-C"}, // No está en AllowedSKUs
 			},
@@ -200,7 +200,7 @@ func TestIncludeProductsOnlyValidator(t *testing.T) {
 	t.Run("Sin restricciones - siempre pasa", func(t *testing.T) {
 		validatorSinRestricciones := &IncludeProductsOnlyValidator{AllowedSKUs: []string{}}
 		order := &dtos.OrderData{
-			Items: []ports.OrderItemData{
+			Items: []dtos.OrderItemData{
 				{SKU: "CUALQUIER-SKU"},
 			},
 		}
@@ -216,7 +216,7 @@ func TestItemsCountValidator(t *testing.T) {
 	t.Run("Dentro del rango - debe pasar", func(t *testing.T) {
 		validator := &ItemsCountValidator{MinCount: &minCount, MaxCount: &maxCount}
 		order := &dtos.OrderData{
-			Items: []ports.OrderItemData{
+			Items: []dtos.OrderItemData{
 				{SKU: "A"}, {SKU: "B"}, {SKU: "C"},
 			},
 		}
@@ -227,7 +227,7 @@ func TestItemsCountValidator(t *testing.T) {
 	t.Run("Por debajo del mínimo - debe fallar", func(t *testing.T) {
 		validator := &ItemsCountValidator{MinCount: &minCount}
 		order := &dtos.OrderData{
-			Items: []ports.OrderItemData{{SKU: "A"}},
+			Items: []dtos.OrderItemData{{SKU: "A"}},
 		}
 		err := validator.Validate(order)
 		assert.Equal(t, errors.ErrMinItemsNotMet, err)
@@ -236,7 +236,7 @@ func TestItemsCountValidator(t *testing.T) {
 	t.Run("Por encima del máximo - debe fallar", func(t *testing.T) {
 		validator := &ItemsCountValidator{MaxCount: &maxCount}
 		order := &dtos.OrderData{
-			Items: make([]ports.OrderItemData, 15),
+			Items: make([]dtos.OrderItemData, 15),
 		}
 		err := validator.Validate(order)
 		assert.Equal(t, errors.ErrMaxItemsExceeded, err)
@@ -245,7 +245,7 @@ func TestItemsCountValidator(t *testing.T) {
 	t.Run("Sin restricciones - siempre pasa", func(t *testing.T) {
 		validator := &ItemsCountValidator{}
 		order := &dtos.OrderData{
-			Items: make([]ports.OrderItemData, 100),
+			Items: make([]dtos.OrderItemData, 100),
 		}
 		err := validator.Validate(order)
 		assert.Nil(t, err)

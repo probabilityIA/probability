@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"time"
+
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
@@ -20,6 +22,31 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRe
 	}
 	if exists {
 		return nil, errors.New("order with this external_id already exists for this integration")
+	}
+
+	// Lógica para plataforma manual (numeración automática)
+	if req.Platform == "manual" {
+		// Asignar integración por defecto si no trae una
+		if req.IntegrationID == 0 {
+			intID, err := uc.repo.GetFirstIntegrationIDByBusinessID(ctx, *req.BusinessID)
+			if err != nil {
+				return nil, fmt.Errorf("error finding a default integration for manual order: %w", err)
+			}
+			req.IntegrationID = intID
+		}
+
+		// Generar ExternalID si no lo trae (usamos timestamp + algo aleatorio)
+		if req.ExternalID == "" {
+			req.ExternalID = fmt.Sprintf("MAN-%d", time.Now().UnixNano())
+		}
+		// Generar OrderNumber con formato prob-XXXX si está vacío
+		if req.OrderNumber == "" || req.OrderNumber == "AUTO" {
+			lastNum, err := uc.repo.GetLastManualOrderNumber(ctx, *req.BusinessID)
+			if err != nil {
+				return nil, fmt.Errorf("error getting last manual order number: %w", err)
+			}
+			req.OrderNumber = fmt.Sprintf("prob-%04d", lastNum+1)
+		}
 	}
 
 	// Crear el modelo de orden
@@ -45,11 +72,13 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRe
 		CodTotal:     req.CodTotal,
 
 		// Información del cliente
-		CustomerID:    req.CustomerID,
-		CustomerName:  req.CustomerName,
-		CustomerEmail: req.CustomerEmail,
-		CustomerPhone: req.CustomerPhone,
-		CustomerDNI:   req.CustomerDNI,
+		CustomerID:        req.CustomerID,
+		CustomerName:      req.CustomerName,
+		CustomerFirstName: req.CustomerFirstName,
+		CustomerLastName:  req.CustomerLastName,
+		CustomerEmail:     req.CustomerEmail,
+		CustomerPhone:     req.CustomerPhone,
+		CustomerDNI:       req.CustomerDNI,
 
 		// Dirección de envío
 		ShippingStreet:     req.ShippingStreet,

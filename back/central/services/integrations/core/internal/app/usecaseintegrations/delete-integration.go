@@ -29,6 +29,11 @@ func (uc *IntegrationUseCase) DeleteIntegration(ctx context.Context, id uint) er
 		return fmt.Errorf("error al eliminar integración: %w", err)
 	}
 
+	// ✅ NUEVO - Invalidar cache (seguridad)
+	if err := uc.cache.InvalidateIntegration(ctx, id); err != nil {
+		uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate deleted integration")
+	}
+
 	uc.log.Info(ctx).Uint("id", id).Msg("Integración eliminada exitosamente")
 
 	return nil

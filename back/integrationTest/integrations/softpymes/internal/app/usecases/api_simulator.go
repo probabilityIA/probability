@@ -48,11 +48,13 @@ func (s *APISimulator) HandleAuth(apiKey, apiSecret, referer string) (string, er
 }
 
 // HandleCreateInvoice simula la creación de una factura
+// Valida el formato correcto según documentación de Softpymes:
+// https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostSaleInvoice
 func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]interface{}) (*domain.Invoice, error) {
 	s.logger.Info().
 		Str("token", token).
 		Interface("data", invoiceData).
-		Msg("Simulando creación de factura")
+		Msg("Simulando creación de factura con formato Softpymes")
 
 	// Validar token
 	authToken, exists := s.Repository.GetToken(token)
@@ -65,47 +67,99 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 		return nil, fmt.Errorf("token expired")
 	}
 
-	// Extraer datos
-	customer, _ := invoiceData["customer"].(map[string]interface{})
-	items, _ := invoiceData["items"].([]interface{})
-	total, _ := invoiceData["total"].(float64)
-	orderID, _ := invoiceData["order_id"].(string)
+	// ====================================================
+	// VALIDAR FORMATO SEGÚN DOCUMENTACIÓN DE SOFTPYMES
+	// ====================================================
 
-	// Generar factura
-	invoiceNumber := s.Repository.GenerateInvoiceNumber()
-	externalID := uuid.New().String()
-	cufe := fmt.Sprintf("CUFE-%s", uuid.New().String()[:16])
+	// Campos requeridos según documentación
+	currencyCode, ok := invoiceData["currencyCode"].(string)
+	if !ok || currencyCode == "" {
+		return nil, fmt.Errorf("missing required field: currencyCode")
+	}
 
-	// Convertir items
+	items, ok := invoiceData["items"].([]interface{})
+	if !ok || len(items) == 0 {
+		return nil, fmt.Errorf("missing required field: items")
+	}
+
+	// Campos opcionales con defaults
+	customerNit := ""
+	if nit, ok := invoiceData["customerNit"].(string); ok {
+		customerNit = nit
+	}
+
+	branchCode := "001"
+	if branch, ok := invoiceData["branchCode"].(string); ok {
+		branchCode = branch
+	}
+
+	sellerNit := ""
+	if seller, ok := invoiceData["sellerNit"].(string); ok {
+		sellerNit = seller
+	}
+
+	s.logger.Info().
+		Str("currency", currencyCode).
+		Str("customer_nit", customerNit).
+		Str("seller_nit", sellerNit).
+		Str("branch", branchCode).
+		Int("items_count", len(items)).
+		Msg("Request validado correctamente según formato Softpymes")
+
+	// Calcular total desde items (Softpymes lo calcula en backend)
+	total := 0.0
 	invoiceItems := make([]domain.InvoiceItem, 0)
 	for _, item := range items {
 		itemMap, ok := item.(map[string]interface{})
 		if !ok {
 			continue
 		}
+
+		// Validar campos requeridos del item
+		itemCode, ok := itemMap["itemCode"].(string)
+		if !ok {
+			return nil, fmt.Errorf("missing required field: itemCode in item")
+		}
+
+		quantity := 0.0
+		if q, ok := itemMap["quantity"].(float64); ok {
+			quantity = q
+		}
+
+		discount := 0.0
+		if d, ok := itemMap["discount"].(float64); ok {
+			discount = d
+		}
+
+		// Calcular subtotal del item (simplificado)
+		itemTotal := quantity * 100.0 // Asumimos precio ficticio
+		itemTotal -= discount
+		total += itemTotal
+
 		invoiceItems = append(invoiceItems, domain.InvoiceItem{
-			Description: itemMap["description"].(string),
-			Quantity:    int(itemMap["quantity"].(float64)),
-			UnitPrice:   itemMap["unit_price"].(float64),
-			Tax:         itemMap["tax"].(float64),
-			Total:       itemMap["total"].(float64),
+			Description: itemCode,
+			Quantity:    int(quantity),
+			UnitPrice:   100.0, // Precio ficticio para el mock
+			Tax:         0.0,
+			Total:       itemTotal,
 		})
 	}
 
-	customerName, _ := customer["name"].(string)
-	customerEmail, _ := customer["email"].(string)
-	customerNIT, _ := customer["nit"].(string)
+	// Generar factura
+	invoiceNumber := s.Repository.GenerateInvoiceNumber()
+	externalID := uuid.New().String()
+	cufe := fmt.Sprintf("CUFE-%s", uuid.New().String()[:16])
 
 	invoice := &domain.Invoice{
 		ID:            externalID,
 		InvoiceNumber: invoiceNumber,
 		ExternalID:    externalID,
-		OrderID:       orderID,
-		CustomerName:  customerName,
-		CustomerEmail: customerEmail,
-		CustomerNIT:   customerNIT,
+		OrderID:       "", // No disponible en formato Softpymes
+		CustomerName:  customerNit,
+		CustomerEmail: "",
+		CustomerNIT:   customerNit,
 		Total:         total,
-		Currency:      "COP",
+		Currency:      currencyCode,
 		Items:         invoiceItems,
 		InvoiceURL:    fmt.Sprintf("https://softpymes-mock.local/invoices/%s", externalID),
 		PDFURL:        fmt.Sprintf("https://softpymes-mock.local/invoices/%s.pdf", externalID),
@@ -120,7 +174,8 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 	s.logger.Info().
 		Str("invoice_number", invoiceNumber).
 		Str("cufe", cufe).
-		Msg("Factura simulada creada exitosamente")
+		Float64("total", total).
+		Msg("✅ Factura simulada creada exitosamente con formato Softpymes")
 
 	return invoice, nil
 }

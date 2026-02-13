@@ -26,10 +26,17 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		PaymentMethodID: order.PaymentMethodID,
 		PaymentStatusID: order.PaymentStatusID,
 
+		// Información financiera detallada (para facturación)
+		Subtotal:     order.Subtotal,
+		Tax:          order.Tax,
+		Discount:     order.Discount,
+		ShippingCost: order.ShippingCost,
+
 		// Información del cliente
 		CustomerName:  order.CustomerName,
 		CustomerEmail: order.CustomerEmail,
 		CustomerPhone: order.CustomerPhone,
+		CustomerDNI:   order.CustomerDNI,
 
 		// Información de origen
 		Platform:      order.Platform,
@@ -39,6 +46,9 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		OrderStatusID:       order.StatusID,
 		FulfillmentStatusID: order.FulfillmentStatusID,
 
+		// Items detallados (para facturación e inventario)
+		Items: OrderItemsToSnapshot(order.OrderItems),
+
 		// Información adicional para mensajes
 		ItemsSummary:    BuildItemsSummary(order.OrderItems),
 		ShippingAddress: BuildShippingAddress(order),
@@ -47,6 +57,47 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		CreatedAt: order.CreatedAt,
 		UpdatedAt: order.UpdatedAt,
 	}
+}
+
+// OrderItemsToSnapshot convierte un slice de ProbabilityOrderItem a OrderItemSnapshot
+// Mapea toda la información de los items necesaria para facturación e inventario
+func OrderItemsToSnapshot(items []entities.ProbabilityOrderItem) []response.OrderItemSnapshot {
+	if len(items) == 0 {
+		return []response.OrderItemSnapshot{}
+	}
+
+	snapshots := make([]response.OrderItemSnapshot, 0, len(items))
+	for _, item := range items {
+		// Elegir el mejor nombre disponible
+		name := item.ProductName
+		if name == "" {
+			name = item.ProductTitle
+		}
+		if name == "" {
+			name = item.ProductSKU
+		}
+
+		// Crear snapshot del item
+		snapshot := response.OrderItemSnapshot{
+			ProductID: item.ProductID,
+			SKU:       item.ProductSKU,
+			VariantID: item.VariantID,
+			Name:      name,
+			Title:     item.ProductTitle,
+			Quantity:  item.Quantity,
+			UnitPrice: item.UnitPrice,
+			TotalPrice: item.TotalPrice,
+			Tax:       item.Tax,
+			TaxRate:   item.TaxRate,
+			Discount:  item.Discount,
+			ImageURL:  item.ImageURL,
+			ProductURL: item.ProductURL,
+		}
+
+		snapshots = append(snapshots, snapshot)
+	}
+
+	return snapshots
 }
 
 // BuildItemsSummary construye un resumen legible de los items de una orden

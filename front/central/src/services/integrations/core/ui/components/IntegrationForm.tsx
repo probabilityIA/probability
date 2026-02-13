@@ -197,8 +197,8 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
     // If editing an existing integration
     if (integration) {
         console.log('📋 Integration recibida para editar:', integration);
-        
-        // Parse config if it's a string
+
+        // Parse config if it’s a string
         let parsedConfig = integration.config || {};
         if (typeof integration.config === 'string') {
             try {
@@ -283,7 +283,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
-        // For other types that don't have a specific form yet
+        // For other types that don’t have a specific form yet
         return (
             <Alert type="info">
                 <div className="space-y-3">

@@ -19,6 +19,7 @@ type IHandler interface {
 	CancelInvoice(c *gin.Context)
 	RetryInvoice(c *gin.Context)
 	CancelRetry(c *gin.Context)
+	EnableRetry(c *gin.Context)
 	GetInvoiceSyncLogs(c *gin.Context)
 
 	// Notas de crédito
@@ -50,6 +51,10 @@ type IHandler interface {
 	// Creación masiva de facturas
 	ListInvoiceableOrders(c *gin.Context)
 	BulkCreateInvoices(c *gin.Context)
+
+	// Jobs de facturación masiva
+	ListBulkJobs(c *gin.Context)
+	GetBulkJobStatus(c *gin.Context)
 }
 
 // handler implementa IHandler
@@ -61,11 +66,10 @@ type handler struct {
 }
 
 // New crea un nuevo handler de facturación
-func New(useCase ports.IUseCase, repo ports.IRepository, config env.IConfig, logger log.ILogger) IHandler {
+func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger) IHandler {
 	return &handler{
 		useCase: useCase,
 		repo:    repo,
-		config:  config,
 		log:     logger.WithModule("invoicing.handler"),
 	}
 }

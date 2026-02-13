@@ -6,8 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	integrationCore "github.com/secamc93/probability/back/central/services/integrations/core"
-	softpymesBundle "github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes"
+	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/constants"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
@@ -96,19 +95,12 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		return nil, err
 	}
 
-	// 7. Obtener integración de facturación desde integrationCore
-	integrationIDStr := fmt.Sprintf("%d", integrationID)
-	integration, err := uc.integrationCore.GetIntegrationByID(ctx, integrationIDStr)
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to get invoicing integration")
-		return nil, errors.ErrProviderNotFound
-	}
+	// 7. Determinar proveedor de facturación
+	// NOTA: Por ahora asumimos Softpymes como único proveedor
+	// En el futuro se determinará dinámicamente desde la configuración
+	provider := dtos.ProviderSoftpymes
 
-	// 8. Desencriptar credenciales usando integrationCore
-	// NOTA: Las credenciales ahora se manejan internamente por el bundle de softpymes
-	// No necesitamos desencriptarlas aquí
-
-	// 9. Crear entidad de factura
+	// 8. Crear entidad de factura (estado pending)
 	invoice := &entities.Invoice{
 		OrderID:                order.ID,
 		BusinessID:             order.BusinessID,
@@ -129,7 +121,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		Metadata:               make(map[string]interface{}),
 	}
 
-	// 10. Crear items de factura desde los items de la orden
+	// 9. Crear items de factura desde los items de la orden
 	invoiceItems := make([]*entities.InvoiceItem, 0, len(order.Items))
 	for _, orderItem := range order.Items {
 		item := &entities.InvoiceItem{
@@ -149,13 +141,13 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		invoiceItems = append(invoiceItems, item)
 	}
 
-	// 11. Guardar factura en BD (estado pending)
+	// 10. Guardar factura en BD (estado pending)
 	if err := uc.repo.CreateInvoice(ctx, invoice); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to create invoice in database")
 		return nil, fmt.Errorf("failed to create invoice: %w", err)
 	}
 
-	// 12. Guardar items de factura
+	// 11. Guardar items de factura
 	for _, item := range invoiceItems {
 		item.InvoiceID = invoice.ID
 		if err := uc.repo.CreateInvoiceItem(ctx, item); err != nil {
@@ -168,7 +160,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		}
 	}
 
-	// 13. Crear log de sincronización
+	// 12. Crear log de sincronización
 	syncLog := &entities.InvoiceSyncLog{
 		InvoiceID:     invoice.ID,
 		OperationType: constants.OperationTypeCreate,
@@ -190,34 +182,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		// Continuamos aunque falle el log
 	}
 
-	// 14. Obtener credentials de la integración usando integrationCore
-	credentialsMap := make(map[string]interface{})
-	if integration.Config != nil {
-		if configMap, ok := integration.Config.(map[string]interface{}); ok {
-			credentialsMap = configMap
-		}
-	}
-
-	// Desencriptar credenciales específicas si es necesario
-	// NOTA: El bundle de Softpymes maneja la autenticación internamente
-	apiKey, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_key")
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to decrypt api_key")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, nil)
-		return nil, errors.ErrDecryptionFailed
-	}
-
-	apiSecret, err := uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_secret")
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to decrypt api_secret")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, nil)
-		return nil, errors.ErrDecryptionFailed
-	}
-
-	credentialsMap["api_key"] = apiKey
-	credentialsMap["api_secret"] = apiSecret
-
-	// 15. Preparar datos para el bundle de Softpymes
+	// 13. Preparar datos de facturación para el proveedor
 	invoiceItems2 := make([]map[string]interface{}, 0, len(invoiceItems))
 	for _, item := range invoiceItems {
 		itemMap := map[string]interface{}{
@@ -242,187 +207,83 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		"dni":   invoice.CustomerDNI,
 	}
 
+	// Config específico de facturación (invoice_config desde DB)
+	invoiceConfigData := make(map[string]interface{})
+	if config.InvoiceConfig != nil {
+		invoiceConfigData = config.InvoiceConfig
+	}
+
+	// Incluir integration_id para que el proveedor pueda obtener credentials y config
 	invoiceData := map[string]interface{}{
-		"credentials":  credentialsMap,
-		"customer":     customerData,
-		"items":        invoiceItems2,
-		"total":        invoice.TotalAmount,
-		"subtotal":     invoice.Subtotal,
-		"tax":          invoice.Tax,
-		"discount":     invoice.Discount,
-		"shipping_cost": invoice.ShippingCost,
-		"currency":     invoice.Currency,
-		"order_id":     invoice.OrderID,
-		"config":       integration.Config, // Config de la integración (contiene referer, api_url, etc)
+		"integration_id": integrationID, // El proveedor usa esto para obtener config+credentials de cache
+		"customer":       customerData,
+		"items":          invoiceItems2,
+		"total":          invoice.TotalAmount,
+		"subtotal":       invoice.Subtotal,
+		"tax":            invoice.Tax,
+		"discount":       invoice.Discount,
+		"shipping_cost":  invoice.ShippingCost,
+		"currency":       invoice.Currency,
+		"order_id":       invoice.OrderID,
+		"config":         invoiceConfigData, // Config de facturación (filtros, etc.)
 	}
 
-	// 16. Enviar factura al proveedor usando el bundle de Softpymes
-	// Obtener el bundle registrado desde integrationCore
-	if integration.IntegrationType != integrationCore.IntegrationTypeInvoicing {
-		uc.log.Error(ctx).Msg("Integration is not an invoicing type")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("integration type mismatch"), nil)
-		return nil, errors.ErrProviderNotFound
+	// 14. Generar correlation ID único para request/response
+	correlationID := uuid.New().String()
+
+	// 15. Construir mensaje de request
+	requestMessage := &dtos.InvoiceRequestMessage{
+		InvoiceID:     invoice.ID,
+		Provider:      provider,
+		Operation:     dtos.OperationCreate,
+		InvoiceData:   invoiceData,
+		CorrelationID: correlationID,
+		Timestamp:     time.Now(),
 	}
 
-	integrationBundle, ok := uc.integrationCore.GetRegisteredIntegration(integrationCore.IntegrationTypeInvoicing)
-	if !ok {
-		uc.log.Error(ctx).Msg("Invoicing integration bundle not registered")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invoicing bundle not found"), nil)
-		return nil, errors.ErrProviderNotFound
-	}
+	// 16. Publicar request a RabbitMQ (async)
+	if err := uc.invoiceRequestPub.PublishInvoiceRequest(ctx, requestMessage); err != nil {
+		uc.log.Error(ctx).
+			Err(err).
+			Uint("invoice_id", invoice.ID).
+			Str("provider", provider).
+			Msg("Failed to publish invoice request to queue")
 
-	// Cast al bundle de Softpymes
-	softpymes, ok := integrationBundle.(*softpymesBundle.Bundle)
-	if !ok {
-		uc.log.Error(ctx).Msg("Failed to cast integration to softpymes bundle")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("invalid bundle type"), nil)
-		return nil, errors.ErrProviderNotFound
-	}
+		// Marcar syncLog como failed
+		failedAt := time.Now()
+		duration := int(failedAt.Sub(syncLog.StartedAt).Milliseconds())
+		syncLog.Status = constants.SyncStatusFailed
+		syncLog.CompletedAt = &failedAt
+		syncLog.Duration = &duration
+		errorMsg := "Failed to publish to queue: " + err.Error()
+		syncLog.ErrorMessage = &errorMsg
 
-	err = softpymes.CreateInvoice(ctx, invoiceData)
-	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to create invoice with provider")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, err, invoiceData)
-		return nil, errors.ErrProviderAPIError
-	}
-
-	// 17. Actualizar factura con datos del proveedor
-	// El bundle de Softpymes actualiza invoiceData con la respuesta
-	if invoiceNumber, ok := invoiceData["invoice_number"].(string); ok {
-		invoice.InvoiceNumber = invoiceNumber
-	}
-	if externalID, ok := invoiceData["external_id"].(string); ok {
-		invoice.ExternalID = &externalID
-	}
-	if invoiceURL, ok := invoiceData["invoice_url"].(string); ok {
-		invoice.InvoiceURL = &invoiceURL
-	}
-	if pdfURL, ok := invoiceData["pdf_url"].(string); ok {
-		invoice.PDFURL = &pdfURL
-	}
-	if xmlURL, ok := invoiceData["xml_url"].(string); ok {
-		invoice.XMLURL = &xmlURL
-	}
-	if cufe, ok := invoiceData["cufe"].(string); ok {
-		invoice.CUFE = &cufe
-	}
-
-	invoice.Status = constants.InvoiceStatusIssued
-
-	// Parsear IssuedAt si está presente
-	if issuedAtStr, ok := invoiceData["issued_at"].(string); ok && issuedAtStr != "" {
-		issuedAt, err := time.Parse(time.RFC3339, issuedAtStr)
-		if err == nil {
-			invoice.IssuedAt = &issuedAt
+		if updateErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); updateErr != nil {
+			uc.log.Error(ctx).Err(updateErr).Msg("Failed to update sync log")
 		}
+
+		// Marcar invoice como failed
+		invoice.Status = constants.InvoiceStatusFailed
+		if updateErr := uc.repo.UpdateInvoice(ctx, invoice); updateErr != nil {
+			uc.log.Error(ctx).Err(updateErr).Msg("Failed to update invoice status")
+		}
+
+		return nil, fmt.Errorf("failed to publish invoice request: %w", err)
 	}
-
-	// 18. Actualizar factura en BD (con reintentos para evitar factura fantasma)
-	if err := uc.updateInvoiceWithRetry(ctx, invoice, syncLog, invoiceData); err != nil {
-		return nil, err
-	}
-
-	// 18.5. CONSULTA POSTERIOR DEL DOCUMENTO COMPLETO
-	// Fase 1: Solo guardar documento completo, extracción de campos en fase posterior
-	uc.log.Info(ctx).
-		Str("invoice_number", invoice.InvoiceNumber).
-		Msg("⏳ Waiting 3 seconds for DIAN processing")
-
-	time.Sleep(3 * time.Second)
 
 	uc.log.Info(ctx).
-		Str("invoice_number", invoice.InvoiceNumber).
-		Msg("📥 Fetching full document from Softpymes")
+		Uint("invoice_id", invoice.ID).
+		Str("provider", provider).
+		Str("correlation_id", correlationID).
+		Msg("📤 Invoice request published - waiting for provider response")
 
-	// Consultar documento completo usando el invoice_number
-	fullDocument, err := softpymes.GetDocumentByNumber(
-		ctx,
-		apiKey,
-		apiSecret,
-		credentialsMap["referer"].(string),
-		invoice.InvoiceNumber,
-	)
-
-	if err != nil {
-		// WARNING: No fallar factura si consulta posterior falla
-		uc.log.Warn(ctx).
-			Err(err).
-			Str("invoice_number", invoice.InvoiceNumber).
-			Msg("⚠️ Failed to fetch full document - will have NULL URLs/CUFE")
-
-		uc.log.Debug(ctx).
-			Err(err).
-			Str("invoice_number", invoice.InvoiceNumber).
-			Msg("📋 Document fetch failed - invoice created without enrichment")
-	} else {
-		// ÉXITO: Guardar documento completo en ProviderResponse
-		uc.log.Info(ctx).
-			Str("invoice_number", invoice.InvoiceNumber).
-			Msg("✅ Full document retrieved - saving to ProviderResponse")
-
-		// Asegurar que ProviderResponse existe y guardar documento completo
-		if invoice.ProviderResponse == nil {
-			invoice.ProviderResponse = make(map[string]interface{})
-		}
-
-		// Guardar documento completo y timestamp directamente
-		invoice.ProviderResponse["full_document"] = fullDocument
-		invoice.ProviderResponse["document_fetch_timestamp"] = time.Now().Format(time.RFC3339)
-
-		// Log detallado del documento para investigación
-		uc.log.Debug(ctx).
-			Interface("full_document", fullDocument).
-			Str("invoice_number", invoice.InvoiceNumber).
-			Msg("📋 Full document saved - review structure for field extraction in phase 2")
-
-		// NOTA: Extracción de campos específicos (PDF URL, XML URL, CUFE)
-		// se implementará en Fase 2 después de confirmar nombres exactos
-		// revisando el documento guardado en BD
-
-		// Actualizar invoice en BD con el documento completo
-		if err := uc.updateInvoiceWithRetry(ctx, invoice, syncLog, invoiceData); err != nil {
-			uc.log.Warn(ctx).
-				Err(err).
-				Str("invoice_number", invoice.InvoiceNumber).
-				Msg("⚠️ Failed to save full document to DB - continuing without it")
-		}
-	}
-
-	// 19. Actualizar log de sincronización como exitoso
-	completedAt := time.Now()
-	duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
-	syncLog.Status = constants.SyncStatusSuccess
-	syncLog.CompletedAt = &completedAt
-	syncLog.Duration = &duration
-	// La respuesta completa está ahora en invoiceData
-	invoice.ProviderResponse = invoiceData
-
-	// Extraer audit data del invoiceData (capturada por el cliente Softpymes)
-	uc.populateSyncLogAudit(syncLog, invoiceData)
-
-	if err := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to update sync log")
-	}
-
-	// 20. Actualizar información de factura en la orden
-	invoiceURL := ""
-	if invoice.InvoiceURL != nil {
-		invoiceURL = *invoice.InvoiceURL
-	}
-	if err := uc.repo.UpdateOrderInvoiceInfo(ctx, order.ID, invoice.InvoiceNumber, invoiceURL); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to update order invoice info")
-	}
-
-	// 21. Publicar evento de factura creada (RabbitMQ)
-	if err := uc.eventPublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created event")
-	}
-
-	// 22. Publicar evento SSE en tiempo real (Redis Pub/Sub)
+	// 17. Publicar evento SSE en tiempo real (factura creada pero pending)
 	if err := uc.ssePublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created SSE event")
 	}
 
+	// 18. Retornar invoice inmediatamente (estado pending)
+	// El consumer actualizará el invoice cuando reciba la respuesta del proveedor
 	return invoice, nil
 }
 

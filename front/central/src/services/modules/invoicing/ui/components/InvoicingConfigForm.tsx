@@ -271,6 +271,129 @@ export function InvoicingConfigForm({
         </div>
       )}
 
+      {/* Configuración específica de Softpymes */}
+      {formData.enabled && (
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="font-medium text-gray-900 mb-2">
+            Configuración de Softpymes
+          </h4>
+          <p className="text-xs text-gray-600 mb-4">
+            Campos requeridos por Softpymes para generar facturas electrónicas en Colombia
+          </p>
+
+          <div className="space-y-4">
+            {/* NIT por defecto */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                NIT por defecto
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="text"
+                value={formData.config?.default_customer_nit ?? ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    config: {
+                      ...formData.config,
+                      default_customer_nit: e.target.value,
+                    },
+                  })
+                }
+                placeholder="222222222222"
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                NIT a usar cuando el cliente no tiene DNI/NIT registrado.
+                Para consumidor final en Colombia: 222222222222
+              </p>
+            </div>
+
+            {/* Resolution ID */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Resolution ID
+                <span className="text-red-500 ml-1">*</span>
+              </label>
+              <input
+                type="number"
+                value={formData.config?.resolution_id ?? ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    config: {
+                      ...formData.config,
+                      resolution_id: e.target.value ? Number(e.target.value) : undefined,
+                    },
+                  })
+                }
+                placeholder="123"
+                min="1"
+                disabled={loading}
+                className="w-full md:w-48 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                ID de resolución válido obtenido desde Softpymes.
+                Consulta: /app/integration/resolutions
+              </p>
+            </div>
+
+            {/* Branch Code */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Código de sucursal
+              </label>
+              <input
+                type="text"
+                value={formData.config?.branch_code ?? '001'}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    config: {
+                      ...formData.config,
+                      branch_code: e.target.value,
+                    },
+                  })
+                }
+                placeholder="001"
+                disabled={loading}
+                className="w-full md:w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Código de sucursal en Softpymes (default: 001)
+              </p>
+            </div>
+
+            {/* Seller NIT */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                NIT del vendedor
+              </label>
+              <input
+                type="text"
+                value={formData.config?.seller_nit ?? ''}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    config: {
+                      ...formData.config,
+                      seller_nit: e.target.value,
+                    },
+                  })
+                }
+                placeholder="800123456"
+                disabled={loading}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                NIT del vendedor (opcional, usa el referer por defecto)
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Botones de acción */}
       <div className="flex items-center gap-3 pt-4 border-t">
         {onCancel && (

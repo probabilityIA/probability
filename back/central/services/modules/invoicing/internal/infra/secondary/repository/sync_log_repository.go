@@ -10,8 +10,6 @@ import (
 	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
-
-
 func (r *Repository) CreateInvoiceSyncLog(ctx context.Context, log *entities.InvoiceSyncLog) error {
 	model := mappers.SyncLogToModel(log)
 

@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import { Order, CreateOrderDTO, UpdateOrderDTO } from '../../domain/types';
-import { Button, Input, Alert } from '@/shared/ui';
+import { Product } from '../../../products/domain/types';
+import { Button, Input, Alert, Modal } from '@/shared/ui';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import ProductSelector from '../../../products/ui/components/ProductSelector';
+import ProductForm from '../../../products/ui/components/ProductForm';
+import { createOrderAction, updateOrderAction } from '../../infra/actions';
 
 interface OrderFormProps {
     order?: Order;
@@ -12,14 +17,19 @@ interface OrderFormProps {
 
 export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps) {
     const isEdit = !!order;
+    const { permissions } = usePermissions();
+    const defaultBusinessId = permissions?.business_id || 0;
 
     const [formData, setFormData] = useState({
         // Integration
         integration_id: order?.integration_id || 0,
-        platform: order?.platform || '',
+        platform: order?.platform || 'manual',
+        business_id: order?.business_id || defaultBusinessId,
 
         // Customer
         customer_name: order?.customer_name || '',
+        customer_first_name: order?.customer_first_name || '',
+        customer_last_name: order?.customer_last_name || '',
         customer_email: order?.customer_email || '',
         customer_phone: order?.customer_phone || '',
         customer_dni: order?.customer_dni || '',
@@ -45,7 +55,17 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
 
         // Status
         status: order?.status || 'pending',
+
+        // Items
+        items: order?.items || [],
+
+        // Extra
+        integration_type: order?.integration_type || '',
+        external_id: order?.external_id || '',
     });
+
+    const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+    const [showProductModal, setShowProductModal] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -57,19 +77,41 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
 
         try {
             // Validation
-            if (!formData.customer_name || !formData.total_amount) {
+            if ((!formData.customer_name && !formData.customer_first_name) || !formData.total_amount) {
                 throw new Error('Por favor completa los campos requeridos');
             }
 
-            // TODO: Call create or update action
-            console.log('Form data:', formData);
+            const data: CreateOrderDTO = {
+                ...formData,
+                items: selectedProducts.length > 0 ? selectedProducts : formData.items,
+                // Ensure customer_name is populated from first/last if missing
+                customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
+            };
 
-            if (onSuccess) onSuccess();
+            let response;
+            if (isEdit && order) {
+                response = await updateOrderAction(order.id, data as UpdateOrderDTO);
+            } else {
+                response = await createOrderAction(data);
+            }
+
+            if (response.success) {
+                if (onSuccess) onSuccess();
+            } else {
+                setError(response.message || 'Error al guardar la orden');
+            }
         } catch (err: any) {
             setError(err.message || 'Error al guardar la orden');
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleProductsChange = (products: Product[]) => {
+        setSelectedProducts(products);
+        const subtotal = products.reduce((acc, p) => acc + p.price, 0);
+        const total = subtotal + formData.tax - formData.discount + formData.shipping_cost;
+        setFormData({ ...formData, subtotal, total_amount: total });
     };
 
     // Auto-calculate total
@@ -86,44 +128,21 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                 </Alert>
             )}
 
-            {/* Integration Info */}
-            <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Información de Integración</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            ID de Integración *
-                        </label>
-                        <Input
-                            type="number"
-                            required
-                            value={formData.integration_id}
-                            onChange={(e) => setFormData({ ...formData, integration_id: parseInt(e.target.value) })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Plataforma *
-                        </label>
-                        <select
-                            required
-                            value={formData.platform}
-                            onChange={(e) => setFormData({ ...formData, platform: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="">Seleccionar...</option>
-                            <option value="shopify">Shopify</option>
-                            <option value="woocommerce">WooCommerce</option>
-                            <option value="manual">Manual</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
             {/* Customer Info */}
             <div className="bg-blue-50 p-4 rounded-lg">
                 <h3 className="text-base font-semibold text-gray-800 mb-4">Información del Cliente</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Nombre Completo
+                        </label>
+                        <Input
+                            type="text"
+                            placeholder="Se autocompleta con nombre y apellido"
+                            value={formData.customer_name}
+                            onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                        />
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Nombre *
@@ -131,8 +150,19 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                         <Input
                             type="text"
                             required
-                            value={formData.customer_name}
-                            onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
+                            value={formData.customer_first_name}
+                            onChange={(e) => setFormData({ ...formData, customer_first_name: e.target.value })}
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Apellido *
+                        </label>
+                        <Input
+                            type="text"
+                            required
+                            value={formData.customer_last_name}
+                            onChange={(e) => setFormData({ ...formData, customer_last_name: e.target.value })}
                         />
                     </div>
                     <div>
@@ -155,17 +185,18 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                             onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
                         />
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            DNI
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.customer_dni}
-                            onChange={(e) => setFormData({ ...formData, customer_dni: e.target.value })}
-                        />
-                    </div>
                 </div>
+            </div>
+
+            {/* Product Selection */}
+            <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
+                <h3 className="text-base font-semibold text-gray-800 mb-4">Productos</h3>
+                <ProductSelector
+                    businessId={formData.business_id || 0}
+                    selectedProducts={selectedProducts}
+                    onSelect={handleProductsChange}
+                    onCreateNew={() => setShowProductModal(true)}
+                />
             </div>
 
             {/* Shipping Address */}
@@ -352,6 +383,19 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                     {isEdit ? 'Actualizar Orden' : 'Crear Orden'}
                 </Button>
             </div>
+            <Modal
+                isOpen={showProductModal}
+                onClose={() => setShowProductModal(false)}
+                title="Crear Nuevo Producto"
+            >
+                <ProductForm
+                    onSuccess={() => {
+                        setShowProductModal(false);
+                        // Optional: Refresh products list if needed, but ProductSelector handles it
+                    }}
+                    onCancel={() => setShowProductModal(false)}
+                />
+            </Modal>
         </form>
     );
 }

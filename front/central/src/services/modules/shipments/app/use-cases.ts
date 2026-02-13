@@ -11,4 +11,12 @@ export class ShipmentUseCases {
     async getShipments(params?: GetShipmentsParams): Promise<PaginatedResponse<Shipment>> {
         return this.repository.getShipments(params);
     }
+
+    async trackShipment(trackingNumber: string) {
+        return this.repository.trackShipment(trackingNumber);
+    }
+
+    async cancelShipment(id: string) {
+        return this.repository.cancelShipment(id);
+    }
 }

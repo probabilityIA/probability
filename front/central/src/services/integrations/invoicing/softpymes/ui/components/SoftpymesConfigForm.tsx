@@ -14,7 +14,9 @@ import {
     Cog6ToothIcon,
     CheckBadgeIcon,
     InformationCircleIcon,
-    ArrowLeftIcon
+    ArrowLeftIcon,
+    EyeIcon,
+    EyeSlashIcon
 } from '@heroicons/react/24/outline';
 
 interface SoftpymesConfigFormProps {
@@ -27,6 +29,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [showApiSecret, setShowApiSecret] = useState(false);
 
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -41,6 +44,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
         referer: '', // Identificación de la instancia del cliente (requerido por API)
         api_url: 'https://api-integracion.softpymes.com.co',
         test_mode: false,
+        default_customer_nit: '', // NIT por defecto para clientes sin DNI
         api_key: '',
         api_secret: '',
     });
@@ -140,6 +144,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
                 referer: formData.referer,
                 api_url: formData.api_url,
                 test_mode: formData.test_mode,
+                default_customer_nit: formData.default_customer_nit || undefined,
             };
 
             const credentials: SoftpymesCredentials = {
@@ -331,6 +336,26 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
                         </span>
                     </p>
                 </div>
+
+                {/* NIT por defecto para clientes sin DNI */}
+                <div className="mt-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        NIT por Defecto para Clientes sin DNI
+                    </label>
+                    <Input
+                        type="text"
+                        value={formData.default_customer_nit}
+                        onChange={(e) => setFormData({ ...formData, default_customer_nit: e.target.value })}
+                        placeholder="222222222222"
+                        className="bg-white"
+                    />
+                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                        <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                        <span>
+                            NIT que se usará cuando un cliente no tenga DNI. En Colombia, el consumidor final es <strong>222222222222</strong>
+                        </span>
+                    </p>
+                </div>
             </div>
 
             {/* Credenciales de API */}
@@ -368,14 +393,28 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             API Secret <span className="text-red-500">*</span>
                         </label>
-                        <Input
-                            type="password"
-                            value={formData.api_secret}
-                            onChange={(e) => setFormData({ ...formData, api_secret: e.target.value })}
-                            placeholder="Ingresa tu API Secret de Softpymes"
-                            required
-                            className="bg-white font-mono text-sm"
-                        />
+                        <div className="relative">
+                            <Input
+                                type={showApiSecret ? "text" : "password"}
+                                value={formData.api_secret}
+                                onChange={(e) => setFormData({ ...formData, api_secret: e.target.value })}
+                                placeholder="Ingresa tu API Secret de Softpymes"
+                                required
+                                className="bg-white font-mono text-sm pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowApiSecret(!showApiSecret)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                tabIndex={-1}
+                            >
+                                {showApiSecret ? (
+                                    <EyeSlashIcon className="w-5 h-5" />
+                                ) : (
+                                    <EyeIcon className="w-5 h-5" />
+                                )}
+                            </button>
+                        </div>
                     </div>
 
                     {/* Test Connection Button */}
