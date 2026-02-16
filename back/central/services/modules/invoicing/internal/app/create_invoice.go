@@ -277,10 +277,8 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		Str("correlation_id", correlationID).
 		Msg("📤 Invoice request published - waiting for provider response")
 
-	// 17. Publicar evento SSE en tiempo real (factura creada pero pending)
-	if err := uc.ssePublisher.PublishInvoiceCreated(ctx, invoice); err != nil {
-		uc.log.Error(ctx).Err(err).Msg("Failed to publish invoice created SSE event")
-	}
+	// 17. NO publicar SSE aquí - la factura aún está "pending"
+	// El response_consumer publicará el SSE correcto cuando Softpymes confirme (invoice.created) o falle (invoice.failed)
 
 	// 18. Retornar invoice inmediatamente (estado pending)
 	// El consumer actualizará el invoice cuando reciba la respuesta del proveedor

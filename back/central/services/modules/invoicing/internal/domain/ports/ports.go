@@ -90,6 +90,7 @@ type IRepository interface {
 	CreateJobItems(ctx context.Context, items []*entities.BulkInvoiceJobItem) error
 	GetJobByID(ctx context.Context, jobID string) (*entities.BulkInvoiceJob, error)
 	GetJobItems(ctx context.Context, jobID string) ([]*entities.BulkInvoiceJobItem, error)
+	GetJobItemByInvoiceID(ctx context.Context, invoiceID uint) (*entities.BulkInvoiceJobItem, error)
 	UpdateJob(ctx context.Context, job *entities.BulkInvoiceJob) error
 	UpdateJobItem(ctx context.Context, item *entities.BulkInvoiceJobItem) error
 	ListJobs(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.BulkInvoiceJob, int64, error)

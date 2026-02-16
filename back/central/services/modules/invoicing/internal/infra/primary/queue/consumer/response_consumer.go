@@ -199,6 +199,9 @@ func (c *ResponseConsumer) handleSuccess(
 		c.log.Error(ctx).Err(err).Msg("Failed to publish SSE event")
 	}
 
+	// Actualizar contadores de bulk job si la factura pertenece a uno
+	c.updateBulkJobOnResult(ctx, invoice.ID, true)
+
 	c.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).
 		Str("invoice_number", invoice.InvoiceNumber).
@@ -262,6 +265,82 @@ func (c *ResponseConsumer) handleError(
 	if err := c.ssePublisher.PublishInvoiceFailed(ctx, invoice, response.Error); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Failed to publish SSE failed event")
 	}
+
+	// Actualizar contadores de bulk job si la factura pertenece a uno
+	c.updateBulkJobOnResult(ctx, invoice.ID, false)
+}
+
+// updateBulkJobOnResult actualiza los contadores del bulk job cuando se recibe el resultado del proveedor
+func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID uint, success bool) {
+	// Buscar si esta factura pertenece a un bulk job
+	jobItem, err := c.repo.GetJobItemByInvoiceID(ctx, invoiceID)
+	if err != nil {
+		c.log.Warn(ctx).Err(err).Uint("invoice_id", invoiceID).Msg("Error checking bulk job item")
+		return
+	}
+	if jobItem == nil {
+		return // No pertenece a un bulk job
+	}
+
+	// Actualizar estado del item
+	if success {
+		jobItem.Status = "success"
+	} else {
+		jobItem.Status = "failed"
+	}
+	if updateErr := c.repo.UpdateJobItem(ctx, jobItem); updateErr != nil {
+		c.log.Error(ctx).Err(updateErr).Msg("Failed to update bulk job item status")
+	}
+
+	// Incrementar contadores del job
+	successful, failed := 0, 0
+	if success {
+		successful = 1
+	} else {
+		failed = 1
+	}
+	if incrementErr := c.repo.IncrementJobCounters(ctx, jobItem.JobID, 0, successful, failed); incrementErr != nil {
+		c.log.Error(ctx).Err(incrementErr).Str("job_id", jobItem.JobID).Msg("Failed to increment bulk job counters")
+		return
+	}
+
+	// Publicar progreso SSE del job
+	job, err := c.repo.GetJobByID(ctx, jobItem.JobID)
+	if err != nil || job == nil {
+		return
+	}
+
+	if pubErr := c.ssePublisher.PublishBulkJobProgress(ctx, job); pubErr != nil {
+		c.log.Error(ctx).Err(pubErr).Str("job_id", jobItem.JobID).Msg("Failed to publish bulk job progress SSE")
+	}
+
+	// Verificar si el job completó (successful + failed = total)
+	if job.Successful+job.Failed >= job.TotalOrders {
+		c.completeBulkJob(ctx, job)
+	}
+}
+
+// completeBulkJob marca un bulk job como completado
+func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.BulkInvoiceJob) {
+	now := time.Now()
+	job.Status = "completed"
+	job.CompletedAt = &now
+
+	if updateErr := c.repo.UpdateJob(ctx, job); updateErr != nil {
+		c.log.Error(ctx).Err(updateErr).Str("job_id", job.ID).Msg("Failed to mark bulk job as completed")
+		return
+	}
+
+	if pubErr := c.ssePublisher.PublishBulkJobCompleted(ctx, job); pubErr != nil {
+		c.log.Error(ctx).Err(pubErr).Str("job_id", job.ID).Msg("Failed to publish bulk job completed SSE")
+	}
+
+	c.log.Info(ctx).
+		Str("job_id", job.ID).
+		Int("successful", job.Successful).
+		Int("failed", job.Failed).
+		Int("total", job.TotalOrders).
+		Msg("Bulk invoice job completed (from response consumer)")
 }
 
 // calculateNextRetry calcula el próximo intento (exponential backoff)

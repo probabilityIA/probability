@@ -94,6 +94,21 @@ func (r *Repository) GetJobItems(ctx context.Context, jobID string) ([]*entities
 	return items, nil
 }
 
+// GetJobItemByInvoiceID busca un item de job por el ID de la factura asociada
+func (r *Repository) GetJobItemByInvoiceID(ctx context.Context, invoiceID uint) (*entities.BulkInvoiceJobItem, error) {
+	var itemModel models.BulkInvoiceJobItem
+	if err := r.db.Conn(ctx).
+		Where("invoice_id = ?", invoiceID).
+		First(&itemModel).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil // No pertenece a un bulk job
+		}
+		return nil, err
+	}
+
+	return mappers.JobItemToDomain(&itemModel), nil
+}
+
 // UpdateBulkInvoiceJob actualiza un job existente en la base de datos (todos los campos)
 func (r *Repository) UpdateJob(ctx context.Context, job *entities.BulkInvoiceJob) error {
 	jobUUID, err := uuid.Parse(job.ID)

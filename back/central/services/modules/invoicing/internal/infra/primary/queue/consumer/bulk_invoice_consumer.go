@@ -97,11 +97,11 @@ func (c *BulkInvoiceConsumer) handleMessage(message []byte) error {
 		return nil
 	}
 
-	// 7. Factura creada exitosamente
+	// 7. Solicitud de factura enviada al proveedor (aún pendiente de confirmación)
 	c.handleInvoiceSuccess(ctx, msg.JobID, msg.OrderID, invoice.ID)
 
-	// 8. Verificar si el job completó
-	c.checkJobCompletion(ctx, msg.JobID)
+	// 8. NO verificar job completion aquí - el response_consumer lo hará
+	// cuando reciba la respuesta de Softpymes (success o failure)
 
 	return nil
 }
@@ -137,6 +137,10 @@ func (c *BulkInvoiceConsumer) handleInvoiceError(ctx context.Context, jobID, ord
 	// Publicar progreso SSE
 	c.publishJobProgress(ctx, jobID)
 
+	// Para errores de pre-procesamiento (validación, BD, cola), verificar completion
+	// ya que estas facturas NO pasarán por el response_consumer
+	c.checkJobCompletion(ctx, jobID)
+
 	c.log.Warn(ctx).
 		Err(err).
 		Str("job_id", jobID).
@@ -144,20 +148,15 @@ func (c *BulkInvoiceConsumer) handleInvoiceError(ctx context.Context, jobID, ord
 		Msg("Invoice creation failed in bulk job")
 }
 
-// handleInvoiceSuccess maneja cuando la creación de factura tiene éxito
+// handleInvoiceSuccess maneja cuando la solicitud de factura fue enviada al proveedor
+// NOTA: En este punto la factura está en estado "pending" - aún NO fue confirmada por Softpymes.
+// El response_consumer publicará el SSE correcto (invoice.created o invoice.failed) cuando
+// Softpymes responda, y también actualizará los contadores del job (successful/failed).
 func (c *BulkInvoiceConsumer) handleInvoiceSuccess(ctx context.Context, jobID, orderID string, invoiceID uint) {
-	// Obtener factura completa para publicar SSE individual
-	invoice, err := c.repo.GetInvoiceByID(ctx, invoiceID)
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to get invoice for SSE event")
-	} else {
-		// Publicar evento individual de factura creada
-		if pubErr := c.ssePublisher.PublishInvoiceCreated(ctx, invoice); pubErr != nil {
-			c.log.Error(ctx).Err(pubErr).Msg("Failed to publish invoice.created SSE")
-		}
-	}
+	// NO publicar invoice.created SSE aquí - la factura aún está pendiente de confirmación.
+	// El response_consumer se encarga del SSE cuando Softpymes confirme o falle.
 
-	// Actualizar item como success
+	// Actualizar item como processing (enviado al proveedor, esperando respuesta)
 	now := time.Now()
 	items, err := c.repo.GetJobItems(ctx, jobID)
 	if err != nil {
@@ -165,24 +164,24 @@ func (c *BulkInvoiceConsumer) handleInvoiceSuccess(ctx context.Context, jobID, o
 		return
 	}
 
-	// Encontrar el item específico
+	// Encontrar el item específico y vincularlo con la factura
 	for _, item := range items {
 		if item.OrderID == orderID {
-			item.Status = entities.JobItemStatusSuccess
+			item.Status = entities.JobItemStatusProcessing
 			item.InvoiceID = &invoiceID
 			item.ProcessedAt = &now
 			item.ErrorMessage = nil
 
 			if updateErr := c.repo.UpdateJobItem(ctx, item); updateErr != nil {
-				c.log.Error(ctx).Err(updateErr).Str("job_id", jobID).Str("order_id", orderID).Msg("Failed to update item to success")
+				c.log.Error(ctx).Err(updateErr).Str("job_id", jobID).Str("order_id", orderID).Msg("Failed to update item to processing")
 			}
 			break
 		}
 	}
 
-	// Incrementar contadores del job (processed +1, successful +1)
-	if incrementErr := c.repo.IncrementJobCounters(ctx, jobID, 1, 1, 0); incrementErr != nil {
-		c.log.Error(ctx).Err(incrementErr).Str("job_id", jobID).Msg("Failed to increment job counters for successful invoice")
+	// Solo incrementar "processed" (NO "successful" - eso lo hará el response_consumer)
+	if incrementErr := c.repo.IncrementJobCounters(ctx, jobID, 1, 0, 0); incrementErr != nil {
+		c.log.Error(ctx).Err(incrementErr).Str("job_id", jobID).Msg("Failed to increment job counters")
 	}
 
 	// Publicar progreso SSE
