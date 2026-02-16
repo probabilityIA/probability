@@ -9,7 +9,7 @@ import (
 const (
 	// TTLs
 	ttlMetadata    = 24 * time.Hour
-	ttlCredentials = 1 * time.Hour
+	ttlCredentials = 24 * time.Hour
 )
 
 // integrationKey retorna la key de metadata de integración

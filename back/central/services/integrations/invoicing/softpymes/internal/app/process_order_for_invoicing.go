@@ -123,17 +123,25 @@ func (uc *invoicingUseCase) ProcessOrderForInvoicing(ctx context.Context, event 
 		Interface("integration", integration).
 		Msg("📋 Integration loaded from cache")
 
-	// 6. ✅ NUEVO - Obtener credenciales desde cache (desencriptadas)
+	// 6. Obtener credenciales desde cache, con fallback a DB si el cache expiró
 	apiKey, err := uc.integrationCache.GetCredential(ctx, integrationID, "api_key")
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("❌ Failed to get api_key from cache")
-		return fmt.Errorf("failed to get api_key: %w", err)
+		uc.log.Warn(ctx).Err(err).Msg("⚠️ Cache miss for api_key - falling back to DB decrypt")
+		apiKey, err = uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_key")
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Msg("❌ Failed to get api_key from DB fallback")
+			return fmt.Errorf("failed to get api_key: %w", err)
+		}
 	}
 
 	apiSecret, err := uc.integrationCache.GetCredential(ctx, integrationID, "api_secret")
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Msg("❌ Failed to get api_secret from cache")
-		return fmt.Errorf("failed to get api_secret: %w", err)
+		uc.log.Warn(ctx).Err(err).Msg("⚠️ Cache miss for api_secret - falling back to DB decrypt")
+		apiSecret, err = uc.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_secret")
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Msg("❌ Failed to get api_secret from DB fallback")
+			return fmt.Errorf("failed to get api_secret: %w", err)
+		}
 	}
 
 	// 7. Construir invoiceData (en memoria)
