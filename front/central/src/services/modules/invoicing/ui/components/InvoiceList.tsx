@@ -4,11 +4,11 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
 import { EyeIcon } from '@heroicons/react/24/outline';
 import { Table } from '@/shared/ui/table';
-import { Button } from '@/shared/ui/button';
 import { Badge } from '@/shared/ui/badge';
+import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
@@ -22,17 +22,17 @@ import type { Invoice, InvoiceFilters } from '../../domain/types';
 
 interface InvoiceListProps {
   businessId: number;
-  filters?: InvoiceFilters;
   onOpenBulkModal?: () => void;
 }
 
 const PAGE_SIZE_DEFAULT = 20;
 
 export const InvoiceList = forwardRef(function InvoiceList(
-  { businessId, filters = {} }: InvoiceListProps,
+  { businessId }: InvoiceListProps,
   ref
 ) {
   const { showToast } = useToast();
+  const [filters, setFilters] = useState<InvoiceFilters>({});
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalCount, setTotalCount] = useState(0);
@@ -183,6 +183,100 @@ export const InvoiceList = forwardRef(function InvoiceList(
     return <Badge type={config.type}>{config.label}</Badge>;
   };
 
+  // ===== DynamicFilters =====
+  const availableFilters: FilterOption[] = useMemo(() => [
+    {
+      key: 'invoice_number',
+      label: 'Nº Factura',
+      type: 'text',
+      placeholder: 'Buscar por número de factura...',
+    },
+    {
+      key: 'order_number',
+      label: 'Nº Orden',
+      type: 'text',
+      placeholder: 'Buscar por #orden o ID Shopify...',
+    },
+    {
+      key: 'customer_name',
+      label: 'Cliente',
+      type: 'text',
+      placeholder: 'Buscar por nombre de cliente...',
+    },
+    {
+      key: 'status',
+      label: 'Estado',
+      type: 'select',
+      options: [
+        { value: 'issued', label: 'Emitida' },
+        { value: 'pending', label: 'Pendiente' },
+        { value: 'cancelled', label: 'Cancelada' },
+        { value: 'failed', label: 'Fallida' },
+      ],
+    },
+    {
+      key: 'created_at',
+      label: 'Rango de fechas',
+      type: 'date-range',
+    },
+  ], []);
+
+  const activeFilters: ActiveFilter[] = useMemo(() => {
+    const active: ActiveFilter[] = [];
+
+    if (filters.invoice_number) {
+      active.push({ key: 'invoice_number', label: 'Nº Factura', value: filters.invoice_number, type: 'text' });
+    }
+    if (filters.order_number) {
+      active.push({ key: 'order_number', label: 'Nº Orden', value: filters.order_number, type: 'text' });
+    }
+    if (filters.customer_name) {
+      active.push({ key: 'customer_name', label: 'Cliente', value: filters.customer_name, type: 'text' });
+    }
+    if (filters.status) {
+      const statusLabels: Record<string, string> = { issued: 'Emitida', pending: 'Pendiente', cancelled: 'Cancelada', failed: 'Fallida' };
+      active.push({ key: 'status', label: 'Estado', value: statusLabels[filters.status] || filters.status, type: 'select' });
+    }
+    if (filters.start_date || filters.end_date) {
+      active.push({
+        key: 'created_at',
+        label: 'Rango de fechas',
+        value: { start: filters.start_date, end: filters.end_date },
+        type: 'date-range',
+      });
+    }
+
+    return active;
+  }, [filters]);
+
+  const handleAddFilter = useCallback((filterKey: string, value: any) => {
+    setFilters((prev) => {
+      const newFilters = { ...prev };
+      if (filterKey === 'created_at' && typeof value === 'object') {
+        newFilters.start_date = value.start;
+        newFilters.end_date = value.end;
+      } else {
+        (newFilters as any)[filterKey] = value;
+      }
+      return newFilters;
+    });
+    setCurrentPage(1);
+  }, []);
+
+  const handleRemoveFilter = useCallback((filterKey: string) => {
+    setFilters((prev) => {
+      const newFilters = { ...prev };
+      if (filterKey === 'created_at') {
+        delete newFilters.start_date;
+        delete newFilters.end_date;
+      } else {
+        delete (newFilters as any)[filterKey];
+      }
+      return newFilters;
+    });
+    setCurrentPage(1);
+  }, []);
+
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
 
   const columns = [
@@ -239,27 +333,19 @@ export const InvoiceList = forwardRef(function InvoiceList(
       label: 'Fecha',
       render: (_: unknown, invoice: Invoice) => (
         <div className="text-sm text-gray-600">
-          {new Date(invoice.created_at).toLocaleDateString('es-CO', {
+          {new Date(invoice.created_at).toLocaleString('es-CO', {
             day: '2-digit',
             month: 'short',
             year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
           })}
         </div>
       ),
     },
     {
       key: 'actions',
-      label: (
-        <button
-          onClick={() => setShowBulkModal(true)}
-          className="p-1.5 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
-          title="Crear Facturas"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-      ),
+      label: '',
       width: '50px',
       align: 'right' as const,
       render: (_: unknown, invoice: Invoice) => (
@@ -279,6 +365,28 @@ export const InvoiceList = forwardRef(function InvoiceList(
 
   return (
     <>
+      {/* Filtros + botón crear */}
+      <div className="invoiceFilters flex items-center mb-4">
+        <div className="flex-1 min-w-0">
+          <DynamicFilters
+            availableFilters={availableFilters}
+            activeFilters={activeFilters}
+            onAddFilter={handleAddFilter}
+            onRemoveFilter={handleRemoveFilter}
+            className="!p-0 !border-0 !shadow-none !rounded-none"
+          />
+        </div>
+        <button
+          onClick={() => setShowBulkModal(true)}
+          className="ml-4 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Crear Facturas"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
+
       {/* Tabla con paginación */}
       <div className="invoiceTable">
         <Table
@@ -301,6 +409,25 @@ export const InvoiceList = forwardRef(function InvoiceList(
         />
 
         <style jsx>{`
+          /* Botones morados en filtros */
+          :global(.invoiceFilters) :global(button.btn-primary),
+          :global(.invoiceFilters) :global(.btn-primary) {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%) !important;
+            border-color: #7c3aed !important;
+          }
+          :global(.invoiceFilters) :global(button.btn-primary:hover),
+          :global(.invoiceFilters) :global(.btn-primary:hover) {
+            filter: brightness(1.08);
+          }
+          /* Chips morados */
+          :global(.invoiceFilters) :global(.bg-blue-50) {
+            background-color: rgba(124, 58, 237, 0.08) !important;
+            color: #6d28d9 !important;
+          }
+          :global(.invoiceFilters) :global(.text-blue-800) {
+            color: #6d28d9 !important;
+          }
+
           /* CTA morado (solo esta pantalla) */
           .invoiceHeader :global(.btn-primary) {
             background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);

@@ -88,6 +88,27 @@ func (r *Repository) ListInvoices(ctx context.Context, filters map[string]interf
 		query = query.Where("invoicing_provider_id = ?", providerID)
 	}
 
+	if invoiceNumber, ok := filters["invoice_number"].(string); ok && invoiceNumber != "" {
+		query = query.Where("invoice_number ILIKE ?", "%"+invoiceNumber+"%")
+	}
+
+	if customerName, ok := filters["customer_name"].(string); ok && customerName != "" {
+		query = query.Where("customer_name ILIKE ?", "%"+customerName+"%")
+	}
+
+	if orderNumber, ok := filters["order_number"].(string); ok && orderNumber != "" {
+		query = query.Where("order_id IN (SELECT id FROM orders WHERE (order_number ILIKE ? OR external_id ILIKE ?) AND deleted_at IS NULL)",
+			"%"+orderNumber+"%", "%"+orderNumber+"%")
+	}
+
+	if startDate, ok := filters["start_date"].(string); ok && startDate != "" {
+		query = query.Where("invoices.created_at >= ?", startDate)
+	}
+
+	if endDate, ok := filters["end_date"].(string); ok && endDate != "" {
+		query = query.Where("invoices.created_at < ?::date + interval '1 day'", endDate)
+	}
+
 	// Contar total antes de paginar
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to count invoices: %w", err)

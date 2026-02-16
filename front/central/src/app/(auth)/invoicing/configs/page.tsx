@@ -46,9 +46,11 @@ export default async function InvoicingConfigsPage({ searchParams }: PageProps) 
 
   return (
     <ConfigsClient
+      key={selectedBusinessId || 'all'}
       initialConfigs={configs}
       businesses={businesses}
       isSuperAdmin={isSuperAdmin}
+      selectedBusinessId={selectedBusinessId}
     />
   );
 }

@@ -104,7 +104,7 @@ func New(
 	// ═══════════════════════════════════════════════════════════════
 
 	// HTTP Handlers
-	handler := handlers.New(useCase, repo, moduleLogger)
+	handler := handlers.New(useCase, repo, moduleLogger, config)
 	handler.RegisterRoutes(router)
 
 	// Consumers (RabbitMQ)

@@ -66,10 +66,11 @@ type handler struct {
 }
 
 // New crea un nuevo handler de facturación
-func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger) IHandler {
+func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger, config env.IConfig) IHandler {
 	return &handler{
 		useCase: useCase,
 		repo:    repo,
+		config:  config,
 		log:     logger.WithModule("invoicing.handler"),
 	}
 }

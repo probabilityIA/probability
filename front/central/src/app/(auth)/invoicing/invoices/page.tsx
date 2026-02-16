@@ -6,7 +6,6 @@
 'use client';
 
 import { useRef } from 'react';
-import { Button } from '@/shared/ui/button';
 import { InvoiceList } from '@/services/modules/invoicing/ui/components/InvoiceList';
 import { InvoicingHeader } from '@/services/modules/invoicing/ui/components/InvoicingHeader';
 import { usePermissions } from '@/shared/contexts/permissions-context';

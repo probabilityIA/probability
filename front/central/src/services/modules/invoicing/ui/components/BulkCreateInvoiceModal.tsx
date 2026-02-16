@@ -289,8 +289,8 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           onClick={onClose}
         />
 
-        {/* Modal 80% del ancho */}
-        <div className="relative bg-white rounded-xl shadow-2xl w-[80%] max-h-[90vh] flex flex-col overflow-hidden">
+        {/* Modal 95% de la pantalla */}
+        <div className="relative bg-white rounded-xl shadow-2xl w-[95vw] h-[95vh] flex flex-col overflow-hidden">
           {/* Header con gradiente morado */}
           <div className="flex items-center justify-between p-8 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9]">
             <div>
@@ -516,10 +516,31 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                               )}
                             </div>
 
-                            {/* Error message */}
-                            {orderStatus?.status === 'failed' && orderStatus.error_message && (
-                              <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700">
-                                <span className="font-semibold">Error:</span> {orderStatus.error_message}
+                            {/* Resultado: siempre visible cuando hay status */}
+                            {orderStatus?.status === 'success' && (
+                              <div className="mt-2 p-2.5 bg-green-100 border border-green-300 rounded-lg text-xs text-green-800">
+                                <div className="flex items-start gap-2">
+                                  <CheckCircleIcon className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
+                                  <div>
+                                    <p className="font-semibold">Factura creada exitosamente</p>
+                                    {orderStatus.invoice_id && (
+                                      <p className="mt-0.5 text-green-700">ID: {orderStatus.invoice_id}</p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            {orderStatus?.status === 'failed' && (
+                              <div className="mt-2 p-2.5 bg-red-100 border border-red-300 rounded-lg text-xs text-red-800">
+                                <div className="flex items-start gap-2">
+                                  <XCircleIcon className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                                  <div className="min-w-0 flex-1">
+                                    <p className="font-semibold">Error al crear factura</p>
+                                    {orderStatus.error_message && (
+                                      <p className="mt-0.5 text-red-700 break-words whitespace-pre-wrap">{orderStatus.error_message}</p>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
                             )}
                           </div>

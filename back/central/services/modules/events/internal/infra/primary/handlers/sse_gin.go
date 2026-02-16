@@ -299,7 +299,6 @@ func (h *SSEHandler) preloadCacheEventsForSuperUser(w http.ResponseWriter) {
 
 // eventToSSEJSON convierte un evento a JSON para enviar por SSE
 func (h *SSEHandler) eventToSSEJSON(event domain.Event) string {
-	// Usar el mismo formato que el manager de eventos
 	eventData := map[string]interface{}{
 		"id":          event.ID,
 		"type":        event.Type,
@@ -308,13 +307,9 @@ func (h *SSEHandler) eventToSSEJSON(event domain.Event) string {
 		"metadata":    event.Metadata,
 	}
 
-	// Agregar campos específicos según el tipo de evento
+	// Incluir data como campo anidado (consistente con EventManager.eventToJSON)
 	if event.Data != nil {
-		if dataMap, ok := event.Data.(map[string]interface{}); ok {
-			for key, value := range dataMap {
-				eventData[key] = value
-			}
-		}
+		eventData["data"] = event.Data
 	}
 
 	// Convertir a JSON

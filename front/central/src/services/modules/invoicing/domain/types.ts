@@ -270,6 +270,11 @@ export interface InvoiceFilters {
   integration_id?: number;
   status?: string;
   provider_id?: number;
+  invoice_number?: string;
+  order_number?: string;
+  customer_name?: string;
+  start_date?: string;
+  end_date?: string;
   page?: number;
   page_size?: number;
 }

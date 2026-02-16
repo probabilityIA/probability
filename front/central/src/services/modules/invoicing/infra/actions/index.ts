@@ -81,6 +81,11 @@ export async function getInvoicesAction(filters?: InvoiceFilters): Promise<Pagin
   if (filters?.integration_id) params.append('integration_id', filters.integration_id.toString());
   if (filters?.status) params.append('status', filters.status);
   if (filters?.provider_id) params.append('provider_id', filters.provider_id.toString());
+  if (filters?.invoice_number) params.append('invoice_number', filters.invoice_number);
+  if (filters?.order_number) params.append('order_number', filters.order_number);
+  if (filters?.customer_name) params.append('customer_name', filters.customer_name);
+  if (filters?.start_date) params.append('start_date', filters.start_date);
+  if (filters?.end_date) params.append('end_date', filters.end_date);
   if (filters?.page) params.append('page', filters.page.toString());
   if (filters?.page_size) params.append('page_size', filters.page_size.toString());
 

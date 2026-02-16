@@ -27,9 +27,10 @@ interface ConfigsClientProps {
   initialConfigs: InvoicingConfig[];
   businesses?: Business[];
   isSuperAdmin: boolean;
+  selectedBusinessId?: number | null;
 }
 
-export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: ConfigsClientProps) {
+export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, selectedBusinessId }: ConfigsClientProps) {
   const { showToast } = useToast();
   const router = useRouter();
   const [configs, setConfigs] = useState<InvoicingConfig[]>(initialConfigs);
@@ -293,6 +294,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin }: Conf
             Seleccionar Negocio (Super Admin)
           </label>
           <select
+            defaultValue={selectedBusinessId?.toString() || ''}
             onChange={(e) => handleBusinessChange(e.target.value)}
             className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
           >

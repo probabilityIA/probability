@@ -38,6 +38,29 @@ func (h *handler) ListInvoices(c *gin.Context) {
 		filters["status"] = status
 	}
 
+	// Invoice Number (search)
+	if invoiceNumber := c.Query("invoice_number"); invoiceNumber != "" {
+		filters["invoice_number"] = invoiceNumber
+	}
+
+	// Order Number (search)
+	if orderNumber := c.Query("order_number"); orderNumber != "" {
+		filters["order_number"] = orderNumber
+	}
+
+	// Customer Name (search)
+	if customerName := c.Query("customer_name"); customerName != "" {
+		filters["customer_name"] = customerName
+	}
+
+	// Date range
+	if startDate := c.Query("start_date"); startDate != "" {
+		filters["start_date"] = startDate
+	}
+	if endDate := c.Query("end_date"); endDate != "" {
+		filters["end_date"] = endDate
+	}
+
 	// Provider ID
 	if providerID := c.Query("provider_id"); providerID != "" {
 		id, _ := strconv.ParseUint(providerID, 10, 32)
