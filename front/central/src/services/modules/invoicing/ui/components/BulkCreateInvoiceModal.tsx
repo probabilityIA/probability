@@ -315,7 +315,52 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
 
           {/* Content */}
           <div className="flex-1 overflow-y-auto p-8 bg-white">
-            {loading ? (
+            {/* Filtro de Business (solo Super Admin) - siempre visible arriba */}
+            {isSuperAdmin && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Seleccionar Negocio <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={selectedBusinessId ?? ''}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    setShowBusinessAlert(false);
+                    handleBusinessFilterChange(value === '' ? null : parseInt(value));
+                  }}
+                  className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    superAdminNeedsBusiness ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
+                  }`}
+                  disabled={loadingBusinesses}
+                >
+                  <option value="">-- Selecciona un negocio --</option>
+                  {businesses.map((business) => (
+                    <option key={business.id} value={business.id}>
+                      {business.name}
+                    </option>
+                  ))}
+                </select>
+                {loadingBusinesses && (
+                  <p className="text-xs text-gray-500 mt-1">Cargando negocios...</p>
+                )}
+                {superAdminNeedsBusiness && (
+                  <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-lg">
+                    <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-amber-800">
+                      Debes seleccionar un negocio antes de poder seleccionar ordenes y facturar.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Contenido principal: ordenes */}
+            {superAdminNeedsBusiness ? (
+              <div className="py-8 text-center text-gray-400">
+                <ExclamationTriangleIcon className="w-12 h-12 mx-auto mb-3 text-amber-300" />
+                <p className="text-gray-500">Selecciona un negocio para ver las ordenes facturables</p>
+              </div>
+            ) : loading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
                 <p className="mt-4 text-gray-600">Cargando órdenes facturables...</p>
@@ -339,7 +384,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   </div>
                 ) : (
                   <button
-                    onClick={() => loadOrders()}
+                    onClick={() => loadOrders(selectedBusinessId)}
                     className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded"
                   >
                     Reintentar
@@ -360,45 +405,6 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   Selecciona las órdenes para las cuales deseas crear facturas
                   electrónicas. Cada orden se procesará individualmente.
                 </p>
-
-                {/* Filtro de Business (solo Super Admin) */}
-                {isSuperAdmin && (
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Seleccionar Negocio <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={selectedBusinessId ?? ''}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setShowBusinessAlert(false);
-                        handleBusinessFilterChange(value === '' ? null : parseInt(value));
-                      }}
-                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                        superAdminNeedsBusiness ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
-                      }`}
-                      disabled={loadingBusinesses}
-                    >
-                      <option value="">-- Selecciona un negocio --</option>
-                      {businesses.map((business) => (
-                        <option key={business.id} value={business.id}>
-                          {business.name}
-                        </option>
-                      ))}
-                    </select>
-                    {loadingBusinesses && (
-                      <p className="text-xs text-gray-500 mt-1">Cargando negocios...</p>
-                    )}
-                    {superAdminNeedsBusiness && (
-                      <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-lg">
-                        <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-amber-800">
-                          Como super administrador, debes seleccionar un negocio antes de poder seleccionar ordenes y facturar.
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
 
                 {/* Búsqueda */}
                 <div className="mb-6 relative">
