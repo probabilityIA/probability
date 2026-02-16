@@ -16,6 +16,7 @@ interface ShipmentGuideModalProps {
     onClose: () => void;
     order?: Order;
     onGuideGenerated?: (trackingNumber: string) => void;
+    recommendedCarrier?: string;
 }
 
 // Step 1: Origin/Destination/Package Schema
@@ -69,7 +70,7 @@ const STEPS = [
     { id: 4, label: "Pago" },
 ];
 
-export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGenerated }: ShipmentGuideModalProps) {
+export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGenerated, recommendedCarrier }: ShipmentGuideModalProps) {
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

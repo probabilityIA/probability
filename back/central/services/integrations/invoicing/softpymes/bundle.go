@@ -59,23 +59,29 @@ func New(
 	logger.Info(context.Background()).Msg("✅ Response publisher initialized")
 
 	// 3. Invoice Request Consumer (ÚNICO consumer - procesa requests desde Invoicing Module)
-	invoiceRequestConsumer := consumer.NewInvoiceRequestConsumer(
-		rabbit,
-		coreIntegration,
-		httpClient, // Concrete *client.Client type
-		responsePublisher,
-		logger,
-	)
-	logger.Info(context.Background()).Msg("✅ Invoice request consumer initialized")
+	var invoiceRequestConsumer *consumer.InvoiceRequestConsumer
+	if rabbit != nil {
+		invoiceRequestConsumer = consumer.NewInvoiceRequestConsumer(
+			rabbit,
+			coreIntegration,
+			httpClient, // Concrete *client.Client type
+			responsePublisher,
+			logger,
+		)
+		logger.Info(context.Background()).Msg("✅ Invoice request consumer initialized")
 
-	// 4. Iniciar consumer en goroutine
-	go func() {
-		ctx := context.Background()
-		logger.Info(ctx).Msg("🚀 Starting Softpymes invoice request consumer in background...")
-		if err := invoiceRequestConsumer.Start(ctx); err != nil {
-			logger.Error(ctx).Err(err).Msg("❌ Invoice request consumer failed to start or stopped with error")
-		}
-	}()
+		// 4. Iniciar consumer en goroutine
+		go func() {
+			ctx := context.Background()
+			logger.Info(ctx).Msg("🚀 Starting Softpymes invoice request consumer in background...")
+			if err := invoiceRequestConsumer.Start(ctx); err != nil {
+				logger.Error(ctx).Err(err).Msg("❌ Invoice request consumer failed to start or stopped with error")
+			}
+		}()
+	} else {
+		logger.Warn(context.Background()).
+			Msg("❌ RabbitMQ no disponible, consumer de facturación (Softpymes) deshabilitado")
+	}
 
 	logger.Info(context.Background()).Msg("✅ Softpymes bundle initialized (HTTP client + RabbitMQ async consumer)")
 
