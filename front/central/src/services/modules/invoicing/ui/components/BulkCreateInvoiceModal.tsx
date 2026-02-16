@@ -510,23 +510,43 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   {bulkProgress.processed ?? 0}/{bulkProgress.total_orders ?? 0}
                 </span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className={`h-3 rounded-full transition-all duration-300 ${
-                    bulkCompleted ? 'bg-green-500' : 'bg-blue-600'
-                  }`}
-                  style={{ width: `${Math.min(bulkProgress.progress ?? 0, 100)}%` }}
-                />
+              <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden flex">
+                {bulkCompleted || (bulkProgress.successful ?? 0) > 0 || (bulkProgress.failed ?? 0) > 0 ? (
+                  <>
+                    {/* Segmento verde (exitosas) */}
+                    {(bulkProgress.successful ?? 0) > 0 && (
+                      <div
+                        className="h-3 bg-green-500 transition-all duration-300"
+                        style={{
+                          width: `${((bulkProgress.successful ?? 0) / (bulkProgress.total_orders || 1)) * 100}%`,
+                        }}
+                      />
+                    )}
+                    {/* Segmento rojo (fallidas) */}
+                    {(bulkProgress.failed ?? 0) > 0 && (
+                      <div
+                        className="h-3 bg-red-500 transition-all duration-300"
+                        style={{
+                          width: `${((bulkProgress.failed ?? 0) / (bulkProgress.total_orders || 1)) * 100}%`,
+                        }}
+                      />
+                    )}
+                  </>
+                ) : (
+                  /* Barra azul mientras procesa (sin resultados aún) */
+                  <div
+                    className="h-3 bg-blue-600 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(bulkProgress.progress ?? 0, 100)}%` }}
+                  />
+                )}
               </div>
               <div className="flex gap-4 mt-2 text-xs text-gray-500">
                 <span className="text-green-600">
                   Exitosas: {bulkProgress.successful ?? 0}
                 </span>
-                {(bulkProgress.failed ?? 0) > 0 && (
-                  <span className="text-red-600">
-                    Fallidas: {bulkProgress.failed}
-                  </span>
-                )}
+                <span className="text-red-600">
+                  Fallidas: {bulkProgress.failed ?? 0}
+                </span>
               </div>
             </div>
           )}
