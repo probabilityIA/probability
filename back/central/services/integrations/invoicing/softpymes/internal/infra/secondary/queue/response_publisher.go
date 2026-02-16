@@ -64,6 +64,13 @@ func (p *ResponsePublisher) PublishResponse(ctx context.Context, response *Invoi
 	}
 
 	// Publicar en RabbitMQ
+	if p.queue == nil {
+		p.log.Warn(ctx).
+			Uint("invoice_id", response.InvoiceID).
+			Msg("RabbitMQ client is nil, cannot publish response")
+		return nil // No retornamos error para no romper el flujo, pero logueamos
+	}
+
 	if err := p.queue.Publish(ctx, QueueInvoiceResponses, data); err != nil {
 		p.log.Error(ctx).
 			Err(err).

@@ -25,11 +25,11 @@ type InvoiceRequestMessage struct {
 
 // InvoiceRequestConsumer consume solicitudes de facturación desde Invoicing Module
 type InvoiceRequestConsumer struct {
-	rabbit           rabbitmq.IQueue
-	integrationCore  integrationCore.IIntegrationCore
-	softpymesClient  ports.ISoftpymesClient
+	rabbit            rabbitmq.IQueue
+	integrationCore   integrationCore.IIntegrationCore
+	softpymesClient   ports.ISoftpymesClient
 	responsePublisher *queue.ResponsePublisher
-	log              log.ILogger
+	log               log.ILogger
 }
 
 // NewInvoiceRequestConsumer crea una nueva instancia del consumer
@@ -41,11 +41,11 @@ func NewInvoiceRequestConsumer(
 	logger log.ILogger,
 ) *InvoiceRequestConsumer {
 	return &InvoiceRequestConsumer{
-		rabbit:           rabbit,
-		integrationCore:  integrationCore,
-		softpymesClient:  softpymesClient,
+		rabbit:            rabbit,
+		integrationCore:   integrationCore,
+		softpymesClient:   softpymesClient,
 		responsePublisher: responsePublisher,
-		log:              logger.WithModule("softpymes.invoice_request_consumer"),
+		log:               logger.WithModule("softpymes.invoice_request_consumer"),
 	}
 }
 
@@ -55,6 +55,11 @@ const (
 
 // Start inicia el consumer
 func (c *InvoiceRequestConsumer) Start(ctx context.Context) error {
+	if c.rabbit == nil {
+		c.log.Warn(ctx).Msg("RabbitMQ client is nil, consumer cannot start")
+		return fmt.Errorf("rabbitmq client is nil")
+	}
+
 	c.log.Info(ctx).
 		Str("queue", QueueSoftpymesRequests).
 		Msg("🚀 Starting Softpymes invoice request consumer")
