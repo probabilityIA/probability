@@ -13,7 +13,10 @@ type Shipment struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 
-	OrderID string `json:"order_id"`
+	OrderID *string `json:"order_id"`
+
+	ClientName         string `json:"client_name"`
+	DestinationAddress string `json:"destination_address"`
 
 	TrackingNumber *string `json:"tracking_number"`
 	TrackingURL    *string `json:"tracking_url"`
@@ -48,4 +51,3 @@ type Shipment struct {
 	DeliveryNotes     *string        `json:"delivery_notes"`
 	Metadata          datatypes.JSON `json:"metadata"`
 }
-

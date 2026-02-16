@@ -54,20 +54,13 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
             return;
         }
 
-        const token = TokenStorage.getSessionToken();
-        if (!token) {
-            setError('No se encontró el token de sesión. Por favor, inicia sesión nuevamente.');
-            return;
-        }
-
         startTransition(async () => {
             try {
                 const response = await changePasswordAction(
                     {
                         current_password: currentPassword,
                         new_password: newPassword,
-                    },
-                    token
+                    }
                 );
 
                 if (response.success) {
@@ -246,14 +239,14 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
             </form>
 
             {/* Modal de éxito */}
-            <Modal 
-                isOpen={!!success} 
+            <Modal
+                isOpen={!!success}
                 onClose={() => {
                     setSuccess(null);
                     if (onSuccess) {
                         onSuccess();
                     }
-                }} 
+                }}
                 title="Contraseña cambiada exitosamente"
                 size="sm"
                 zIndex={60}
@@ -275,7 +268,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
 
                     {/* Botón Aceptar */}
                     <div className="flex justify-end">
-                        <button 
+                        <button
                             className="btn btn-primary btn-sm px-6"
                             onClick={() => {
                                 setSuccess(null);

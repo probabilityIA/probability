@@ -710,7 +710,7 @@ func (uc *UseCaseOrderMapping) saveShipments(ctx context.Context, order *entitie
 	shipments := make([]*entities.ProbabilityShipment, len(dto.Shipments))
 	for i, shipDTO := range dto.Shipments {
 		shipments[i] = &entities.ProbabilityShipment{
-			OrderID:           order.ID,
+			OrderID:           &order.ID,
 			TrackingNumber:    shipDTO.TrackingNumber,
 			TrackingURL:       shipDTO.TrackingURL,
 			Carrier:           shipDTO.Carrier,

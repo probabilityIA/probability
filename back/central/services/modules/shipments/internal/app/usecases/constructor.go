@@ -3,6 +3,7 @@ package usecases
 import (
 	"context"
 
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecaseoriginaddress"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecaseshipment"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
@@ -12,14 +13,16 @@ type UseCases struct {
 	repo domain.IRepository
 
 	// Casos de uso modulares
-	ShipmentCRUD *usecaseshipment.UseCaseShipment
+	ShipmentCRUD  *usecaseshipment.UseCaseShipment
+	OriginAddress *usecaseoriginaddress.OriginAddressUseCase
 }
 
 // New crea una nueva instancia de UseCases
 func New(repo domain.IRepository) *UseCases {
 	return &UseCases{
-		repo:         repo,
-		ShipmentCRUD: usecaseshipment.New(repo),
+		repo:          repo,
+		ShipmentCRUD:  usecaseshipment.New(repo),
+		OriginAddress: usecaseoriginaddress.New(repo),
 	}
 }
 
@@ -69,36 +72,35 @@ func (uc *UseCases) GetShipmentByTrackingNumber(ctx context.Context, trackingNum
 // mapShipmentToResponse convierte un modelo Shipment a ShipmentResponse
 func mapShipmentToResponse(shipment *domain.Shipment) *domain.ShipmentResponse {
 	return &domain.ShipmentResponse{
-		ID:         shipment.ID,
-		CreatedAt:  shipment.CreatedAt,
-		UpdatedAt:  shipment.UpdatedAt,
-		DeletedAt:  shipment.DeletedAt,
-		OrderID:    shipment.OrderID,
-		TrackingNumber: shipment.TrackingNumber,
-		TrackingURL:    shipment.TrackingURL,
-		Carrier:        shipment.Carrier,
-		CarrierCode:    shipment.CarrierCode,
-		GuideID:        shipment.GuideID,
-		GuideURL:       shipment.GuideURL,
-		Status:         shipment.Status,
-		ShippedAt:      shipment.ShippedAt,
-		DeliveredAt:    shipment.DeliveredAt,
+		ID:                shipment.ID,
+		CreatedAt:         shipment.CreatedAt,
+		UpdatedAt:         shipment.UpdatedAt,
+		DeletedAt:         shipment.DeletedAt,
+		OrderID:           shipment.OrderID,
+		TrackingNumber:    shipment.TrackingNumber,
+		TrackingURL:       shipment.TrackingURL,
+		Carrier:           shipment.Carrier,
+		CarrierCode:       shipment.CarrierCode,
+		GuideID:           shipment.GuideID,
+		GuideURL:          shipment.GuideURL,
+		Status:            shipment.Status,
+		ShippedAt:         shipment.ShippedAt,
+		DeliveredAt:       shipment.DeliveredAt,
 		ShippingAddressID: shipment.ShippingAddressID,
-		ShippingCost:   shipment.ShippingCost,
-		InsuranceCost:  shipment.InsuranceCost,
-		TotalCost:      shipment.TotalCost,
-		Weight:         shipment.Weight,
-		Height:         shipment.Height,
-		Width:          shipment.Width,
-		Length:         shipment.Length,
-		WarehouseID:    shipment.WarehouseID,
-		WarehouseName:  shipment.WarehouseName,
-		DriverID:       shipment.DriverID,
-		DriverName:     shipment.DriverName,
-		IsLastMile:    shipment.IsLastMile,
+		ShippingCost:      shipment.ShippingCost,
+		InsuranceCost:     shipment.InsuranceCost,
+		TotalCost:         shipment.TotalCost,
+		Weight:            shipment.Weight,
+		Height:            shipment.Height,
+		Width:             shipment.Width,
+		Length:            shipment.Length,
+		WarehouseID:       shipment.WarehouseID,
+		WarehouseName:     shipment.WarehouseName,
+		DriverID:          shipment.DriverID,
+		DriverName:        shipment.DriverName,
+		IsLastMile:        shipment.IsLastMile,
 		EstimatedDelivery: shipment.EstimatedDelivery,
 		DeliveryNotes:     shipment.DeliveryNotes,
 		Metadata:          shipment.Metadata,
 	}
 }
-

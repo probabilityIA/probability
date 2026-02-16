@@ -246,17 +246,17 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 	if sort, ok := filters["sort_by"].(string); ok && sort != "" {
 		// Mapear campos de ordenamiento
 		sortFieldMap := map[string]string{
-			"id":                "shipments.id",
-			"order_id":          "shipments.order_id",
-			"tracking_number":   "shipments.tracking_number",
-			"status":            "shipments.status",
-			"carrier":           "shipments.carrier",
-			"shipped_at":        "shipments.shipped_at",
-			"delivered_at":      "shipments.delivered_at",
-			"created_at":        "shipments.created_at",
-			"updated_at":        "shipments.updated_at",
-			"warehouse_id":      "shipments.warehouse_id",
-			"driver_id":         "shipments.driver_id",
+			"id":              "shipments.id",
+			"order_id":        "shipments.order_id",
+			"tracking_number": "shipments.tracking_number",
+			"status":          "shipments.status",
+			"carrier":         "shipments.carrier",
+			"shipped_at":      "shipments.shipped_at",
+			"delivered_at":    "shipments.delivered_at",
+			"created_at":      "shipments.created_at",
+			"updated_at":      "shipments.updated_at",
+			"warehouse_id":    "shipments.warehouse_id",
+			"driver_id":       "shipments.driver_id",
 		}
 		if mappedField, exists := sortFieldMap[sort]; exists {
 			sortBy = mappedField
@@ -317,3 +317,155 @@ func (r *Repository) ShipmentExists(ctx context.Context, orderID string, trackin
 	return count > 0, nil
 }
 
+// ───────────────────────────────────────────
+// ORIGIN ADDRESSES
+// ───────────────────────────────────────────
+
+func (r *Repository) CreateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {
+	dbAddress := &models.OriginAddress{
+		BusinessID:   address.BusinessID,
+		Alias:        address.Alias,
+		Company:      address.Company,
+		FirstName:    address.FirstName,
+		LastName:     address.LastName,
+		Email:        address.Email,
+		Phone:        address.Phone,
+		Street:       address.Street,
+		Suburb:       address.Suburb,
+		CityDaneCode: address.CityDaneCode,
+		City:         address.City,
+		State:        address.State,
+		PostalCode:   address.PostalCode,
+		IsDefault:    address.IsDefault,
+	}
+
+	if err := r.db.Conn(ctx).Create(dbAddress).Error; err != nil {
+		return err
+	}
+	address.ID = dbAddress.ID
+	return nil
+}
+
+func (r *Repository) GetOriginAddressByID(ctx context.Context, id uint) (*domain.OriginAddress, error) {
+	var dbAddress models.OriginAddress
+	if err := r.db.Conn(ctx).First(&dbAddress, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("dirección de origen no encontrada")
+		}
+		return nil, err
+	}
+
+	return &domain.OriginAddress{
+		Model:        dbAddress.Model,
+		BusinessID:   dbAddress.BusinessID,
+		Alias:        dbAddress.Alias,
+		Company:      dbAddress.Company,
+		FirstName:    dbAddress.FirstName,
+		LastName:     dbAddress.LastName,
+		Email:        dbAddress.Email,
+		Phone:        dbAddress.Phone,
+		Street:       dbAddress.Street,
+		Suburb:       dbAddress.Suburb,
+		CityDaneCode: dbAddress.CityDaneCode,
+		City:         dbAddress.City,
+		State:        dbAddress.State,
+		PostalCode:   dbAddress.PostalCode,
+		IsDefault:    dbAddress.IsDefault,
+	}, nil
+}
+
+func (r *Repository) ListOriginAddressesByBusiness(ctx context.Context, businessID uint) ([]domain.OriginAddress, error) {
+	var dbAddresses []models.OriginAddress
+	if err := r.db.Conn(ctx).Where("business_id = ?", businessID).Find(&dbAddresses).Error; err != nil {
+		return nil, err
+	}
+
+	addresses := make([]domain.OriginAddress, len(dbAddresses))
+	for i, dbAddress := range dbAddresses {
+		addresses[i] = domain.OriginAddress{
+			Model:        dbAddress.Model,
+			BusinessID:   dbAddress.BusinessID,
+			Alias:        dbAddress.Alias,
+			Company:      dbAddress.Company,
+			FirstName:    dbAddress.FirstName,
+			LastName:     dbAddress.LastName,
+			Email:        dbAddress.Email,
+			Phone:        dbAddress.Phone,
+			Street:       dbAddress.Street,
+			Suburb:       dbAddress.Suburb,
+			CityDaneCode: dbAddress.CityDaneCode,
+			City:         dbAddress.City,
+			State:        dbAddress.State,
+			PostalCode:   dbAddress.PostalCode,
+			IsDefault:    dbAddress.IsDefault,
+		}
+	}
+	return addresses, nil
+}
+
+func (r *Repository) GetDefaultOriginAddress(ctx context.Context, businessID uint) (*domain.OriginAddress, error) {
+	var dbAddress models.OriginAddress
+	if err := r.db.Conn(ctx).Where("business_id = ? AND is_default = ?", businessID, true).First(&dbAddress).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil // No default found
+		}
+		return nil, err
+	}
+
+	return &domain.OriginAddress{
+		Model:        dbAddress.Model,
+		BusinessID:   dbAddress.BusinessID,
+		Alias:        dbAddress.Alias,
+		Company:      dbAddress.Company,
+		FirstName:    dbAddress.FirstName,
+		LastName:     dbAddress.LastName,
+		Email:        dbAddress.Email,
+		Phone:        dbAddress.Phone,
+		Street:       dbAddress.Street,
+		Suburb:       dbAddress.Suburb,
+		CityDaneCode: dbAddress.CityDaneCode,
+		City:         dbAddress.City,
+		State:        dbAddress.State,
+		PostalCode:   dbAddress.PostalCode,
+		IsDefault:    dbAddress.IsDefault,
+	}, nil
+}
+
+func (r *Repository) UpdateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {
+	dbAddress := &models.OriginAddress{
+		Model:        address.Model,
+		BusinessID:   address.BusinessID,
+		Alias:        address.Alias,
+		Company:      address.Company,
+		FirstName:    address.FirstName,
+		LastName:     address.LastName,
+		Email:        address.Email,
+		Phone:        address.Phone,
+		Street:       address.Street,
+		Suburb:       address.Suburb,
+		CityDaneCode: address.CityDaneCode,
+		City:         address.City,
+		State:        address.State,
+		PostalCode:   address.PostalCode,
+		IsDefault:    address.IsDefault,
+	}
+	return r.db.Conn(ctx).Save(dbAddress).Error
+}
+
+func (r *Repository) DeleteOriginAddress(ctx context.Context, id uint) error {
+	return r.db.Conn(ctx).Delete(&models.OriginAddress{}, id).Error
+}
+
+func (r *Repository) SetDefaultOriginAddress(ctx context.Context, businessID, addressID uint) error {
+	return r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
+		// Remove existing default
+		if err := tx.Model(&models.OriginAddress{}).Where("business_id = ?", businessID).Update("is_default", false).Error; err != nil {
+			return err
+		}
+		// Set new default
+		if err := tx.Model(&models.OriginAddress{}).Where("id = ? AND business_id = ?", addressID, businessID).Update("is_default", true).Error; err != nil {
+			return err
+		}
+		return nil
+	})
+}

@@ -5,6 +5,8 @@ import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui
 import { Order } from '@/services/modules/orders/domain/types';
 import { Button, Modal } from '@/shared/ui';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
+import MassOrderUploadModal from '@/shared/ui/modals/mass-order-upload-modal';
+import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-modal';
 
 
 export default function OrdersPage() {
@@ -15,6 +17,8 @@ export default function OrdersPage() {
     const [viewMode, setViewMode] = useState<'details' | 'recommendation'>('details');
     const [showTestGuideModal, setShowTestGuideModal] = useState(false);
     const [showGuideModal, setShowGuideModal] = useState(false);
+    const [showMassUploadModal, setShowMassUploadModal] = useState(false);
+    const [showMassGuideModal, setShowMassGuideModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
     const handleView = (order: Order) => {
@@ -52,6 +56,20 @@ export default function OrdersPage() {
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Órdenes</h1>
+                <div className="flex gap-2">
+                    <Button
+                        onClick={() => setShowMassUploadModal(true)}
+                        variant="outline"
+                    >
+                        📤 Carga Masiva
+                    </Button>
+                    <Button
+                        onClick={() => setShowMassGuideModal(true)}
+                        variant="outline"
+                    >
+                        📦 Guías Masivas
+                    </Button>
+                </div>
             </div>
 
             <OrderList
@@ -125,6 +143,26 @@ export default function OrdersPage() {
                     />
                 )}
             </Modal>
+
+            {/* Mass Upload Modal */}
+            <MassOrderUploadModal
+                isOpen={showMassUploadModal}
+                onClose={() => setShowMassUploadModal(false)}
+                onUploadComplete={(count) => {
+                    setRefreshKey(prev => prev + 1);
+                    setShowMassUploadModal(false);
+                }}
+            />
+
+            {/* Mass Guide Generation Modal */}
+            <MassGuideGenerationModal
+                isOpen={showMassGuideModal}
+                onClose={() => setShowMassGuideModal(false)}
+                onComplete={(count) => {
+                    setRefreshKey(prev => prev + 1);
+                    setShowMassGuideModal(false);
+                }}
+            />
         </div>
     );
 }

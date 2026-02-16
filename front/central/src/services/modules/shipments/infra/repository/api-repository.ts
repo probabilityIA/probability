@@ -1,5 +1,5 @@
 import { IShipmentRepository } from '../../domain/ports';
-import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse } from '../../domain/types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
 export class ShipmentApiRepository implements IShipmentRepository {
@@ -72,6 +72,37 @@ export class ShipmentApiRepository implements IShipmentRepository {
     async cancelShipment(id: string): Promise<EnvioClickCancelResponse> {
         return this.fetch<EnvioClickCancelResponse>(`/shipments/${id}/cancel`, {
             method: 'POST',
+        });
+    }
+    async createShipment(req: CreateShipmentRequest): Promise<{ success: boolean; message: string; data?: Shipment }> {
+        return this.fetch<{ success: boolean; message: string; data?: Shipment }>('/shipments', {
+            method: 'POST',
+            body: JSON.stringify(req),
+        });
+    }
+
+    // Origin Addresses
+    async getOriginAddresses(): Promise<OriginAddress[]> {
+        return this.fetch<OriginAddress[]>('/shipments/origin-addresses');
+    }
+
+    async createOriginAddress(req: CreateOriginAddressRequest): Promise<OriginAddress> {
+        return this.fetch<OriginAddress>('/shipments/origin-addresses', {
+            method: 'POST',
+            body: JSON.stringify(req),
+        });
+    }
+
+    async updateOriginAddress(id: number, req: UpdateOriginAddressRequest): Promise<OriginAddress> {
+        return this.fetch<OriginAddress>(`/shipments/origin-addresses/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(req),
+        });
+    }
+
+    async deleteOriginAddress(id: number): Promise<{ message: string }> {
+        return this.fetch<{ message: string }>(`/shipments/origin-addresses/${id}`, {
+            method: 'DELETE',
         });
     }
 }

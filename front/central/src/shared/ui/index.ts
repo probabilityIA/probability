@@ -19,6 +19,7 @@ export * from './modal';
 export * from './select';
 export * from './sidebar';
 export * from './spinner';
+export * from './stepper';
 export * from './table';
 // IAM and Orders sidebars have been integrated into the main `sidebar` component
 export * from './user-profile-modal';
