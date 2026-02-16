@@ -246,7 +246,7 @@ jobs:
 
             # 5. Levantar solo el servicio front-central (contenedor: frontend_prod)
             echo "🚀 Levantando frontend con nueva imagen..."
-            docker compose -f docker-compose.yaml up -d front-central
+            docker compose -f docker-compose.yaml up -d --no-deps front-central
             sleep 3
 
             echo "⏳ Esperando a que el contenedor inicie (15 segundos)..."
