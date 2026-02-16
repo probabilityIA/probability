@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { XMarkIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { CookieStorage } from '@/shared/utils/cookie-storage';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import {
@@ -50,6 +50,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   const [businesses, setBusinesses] = useState<Business[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [loadingBusinesses, setLoadingBusinesses] = useState(false);
+  const [showBusinessAlert, setShowBusinessAlert] = useState(false);
+
+  // Super admin debe seleccionar un negocio antes de operar
+  const superAdminNeedsBusiness = isSuperAdmin && !selectedBusinessId;
 
   // Get businessId for SSE connection
   const currentBusinessId = propBusinessId ?? selectedBusinessId ?? 0;
@@ -106,7 +110,12 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   useEffect(() => {
     if (isOpen && !hasLoadedOnce) {
       checkIfSuperAdmin();
-      loadOrders();
+      // Solo cargar ordenes al inicio si NO es super admin
+      // Super admin debe seleccionar un negocio primero
+      const user = CookieStorage.getUser();
+      if (!user?.is_super_admin) {
+        loadOrders();
+      }
       setHasLoadedOnce(true);
     } else if (!isOpen) {
       // Reset state cuando se cierra
@@ -120,6 +129,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       setBulkCompleted(false);
       setSubmitting(false);
       setOrderStatuses({});
+      setShowBusinessAlert(false);
       // Clear timeout if modal closes
       if (submittingTimeoutRef.current) {
         clearTimeout(submittingTimeoutRef.current);
@@ -193,6 +203,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   }, [orders, searchQuery]);
 
   const handleToggleOrder = (orderId: string) => {
+    if (superAdminNeedsBusiness) {
+      setShowBusinessAlert(true);
+      return;
+    }
     setSelectedOrderIds((prev) =>
       prev.includes(orderId)
         ? prev.filter((id) => id !== orderId)
@@ -201,6 +215,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   };
 
   const handleToggleAll = () => {
+    if (superAdminNeedsBusiness) {
+      setShowBusinessAlert(true);
+      return;
+    }
     if (selectedOrderIds.length === filteredOrders.length) {
       setSelectedOrderIds([]);
     } else {
@@ -209,6 +227,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
   };
 
   const handleSubmit = async () => {
+    if (superAdminNeedsBusiness) {
+      setShowBusinessAlert(true);
+      return;
+    }
     if (selectedOrderIds.length === 0) {
       alert('Selecciona al menos una orden');
       return;
@@ -343,18 +365,21 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 {isSuperAdmin && (
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Filtrar por Negocio
+                      Seleccionar Negocio <span className="text-red-500">*</span>
                     </label>
                     <select
                       value={selectedBusinessId ?? ''}
                       onChange={(e) => {
                         const value = e.target.value;
+                        setShowBusinessAlert(false);
                         handleBusinessFilterChange(value === '' ? null : parseInt(value));
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        superAdminNeedsBusiness ? 'border-amber-400 bg-amber-50' : 'border-gray-300'
+                      }`}
                       disabled={loadingBusinesses}
                     >
-                      <option value="">Todos los negocios</option>
+                      <option value="">-- Selecciona un negocio --</option>
                       {businesses.map((business) => (
                         <option key={business.id} value={business.id}>
                           {business.name}
@@ -363,6 +388,14 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                     </select>
                     {loadingBusinesses && (
                       <p className="text-xs text-gray-500 mt-1">Cargando negocios...</p>
+                    )}
+                    {superAdminNeedsBusiness && (
+                      <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-lg">
+                        <ExclamationTriangleIcon className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                        <p className="text-sm text-amber-800">
+                          Como super administrador, debes seleccionar un negocio antes de poder seleccionar ordenes y facturar.
+                        </p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -571,7 +604,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 </button>
                 <button
                   onClick={handleSubmit}
-                  disabled={submitting || selectedOrderIds.length === 0 || loading}
+                  disabled={submitting || selectedOrderIds.length === 0 || loading || superAdminNeedsBusiness}
                   className="px-6 py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white font-semibold rounded-full hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
                 >
                   {submitting
@@ -583,6 +616,35 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           </div>
         </div>
       </div>
+
+      {/* Modal de alerta: Super admin debe seleccionar negocio */}
+      {showBusinessAlert && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowBusinessAlert(false)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+            <div className="bg-amber-500 p-4 flex items-center gap-3">
+              <ExclamationTriangleIcon className="w-8 h-8 text-white" />
+              <h3 className="text-lg font-bold text-white">Negocio requerido</h3>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700">
+                Como super administrador, debes seleccionar un <strong>negocio</strong> antes de poder seleccionar ordenes y crear facturas.
+              </p>
+              <p className="text-sm text-gray-500 mt-2">
+                Cada factura se asocia a un negocio especifico. Selecciona uno del listado para continuar.
+              </p>
+            </div>
+            <div className="flex justify-end p-4 border-t bg-gray-50">
+              <button
+                onClick={() => setShowBusinessAlert(false)}
+                className="px-5 py-2 bg-amber-500 text-white font-semibold rounded-full hover:bg-amber-600 transition-all duration-200"
+              >
+                Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
