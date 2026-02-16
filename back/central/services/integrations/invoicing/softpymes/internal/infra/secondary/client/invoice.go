@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 // InvoiceResponse representa la respuesta de creación de factura de Softpymes
@@ -95,14 +96,32 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 		}
 	}
 
+	// Asegurar que el cliente existe en Softpymes antes de facturar
+	// Si no existe, crearlo automáticamente usando la API de Softpymes
+	if err := c.ensureCustomerExists(ctx, token, referer, customerNit, customer, config); err != nil {
+		c.log.Warn(ctx).Err(err).
+			Str("customer_nit", customerNit).
+			Msg("⚠️ Could not ensure customer exists in Softpymes, proceeding anyway")
+	}
+
 	// Obtener branch_code del config (default "001" si no existe)
 	branchCode := "001" // Default
 	if branch, ok := config["branch_code"].(string); ok && branch != "" {
 		branchCode = branch
 	}
 
-	// Obtener seller_nit del config (usualmente es el referer/NIT de la empresa)
-	sellerNit := referer // Por defecto usar el referer (NIT de la empresa)
+	// Obtener customer_branch_code del config (default "000" si no existe)
+	// REQUERIDO por Softpymes: código de la sucursal del cliente
+	// Softpymes asigna "000" por defecto al crear un cliente nuevo
+	customerBranch := "000" // Default (Softpymes genera "000" al crear cliente)
+	if cb, ok := config["customer_branch_code"].(string); ok && cb != "" {
+		customerBranch = cb
+	}
+
+	// Obtener seller_nit del config (OPCIONAL - solo enviar si está configurado)
+	// Softpymes requiere que el seller exista en su sistema via /app/integration/seller
+	// Si no hay sellers configurados, NO enviar el campo para evitar 404
+	sellerNit := ""
 	if seller, ok := config["seller_nit"].(string); ok && seller != "" {
 		sellerNit = seller
 	}
@@ -124,7 +143,24 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 	}
 
 	// Mapear items al formato de Softpymes
-	items, _ := invoiceData["items"].([]map[string]interface{})
+	// Después de JSON marshal/unmarshal (RabbitMQ), []map[string]interface{} se convierte en []interface{}
+	var items []map[string]interface{}
+	if rawItems, ok := invoiceData["items"].([]interface{}); ok {
+		for _, rawItem := range rawItems {
+			if item, ok := rawItem.(map[string]interface{}); ok {
+				items = append(items, item)
+			}
+		}
+	} else if directItems, ok := invoiceData["items"].([]map[string]interface{}); ok {
+		items = directItems
+	}
+
+	if len(items) == 0 {
+		c.log.Error(ctx).
+			Interface("items_raw", invoiceData["items"]).
+			Msg("❌ No items found in invoice data - cannot create invoice without items")
+		return fmt.Errorf("no items found in invoice data")
+	}
 	softpymesItems := make([]map[string]interface{}, 0, len(items))
 	for _, item := range items {
 		// Extraer datos del item
@@ -149,10 +185,19 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 			discount = float64(d)
 		}
 
-		// unitCode por defecto "UND" (unidad)
-		unitCode := "UND"
+		// unitCode por defecto "UNI" (UNIDADES) - código estándar en Softpymes
+		// Verificado via API: /app/integration/items/:code → units[].code = "UNI"
+		unitCode := "UNI"
 		if unit, ok := item["unit_code"].(string); ok && unit != "" {
 			unitCode = unit
+		}
+
+		// unitValue (precio unitario) - enviarlo para usar nuestro precio en vez del price list de Softpymes
+		unitValue := 0.0
+		if up, ok := item["unit_price"].(float64); ok {
+			unitValue = up
+		} else if up, ok := item["unit_price"].(int); ok {
+			unitValue = float64(up)
 		}
 
 		softpymesItem := map[string]interface{}{
@@ -161,37 +206,62 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 			"discount": discount,
 			"unitCode": unitCode,
 		}
+
+		// Solo incluir unitValue si tiene valor (Softpymes lo usa para override del precio de lista)
+		// IMPORTANTE: Softpymes espera unitValue como String, no como número
+		if unitValue > 0 {
+			softpymesItem["unitValue"] = fmt.Sprintf("%.2f", unitValue)
+		}
+
 		softpymesItems = append(softpymesItems, softpymesItem)
 	}
 
-	// Obtener currency (default COP)
-	currency := "COP"
+	// Obtener currency y mapear al formato de Softpymes
+	// Softpymes usa códigos propios: "P" = Peso Colombiano, "D" = Dólar Americano
+	rawCurrency := "COP"
 	if curr, ok := invoiceData["currency"].(string); ok && curr != "" {
-		currency = curr
+		rawCurrency = curr
 	}
+	currency := mapCurrencyToSoftpymes(rawCurrency)
+
+	// Generar documentDate en formato YYYY-MM-DD (zona horaria Colombia UTC-5)
+	// REQUERIDO por Softpymes - sin este campo retorna 500
+	loc, _ := time.LoadLocation("America/Bogota")
+	documentDate := time.Now().In(loc).Format("2006-01-02")
 
 	// Construir request según formato de Softpymes
+	// Docs: https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostSaleInvoice
 	invoiceReq := map[string]interface{}{
-		"currencyCode": currency,
-		"exchangeRate": 1.0, // Por ahora siempre 1.0 (moneda local)
-		"branchCode":   branchCode,
-		"customerNit":  customerNit,
-		"sellerNit":    sellerNit,
-		"termDays":     0, // Por ahora siempre contado (0 días)
-		"resolutionId": resolutionID,
-		"comment":      "", // Opcional
-		"items":        softpymesItems,
+		"documentDate":   documentDate, // REQUERIDO: formato YYYY-MM-DD, zona Colombia
+		"currencyCode":   currency,
+		"exchangeRate":   1.0, // Por ahora siempre 1.0 (moneda local)
+		"branchCode":     branchCode,
+		"customerBranch": customerBranch, // REQUERIDO: código sucursal del cliente
+		"customerNit":    customerNit,
+		"termDays":       0, // Por ahora siempre contado (0 días)
+		"resolutionId":   resolutionID,
+		"comment":        "", // Observaciones del documento
+		"items":          softpymesItems,
+	}
+
+	// Solo incluir sellerNit si está configurado
+	// Si no hay sellers en Softpymes, enviar el campo causa 404
+	if sellerNit != "" {
+		invoiceReq["sellerNit"] = sellerNit
 	}
 
 	// Log detallado del request para debugging
 	c.log.Info(ctx).
+		Str("document_date", documentDate).
 		Str("currency", currency).
 		Str("customer_nit", customerNit).
+		Str("customer_branch", customerBranch).
 		Str("seller_nit", sellerNit).
 		Str("branch_code", branchCode).
 		Int("resolution_id", resolutionID).
 		Int("items_count", len(softpymesItems)).
-		Msg("📤 Sending invoice request to Softpymes with validated format")
+		Interface("items", softpymesItems).
+		Msg("📤 Sending invoice request to Softpymes")
 
 	var invoiceResp InvoiceResponse
 
@@ -276,4 +346,17 @@ func (c *Client) CreateInvoice(ctx context.Context, invoiceData map[string]inter
 	invoiceData["provider_info"] = providerInfo
 
 	return nil
+}
+
+// mapCurrencyToSoftpymes convierte códigos ISO de moneda al formato de Softpymes
+// Softpymes usa: "P" = Peso Colombiano, "D" = Dólar Americano
+func mapCurrencyToSoftpymes(isoCurrency string) string {
+	switch isoCurrency {
+	case "COP", "cop":
+		return "P"
+	case "USD", "usd":
+		return "D"
+	default:
+		return "P" // Default a Pesos
+	}
 }

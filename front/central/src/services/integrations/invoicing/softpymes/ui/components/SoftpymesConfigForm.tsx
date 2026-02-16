@@ -45,6 +45,10 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
         api_url: 'https://api-integracion.softpymes.com.co',
         test_mode: false,
         default_customer_nit: '', // NIT por defecto para clientes sin DNI
+        resolution_id: '' as string | number, // ID de resolución de facturación
+        branch_code: '001', // Código de sucursal
+        customer_branch_code: '000', // Código de sucursal del cliente (Softpymes default)
+        seller_nit: '', // NIT del vendedor
         api_key: '',
         api_secret: '',
     });
@@ -145,6 +149,10 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
                 api_url: formData.api_url,
                 test_mode: formData.test_mode,
                 default_customer_nit: formData.default_customer_nit || undefined,
+                resolution_id: formData.resolution_id ? Number(formData.resolution_id) : undefined,
+                branch_code: formData.branch_code || undefined,
+                customer_branch_code: formData.customer_branch_code || undefined,
+                seller_nit: formData.seller_nit || undefined,
             };
 
             const credentials: SoftpymesCredentials = {
@@ -358,6 +366,95 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
                 </div>
             </div>
 
+            {/* Configuración de Facturación */}
+            <div className="bg-blue-50 rounded-xl p-6 space-y-4 border border-blue-100">
+                <div className="flex items-center gap-2 mb-4">
+                    <Cog6ToothIcon className="w-5 h-5 text-blue-700" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Configuración de Facturación
+                    </h3>
+                </div>
+                <p className="text-sm text-blue-900 -mt-2 mb-4">
+                    Datos requeridos por Softpymes para generar facturas electrónicas
+                </p>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Resolution ID <span className="text-red-500">*</span>
+                        </label>
+                        <Input
+                            type="number"
+                            value={formData.resolution_id}
+                            onChange={(e) => setFormData({ ...formData, resolution_id: e.target.value })}
+                            placeholder="1"
+                            min="1"
+                            required
+                            className="bg-white"
+                        />
+                        <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <span>
+                                ID de la resolución de facturación DIAN. Se obtiene desde el panel de Softpymes o consultando el endpoint <strong>/resolutions</strong>
+                            </span>
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Código de Sucursal
+                        </label>
+                        <Input
+                            type="text"
+                            value={formData.branch_code}
+                            onChange={(e) => setFormData({ ...formData, branch_code: e.target.value })}
+                            placeholder="001"
+                            className="bg-white"
+                        />
+                        <p className="text-xs text-gray-500 mt-1.5">
+                            Código de sucursal en Softpymes (por defecto: 001)
+                        </p>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Código Sucursal del Cliente
+                        </label>
+                        <Input
+                            type="text"
+                            value={formData.customer_branch_code}
+                            onChange={(e) => setFormData({ ...formData, customer_branch_code: e.target.value })}
+                            placeholder="001"
+                            className="bg-white"
+                        />
+                        <p className="text-xs text-gray-500 mt-1.5">
+                            Softpymes asigna &quot;000&quot; por defecto al crear clientes. Solo cambiar si tus clientes tienen otra sucursal.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            NIT del Vendedor
+                        </label>
+                        <Input
+                            type="text"
+                            value={formData.seller_nit}
+                            onChange={(e) => setFormData({ ...formData, seller_nit: e.target.value })}
+                            placeholder="Dejar vac&iacute;o si no hay vendedores"
+                            className="bg-white"
+                        />
+                        <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                            <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                            <span>
+                                Solo si tienes vendedores registrados en Softpymes. Si no tienes, <strong>d&eacute;jalo vac&iacute;o</strong> para evitar errores.
+                            </span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
             {/* Credenciales de API */}
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 space-y-4 border border-blue-100">
                 <div className="flex items-center gap-2 mb-4">
@@ -444,16 +541,18 @@ export function SoftpymesConfigForm({ onSuccess, onCancel }: SoftpymesConfigForm
                     </div>
                 </div>
 
-                <div className="bg-blue-100 border border-blue-200 rounded-lg p-3 mt-4">
-                    <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                <div className="bg-blue-100 border border-blue-200 rounded-lg p-4 mt-4">
+                    <h4 className="text-sm font-semibold text-blue-900 mb-3 flex items-center gap-2">
                         <InformationCircleIcon className="w-4 h-4" />
-                        Instrucciones de Configuración
+                        Requisitos para facturar correctamente
                     </h4>
-                    <ol className="text-xs text-blue-800 space-y-1 list-decimal list-inside ml-1">
-                        <li>Ingresa a tu cuenta de Softpymes</li>
-                        <li>Ve a <strong>Configuración → API Keys</strong></li>
-                        <li>Copia tu API Key y API Secret</li>
-                        <li>Pega las credenciales en los campos de arriba</li>
+                    <ol className="text-xs text-blue-800 space-y-2 list-decimal list-inside ml-1">
+                        <li>En Softpymes ve a <strong>Configuraci&oacute;n &rarr; API Keys</strong> y genera tu API Key y API Secret.</li>
+                        <li>El <strong>Referer</strong> es el NIT de tu empresa <strong>sin d&iacute;gito de verificaci&oacute;n</strong> (ej: 901497840).</li>
+                        <li>Debes tener una <strong>resoluci&oacute;n DIAN activa</strong>. Obt&eacute;n el Resolution ID desde Softpymes en <em>Facturaci&oacute;n &rarr; Resoluciones</em>.</li>
+                        <li>Los <strong>SKU de tus productos</strong> en Probability deben coincidir con los c&oacute;digos de art&iacute;culos en Softpymes.</li>
+                        <li>Configura un <strong>NIT por defecto</strong> para clientes sin DNI. En Colombia el consumidor final es <code className="bg-blue-200 px-1 rounded">222222222222</code>.</li>
+                        <li>El <strong>NIT del vendedor</strong> solo si tienes vendedores registrados en Softpymes. Si no, <strong>d&eacute;jalo vac&iacute;o</strong>.</li>
                     </ol>
                 </div>
             </div>

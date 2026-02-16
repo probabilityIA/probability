@@ -7,6 +7,10 @@ export interface SoftpymesConfig {
     api_url: string;              // URL de la API de Softpymes
     test_mode?: boolean;          // Modo de pruebas
     default_customer_nit?: string; // NIT por defecto para clientes sin DNI (consumidor final: 222222222222)
+    resolution_id?: number;       // ID de resolución de facturación (obtenido desde Softpymes /resolutions)
+    branch_code?: string;         // Código de sucursal (default: "001")
+    customer_branch_code?: string; // Código de sucursal del cliente (default: "001", requerido por Softpymes)
+    seller_nit?: string;          // NIT del vendedor (opcional, usa referer por defecto)
 }
 
 export interface SoftpymesCredentials {

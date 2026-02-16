@@ -39,22 +39,30 @@ var (
 		"Calle", "Carrera", "Avenida", "Diagonal", "Transversal",
 	}
 
+	// Productos reales del catálogo de Softpymes (itemCode debe coincidir)
 	productNames = []string{
-		"Camiseta Básica", "Pantalón Jeans", "Zapatos Deportivos", "Bolso de Cuero",
-		"Reloj Inteligente", "Auriculares Bluetooth", "Laptop", "Tablet",
-		"Smartphone", "Cámara Digital", "Televisor LED", "Refrigerador",
-		"Microondas", "Lavadora", "Secadora", "Aspiradora", "Plancha",
-		"Cafetera", "Licuadora", "Batidora", "Horno Eléctrico", "Ventilador",
-		"Aire Acondicionado", "Calentador", "Lámpara LED", "Mesa de Comedor",
-		"Silla Ergonómica", "Escritorio", "Estantería", "Cama",
+		"Proteína Aislada (ISO) - 2 Lb (910g) - Vainilla",
+		"Proteína Whey - 2lb (910g) - Vainilla",
+		"Proteína Whey - 2lb (910g) - Chocolate",
+		"Creatina Monohidrato - 300g",
+		"Proteína Aislada (ISO) - 2 Lb (910g) - Chocolate",
+		"Proteína Vegetal - 2 Libras (910g) - Vainilla",
+		"Proteína Vegetal - 2 Libras (910g) - Chocolate",
+		"Multivitaminico - Gomas",
+		"Omega 3 + prebioticos - Gomas",
+		"Citrato de Magnesio Limon - 210g",
+		"BCAAs sabor limon mandarino - 300g",
+		"PR - 600g",
+		"Colágeno Hidrolizado - 300g",
+		"Pancakes de Proteina (770)",
+		"Creatina Monohidrato - 100g",
 	}
 
+	// SKUs que coinciden con los itemCode de Softpymes
 	productSKUs = []string{
-		"CAMI-001", "PANT-001", "ZAP-001", "BOL-001", "REL-001", "AUR-001",
-		"LAP-001", "TAB-001", "CEL-001", "CAM-001", "TV-001", "REF-001",
-		"MIC-001", "LAV-001", "SEC-001", "ASP-001", "PLA-001", "CAF-001",
-		"LIC-001", "BAT-001", "HOR-001", "VEN-001", "AIR-001", "CAL-001",
-		"LAM-001", "MES-001", "SIL-001", "ESC-001", "EST-001", "CAMA-001",
+		"PT01001", "PT01002", "PT01003", "PT01004", "PT01005",
+		"PT01006", "PT01007", "PT02038", "PT02039", "PT02041",
+		"PT02043", "PT02044", "PT01015", "PT01016", "PT02050",
 	}
 
 	vendors = []string{
@@ -63,7 +71,7 @@ var (
 		"Digital Store", "Quality Goods",
 	}
 
-	currencies = []string{"COP", "USD", "EUR"}
+	currencies = []string{"COP"}
 )
 
 func init() {
@@ -152,9 +160,12 @@ func (g *RandomDataGenerator) GenerateLineItems(count int) []domain.LineItem {
 	items := make([]domain.LineItem, 0, count)
 
 	for i := 0; i < count; i++ {
-		productName := productNames[rand.Intn(len(productNames))]
-		sku := productSKUs[rand.Intn(len(productSKUs))]
-		price := float64(rand.Intn(500000)+10000) / 100.0
+		// Emparejar nombre y SKU del mismo índice (catálogo Softpymes)
+		idx := rand.Intn(len(productSKUs))
+		productName := productNames[idx]
+		sku := productSKUs[idx]
+		// Precios realistas en COP (entre 25.300 y 152.900 como en catálogo Softpymes)
+		price := float64(rand.Intn(127600)+25300) / 1.0
 		quantity := rand.Intn(3) + 1
 
 		item := domain.LineItem{
