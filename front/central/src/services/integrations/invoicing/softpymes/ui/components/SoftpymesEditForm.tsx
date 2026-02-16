@@ -190,7 +190,7 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
             {/* Header */}
             <div className="border-b border-gray-200 pb-6">
                 <div className="flex items-center gap-3 mb-2">
@@ -481,6 +481,8 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
                             onChange={(e) => setFormData({ ...formData, api_key: e.target.value })}
                             placeholder="Ingresa tu API Key de Softpymes"
                             required
+                            autoComplete="off"
+                            data-1p-ignore
                             className="bg-white font-mono text-sm"
                         />
                     </div>
@@ -496,6 +498,8 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
                                 onChange={(e) => setFormData({ ...formData, api_secret: e.target.value })}
                                 placeholder="Ingresa tu API Secret de Softpymes"
                                 required
+                                autoComplete="new-password"
+                                data-1p-ignore
                                 className="bg-white font-mono text-sm pr-10"
                             />
                             <button
