@@ -23,5 +23,13 @@ type IRepository interface {
 
 	// Validation
 	ShipmentExists(ctx context.Context, orderID string, trackingNumber string) (bool, error)
-}
 
+	// Origin Addresses
+	CreateOriginAddress(ctx context.Context, address *OriginAddress) error
+	GetOriginAddressByID(ctx context.Context, id uint) (*OriginAddress, error)
+	ListOriginAddressesByBusiness(ctx context.Context, businessID uint) ([]OriginAddress, error)
+	GetDefaultOriginAddress(ctx context.Context, businessID uint) (*OriginAddress, error)
+	UpdateOriginAddress(ctx context.Context, address *OriginAddress) error
+	DeleteOriginAddress(ctx context.Context, id uint) error
+	SetDefaultOriginAddress(ctx context.Context, businessID, addressID uint) error
+}

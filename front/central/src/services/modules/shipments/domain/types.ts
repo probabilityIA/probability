@@ -2,7 +2,9 @@ export interface Shipment {
     id: number;
     created_at: string;
     updated_at: string;
-    order_id: string;
+    order_id?: string;
+    client_name?: string;
+    destination_address?: string;
     tracking_number?: string;
     tracking_url?: string;
     carrier?: string;
@@ -54,15 +56,15 @@ export interface PaginatedResponse<T> {
 }
 
 export interface EnvioClickAddress {
-    company: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
+    company?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
     address: string;
-    suburb: string;
-    crossStreet: string;
-    reference: string;
+    suburb?: string;
+    crossStreet?: string;
+    reference?: string;
     daneCode: string;
 }
 
@@ -74,15 +76,16 @@ export interface EnvioClickPackage {
 }
 
 export interface EnvioClickQuoteRequest {
-    idRate: number;
-    myShipmentReference: string;
-    external_order_id: string;
-    requestPickup: boolean;
-    pickupDate: string;
-    insurance: boolean;
+    idRate?: number;
+    myShipmentReference?: string;
+    external_order_id?: string;
+    order_uuid?: string;
+    requestPickup?: boolean;
+    pickupDate?: string;
+    insurance?: boolean;
     description: string;
     contentValue: number;
-    codValue: number;
+    codValue?: number;
     includeGuideCost: boolean;
     codPaymentMethod: string;
     packages: EnvioClickPackage[];
@@ -109,6 +112,9 @@ export interface EnvioClickRate {
     flete: number;
     deliveryDays: number;
     quotationType: string;
+    minimumInsurance?: number;
+    extraInsurance?: number;
+    cod?: boolean;
 }
 
 export interface EnvioClickQuoteResponse {
@@ -144,3 +150,39 @@ export interface EnvioClickCancelResponse {
         message: string;
     };
 }
+
+export interface CreateShipmentRequest {
+    order_id?: string;
+    client_name?: string;
+    destination_address?: string;
+    tracking_number?: string;
+    carrier?: string;
+    status?: string;
+}
+
+export interface OriginAddress {
+    id: number;
+    business_id: number;
+    alias: string;
+    company: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    street: string;
+    suburb?: string;
+    city_dane_code: string;
+    city: string;
+    state: string;
+    postal_code?: string;
+    is_default: boolean;
+    created_at: string;
+    updated_at: string;
+}
+
+export type CreateOriginAddressRequest = Omit<OriginAddress, 'id' | 'business_id' | 'created_at' | 'updated_at' | 'is_default'> & {
+    is_default?: boolean;
+};
+
+export type UpdateOriginAddressRequest = Partial<CreateOriginAddressRequest>;
+

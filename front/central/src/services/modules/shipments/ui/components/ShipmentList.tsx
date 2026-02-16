@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge, Button } from '@/shared/ui';
 import { getShipmentsAction, trackShipmentAction, cancelShipmentAction } from '../../infra/actions';
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
-import { Search, Package, Truck, Calendar, MapPin, X, Eye, CreditCard, ExternalLink, RefreshCw, AlertTriangle } from 'lucide-react';
+import { Search, Package, Truck, Calendar, MapPin, X, Eye, CreditCard, ExternalLink, RefreshCw, AlertTriangle, Plus } from 'lucide-react';
+import { ManualShipmentModal } from './ManualShipmentModal';
 
 export default function ShipmentList() {
     const router = useRouter();
@@ -32,6 +33,7 @@ export default function ShipmentList() {
     });
 
     const [cancelingId, setCancelingId] = useState<string | null>(null);
+    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
     const fetchShipments = async () => {
         setLoading(true);
@@ -103,6 +105,14 @@ export default function ShipmentList() {
 
     return (
         <div className="space-y-4">
+            <div className="flex justify-between items-center">
+                <h2 className="text-xl font-bold text-gray-800">Envíos</h2>
+                <Button onClick={() => setIsManualModalOpen(true)}>
+                    <Plus size={16} className="mr-2" />
+                    Agregar Envío
+                </Button>
+            </div>
+
             {/* Filters */}
             <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
@@ -212,9 +222,16 @@ export default function ShipmentList() {
                                             )}
                                         </td>
                                         <td className="px-3 sm:px-6 py-4">
-                                            <span className="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                                                {shipment.order_id.substring(0, 8)}...
-                                            </span>
+                                            {shipment.order_id ? (
+                                                <span className="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
+                                                    {shipment.order_id.substring(0, 8)}...
+                                                </span>
+                                            ) : (
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-medium text-gray-900">{shipment.client_name || 'Desconocido'}</span>
+                                                    <span className="text-xs text-gray-500">{shipment.destination_address || '-'}</span>
+                                                </div>
+                                            )}
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
                                             <div className="flex flex-col">
@@ -450,6 +467,12 @@ export default function ShipmentList() {
                     </div>
                 )}
             </div>
+
+            <ManualShipmentModal
+                isOpen={isManualModalOpen}
+                onClose={() => setIsManualModalOpen(false)}
+                onSuccess={fetchShipments}
+            />
         </div>
     );
 }

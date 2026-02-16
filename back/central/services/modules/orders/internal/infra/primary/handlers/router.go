@@ -14,6 +14,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		orders.GET("/:id", middleware.JWT(), h.GetOrderByID)
 		orders.GET("/:id/raw", middleware.JWT(), h.GetOrderRaw)
 		orders.POST("", middleware.JWT(), h.CreateOrder)
+		orders.POST("/upload-bulk", middleware.JWT(), h.UploadBulkOrders)
 		orders.PUT("/:id", middleware.JWT(), h.UpdateOrder)
 		orders.DELETE("/:id", middleware.JWT(), h.DeleteOrder)
 

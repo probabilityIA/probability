@@ -81,8 +81,8 @@ type Business struct {
 	EnableReservations bool `gorm:"default:true"`
 
 	// Configuración de confirmación de órdenes
-	RequiresOrderConfirmation bool   `gorm:"default:false"`        // Si requiere confirmación automática
-	ConfirmationMethod        string `gorm:"default:'whatsapp'"`   // whatsapp, email, sms
+	RequiresOrderConfirmation bool   `gorm:"default:false"`      // Si requiere confirmación automática
+	ConfirmationMethod        string `gorm:"default:'whatsapp'"` // whatsapp, email, sms
 
 	// Relaciones
 	BusinessType                BusinessType `gorm:"foreignKey:BusinessTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
@@ -301,8 +301,8 @@ type IntegrationCategory struct {
 	IsVisible        bool   `gorm:"default:true"`                  // Si se muestra en UI
 
 	// Relaciones
-	ParentCategory     *IntegrationCategory `gorm:"foreignKey:ParentCategoryID"`
-	IntegrationTypes   []IntegrationType    `gorm:"foreignKey:CategoryID"`
+	ParentCategory   *IntegrationCategory `gorm:"foreignKey:ParentCategoryID"`
+	IntegrationTypes []IntegrationType    `gorm:"foreignKey:CategoryID"`
 }
 
 // TableName especifica el nombre de la tabla para IntegrationCategory
@@ -325,7 +325,7 @@ type IntegrationType struct {
 	IsActive    bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
 
 	// Relación con IntegrationCategory
-	CategoryID *uint                 `gorm:"index"`
+	CategoryID *uint                `gorm:"index"`
 	Category   *IntegrationCategory `gorm:"foreignKey:CategoryID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 
 	// Configuración requerida (JSON schema - define qué campos de config son necesarios)

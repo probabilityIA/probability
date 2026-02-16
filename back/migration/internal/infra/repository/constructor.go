@@ -101,6 +101,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		// Bulk Invoice Jobs (Async Bulk Invoicing)
 		&models.BulkInvoiceJob{},
 		&models.BulkInvoiceJobItem{},
+
+		// Origin Addresses
+		&models.OriginAddress{},
 	); err != nil {
 		return err
 	}

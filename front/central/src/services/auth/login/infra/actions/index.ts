@@ -45,8 +45,17 @@ export const loginAction = async (credentials: LoginRequest): Promise<LoginSucce
 /**
  * Server Action para cambiar contraseña
  */
-export const changePasswordAction = async (data: ChangePasswordRequest, token: string): Promise<ChangePasswordResponse> => {
+export const changePasswordAction = async (data: ChangePasswordRequest, token?: string): Promise<ChangePasswordResponse> => {
     try {
+        if (!token) {
+            const cookieStore = await cookies();
+            token = cookieStore.get('session_token')?.value;
+        }
+
+        if (!token) {
+            throw new Error('No se encontró el token de sesión. Por favor, inicia sesión nuevamente.');
+        }
+
         return await useCase.changePassword(data, token);
     } catch (error: any) {
         console.error('Change Password Action Error:', error.message);

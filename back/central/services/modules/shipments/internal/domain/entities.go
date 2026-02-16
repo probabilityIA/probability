@@ -14,7 +14,10 @@ import (
 
 // CreateShipmentRequest representa la solicitud para crear un envío
 type CreateShipmentRequest struct {
-	OrderID string `json:"order_id" binding:"required"`
+	OrderID *string `json:"order_id" binding:"omitempty"`
+
+	ClientName         string `json:"client_name" binding:"omitempty"`
+	DestinationAddress string `json:"destination_address" binding:"omitempty"`
 
 	TrackingNumber *string `json:"tracking_number" binding:"omitempty,max=128"`
 	TrackingURL    *string `json:"tracking_url" binding:"omitempty,max=512"`
@@ -93,7 +96,10 @@ type ShipmentResponse struct {
 	UpdatedAt time.Time  `json:"updated_at"`
 	DeletedAt *time.Time `json:"deleted_at,omitempty"`
 
-	OrderID string `json:"order_id"`
+	OrderID *string `json:"order_id"`
+
+	ClientName         string `json:"client_name"`
+	DestinationAddress string `json:"destination_address"`
 
 	TrackingNumber *string `json:"tracking_number,omitempty"`
 	TrackingURL    *string `json:"tracking_url,omitempty"`
@@ -132,9 +138,8 @@ type ShipmentResponse struct {
 // ShipmentsListResponse representa la respuesta paginada de envíos
 type ShipmentsListResponse struct {
 	Data       []ShipmentResponse `json:"data"`
-	Total      int64             `json:"total"`
-	Page       int               `json:"page"`
-	PageSize   int               `json:"page_size"`
-	TotalPages int               `json:"total_pages"`
+	Total      int64              `json:"total"`
+	Page       int                `json:"page"`
+	PageSize   int                `json:"page_size"`
+	TotalPages int                `json:"total_pages"`
 }
-

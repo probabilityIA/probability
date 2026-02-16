@@ -2,87 +2,241 @@ import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Input, Button, Select } from "@/shared/ui";
+import { Input, Button, Stepper } from "@/shared/ui";
 import { ShipmentApiRepository } from "@/services/modules/shipments/infra/repository/api-repository";
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { Order } from "@/services/modules/orders/domain/types";
 import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
-import { getAIRecommendationAction } from "@/services/modules/orders/infra/actions";
+import { getOriginAddressesAction } from "@/services/modules/shipments/infra/actions";
+import { OriginAddress } from "@/services/modules/shipments/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 
 interface ShipmentGuideModalProps {
     isOpen: boolean;
     onClose: () => void;
     order?: Order;
-    recommendedCarrier?: string;
     onGuideGenerated?: (trackingNumber: string) => void;
 }
 
-// Zod Schema (Same as ShippingForm but adapted if needed)
-const addressSchema = z.object({
-    company: z.string().optional(),
-    firstName: z.string().min(1, "Nombre es requerido"),
-    lastName: z.string().min(1, "Apellido es requerido"),
-    email: z.string().email("Email inválido"),
-    phone: z.string().min(1, "Teléfono es requerido"),
-    address: z.string().min(1, "Dirección es requerida"),
-    suburb: z.string().min(1, "Barrio es requerido"),
-    crossStreet: z.string().optional(),
-    reference: z.string().optional(),
-    daneCode: z.string().min(1, "Código DANE es requerido"),
+// Step 1: Origin/Destination/Package Schema
+const step1Schema = z.object({
+    originDaneCode: z.string().min(8, "Código DANE de origen requerido"),
+    originAddress: z.string().min(2, "Dirección de origen requerida").max(50),
+    destDaneCode: z.string().min(8, "Código DANE de destino requerido"),
+    destAddress: z.string().min(8, "Dirección de destino requerida").max(50),
+    weight: z.number().min(1).max(1000),
+    height: z.number().min(1).max(300),
+    width: z.number().min(1).max(300),
+    length: z.number().min(1).max(300),
+    description: z.string().min(3).max(25),
+    contentValue: z.number().min(0).max(3000000),
+    codValue: z.number().min(0).max(3000000).optional(),
+    includeGuideCost: z.boolean(),
+    codPaymentMethod: z.enum(["cash", "data_phone"]),
 });
 
-const formSchema = z.object({
-    origin: addressSchema,
-    destination: addressSchema,
-    packageSize: z.enum(["small", "medium", "large", "custom"]),
-    customPackage: z.object({
-        weight: z.number().min(0.1),
-        height: z.number().min(1),
-        width: z.number().min(1),
-        length: z.number().min(1),
-    }).optional(),
-    description: z.string().min(1, "Descripción es requerida"),
-    contentValue: z.number().min(0, "Valor declarado debe ser positivo"),
+// Step 3: Detailed Contact Info Schema
+const step3Schema = z.object({
+    originCompany: z.string().min(2).max(28),
+    originFirstName: z.string().min(2).max(14),
+    originLastName: z.string().min(2).max(14),
+    originEmail: z.string().email().min(8).max(60),
+    originPhone: z.string().length(10),
+    originSuburb: z.string().min(2).max(30),
+    originCrossStreet: z.string().min(2).max(35),
+    originReference: z.string().min(2).max(25),
+    destCompany: z.string().min(2).max(28),
+    destFirstName: z.string().min(2).max(14),
+    destLastName: z.string().min(2).max(14),
+    destEmail: z.string().email().min(8).max(60),
+    destPhone: z.string().length(10),
+    destSuburb: z.string().min(2).max(30),
+    destCrossStreet: z.string().min(2).max(35),
+    destReference: z.string().min(2).max(25),
     requestPickup: z.boolean(),
     insurance: z.boolean(),
-    codPaymentMethod: z.string().min(1, "Método de pago requerido").max(10, "Máximo 10 caracteres"),
-    external_order_id: z.string().optional(),
-    myShipmentReference: z.string().optional(),
+    myShipmentReference: z.string().min(2).max(28),
+    external_order_id: z.string().min(1).max(28).optional(),
 });
 
-type FormValues = z.infer<typeof formSchema>;
+type Step1Values = z.infer<typeof step1Schema>;
+type Step3Values = z.infer<typeof step3Schema>;
 
-const PACKAGE_SIZES = {
-    small: { weight: 1, height: 10, width: 10, length: 10, label: "Pequeño (1kg - 10x10x10)" },
-    medium: { weight: 5, height: 30, width: 30, length: 30, label: "Mediano (5kg - 30x30x30)" },
-    large: { weight: 10, height: 50, width: 50, length: 50, label: "Grande (10kg - 50x50x50)" },
-    custom: { weight: 0, height: 0, width: 0, length: 0, label: "Personalizado" },
-};
+const STEPS = [
+    { id: 1, label: "Origen y Destino" },
+    { id: 2, label: "Cotización" },
+    { id: 3, label: "Detalles" },
+    { id: 4, label: "Pago" },
+];
 
-export default function ShipmentGuideModal({ isOpen, onClose, order, recommendedCarrier, onGuideGenerated }: ShipmentGuideModalProps) {
+export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGenerated }: ShipmentGuideModalProps) {
+    const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
+
+    // Step 1 data
+    const [step1Data, setStep1Data] = useState<Step1Values | null>(null);
+
+    // Step 2 data (quotes)
     const [rates, setRates] = useState<EnvioClickRate[]>([]);
     const [selectedRate, setSelectedRate] = useState<EnvioClickRate | null>(null);
-    const [hasQuoted, setHasQuoted] = useState(false);
-    const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
-    const [walletBalance, setWalletBalance] = useState<number | null>(null);
-    const [aiAnalysis, setAiAnalysis] = useState<{ recommended_carrier: string; reasoning: string } | null>(null);
-    const [loadingAI, setLoadingAI] = useState(false);
-    const [showBalanceModal, setShowBalanceModal] = useState(false);
-    const [insufficientBalanceInfo, setInsufficientBalanceInfo] = useState<{ balance: number; cost: number } | null>(null);
 
-    // Filter states
+    // Step 3 data
+    const [step3Data, setStep3Data] = useState<Step3Values | null>(null);
+
+    // Step 4 data
+    const [walletBalance, setWalletBalance] = useState<number | null>(null);
+    const [originAddresses, setOriginAddresses] = useState<OriginAddress[]>([]);
+    const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
+    const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
+
+    // DANE search states
     const [originSearch, setOriginSearch] = useState("");
     const [destSearch, setDestSearch] = useState("");
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
-
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
 
+    const repo = new ShipmentApiRepository();
+
+    // DANE options
+    const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
+        value: code,
+        label: `${data.ciudad} (${data.departamento})`
+    })).sort((a, b) => a.label.localeCompare(b.label));
+
+    const filteredOriginOptions = daneOptions.filter(opt =>
+        opt.label.toLowerCase().includes(originSearch.toLowerCase())
+    );
+
+    const filteredDestOptions = daneOptions.filter(opt =>
+        opt.label.toLowerCase().includes(destSearch.toLowerCase())
+    );
+
+    // Step 1 Form
+    const step1Form = useForm<Step1Values>({
+        resolver: zodResolver(step1Schema),
+        defaultValues: {
+            originDaneCode: "11001000",
+            originAddress: "",
+            destDaneCode: "11001000",
+            destAddress: "",
+            weight: 1,
+            height: 10,
+            width: 10,
+            length: 10,
+            description: "E-commerce Order",
+            contentValue: 0,
+            codValue: 0,
+            includeGuideCost: false,
+            codPaymentMethod: "cash",
+        },
+    });
+
+    // Step 3 Form
+    const step3Form = useForm<Step3Values>({
+        resolver: zodResolver(step3Schema),
+        defaultValues: {
+            originCompany: "Mi Empresa",
+            originFirstName: "",
+            originLastName: "",
+            originEmail: "",
+            originPhone: "",
+            originSuburb: "",
+            originCrossStreet: "",
+            originReference: "",
+            destCompany: "NA",
+            destFirstName: "",
+            destLastName: "",
+            destEmail: "",
+            destPhone: "",
+            destSuburb: "",
+            destCrossStreet: "",
+            destReference: "",
+            requestPickup: false,
+            insurance: true,
+            myShipmentReference: "",
+            external_order_id: "",
+        },
+    });
+
+    // Fetch initial data on open
+    useEffect(() => {
+        if (isOpen) {
+            getWalletBalanceAction().then(res => {
+                if (res.success && res.data) setWalletBalance(res.data.Balance);
+            });
+            getOriginAddressesAction().then(res => {
+                if (res.success && res.data) {
+                    setOriginAddresses(res.data);
+                    // Si hay una predeterminada, seleccionarla automáticamente
+                    const defaultAddr = res.data.find(a => a.is_default);
+                    if (defaultAddr) {
+                        handleOriginAddressSelect(defaultAddr);
+                    }
+                }
+            });
+        }
+    }, [isOpen]);
+
+    const handleOriginAddressSelect = (addr: OriginAddress) => {
+        // Step 1
+        step1Form.setValue("originDaneCode", addr.city_dane_code);
+        step1Form.setValue("originAddress", addr.street);
+        setOriginSearch(`${addr.city} (${addr.state})`);
+
+        // Step 3
+        step3Form.setValue("originCompany", addr.company);
+        step3Form.setValue("originFirstName", addr.first_name);
+        step3Form.setValue("originLastName", addr.last_name);
+        step3Form.setValue("originEmail", addr.email);
+        step3Form.setValue("originPhone", addr.phone);
+        step3Form.setValue("originSuburb", addr.suburb || "");
+        step3Form.setValue("originCrossStreet", addr.street);
+        step3Form.setValue("originReference", ""); // Opcional
+    };
+
+    // Pre-fill from order
+    useEffect(() => {
+        if (isOpen && order) {
+            // Step 1
+            step1Form.setValue("contentValue", order.total_amount);
+            step1Form.setValue("codValue", order.total_amount);
+            step1Form.setValue("description", `Order ${order.order_number}`);
+            step1Form.setValue("destAddress", order.shipping_street);
+
+            if (order.weight && order.weight > 0) {
+                step1Form.setValue("weight", order.weight);
+                step1Form.setValue("height", order.height || 10);
+                step1Form.setValue("width", order.width || 10);
+                step1Form.setValue("length", order.length || 10);
+            }
+
+            // Try to find DANE code by city
+            const city = (order.shipping_city || "").toUpperCase();
+            const foundDane = Object.entries(danes).find(([_, data]: [string, any]) =>
+                (data as any).ciudad.includes(city)
+            );
+            if (foundDane) {
+                step1Form.setValue("destDaneCode", foundDane[0]);
+                setDestSearch(`${(foundDane[1] as any).ciudad} (${(foundDane[1] as any).departamento})`);
+            }
+
+            // Step 3
+            step3Form.setValue("destCompany", order.customer_name);
+            step3Form.setValue("destFirstName", order.customer_name.split(" ")[0] || "");
+            step3Form.setValue("destLastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
+            step3Form.setValue("destEmail", order.customer_email);
+            step3Form.setValue("destPhone", order.customer_phone);
+            step3Form.setValue("destSuburb", order.shipping_state || "");
+            step3Form.setValue("myShipmentReference", `Orden ${order.internal_number}`);
+            step3Form.setValue("external_order_id", order.order_number);
+        }
+    }, [isOpen, order]);
+
+    // Click outside to close DANE dropdowns
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (originRef.current && !originRef.current.contains(event.target as Node)) {
@@ -96,231 +250,150 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    // DANE options for select
-    const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
-        value: code,
-        label: `${data.ciudad} (${data.departamento})`
-    })).sort((a, b) => a.label.localeCompare(b.label));
-
-    const {
-        register,
-        handleSubmit,
-        watch,
-        setValue,
-        formState: { errors },
-    } = useForm<FormValues>({
-        resolver: zodResolver(formSchema),
-        defaultValues: {
-            origin: {
-                company: "", firstName: "", lastName: "", email: "", phone: "",
-                address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
-            },
-            destination: {
-                company: "", firstName: "", lastName: "", email: "", phone: "", address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
-            },
-            packageSize: "medium",
-            insurance: true,
-            requestPickup: false,
-            contentValue: 0,
-            codPaymentMethod: "cash",
-            description: "E-commerce Order",
-        },
-    });
-
-    const packageSize = watch("packageSize");
-
-    // Fetch wallet balance on open
+    // Reset on close
     useEffect(() => {
-        if (isOpen) {
-            getWalletBalanceAction().then(res => {
-                if (res.success && res.data) setWalletBalance(res.data.Balance);
-            });
+        if (!isOpen) {
+            setCurrentStep(1);
+            setStep1Data(null);
+            setRates([]);
+            setSelectedRate(null);
+            setStep3Data(null);
+            setGeneratedPdfUrl(null);
+            setTrackingNumber(null);
+            setError(null);
+            setSuccess(null);
+            step1Form.reset();
+            step3Form.reset();
         }
     }, [isOpen]);
 
-    // Pre-fill form with order data on open
-    useEffect(() => {
-        if (isOpen && order) {
-            setValue("destination.company", order.customer_name);
-            setValue("destination.firstName", order.customer_name.split(" ")[0] || "");
-            setValue("destination.lastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
-            setValue("destination.email", order.customer_email);
-            setValue("destination.phone", order.customer_phone);
-            setValue("destination.address", order.shipping_street);
-            setValue("destination.suburb", order.shipping_state || "");
-
-            // Try to find DANE code by city name
-            const city = (order.shipping_city || "").toUpperCase();
-            const foundDane = Object.entries(danes).find(([_, data]: [string, any]) => (data as any).ciudad.includes(city));
-            if (foundDane) {
-                setValue("destination.daneCode", foundDane[0]);
-                setDestSearch(`${(foundDane[1] as any).ciudad} (${(foundDane[1] as any).departamento})`);
-            } else {
-                const defaultDane = "11001000";
-                setValue("destination.daneCode", defaultDane);
-                const cityData = danes[defaultDane as keyof typeof danes];
-                if (cityData) {
-                    setDestSearch(`${(cityData as any).ciudad} (${(cityData as any).departamento})`);
-                }
-            }
-
-            setValue("contentValue", order.total_amount);
-            setValue("description", "Order " + order.order_number);
-            setValue("external_order_id", order.order_number);
-            setValue("myShipmentReference", "Orden " + order.internal_number);
-
-            if (order.weight && order.weight > 0) {
-                setValue("packageSize", "custom");
-                setValue("customPackage.weight", order.weight);
-                setValue("customPackage.height", order.height || 10);
-                setValue("customPackage.width", order.width || 10);
-                setValue("customPackage.length", order.length || 10);
-            }
-        }
-    }, [isOpen, order, setValue]);
-
-    const buildPayload = (data: FormValues, idRate: number = 0): EnvioClickQuoteRequest => {
-        const pkg =
-            data.packageSize === "custom" && data.customPackage
-                ? data.customPackage
-                : PACKAGE_SIZES[data.packageSize];
-
-        return {
-            idRate: idRate,
-            myShipmentReference: data.myShipmentReference || `REF-${Date.now()}`,
-            external_order_id: data.external_order_id || `EXT-${Date.now()}`,
-            requestPickup: data.requestPickup,
-            pickupDate: new Date().toISOString().split("T")[0],
-            insurance: data.insurance,
-            description: data.description,
-            contentValue: Number(data.contentValue),
-            codValue: Number(data.contentValue),
-            includeGuideCost: false,
-            codPaymentMethod: data.codPaymentMethod,
-            packages: [
-                {
-                    weight: Number(pkg.weight),
-                    height: Number(pkg.height),
-                    width: Number(pkg.width),
-                    length: Number(pkg.length),
-                },
-            ],
-            origin: {
-                ...data.origin,
-                company: data.origin.company || "",
-                crossStreet: data.origin.crossStreet || "",
-                reference: data.origin.reference || ""
-            },
-            destination: {
-                ...data.destination,
-                company: data.destination.company || "",
-                crossStreet: data.destination.crossStreet || "",
-                reference: data.destination.reference || ""
-            },
-        };
-    };
-
-    const handleQuote = async (data: FormValues) => {
+    // Step 1: Quote
+    const handleStep1Submit = async (data: Step1Values) => {
         setLoading(true);
         setError(null);
-        setRates([]);
-        setSelectedRate(null);
-        setHasQuoted(false);
-
         try {
-            const payload = buildPayload(data);
-            const repo = new ShipmentApiRepository();
-            const res = await repo.quoteShipment(payload);
+            const quotePayload: EnvioClickQuoteRequest = {
+                packages: [{
+                    weight: data.weight,
+                    height: data.height,
+                    width: data.width,
+                    length: data.length,
+                }],
+                description: data.description,
+                contentValue: data.contentValue,
+                codValue: data.codValue,
+                includeGuideCost: data.includeGuideCost,
+                codPaymentMethod: data.codPaymentMethod,
+                origin: {
+                    daneCode: data.originDaneCode,
+                    address: data.originAddress,
+                },
+                destination: {
+                    daneCode: data.destDaneCode,
+                    address: data.destAddress,
+                },
+            };
 
-            if (res.data && res.data.rates && res.data.rates.length > 0) {
-                setRates(res.data.rates);
-                setHasQuoted(true);
-
-                // Perform AI Analysis on real rates
-                const originDane = danes[data.origin.daneCode as keyof typeof danes];
-                const destDane = danes[data.destination.daneCode as keyof typeof danes];
-
-                if (originDane && destDane) {
-                    setLoadingAI(true);
-                    try {
-                        const aiRes = await getAIRecommendationAction(destDane.ciudad, destDane.departamento);
-                        if (aiRes) {
-                            // Validate that the recommended carrier exists in the quotes
-                            const carrierExists = res.data.rates.some((r: any) =>
-                                r.carrier.toLowerCase() === aiRes.recommended_carrier.toLowerCase()
-                            );
-
-                            if (carrierExists) {
-                                setAiAnalysis({
-                                    recommended_carrier: aiRes.recommended_carrier,
-                                    reasoning: aiRes.reasoning
-                                });
-                            } else {
-                                console.warn(`AI recommended ${aiRes.recommended_carrier} but it's not in available quotes.`);
-                                setAiAnalysis(null);
-                            }
-                        }
-                    } catch (e) {
-                        console.error("AI Error:", e);
-                    } finally {
-                        setLoadingAI(false);
-                    }
-                }
-
+            const response = await repo.quoteShipment(quotePayload);
+            if (response.data?.rates && response.data.rates.length > 0) {
+                setRates(response.data.rates);
+                setStep1Data(data);
+                setCurrentStep(2);
             } else {
-                setError("No se encontraron cotizaciones.");
+                setError("No se encontraron tarifas disponibles");
             }
         } catch (err: any) {
-            const msg = err.message || "";
-            if (msg.toLowerCase().includes("no tiene suficiente crédito")) {
-                setError("Saldo insuficiente");
-            } else {
-                setError(msg || "Error consultando cotizaciones");
-            }
+            setError(err.message || "Error al cotizar envío");
         } finally {
             setLoading(false);
         }
     };
 
-    const handleGenerate = async (data: FormValues) => {
-        if (selectedRate && walletBalance !== null && walletBalance < selectedRate.flete) {
-            setInsufficientBalanceInfo({ balance: walletBalance, cost: selectedRate.flete });
-            setShowBalanceModal(true);
+    // Step 2: Select Rate
+    const handleRateSelection = (rate: EnvioClickRate) => {
+        setSelectedRate(rate);
+        setCurrentStep(3);
+    };
+
+    // Step 3: Details
+    const handleStep3Submit = async (data: Step3Values) => {
+        setStep3Data(data);
+        setCurrentStep(4);
+    };
+
+    // Step 4: Generate Guide
+    const handleFinalGenerate = async () => {
+        if (!step1Data || !selectedRate || !step3Data) {
+            setError("Faltan datos para generar la guía");
             return;
         }
 
-        if (!selectedRate) {
-            setError("Debes seleccionar una cotización");
+        // Check wallet balance
+        const totalCost = selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
+        if (walletBalance !== null && walletBalance < totalCost) {
+            setError(`Saldo insuficiente. Necesitas $${totalCost.toLocaleString()} pero tienes $${walletBalance.toLocaleString()}`);
             return;
         }
 
         setLoading(true);
         setError(null);
-        setSuccess(null);
-
         try {
-            const payload = buildPayload(data, selectedRate.idRate);
-            const repo = new ShipmentApiRepository();
-            const res = await repo.generateGuide(payload);
+            const generatePayload: EnvioClickQuoteRequest = {
+                idRate: selectedRate.idRate,
+                myShipmentReference: step3Data.myShipmentReference,
+                external_order_id: step3Data.external_order_id,
+                order_uuid: order?.id,
+                requestPickup: step3Data.requestPickup,
+                pickupDate: new Date().toISOString().split("T")[0],
+                insurance: step3Data.insurance,
+                description: step1Data.description,
+                contentValue: step1Data.contentValue,
+                codValue: step1Data.codValue,
+                includeGuideCost: step1Data.includeGuideCost,
+                codPaymentMethod: step1Data.codPaymentMethod,
+                packages: [{
+                    weight: step1Data.weight,
+                    height: step1Data.height,
+                    width: step1Data.width,
+                    length: step1Data.length,
+                }],
+                origin: {
+                    daneCode: step1Data.originDaneCode,
+                    address: step1Data.originAddress,
+                    company: step3Data.originCompany,
+                    firstName: step3Data.originFirstName,
+                    lastName: step3Data.originLastName,
+                    email: step3Data.originEmail,
+                    phone: step3Data.originPhone,
+                    suburb: step3Data.originSuburb,
+                    crossStreet: step3Data.originCrossStreet,
+                    reference: step3Data.originReference,
+                },
+                destination: {
+                    daneCode: step1Data.destDaneCode,
+                    address: step1Data.destAddress,
+                    company: step3Data.destCompany,
+                    firstName: step3Data.destFirstName,
+                    lastName: step3Data.destLastName,
+                    email: step3Data.destEmail,
+                    phone: step3Data.destPhone,
+                    suburb: step3Data.destSuburb,
+                    crossStreet: step3Data.destCrossStreet,
+                    reference: step3Data.destReference,
+                },
+            };
 
-            // API returns 'tracker' and 'url'
-            const tracking = res.data.tracker;
-            const pdfUrl = res.data.url;
-
-            setSuccess(`Guía generada exitosamente! Tracking: ${tracking}`);
-
-            // We can store the URL in a local state if we want to show it in the success UI specifically
-            // For now, we'll append it to the success message or handle it in the UI render
-            setGeneratedPdfUrl(pdfUrl);
-
-            if (onGuideGenerated) onGuideGenerated(tracking);
-        } catch (err: any) {
-            const msg = err.message || "";
-            if (msg.toLowerCase().includes("no tiene suficiente crédito")) {
-                setError("Saldo insuficiente");
-            } else {
-                setError(msg || "Error generando guía");
+            const response = await repo.generateGuide(generatePayload);
+            if (response.data) {
+                setGeneratedPdfUrl(response.data.url);
+                setTrackingNumber(response.data.tracker);
+                setSuccess("¡Guía generada exitosamente!");
+                if (onGuideGenerated && response.data.tracker) {
+                    onGuideGenerated(response.data.tracker);
+                }
             }
+        } catch (err: any) {
+            setError(err.message || "Error al generar guía");
         } finally {
             setLoading(false);
         }
@@ -329,317 +402,553 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, recommended
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl overflow-hidden max-h-[90vh] flex flex-col">
-                <div className="p-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                    <h3 className="text-lg font-bold text-gray-800">
-                        {order ? `Generar Guía de Envío para Orden #${order.order_number}` : 'Generar Guía de Envío (Prueba)'}
-                    </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600">✕</button>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+                {/* Header */}
+                <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
+                    <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-2xl font-bold text-gray-800">Generar Guía de Envío</h2>
+                        <button
+                            onClick={onClose}
+                            className="text-gray-500 hover:text-gray-700 text-2xl"
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <Stepper steps={STEPS} currentStep={currentStep} />
                 </div>
 
-                <div className="p-6 overflow-y-auto flex-1">
+                {/* Content */}
+                <div className="p-6">
                     {error && (
-                        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-                            <p className="font-bold">Error</p>
-                            <p>{error}</p>
-                        </div>
-                    )}
-
-                    {showBalanceModal && insufficientBalanceInfo && (
-                        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in fade-in zoom-in duration-300">
-                                <div className="bg-red-600 p-6 text-center">
-                                    <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <span className="text-3xl">⚠️</span>
-                                    </div>
-                                    <h3 className="text-xl font-bold text-white">Saldo Insuficiente</h3>
-                                </div>
-                                <div className="p-8 text-center">
-                                    <p className="text-gray-600 mb-6">
-                                        No cuentas con saldo suficiente en tu billetera local para generar esta guía.
-                                    </p>
-                                    <div className="bg-gray-50 rounded-xl p-4 mb-8 grid grid-cols-2 gap-4">
-                                        <div className="text-left">
-                                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Tu Saldo</p>
-                                            <p className="text-lg font-bold text-gray-900">${insufficientBalanceInfo.balance.toLocaleString()}</p>
-                                        </div>
-                                        <div className="text-left border-l pl-4">
-                                            <p className="text-xs text-gray-500 uppercase font-bold mb-1">Costo Guía</p>
-                                            <p className="text-lg font-bold text-red-600">${insufficientBalanceInfo.cost.toLocaleString()}</p>
-                                        </div>
-                                    </div>
-                                    <div className="flex flex-col gap-3">
-                                        <Button
-                                            className="w-full bg-red-600 hover:bg-red-700 h-12 text-lg"
-                                            onClick={() => window.location.href = '/wallet'}
-                                        >
-                                            Recargar Billetera
-                                        </Button>
-                                        <Button
-                                            variant="secondary"
-                                            className="w-full h-12"
-                                            onClick={() => setShowBalanceModal(false)}
-                                        >
-                                            Volver
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
+                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                            {error}
                         </div>
                     )}
 
                     {success && (
-                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-4 text-center">
-                            <p className="font-bold text-lg mb-2">¡Éxito!</p>
-                            <p>{success}</p>
-
-                            {generatedPdfUrl && (
-                                <div className="mt-4">
-                                    <a
-                                        href={generatedPdfUrl}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="inline-block bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded transition-colors"
-                                    >
-                                        📄 Ver Guía PDF
-                                    </a>
-                                </div>
-                            )}
-
-                            <Button className="mt-4" onClick={onClose}>Cerrar</Button>
+                        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                            {success}
                         </div>
                     )}
 
-                    {!success && (
-                        <form onSubmit={handleSubmit(hasQuoted ? handleGenerate : handleQuote)} className="space-y-6">
-                            {/* Origin Section */}
-                            <section>
-                                <h3 className="text-md font-semibold mb-3 text-gray-700 border-b pb-1">Origen</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <Input label="Empresa" {...register("origin.company")} error={errors.origin?.company?.message} />
-                                    <Input label="Nombre" {...register("origin.firstName")} error={errors.origin?.firstName?.message} />
-                                    <Input label="Apellido" {...register("origin.lastName")} error={errors.origin?.lastName?.message} />
-                                    <Input label="Email" {...register("origin.email")} error={errors.origin?.email?.message} />
-                                    <Input label="Teléfono" {...register("origin.phone")} error={errors.origin?.phone?.message} />
-                                    <Input label="Dirección" {...register("origin.address")} error={errors.origin?.address?.message} />
-                                    <Input label="Barrio" {...register("origin.suburb")} error={errors.origin?.suburb?.message} />
-                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <div className="relative" ref={originRef}>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
-                                            <input
-                                                type="text"
-                                                value={originSearch}
+                    {/* Step 1: Origin/Destination/Package */}
+                    {currentStep === 1 && (
+                        <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
+                            <div className="grid grid-cols-2 gap-6">
+                                {/* Origin */}
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="font-semibold text-lg text-gray-700">Origen</h3>
+                                        {originAddresses.length > 0 && (
+                                            <select
+                                                className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500"
                                                 onChange={(e) => {
-                                                    setOriginSearch(e.target.value);
-                                                    setShowOriginResults(true);
+                                                    const addr = originAddresses.find(a => a.id === parseInt(e.target.value));
+                                                    if (addr) handleOriginAddressSelect(addr);
                                                 }}
-                                                onFocus={() => setShowOriginResults(true)}
-                                                placeholder="Escribe al menos 3 letras..."
-                                                className="w-full border-gray-300 rounded-md shadow-sm p-2 border text-sm"
-                                            />
-                                            {showOriginResults && originSearch.length >= 3 && (
-                                                <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                                    {Object.entries(danes)
-                                                        .filter(([_, data]: [string, any]) => `${data.ciudad} (${data.departamento})`.toLowerCase().includes(originSearch.toLowerCase()))
-                                                        .slice(0, 10)
-                                                        .map(([code, data]: [string, any]) => (
-                                                            <div
-                                                                key={`origin-opt-${code}`}
-                                                                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                                                onClick={() => {
-                                                                    setValue("origin.daneCode", code);
-                                                                    setOriginSearch(`${data.ciudad} (${data.departamento})`);
-                                                                    setShowOriginResults(false);
-                                                                }}
-                                                            >
-                                                                {data.ciudad} ({data.departamento})
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <Input
-                                            label="Código DANE"
-                                            {...register("origin.daneCode")}
-                                            error={errors.origin?.daneCode?.message}
-                                            placeholder="Código DANE"
+                                                defaultValue=""
+                                            >
+                                                <option value="" disabled>Mis direcciones...</option>
+                                                {originAddresses.map(a => (
+                                                    <option key={a.id} value={a.id}>{a.alias}</option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </div>
+
+                                    <div ref={originRef} className="relative">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Ciudad remitente *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={originSearch}
+                                            onChange={(e) => {
+                                                setOriginSearch(e.target.value);
+                                                setShowOriginResults(true);
+                                            }}
+                                            onFocus={() => setShowOriginResults(true)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            placeholder="Buscar ciudad..."
                                         />
-                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <Input label="Cruzamiento" {...register("origin.crossStreet")} error={errors.origin?.crossStreet?.message} />
-                                            <Input label="Referencia" {...register("origin.reference")} error={errors.origin?.reference?.message} />
-                                        </div>
+                                        {showOriginResults && filteredOriginOptions.length > 0 && (
+                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                {filteredOriginOptions.slice(0, 50).map((opt) => (
+                                                    <div
+                                                        key={opt.value}
+                                                        onClick={() => {
+                                                            step1Form.setValue("originDaneCode", opt.value);
+                                                            setOriginSearch(opt.label);
+                                                            setShowOriginResults(false);
+                                                        }}
+                                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                    >
+                                                        {opt.label}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                </div>
-                            </section>
 
-                            {/* Destination Section */}
-                            <section>
-                                <h3 className="text-md font-semibold mb-3 text-gray-700 border-b pb-1">Destino</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <Input label="Empresa" {...register("destination.company")} error={errors.destination?.company?.message} />
-                                    <Input label="Nombre" {...register("destination.firstName")} error={errors.destination?.firstName?.message} />
-                                    <Input label="Apellido" {...register("destination.lastName")} error={errors.destination?.lastName?.message} />
-                                    <Input label="Email" {...register("destination.email")} error={errors.destination?.email?.message} />
-                                    <Input label="Teléfono" {...register("destination.phone")} error={errors.destination?.phone?.message} />
-                                    <Input label="Dirección" {...register("destination.address")} error={errors.destination?.address?.message} />
-                                    <Input label="Barrio" {...register("destination.suburb")} error={errors.destination?.suburb?.message} />
-                                    <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        <div className="relative" ref={destRef}>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
-                                            <input
-                                                type="text"
-                                                value={destSearch}
-                                                onChange={(e) => {
-                                                    setDestSearch(e.target.value);
-                                                    setShowDestResults(true);
-                                                }}
-                                                onFocus={() => setShowDestResults(true)}
-                                                placeholder="Escribe al menos 3 letras..."
-                                                className="w-full border-gray-300 rounded-md shadow-sm p-2 border text-sm"
-                                            />
-                                            {showDestResults && destSearch.length >= 3 && (
-                                                <div className="absolute z-10 w-full bg-white border border-gray-200 mt-1 rounded-md shadow-lg max-h-48 overflow-y-auto">
-                                                    {Object.entries(danes)
-                                                        .filter(([_, data]: [string, any]) => `${data.ciudad} (${data.departamento})`.toLowerCase().includes(destSearch.toLowerCase()))
-                                                        .slice(0, 10)
-                                                        .map(([code, data]: [string, any]) => (
-                                                            <div
-                                                                key={`dest-opt-${code}`}
-                                                                className="p-2 hover:bg-gray-100 cursor-pointer text-sm"
-                                                                onClick={() => {
-                                                                    setValue("destination.daneCode", code);
-                                                                    setDestSearch(`${data.ciudad} (${data.departamento})`);
-                                                                    setShowDestResults(false);
-                                                                }}
-                                                            >
-                                                                {data.ciudad} ({data.departamento})
-                                                            </div>
-                                                        ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                        <Input
-                                            label="Código DANE"
-                                            {...register("destination.daneCode")}
-                                            error={errors.destination?.daneCode?.message}
-                                            placeholder="Código DANE"
+                                    <Input
+                                        label="Calle y Número *"
+                                        {...step1Form.register("originAddress")}
+                                        error={step1Form.formState.errors.originAddress?.message}
+                                        placeholder="Calle 98 62-37"
+                                    />
+                                </div>
+
+                                {/* Destination */}
+                                <div className="space-y-4">
+                                    <h3 className="font-semibold text-lg text-gray-700">Destino</h3>
+
+                                    <div ref={destRef} className="relative">
+                                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            Ciudad destinatario *
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={destSearch}
+                                            onChange={(e) => {
+                                                setDestSearch(e.target.value);
+                                                setShowDestResults(true);
+                                            }}
+                                            onFocus={() => setShowDestResults(true)}
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            placeholder="Buscar ciudad..."
                                         />
-                                        <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-3">
-                                            <Input label="Cruzamiento" {...register("destination.crossStreet")} error={errors.destination?.crossStreet?.message} />
-                                            <Input label="Referencia" {...register("destination.reference")} error={errors.destination?.reference?.message} />
-                                        </div>
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Package Section */}
-                            <section>
-                                <h3 className="text-md font-semibold mb-3 text-gray-700 border-b pb-1">Paquete y Detalles</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                    <div className="col-span-2">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Tamaño del Paquete</label>
-                                        <select
-                                            {...register("packageSize")}
-                                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
-                                        >
-                                            {Object.entries(PACKAGE_SIZES).map(([key, val]) => (
-                                                <option key={key} value={key}>{val.label}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    {packageSize === "custom" && (
-                                        <>
-                                            <Input label="Peso (kg)" type="number" step="0.1" {...register("customPackage.weight", { valueAsNumber: true })} error={errors.customPackage?.weight?.message} />
-                                            <Input label="Alto (cm)" type="number" {...register("customPackage.height", { valueAsNumber: true })} error={errors.customPackage?.height?.message} />
-                                            <Input label="Ancho (cm)" type="number" {...register("customPackage.width", { valueAsNumber: true })} error={errors.customPackage?.width?.message} />
-                                            <Input label="Largo (cm)" type="number" {...register("customPackage.length", { valueAsNumber: true })} error={errors.customPackage?.length?.message} />
-                                        </>
-                                    )}
-
-                                    <div className="col-span-2">
-                                        <Input label="Descripción" {...register("description")} error={errors.description?.message} />
-                                    </div>
-                                    <Input label="Valor Declarado" type="number" {...register("contentValue", { valueAsNumber: true })} error={errors.contentValue?.message} />
-
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago COD</label>
-                                        <select {...register("codPaymentMethod")} className="w-full border-gray-300 rounded-md shadow-sm p-2 border">
-                                            <option value="cash">Efectivo (cash)</option>
-                                            <option value="data_phone">Datáfono</option>
-                                        </select>
-                                        {errors.codPaymentMethod && <p className="text-red-500 text-xs mt-1">{errors.codPaymentMethod.message}</p>}
-                                    </div>
-                                </div>
-                            </section>
-
-                            {/* Rates Section */}
-                            {rates.length > 0 && (
-                                <section className="bg-gray-50 p-4 rounded-md">
-                                    {loadingAI && (
-                                        <div className="text-center py-4 text-blue-600 animate-pulse text-sm font-medium">
-                                            🤖 IA Analizando mejores opciones...
-                                        </div>
-                                    )}
-
-                                    {aiAnalysis && !loadingAI && (
-                                        <div className="bg-blue-50 border border-blue-200 p-4 rounded-xl mb-4">
-                                            <h4 className="text-blue-900 font-bold flex items-center gap-2 mb-1">
-                                                <span>🤖</span> Recomendación: {aiAnalysis.recommended_carrier}
-                                            </h4>
-                                            <p className="text-blue-800 text-xs leading-relaxed italic">
-                                                &quot;{aiAnalysis.reasoning}&quot;
-                                            </p>
-                                        </div>
-                                    )}
-
-                                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                                        {rates.map((rate) => {
-                                            const isRecommended = rate.carrier === aiAnalysis?.recommended_carrier;
-                                            return (
-                                                <div
-                                                    key={rate.idRate}
-                                                    className={`p-3 border rounded cursor-pointer flex justify-between items-center transition-all ${selectedRate?.idRate === rate.idRate ? "border-indigo-500 bg-indigo-50 ring-1 ring-indigo-200" : isRecommended ? "border-green-300 bg-green-50" : "border-gray-200 bg-white hover:bg-gray-50"}`}
-                                                    onClick={() => setSelectedRate(rate)}
-                                                >
-                                                    <div>
-                                                        <div className="flex items-center gap-2">
-                                                            <p className="font-bold text-gray-800">{rate.carrier}</p>
-                                                            {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
-                                                        </div>
-                                                        <p className="text-sm text-gray-600">{rate.product} - {rate.deliveryDays} días</p>
+                                        {showDestResults && filteredDestOptions.length > 0 && (
+                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                {filteredDestOptions.slice(0, 50).map((opt) => (
+                                                    <div
+                                                        key={opt.value}
+                                                        onClick={() => {
+                                                            step1Form.setValue("destDaneCode", opt.value);
+                                                            setDestSearch(opt.label);
+                                                            setShowDestResults(false);
+                                                        }}
+                                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                    >
+                                                        {opt.label}
                                                     </div>
-                                                    <div className="text-right">
-                                                        <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>
-                                                    </div>
-                                                </div>
-                                            );
-                                        })}
+                                                ))}
+                                            </div>
+                                        )}
                                     </div>
-                                </section>
-                            )}
 
-                            <div className="flex justify-end pt-4 gap-4 sticky bottom-0 bg-white p-4 border-t border-gray-100">
-                                <Button type="button" variant="secondary" onClick={onClose} disabled={loading}>
-                                    Cancelar
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    onClick={handleSubmit(handleQuote)}
-                                    disabled={loading}
-                                >
-                                    {rates.length > 0 ? "Cotizar de Nuevo" : "Cotizar"}
-                                </Button>
+                                    <Input
+                                        label="Calle y Número *"
+                                        {...step1Form.register("destAddress")}
+                                        error={step1Form.formState.errors.destAddress?.message}
+                                        placeholder="Carrera 46 # 93 - 45"
+                                    />
+                                </div>
+                            </div>
 
-                                {rates.length > 0 && (
-                                    <Button type="button" onClick={handleSubmit(handleGenerate)} disabled={loading || !selectedRate}>
-                                        {loading ? "Generando..." : "Generar Guía"}
-                                    </Button>
-                                )}
+                            {/* Package Details */}
+                            <div className="border-t pt-6">
+                                <h3 className="font-semibold text-lg text-gray-700 mb-4">Características del paquete</h3>
+                                <div className="grid grid-cols-4 gap-4">
+                                    <Input
+                                        label="Peso (kg) *"
+                                        type="number"
+                                        step="0.1"
+                                        {...step1Form.register("weight", { valueAsNumber: true })}
+                                        error={step1Form.formState.errors.weight?.message}
+                                    />
+                                    <Input
+                                        label="Alto (cm) *"
+                                        type="number"
+                                        {...step1Form.register("height", { valueAsNumber: true })}
+                                        error={step1Form.formState.errors.height?.message}
+                                    />
+                                    <Input
+                                        label="Ancho (cm) *"
+                                        type="number"
+                                        {...step1Form.register("width", { valueAsNumber: true })}
+                                        error={step1Form.formState.errors.width?.message}
+                                    />
+                                    <Input
+                                        label="Largo (cm) *"
+                                        type="number"
+                                        {...step1Form.register("length", { valueAsNumber: true })}
+                                        error={step1Form.formState.errors.length?.message}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Additional Info */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <Input
+                                    label="Descripción *"
+                                    {...step1Form.register("description")}
+                                    error={step1Form.formState.errors.description?.message}
+                                    placeholder="descripción"
+                                />
+                                <Input
+                                    label="Valor factura declarado *"
+                                    type="number"
+                                    {...step1Form.register("contentValue", { valueAsNumber: true })}
+                                    error={step1Form.formState.errors.contentValue?.message}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            {...step1Form.register("includeGuideCost")}
+                                            className="rounded"
+                                        />
+                                        <span className="text-sm">Incluir costo de guía en COD</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Método de pago COD
+                                    </label>
+                                    <select
+                                        {...step1Form.register("codPaymentMethod")}
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                    >
+                                        <option value="cash">Efectivo</option>
+                                        <option value="data_phone">Datáfono</option>
+                                    </select>
+                                    {step1Form.formState.errors.codPaymentMethod?.message && (
+                                        <p className="text-sm text-red-500 mt-1">
+                                            {step1Form.formState.errors.codPaymentMethod.message}
+                                        </p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end">
+                                <Button type="submit" disabled={loading}>
+                                    {loading ? "Cotizando..." : "Siguiente"}
+                                </Button>
                             </div>
                         </form>
+                    )}
+
+                    {/* Step 2: Quote Selection */}
+                    {currentStep === 2 && (
+                        <div className="space-y-4">
+                            <h3 className="font-semibold text-lg text-gray-700 mb-4">
+                                Filtra por servicio / Transportadora
+                            </h3>
+                            <p className="text-sm text-gray-600 mb-4">Todos los precios incluyen IVA</p>
+
+                            {rates.map((rate) => {
+                                const totalCost = rate.flete + (rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0);
+                                const isCOD = rate.cod;
+
+                                return (
+                                    <div
+                                        key={rate.idRate}
+                                        onClick={() => handleRateSelection(rate)}
+                                        className="border rounded-lg p-4 hover:border-orange-500 cursor-pointer transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between">
+                                            <div className="flex items-center space-x-4">
+                                                <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
+                                                    <span className="font-bold text-xs">{rate.carrier}</span>
+                                                </div>
+                                                <div>
+                                                    <div className="font-semibold">{rate.carrier}</div>
+                                                    <div className="text-sm text-gray-600">{rate.product}</div>
+                                                    <div className="text-xs text-gray-500">
+                                                        Entrega aprox. {rate.deliveryDays} días
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-2xl font-bold text-orange-600">
+                                                    ${totalCost.toLocaleString()} COP
+                                                </div>
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Entrega: {rate.deliveryDays} días
+                                                </div>
+                                                {isCOD && (
+                                                    <div className="text-xs text-blue-600 mt-1">
+                                                        COD disponible
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            <div className="flex justify-between mt-6">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setCurrentStep(1)}
+                                >
+                                    Atrás
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Step 3: Details */}
+                    {currentStep === 3 && (
+                        <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6">
+                            {/* Origin Details */}
+                            <div>
+                                <h3 className="font-semibold text-lg text-gray-700 mb-4">Dirección - Remitente</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <Input
+                                        label="Calle *"
+                                        {...step3Form.register("originCrossStreet")}
+                                        error={step3Form.formState.errors.originCrossStreet?.message}
+                                        placeholder="calle 75 sur n 42-97"
+                                    />
+                                    <Input
+                                        label="Edificio/Interior/Apto *"
+                                        {...step3Form.register("originReference")}
+                                        error={step3Form.formState.errors.originReference?.message}
+                                        placeholder="apt 801"
+                                    />
+                                    <Input
+                                        label="Barrio *"
+                                        {...step3Form.register("originSuburb")}
+                                        error={step3Form.formState.errors.originSuburb?.message}
+                                        placeholder="sector Aves María"
+                                    />
+                                </div>
+
+                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Referencias - Empresa</h4>
+                                <Input
+                                    label="Empresa"
+                                    {...step3Form.register("originCompany")}
+                                    error={step3Form.formState.errors.originCompany?.message}
+                                    placeholder="ProbabilityIA"
+                                />
+
+                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Datos de contacto</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="Nombre *"
+                                        {...step3Form.register("originFirstName")}
+                                        error={step3Form.formState.errors.originFirstName?.message}
+                                        placeholder="Luisa"
+                                    />
+                                    <Input
+                                        label="Apellido *"
+                                        {...step3Form.register("originLastName")}
+                                        error={step3Form.formState.errors.originLastName?.message}
+                                        placeholder="Muñoz"
+                                    />
+                                    <Input
+                                        label="Teléfono *"
+                                        {...step3Form.register("originPhone")}
+                                        error={step3Form.formState.errors.originPhone?.message}
+                                        placeholder="3224098631"
+                                    />
+                                    <Input
+                                        label="Correo *"
+                                        type="email"
+                                        {...step3Form.register("originEmail")}
+                                        error={step3Form.formState.errors.originEmail?.message}
+                                        placeholder="probabilitysa@gmail.com"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Destination Details */}
+                            <div className="border-t pt-6">
+                                <h3 className="font-semibold text-lg text-gray-700 mb-4">Destinatario</h3>
+                                <div className="grid grid-cols-3 gap-4">
+                                    <Input
+                                        label="Calle *"
+                                        {...step3Form.register("destCrossStreet")}
+                                        error={step3Form.formState.errors.destCrossStreet?.message}
+                                        placeholder="calle 75 sur n 42-97"
+                                    />
+                                    <Input
+                                        label="Edificio/Interior/Apto *"
+                                        {...step3Form.register("destReference")}
+                                        error={step3Form.formState.errors.destReference?.message}
+                                        placeholder="apt 801"
+                                    />
+                                    <Input
+                                        label="Barrio *"
+                                        {...step3Form.register("destSuburb")}
+                                        error={step3Form.formState.errors.destSuburb?.message}
+                                        placeholder="sector Aves María"
+                                    />
+                                </div>
+
+                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Referencias - Empresa</h4>
+                                <Input
+                                    label="Empresa"
+                                    {...step3Form.register("destCompany")}
+                                    error={step3Form.formState.errors.destCompany?.message}
+                                    placeholder="ProbabilityIA"
+                                />
+
+                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Datos de contacto</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="Nombre *"
+                                        {...step3Form.register("destFirstName")}
+                                        error={step3Form.formState.errors.destFirstName?.message}
+                                        placeholder="Luisa"
+                                    />
+                                    <Input
+                                        label="Apellido *"
+                                        {...step3Form.register("destLastName")}
+                                        error={step3Form.formState.errors.destLastName?.message}
+                                        placeholder="Muñoz"
+                                    />
+                                    <Input
+                                        label="Teléfono *"
+                                        {...step3Form.register("destPhone")}
+                                        error={step3Form.formState.errors.destPhone?.message}
+                                        placeholder="3224098631"
+                                    />
+                                    <Input
+                                        label="Correo *"
+                                        type="email"
+                                        {...step3Form.register("destEmail")}
+                                        error={step3Form.formState.errors.destEmail?.message}
+                                        placeholder="probabilitysa@gmail.com"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Additional Options */}
+                            <div className="border-t pt-6">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <Input
+                                        label="Mi referencia de envío"
+                                        {...step3Form.register("myShipmentReference")}
+                                        error={step3Form.formState.errors.myShipmentReference?.message}
+                                        placeholder="Orden 5649"
+                                    />
+                                    <Input
+                                        label="Número de orden externo"
+                                        {...step3Form.register("external_order_id")}
+                                        error={step3Form.formState.errors.external_order_id?.message}
+                                        placeholder="ORD345678"
+                                    />
+                                </div>
+
+                                <div className="mt-4 space-y-2">
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            {...step3Form.register("requestPickup")}
+                                            className="rounded"
+                                        />
+                                        <span className="text-sm">Solicitar recolección</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            {...step3Form.register("insurance")}
+                                            className="rounded"
+                                        />
+                                        <span className="text-sm">Asegurar envío</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-between mt-6">
+                                <Button
+                                    variant="outline"
+                                    onClick={() => setCurrentStep(2)}
+                                    type="button"
+                                >
+                                    Atrás
+                                </Button>
+                                <Button type="submit">
+                                    Siguiente
+                                </Button>
+                            </div>
+                        </form>
+                    )}
+
+                    {/* Step 4: Payment & Confirmation */}
+                    {currentStep === 4 && selectedRate && (
+                        <div className="space-y-6">
+                            <h3 className="font-semibold text-lg text-gray-700">Resumen de tu envío</h3>
+
+                            <div className="bg-gray-50 p-4 rounded-lg">
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center space-x-2">
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                        </svg>
+                                        <span className="font-medium">1 Envíos</span>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-sm text-gray-600">TOTAL:</div>
+                                        <div className="text-2xl font-bold text-orange-600">
+                                            ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0)).toLocaleString()}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="border-t pt-4">
+                                    <div className="text-sm text-gray-600 mb-2">Carrier: {selectedRate.carrier}</div>
+                                    <div className="text-sm text-gray-600">Producto: {selectedRate.product}</div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="font-medium text-gray-700 mb-3">Selecciona tu método de pago</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="border-2 border-orange-500 rounded-lg p-4 bg-orange-50">
+                                        <div className="flex items-center justify-center mb-2">
+                                            <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                            </svg>
+                                        </div>
+                                        <div className="text-center font-semibold">Monedero</div>
+                                        <div className="text-center text-sm text-gray-600">
+                                            ${walletBalance?.toLocaleString() || 0}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {generatedPdfUrl && trackingNumber ? (
+                                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                                    <h4 className="font-semibold text-green-800 mb-4">¡Guía generada exitosamente!</h4>
+                                    <div className="space-y-2">
+                                        <p className="text-sm"><strong>Tracking:</strong> {trackingNumber}</p>
+                                        <a
+                                            href={generatedPdfUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                        >
+                                            Descargar Guía PDF
+                                        </a>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex justify-between mt-6">
+                                    <Button
+                                        variant="outline"
+                                        onClick={() => setCurrentStep(3)}
+                                        disabled={loading}
+                                    >
+                                        Atrás
+                                    </Button>
+                                    <Button
+                                        onClick={handleFinalGenerate}
+                                        disabled={loading}
+                                        className="bg-green-600 hover:bg-green-700"
+                                    >
+                                        {loading ? "Generando..." : "Pagar guías"}
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
                     )}
                 </div>
             </div>

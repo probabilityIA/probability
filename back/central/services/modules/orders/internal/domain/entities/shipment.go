@@ -10,7 +10,7 @@ type ProbabilityShipment struct {
 	UpdatedAt time.Time
 	DeletedAt *time.Time
 
-	OrderID string
+	OrderID *string
 
 	TrackingNumber *string
 	TrackingURL    *string

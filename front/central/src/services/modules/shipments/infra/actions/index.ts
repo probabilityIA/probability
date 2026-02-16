@@ -3,7 +3,7 @@
 import { getAuthToken } from '@/shared/utils/server-auth';
 import { ShipmentApiRepository } from '../repository/api-repository';
 import { ShipmentUseCases } from '../../app/use-cases';
-import { GetShipmentsParams } from '../../domain/types';
+import { GetShipmentsParams, CreateShipmentRequest } from '../../domain/types';
 
 const getUseCases = async () => {
     const token = await getAuthToken();
@@ -51,3 +51,57 @@ export const cancelShipmentAction = async (id: string) => {
         };
     }
 };
+
+export const createShipmentAction = async (req: CreateShipmentRequest) => {
+    try {
+        return await (await getUseCases()).createShipment(req);
+    } catch (error: any) {
+        console.error('Create Shipment Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al crear envío',
+        };
+    }
+};
+
+// Origin Addresses Actions
+export const getOriginAddressesAction = async () => {
+    try {
+        const data = await (await getUseCases()).getOriginAddresses();
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Get Origin Addresses Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al obtener direcciones de origen' };
+    }
+};
+
+export const createOriginAddressAction = async (req: any) => {
+    try {
+        const data = await (await getUseCases()).createOriginAddress(req);
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Create Origin Address Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al crear dirección de origen' };
+    }
+};
+
+export const updateOriginAddressAction = async (id: number, req: any) => {
+    try {
+        const data = await (await getUseCases()).updateOriginAddress(id, req);
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Update Origin Address Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al actualizar dirección de origen' };
+    }
+};
+
+export const deleteOriginAddressAction = async (id: number) => {
+    try {
+        const data = await (await getUseCases()).deleteOriginAddress(id);
+        return { success: true, message: data.message };
+    } catch (error: any) {
+        console.error('Delete Origin Address Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al eliminar dirección de origen' };
+    }
+};
+

@@ -17,14 +17,14 @@ import (
 
 // CreateShipment crea un nuevo envío
 func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.CreateShipmentRequest) (*domain.ShipmentResponse, error) {
-	// Validar order_id
-	if req.OrderID == "" {
-		return nil, domain.ErrOrderIDRequired
+	// Validar: OrderID o (ClientName + DestinationAddress) requeridos
+	if (req.OrderID == nil || *req.OrderID == "") && (req.ClientName == "" || req.DestinationAddress == "") {
+		return nil, domain.ErrOrderIDRequired // O crear un nuevo error más específico
 	}
 
-	// Si hay tracking number, validar que no exista otro envío con el mismo tracking para la misma orden
-	if req.TrackingNumber != nil && *req.TrackingNumber != "" {
-		exists, err := uc.repo.ShipmentExists(ctx, req.OrderID, *req.TrackingNumber)
+	// Si hay tracking number y OrderID, validar que no exista otro envío con el mismo tracking para la misma orden
+	if req.OrderID != nil && *req.OrderID != "" && req.TrackingNumber != nil && *req.TrackingNumber != "" {
+		exists, err := uc.repo.ShipmentExists(ctx, *req.OrderID, *req.TrackingNumber)
 		if err != nil {
 			return nil, fmt.Errorf("error checking if shipment exists: %w", err)
 		}
@@ -41,7 +41,9 @@ func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.Creat
 
 	// Crear el modelo de envío
 	shipment := &domain.Shipment{
-		OrderID: req.OrderID,
+		OrderID:            req.OrderID,
+		ClientName:         req.ClientName,
+		DestinationAddress: req.DestinationAddress,
 
 		TrackingNumber: req.TrackingNumber,
 		TrackingURL:    req.TrackingURL,
@@ -176,12 +178,14 @@ func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *dom
 	if req.TrackingNumber != nil {
 		// Si se cambia el tracking number, verificar que no exista otro envío con ese tracking para la misma orden
 		if *req.TrackingNumber != "" && (shipment.TrackingNumber == nil || *req.TrackingNumber != *shipment.TrackingNumber) {
-			exists, err := uc.repo.ShipmentExists(ctx, shipment.OrderID, *req.TrackingNumber)
-			if err != nil {
-				return nil, fmt.Errorf("error checking if shipment exists: %w", err)
-			}
-			if exists {
-				return nil, domain.ErrShipmentAlreadyExists
+			if shipment.OrderID != nil {
+				exists, err := uc.repo.ShipmentExists(ctx, *shipment.OrderID, *req.TrackingNumber)
+				if err != nil {
+					return nil, fmt.Errorf("error checking if shipment exists: %w", err)
+				}
+				if exists {
+					return nil, domain.ErrShipmentAlreadyExists
+				}
 			}
 		}
 		shipment.TrackingNumber = req.TrackingNumber
@@ -350,36 +354,35 @@ func (uc *UseCaseShipment) GetShipmentByTrackingNumber(ctx context.Context, trac
 // mapShipmentToResponse convierte un modelo Shipment a ShipmentResponse
 func mapShipmentToResponse(shipment *domain.Shipment) *domain.ShipmentResponse {
 	return &domain.ShipmentResponse{
-		ID:         shipment.ID,
-		CreatedAt:  shipment.CreatedAt,
-		UpdatedAt:  shipment.UpdatedAt,
-		DeletedAt:  shipment.DeletedAt,
-		OrderID:    shipment.OrderID,
-		TrackingNumber: shipment.TrackingNumber,
-		TrackingURL:    shipment.TrackingURL,
-		Carrier:        shipment.Carrier,
-		CarrierCode:    shipment.CarrierCode,
-		GuideID:        shipment.GuideID,
-		GuideURL:       shipment.GuideURL,
-		Status:         shipment.Status,
-		ShippedAt:      shipment.ShippedAt,
-		DeliveredAt:    shipment.DeliveredAt,
+		ID:                shipment.ID,
+		CreatedAt:         shipment.CreatedAt,
+		UpdatedAt:         shipment.UpdatedAt,
+		DeletedAt:         shipment.DeletedAt,
+		OrderID:           shipment.OrderID,
+		TrackingNumber:    shipment.TrackingNumber,
+		TrackingURL:       shipment.TrackingURL,
+		Carrier:           shipment.Carrier,
+		CarrierCode:       shipment.CarrierCode,
+		GuideID:           shipment.GuideID,
+		GuideURL:          shipment.GuideURL,
+		Status:            shipment.Status,
+		ShippedAt:         shipment.ShippedAt,
+		DeliveredAt:       shipment.DeliveredAt,
 		ShippingAddressID: shipment.ShippingAddressID,
-		ShippingCost:   shipment.ShippingCost,
-		InsuranceCost:  shipment.InsuranceCost,
-		TotalCost:      shipment.TotalCost,
-		Weight:         shipment.Weight,
-		Height:         shipment.Height,
-		Width:          shipment.Width,
-		Length:         shipment.Length,
-		WarehouseID:    shipment.WarehouseID,
-		WarehouseName:  shipment.WarehouseName,
-		DriverID:       shipment.DriverID,
-		DriverName:     shipment.DriverName,
-		IsLastMile:    shipment.IsLastMile,
+		ShippingCost:      shipment.ShippingCost,
+		InsuranceCost:     shipment.InsuranceCost,
+		TotalCost:         shipment.TotalCost,
+		Weight:            shipment.Weight,
+		Height:            shipment.Height,
+		Width:             shipment.Width,
+		Length:            shipment.Length,
+		WarehouseID:       shipment.WarehouseID,
+		WarehouseName:     shipment.WarehouseName,
+		DriverID:          shipment.DriverID,
+		DriverName:        shipment.DriverName,
+		IsLastMile:        shipment.IsLastMile,
 		EstimatedDelivery: shipment.EstimatedDelivery,
 		DeliveryNotes:     shipment.DeliveryNotes,
 		Metadata:          shipment.Metadata,
 	}
 }
-

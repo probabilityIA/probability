@@ -1,5 +1,5 @@
 import { IShipmentRepository } from '../domain/ports';
-import { GetShipmentsParams, PaginatedResponse, Shipment } from '../domain/types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, CreateShipmentRequest } from '../domain/types';
 
 export class ShipmentUseCases {
     private repository: IShipmentRepository;
@@ -18,5 +18,26 @@ export class ShipmentUseCases {
 
     async cancelShipment(id: string) {
         return this.repository.cancelShipment(id);
+    }
+
+    async createShipment(req: CreateShipmentRequest) {
+        return this.repository.createShipment(req);
+    }
+
+    // Origin Addresses
+    async getOriginAddresses() {
+        return this.repository.getOriginAddresses();
+    }
+
+    async createOriginAddress(req: any) {
+        return this.repository.createOriginAddress(req);
+    }
+
+    async updateOriginAddress(id: number, req: any) {
+        return this.repository.updateOriginAddress(id, req);
+    }
+
+    async deleteOriginAddress(id: number) {
+        return this.repository.deleteOriginAddress(id);
     }
 }

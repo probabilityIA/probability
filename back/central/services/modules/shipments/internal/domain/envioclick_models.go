@@ -6,6 +6,7 @@ type EnvioClickQuoteRequest struct {
 	IDRate              int64               `json:"idRate"`
 	MyShipmentReference string              `json:"myShipmentReference"`
 	ExternalOrderID     string              `json:"external_order_id"`
+	OrderUUID           string              `json:"order_uuid,omitempty"` // Internal Order UUID for relation
 	RequestPickup       bool                `json:"requestPickup"`
 	PickupDate          string              `json:"pickupDate"`
 	Insurance           bool                `json:"insurance"`

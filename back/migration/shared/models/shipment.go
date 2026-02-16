@@ -18,7 +18,11 @@ type Shipment struct {
 	gorm.Model
 
 	// Relación con la orden
-	OrderID string `gorm:"type:varchar(36);not null;index"` // UUID de la orden
+	OrderID *string `gorm:"type:varchar(36);index"` // UUID de la orden (opcional)
+
+	// Información manual (cuando no hay orden)
+	ClientName         string `gorm:"size:255"` // Nombre del cliente
+	DestinationAddress string `gorm:"size:255"` // Dirección de destino
 
 	// Información de tracking
 	TrackingNumber *string `gorm:"size:128;index"` // Número de rastreo

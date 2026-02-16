@@ -22,7 +22,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// EnvioClick Integration
 	envioClickClient := envioclick.New(logger)
-	envioClickUC := usecaseenvioclick.New(logger, envioClickClient)
+	envioClickUC := usecaseenvioclick.New(logger, envioClickClient, repo)
 
 	// 3. Init Handlers
 	h := handlers.New(uc, envioClickUC)
