@@ -4,42 +4,134 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 ---
 
+<style>
+	@keyframes float {
+		0%, 100% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-20px);
+		}
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.1);
+		}
+	}
+
+	.blob {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(60px);
+		opacity: 0.1;
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.whatsapp-float {
+		position: fixed;
+		bottom: 2rem;
+		right: 2rem;
+		z-index: 50;
+	}
+
+	.whatsapp-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 80px;
+		height: 80px;
+		background: transparent;
+		border-radius: 50%;
+		color: white;
+		text-decoration: none;
+		transition: all 0.3s ease;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	.whatsapp-btn:hover {
+		transform: scale(1.2);
+		filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.integration-card {
+		background: linear-gradient(135deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.3) 100%);
+		border: 1px solid #E9D5FF;
+		backdrop-filter: blur(10px);
+	}
+
+	.integration-card:hover {
+		background: linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(255, 255, 255, 0.5) 100%);
+		border-color: #D8B4FE;
+		transform: translateY(-4px);
+		box-shadow: 0 20px 25px -5px rgba(139, 92, 246, 0.1);
+	}
+
+	.logo-container {
+		background: white;
+		padding: 12px;
+		border-radius: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 80px;
+	}
+</style>
+
 <Layout title="Integraciones - probabilityIA">
 	<Header />
 	<main>
+		<!-- WhatsApp Float Button -->
+		<div class="whatsapp-float">
+			<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20tengo%20una%20consulta%20sobre%20integraciones" class="whatsapp-btn" title="Contactanos por WhatsApp">
+				<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744972_whatsap.png" alt="WhatsApp" class="w-12 h-12"/>
+			</a>
+		</div>
+
 		<!-- Hero Section -->
-		<section class="relative bg-[#0A0A0F] py-20 px-20 overflow-hidden">
-			<div class="max-w-6xl mx-auto text-center">
-				<div class="inline-flex items-center gap-2 bg-[#8B5CF620] border border-[#8B5CF650] rounded-full px-4 py-2 mb-6">
+		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
+			<div class="blob" style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"></div>
+			<div class="blob" style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"></div>
+
+			<div class="max-w-6xl mx-auto text-center relative z-10">
+				<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
 					<span class="text-[#8B5CF6] font-medium text-sm">INTEGRACIONES</span>
 				</div>
-				<h1 class="text-6xl font-bold text-white mb-6">
-					Conecta con tus herramientas favoritas
+				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+					Conecta con tus herramientas <span class="gradient-text">favoritas</span>
 				</h1>
-				<p class="text-xl text-[#A1A1AA] max-w-3xl mx-auto">
+				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
 					Integramos con las plataformas de eCommerce más populares del mundo
 				</p>
 			</div>
 		</section>
 
 		<!-- Integrations Grid -->
-		<section class="bg-[#0A0A0F] py-25 px-20">
+		<section class="bg-white py-20 px-6 sm:px-20">
 			<div class="max-w-6xl mx-auto">
 				<div class="text-center mb-16">
-					<h2 class="text-4xl font-bold text-white mb-4">Plataformas Soportadas</h2>
-					<p class="text-[#A1A1AA] text-lg">Encuentra tu plataforma y comienza a integrar hoy</p>
+					<h2 class="text-4xl sm:text-5xl font-bold text-gray-900 mb-4">Plataformas Soportadas</h2>
+					<p class="text-gray-600 text-lg">Encuentra tu plataforma y comienza a integrar hoy</p>
 				</div>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 					<!-- Shopify -->
-					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
-						<div class="w-16 h-16 rounded-lg bg-[#96BE4D] flex items-center justify-center mb-6">
-							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M13.22 6.1c-.27-.65-.77-1.42-1.72-1.42-.95 0-1.45.77-1.72 1.42L7.93 14.08c-.31.82.43 1.53 1.25 1.27l1.63-.51.71-2.54h3.76l.71 2.54 1.63.51c.82.26 1.56-.45 1.25-1.27l-2.84-7.98zm-2.9 2.98l.56-1.92.56 1.92h-1.12z"></path>
-							</svg>
+					<div class="integration-card rounded-2xl p-8 transition-all duration-300 cursor-pointer">
+						<div class="logo-container mb-6">
+							<img src="https://cdn.shopify.com/shopify-marketing_assets/static/shopify-favicon.png" alt="Shopify" class="h-12 object-contain"/>
 						</div>
-						<h3 class="text-xl font-bold text-white mb-2">Shopify</h3>
-						<p class="text-[#A1A1AA] mb-6">La plataforma de eCommerce más popular del mundo</p>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">Shopify</h3>
+						<p class="text-gray-600 mb-6">La plataforma de eCommerce más popular del mundo</p>
 						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
 							Integrar
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
@@ -47,14 +139,12 @@ import Footer from '../components/Footer.astro';
 					</div>
 
 					<!-- Mercado Libre -->
-					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
-						<div class="w-16 h-16 rounded-lg bg-[#FFE600] flex items-center justify-center mb-6">
-							<svg class="w-8 h-8 text-black" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm5 11h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"></path>
-							</svg>
+					<div class="integration-card rounded-2xl p-8 transition-all duration-300 cursor-pointer">
+						<div class="logo-container mb-6">
+							<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744961_mercado-libre-logo.png" alt="Mercado Libre" class="h-16 object-contain"/>
 						</div>
-						<h3 class="text-xl font-bold text-white mb-2">Mercado Libre</h3>
-						<p class="text-[#A1A1AA] mb-6">El marketplace líder en América Latina</p>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">Mercado Libre</h3>
+						<p class="text-gray-600 mb-6">El marketplace líder en América Latina</p>
 						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
 							Integrar
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
@@ -62,44 +152,12 @@ import Footer from '../components/Footer.astro';
 					</div>
 
 					<!-- WooCommerce -->
-					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
-						<div class="w-16 h-16 rounded-lg bg-[#96588A] flex items-center justify-center mb-6">
-							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
-							</svg>
+					<div class="integration-card rounded-2xl p-8 transition-all duration-300 cursor-pointer">
+						<div class="logo-container mb-6">
+							<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765745053_woocomerce.webp" alt="WooCommerce" class="h-12 object-contain"/>
 						</div>
-						<h3 class="text-xl font-bold text-white mb-2">WooCommerce</h3>
-						<p class="text-[#A1A1AA] mb-6">La plataforma de WordPress para eCommerce</p>
-						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
-							Integrar
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-						</button>
-					</div>
-
-					<!-- Amazon -->
-					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
-						<div class="w-16 h-16 rounded-lg bg-[#FF9900] flex items-center justify-center mb-6">
-							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M6 6h12v12H6z"></path>
-							</svg>
-						</div>
-						<h3 class="text-xl font-bold text-white mb-2">Amazon</h3>
-						<p class="text-[#A1A1AA] mb-6">El marketplace más grande del mundo</p>
-						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
-							Integrar
-							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
-						</button>
-					</div>
-
-					<!-- Magento -->
-					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
-						<div class="w-16 h-16 rounded-lg bg-[#EB5202] flex items-center justify-center mb-6">
-							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-								<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8z"></path>
-							</svg>
-						</div>
-						<h3 class="text-xl font-bold text-white mb-2">Magento</h3>
-						<p class="text-[#A1A1AA] mb-6">Plataforma empresarial de eCommerce</p>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">WooCommerce</h3>
+						<p class="text-gray-600 mb-6">La plataforma de WordPress para eCommerce</p>
 						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
 							Integrar
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
@@ -107,8 +165,8 @@ import Footer from '../components/Footer.astro';
 					</div>
 
 					<!-- API Custom -->
-					<div class="integration-logo bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 hover:border-[#8B5CF6] transition-all duration-300 cursor-pointer">
-						<div class="w-16 h-16 rounded-lg bg-[#8B5CF6] flex items-center justify-center mb-6">
+					<div class="integration-card rounded-2xl p-8 transition-all duration-300 cursor-pointer">
+						<div class="logo-container mb-6 bg-gradient-to-br from-[#8B5CF6] to-[#A855F7]">
 							<svg class="w-8 h-8 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<polyline points="12 3 20 7.5 20 16.5 12 21 4 16.5 4 7.5 12 3"></polyline>
 								<line x1="12" y1="12" x2="20" y2="7.5"></line>
@@ -116,8 +174,8 @@ import Footer from '../components/Footer.astro';
 								<line x1="12" y1="12" x2="4" y2="7.5"></line>
 							</svg>
 						</div>
-						<h3 class="text-xl font-bold text-white mb-2">API Personalizada</h3>
-						<p class="text-[#A1A1AA] mb-6">Integración mediante API REST para cualquier plataforma</p>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">API Personalizada</h3>
+						<p class="text-gray-600 mb-6">Integración mediante API REST para cualquier plataforma</p>
 						<button class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold flex items-center gap-2">
 							Documentación
 							<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
@@ -128,55 +186,55 @@ import Footer from '../components/Footer.astro';
 		</section>
 
 		<!-- Integration Features -->
-		<section class="bg-[#0F0F14] py-25 px-20">
+		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
 			<div class="max-w-6xl mx-auto">
-				<h2 class="text-4xl font-bold text-white text-center mb-16">¿Qué obtiene con cada integración?</h2>
+				<h2 class="text-4xl font-bold text-gray-900 text-center mb-16">¿Qué obtiene con cada integración?</h2>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+					<div class="bg-white border border-purple-200 rounded-2xl p-8 hover:shadow-lg hover:border-purple-300 transition-all">
 						<div class="flex items-center gap-4 mb-6">
-							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+							<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
 								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
 							</div>
-							<h3 class="text-xl font-bold text-white">Sincronización Automática</h3>
+							<h3 class="text-xl font-bold text-gray-900">Sincronización Automática</h3>
 						</div>
-						<p class="text-[#A1A1AA]">
+						<p class="text-gray-600">
 							Los datos de tus pedidos se sincronizan automáticamente en tiempo real sin intervención manual
 						</p>
 					</div>
 
-					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+					<div class="bg-white border border-purple-200 rounded-2xl p-8 hover:shadow-lg hover:border-purple-300 transition-all">
 						<div class="flex items-center gap-4 mb-6">
-							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+							<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
 								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
 							</div>
-							<h3 class="text-xl font-bold text-white">Predicciones en Tiempo Real</h3>
+							<h3 class="text-xl font-bold text-gray-900">Predicciones en Tiempo Real</h3>
 						</div>
-						<p class="text-[#A1A1AA]">
+						<p class="text-gray-600">
 							Recibe análisis predictivos instantáneos para cada nuevo pedido en tu plataforma
 						</p>
 					</div>
 
-					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+					<div class="bg-white border border-purple-200 rounded-2xl p-8 hover:shadow-lg hover:border-purple-300 transition-all">
 						<div class="flex items-center gap-4 mb-6">
-							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+							<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
 								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
 							</div>
-							<h3 class="text-xl font-bold text-white">Alertas Inteligentes</h3>
+							<h3 class="text-xl font-bold text-gray-900">Alertas Inteligentes</h3>
 						</div>
-						<p class="text-[#A1A1AA]">
+						<p class="text-gray-600">
 							Recibe notificaciones cuando se detecten riesgos altos de devolución en tus pedidos
 						</p>
 					</div>
 
-					<div class="bg-[#18181B] border border-[#27272A] rounded-xl p-8">
+					<div class="bg-white border border-purple-200 rounded-2xl p-8 hover:shadow-lg hover:border-purple-300 transition-all">
 						<div class="flex items-center gap-4 mb-6">
-							<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] flex items-center justify-center">
+							<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center">
 								<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
 							</div>
-							<h3 class="text-xl font-bold text-white">Webhooks Personalizados</h3>
+							<h3 class="text-xl font-bold text-gray-900">Webhooks Personalizados</h3>
 						</div>
-						<p class="text-[#A1A1AA]">
+						<p class="text-gray-600">
 							Integra nuestros datos con tus workflows automáticos mediante webhooks
 						</p>
 					</div>
@@ -185,17 +243,22 @@ import Footer from '../components/Footer.astro';
 		</section>
 
 		<!-- CTA Section -->
-		<section class="bg-[#0A0A0F] py-25 px-20">
-			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#6D28D9] to-[#4C1D95] rounded-2xl p-20 text-center border border-[#8B5CF650]">
-				<h2 class="text-4xl font-bold text-white mb-6">
+		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
+			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#A855F7] to-[#7C3AED] rounded-2xl p-12 sm:p-20 text-center border border-purple-300">
+				<h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
 					¿Tu plataforma no está en la lista?
 				</h2>
 				<p class="text-white text-opacity-90 mb-10 text-lg">
 					Contáctanos para una integración personalizada
 				</p>
-				<a href="./demo" class="inline-block bg-white text-[#8B5CF6] hover:bg-gray-100 px-10 py-4 rounded-lg font-bold text-lg transition-colors">
-					Solicitar Integración
-				</a>
+				<div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+					<a href="./demo" class="flex justify-center items-center bg-white text-[#8B5CF6] hover:bg-gray-100 px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-lg w-full sm:w-auto">
+						Solicitar Integración
+					</a>
+					<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20necesito%20una%20integración%20personalizada" class="flex justify-center items-center border-2 border-white text-white hover:bg-white hover:text-[#8B5CF6] px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all w-full sm:w-auto">
+						Contáctanos por WhatsApp
+					</a>
+				</div>
 			</div>
 		</section>
 	</main>

@@ -4,39 +4,120 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 ---
 
+<style>
+	@keyframes float {
+		0%, 100% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-20px);
+		}
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.1);
+		}
+	}
+
+	.blob {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(60px);
+		opacity: 0.1;
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.whatsapp-float {
+		position: fixed;
+		bottom: 2rem;
+		right: 2rem;
+		z-index: 50;
+	}
+
+	.whatsapp-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 80px;
+		height: 80px;
+		background: transparent;
+		border-radius: 50%;
+		color: white;
+		text-decoration: none;
+		transition: all 0.3s ease;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	.whatsapp-btn:hover {
+		transform: scale(1.2);
+		filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.step-box {
+		background: linear-gradient(135deg, rgba(139, 92, 246, 0.05) 0%, rgba(168, 85, 247, 0.05) 100%);
+		border: 1px solid #D8B4FE;
+	}
+
+	.step-box:hover {
+		background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%);
+		border-color: #C084FC;
+	}
+</style>
+
 <Layout title="Cómo Funciona - probabilityIA">
 	<Header />
 	<main>
+		<!-- WhatsApp Float Button -->
+		<div class="whatsapp-float">
+			<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20tengo%20una%20consulta" class="whatsapp-btn" title="Contactanos por WhatsApp">
+				<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744972_whatsap.png" alt="WhatsApp" class="w-12 h-12"/>
+			</a>
+		</div>
+
 		<!-- Hero Section -->
-		<section class="relative bg-[#0A0A0F] py-20 px-20 overflow-hidden">
-			<div class="max-w-6xl mx-auto">
-				<div class="inline-flex items-center gap-2 bg-[#8B5CF620] border border-[#8B5CF650] rounded-full px-4 py-2 mb-6">
+		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
+			<div class="blob" style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"></div>
+			<div class="blob" style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"></div>
+
+			<div class="max-w-6xl mx-auto relative z-10">
+				<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
 					<span class="text-[#8B5CF6] font-medium text-sm">PROCESO</span>
 				</div>
-				<h1 class="text-6xl font-bold text-white mb-6">
-					Así es como ProbabilityIA trabaja para ti
+				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+					Así es como ProbabilityIA trabaja para <span class="gradient-text">ti</span>
 				</h1>
-				<p class="text-xl text-[#A1A1AA] max-w-3xl">
+				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl">
 					Un proceso simple de 4 pasos para transformar tu operación
 				</p>
 			</div>
 		</section>
 
 		<!-- Steps Process -->
-		<section class="bg-[#0A0A0F] py-25 px-20">
+		<section class="bg-white py-20 px-6 sm:px-20">
 			<div class="max-w-6xl mx-auto">
-				<div class="space-y-12">
+				<div class="space-y-16">
 					<!-- Step 1 -->
-					<div class="flex flex-col md:flex-row gap-12 items-center">
-						<div class="md:w-1/2">
+					<div class="flex flex-col lg:flex-row gap-12 items-center">
+						<div class="lg:w-1/2">
 							<div class="inline-block mb-4">
 								<span class="text-7xl font-bold text-[#8B5CF6]">01</span>
 							</div>
-							<h2 class="text-4xl font-bold text-white mb-4">Conecta tu tienda</h2>
-							<p class="text-[#A1A1AA] text-lg mb-6">
+							<h2 class="text-4xl font-bold text-gray-900 mb-4">Conecta tu tienda</h2>
+							<p class="text-gray-600 text-lg mb-6">
 								Intégramos con tu plataforma de eCommerce en cuestión de minutos. Soportamos Shopify, Mercado Libre, WooCommerce, Amazon y Magento sin necesidad de código.
 							</p>
-							<ul class="space-y-3 text-[#A1A1AA]">
+							<ul class="space-y-3 text-gray-700">
 								<li class="flex items-center gap-2">
 									<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
 									No requiere instalación de plugins complejos
@@ -51,24 +132,24 @@ import Footer from '../components/Footer.astro';
 								</li>
 							</ul>
 						</div>
-						<div class="md:w-1/2 bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 min-h-96 flex items-center justify-center">
-							<svg class="w-32 h-32 text-[#8B5CF6] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<div class="lg:w-1/2 step-box rounded-2xl p-12 min-h-96 flex items-center justify-center">
+							<svg class="w-32 h-32 text-[#8B5CF6] opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
 							</svg>
 						</div>
 					</div>
 
 					<!-- Step 2 -->
-					<div class="flex flex-col md:flex-row-reverse gap-12 items-center">
-						<div class="md:w-1/2">
+					<div class="flex flex-col lg:flex-row-reverse gap-12 items-center">
+						<div class="lg:w-1/2">
 							<div class="inline-block mb-4">
 								<span class="text-7xl font-bold text-[#8B5CF6]">02</span>
 							</div>
-							<h2 class="text-4xl font-bold text-white mb-4">Análisis Inteligente</h2>
-							<p class="text-[#A1A1AA] text-lg mb-6">
+							<h2 class="text-4xl font-bold text-gray-900 mb-4">Análisis Inteligente</h2>
+							<p class="text-gray-600 text-lg mb-6">
 								Nuestros algoritmos de IA analizan tus datos históricos de pedidos y devoluciones para crear un modelo predictivo personalizado para tu negocio.
 							</p>
-							<ul class="space-y-3 text-[#A1A1AA]">
+							<ul class="space-y-3 text-gray-700">
 								<li class="flex items-center gap-2">
 									<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
 									Aprendizaje automático continuo
@@ -83,24 +164,24 @@ import Footer from '../components/Footer.astro';
 								</li>
 							</ul>
 						</div>
-						<div class="md:w-1/2 bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 min-h-96 flex items-center justify-center">
-							<svg class="w-32 h-32 text-[#8B5CF6] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<div class="lg:w-1/2 step-box rounded-2xl p-12 min-h-96 flex items-center justify-center">
+							<svg class="w-32 h-32 text-[#8B5CF6] opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
 							</svg>
 						</div>
 					</div>
 
 					<!-- Step 3 -->
-					<div class="flex flex-col md:flex-row gap-12 items-center">
-						<div class="md:w-1/2">
+					<div class="flex flex-col lg:flex-row gap-12 items-center">
+						<div class="lg:w-1/2">
 							<div class="inline-block mb-4">
 								<span class="text-7xl font-bold text-[#8B5CF6]">03</span>
 							</div>
-							<h2 class="text-4xl font-bold text-white mb-4">Predicciones en Tiempo Real</h2>
-							<p class="text-[#A1A1AA] text-lg mb-6">
+							<h2 class="text-4xl font-bold text-gray-900 mb-4">Predicciones en Tiempo Real</h2>
+							<p class="text-gray-600 text-lg mb-6">
 								Cada nuevo pedido se analiza automáticamente para identificar riesgos potenciales de devolución antes de que se procese el envío.
 							</p>
-							<ul class="space-y-3 text-[#A1A1AA]">
+							<ul class="space-y-3 text-gray-700">
 								<li class="flex items-center gap-2">
 									<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
 									Predicción en milisegundos
@@ -115,24 +196,24 @@ import Footer from '../components/Footer.astro';
 								</li>
 							</ul>
 						</div>
-						<div class="md:w-1/2 bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 min-h-96 flex items-center justify-center">
-							<svg class="w-32 h-32 text-[#8B5CF6] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<div class="lg:w-1/2 step-box rounded-2xl p-12 min-h-96 flex items-center justify-center">
+							<svg class="w-32 h-32 text-[#8B5CF6] opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M13 10V3L4 14h7v7l9-11h-7z"></path>
 							</svg>
 						</div>
 					</div>
 
 					<!-- Step 4 -->
-					<div class="flex flex-col md:flex-row-reverse gap-12 items-center">
-						<div class="md:w-1/2">
+					<div class="flex flex-col lg:flex-row-reverse gap-12 items-center">
+						<div class="lg:w-1/2">
 							<div class="inline-block mb-4">
 								<span class="text-7xl font-bold text-[#8B5CF6]">04</span>
 							</div>
-							<h2 class="text-4xl font-bold text-white mb-4">Toma Decisiones Inteligentes</h2>
-							<p class="text-[#A1A1AA] text-lg mb-6">
+							<h2 class="text-4xl font-bold text-gray-900 mb-4">Toma Decisiones Inteligentes</h2>
+							<p class="text-gray-600 text-lg mb-6">
 								Usa nuestras recomendaciones para optimizar tu cadena de suministro, seleccionar las mejores transportadoras y reducir tus costos de devolución.
 							</p>
-							<ul class="space-y-3 text-[#A1A1AA]">
+							<ul class="space-y-3 text-gray-700">
 								<li class="flex items-center gap-2">
 									<svg class="w-5 h-5 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
 									Automatización de acciones
@@ -147,8 +228,8 @@ import Footer from '../components/Footer.astro';
 								</li>
 							</ul>
 						</div>
-						<div class="md:w-1/2 bg-[#0F0F14] border border-[#27272A] rounded-xl p-8 min-h-96 flex items-center justify-center">
-							<svg class="w-32 h-32 text-[#8B5CF6] opacity-50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+						<div class="lg:w-1/2 step-box rounded-2xl p-12 min-h-96 flex items-center justify-center">
+							<svg class="w-32 h-32 text-[#8B5CF6] opacity-40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
 								<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
 							</svg>
 						</div>
@@ -158,17 +239,22 @@ import Footer from '../components/Footer.astro';
 		</section>
 
 		<!-- CTA Section -->
-		<section class="bg-[#0F0F14] py-25 px-20">
-			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#6D28D9] to-[#4C1D95] rounded-2xl p-20 text-center border border-[#8B5CF650]">
-				<h2 class="text-4xl font-bold text-white mb-6">
+		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
+			<div class="max-w-4xl mx-auto bg-gradient-to-br from-[#8B5CF6] via-[#A855F7] to-[#7C3AED] rounded-2xl p-12 sm:p-20 text-center border border-purple-300">
+				<h2 class="text-3xl sm:text-4xl font-bold text-white mb-6">
 					¿Quieres ver cómo funciona en tu tienda?
 				</h2>
 				<p class="text-white text-opacity-90 mb-10 text-lg">
-					Solicita una demostración personalizada
+					Solicita una demostración personalizada. Contacta con Lina M.
 				</p>
-				<a href="./demo" class="inline-block bg-white text-[#8B5CF6] hover:bg-gray-100 px-10 py-4 rounded-lg font-bold text-lg transition-colors">
-					Agendar Demo Gratis
-				</a>
+				<div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+					<a href="./demo" class="flex justify-center items-center bg-white text-[#8B5CF6] hover:bg-gray-100 px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-lg w-full sm:w-auto">
+						Agendar Demo Gratis
+					</a>
+					<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20quiero%20conocer%20cómo%20funciona" class="flex justify-center items-center border-2 border-white text-white hover:bg-white hover:text-[#8B5CF6] px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all w-full sm:w-auto">
+						Contáctanos por WhatsApp
+					</a>
+				</div>
 			</div>
 		</section>
 	</main>

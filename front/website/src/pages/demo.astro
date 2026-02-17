@@ -4,57 +4,85 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 ---
 
+<style>
+	@keyframes float {
+		0%, 100% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-20px);
+		}
+	}
+
+	.blob {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(60px);
+		opacity: 0.1;
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+</style>
+
 <Layout title="Solicitar Demo - probabilityIA">
 	<Header />
 	<main>
 		<!-- Hero Section -->
-		<section class="relative bg-[#0A0A0F] py-20 px-20 overflow-hidden">
-			<div class="max-w-4xl mx-auto text-center">
-				<div class="inline-flex items-center gap-2 bg-[#8B5CF620] border border-[#8B5CF650] rounded-full px-4 py-2 mb-6">
+		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
+			<div class="blob" style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"></div>
+			<div class="blob" style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"></div>
+			<div class="max-w-4xl mx-auto text-center relative z-10">
+				<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
 					<span class="text-[#8B5CF6] font-medium text-sm">DEMO GRATUITA</span>
 				</div>
-				<h1 class="text-6xl font-bold text-white mb-6">
-					Ve ProbabilityIA en acción
+				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+					Ve ProbabilityIA en <span class="gradient-text">acción</span>
 				</h1>
-				<p class="text-xl text-[#A1A1AA] max-w-2xl mx-auto">
+				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
 					Agendar una demostración personalizada con nuestro equipo. Sin compromiso, sin tarjeta de crédito.
 				</p>
 			</div>
 		</section>
 
 		<!-- Demo Form Section -->
-		<section class="bg-[#0A0A0F] py-25 px-20">
+		<section class="bg-white py-20 px-6 sm:px-20">
 			<div class="max-w-2xl mx-auto">
-				<div class="bg-[#0F0F14] border border-[#27272A] rounded-2xl p-12">
+				<div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-12">
 					<form class="space-y-6">
 						<!-- Name -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">Nombre Completo *</label>
-							<input type="text" required placeholder="Tu nombre" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<label class="block text-gray-600 font-semibold mb-2">Nombre Completo *</label>
+							<input type="text" required placeholder="Tu nombre" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Email -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">Email *</label>
-							<input type="email" required placeholder="tu@email.com" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<label class="block text-gray-600 font-semibold mb-2">Email *</label>
+							<input type="email" required placeholder="tu@email.com" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Company -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">Empresa *</label>
-							<input type="text" required placeholder="Tu empresa" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<label class="block text-gray-600 font-semibold mb-2">Empresa *</label>
+							<input type="text" required placeholder="Tu empresa" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Phone -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">Teléfono</label>
-							<input type="tel" placeholder="+57 (300) 123-4567" class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<label class="block text-gray-600 font-semibold mb-2">Teléfono</label>
+							<input type="tel" placeholder="+57 (300) 123-4567" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Industry -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">Industria *</label>
-							<select required class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<label class="block text-gray-600 font-semibold mb-2">Industria *</label>
+							<select required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona tu industria</option>
 								<option>eCommerce</option>
 								<option>Retail</option>
@@ -66,8 +94,8 @@ import Footer from '../components/Footer.astro';
 
 						<!-- Platform -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">¿Cuál es tu plataforma? *</label>
-							<select required class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<label class="block text-gray-600 font-semibold mb-2">¿Cuál es tu plataforma? *</label>
+							<select required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona tu plataforma</option>
 								<option>Shopify</option>
 								<option>Mercado Libre</option>
@@ -80,8 +108,8 @@ import Footer from '../components/Footer.astro';
 
 						<!-- Monthly Orders -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">¿Cuántos pedidos mensuales tienes?</label>
-							<select class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<label class="block text-gray-600 font-semibold mb-2">¿Cuántos pedidos mensuales tienes?</label>
+							<select class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona un rango</option>
 								<option>Menos de 100</option>
 								<option>100 - 500</option>
@@ -93,35 +121,35 @@ import Footer from '../components/Footer.astro';
 
 						<!-- Interested Features -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-4">¿Qué te interesa? (Selecciona múltiples)</label>
+							<label class="block text-gray-600 font-semibold mb-4">¿Qué te interesa? (Selecciona múltiples)</label>
 							<div class="space-y-3">
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
-									<span class="text-white">Predicción de devoluciones</span>
+									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<span class="text-gray-900">Predicción de devoluciones</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
-									<span class="text-white">Análisis de imágenes</span>
+									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<span class="text-gray-900">Análisis de imágenes</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
-									<span class="text-white">Optimización de transportadoras</span>
+									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<span class="text-gray-900">Optimización de transportadoras</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
-									<span class="text-white">Dashboard y reportes</span>
+									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<span class="text-gray-900">Dashboard y reportes</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6]"/>
-									<span class="text-white">Integraciones personalizadas</span>
+									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<span class="text-gray-900">Integraciones personalizadas</span>
 								</label>
 							</div>
 						</div>
 
 						<!-- Preferred Time -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">¿Cuándo prefieres la demo?</label>
-							<select class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<label class="block text-gray-600 font-semibold mb-2">¿Cuándo prefieres la demo?</label>
+							<select class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona un horario</option>
 								<option>Mañana (9AM - 12PM)</option>
 								<option>Tarde (12PM - 3PM)</option>
@@ -132,24 +160,24 @@ import Footer from '../components/Footer.astro';
 
 						<!-- Message -->
 						<div>
-							<label class="block text-[#A1A1AA] font-semibold mb-2">Mensaje adicional</label>
-							<textarea rows="4" placeholder="Cuéntanos sobre tus desafíos específicos..." class="w-full bg-[#18181B] border border-[#27272A] rounded-lg px-4 py-3 text-white placeholder-[#71717A] focus:outline-none focus:border-[#8B5CF6] transition-colors resize-none"></textarea>
+							<label class="block text-gray-600 font-semibold mb-2">Mensaje adicional</label>
+							<textarea rows="4" placeholder="Cuéntanos sobre tus desafíos específicos..." class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors resize-none"></textarea>
 						</div>
 
 						<!-- Checkbox -->
 						<label class="flex items-start gap-3 cursor-pointer">
-							<input type="checkbox" class="w-5 h-5 rounded bg-[#18181B] border border-[#27272A] text-[#8B5CF6] mt-1"/>
-							<span class="text-[#A1A1AA] text-sm">
+							<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6] mt-1"/>
+							<span class="text-gray-600 text-sm">
 								Acepto recibir información y actualizaciones de ProbabilityIA
 							</span>
 						</label>
 
 						<!-- Submit -->
-						<button type="submit" class="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white py-4 rounded-lg font-bold text-lg transition-colors mt-8">
+						<button type="submit" class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:from-[#7C3AED] hover:to-[#9333EA] text-white py-4 rounded-lg font-bold text-lg transition-colors mt-8">
 							Agendar Demo Gratuita
 						</button>
 
-						<p class="text-center text-[#71717A] text-sm">
+						<p class="text-center text-gray-500 text-sm">
 							Nos pondremos en contacto en máximo 24 horas para confirmar tu demo
 						</p>
 					</form>
@@ -158,75 +186,75 @@ import Footer from '../components/Footer.astro';
 				<!-- Benefits -->
 				<div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
 					<div class="text-center">
-						<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] border border-[#8B5CF650] flex items-center justify-center mx-auto mb-4">
+						<div class="w-12 h-12 rounded-lg bg-purple-100 border border-purple-300 flex items-center justify-center mx-auto mb-4">
 							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
 						</div>
-						<h3 class="text-white font-semibold mb-2">Personalizada</h3>
-						<p class="text-[#A1A1AA] text-sm">Demo adaptada a tu industria y necesidades específicas</p>
+						<h3 class="text-gray-900 font-semibold mb-2">Personalizada</h3>
+						<p class="text-gray-600 text-sm">Demo adaptada a tu industria y necesidades específicas</p>
 					</div>
 
 					<div class="text-center">
-						<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] border border-[#8B5CF650] flex items-center justify-center mx-auto mb-4">
+						<div class="w-12 h-12 rounded-lg bg-purple-100 border border-purple-300 flex items-center justify-center mx-auto mb-4">
 							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
 						</div>
-						<h3 class="text-white font-semibold mb-2">30 Minutos</h3>
-						<p class="text-[#A1A1AA] text-sm">Demo rápida y efectiva con nuestro equipo experto</p>
+						<h3 class="text-gray-900 font-semibold mb-2">30 Minutos</h3>
+						<p class="text-gray-600 text-sm">Demo rápida y efectiva con nuestro equipo experto</p>
 					</div>
 
 					<div class="text-center">
-						<div class="w-12 h-12 rounded-lg bg-[#8B5CF620] border border-[#8B5CF650] flex items-center justify-center mx-auto mb-4">
+						<div class="w-12 h-12 rounded-lg bg-purple-100 border border-purple-300 flex items-center justify-center mx-auto mb-4">
 							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
 						</div>
-						<h3 class="text-white font-semibold mb-2">Sin Compromiso</h3>
-						<p class="text-[#A1A1AA] text-sm">Conócenos primero, sin obligación de compra</p>
+						<h3 class="text-gray-900 font-semibold mb-2">Sin Compromiso</h3>
+						<p class="text-gray-600 text-sm">Conócenos primero, sin obligación de compra</p>
 					</div>
 				</div>
 			</div>
 		</section>
 
 		<!-- FAQ Section -->
-		<section class="bg-[#0F0F14] py-25 px-20">
+		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
 			<div class="max-w-4xl mx-auto">
-				<h2 class="text-3xl font-bold text-white text-center mb-12">¿Qué esperar en la demo?</h2>
+				<h2 class="text-3xl font-bold text-gray-900 text-center mb-12">¿Qué esperar en la demo?</h2>
 				<div class="space-y-4">
-					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-white">
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-gray-900">
 							Introducción a ProbabilityIA
 							<span class="group-open:rotate-180 transition-transform">
 								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
 							</span>
 						</summary>
-						<p class="text-[#A1A1AA] mt-4">Te mostraremos cómo funciona nuestra plataforma y cómo puede beneficiar tu negocio específicamente.</p>
+						<p class="text-gray-600 mt-4">Te mostraremos cómo funciona nuestra plataforma y cómo puede beneficiar tu negocio específicamente.</p>
 					</details>
 
-					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-white">
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-gray-900">
 							Tour del Dashboard
 							<span class="group-open:rotate-180 transition-transform">
 								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
 							</span>
 						</summary>
-						<p class="text-[#A1A1AA] mt-4">Te enseñaremos todas las características del dashboard, reportes y análisis que ofrece nuestra plataforma.</p>
+						<p class="text-gray-600 mt-4">Te enseñaremos todas las características del dashboard, reportes y análisis que ofrece nuestra plataforma.</p>
 					</details>
 
-					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-white">
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-gray-900">
 							Demostración en Tiempo Real
 							<span class="group-open:rotate-180 transition-transform">
 								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
 							</span>
 						</summary>
-						<p class="text-[#A1A1AA] mt-4">Verás en vivo cómo nuestros algoritmos de IA analizan pedidos y generan predicciones.</p>
+						<p class="text-gray-600 mt-4">Verás en vivo cómo nuestros algoritmos de IA analizan pedidos y generan predicciones.</p>
 					</details>
 
-					<details class="bg-[#18181B] border border-[#27272A] rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-white">
+					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
+						<summary class="flex items-center justify-between font-semibold text-gray-900">
 							Próximos Pasos
 							<span class="group-open:rotate-180 transition-transform">
 								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
 							</span>
 						</summary>
-						<p class="text-[#A1A1AA] mt-4">Discutiremos cómo integrar ProbabilityIA con tu plataforma y responderemos todas tus preguntas.</p>
+						<p class="text-gray-600 mt-4">Discutiremos cómo integrar ProbabilityIA con tu plataforma y responderemos todas tus preguntas.</p>
 					</details>
 				</div>
 			</div>
