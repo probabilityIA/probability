@@ -2,23 +2,66 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import HeroSection from '../components/HeroSection.astro';
+import BannerPromo from '../components/BannerPromo.astro';
+import IntegrationsSection from '../components/IntegrationsSection.astro';
 import HowItWorks from '../components/HowItWorks.astro';
+import AdvantagesSection from '../components/AdvantagesSection.astro';
 import FeaturesSection from '../components/FeaturesSection.astro';
-import StatsSection from '../components/StatsSection.astro';
-import TestimonialsSection from '../components/TestimonialsSection.astro';
-import CTASection from '../components/CTASection.astro';
 import Footer from '../components/Footer.astro';
 ---
 
+<style>
+	.whatsapp-float {
+		position: fixed;
+		bottom: 2rem;
+		right: 2rem;
+		z-index: 50;
+	}
+
+	.whatsapp-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 80px;
+		height: 80px;
+		background: transparent;
+		border-radius: 50%;
+		color: white;
+		text-decoration: none;
+		transition: all 0.3s ease;
+		animation: pulse 2s ease-in-out infinite;
+	}
+
+	.whatsapp-btn:hover {
+		transform: scale(1.2);
+		filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
+	}
+
+	@keyframes pulse {
+		0%, 100% {
+			transform: scale(1);
+		}
+		50% {
+			transform: scale(1.1);
+		}
+	}
+</style>
+
 <Layout>
 	<Header />
+	<!-- WhatsApp Float Button -->
+	<div class="whatsapp-float">
+		<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20me%20interesa%20conocer%20más%20sobre%20tu%20plataforma" class="whatsapp-btn" title="Contactanos por WhatsApp">
+			<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744972_whatsap.png" alt="WhatsApp" class="w-12 h-12"/>
+		</a>
+	</div>
 	<main>
 		<HeroSection />
+		<BannerPromo />
+		<IntegrationsSection />
 		<HowItWorks />
+		<AdvantagesSection />
 		<FeaturesSection />
-		<StatsSection />
-		<TestimonialsSection />
-		<CTASection />
 	</main>
 	<Footer />
 </Layout>
