@@ -164,29 +164,29 @@ import Footer from '../components/Footer.astro';
 				<!-- Contact Form -->
 				<div class="md:col-span-2 bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-12">
 					<h2 class="text-2xl font-bold text-gray-900 mb-8">Envíanos un mensaje</h2>
-					<form class="space-y-6">
+					<form id="contactForm" class="space-y-6">
 						<!-- Name -->
 						<div>
 							<label class="block text-gray-700 font-semibold mb-2">Nombre Completo</label>
-							<input type="text" placeholder="Tu nombre" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+							<input type="text" id="contactName" placeholder="Tu nombre" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
 						</div>
 
 						<!-- Email -->
 						<div>
 							<label class="block text-gray-700 font-semibold mb-2">Email</label>
-							<input type="email" placeholder="tu@email.com" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+							<input type="email" id="contactEmail" placeholder="tu@email.com" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
 						</div>
 
 						<!-- Company -->
 						<div>
 							<label class="block text-gray-700 font-semibold mb-2">Empresa</label>
-							<input type="text" placeholder="Tu empresa" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+							<input type="text" id="contactCompany" placeholder="Tu empresa" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
 						</div>
 
 						<!-- Subject -->
 						<div>
 							<label class="block text-gray-700 font-semibold mb-2">Asunto</label>
-							<select class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors">
+							<select id="contactSubject" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors">
 								<option>Selecciona un asunto</option>
 								<option>Consulta sobre precios</option>
 								<option>Soporte técnico</option>
@@ -199,12 +199,12 @@ import Footer from '../components/Footer.astro';
 						<!-- Message -->
 						<div>
 							<label class="block text-gray-700 font-semibold mb-2">Mensaje</label>
-							<textarea rows="6" placeholder="Tu mensaje..." class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors resize-none"></textarea>
+							<textarea id="contactMessage" rows="6" placeholder="Tu mensaje..." class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors resize-none"></textarea>
 						</div>
 
 						<!-- Submit -->
 						<button type="submit" class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:from-[#7C3AED] hover:to-[#9333EA] text-white py-3 rounded-lg font-semibold transition-all hover:shadow-lg hover:shadow-purple-500/40">
-							Enviar Mensaje
+							Enviar por WhatsApp
 						</button>
 					</form>
 				</div>
@@ -261,3 +261,42 @@ import Footer from '../components/Footer.astro';
 	</main>
 	<Footer />
 </Layout>
+
+<script>
+	const contactForm = document.getElementById('contactForm');
+	if (contactForm) {
+		contactForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			const name = (document.getElementById('contactName') as HTMLInputElement)?.value || '';
+			const email = (document.getElementById('contactEmail') as HTMLInputElement)?.value || '';
+			const company = (document.getElementById('contactCompany') as HTMLInputElement)?.value || '';
+			const subject = (document.getElementById('contactSubject') as HTMLSelectElement)?.value || '';
+			const message = (document.getElementById('contactMessage') as HTMLTextAreaElement)?.value || '';
+
+			if (!name || !email || !company || !subject || !message) {
+				alert('Por favor completa todos los campos');
+				return;
+			}
+
+			// Crear mensaje formateado para WhatsApp
+			const whatsappMessage = `*NUEVO MENSAJE DE CONTACTO*
+
+*Nombre:* ${name}
+*Email:* ${email}
+*Empresa:* ${company}
+*Asunto:* ${subject}
+
+*Mensaje:*
+${message}`;
+
+			// Codificar el mensaje para URL
+			const encodedMessage = encodeURIComponent(whatsappMessage);
+			const whatsappPhone = '573138241302'; // Sin el +
+			const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodedMessage}`;
+
+			// Redirigir a WhatsApp
+			window.open(whatsappUrl, '_blank');
+		});
+	}
+</script>

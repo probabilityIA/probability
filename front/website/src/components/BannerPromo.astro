@@ -1,62 +1,83 @@
 ---
 ---
 
+<style>
+	.banner-container {
+		aspect-ratio: 1 / 1.2;
+		/* Mobile: nearly square */
+	}
+
+	@media (min-width: 640px) {
+		.banner-container {
+			aspect-ratio: 16 / 6;
+			/* Tablet */
+		}
+	}
+
+	@media (min-width: 1024px) {
+		.banner-container {
+			aspect-ratio: 16 / 4.5;
+			/* Desktop */
+		}
+	}
+</style>
+
 <section class="w-full">
 	<div class="w-full">
-		<div class="relative w-full overflow-hidden" style="background: linear-gradient(to bottom right, #1A0A2E 0%, #3D1459 15%, #5B1B7E 30%, #7B2D8E 45%, #A73A87 60%, #C74B8B 75%, #E85A8A 100%); aspect-ratio: 16/4.5;">
+		<div class="relative w-full overflow-hidden banner-container" style="background: linear-gradient(to bottom right, #1A0A2E 0%, #3D1459 15%, #5B1B7E 30%, #7B2D8E 45%, #A73A87 60%, #C74B8B 75%, #E85A8A 100%);">
 
 			<!-- Glow Effects -->
-			<div class="absolute top-0 right-0 w-96 h-96 rounded-full opacity-60" style="background: radial-gradient(circle, rgba(217, 70, 239, 0.2) 0%, transparent 70%); transform: translate(100px, -150px);"></div>
-			<div class="absolute bottom-0 left-0 w-full h-96 rounded-full opacity-50" style="background: radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, transparent 70%); transform: translate(-150px, 200px);"></div>
+			<div class="hidden sm:block absolute top-0 right-0 w-64 sm:w-96 h-64 sm:h-96 rounded-full opacity-60" style="background: radial-gradient(circle, rgba(217, 70, 239, 0.2) 0%, transparent 70%); transform: translate(100px, -150px);"></div>
+			<div class="hidden sm:block absolute bottom-0 left-0 w-full h-64 sm:h-96 rounded-full opacity-50" style="background: radial-gradient(circle, rgba(236, 72, 153, 0.2) 0%, transparent 70%); transform: translate(-150px, 200px);"></div>
 			<div class="absolute inset-0 opacity-40" style="background: radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 70%);"></div>
 
-			<!-- Decorative Dots -->
-			<div class="absolute w-2 h-2 rounded-full opacity-40" style="background: #D946EF; left: 16%; top: 17%; width: 8px; height: 8px;"></div>
-			<div class="absolute w-2 h-2 rounded-full opacity-50" style="background: #EC4899; right: 5%; top: 29%; width: 6px; height: 6px;"></div>
-			<div class="absolute w-2 h-2 rounded-full opacity-30" style="background: #F0ABFC; left: 8%; bottom: 15%; width: 10px; height: 10px;"></div>
-			<div class="absolute w-2 h-2 rounded-full opacity-40" style="background: #D946EF; right: 5%; bottom: 10%; width: 5px; height: 5px;"></div>
-			<div class="absolute w-2 h-2 rounded-full opacity-25" style="background: #EC4899; left: 58%; top: 11%; width: 12px; height: 12px;"></div>
+			<!-- Decorative Dots (hidden on mobile) -->
+			<div class="hidden sm:block absolute w-2 h-2 rounded-full opacity-40" style="background: #D946EF; left: 16%; top: 17%; width: 8px; height: 8px;"></div>
+			<div class="hidden sm:block absolute w-2 h-2 rounded-full opacity-50" style="background: #EC4899; right: 5%; top: 29%; width: 6px; height: 6px;"></div>
+			<div class="hidden md:block absolute w-2 h-2 rounded-full opacity-30" style="background: #F0ABFC; left: 8%; bottom: 15%; width: 10px; height: 10px;"></div>
+			<div class="hidden md:block absolute w-2 h-2 rounded-full opacity-40" style="background: #D946EF; right: 5%; bottom: 10%; width: 5px; height: 5px;"></div>
+			<div class="hidden md:block absolute w-2 h-2 rounded-full opacity-25" style="background: #EC4899; left: 58%; top: 11%; width: 12px; height: 12px;"></div>
 
-			<!-- Decorative Rings -->
-			<div class="absolute rounded-full opacity-50" style="border: 1px solid rgba(255, 255, 255, 0.15); width: 60px; height: 60px; right: 10%; top: 14%;"></div>
-			<div class="absolute rounded-full opacity-40" style="border: 1px solid rgba(255, 255, 255, 0.1); width: 40px; height: 40px; left: 5%; top: 29%;"></div>
+			<!-- Decorative Rings (hidden on mobile) -->
+			<div class="hidden sm:block absolute rounded-full opacity-50" style="border: 1px solid rgba(255, 255, 255, 0.15); width: 60px; height: 60px; right: 10%; top: 14%;"></div>
+			<div class="hidden sm:block absolute rounded-full opacity-40" style="border: 1px solid rgba(255, 255, 255, 0.1); width: 40px; height: 40px; left: 5%; top: 29%;"></div>
 
 			<!-- Content -->
-			<div class="relative z-10 h-full flex flex-col items-center justify-center px-12 text-center">
+			<div class="relative z-10 h-full flex flex-col items-center justify-center px-3 sm:px-8 md:px-12 text-center py-4 sm:py-0">
 				<!-- Sparkle Icon -->
-				<svg class="w-7 h-7 mb-6" style="color: #E88ACD;" viewBox="0 0 24 24" fill="currentColor">
+				<svg class="w-4 sm:w-5 md:w-7 h-4 sm:h-5 md:h-7 mb-2 sm:mb-4 md:mb-6" style="color: #E88ACD;" viewBox="0 0 24 24" fill="currentColor">
 					<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
 				</svg>
 
 				<!-- Badge -->
-				<div class="inline-flex items-center gap-2 mb-8 px-5 py-2 rounded-full" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
-					<svg class="w-4 h-4" style="color: #F0A0D0;" viewBox="0 0 24 24" fill="currentColor">
+				<div class="inline-flex items-center gap-1 sm:gap-2 mb-2 sm:mb-4 md:mb-6 px-3 sm:px-4 md:px-5 py-1 sm:py-2 rounded-full" style="background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.3); backdrop-filter: blur(10px);">
+					<svg class="w-2.5 sm:w-3 md:w-4 h-2.5 sm:h-3 md:h-4" style="color: #F0A0D0;" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M7 16.5V7h10v9.5M17 7l-5-5-5 5"/>
 					</svg>
-					<span class="text-sm font-medium" style="color: #F0C0E0; letter-spacing: 0.5px;">Potencia tu negocio con IA</span>
+					<span class="text-[10px] sm:text-xs md:text-sm font-medium" style="color: #F0C0E0; letter-spacing: 0.5px;">Potencia tu negocio con IA</span>
 				</div>
 
 				<!-- Headline -->
-				<h2 class="text-5xl font-bold text-white mb-6 max-w-4xl leading-tight" style="font-family: Sora, sans-serif; letter-spacing: -0.02em;">
+				<h2 class="text-lg sm:text-2xl md:text-3xl lg:text-5xl font-bold text-white mb-2 sm:mb-3 md:mb-6 max-w-4xl leading-tight" style="font-family: Sora, sans-serif; letter-spacing: -0.02em;">
 					Haz tu mejor movimiento financiero
 				</h2>
 
 				<!-- Subheadline -->
-				<p class="text-lg font-normal mb-12 max-w-2xl" style="color: #E0C0E8; font-family: Inter, sans-serif; line-height: 1.6;">
+				<p class="text-[10px] sm:text-xs md:text-sm lg:text-lg font-normal mb-3 sm:mb-6 md:mb-8 lg:mb-12 max-w-2xl px-1" style="color: #E0C0E8; font-family: Inter, sans-serif; line-height: 1.4;">
 					Descubre con ProbabilityIA las decisiones que maximizan la rentabilidad de tu empresa. Predice, optimiza y crece.
 				</p>
 
 				<!-- CTA Button -->
-				<a href="https://app.probabilityia.com.co/login" class="inline-flex items-center justify-center px-9 py-4 rounded-full font-bold transition-all hover:shadow-2xl hover:scale-105" style="background: white; box-shadow: 0 8px 30px rgba(217, 70, 239, 0.4);">
-					<img src="https://app.probabilityia.com.co/_next/image?url=%2Flogo2recortado.png&w=1200&q=75" alt="ProbabilityIA Logo" class="h-8 object-contain">
+				<a href="https://app.probabilityia.com.co/login" class="inline-flex items-center justify-center px-4 sm:px-6 md:px-9 py-2 sm:py-3 md:py-4 rounded-full font-bold transition-all hover:shadow-2xl hover:scale-105" style="background: white; box-shadow: 0 8px 30px rgba(217, 70, 239, 0.4);">
+					<img src="https://app.probabilityia.com.co/_next/image?url=%2Flogo2recortado.png&w=1200&q=75" alt="ProbabilityIA Logo" class="h-5 sm:h-6 md:h-8 object-contain">
 				</a>
 
 				<!-- Trust Row -->
-				<div class="mt-12 flex items-center justify-center gap-2" style="color: rgba(255, 255, 255, 0.5);">
-					<svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor">
+				<div class="mt-2 sm:mt-4 md:mt-8 lg:mt-12 flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-1 md:gap-2 px-1" style="color: rgba(255, 255, 255, 0.5);">
+					<svg class="w-2 sm:w-2.5 md:w-3 lg:w-3.5 h-2 sm:h-2.5 md:h-3 lg:h-3.5" viewBox="0 0 24 24" fill="currentColor">
 						<path d="M9 16.2L4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2z"/>
 					</svg>
-					<span class="text-xs font-normal" style="font-family: Inter, sans-serif;">Plataforma segura  ·  Sin tarjeta de crédito  ·  Resultados inmediatos</span>
+					<span class="text-[9px] sm:text-[10px] md:text-xs lg:text-sm font-normal" style="font-family: Inter, sans-serif;">Plataforma segura  ·  Sin tarjeta de crédito  ·  Resultados inmediatos</span>
 				</div>
 			</div>
 		</div>

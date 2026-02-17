@@ -2,57 +2,57 @@
 const currentYear = new Date().getFullYear();
 ---
 
-<footer class="bg-gray-100 text-gray-700 py-16 px-20">
+<footer class="bg-gray-100 text-gray-700 py-8 sm:py-12 md:py-16 px-4 sm:px-6 md:px-10 lg:px-20">
 	<div class="max-w-6xl mx-auto">
-		<div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-12 pb-12 border-b border-gray-300">
+		<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 md:gap-12 mb-8 sm:mb-12 pb-8 sm:pb-12 border-b border-gray-300">
 			<!-- Left Column - Logo -->
 			<div class="flex flex-col items-start">
-				<a href="./" class="flex items-center gap-2 mb-6 group cursor-pointer inline-block">
+				<a href="./" class="flex items-center gap-2 mb-4 sm:mb-6 group cursor-pointer inline-block">
 					<img
 						src="https://app.probabilityia.com.co/_next/image?url=%2Flogo2recortado.png&w=1200&q=75"
 						alt="probabilityIA logo"
-						class="h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+						class="h-10 sm:h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
 					/>
 				</a>
-				<p class="text-gray-600 text-sm">
+				<p class="text-gray-600 text-xs sm:text-sm">
 					Reduce devoluciones. Aumenta ganancias. Crece con inteligencia artificial.
 				</p>
 			</div>
 
 			<!-- Center Column - Navigation -->
 			<div class="flex flex-col">
-				<h3 class="font-bold text-gray-700 mb-6 text-lg">Navegación</h3>
-				<nav class="space-y-3 flex flex-col">
-					<a href="./producto" class="text-gray-600 hover:text-gray-700 transition-colors text-sm">Producto</a>
-					<a href="./como-funciona" class="text-gray-600 hover:text-gray-700 transition-colors text-sm">Cómo funciona</a>
-					<a href="./precios" class="text-gray-600 hover:text-gray-700 transition-colors text-sm">Precios</a>
-					<a href="./integraciones" class="text-gray-600 hover:text-gray-700 transition-colors text-sm">Integraciones</a>
-					<a href="./demo" class="text-gray-600 hover:text-gray-700 transition-colors text-sm">Demo</a>
+				<h3 class="font-bold text-gray-700 mb-4 sm:mb-6 text-base sm:text-lg">Navegación</h3>
+				<nav class="space-y-2 sm:space-y-3 flex flex-col">
+					<a href="./producto" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Producto</a>
+					<a href="./como-funciona" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Cómo funciona</a>
+					<a href="./precios" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Precios</a>
+					<a href="./integraciones" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Integraciones</a>
+					<a href="./demo" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">Demo</a>
 				</nav>
 			</div>
 
 			<!-- Right Column - Contact Information -->
 			<div class="flex flex-col">
-				<div class="space-y-4">
+				<div class="space-y-3 sm:space-y-4">
 					<div>
 						<p class="text-gray-500 text-xs font-medium mb-1">Email</p>
-						<a href="mailto:gerencia@probabilityapp.com" class="text-gray-600 hover:text-gray-700 transition-colors text-sm">
+						<a href="mailto:gerencia@probabilityapp.com" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm break-all">
 							gerencia@probabilityapp.com
 						</a>
 					</div>
 					<div>
 						<p class="text-gray-500 text-xs font-medium mb-1">Teléfono</p>
-						<a href="tel:+573138241302" class="text-gray-600 hover:text-gray-700 transition-colors text-sm">
+						<a href="tel:+573138241302" class="text-gray-600 hover:text-gray-700 transition-colors text-xs sm:text-sm">
 							+57 313 824 1302
 						</a>
 					</div>
 					<div>
 						<p class="text-gray-500 text-xs font-medium mb-1">Contacto</p>
-						<p class="text-gray-600 text-sm">Lina M.</p>
+						<p class="text-gray-600 text-xs sm:text-sm">Lina M.</p>
 					</div>
 					<div>
 						<p class="text-gray-500 text-xs font-medium mb-1">Horario</p>
-						<p class="text-gray-600 text-sm">8:00am - 6:00pm</p>
+						<p class="text-gray-600 text-xs sm:text-sm">8:00am - 6:00pm</p>
 					</div>
 				</div>
 			</div>
@@ -60,7 +60,7 @@ const currentYear = new Date().getFullYear();
 
 		<!-- Bottom Section -->
 		<div class="text-center">
-			<p class="text-gray-500 text-sm">
+			<p class="text-gray-500 text-xs sm:text-sm px-2">
 				&copy; {currentYear} ProbabilityIA. Todos los derechos reservados.
 			</p>
 		</div>

@@ -2,55 +2,145 @@
 
 ---
 
+<style>
+	.mobile-menu-toggle {
+		display: none;
+	}
+
+	@media (max-width: 768px) {
+		.mobile-menu-toggle {
+			display: flex;
+		}
+
+		.mobile-menu.hidden {
+			display: none;
+		}
+
+		.mobile-menu:not(.hidden) {
+			display: flex;
+		}
+	}
+</style>
+
 <header class="bg-white sticky top-0 z-50 border-b border-gray-200">
-	<nav class="mx-auto px-20 py-5 flex items-center justify-between h-20">
+	<nav class="mx-auto px-4 sm:px-6 md:px-10 lg:px-20 py-4 sm:py-5 flex items-center justify-between h-auto sm:h-20">
 		<!-- Logo -->
-		<a href="." class="flex items-center gap-3 cursor-pointer group">
+		<a href="." class="flex items-center gap-3 cursor-pointer group flex-shrink-0">
 			<img
 				src="https://app.probabilityia.com.co/_next/image?url=%2Flogo2recortado.png&w=1200&q=75"
 				alt="probabilityIA logo"
-				class="h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
+				class="h-10 sm:h-12 flex-shrink-0 group-hover:scale-110 transition-transform duration-300"
 			/>
 		</a>
 
 		<!-- Navigation Links -->
-		<div class="hidden md:flex items-center gap-8">
+		<div class="hidden md:flex items-center gap-6 lg:gap-8">
 			<a
 				href="./producto"
-				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium"
+				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-sm lg:text-base font-medium"
 				>Producto</a
 			>
 			<a
 				href="./como-funciona"
-				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium"
+				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-sm lg:text-base font-medium"
 				>Cómo funciona</a
 			>
 			<a
 				href="./precios"
-				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium"
+				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-sm lg:text-base font-medium"
 				>Precios</a
 			>
 			<a
 				href="./integraciones"
-				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium"
+				class="text-gray-600 hover:text-[#8B5CF6] transition-colors text-sm lg:text-base font-medium"
 				>Integraciones</a
 			>
 		</div>
 
 		<!-- CTA Buttons -->
-		<div class="flex items-center gap-3">
+		<div class="hidden md:flex items-center gap-2 lg:gap-3">
 			<a
 				href="./contacto"
-				class="border border-gray-300 text-gray-900 px-5 py-2 rounded-lg font-medium transition-colors hover:bg-gray-50 text-sm"
+				class="border border-gray-300 text-gray-900 px-4 lg:px-5 py-2 rounded-lg font-medium transition-colors hover:bg-gray-50 text-xs lg:text-sm"
 			>
 				Contáctanos
 			</a>
 			<a
 				href="./demo"
-				class="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white px-5 py-2 rounded-lg font-medium transition-colors text-sm"
+				class="bg-[#8B5CF6] hover:bg-[#7C3AED] text-white px-4 lg:px-5 py-2 rounded-lg font-medium transition-colors text-xs lg:text-sm"
 			>
-				Solicitar Demo
+				Demo
 			</a>
 		</div>
+
+		<!-- Mobile Menu Button -->
+		<button class="mobile-menu-toggle md:hidden flex items-center gap-2 text-gray-600 hover:text-[#8B5CF6]" id="mobile-menu-btn">
+			<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+			</svg>
+		</button>
 	</nav>
+
+	<!-- Mobile Menu -->
+	<div class="mobile-menu hidden md:hidden border-t border-gray-200 bg-white" id="mobile-menu">
+		<div class="px-4 py-4 space-y-3">
+			<a
+				href="./producto"
+				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
+			>
+				Producto
+			</a>
+			<a
+				href="./como-funciona"
+				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
+			>
+				Cómo funciona
+			</a>
+			<a
+				href="./precios"
+				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
+			>
+				Precios
+			</a>
+			<a
+				href="./integraciones"
+				class="block text-gray-600 hover:text-[#8B5CF6] transition-colors text-base font-medium py-2"
+			>
+				Integraciones
+			</a>
+			<div class="border-t border-gray-200 pt-3 flex flex-col gap-2">
+				<a
+					href="./contacto"
+					class="w-full border border-gray-300 text-gray-900 px-4 py-2 rounded-lg font-medium transition-colors hover:bg-gray-50 text-sm text-center"
+				>
+					Contáctanos
+				</a>
+				<a
+					href="./demo"
+					class="w-full bg-[#8B5CF6] hover:bg-[#7C3AED] text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm text-center"
+				>
+					Solicitar Demo
+				</a>
+			</div>
+		</div>
+	</div>
 </header>
+
+<script>
+	const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+	const mobileMenu = document.getElementById('mobile-menu');
+
+	if (mobileMenuBtn && mobileMenu) {
+		mobileMenuBtn.addEventListener('click', () => {
+			mobileMenu.classList.toggle('hidden');
+		});
+
+		// Close menu when a link is clicked
+		const menuLinks = mobileMenu.querySelectorAll('a');
+		menuLinks.forEach(link => {
+			link.addEventListener('click', () => {
+				mobileMenu.classList.add('hidden');
+			});
+		});
+	}
+</script>

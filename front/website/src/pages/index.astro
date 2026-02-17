@@ -13,8 +13,8 @@ import Footer from '../components/Footer.astro';
 <style>
 	.whatsapp-float {
 		position: fixed;
-		bottom: 2rem;
-		right: 2rem;
+		bottom: 1rem;
+		right: 1rem;
 		z-index: 50;
 	}
 
@@ -22,8 +22,8 @@ import Footer from '../components/Footer.astro';
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 80px;
-		height: 80px;
+		width: 60px;
+		height: 60px;
 		background: transparent;
 		border-radius: 50%;
 		color: white;
@@ -35,6 +35,18 @@ import Footer from '../components/Footer.astro';
 	.whatsapp-btn:hover {
 		transform: scale(1.2);
 		filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.6));
+	}
+
+	@media (min-width: 640px) {
+		.whatsapp-float {
+			bottom: 2rem;
+			right: 2rem;
+		}
+
+		.whatsapp-btn {
+			width: 80px;
+			height: 80px;
+		}
 	}
 
 	@keyframes pulse {
@@ -52,7 +64,7 @@ import Footer from '../components/Footer.astro';
 	<!-- WhatsApp Float Button -->
 	<div class="whatsapp-float">
 		<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20me%20interesa%20conocer%20más%20sobre%20tu%20plataforma" class="whatsapp-btn" title="Contactanos por WhatsApp">
-			<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744972_whatsap.png" alt="WhatsApp" class="w-12 h-12"/>
+			<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744972_whatsap.png" alt="WhatsApp" class="w-9 sm:w-12 h-9 sm:h-12"/>
 		</a>
 	</div>
 	<main>

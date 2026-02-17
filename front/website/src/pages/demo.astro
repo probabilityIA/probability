@@ -54,35 +54,35 @@ import Footer from '../components/Footer.astro';
 		<section class="bg-white py-20 px-6 sm:px-20">
 			<div class="max-w-2xl mx-auto">
 				<div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-12">
-					<form class="space-y-6">
+					<form id="demoForm" class="space-y-6">
 						<!-- Name -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">Nombre Completo *</label>
-							<input type="text" required placeholder="Tu nombre" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<input type="text" id="demoName" required placeholder="Tu nombre" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Email -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">Email *</label>
-							<input type="email" required placeholder="tu@email.com" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<input type="email" id="demoEmail" required placeholder="tu@email.com" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Company -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">Empresa *</label>
-							<input type="text" required placeholder="Tu empresa" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<input type="text" id="demoCompany" required placeholder="Tu empresa" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Phone -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">Teléfono</label>
-							<input type="tel" placeholder="+57 (300) 123-4567" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<input type="tel" id="demoPhone" placeholder="+57 (300) 123-4567" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
 						</div>
 
 						<!-- Industry -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">Industria *</label>
-							<select required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<select id="demoIndustry" required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona tu industria</option>
 								<option>eCommerce</option>
 								<option>Retail</option>
@@ -95,7 +95,7 @@ import Footer from '../components/Footer.astro';
 						<!-- Platform -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">¿Cuál es tu plataforma? *</label>
-							<select required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<select id="demoPlatform" required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona tu plataforma</option>
 								<option>Shopify</option>
 								<option>Mercado Libre</option>
@@ -109,7 +109,7 @@ import Footer from '../components/Footer.astro';
 						<!-- Monthly Orders -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">¿Cuántos pedidos mensuales tienes?</label>
-							<select class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<select id="demoOrders" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona un rango</option>
 								<option>Menos de 100</option>
 								<option>100 - 500</option>
@@ -124,23 +124,23 @@ import Footer from '../components/Footer.astro';
 							<label class="block text-gray-600 font-semibold mb-4">¿Qué te interesa? (Selecciona múltiples)</label>
 							<div class="space-y-3">
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Predicción de devoluciones"/>
 									<span class="text-gray-900">Predicción de devoluciones</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Análisis de imágenes"/>
 									<span class="text-gray-900">Análisis de imágenes</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Optimización de transportadoras"/>
 									<span class="text-gray-900">Optimización de transportadoras</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Dashboard y reportes"/>
 									<span class="text-gray-900">Dashboard y reportes</span>
 								</label>
 								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]"/>
+									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Integraciones personalizadas"/>
 									<span class="text-gray-900">Integraciones personalizadas</span>
 								</label>
 							</div>
@@ -149,7 +149,7 @@ import Footer from '../components/Footer.astro';
 						<!-- Preferred Time -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">¿Cuándo prefieres la demo?</label>
-							<select class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
+							<select id="demoTime" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
 								<option>Selecciona un horario</option>
 								<option>Mañana (9AM - 12PM)</option>
 								<option>Tarde (12PM - 3PM)</option>
@@ -161,12 +161,12 @@ import Footer from '../components/Footer.astro';
 						<!-- Message -->
 						<div>
 							<label class="block text-gray-600 font-semibold mb-2">Mensaje adicional</label>
-							<textarea rows="4" placeholder="Cuéntanos sobre tus desafíos específicos..." class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors resize-none"></textarea>
+							<textarea id="demoMessage" rows="4" placeholder="Cuéntanos sobre tus desafíos específicos..." class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors resize-none"></textarea>
 						</div>
 
 						<!-- Checkbox -->
 						<label class="flex items-start gap-3 cursor-pointer">
-							<input type="checkbox" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6] mt-1"/>
+							<input type="checkbox" id="demoConsent" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6] mt-1"/>
 							<span class="text-gray-600 text-sm">
 								Acepto recibir información y actualizaciones de ProbabilityIA
 							</span>
@@ -262,3 +262,66 @@ import Footer from '../components/Footer.astro';
 	</main>
 	<Footer />
 </Layout>
+
+<script>
+	const demoForm = document.getElementById('demoForm');
+	if (demoForm) {
+		demoForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			const name = (document.getElementById('demoName') as HTMLInputElement)?.value || '';
+			const email = (document.getElementById('demoEmail') as HTMLInputElement)?.value || '';
+			const company = (document.getElementById('demoCompany') as HTMLInputElement)?.value || '';
+			const phone = (document.getElementById('demoPhone') as HTMLInputElement)?.value || '';
+			const industry = (document.getElementById('demoIndustry') as HTMLSelectElement)?.value || '';
+			const platform = (document.getElementById('demoPlatform') as HTMLSelectElement)?.value || '';
+			const orders = (document.getElementById('demoOrders') as HTMLSelectElement)?.value || '';
+			const time = (document.getElementById('demoTime') as HTMLSelectElement)?.value || '';
+			const message = (document.getElementById('demoMessage') as HTMLTextAreaElement)?.value || '';
+
+			// Obtener características seleccionadas
+			const featureCheckboxes = document.querySelectorAll('.demoFeature:checked') as NodeListOf<HTMLInputElement>;
+			const features = Array.from(featureCheckboxes).map(checkbox => checkbox.value).join(', ') || 'No especificado';
+
+			// Validar campos requeridos
+			if (!name || !email || !company || industry === 'Selecciona tu industria' || platform === 'Selecciona tu plataforma') {
+				alert('Por favor completa todos los campos requeridos');
+				return;
+			}
+
+			// Crear mensaje formateado para WhatsApp
+			const whatsappMessage = `*SOLICITUD DE DEMO - PROBABILITYIA*
+
+*Información Personal:*
+📝 *Nombre:* ${name}
+📧 *Email:* ${email}
+📱 *Teléfono:* ${phone || 'No proporcionado'}
+
+*Información de Negocio:*
+🏢 *Empresa:* ${company}
+🏭 *Industria:* ${industry}
+🛍️ *Plataforma:* ${platform}
+📦 *Pedidos Mensuales:* ${orders || 'No especificado'}
+
+*Características de Interés:*
+✨ ${features}
+
+*Preferencia de Horario:*
+⏰ ${time || 'Flexible'}
+
+*Mensaje Adicional:*
+${message || 'Sin comentarios adicionales'}
+
+---
+Enviado desde: probabilityia.com.co`;
+
+			// Codificar el mensaje para URL
+			const encodedMessage = encodeURIComponent(whatsappMessage);
+			const whatsappPhone = '573138241302'; // Sin el +
+			const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodedMessage}`;
+
+			// Redirigir a WhatsApp
+			window.open(whatsappUrl, '_blank');
+		});
+	}
+</script>
