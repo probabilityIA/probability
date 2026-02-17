@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/primary/consumer"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/client"
@@ -179,12 +180,12 @@ func (b *Bundle) GetWebhookURL(ctx context.Context, baseURL string, integrationI
 
 // CreateInvoice crea una factura en Softpymes
 // Este método es llamado por modules/invoicing cuando se necesita facturar
-func (b *Bundle) CreateInvoice(ctx context.Context, invoiceData map[string]interface{}) error {
+func (b *Bundle) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error) {
 	b.log.Info(ctx).
-		Interface("data", invoiceData).
+		Str("order_id", req.OrderID).
 		Msg("Creating invoice in Softpymes via bundle")
 
-	return b.client.CreateInvoice(ctx, invoiceData)
+	return b.client.CreateInvoice(ctx, req)
 }
 
 // CreateCreditNote crea una nota crédito en Softpymes

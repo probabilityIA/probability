@@ -21,6 +21,12 @@ type InvoiceResponseMessage struct {
 	CorrelationID  string                 `json:"correlation_id"` // Mismo UUID del request
 	Timestamp      time.Time              `json:"timestamp"`
 	ProcessingTime int64                  `json:"processing_time_ms"` // Tiempo de procesamiento en ms
+
+	// Audit data del request/response HTTP al proveedor
+	AuditRequestURL     string                 `json:"audit_request_url,omitempty"`
+	AuditRequestPayload map[string]interface{} `json:"audit_request_payload,omitempty"`
+	AuditResponseStatus int                    `json:"audit_response_status,omitempty"`
+	AuditResponseBody   string                 `json:"audit_response_body,omitempty"`
 }
 
 // Response statuses

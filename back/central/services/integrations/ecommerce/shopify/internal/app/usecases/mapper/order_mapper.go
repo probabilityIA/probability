@@ -170,6 +170,14 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		codTotal = &amount
 	}
 
+	// Extraer customer_dni de note_attributes (viene en metadata como "note_attr__customer_dni")
+	customerDNI := ""
+	if s.Metadata != nil {
+		if dni, ok := s.Metadata["note_attr__customer_dni"].(string); ok && dni != "" {
+			customerDNI = dni
+		}
+	}
+
 	probabilityOrder := &domain.ProbabilityOrderDTO{
 		BusinessID:      s.BusinessID,
 		IntegrationID:   s.IntegrationID,
@@ -186,8 +194,8 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		CodTotal:        codTotal,
 		CustomerName:    s.Customer.Name,
 		CustomerEmail:   s.Customer.Email,
-
-		CustomerPhone:      s.Customer.Phone,
+		CustomerDNI:     customerDNI,
+		CustomerPhone:   s.Customer.Phone,
 		CustomerOrderCount: &s.Customer.OrdersCount,
 		CustomerTotalSpent: &s.Customer.TotalSpent,
 		Status:             s.Status,

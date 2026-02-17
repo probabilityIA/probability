@@ -58,6 +58,7 @@ func (s *APISimulator) HandleAuth(apiKey, apiSecret, referer string) (string, er
 }
 
 // HandleCreateInvoice simula la creación de una factura
+// Parsea el formato real de la API de Softpymes (customerNit, items[].itemCode, items[].unitValue string, etc.)
 func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]interface{}) (*InvoiceWithDetails, error) {
 	s.logger.Info().
 		Str("token", token).
@@ -75,28 +76,32 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 		return nil, fmt.Errorf("token expired")
 	}
 
-	// Extraer datos
-	customer, _ := invoiceData["customer"].(map[string]interface{})
+	// Extraer customerNit del top level (formato Softpymes API)
+	customerNIT := "999999999"
+	if nit, ok := invoiceData["customerNit"].(string); ok && nit != "" {
+		customerNIT = nit
+	}
+
+	// Extraer items en formato Softpymes (itemCode, unitValue string, quantity, discount)
 	items, _ := invoiceData["items"].([]interface{})
-	total, _ := invoiceData["total"].(float64)
-	orderID, _ := invoiceData["order_id"].(string)
 
 	// Generar factura
 	invoiceNumber := s.Repository.GenerateInvoiceNumber()
 	externalID := uuid.New().String()
 	cufe := fmt.Sprintf("CUFE-%s", uuid.New().String()[:16])
 
-	// Convertir items
-	invoiceItems := make([]domain.InvoiceItem, 0)
+	// Convertir items del formato Softpymes al formato interno
+	invoiceItems := make([]domain.InvoiceItem, 0, len(items))
+	subtotal := 0.0
 	for _, item := range items {
 		itemMap, ok := item.(map[string]interface{})
 		if !ok {
 			continue
 		}
 
-		description := ""
-		if d, ok := itemMap["description"].(string); ok {
-			description = d
+		itemCode := ""
+		if code, ok := itemMap["itemCode"].(string); ok {
+			itemCode = code
 		}
 
 		quantity := 1
@@ -104,57 +109,60 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 			quantity = int(q)
 		}
 
+		// unitValue viene como string en el formato Softpymes
 		unitPrice := 0.0
-		if p, ok := itemMap["unit_price"].(float64); ok {
-			unitPrice = p
+		if uv, ok := itemMap["unitValue"].(string); ok {
+			fmt.Sscanf(uv, "%f", &unitPrice)
+		} else if uv, ok := itemMap["unitValue"].(float64); ok {
+			unitPrice = uv
 		}
 
-		tax := 0.0
-		if t, ok := itemMap["tax"].(float64); ok {
-			tax = t
+		discount := 0.0
+		if d, ok := itemMap["discount"].(float64); ok {
+			discount = d
 		}
 
-		itemTotal := 0.0
-		if t, ok := itemMap["total"].(float64); ok {
-			itemTotal = t
-		}
+		itemTotal := unitPrice*float64(quantity) - discount
+		itemTax := itemTotal * 0.19 // IVA 19%
 
 		invoiceItems = append(invoiceItems, domain.InvoiceItem{
-			ItemCode:    fmt.Sprintf("ITEM-%d", len(invoiceItems)+1),
-			Description: description,
-			Quantity:    quantity,
-			UnitPrice:   unitPrice,
-			Tax:         tax,
-			Total:       itemTotal,
+			ItemCode:  itemCode,
+			ItemName:  itemCode, // Usar el código como nombre (el mock no tiene catálogo)
+			Quantity:  quantity,
+			UnitPrice: unitPrice,
+			Tax:       itemTax,
+			Discount:  discount,
+			Total:     itemTotal,
 		})
+
+		subtotal += itemTotal
 	}
 
+	iva := subtotal * 0.19
+	total := subtotal + iva
+
+	// Buscar datos del cliente en el repo de customers (si existe)
 	customerName := ""
-	if name, ok := customer["name"].(string); ok {
-		customerName = name
-	}
-
 	customerEmail := ""
-	if email, ok := customer["email"].(string); ok {
-		customerEmail = email
-	}
-
-	customerNIT := "999999999"
-	if nit, ok := customer["nit"].(string); ok {
-		customerNIT = nit
-	} else if dni, ok := customer["dni"].(string); ok {
-		customerNIT = dni
+	customerPhone := ""
+	if cust, exists := s.Repository.GetCustomer(customerNIT); exists {
+		customerName = cust.Name
+		customerEmail = cust.Email
+		customerPhone = cust.Phone
 	}
 
 	invoice := &domain.Invoice{
 		ID:            externalID,
 		InvoiceNumber: invoiceNumber,
 		ExternalID:    externalID,
-		OrderID:       orderID,
+		OrderID:       "",
 		CustomerName:  customerName,
 		CustomerEmail: customerEmail,
 		CustomerNIT:   customerNIT,
+		CustomerPhone: customerPhone,
 		Total:         total,
+		Subtotal:      subtotal,
+		IVA:           iva,
 		Currency:      "COP",
 		Items:         invoiceItems,
 		InvoiceURL:    fmt.Sprintf("https://softpymes-mock.local/invoices/%s", externalID),
@@ -169,10 +177,13 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 
 	s.logger.Info().
 		Str("invoice_number", invoiceNumber).
-		Str("cufe", cufe).
+		Str("customer_nit", customerNIT).
+		Float64("subtotal", subtotal).
+		Float64("iva", iva).
+		Float64("total", total).
+		Int("items_count", len(invoiceItems)).
 		Msg("Factura simulada creada exitosamente")
 
-	// Retornar con detalles adicionales
 	return &InvoiceWithDetails{
 		Invoice:    *invoice,
 		BranchCode: "001",
@@ -203,6 +214,74 @@ func (s *APISimulator) GetInvoiceByNumber(invoiceNumber string) (*InvoiceWithDet
 		SellerName: "Empresa Demo S.A.S.",
 		SellerNIT:  "900123456-7",
 	}, nil
+}
+
+// HandleGetCustomer busca un cliente por identificación
+func (s *APISimulator) HandleGetCustomer(token, identification string) (*domain.Customer, error) {
+	// Validar token
+	authToken, exists := s.Repository.GetToken(token)
+	if !exists {
+		return nil, fmt.Errorf("invalid token")
+	}
+	if time.Now().After(authToken.ExpiresAt) {
+		return nil, fmt.Errorf("token expired")
+	}
+
+	customer, exists := s.Repository.GetCustomer(identification)
+	if !exists {
+		return nil, fmt.Errorf("customer not found")
+	}
+	return customer, nil
+}
+
+// HandleCreateCustomer crea un nuevo cliente
+func (s *APISimulator) HandleCreateCustomer(token string, customerData map[string]interface{}) (*domain.Customer, error) {
+	// Validar token
+	authToken, exists := s.Repository.GetToken(token)
+	if !exists {
+		return nil, fmt.Errorf("invalid token")
+	}
+	if time.Now().After(authToken.ExpiresAt) {
+		return nil, fmt.Errorf("token expired")
+	}
+
+	identification := ""
+	if id, ok := customerData["identification"].(string); ok {
+		identification = id
+	}
+	if identification == "" {
+		return nil, fmt.Errorf("identification is required")
+	}
+
+	name := ""
+	if n, ok := customerData["name"].(string); ok {
+		name = n
+	}
+	email := ""
+	if e, ok := customerData["email"].(string); ok {
+		email = e
+	}
+	phone := ""
+	if p, ok := customerData["phone"].(string); ok {
+		phone = p
+	}
+
+	customer := &domain.Customer{
+		Identification: identification,
+		Name:           name,
+		Email:          email,
+		Phone:          phone,
+		Branch:         "000",
+	}
+
+	s.Repository.SaveCustomer(customer)
+
+	s.logger.Info().
+		Str("identification", identification).
+		Str("name", name).
+		Msg("Cliente simulado creado exitosamente")
+
+	return customer, nil
 }
 
 // HandleCreateCreditNote simula la creación de una nota de crédito

@@ -240,6 +240,11 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 	metadata["source_name"] = orderResp.SourceName
 	metadata["payment_gateway_names"] = orderResp.PaymentGatewayNames
 
+	// Extraer datos de note_attributes (incluye _customer_dni, _business_id, etc.)
+	for _, attr := range orderResp.NoteAttributes {
+		metadata["note_attr_"+attr.Name] = attr.Value
+	}
+
 	// Determinar OrderStatusURL
 	orderStatusURL := ""
 	if orderResp.OrderStatusURL != nil {

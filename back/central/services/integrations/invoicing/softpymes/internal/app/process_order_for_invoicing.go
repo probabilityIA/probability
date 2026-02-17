@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/infra/secondary/cache"
@@ -144,22 +145,25 @@ func (uc *invoicingUseCase) ProcessOrderForInvoicing(ctx context.Context, event 
 		}
 	}
 
-	// 7. Construir invoiceData (en memoria)
-	invoiceData := uc.buildInvoiceData(ctx, order, config, integration, apiKey, apiSecret)
+	// 7. Construir request tipado (en memoria)
+	invoiceReq := uc.buildInvoiceRequest(ctx, order, config, integration, apiKey, apiSecret)
 
 	uc.log.Debug(ctx).
-		Interface("invoice_data", invoiceData).
-		Msg("📄 Invoice data built")
+		Interface("invoice_request", invoiceReq).
+		Msg("Invoice request built")
 
 	// 8. Crear factura en Softpymes
-	if err := uc.softpymesClient.CreateInvoice(ctx, invoiceData); err != nil {
+	result, err := uc.softpymesClient.CreateInvoice(ctx, invoiceReq)
+	if err != nil {
 		uc.log.Error(ctx).
 			Err(err).
-			Msg("❌ Failed to create invoice in Softpymes")
+			Msg("Failed to create invoice in Softpymes")
 		return fmt.Errorf("failed to create invoice: %w", err)
 	}
 
-	uc.log.Info(ctx).Msg("✅ Invoice created successfully in Softpymes")
+	uc.log.Info(ctx).
+		Str("invoice_number", result.InvoiceNumber).
+		Msg("Invoice created successfully in Softpymes")
 
 	// 9. Marcar como procesado en Redis
 	if err := uc.markAsProcessed(ctx, order.ID, integrationIDStr); err != nil {
@@ -256,80 +260,57 @@ func (uc *invoicingUseCase) validateFilters(ctx context.Context, order *ports.Or
 	return nil
 }
 
-// buildInvoiceData construye el payload para la API de Softpymes
-func (uc *invoicingUseCase) buildInvoiceData(
+// buildInvoiceRequest construye el request tipado para la API de Softpymes
+func (uc *invoicingUseCase) buildInvoiceRequest(
 	ctx context.Context,
 	order *ports.OrderSnapshot,
 	config *entities.InvoicingConfig,
-	integration *integration_cache.CachedIntegration, // ✅ CAMBIO DE TIPO
+	integration *integration_cache.CachedIntegration,
 	apiKey, apiSecret string,
-) map[string]interface{} {
-	// Construir items para Softpymes
-	items := make([]map[string]interface{}, 0, len(order.Items))
+) *dtos.CreateInvoiceRequest {
+	// Construir items tipados
+	items := make([]dtos.ItemData, 0, len(order.Items))
 	for _, item := range order.Items {
-		items = append(items, map[string]interface{}{
-			"sku":         item.SKU,
-			"name":        item.Name,
-			"quantity":    item.Quantity,
-			"unit_price":  item.UnitPrice,
-			"total_price": item.TotalPrice,
-			"tax":         item.Tax,
-			"discount":    item.Discount,
-			"product_id":  item.ProductID,
+		items = append(items, dtos.ItemData{
+			ProductID:  item.ProductID,
+			SKU:        item.SKU,
+			Name:       item.Name,
+			Quantity:   item.Quantity,
+			UnitPrice:  item.UnitPrice,
+			TotalPrice: item.TotalPrice,
+			Tax:        item.Tax,
+			TaxRate:    item.TaxRate,
+			Discount:   item.Discount,
 		})
 	}
 
-	// Construir credentials (igual al config de integración + api_key/api_secret)
-	credentials := make(map[string]interface{})
+	// Config combinado de la integración
+	combinedConfig := make(map[string]interface{})
 	if integration.Config != nil {
-		// Copiar todo el config de la integración
 		for k, v := range integration.Config {
-			credentials[k] = v
+			combinedConfig[k] = v
 		}
 	}
-	// Sobrescribir/agregar las credenciales desencriptadas
-	credentials["api_key"] = apiKey
-	credentials["api_secret"] = apiSecret
 
-	// Construir customer
-	customer := map[string]interface{}{
-		"name":  order.CustomerName,
-		"email": order.CustomerEmail,
-		"phone": order.CustomerPhone,
-		"dni":   order.CustomerDNI,
+	return &dtos.CreateInvoiceRequest{
+		Customer: dtos.CustomerData{
+			Name:  order.CustomerName,
+			Email: order.CustomerEmail,
+			Phone: order.CustomerPhone,
+			DNI:   order.CustomerDNI,
+		},
+		Items:    items,
+		Total:    order.TotalAmount,
+		Subtotal: order.Subtotal,
+		Tax:      order.Tax,
+		Discount: order.Discount,
+		ShippingCost: order.ShippingCost,
+		Currency: order.Currency,
+		OrderID:  order.ID,
+		Credentials: dtos.Credentials{
+			APIKey:    apiKey,
+			APISecret: apiSecret,
+		},
+		Config: combinedConfig,
 	}
-
-	// Construir payload completo en el formato que espera el cliente de Softpymes
-	invoiceData := map[string]interface{}{
-		// Credenciales (incluye api_key, api_secret, referer, company_nit, etc.)
-		"credentials": credentials,
-
-		// Config (copia del config de integración - usado por el cliente)
-		"config": integration.Config,
-
-		// Información de la orden
-		"order_id":     order.ID,
-		"order_number": order.OrderNumber,
-		"external_id":  order.ExternalID,
-		"platform":     order.Platform,
-
-		// Cliente
-		"customer": customer,
-
-		// Totales
-		"subtotal":      order.Subtotal,
-		"tax":           order.Tax,
-		"discount":      order.Discount,
-		"shipping_cost": order.ShippingCost,
-		"total":         order.TotalAmount, // Cambiar "total_amount" a "total"
-		"currency":      order.Currency,
-
-		// Items
-		"items": items,
-
-		// Metadata
-		"created_at": order.CreatedAt,
-	}
-
-	return invoiceData
 }

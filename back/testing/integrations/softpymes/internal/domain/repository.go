@@ -10,6 +10,7 @@ type InvoiceRepository struct {
 	mu          sync.RWMutex
 	invoices    map[string]*Invoice
 	creditNotes map[string]*CreditNote
+	customers   map[string]*Customer
 	tokens      map[string]*AuthToken
 	invoiceSeq  int
 	creditSeq   int
@@ -20,6 +21,7 @@ func NewInvoiceRepository() *InvoiceRepository {
 	return &InvoiceRepository{
 		invoices:    make(map[string]*Invoice),
 		creditNotes: make(map[string]*CreditNote),
+		customers:   make(map[string]*Customer),
 		tokens:      make(map[string]*AuthToken),
 		invoiceSeq:  1000,
 		creditSeq:   2000,
@@ -88,6 +90,21 @@ func (r *InvoiceRepository) GetAllCreditNotes() []*CreditNote {
 		notes = append(notes, note)
 	}
 	return notes
+}
+
+// SaveCustomer guarda un cliente
+func (r *InvoiceRepository) SaveCustomer(customer *Customer) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.customers[customer.Identification] = customer
+}
+
+// GetCustomer obtiene un cliente por identificación
+func (r *InvoiceRepository) GetCustomer(identification string) (*Customer, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	c, exists := r.customers[identification]
+	return c, exists
 }
 
 // SaveToken guarda un token de autenticación

@@ -27,7 +27,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		uc.log.Warn(ctx).
 			Str("order_id", order.ID).
 			Str("order_number", order.OrderNumber).
-			Msg("❌ Orden no es facturable")
+			Msg("Orden no es facturable")
 		return nil, errors.ErrOrderNotInvoiceable
 	}
 
@@ -42,7 +42,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		uc.log.Warn(ctx).
 			Str("order_id", order.ID).
 			Str("order_number", order.OrderNumber).
-			Msg("❌ Configuración de facturación deshabilitada")
+			Msg("Configuración de facturación deshabilitada")
 		return nil, errors.ErrConfigNotEnabled
 	}
 
@@ -51,7 +51,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		uc.log.Warn(ctx).
 			Str("order_id", order.ID).
 			Str("order_number", order.OrderNumber).
-			Msg("❌ Facturación automática deshabilitada")
+			Msg("Facturación automática deshabilitada")
 		return nil, errors.ErrAutoInvoiceNotEnabled
 	}
 
@@ -81,7 +81,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		uc.log.Warn(ctx).
 			Str("order_id", order.ID).
 			Str("order_number", order.OrderNumber).
-			Msg("❌ Ya existe factura para esta orden")
+			Msg("Ya existe factura para esta orden")
 		return nil, errors.ErrOrderAlreadyInvoiced
 	}
 
@@ -91,21 +91,19 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			Str("order_id", order.ID).
 			Str("order_number", order.OrderNumber).
 			Err(err).
-			Msg("❌ Orden no cumple criterios de facturación")
+			Msg("Orden no cumple criterios de facturación")
 		return nil, err
 	}
 
 	// 7. Determinar proveedor de facturación
-	// NOTA: Por ahora asumimos Softpymes como único proveedor
-	// En el futuro se determinará dinámicamente desde la configuración
 	provider := dtos.ProviderSoftpymes
 
 	// 8. Crear entidad de factura (estado pending)
 	invoice := &entities.Invoice{
 		OrderID:                order.ID,
 		BusinessID:             order.BusinessID,
-		InvoicingProviderID:    nil,            // NULL - campo legacy deprecado (FK hacia invoicing_providers)
-		InvoicingIntegrationID: &integrationID, // Campo actual (FK hacia integrations)
+		InvoicingProviderID:    nil,
+		InvoicingIntegrationID: &integrationID,
 		Subtotal:               order.Subtotal,
 		Tax:                    order.Tax,
 		Discount:               order.Discount,
@@ -182,29 +180,21 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		// Continuamos aunque falle el log
 	}
 
-	// 13. Preparar datos de facturación para el proveedor
-	invoiceItems2 := make([]map[string]interface{}, 0, len(invoiceItems))
+	// 13. Preparar datos de facturación tipados para el proveedor
+	invoiceItemDTOs := make([]dtos.InvoiceItemData, 0, len(invoiceItems))
 	for _, item := range invoiceItems {
-		itemMap := map[string]interface{}{
-			"product_id":  item.ProductID,
-			"sku":         item.SKU,
-			"name":        item.Name,
-			"description": item.Description,
-			"quantity":    item.Quantity,
-			"unit_price":  item.UnitPrice,
-			"total_price": item.TotalPrice,
-			"tax":         item.Tax,
-			"tax_rate":    item.TaxRate,
-			"discount":    item.Discount,
-		}
-		invoiceItems2 = append(invoiceItems2, itemMap)
-	}
-
-	customerData := map[string]interface{}{
-		"name":  invoice.CustomerName,
-		"email": invoice.CustomerEmail,
-		"phone": invoice.CustomerPhone,
-		"dni":   invoice.CustomerDNI,
+		invoiceItemDTOs = append(invoiceItemDTOs, dtos.InvoiceItemData{
+			ProductID:   item.ProductID,
+			SKU:         item.SKU,
+			Name:        item.Name,
+			Description: item.Description,
+			Quantity:    item.Quantity,
+			UnitPrice:   item.UnitPrice,
+			TotalPrice:  item.TotalPrice,
+			Tax:         item.Tax,
+			TaxRate:     item.TaxRate,
+			Discount:    item.Discount,
+		})
 	}
 
 	// Config específico de facturación (invoice_config desde DB)
@@ -213,25 +203,29 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		invoiceConfigData = config.InvoiceConfig
 	}
 
-	// Incluir integration_id para que el proveedor pueda obtener credentials y config
-	invoiceData := map[string]interface{}{
-		"integration_id": integrationID, // El proveedor usa esto para obtener config+credentials de cache
-		"customer":       customerData,
-		"items":          invoiceItems2,
-		"total":          invoice.TotalAmount,
-		"subtotal":       invoice.Subtotal,
-		"tax":            invoice.Tax,
-		"discount":       invoice.Discount,
-		"shipping_cost":  invoice.ShippingCost,
-		"currency":       invoice.Currency,
-		"order_id":       invoice.OrderID,
-		"config":         invoiceConfigData, // Config de facturación (filtros, etc.)
+	invoiceData := dtos.InvoiceData{
+		IntegrationID: integrationID,
+		Customer: dtos.InvoiceCustomerData{
+			Name:  invoice.CustomerName,
+			Email: invoice.CustomerEmail,
+			Phone: invoice.CustomerPhone,
+			DNI:   invoice.CustomerDNI,
+		},
+		Items:        invoiceItemDTOs,
+		Total:        invoice.TotalAmount,
+		Subtotal:     invoice.Subtotal,
+		Tax:          invoice.Tax,
+		Discount:     invoice.Discount,
+		ShippingCost: invoice.ShippingCost,
+		Currency:     invoice.Currency,
+		OrderID:      invoice.OrderID,
+		Config:       invoiceConfigData,
 	}
 
 	// 14. Generar correlation ID único para request/response
 	correlationID := uuid.New().String()
 
-	// 15. Construir mensaje de request
+	// 15. Construir mensaje de request tipado
 	requestMessage := &dtos.InvoiceRequestMessage{
 		InvoiceID:     invoice.ID,
 		Provider:      provider,
@@ -275,13 +269,9 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		Uint("invoice_id", invoice.ID).
 		Str("provider", provider).
 		Str("correlation_id", correlationID).
-		Msg("📤 Invoice request published - waiting for provider response")
+		Msg("Invoice request published - waiting for provider response")
 
-	// 17. NO publicar SSE aquí - la factura aún está "pending"
-	// El response_consumer publicará el SSE correcto cuando Softpymes confirme (invoice.created) o falle (invoice.failed)
-
-	// 18. Retornar invoice inmediatamente (estado pending)
-	// El consumer actualizará el invoice cuando reciba la respuesta del proveedor
+	// 17. Retornar invoice inmediatamente (estado pending)
 	return invoice, nil
 }
 
@@ -331,7 +321,7 @@ func (uc *useCase) parseFilterConfig(filtersMap map[string]interface{}) (*entiti
 }
 
 // handleInvoiceCreationError maneja errores durante la creación de factura
-func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, err error, invoiceData map[string]interface{}) {
+func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, err error) {
 
 	// Actualizar estado de factura a failed
 	invoice.Status = constants.InvoiceStatusFailed
@@ -347,9 +337,6 @@ func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *enti
 	syncLog.Duration = &duration
 	errorMsg := err.Error()
 	syncLog.ErrorMessage = &errorMsg
-
-	// Extraer audit data si existe
-	uc.populateSyncLogAudit(syncLog, invoiceData)
 
 	// Programar reintento si no se excedió el máximo y no fue cancelado previamente
 	if syncLog.RetryCount < syncLog.MaxRetries && syncLog.Status != constants.SyncStatusCancelled {
@@ -373,9 +360,9 @@ func (uc *useCase) handleInvoiceCreationError(ctx context.Context, invoice *enti
 }
 
 // updateInvoiceWithRetry reintenta UpdateInvoice hasta 3 veces tras éxito del proveedor.
-// Si falla todas las veces, guarda los datos del proveedor en el sync log como fallback
+// Si falla todas las veces, guarda fallbackData en el sync log como respaldo
 // para recuperación manual, evitando facturas fantasma.
-func (uc *useCase) updateInvoiceWithRetry(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, invoiceData map[string]interface{}) error {
+func (uc *useCase) updateInvoiceWithRetry(ctx context.Context, invoice *entities.Invoice, syncLog *entities.InvoiceSyncLog, fallbackData map[string]interface{}) error {
 	var updateErr error
 	for attempt := 0; attempt < 3; attempt++ {
 		updateErr = uc.repo.UpdateInvoice(ctx, invoice)
@@ -390,36 +377,10 @@ func (uc *useCase) updateInvoiceWithRetry(ctx context.Context, invoice *entities
 	uc.log.Error(ctx).Err(updateErr).Msg("CRITICAL: Invoice created at provider but DB update failed after 3 attempts")
 	criticalMsg := "CRITICAL: Invoice created at provider but DB update failed"
 	syncLog.ErrorMessage = &criticalMsg
-	syncLog.ResponseBody = invoiceData
+	syncLog.ResponseBody = fallbackData
 	syncLog.Status = constants.SyncStatusFailed
 	if logErr := uc.repo.UpdateInvoiceSyncLog(ctx, syncLog); logErr != nil {
 		uc.log.Error(ctx).Err(logErr).Msg("Failed to save fallback data in sync log")
 	}
 	return fmt.Errorf("invoice created at provider but failed to save: %w", updateErr)
-}
-
-// populateSyncLogAudit extrae audit data del invoiceData y la almacena en el sync log
-func (uc *useCase) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog, invoiceData map[string]interface{}) {
-	if invoiceData == nil {
-		return
-	}
-	auditData, ok := invoiceData["_audit"].(map[string]interface{})
-	if !ok {
-		return
-	}
-	if reqURL, ok := auditData["request_url"].(string); ok {
-		syncLog.RequestURL = reqURL
-	}
-	if reqPayload, ok := auditData["request_payload"].(map[string]interface{}); ok {
-		syncLog.RequestPayload = reqPayload
-	}
-	if respStatus, ok := auditData["response_status"].(int); ok {
-		syncLog.ResponseStatus = respStatus
-	}
-	if respBody, ok := auditData["response_body"].(string); ok {
-		var bodyMap map[string]interface{}
-		if json.Unmarshal([]byte(respBody), &bodyMap) == nil {
-			syncLog.ResponseBody = bodyMap
-		}
-	}
 }

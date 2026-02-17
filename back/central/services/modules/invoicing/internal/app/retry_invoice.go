@@ -28,8 +28,6 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	}
 
 	// 2.5. Lock optimista: marcar invoice como pending ANTES de llamar al proveedor.
-	// Si el RetryConsumer o un retry manual concurrente intenta procesar la misma factura,
-	// verá status != failed y saldrá con ErrRetryNotAllowed (paso 2).
 	invoice.Status = constants.InvoiceStatusPending
 	if err := uc.repo.UpdateInvoice(ctx, invoice); err != nil {
 		return fmt.Errorf("failed to lock invoice for retry: %w", err)
@@ -78,7 +76,7 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	order, err := uc.repo.GetOrderByID(ctx, invoice.OrderID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get order for retry")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("failed to get order: %w", err), nil)
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, fmt.Errorf("failed to get order: %w", err))
 		return fmt.Errorf("failed to get order: %w", err)
 	}
 
@@ -86,7 +84,7 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get invoicing config for retry")
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotConfigured, nil)
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotConfigured)
 		return errors.ErrProviderNotConfigured
 	}
 
@@ -97,27 +95,27 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	} else if config.InvoicingProviderID != nil {
 		integrationID = *config.InvoicingProviderID
 	} else {
-		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotConfigured, nil)
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotConfigured)
 		return errors.ErrProviderNotConfigured
 	}
 
 	// 10. Determinar proveedor
-	provider := dtos.ProviderSoftpymes // Por ahora solo Softpymes
+	provider := dtos.ProviderSoftpymes
 
-	// 11. Construir invoiceData con items de la orden
-	items := make([]map[string]interface{}, 0, len(order.Items))
+	// 11. Construir invoiceData tipado con items de la orden
+	invoiceItemDTOs := make([]dtos.InvoiceItemData, 0, len(order.Items))
 	for _, item := range order.Items {
-		items = append(items, map[string]interface{}{
-			"product_id":  item.ProductID,
-			"sku":         item.SKU,
-			"name":        item.Name,
-			"description": item.Description,
-			"quantity":    item.Quantity,
-			"unit_price":  item.UnitPrice,
-			"total_price": item.TotalPrice,
-			"tax":         item.Tax,
-			"tax_rate":    item.TaxRate,
-			"discount":    item.Discount,
+		invoiceItemDTOs = append(invoiceItemDTOs, dtos.InvoiceItemData{
+			ProductID:   item.ProductID,
+			SKU:         item.SKU,
+			Name:        item.Name,
+			Description: item.Description,
+			Quantity:    item.Quantity,
+			UnitPrice:   item.UnitPrice,
+			TotalPrice:  item.TotalPrice,
+			Tax:         item.Tax,
+			TaxRate:     item.TaxRate,
+			Discount:    item.Discount,
 		})
 	}
 
@@ -127,29 +125,29 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		invoiceConfigData = config.InvoiceConfig
 	}
 
-	invoiceData := map[string]interface{}{
-		"integration_id": integrationID, // El proveedor obtiene config+credentials de cache
-		"customer": map[string]interface{}{
-			"name":  invoice.CustomerName,
-			"email": invoice.CustomerEmail,
-			"phone": invoice.CustomerPhone,
-			"dni":   invoice.CustomerDNI,
+	invoiceData := dtos.InvoiceData{
+		IntegrationID: integrationID,
+		Customer: dtos.InvoiceCustomerData{
+			Name:  invoice.CustomerName,
+			Email: invoice.CustomerEmail,
+			Phone: invoice.CustomerPhone,
+			DNI:   invoice.CustomerDNI,
 		},
-		"items":         items,
-		"total":         invoice.TotalAmount,
-		"subtotal":      invoice.Subtotal,
-		"tax":           invoice.Tax,
-		"discount":      invoice.Discount,
-		"shipping_cost": invoice.ShippingCost,
-		"currency":      invoice.Currency,
-		"order_id":      invoice.OrderID,
-		"config":        invoiceConfigData,
+		Items:        invoiceItemDTOs,
+		Total:        invoice.TotalAmount,
+		Subtotal:     invoice.Subtotal,
+		Tax:          invoice.Tax,
+		Discount:     invoice.Discount,
+		ShippingCost: invoice.ShippingCost,
+		Currency:     invoice.Currency,
+		OrderID:      invoice.OrderID,
+		Config:       invoiceConfigData,
 	}
 
 	// 12. Generar correlation ID
 	correlationID := uuid.New().String()
 
-	// 13. Construir mensaje de retry request
+	// 13. Construir mensaje de retry request tipado
 	requestMessage := &dtos.InvoiceRequestMessage{
 		InvoiceID:     invoice.ID,
 		Provider:      provider,
@@ -194,7 +192,7 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		Str("provider", provider).
 		Str("correlation_id", correlationID).
 		Int("retry_count", syncLog.RetryCount).
-		Msg("📤 Retry request published - waiting for provider response")
+		Msg("Retry request published - waiting for provider response")
 
 	// 15. Retornar éxito (invoice queda en pending, consumer lo actualizará)
 	return nil
