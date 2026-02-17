@@ -33,6 +33,12 @@ type InvoiceResponseMessage struct {
 	CorrelationID  string                 `json:"correlation_id"`
 	Timestamp      time.Time              `json:"timestamp"`
 	ProcessingTime int64                  `json:"processing_time_ms"`
+
+	// Audit data del request/response HTTP al proveedor
+	AuditRequestURL     string                 `json:"audit_request_url,omitempty"`
+	AuditRequestPayload map[string]interface{} `json:"audit_request_payload,omitempty"`
+	AuditResponseStatus int                    `json:"audit_response_status,omitempty"`
+	AuditResponseBody   string                 `json:"audit_response_body,omitempty"`
 }
 
 // ResponsePublisher publica responses de facturación

@@ -435,6 +435,10 @@ func (s *OrderSimulator) generateNoteAttributes() []domain.NoteAttribute {
 			Name:  "_integration_type_id",
 			Value: fmt.Sprintf("%d", s.businessConfig.IntegrationTypeID),
 		},
+		{
+			Name:  "_customer_dni",
+			Value: "1019086678",
+		},
 	}
 }
 

@@ -175,6 +175,9 @@ func (c *ResponseConsumer) handleSuccess(
 		// Guardar response completa
 		syncLog.ResponseBody = response.DocumentJSON
 
+		// Poblar audit data del request/response HTTP al proveedor
+		c.populateSyncLogAudit(syncLog, response)
+
 		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
 			c.log.Error(ctx).Err(err).Msg("Failed to update sync log")
 		}
@@ -244,6 +247,9 @@ func (c *ResponseConsumer) handleError(
 		if response.ErrorDetails != nil {
 			syncLog.ErrorDetails = response.ErrorDetails
 		}
+
+		// Poblar audit data del request/response HTTP al proveedor
+		c.populateSyncLogAudit(syncLog, response)
 
 		// Calcular próximo reintento si no se excedió el límite
 		if syncLog.RetryCount < syncLog.MaxRetries {
@@ -341,6 +347,25 @@ func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.Bu
 		Int("failed", job.Failed).
 		Int("total", job.TotalOrders).
 		Msg("Bulk invoice job completed (from response consumer)")
+}
+
+// populateSyncLogAudit extrae audit data del response message y la almacena en el sync log
+func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog, response *dtos.InvoiceResponseMessage) {
+	if response.AuditRequestURL != "" {
+		syncLog.RequestURL = response.AuditRequestURL
+	}
+	if response.AuditRequestPayload != nil {
+		syncLog.RequestPayload = response.AuditRequestPayload
+	}
+	if response.AuditResponseStatus != 0 {
+		syncLog.ResponseStatus = response.AuditResponseStatus
+	}
+	if response.AuditResponseBody != "" {
+		var bodyMap map[string]interface{}
+		if json.Unmarshal([]byte(response.AuditResponseBody), &bodyMap) == nil {
+			syncLog.ResponseBody = bodyMap
+		}
+	}
 }
 
 // calculateNextRetry calcula el próximo intento (exponential backoff)

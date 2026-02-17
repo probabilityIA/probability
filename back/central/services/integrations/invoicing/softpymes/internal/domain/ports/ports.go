@@ -3,6 +3,8 @@ package ports
 import (
 	"context"
 	"time"
+
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
 )
 
 // ═══════════════════════════════════════════════════════════════
@@ -16,7 +18,8 @@ type ISoftpymesClient interface {
 	TestAuthentication(ctx context.Context, apiKey, apiSecret, referer string) error
 
 	// CreateInvoice crea una factura en Softpymes
-	CreateInvoice(ctx context.Context, invoiceData map[string]interface{}) error
+	// Retorna resultado con datos de la factura y audit data (incluso en caso de error)
+	CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error)
 
 	// CreateCreditNote crea una nota crédito en Softpymes
 	CreateCreditNote(ctx context.Context, creditNoteData map[string]interface{}) error
@@ -58,27 +61,27 @@ type OrderEventMessage struct {
 
 // OrderSnapshot representa un snapshot completo de una orden
 type OrderSnapshot struct {
-	ID              string                `json:"id"`
-	OrderNumber     string                `json:"order_number"`
-	InternalNumber  string                `json:"internal_number"`
-	ExternalID      string                `json:"external_id"`
-	TotalAmount     float64               `json:"total_amount"`
-	Currency        string                `json:"currency"`
-	PaymentMethodID uint                  `json:"payment_method_id"`
-	PaymentStatusID *uint                 `json:"payment_status_id,omitempty"`
-	Subtotal        float64               `json:"subtotal"`
-	Tax             float64               `json:"tax"`
-	Discount        float64               `json:"discount"`
-	ShippingCost    float64               `json:"shipping_cost"`
-	CustomerName    string                `json:"customer_name"`
-	CustomerEmail   string                `json:"customer_email,omitempty"`
-	CustomerPhone   string                `json:"customer_phone,omitempty"`
-	CustomerDNI     string                `json:"customer_dni,omitempty"`
-	Platform        string                `json:"platform"`
-	IntegrationID   uint                  `json:"integration_id"`
-	Items           []OrderItemSnapshot   `json:"items,omitempty"`
-	CreatedAt       time.Time             `json:"created_at"`
-	UpdatedAt       time.Time             `json:"updated_at"`
+	ID              string              `json:"id"`
+	OrderNumber     string              `json:"order_number"`
+	InternalNumber  string              `json:"internal_number"`
+	ExternalID      string              `json:"external_id"`
+	TotalAmount     float64             `json:"total_amount"`
+	Currency        string              `json:"currency"`
+	PaymentMethodID uint                `json:"payment_method_id"`
+	PaymentStatusID *uint               `json:"payment_status_id,omitempty"`
+	Subtotal        float64             `json:"subtotal"`
+	Tax             float64             `json:"tax"`
+	Discount        float64             `json:"discount"`
+	ShippingCost    float64             `json:"shipping_cost"`
+	CustomerName    string              `json:"customer_name"`
+	CustomerEmail   string              `json:"customer_email,omitempty"`
+	CustomerPhone   string              `json:"customer_phone,omitempty"`
+	CustomerDNI     string              `json:"customer_dni,omitempty"`
+	Platform        string              `json:"platform"`
+	IntegrationID   uint                `json:"integration_id"`
+	Items           []OrderItemSnapshot `json:"items,omitempty"`
+	CreatedAt       time.Time           `json:"created_at"`
+	UpdatedAt       time.Time           `json:"updated_at"`
 }
 
 // OrderItemSnapshot representa un item de orden

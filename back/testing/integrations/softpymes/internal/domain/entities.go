@@ -12,7 +12,10 @@ type Invoice struct {
 	CustomerEmail string
 	CustomerNIT   string
 	Total         float64
+	Subtotal      float64
+	IVA           float64
 	Currency      string
+	CustomerPhone string
 	Items         []InvoiceItem
 	InvoiceURL    string
 	PDFURL        string
@@ -25,10 +28,12 @@ type Invoice struct {
 // InvoiceItem representa un ítem de factura
 type InvoiceItem struct {
 	ItemCode    string
+	ItemName    string
 	Description string
 	Quantity    int
 	UnitPrice   float64
 	Tax         float64
+	Discount    float64
 	Total       float64
 }
 
@@ -47,6 +52,15 @@ type CreditNote struct {
 	CUFE             string
 	IssuedAt         time.Time
 	CreatedAt        time.Time
+}
+
+// Customer representa un cliente en Softpymes
+type Customer struct {
+	Identification string
+	Name           string
+	Email          string
+	Phone          string
+	Branch         string
 }
 
 // AuthToken representa un token de autenticación de SoftPymes

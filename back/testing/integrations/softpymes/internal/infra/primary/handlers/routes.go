@@ -14,6 +14,11 @@ func (h *Handler) RegisterRoutes(router *gin.Engine) {
 	// Autenticación
 	router.POST("/oauth/integration/login/", h.handleAuth)
 
+	// Clientes
+	router.GET("/app/integration/customer", h.handleGetCustomer)
+	router.POST("/app/integration/customer", h.handleCreateCustomer)
+	router.POST("/app/integration/customer_new/", h.handleCreateCustomer)
+
 	// Crear factura
 	router.POST("/app/integration/sales_invoice/", h.handleCreateInvoice)
 
@@ -68,19 +73,102 @@ func (h *Handler) handleAuth(c *gin.Context) {
 	})
 }
 
-// handleCreateInvoice maneja la creación de factura
-func (h *Handler) handleCreateInvoice(c *gin.Context) {
-	token := c.GetHeader("Authorization")
+// handleGetCustomer busca un cliente por identificación
+func (h *Handler) handleGetCustomer(c *gin.Context) {
+	token := h.extractToken(c)
 	if token == "" {
-		c.JSON(401, gin.H{
-			"message": "Missing authorization token",
-			"type":    "UNAUTHORIZED",
-		})
+		c.JSON(401, gin.H{"message": "Missing authorization token"})
 		return
 	}
 
-	if len(token) > 7 && token[:7] == "Bearer " {
-		token = token[7:]
+	identification := c.Query("identification")
+	if identification == "" {
+		c.JSON(400, gin.H{"message": "identification is required"})
+		return
+	}
+
+	customer, err := h.apiSimulator.HandleGetCustomer(token, identification)
+	if err != nil {
+		if err.Error() == "customer not found" {
+			// Softpymes retorna 200 con solo "message" cuando no existe
+			c.JSON(200, gin.H{"message": fmt.Sprintf("No existe cliente con identificación: %s", identification)})
+			return
+		}
+		c.JSON(500, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"identification": customer.Identification,
+		"name":           customer.Name,
+		"email":          customer.Email,
+		"phone":          customer.Phone,
+		"branch":         customer.Branch,
+	})
+}
+
+// handleCreateCustomer crea un nuevo cliente
+// El cliente real envía: identificationNumber, firstName, lastName, email, phone, cellPhone, etc.
+func (h *Handler) handleCreateCustomer(c *gin.Context) {
+	token := h.extractToken(c)
+	if token == "" {
+		c.JSON(401, gin.H{"message": "Missing authorization token"})
+		return
+	}
+
+	var body map[string]interface{}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(400, gin.H{"message": "Invalid request format"})
+		return
+	}
+
+	// Normalizar al formato interno: el cliente real envía identificationNumber, firstName, lastName
+	customerData := map[string]interface{}{}
+	if id, ok := body["identificationNumber"].(string); ok {
+		customerData["identification"] = id
+	} else if id, ok := body["identification"].(string); ok {
+		customerData["identification"] = id
+	}
+
+	// Combinar firstName + lastName como name
+	firstName, _ := body["firstName"].(string)
+	lastName, _ := body["lastName"].(string)
+	if firstName != "" || lastName != "" {
+		customerData["name"] = fmt.Sprintf("%s %s", firstName, lastName)
+	} else if name, ok := body["name"].(string); ok {
+		customerData["name"] = name
+	}
+
+	if email, ok := body["email"].(string); ok {
+		customerData["email"] = email
+	}
+	if phone, ok := body["phone"].(string); ok {
+		customerData["phone"] = phone
+	} else if phone, ok := body["cellPhone"].(string); ok {
+		customerData["phone"] = phone
+	}
+
+	customer, err := h.apiSimulator.HandleCreateCustomer(token, customerData)
+	if err != nil {
+		c.JSON(500, gin.H{"message": err.Error()})
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"identification": customer.Identification,
+		"name":           customer.Name,
+		"email":          customer.Email,
+		"phone":          customer.Phone,
+		"branch":         customer.Branch,
+	})
+}
+
+// handleCreateInvoice maneja la creación de factura
+func (h *Handler) handleCreateInvoice(c *gin.Context) {
+	token := h.extractToken(c)
+	if token == "" {
+		c.JSON(401, gin.H{"message": "Missing authorization token", "type": "UNAUTHORIZED"})
+		return
 	}
 
 	var invoiceData map[string]interface{}
@@ -111,9 +199,9 @@ func (h *Handler) handleCreateInvoice(c *gin.Context) {
 		"info": gin.H{
 			"date":           invoice.IssuedAt.Format(time.RFC3339),
 			"documentNumber": invoice.InvoiceNumber,
-			"subtotal":       invoice.Total * 0.84,
+			"subtotal":       invoice.Subtotal,
 			"discount":       0.0,
-			"iva":            invoice.Total * 0.16,
+			"iva":            invoice.IVA,
 			"withholding":    0.0,
 			"total":          invoice.Total,
 			"docsFe": gin.H{
@@ -124,19 +212,21 @@ func (h *Handler) handleCreateInvoice(c *gin.Context) {
 	})
 }
 
-// handleSearchDocuments maneja la búsqueda de documentos
-func (h *Handler) handleSearchDocuments(c *gin.Context) {
+// extractToken extrae el Bearer token del header Authorization
+func (h *Handler) extractToken(c *gin.Context) string {
 	token := c.GetHeader("Authorization")
-	if token == "" {
-		c.JSON(401, gin.H{
-			"message": "Missing authorization token",
-			"type":    "UNAUTHORIZED",
-		})
-		return
-	}
-
 	if len(token) > 7 && token[:7] == "Bearer " {
 		token = token[7:]
+	}
+	return token
+}
+
+// handleSearchDocuments maneja la búsqueda de documentos
+func (h *Handler) handleSearchDocuments(c *gin.Context) {
+	token := h.extractToken(c)
+	if token == "" {
+		c.JSON(401, gin.H{"message": "Missing authorization token", "type": "UNAUTHORIZED"})
+		return
 	}
 
 	var searchParams struct {
@@ -191,40 +281,23 @@ func (h *Handler) handleSearchDocuments(c *gin.Context) {
 // invoiceToInvoiceWithDetails convierte Invoice a InvoiceWithDetails
 func (h *Handler) invoiceToInvoiceWithDetails(inv *domain.Invoice) *usecases.InvoiceWithDetails {
 	return &usecases.InvoiceWithDetails{
-		Invoice: domain.Invoice{
-			ID:            inv.ID,
-			InvoiceNumber: inv.InvoiceNumber,
-			ExternalID:    inv.ExternalID,
-			OrderID:       inv.OrderID,
-			CustomerName:  inv.CustomerName,
-			CustomerEmail: inv.CustomerEmail,
-			CustomerNIT:   inv.CustomerNIT,
-			Total:         inv.Total,
-			Currency:      inv.Currency,
-			Items:         inv.Items,
-			InvoiceURL:    inv.InvoiceURL,
-			PDFURL:        inv.PDFURL,
-			XMLURL:        inv.XMLURL,
-			CUFE:          inv.CUFE,
-			IssuedAt:      inv.IssuedAt,
-			CreatedAt:     inv.CreatedAt,
-		},
-		BranchCode:  "001",
-		BranchName:  "Sucursal Principal",
-		Prefix:      "SPY",
-		SellerName:  "Empresa Demo",
-		SellerNIT:   "900123456",
+		Invoice:    *inv,
+		BranchCode: "001",
+		BranchName: "Sucursal Principal",
+		Prefix:     "FV",
+		SellerName: "Empresa Demo S.A.S.",
+		SellerNIT:  "900123456-7",
 	}
 }
 
-// buildDocumentResponse construye la respuesta del documento
+// buildDocumentResponse construye la respuesta del documento con datos reales
 func (h *Handler) buildDocumentResponse(invoice *usecases.InvoiceWithDetails) map[string]interface{} {
-	items := make([]map[string]interface{}, 0)
+	items := make([]map[string]interface{}, 0, len(invoice.Items))
 	for _, item := range invoice.Items {
 		items = append(items, map[string]interface{}{
-			"discount":       "0.00",
+			"discount":       fmt.Sprintf("%.2f", item.Discount),
 			"itemCode":       item.ItemCode,
-			"itemName":       item.Description,
+			"itemName":       item.ItemName,
 			"code":           item.ItemCode,
 			"service":        "false",
 			"iva":            fmt.Sprintf("%.2f", item.Tax),
@@ -266,10 +339,10 @@ func (h *Handler) buildDocumentResponse(invoice *usecases.InvoiceWithDetails) ma
 			"shipTo":         "",
 			"shipZipCode":    "",
 		},
-		"termDays":           0,
-		"total":              fmt.Sprintf("%.2f", invoice.Total),
-		"totalDiscount":      "0.00",
-		"totalIva":           fmt.Sprintf("%.2f", invoice.Total*0.16),
+		"termDays":            0,
+		"total":               fmt.Sprintf("%.2f", invoice.Total),
+		"totalDiscount":       "0.00",
+		"totalIva":            fmt.Sprintf("%.2f", invoice.IVA),
 		"totalWithholdingTax": "0.00",
 	}
 }

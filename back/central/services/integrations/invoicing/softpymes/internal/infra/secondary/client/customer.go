@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
 )
 
 // CustomerSearchResponse representa la respuesta de búsqueda de cliente en Softpymes
@@ -19,7 +22,7 @@ type CustomerSearchResponse struct {
 // ensureCustomerExists verifica que el cliente exista en Softpymes y lo crea si no existe
 // Endpoint de búsqueda: GET /app/integration/customer?identification=XXX
 // Endpoint de creación: POST /app/integration/customer_new/
-func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, customerNit string, customer map[string]interface{}, config map[string]interface{}) error {
+func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}) error {
 	// Buscar si el cliente ya existe en Softpymes
 	exists, err := c.customerExists(ctx, token, referer, customerNit)
 	if err != nil {
@@ -29,14 +32,14 @@ func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, custo
 	if exists {
 		c.log.Info(ctx).
 			Str("customer_nit", customerNit).
-			Msg("✅ Customer already exists in Softpymes")
+			Msg("Customer already exists in Softpymes")
 		return nil
 	}
 
 	// El cliente no existe, crearlo
 	c.log.Info(ctx).
 		Str("customer_nit", customerNit).
-		Msg("📝 Customer does not exist in Softpymes, creating...")
+		Msg("Customer does not exist in Softpymes, creating...")
 
 	return c.createCustomer(ctx, token, referer, customerNit, customer, config)
 }
@@ -74,57 +77,73 @@ func (c *Client) customerExists(ctx context.Context, token, referer, customerNit
 	return false, nil
 }
 
-// createCustomer crea un nuevo cliente en Softpymes
-// Usa el endpoint POST /app/integration/customer_new/ (agregar cliente a tercero)
-func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit string, customer map[string]interface{}, config map[string]interface{}) error {
-	// Extraer email del customer (si existe)
+// createCustomer crea un nuevo tercero y cliente en Softpymes
+// Usa el endpoint POST /app/integration/customer (guardar tercero y cliente)
+// Docs: https://api-integracion.softpymes.com.co/doc/#api-Clientes-SaveCustomers
+func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}) error {
+	// Extraer datos del customer tipado
 	email := "noreply@probability.com"
-	if customer != nil {
-		if e, ok := customer["email"].(string); ok && e != "" {
-			email = e
-		}
+	if customer != nil && customer.Email != "" {
+		email = customer.Email
 	}
 
-	// Extraer dirección del customer (si existe)
 	address := "COLOMBIA"
-	if customer != nil {
-		if addr, ok := customer["address"].(string); ok && addr != "" {
-			address = addr
-		}
+	if customer != nil && customer.Address != "" {
+		address = customer.Address
 	}
 
-	// Obtener companyNit del config (referer sin dígito de verificación)
+	phone := ""
+	if customer != nil && customer.Phone != "" {
+		phone = customer.Phone
+	}
+
+	customerName := ""
+	if customer != nil && customer.Name != "" {
+		customerName = customer.Name
+	}
+
+	// Obtener companyNit del config
 	companyNit := referer
 	if cn, ok := config["company_nit"].(string); ok && cn != "" {
 		companyNit = cn
 	}
 
-	// Construir request de creación de cliente
-	// Docs: https://api-integracion.softpymes.com.co/doc/#api-Clientes-AddCustomers
+	// Construir request - Persona Natural (thirdType = "N")
 	customerReq := map[string]interface{}{
 		"identificationNumber": customerNit,
-		"phone":                "",
-		"cellPhone":            "",
+		"identificationType":   "C",
+		"thirdType":            "N",
+		"phone":                phone,
+		"cellPhone":            phone,
 		"branchName":           "PRINCIPAL",
 		"billAddress":          address,
 		"email":                email,
-		"cityCode":             "001",          // Bogotá por defecto
-		"departmentCode":       "11",           // D.C. por defecto
+		"cityCode":             "001",
+		"departmentCode":       "11",
 		"companyNit":           companyNit,
 	}
 
+	// Separar nombre en partes para persona natural
+	firstName, lastName := splitCustomerName(customerName)
+	customerReq["firstName"] = firstName
+	customerReq["lastName"] = lastName
+
 	c.log.Info(ctx).
 		Str("customer_nit", customerNit).
+		Str("first_name", firstName).
+		Str("last_name", lastName).
 		Str("email", email).
+		Str("phone", phone).
 		Str("company_nit", companyNit).
-		Msg("📤 Creating customer in Softpymes")
+		Msg("Creating customer (tercero + cliente) in Softpymes")
 
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Referer", referer).
 		SetBody(customerReq).
-		Post("/app/integration/customer_new/")
+		SetDebug(true).
+		Post("/app/integration/customer")
 
 	if err != nil {
 		return fmt.Errorf("customer creation request failed: %w", err)
@@ -134,14 +153,44 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 		c.log.Error(ctx).
 			Int("status", resp.StatusCode()).
 			Str("response", string(resp.Body())).
-			Msg("❌ Customer creation failed in Softpymes")
+			Msg("Customer creation failed in Softpymes")
 		return fmt.Errorf("customer creation failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
 	c.log.Info(ctx).
 		Str("customer_nit", customerNit).
+		Str("name", customerName).
 		Str("response", string(resp.Body())).
-		Msg("✅ Customer created successfully in Softpymes")
+		Msg("Customer created successfully in Softpymes")
 
 	return nil
+}
+
+// splitCustomerName separa un nombre completo en firstName y lastName
+// Ejemplos:
+//
+//	"Sebastian Camacho"       → "Sebastian", "Camacho"
+//	"Juan Carlos Pérez López" → "Juan Carlos", "Pérez López"
+//	"Sebastian"               → "Sebastian", "."
+//	""                        → "Cliente", "Probability"
+func splitCustomerName(fullName string) (string, string) {
+	fullName = strings.TrimSpace(fullName)
+	if fullName == "" {
+		return "Cliente", "Probability"
+	}
+
+	parts := strings.Fields(fullName)
+	switch len(parts) {
+	case 1:
+		return parts[0], "."
+	case 2:
+		return parts[0], parts[1]
+	case 3:
+		// "Juan Carlos Pérez" → firstName="Juan Carlos", lastName="Pérez"
+		return parts[0] + " " + parts[1], parts[2]
+	default:
+		// "Juan Carlos Pérez López" → firstName="Juan Carlos", lastName="Pérez López"
+		mid := len(parts) / 2
+		return strings.Join(parts[:mid], " "), strings.Join(parts[mid:], " ")
+	}
 }
