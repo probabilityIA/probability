@@ -108,11 +108,19 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 		companyNit = cn
 	}
 
+	// Separar nombre en partes para persona natural
+	firstName, lastName := splitCustomerName(customerName)
+
 	// Construir request - Persona Natural (thirdType = "N")
+	// maidenName y otherName son requeridos por Softpymes para persona natural
 	customerReq := map[string]interface{}{
 		"identificationNumber": customerNit,
 		"identificationType":   "C",
 		"thirdType":            "N",
+		"firstName":            firstName,
+		"lastName":             lastName,
+		"maidenName":           "",
+		"otherName":            "",
 		"phone":                phone,
 		"cellPhone":            phone,
 		"branchName":           "PRINCIPAL",
@@ -122,11 +130,6 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 		"departmentCode":       "11",
 		"companyNit":           companyNit,
 	}
-
-	// Separar nombre en partes para persona natural
-	firstName, lastName := splitCustomerName(customerName)
-	customerReq["firstName"] = firstName
-	customerReq["lastName"] = lastName
 
 	c.log.Info(ctx).
 		Str("customer_nit", customerNit).
@@ -157,6 +160,16 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 		return fmt.Errorf("customer creation failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
+	// Softpymes puede retornar errores dentro de un HTTP 200
+	// Formato: [[{"message":"error msg","type":"ERROR_TYPE"}], 400]
+	if err := c.checkResponseForErrors(resp.Body(), "customer creation"); err != nil {
+		c.log.Error(ctx).
+			Str("customer_nit", customerNit).
+			Str("response", string(resp.Body())).
+			Msg("Customer creation returned error in response body")
+		return err
+	}
+
 	c.log.Info(ctx).
 		Str("customer_nit", customerNit).
 		Str("name", customerName).
@@ -164,6 +177,46 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 		Msg("Customer created successfully in Softpymes")
 
 	return nil
+}
+
+// checkResponseForErrors detecta errores de Softpymes embebidos en respuestas HTTP 200
+// Softpymes retorna errores en formato: [[{"message":"...","type":"..."},...], statusCode]
+func (c *Client) checkResponseForErrors(body []byte, operation string) error {
+	// Intentar parsear como array: [[errors], statusCode]
+	var rawArray []json.RawMessage
+	if err := json.Unmarshal(body, &rawArray); err != nil {
+		// No es un array, probablemente es una respuesta exitosa (objeto JSON)
+		return nil
+	}
+
+	// Si tiene exactamente 2 elementos y el segundo es un número >= 400, es un error
+	if len(rawArray) != 2 {
+		return nil
+	}
+
+	var statusCode int
+	if err := json.Unmarshal(rawArray[1], &statusCode); err != nil {
+		return nil
+	}
+
+	if statusCode < 400 {
+		return nil
+	}
+
+	// Es un error - extraer mensajes
+	var errors []map[string]interface{}
+	if err := json.Unmarshal(rawArray[0], &errors); err != nil {
+		return fmt.Errorf("%s failed (status %d): %s", operation, statusCode, string(rawArray[0]))
+	}
+
+	var messages []string
+	for _, e := range errors {
+		if msg, ok := e["message"].(string); ok {
+			messages = append(messages, msg)
+		}
+	}
+
+	return fmt.Errorf("%s failed (status %d): %s", operation, statusCode, strings.Join(messages, "; "))
 }
 
 // splitCustomerName separa un nombre completo en firstName y lastName
