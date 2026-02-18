@@ -20,21 +20,21 @@ type CustomerSearchResponse struct {
 	BillAddress    string `json:"billAddress,omitempty"`
 }
 
-// ensureCustomerExists verifica que el cliente exista en Softpymes y lo crea si no existe
-// Endpoint de búsqueda: GET /app/integration/customer?identification=XXX
-// Endpoint de creación: POST /app/integration/customer_new/
-func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}) error {
+// ensureCustomerExists verifica que el cliente exista en Softpymes y lo crea si no existe.
+// Retorna el branchCode asignado por Softpymes al cliente.
+func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}) (string, error) {
 	// Buscar si el cliente ya existe en Softpymes
-	exists, err := c.customerExists(ctx, token, referer, customerNit)
+	branchCode, exists, err := c.customerExists(ctx, token, referer, customerNit)
 	if err != nil {
-		return fmt.Errorf("error checking if customer exists: %w", err)
+		return "", fmt.Errorf("error checking if customer exists: %w", err)
 	}
 
 	if exists {
 		c.log.Info(ctx).
 			Str("customer_nit", customerNit).
+			Str("branch_code", branchCode).
 			Msg("Customer already exists in Softpymes")
-		return nil
+		return branchCode, nil
 	}
 
 	// El cliente no existe, crearlo
@@ -42,11 +42,25 @@ func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, custo
 		Str("customer_nit", customerNit).
 		Msg("Customer does not exist in Softpymes, creating...")
 
-	return c.createCustomer(ctx, token, referer, customerNit, customer, config)
+	if err := c.createCustomer(ctx, token, referer, customerNit, customer, config); err != nil {
+		return "", err
+	}
+
+	// Consultar el cliente recién creado para obtener su branchCode
+	branchCode, exists, err = c.customerExists(ctx, token, referer, customerNit)
+	if err != nil || !exists {
+		c.log.Warn(ctx).
+			Str("customer_nit", customerNit).
+			Msg("Customer created but could not retrieve branchCode, using default 001")
+		return "001", nil
+	}
+
+	return branchCode, nil
 }
 
-// customerExists verifica si un cliente existe en Softpymes por su NIT
-func (c *Client) customerExists(ctx context.Context, token, referer, customerNit string) (bool, error) {
+// customerExists verifica si un cliente existe en Softpymes por su NIT.
+// Retorna (branchCode, exists, error).
+func (c *Client) customerExists(ctx context.Context, token, referer, customerNit string) (string, bool, error) {
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetAuthToken(token).
@@ -55,27 +69,31 @@ func (c *Client) customerExists(ctx context.Context, token, referer, customerNit
 		Get("/app/integration/customer")
 
 	if err != nil {
-		return false, fmt.Errorf("customer search request failed: %w", err)
+		return "", false, fmt.Errorf("customer search request failed: %w", err)
 	}
 
 	if resp.IsError() {
-		return false, fmt.Errorf("customer search failed with status %d", resp.StatusCode())
+		return "", false, fmt.Errorf("customer search failed with status %d", resp.StatusCode())
 	}
 
 	// Softpymes retorna 200 con un objeto que tiene "message" si no existe
-	// o un objeto con "identification" si existe
+	// o un objeto con "identification" y "branchCode" si existe
 	var result map[string]interface{}
 	if err := json.Unmarshal(resp.Body(), &result); err != nil {
-		return false, fmt.Errorf("error parsing customer search response: %w", err)
+		return "", false, fmt.Errorf("error parsing customer search response: %w", err)
 	}
 
 	// Si tiene "identification", el cliente existe
 	if _, ok := result["identification"]; ok {
-		return true, nil
+		branchCode := "001" // default
+		if bc, ok := result["branchCode"].(string); ok && bc != "" {
+			branchCode = bc
+		}
+		return branchCode, true, nil
 	}
 
 	// Si solo tiene "message", el cliente no existe
-	return false, nil
+	return "", false, nil
 }
 
 // createCustomer crea un nuevo tercero y cliente en Softpymes
