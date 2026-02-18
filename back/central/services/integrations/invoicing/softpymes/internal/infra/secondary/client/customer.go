@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/entities"
 )
 
 // CustomerSearchResponse representa la respuesta de búsqueda de cliente en Softpymes
@@ -115,8 +116,8 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 	// maidenName y otherName son requeridos por Softpymes para persona natural
 	customerReq := map[string]interface{}{
 		"identificationNumber": customerNit,
-		"identificationType":   "13",
-		"thirdType":            "N",
+		"identificationType":   entities.IdentTypeCedulaCiudadania,
+		"thirdType":            entities.ThirdTypeNatural,
 		"firstName":            firstName,
 		"lastName":             lastName,
 		"maidenName":           ".",
