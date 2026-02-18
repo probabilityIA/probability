@@ -75,7 +75,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 
 	// Asegurar que el cliente existe en Softpymes antes de facturar
 	// Retorna el branchCode real asignado por Softpymes
-	customerBranch := "000"
+	customerBranch := ""
 	if branch, err := c.ensureCustomerExists(ctx, token, referer, customerNit, &req.Customer, req.Config); err != nil {
 		c.log.Warn(ctx).Err(err).
 			Str("customer_nit", customerNit).
@@ -84,9 +84,12 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		customerBranch = branch
 	}
 
-	// Override customerBranch si hay config explícito
-	if cb, ok := req.Config["customer_branch_code"].(string); ok && cb != "" {
-		customerBranch = cb
+	// Fallback: usar config solo si no se pudo obtener branchCode del cliente
+	if customerBranch == "" {
+		customerBranch = "001" // default
+		if cb, ok := req.Config["customer_branch_code"].(string); ok && cb != "" {
+			customerBranch = cb
+		}
 	}
 
 	// Obtener branch_code del config (default "001")
