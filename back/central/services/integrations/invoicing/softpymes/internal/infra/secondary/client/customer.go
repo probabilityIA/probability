@@ -115,7 +115,7 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 	// maidenName y otherName son requeridos por Softpymes para persona natural
 	customerReq := map[string]interface{}{
 		"identificationNumber": customerNit,
-		"identificationType":   "CC",
+		"identificationType":   "13",
 		"thirdType":            "N",
 		"firstName":            firstName,
 		"lastName":             lastName,
