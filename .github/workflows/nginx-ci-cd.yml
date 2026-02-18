@@ -124,11 +124,10 @@ jobs:
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      - name: Upload compose and nginx config files
+      - name: Upload compose file
         run: |
           scp -o StrictHostKeyChecking=no \
             infra/compose-prod/docker-compose.yaml \
-            infra/compose-prod/nginx.conf.template \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
 
       - name: Deploy to server

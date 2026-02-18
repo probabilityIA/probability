@@ -199,7 +199,6 @@ services:
       SSL_KEY_PATH: "${SSL_KEY_PATH}"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
-      - ./nginx.conf.template:/etc/nginx/nginx.conf.template:ro
     depends_on:
       back-central:
         condition: service_healthy
