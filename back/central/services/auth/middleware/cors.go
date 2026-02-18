@@ -11,7 +11,7 @@ func CorsMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		origin := c.Request.Header.Get("Origin")
 		allowedOrigins := []string{
-			"https://app.probabilityia.com.co",
+			"https://www.probabilityia.com.co",
 			"https://admin.shopify.com",
 			"http://localhost:3000",
 			"http://localhost:3001",

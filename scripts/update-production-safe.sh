@@ -99,10 +99,10 @@ fi
 
 echo ""
 echo "  Desde Internet (puede tardar):"
-if curl -s -I https://app.probabilityia.com.co --max-time 5 | grep -q "HTTP"; then
-    echo "    ✅ https://app.probabilityia.com.co responde"
+if curl -s -I https://www.probabilityia.com.co --max-time 5 | grep -q "HTTP"; then
+    echo "    ✅ https://www.probabilityia.com.co responde"
 else
-    echo "    ⚠️  https://app.probabilityia.com.co no responde (puede tomar tiempo)"
+    echo "    ⚠️  https://www.probabilityia.com.co no responde (puede tomar tiempo)"
 fi
 
 echo ""
@@ -114,5 +114,5 @@ echo "Para verificar logs de un servicio:"
 echo "  sudo podman logs -f backend_prod"
 echo ""
 echo "Para verificar desde Internet:"
-echo "  curl -I https://app.probabilityia.com.co"
+echo "  curl -I https://www.probabilityia.com.co"
 echo ""

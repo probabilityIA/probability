@@ -145,7 +145,7 @@ jobs:
             # Asegurar permisos de certificados SSL para Podman rootless
             echo "📜 Verificando permisos de certificados SSL..."
             sudo chmod 755 /etc/letsencrypt/live /etc/letsencrypt/archive 2>/dev/null || true
-            sudo chmod 644 /etc/letsencrypt/archive/app.probabilityia.com.co/*.pem 2>/dev/null || true
+            sudo chmod 644 /etc/letsencrypt/archive/www.probabilityia.com.co/*.pem 2>/dev/null || true
             echo "✅ Permisos de certificados verificados"
 
             # Instalar/reinstalar AWS CLI para ARM64

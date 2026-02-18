@@ -26,7 +26,7 @@ function LoginContent() {
       if (isShopifyEmbedded && sessionToken) {
         setIsAuthenticating(true);
         try {
-          const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://app.probabilityia.com.co/api/v1';
+          const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://www.probabilityia.com.co/api/v1';
           const response = await fetch(`${baseUrl}/integrations/shopify/auth/login`, {
             method: 'POST',
             headers: {

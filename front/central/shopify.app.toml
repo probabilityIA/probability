@@ -1,6 +1,6 @@
 client_id = "50d82a1ec2b19da108f743c6576b3f7d"
 name = "Probability App"
-application_url = "https://app.probabilityia.com.co"
+application_url = "https://www.probabilityia.com.co"
 embedded = true
 
 [build]
@@ -12,7 +12,7 @@ scopes = "read_customers,read_fulfillments,read_orders,write_orders,read_product
 
 [auth]
 redirect_urls = [
-  "https://app.probabilityia.com.co/api/v1/shopify/callback"
+  "https://www.probabilityia.com.co/api/v1/shopify/callback"
 ]
 
 [webhooks]
@@ -20,4 +20,4 @@ api_version = "2024-10"
 
 [[webhooks.subscriptions]]
 compliance_topics = ["customers/data_request", "customers/redact", "shop/redact"]
-uri = "https://app.probabilityia.com.co/api/v1/integrations/shopify/webhooks/compliance"
+uri = "https://www.probabilityia.com.co/api/v1/integrations/shopify/webhooks/compliance"

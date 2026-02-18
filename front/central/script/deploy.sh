@@ -75,7 +75,7 @@ fi
 # URLs del API
 # NEXT_PUBLIC_API_BASE_URL = Cliente (SSE, dominio público)
 # API_BASE_URL = Servidor (Server Actions, red interna Docker)
-PUBLIC_API_URL=${NEXT_PUBLIC_API_BASE_URL:-"https://app.probabilityia.com.co/api/v1"}
+PUBLIC_API_URL=${NEXT_PUBLIC_API_BASE_URL:-"https://www.probabilityia.com.co/api/v1"}
 SERVER_API_URL=${API_BASE_URL:-"http://back-central:3050/api/v1"}
 
 echo -e "${BLUE}🌐 URLs del API:${NC}"
