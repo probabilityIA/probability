@@ -298,9 +298,6 @@ export const BusinessList: React.FC = () => {
                                     Nombre
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tipo
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Activo
                                 </th>
                                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -311,13 +308,13 @@ export const BusinessList: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                                         Cargando negocios...
                                     </td>
                                 </tr>
                             ) : businesses.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                                         No hay negocios disponibles
                                     </td>
                                 </tr>
@@ -344,9 +341,6 @@ export const BusinessList: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {business.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {business.business_type?.name || business.business_type_id || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span
