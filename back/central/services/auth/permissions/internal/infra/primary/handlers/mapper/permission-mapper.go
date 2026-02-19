@@ -32,6 +32,17 @@ func ToUpdatePermissionDTO(req request.UpdatePermissionRequest) domain.UpdatePer
 	}
 }
 
+// ToBulkItemToCreateDTO convierte BulkCreatePermissionItem a CreatePermissionDTO
+func ToBulkItemToCreateDTO(item request.BulkCreatePermissionItem) domain.CreatePermissionDTO {
+	return domain.CreatePermissionDTO{
+		Name:           item.Name,
+		ResourceID:     item.ResourceID,
+		ActionID:       item.ActionID,
+		ScopeID:        item.ScopeID,
+		BusinessTypeID: item.BusinessTypeID,
+	}
+}
+
 // ToPermissionResponse convierte PermissionDTO a PermissionResponse
 func ToPermissionResponse(dto domain.PermissionDTO) response.PermissionResponse {
 	return response.PermissionResponse{

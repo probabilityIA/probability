@@ -42,6 +42,13 @@ type CreatePermissionDTO struct {
 	BusinessTypeID *uint // Opcional, nil = genérico
 }
 
+type BulkCreateResult struct {
+	Name    string `json:"name"`
+	Success bool   `json:"success"`
+	Message string `json:"message,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
 type UpdatePermissionDTO struct {
 	Name           string
 	Code           string

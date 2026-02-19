@@ -15,6 +15,7 @@ func (h *PermissionHandler) RegisterRoutes(router *gin.RouterGroup, handler IPer
 		permissionsGroup.GET("/scope/:scope_id", middleware.JWT(), handler.GetPermissionsByScopeHandler)
 		permissionsGroup.GET("/resource/:resource", middleware.JWT(), handler.GetPermissionsByResourceHandler)
 		permissionsGroup.POST("", middleware.JWT(), handler.CreatePermissionHandler)
+		permissionsGroup.POST("/bulk", middleware.JWT(), handler.BulkCreatePermissionsHandler)
 		permissionsGroup.PUT("/:id", middleware.JWT(), handler.UpdatePermissionHandler)
 		permissionsGroup.DELETE("/:id", middleware.JWT(), handler.DeletePermissionHandler)
 	}

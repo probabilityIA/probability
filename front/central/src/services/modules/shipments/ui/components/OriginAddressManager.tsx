@@ -46,10 +46,6 @@ export function OriginAddressManager() {
     const [citySearch, setCitySearch] = useState('');
     const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
 
-    useEffect(() => {
-        loadAddresses();
-    }, []);
-
     const loadAddresses = async () => {
         const result = await getOriginAddressesAction();
         if (result.success && result.data) {
@@ -58,6 +54,10 @@ export function OriginAddressManager() {
             showToast(result.message || 'Error al cargar direcciones', 'error');
         }
     };
+
+    useEffect(() => {
+        loadAddresses();
+    }, []);
 
     const handleCitySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;

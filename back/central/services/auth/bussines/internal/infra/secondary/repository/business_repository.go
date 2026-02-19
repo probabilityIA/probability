@@ -201,3 +201,23 @@ func (r *Repository) DeleteBusiness(ctx context.Context, id uint) (string, error
 	}
 	return fmt.Sprintf("Negocio eliminado con ID: %d", id), nil
 }
+
+// ToggleBusinessActive activa o desactiva un business
+func (r *Repository) ToggleBusinessActive(ctx context.Context, businessID uint, active bool) error {
+	result := r.database.Conn(ctx).
+		Model(&models.Business{}).
+		Where("id = ? AND deleted_at IS NULL", businessID).
+		Update("is_active", active)
+
+	if result.Error != nil {
+		r.logger.Error().Err(result.Error).Uint("business_id", businessID).Msg("[business_repository] Error al actualizar estado del business")
+		return errors.New("error interno del servidor")
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("business no encontrado")
+	}
+
+	r.logger.Info().Uint("business_id", businessID).Bool("active", active).Msg("[business_repository] Estado del business actualizado exitosamente")
+	return nil
+}

@@ -7,7 +7,8 @@ import {
     SingleResponse,
     CreatePermissionDTO,
     UpdatePermissionDTO,
-    ActionResponse
+    ActionResponse,
+    BulkCreatePermissionsResponse
 } from '../../domain/types';
 
 export class PermissionApiRepository implements IPermissionRepository {
@@ -102,6 +103,13 @@ export class PermissionApiRepository implements IPermissionRepository {
     async deletePermission(id: number): Promise<ActionResponse> {
         return this.fetch<ActionResponse>(`/permissions/${id}`, {
             method: 'DELETE',
+        });
+    }
+
+    async createPermissionsBulk(permissions: CreatePermissionDTO[]): Promise<BulkCreatePermissionsResponse> {
+        return this.fetch<BulkCreatePermissionsResponse>('/permissions/bulk', {
+            method: 'POST',
+            body: JSON.stringify({ permissions }),
         });
     }
 }

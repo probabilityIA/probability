@@ -103,6 +103,24 @@ export const deactivateResourceAction = async (resourceId: number, businessId?: 
     }
 };
 
+export const activateBusinessAction = async (id: number) => {
+    try {
+        return (await getUseCases()).activateBusiness(id);
+    } catch (error: any) {
+        console.error('Activate Business Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const deactivateBusinessAction = async (id: number) => {
+    try {
+        return (await getUseCases()).deactivateBusiness(id);
+    } catch (error: any) {
+        console.error('Deactivate Business Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
 // Business Types Actions
 export const getBusinessTypesAction = async () => {
     try {

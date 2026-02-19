@@ -50,6 +50,7 @@ export interface GetPermissionsParams {
     business_type_id?: number;
     name?: string;
     scope_id?: number;
+    resource?: string;
 }
 
 export interface CreatePermissionDTO {
@@ -60,6 +61,19 @@ export interface CreatePermissionDTO {
     action_id: number;
     scope_id: number;
     business_type_id?: number | null;
+}
+
+export interface BulkCreateResult {
+    name: string;
+    success: boolean;
+    message?: string;
+    error?: string;
+}
+
+export interface BulkCreatePermissionsResponse {
+    success: boolean;
+    message: string;
+    results: BulkCreateResult[];
 }
 
 export interface UpdatePermissionDTO {

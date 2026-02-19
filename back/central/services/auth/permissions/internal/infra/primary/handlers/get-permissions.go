@@ -50,7 +50,12 @@ func (h *PermissionHandler) GetPermissionsHandler(c *gin.Context) {
 		}
 	}
 
-	permissions, err := h.usecase.GetPermissions(c.Request.Context(), businessTypeID, name, scopeID)
+	var resource *string
+	if resourceStr := c.Query("resource"); resourceStr != "" {
+		resource = &resourceStr
+	}
+
+	permissions, err := h.usecase.GetPermissions(c.Request.Context(), businessTypeID, name, scopeID, resource)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Error al obtener permisos desde el caso de uso")
 		c.JSON(http.StatusInternalServerError, response.PermissionErrorResponse{

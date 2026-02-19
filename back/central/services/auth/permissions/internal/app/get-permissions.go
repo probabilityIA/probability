@@ -7,10 +7,10 @@ import (
 )
 
 // GetPermissions obtiene todos los permisos con filtros opcionales
-func (uc *PermissionUseCase) GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint) ([]domain.PermissionDTO, error) {
+func (uc *PermissionUseCase) GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint, resource *string) ([]domain.PermissionDTO, error) {
 	uc.logger.Info().Msg("Obteniendo todos los permisos")
 
-	permissions, err := uc.repository.GetPermissions(ctx, businessTypeID, name, scopeID)
+	permissions, err := uc.repository.GetPermissions(ctx, businessTypeID, name, scopeID, resource)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener permisos desde el repositorio")
 		return nil, err

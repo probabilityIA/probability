@@ -23,4 +23,8 @@ func (h *BusinessHandler) RegisterRoutes(router *gin.RouterGroup, handler IBusin
 	// Rutas para activar/desactivar recursos de business
 	businesses.PUT("/configured-resources/:resource_id/activate", middleware.JWT(), handler.ActivateBusinessResourceHandler)
 	businesses.PUT("/configured-resources/:resource_id/deactivate", middleware.JWT(), handler.DeactivateBusinessResourceHandler)
+
+	// Rutas para activar/desactivar business
+	businesses.PUT("/:id/activate", middleware.JWT(), handler.ActivateBusinessHandler)
+	businesses.PUT("/:id/deactivate", middleware.JWT(), handler.DeactivateBusinessHandler)
 }

@@ -10,7 +10,7 @@ import (
 )
 
 // GetPermissions obtiene todos los permisos con filtros opcionales
-func (r *Repository) GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint) ([]domain.Permission, error) {
+func (r *Repository) GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint, resource *string) ([]domain.Permission, error) {
 	var permissions []models.Permission
 	query := r.database.Conn(ctx).
 		Model(&models.Permission{}).
@@ -25,10 +25,20 @@ func (r *Repository) GetPermissions(ctx context.Context, businessTypeID *uint, n
 		query = query.Where("business_type_id = ? OR business_type_id IS NULL", *businessTypeID)
 	}
 
-	// Filtrar por name (búsqueda parcial en resource.name)
+	// JOIN a resource solo si alguno de los filtros lo requiere
+	needsResourceJoin := (name != nil && *name != "") || (resource != nil && *resource != "")
+	if needsResourceJoin {
+		query = query.Joins("JOIN resource ON permission.resource_id = resource.id")
+	}
+
+	// Filtrar por name (búsqueda parcial en permission.name)
 	if name != nil && *name != "" {
-		query = query.Joins("JOIN resource ON permission.resource_id = resource.id").
-			Where("resource.name ILIKE ?", "%"+*name+"%")
+		query = query.Where("permission.name ILIKE ?", "%"+*name+"%")
+	}
+
+	// Filtrar por resource (búsqueda parcial en resource.name)
+	if resource != nil && *resource != "" {
+		query = query.Where("resource.name ILIKE ?", "%"+*resource+"%")
 	}
 
 	// Filtrar por scope_id

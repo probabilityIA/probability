@@ -55,6 +55,14 @@ export class BusinessUseCases {
         return this.repository.deactivateResource(resourceId, businessId);
     }
 
+    async activateBusiness(id: number): Promise<ActionResponse> {
+        return this.repository.activateBusiness(id);
+    }
+
+    async deactivateBusiness(id: number): Promise<ActionResponse> {
+        return this.repository.deactivateBusiness(id);
+    }
+
     // Business Types
     async getBusinessTypes(): Promise<PaginatedResponse<BusinessType>> {
         return this.repository.getBusinessTypes();

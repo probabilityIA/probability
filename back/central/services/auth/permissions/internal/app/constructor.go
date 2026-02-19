@@ -9,9 +9,10 @@ import (
 
 // PermissionUseCase implementa los casos de uso para permisos
 type Iapp interface {
-	GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint) ([]domain.PermissionDTO, error)
+	GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint, resource *string) ([]domain.PermissionDTO, error)
 	GetPermissionByID(ctx context.Context, id uint) (*domain.PermissionDTO, error)
 	CreatePermission(ctx context.Context, permission domain.CreatePermissionDTO) (string, error)
+	BulkCreatePermissions(ctx context.Context, permissions []domain.CreatePermissionDTO) ([]domain.BulkCreateResult, error)
 	UpdatePermission(ctx context.Context, id uint, permission domain.UpdatePermissionDTO) (string, error)
 	DeletePermission(ctx context.Context, id uint) (string, error)
 	GetPermissionsByResource(ctx context.Context, resource string) ([]domain.PermissionDTO, error)

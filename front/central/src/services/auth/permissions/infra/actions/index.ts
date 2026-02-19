@@ -9,6 +9,7 @@ import {
     UpdatePermissionDTO
 } from '../../domain/types';
 
+
 async function getUseCases() {
     const cookieStore = await cookies();
     const token = cookieStore.get('session_token')?.value || null;
@@ -76,6 +77,15 @@ export const deletePermissionAction = async (id: number) => {
         return await (await getUseCases()).deletePermission(id);
     } catch (error: any) {
         console.error('Delete Permission Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const createPermissionsBulkAction = async (permissions: CreatePermissionDTO[]) => {
+    try {
+        return await (await getUseCases()).createPermissionsBulk(permissions);
+    } catch (error: any) {
+        console.error('Bulk Create Permissions Action Error:', error.message);
         throw new Error(error.message);
     }
 };

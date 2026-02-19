@@ -3,7 +3,7 @@ package domain
 import "context"
 
 type IPermissionRepository interface {
-	GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint) ([]Permission, error)
+	GetPermissions(ctx context.Context, businessTypeID *uint, name *string, scopeID *uint, resource *string) ([]Permission, error)
 	GetPermissionByID(ctx context.Context, id uint) (*Permission, error)
 	GetPermissionsByScopeID(ctx context.Context, scopeID uint) ([]Permission, error)
 	GetPermissionsByResource(ctx context.Context, resource string) ([]Permission, error)

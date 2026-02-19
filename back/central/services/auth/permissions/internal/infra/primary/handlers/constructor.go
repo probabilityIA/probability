@@ -14,6 +14,7 @@ type IPermissionHandler interface {
 	GetPermissionsByScopeHandler(c *gin.Context)
 	GetPermissionsByResourceHandler(c *gin.Context)
 	CreatePermissionHandler(c *gin.Context)
+	BulkCreatePermissionsHandler(c *gin.Context)
 	UpdatePermissionHandler(c *gin.Context)
 	DeletePermissionHandler(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, handler IPermissionHandler, logger log.ILogger)

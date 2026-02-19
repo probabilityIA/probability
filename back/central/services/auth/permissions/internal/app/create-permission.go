@@ -99,13 +99,16 @@ func (uc *PermissionUseCase) generatePermissionCode(ctx context.Context, permiss
 
 // dtosToPermissionEntity convierte un CreatePermissionDTO a entidad Permission
 func dtosToPermissionEntity(permissionDTO domain.CreatePermissionDTO) domain.Permission {
+	businessTypeID := uint(1) // default: único tipo de business existente
+	if permissionDTO.BusinessTypeID != nil {
+		businessTypeID = *permissionDTO.BusinessTypeID
+	}
 	return domain.Permission{
 		Name:           permissionDTO.Name,
 		Description:    permissionDTO.Description,
 		ResourceID:     permissionDTO.ResourceID,
 		ActionID:       permissionDTO.ActionID,
 		ScopeID:        permissionDTO.ScopeID,
-		BusinessTypeID: *permissionDTO.BusinessTypeID,
-		// BusinessTypeName se establecerá desde el modelo si es necesario
+		BusinessTypeID: businessTypeID,
 	}
 }

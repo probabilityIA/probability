@@ -19,6 +19,8 @@ type IBusinessHandler interface {
 	GetBusinessConfiguredResourcesByIDHandler(c *gin.Context)
 	ActivateBusinessResourceHandler(c *gin.Context)
 	DeactivateBusinessResourceHandler(c *gin.Context)
+	ActivateBusinessHandler(c *gin.Context)
+	DeactivateBusinessHandler(c *gin.Context)
 	RegisterRoutes(router *gin.RouterGroup, handler IBusinessHandler)
 }
 

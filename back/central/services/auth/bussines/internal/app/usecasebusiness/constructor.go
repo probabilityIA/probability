@@ -17,6 +17,7 @@ type IUseCaseBusiness interface {
 	GetBusinessesConfiguredResources(ctx context.Context, page, perPage int, businessID *uint, businessTypeID *uint) ([]domain.BusinessWithConfiguredResourcesResponse, int64, error)
 	GetBusinessConfiguredResourcesByID(ctx context.Context, businessID uint) (*domain.BusinessWithConfiguredResourcesResponse, error)
 	ToggleBusinessResourceActive(ctx context.Context, businessID uint, resourceID uint, active bool) error
+	ToggleBusinessActive(ctx context.Context, businessID uint, active bool) error
 }
 
 type BusinessUseCase struct {
