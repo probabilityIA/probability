@@ -208,7 +208,7 @@ func (r *Repository) GetBusinessByIDWithConfiguredResources(ctx context.Context,
 					Active:     false, // Por defecto desactivados
 				}
 
-				if err := r.database.Conn(ctx).Create(&newConfig).Error; err != nil {
+				if err := r.database.Conn(ctx).Select("BusinessID", "ResourceID", "Active").Create(&newConfig).Error; err != nil {
 					r.logger.Error().Err(err).
 						Uint("business_id", businessID).
 						Uint("resource_id", resource.ID).
