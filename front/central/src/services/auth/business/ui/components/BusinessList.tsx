@@ -292,10 +292,10 @@ export const BusinessList: React.FC = () => {
                                     ID
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Nombre
+                                    Logo
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Código
+                                    Nombre
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Tipo
@@ -327,11 +327,23 @@ export const BusinessList: React.FC = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {business.id}
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {business.logo_url ? (
+                                                <img
+                                                    src={business.logo_url}
+                                                    alt={business.name}
+                                                    className="w-10 h-10 rounded-full object-cover"
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                    <span className="text-sm font-medium text-gray-600">
+                                                        {business.name.charAt(0).toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {business.name}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {business.code || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                             {business.business_type?.name || business.business_type_id || '-'}
