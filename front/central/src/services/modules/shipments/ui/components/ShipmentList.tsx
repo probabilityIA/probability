@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge, Button } from '@/shared/ui';
+import { useHasPermission } from '@/shared/contexts/permissions-context';
 import { getShipmentsAction, trackShipmentAction, cancelShipmentAction } from '../../infra/actions';
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import { Search, Package, Truck, Calendar, MapPin, X, Eye, CreditCard, ExternalLink, RefreshCw, AlertTriangle, Plus } from 'lucide-react';
@@ -11,6 +12,8 @@ import { ManualShipmentModal } from './ManualShipmentModal';
 export default function ShipmentList() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const canCreate = useHasPermission('Envios', 'Create');
+    const canDelete = useHasPermission('Envios', 'Delete');
     const [loading, setLoading] = useState(true);
     const [shipments, setShipments] = useState<Shipment[]>([]);
     const [page, setPage] = useState(1);
@@ -107,10 +110,12 @@ export default function ShipmentList() {
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-bold text-gray-800">Envíos</h2>
-                <Button onClick={() => setIsManualModalOpen(true)}>
-                    <Plus size={16} className="mr-2" />
-                    Agregar Envío
-                </Button>
+                {canCreate && (
+                    <Button onClick={() => setIsManualModalOpen(true)}>
+                        <Plus size={16} className="mr-2" />
+                        Agregar Envío
+                    </Button>
+                )}
             </div>
 
             {/* Filters */}
@@ -261,20 +266,22 @@ export default function ShipmentList() {
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right">
                                             <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                                    onClick={() => handleCancel(shipment.tracking_number || shipment.id.toString())}
-                                                    disabled={cancelingId === (shipment.tracking_number || shipment.id.toString())}
-                                                    title="Cancelar envío"
-                                                >
-                                                    {cancelingId === (shipment.tracking_number || shipment.id.toString()) ? (
-                                                        <RefreshCw size={14} className="animate-spin" />
-                                                    ) : (
-                                                        <X size={14} />
-                                                    )}
-                                                </Button>
+                                                {canDelete && (
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                                        onClick={() => handleCancel(shipment.tracking_number || shipment.id.toString())}
+                                                        disabled={cancelingId === (shipment.tracking_number || shipment.id.toString())}
+                                                        title="Cancelar envío"
+                                                    >
+                                                        {cancelingId === (shipment.tracking_number || shipment.id.toString()) ? (
+                                                            <RefreshCw size={14} className="animate-spin" />
+                                                        ) : (
+                                                            <X size={14} />
+                                                        )}
+                                                    </Button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
