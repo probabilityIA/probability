@@ -19,7 +19,7 @@ import Footer from '../components/Footer.astro';
 			transform: scale(1);
 		}
 		50% {
-			transform: scale(1.1);
+			transform: scale(1.05);
 		}
 	}
 
@@ -49,7 +49,7 @@ import Footer from '../components/Footer.astro';
 		color: white;
 		text-decoration: none;
 		transition: all 0.3s ease;
-		animation: pulse 2s ease-in-out infinite;
+		animation: pulse 3s ease-in-out infinite;
 	}
 
 	.whatsapp-btn:hover {
@@ -71,7 +71,7 @@ import Footer from '../components/Footer.astro';
 		<!-- WhatsApp Float Button -->
 		<div class="whatsapp-float">
 			<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20tengo%20una%20consulta" class="whatsapp-btn" title="Contactanos por WhatsApp">
-				<img src="https://probability-media-assets.s3.us-east-1.amazonaws.com/integration-types/1765744972_whatsap.png" alt="WhatsApp" class="w-12 h-12"/>
+				<img src="https://static.vecteezy.com/system/resources/previews/021/495/946/non_2x/whatsapp-logo-icon-free-png.png" alt="WhatsApp" class="w-12 h-12"/>
 			</a>
 		</div>
 
@@ -102,59 +102,6 @@ import Footer from '../components/Footer.astro';
 				</div>
 
 				<div class="grid grid-cols-1 md:grid-cols-2 gap-12">
-					<!-- Feature 1 -->
-					<div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-8 hover:border-purple-300 hover:shadow-lg transition-all">
-						<div class="w-16 h-16 rounded-lg bg-purple-100 border border-purple-300 flex items-center justify-center mb-6">
-							<svg class="w-8 h-8 text-[#8B5CF6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
-							</svg>
-						</div>
-						<h3 class="text-2xl font-bold text-gray-900 mb-3">Análisis Predictivo Avanzado</h3>
-						<p class="text-gray-600 mb-4">
-							Nuestros modelos de IA analizan millones de datos para predecir devoluciones con una precisión del 99%
-						</p>
-						<ul class="space-y-2 text-gray-700">
-							<li class="flex items-center gap-2">
-								<svg class="w-4 h-4 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-								Predicción en tiempo real
-							</li>
-							<li class="flex items-center gap-2">
-								<svg class="w-4 h-4 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-								Mejora continua con tus datos
-							</li>
-							<li class="flex items-center gap-2">
-								<svg class="w-4 h-4 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-								Algoritmos propietarios
-							</li>
-						</ul>
-					</div>
-
-					<!-- Feature 2 -->
-					<div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-8 hover:border-purple-300 hover:shadow-lg transition-all">
-						<div class="w-16 h-16 rounded-lg bg-purple-100 border border-purple-300 flex items-center justify-center mb-6">
-							<svg class="w-8 h-8 text-[#8B5CF6]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-								<path d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-							</svg>
-						</div>
-						<h3 class="text-2xl font-bold text-gray-900 mb-3">Análisis de Imágenes con IA</h3>
-						<p class="text-gray-600 mb-4">
-							Detecta automáticamente problemas de calidad en imágenes de productos antes de que se envíen
-						</p>
-						<ul class="space-y-2 text-gray-700">
-							<li class="flex items-center gap-2">
-								<svg class="w-4 h-4 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-								Detección de daños
-							</li>
-							<li class="flex items-center gap-2">
-								<svg class="w-4 h-4 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-								Análisis de empaque
-							</li>
-							<li class="flex items-center gap-2">
-								<svg class="w-4 h-4 text-[#8B5CF6]" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
-								Identificación automática de defectos
-							</li>
-						</ul>
-					</div>
 
 					<!-- Feature 3 -->
 					<div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-8 hover:border-purple-300 hover:shadow-lg transition-all">
@@ -224,7 +171,7 @@ import Footer from '../components/Footer.astro';
 					Comienza con una demo gratuita sin tarjeta de crédito. Contacta con Lina M. para más información.
 				</p>
 				<div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
-					<a href="./demo" class="flex justify-center items-center bg-white text-[#8B5CF6] hover:bg-gray-100 px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-lg w-full sm:w-auto">
+					<a href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos" class="flex justify-center items-center bg-white text-[#8B5CF6] hover:bg-gray-100 px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all hover:shadow-lg w-full sm:w-auto">
 						Solicitar Demo Ahora
 					</a>
 					<a href="https://wa.me/573138241302?text=Hola%20ProbabilityIA%2C%20me%20interesa%20conocer%20más%20sobre%20el%20producto" class="flex justify-center items-center border-2 border-white text-white hover:bg-white hover:text-[#8B5CF6] px-8 sm:px-10 py-4 rounded-full font-bold text-lg transition-all w-full sm:w-auto">

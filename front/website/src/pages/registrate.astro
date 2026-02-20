@@ -1,0 +1,256 @@
+---
+import Layout from '../layouts/Layout.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+---
+
+<style>
+	@keyframes float {
+		0%, 100% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-20px);
+		}
+	}
+
+	.blob {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(60px);
+		opacity: 0.1;
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+</style>
+
+<Layout title="Registrate - probabilityIA">
+	<Header />
+	<main>
+		<!-- Hero Section -->
+		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
+			<div class="blob" style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"></div>
+			<div class="blob" style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"></div>
+
+			<div class="max-w-4xl mx-auto text-center relative z-10">
+				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 text-gray-900 leading-tight">
+					¡Bienvenido a <span class="gradient-text">probabilityIA</span>!
+				</h1>
+				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+					Crea tu cuenta y comienza a transformar tu negocio con la inteligencia artificial
+				</p>
+			</div>
+		</section>
+
+		<!-- Registration Form -->
+		<section class="bg-white py-20 px-6 sm:px-20">
+			<div class="max-w-2xl mx-auto">
+				<div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-8 sm:p-12">
+					<form id="registrationForm" class="space-y-6">
+						<!-- Name -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Nombre Completo</label>
+							<input type="text" id="regName" placeholder="Tu nombre completo" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+						</div>
+
+						<!-- Email -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Email</label>
+							<input type="email" id="regEmail" placeholder="tu@email.com" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+						</div>
+
+						<!-- Company -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Empresa</label>
+							<input type="text" id="regCompany" placeholder="Tu empresa" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+						</div>
+
+						<!-- Phone -->
+						<div>
+							<label class="block text-gray-700 font-semibold mb-2">Teléfono</label>
+							<input type="tel" id="regPhone" placeholder="+57 3XX XXXX XXXX" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+						</div>
+
+						<!-- Terms Checkbox -->
+						<div class="flex items-center gap-3">
+							<input type="checkbox" id="regTerms" class="w-4 h-4 rounded border-gray-300 text-[#8B5CF6] focus:ring-[#8B5CF6]"/>
+							<label for="regTerms" class="text-gray-600 text-sm">
+								Acepto los <a href="#" class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold">términos y condiciones</a> y la <a href="#" class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold">política de privacidad</a>
+							</label>
+						</div>
+
+						<!-- Submit -->
+						<button type="submit" class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:from-[#7C3AED] hover:to-[#9333EA] text-white py-3 rounded-lg font-semibold transition-all hover:shadow-lg hover:shadow-purple-500/40">
+							Crear Cuenta
+						</button>
+
+						<!-- Login Link -->
+						<div class="text-center mt-4">
+							<p class="text-gray-600">¿Ya tienes cuenta? <a href="#" class="text-[#8B5CF6] hover:text-[#7C3AED] font-semibold">Inicia sesión</a></p>
+						</div>
+					</form>
+				</div>
+			</div>
+		</section>
+
+		<!-- Plan Selection Banner -->
+		<section class="bg-gradient-to-r from-purple-100 to-purple-50 border-t border-purple-200 py-16 px-6 sm:px-20">
+			<div class="max-w-4xl mx-auto text-center">
+				<h2 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">
+					¿Quieres explorar probabilityIA?
+				</h2>
+				<p class="text-gray-700 text-lg mb-2 max-w-2xl mx-auto">
+					Elige entre obtener acceso gratuito o agendar una demo personalizada con nuestro equipo
+				</p>
+				<p class="text-gray-600 text-sm mb-8 max-w-2xl mx-auto">
+					<span class="font-semibold">🎁 Acceso Gratuito:</span> Te habilitaremos el acceso a la plataforma con credenciales. Tendrás 3 días completamente gratis a partir del momento en que recibas tus credenciales.
+				</p>
+
+				<div class="flex flex-col sm:flex-row gap-4 justify-center items-center sm:items-stretch">
+					<button type="button" id="fullPlanBtn" class="flex-1 max-w-xs bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:from-[#7C3AED] hover:to-[#9333EA] text-white py-3 px-8 rounded-lg font-semibold transition-all hover:shadow-lg hover:shadow-purple-500/40">
+						Prueba Gratuita (3 días)
+					</button>
+					<a href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos" target="_blank" rel="noopener noreferrer" class="flex-1 max-w-xs bg-white border-2 border-[#8B5CF6] text-[#8B5CF6] hover:bg-purple-50 py-3 px-8 rounded-lg font-semibold transition-colors">
+						Solicitar Demo
+					</a>
+				</div>
+			</div>
+		</section>
+
+		<!-- Benefits Section -->
+		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
+			<div class="max-w-4xl mx-auto">
+				<h2 class="text-4xl font-bold text-gray-900 text-center mb-16">¿Qué obtendrás al registrarte?</h2>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+					<!-- Benefit 1 -->
+					<div class="bg-white border border-purple-200 rounded-xl p-8 hover:border-purple-300 transition-colors">
+						<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
+							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+						</div>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">Acceso Inmediato</h3>
+						<p class="text-gray-600">Comienza a usar probabilityIA al instante sin esperas ni procesos complicados</p>
+					</div>
+
+					<!-- Benefit 2 -->
+					<div class="bg-white border border-purple-200 rounded-xl p-8 hover:border-purple-300 transition-colors">
+						<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
+							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+						</div>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">Personalización</h3>
+						<p class="text-gray-600">Configura la plataforma según las necesidades específicas de tu negocio</p>
+					</div>
+
+					<!-- Benefit 3 -->
+					<div class="bg-white border border-purple-200 rounded-xl p-8 hover:border-purple-300 transition-colors">
+						<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
+							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+						</div>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">Soporte 24/7</h3>
+						<p class="text-gray-600">Nuestro equipo está disponible para ayudarte en cualquier momento</p>
+					</div>
+
+					<!-- Benefit 4 -->
+					<div class="bg-white border border-purple-200 rounded-xl p-8 hover:border-purple-300 transition-colors">
+						<div class="w-12 h-12 rounded-lg bg-purple-100 flex items-center justify-center mb-4">
+							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+						</div>
+						<h3 class="text-xl font-bold text-gray-900 mb-2">Integraciones</h3>
+						<p class="text-gray-600">Conecta fácilmente con tus herramientas favoritas y sistemas existentes</p>
+					</div>
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>
+
+<script>
+	const registrationForm = document.getElementById('registrationForm');
+	const fullPlanBtn = document.getElementById('fullPlanBtn');
+
+	if (registrationForm) {
+		registrationForm.addEventListener('submit', (e) => {
+			e.preventDefault();
+
+			const name = (document.getElementById('regName') as HTMLInputElement)?.value || '';
+			const email = (document.getElementById('regEmail') as HTMLInputElement)?.value || '';
+			const company = (document.getElementById('regCompany') as HTMLInputElement)?.value || '';
+			const phone = (document.getElementById('regPhone') as HTMLInputElement)?.value || '';
+			const termsAccepted = (document.getElementById('regTerms') as HTMLInputElement)?.checked || false;
+
+			if (!name || !email || !company || !phone) {
+				alert('Por favor completa todos los campos');
+				return;
+			}
+
+			if (!termsAccepted) {
+				alert('Debes aceptar los términos y condiciones');
+				return;
+			}
+
+			// Crear mensaje para WhatsApp con los datos del registro
+			const whatsappMessage = `*NUEVO REGISTRO EN PROBABILITYIA*
+
+*Nombre:* ${name}
+*Email:* ${email}
+*Empresa:* ${company}
+*Teléfono:* ${phone}`;
+
+			// Codificar el mensaje para URL
+			const encodedMessage = encodeURIComponent(whatsappMessage);
+			const whatsappPhone = '573138241302'; // Sin el +
+			const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodedMessage}`;
+
+			// Mostrar mensaje de éxito
+			alert('¡Registro completado! Te contactaremos pronto por WhatsApp.');
+
+			// Redirigir a WhatsApp
+			window.open(whatsappUrl, '_blank');
+
+			// Limpiar formulario
+			registrationForm.reset();
+		});
+	}
+
+	// Free Trial button handler
+	if (fullPlanBtn) {
+		fullPlanBtn.addEventListener('click', () => {
+			const name = (document.getElementById('regName') as HTMLInputElement)?.value || '';
+			const email = (document.getElementById('regEmail') as HTMLInputElement)?.value || '';
+			const company = (document.getElementById('regCompany') as HTMLInputElement)?.value || '';
+			const phone = (document.getElementById('regPhone') as HTMLInputElement)?.value || '';
+			const termsAccepted = (document.getElementById('regTerms') as HTMLInputElement)?.checked || false;
+
+			if (!name || !email || !company || !phone) {
+				alert('Por favor completa todos los campos del formulario');
+				return;
+			}
+
+			if (!termsAccepted) {
+				alert('Debes aceptar los términos y condiciones');
+				return;
+			}
+
+			// Crear mensaje para WhatsApp
+			const whatsappMessage = `*SOLICITUD DE PRUEBA GRATUITA*
+
+*Nombre:* ${name}
+*Email:* ${email}
+*Empresa:* ${company}
+*Teléfono:* ${phone}`;
+
+			const encodedMessage = encodeURIComponent(whatsappMessage);
+			const whatsappPhone = '573138241302';
+			const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodedMessage}`;
+
+			alert('¡Solicitud enviada! Te contactaremos pronto por WhatsApp para habilitarte el acceso.');
+			window.open(whatsappUrl, '_blank');
+		});
+	}
+</script>

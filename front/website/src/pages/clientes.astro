@@ -1,0 +1,315 @@
+---
+import Layout from "../layouts/Layout.astro";
+import Header from "../components/Header.astro";
+import Footer from "../components/Footer.astro";
+---
+
+<style>
+	@keyframes float {
+		0%,
+		100% {
+			transform: translateY(0px);
+		}
+		50% {
+			transform: translateY(-20px);
+		}
+	}
+
+	.blob {
+		position: absolute;
+		border-radius: 50%;
+		filter: blur(60px);
+		opacity: 0.1;
+		animation: float 6s ease-in-out infinite;
+	}
+
+	.gradient-text {
+		background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+
+	.client-card {
+		transition: all 0.3s ease;
+	}
+
+	.client-card:hover {
+		transform: translateY(-8px);
+		box-shadow: 0 20px 40px rgba(139, 92, 246, 0.15);
+	}
+
+	.stat-number {
+		background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+		-webkit-background-clip: text;
+		-webkit-text-fill-color: transparent;
+		background-clip: text;
+	}
+</style>
+
+<Layout title="Nuestros Clientes - probabilityIA">
+	<Header />
+	<main>
+		<!-- Hero Section -->
+		<section
+			class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden"
+		>
+			<div
+				class="blob"
+				style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"
+			>
+			</div>
+			<div
+				class="blob"
+				style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"
+			>
+			</div>
+
+			<div class="max-w-4xl mx-auto text-center relative z-10">
+				<h1
+					class="text-5xl sm:text-6xl lg:text-7xl font-extrabold mb-6 text-gray-900 leading-tight"
+				>
+					Empresas que confían en <span class="gradient-text"
+						>probabilityIA</span
+					>
+				</h1>
+				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
+					Transformando negocios con inteligencia artificial en toda
+					Latinoamérica
+				</p>
+			</div>
+		</section>
+
+		<!-- Clients Grid -->
+		<section
+			class="bg-gradient-to-br from-gray-50 to-white py-20 px-6 sm:px-20"
+		>
+			<div class="max-w-6xl mx-auto">
+				<h2 class="text-4xl font-bold text-gray-900 text-center mb-16">
+					Nuestros Clientes
+				</h2>
+				<div
+					class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+				>
+					<!-- Client Card 1 -->
+					<div
+						class="client-card bg-white border border-gray-200 rounded-2xl p-8 hover:border-purple-300"
+					>
+						<div class="flex items-center gap-4 mb-6">
+							<img
+								src="https://probability-media-assets.s3.us-east-1.amazonaws.com/avatars/1770310337_whatsapp_image_2026-02-05_at_11.26.30_am.jpeg"
+								alt="Elite Sports Training"
+								class="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+							/>
+							<div>
+								<h3 class="text-xl font-bold text-gray-900">
+									Neurotec
+								</h3>
+								<p class="text-sm text-gray-600">
+									Medellín, Colombia
+								</p>
+							</div>
+						</div>
+						<p class="text-gray-600 mb-6">
+							Automatizó ventas online y mejoró la gestión de
+							entrenamientos deportivos con inteligencia
+							artificial.
+						</p>
+						<div class="border-t border-gray-200 pt-6">
+							<div class="grid grid-cols-2 gap-4">
+								<div>
+									<p
+										class="text-2xl font-bold text-[#8B5CF6]"
+									>
+										85%
+									</p>
+									<p class="text-sm text-gray-600">
+										Ventas online
+									</p>
+								</div>
+								<div>
+									<p
+										class="text-2xl font-bold text-[#8B5CF6]"
+									>
+										100%
+									</p>
+									<p class="text-sm text-gray-600">
+										Automatización
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Client Card 2 -->
+					<div
+						class="client-card bg-white border border-gray-200 rounded-2xl p-8 hover:border-purple-300"
+					>
+						<div class="flex items-center gap-4 mb-6">
+							<img
+								src="/website/mystic-rose.jpg"
+								alt="Mystic Rose"
+								class="w-14 h-14 rounded-lg object-cover flex-shrink-0"
+							/>
+							<div>
+								<h3 class="text-xl font-bold text-gray-900">
+									Mystic Rose
+								</h3>
+								<p class="text-sm text-gray-600">
+									Sabaneta, Antioquia
+								</p>
+							</div>
+						</div>
+						<p class="text-gray-600 mb-6">
+							Gestión logística de envío de pedidos a nivel
+							nacional con automatización del 100% y soporte
+							dedicado.
+						</p>
+						<div class="border-t border-gray-200 pt-6">
+							<div class="grid grid-cols-2 gap-4">
+								<div>
+									<p
+										class="text-2xl font-bold text-[#8B5CF6]"
+									>
+										100%
+									</p>
+									<p class="text-sm text-gray-600">
+										Automatización
+									</p>
+								</div>
+								<div>
+									<p
+										class="text-2xl font-bold text-[#8B5CF6]"
+									>
+										24/7
+									</p>
+									<p class="text-sm text-gray-600">Soporte</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Client Card 3 - Sin Intermediarios -->
+					<div
+						class="client-card bg-white border border-gray-200 rounded-2xl p-8 hover:border-purple-300"
+					>
+						<div class="flex justify-center mb-6">
+							<img
+								src="https://www.sinintermediarios.co/cdn/shop/files/Logo_negro_sinespacios.png?v=1708140274&width=410"
+								alt="Sin Intermediarios"
+								class="h-20 object-contain"
+							/>
+						</div>
+						<p class="text-gray-600 mb-6">
+							Facturación electrónica automática a través de ventas en Shopify. Cada venta genera automáticamente su factura electrónica con 100% de automatización.
+						</p>
+						<div class="border-t border-gray-200 pt-6">
+							<div class="grid grid-cols-1 gap-4">
+								<div class="text-center">
+									<p
+										class="text-2xl font-bold text-[#8B5CF6]"
+									>
+										100%
+									</p>
+									<p class="text-sm text-gray-600">
+										Automatización
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Client Card 4 - Vitality Sports -->
+					<div
+						class="client-card bg-white border border-gray-200 rounded-2xl p-8 hover:border-purple-300"
+					>
+						<div class="flex justify-center mb-6">
+							<img
+								src="https://vitalitysports.co/cdn/shop/files/logo-vitality_negro.png?v=1682547864&width=240"
+								alt="Vitality Sports"
+								class="h-20 object-contain"
+							/>
+						</div>
+						<p class="text-gray-600 mb-6">
+							Venta online de ropa con automatización completa en gestión de guías de envío y soporte al cliente con inteligencia artificial.
+						</p>
+						<div class="border-t border-gray-200 pt-6">
+							<div class="grid grid-cols-1 gap-4">
+								<div class="text-center">
+									<p
+										class="text-2xl font-bold text-[#8B5CF6]"
+									>
+										100%
+									</p>
+									<p class="text-sm text-gray-600">
+										Automatización
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+
+					<!-- Client Card 4 - RetailPro -->
+					<div
+						class="client-card bg-white border border-gray-200 rounded-2xl p-8 hover:border-purple-300"
+					>
+						<div class="flex justify-center mb-6">
+							<img
+								src="https://static.wixstatic.com/media/f88aff_fdbf9b650ba14433b4e68f0c45f08812~mv2.png/v1/fill/w_280,h_105,al_c,lg_1,q_85,enc_avif,quality_auto/Preview.png"
+								alt="RetailPro"
+								class="h-20 object-contain"
+							/>
+						</div>
+						<p class="text-gray-600 mb-6">
+							Automatización completa en gestión de envíos y logística, mejorando la experiencia del cliente con entregas más rápidas y precisas.
+						</p>
+						<div class="border-t border-gray-200 pt-6">
+							<div class="grid grid-cols-1 gap-4">
+								<div class="text-center">
+									<p
+										class="text-2xl font-bold text-[#8B5CF6]"
+									>
+										100%
+									</p>
+									<p class="text-sm text-gray-600">
+										Automatización
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+
+		<!-- CTA Section -->
+		<section
+			class="bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] py-20 px-6 sm:px-20"
+		>
+			<div class="max-w-4xl mx-auto text-center">
+				<h2 class="text-4xl font-bold text-white mb-6">
+					¿Listo para transformar tu negocio?
+				</h2>
+				<p class="text-xl text-purple-100 mb-8">
+					Únete a nuestros clientes exitosos y descubre el potencial
+					de la IA en tu empresa
+				</p>
+				<div class="flex flex-col sm:flex-row gap-4 justify-center">
+					<a
+						href="./registrate"
+						class="bg-white text-[#8B5CF6] px-8 py-3 rounded-lg font-bold hover:bg-gray-100 transition-colors"
+					>
+						Registrate Ahora
+					</a>
+					<a
+						href="https://meet.brevo.com/probability-ia/reunion-de-30-minutos"
+						class="border-2 border-white text-white px-8 py-3 rounded-lg font-bold hover:bg-white hover:bg-opacity-10 transition-colors"
+					>
+						Solicitar Demo
+					</a>
+				</div>
+			</div>
+		</section>
+	</main>
+	<Footer />
+</Layout>

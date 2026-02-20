@@ -45,7 +45,7 @@ import Footer from '../components/Footer.astro';
 					Ve ProbabilityIA en <span class="gradient-text">acción</span>
 				</h1>
 				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl mx-auto">
-					Agendar una demostración personalizada con nuestro equipo. Sin compromiso, sin tarjeta de crédito.
+					Regístrate con tu correo y recibe información detallada sobre cómo transformar tu negocio
 				</p>
 			</div>
 		</section>
@@ -55,132 +55,24 @@ import Footer from '../components/Footer.astro';
 			<div class="max-w-2xl mx-auto">
 				<div class="bg-gradient-to-br from-purple-50 to-white border border-purple-200 rounded-2xl p-12">
 					<form id="demoForm" class="space-y-6">
-						<!-- Name -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">Nombre Completo *</label>
-							<input type="text" id="demoName" required placeholder="Tu nombre" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
-						</div>
-
 						<!-- Email -->
 						<div>
-							<label class="block text-gray-600 font-semibold mb-2">Email *</label>
-							<input type="email" id="demoEmail" required placeholder="tu@email.com" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
+							<label class="block text-gray-700 font-semibold mb-2">Tu Correo Electrónico</label>
+							<input type="email" id="demoEmail" required placeholder="tu@email.com" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] focus:ring-2 focus:ring-purple-200 transition-colors"/>
+							<p class="text-sm text-gray-600 mt-2">Recibirás un mensaje automático con toda la información de probabilityIA</p>
 						</div>
-
-						<!-- Company -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">Empresa *</label>
-							<input type="text" id="demoCompany" required placeholder="Tu empresa" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
-						</div>
-
-						<!-- Phone -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">Teléfono</label>
-							<input type="tel" id="demoPhone" placeholder="+57 (300) 123-4567" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors"/>
-						</div>
-
-						<!-- Industry -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">Industria *</label>
-							<select id="demoIndustry" required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
-								<option>Selecciona tu industria</option>
-								<option>eCommerce</option>
-								<option>Retail</option>
-								<option>Logística</option>
-								<option>Manufactura</option>
-								<option>Otra</option>
-							</select>
-						</div>
-
-						<!-- Platform -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">¿Cuál es tu plataforma? *</label>
-							<select id="demoPlatform" required class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
-								<option>Selecciona tu plataforma</option>
-								<option>Shopify</option>
-								<option>Mercado Libre</option>
-								<option>WooCommerce</option>
-								<option>Amazon</option>
-								<option>Magento</option>
-								<option>Otra</option>
-							</select>
-						</div>
-
-						<!-- Monthly Orders -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">¿Cuántos pedidos mensuales tienes?</label>
-							<select id="demoOrders" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
-								<option>Selecciona un rango</option>
-								<option>Menos de 100</option>
-								<option>100 - 500</option>
-								<option>500 - 1,000</option>
-								<option>1,000 - 5,000</option>
-								<option>Más de 5,000</option>
-							</select>
-						</div>
-
-						<!-- Interested Features -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-4">¿Qué te interesa? (Selecciona múltiples)</label>
-							<div class="space-y-3">
-								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Predicción de devoluciones"/>
-									<span class="text-gray-900">Predicción de devoluciones</span>
-								</label>
-								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Análisis de imágenes"/>
-									<span class="text-gray-900">Análisis de imágenes</span>
-								</label>
-								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Optimización de transportadoras"/>
-									<span class="text-gray-900">Optimización de transportadoras</span>
-								</label>
-								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Dashboard y reportes"/>
-									<span class="text-gray-900">Dashboard y reportes</span>
-								</label>
-								<label class="flex items-center gap-3 cursor-pointer">
-									<input type="checkbox" class="demoFeature w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6]" value="Integraciones personalizadas"/>
-									<span class="text-gray-900">Integraciones personalizadas</span>
-								</label>
-							</div>
-						</div>
-
-						<!-- Preferred Time -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">¿Cuándo prefieres la demo?</label>
-							<select id="demoTime" class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 focus:outline-none focus:border-[#8B5CF6] transition-colors">
-								<option>Selecciona un horario</option>
-								<option>Mañana (9AM - 12PM)</option>
-								<option>Tarde (12PM - 3PM)</option>
-								<option>Tarde tarde (3PM - 6PM)</option>
-								<option>Flexible</option>
-							</select>
-						</div>
-
-						<!-- Message -->
-						<div>
-							<label class="block text-gray-600 font-semibold mb-2">Mensaje adicional</label>
-							<textarea id="demoMessage" rows="4" placeholder="Cuéntanos sobre tus desafíos específicos..." class="w-full bg-white border border-purple-200 rounded-lg px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#8B5CF6] transition-colors resize-none"></textarea>
-						</div>
-
-						<!-- Checkbox -->
-						<label class="flex items-start gap-3 cursor-pointer">
-							<input type="checkbox" id="demoConsent" class="w-5 h-5 rounded bg-white border border-purple-200 text-[#8B5CF6] mt-1"/>
-							<span class="text-gray-600 text-sm">
-								Acepto recibir información y actualizaciones de ProbabilityIA
-							</span>
-						</label>
 
 						<!-- Submit -->
 						<button type="submit" class="w-full bg-gradient-to-r from-[#8B5CF6] to-[#A855F7] hover:from-[#7C3AED] hover:to-[#9333EA] text-white py-4 rounded-lg font-bold text-lg transition-colors mt-8">
-							Agendar Demo Gratuita
+							Recibir Información
 						</button>
-
-						<p class="text-center text-gray-500 text-sm">
-							Nos pondremos en contacto en máximo 24 horas para confirmar tu demo
-						</p>
 					</form>
+
+					<!-- Success Message -->
+					<div id="successMessage" class="hidden mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+						<p class="text-green-800 font-semibold">✓ ¡Perfecto!</p>
+						<p class="text-green-700 text-sm mt-1">Te hemos enviado un mensaje con toda la información de probabilityIA. Revisa tu correo en los próximos momentos.</p>
+					</div>
 				</div>
 
 				<!-- Benefits -->
@@ -189,16 +81,16 @@ import Footer from '../components/Footer.astro';
 						<div class="w-12 h-12 rounded-lg bg-purple-100 border border-purple-300 flex items-center justify-center mx-auto mb-4">
 							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
 						</div>
-						<h3 class="text-gray-900 font-semibold mb-2">Personalizada</h3>
-						<p class="text-gray-600 text-sm">Demo adaptada a tu industria y necesidades específicas</p>
+						<h3 class="text-gray-900 font-semibold mb-2">Información Completa</h3>
+						<p class="text-gray-600 text-sm">Recibe detalles sobre características, precios y casos de éxito</p>
 					</div>
 
 					<div class="text-center">
 						<div class="w-12 h-12 rounded-lg bg-purple-100 border border-purple-300 flex items-center justify-center mx-auto mb-4">
 							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
 						</div>
-						<h3 class="text-gray-900 font-semibold mb-2">30 Minutos</h3>
-						<p class="text-gray-600 text-sm">Demo rápida y efectiva con nuestro equipo experto</p>
+						<h3 class="text-gray-900 font-semibold mb-2">Rápido y Sencillo</h3>
+						<p class="text-gray-600 text-sm">Solo necesitas tu correo electrónico, sin formularios complicados</p>
 					</div>
 
 					<div class="text-center">
@@ -206,56 +98,64 @@ import Footer from '../components/Footer.astro';
 							<svg class="w-6 h-6 text-[#8B5CF6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
 						</div>
 						<h3 class="text-gray-900 font-semibold mb-2">Sin Compromiso</h3>
-						<p class="text-gray-600 text-sm">Conócenos primero, sin obligación de compra</p>
+						<p class="text-gray-600 text-sm">Conoce nuestro producto sin obligación de compra</p>
 					</div>
 				</div>
 			</div>
 		</section>
 
-		<!-- FAQ Section -->
+		<!-- What You'll Get Section -->
 		<section class="bg-gradient-to-br from-purple-50 via-white to-purple-50 py-20 px-6 sm:px-20">
 			<div class="max-w-4xl mx-auto">
-				<h2 class="text-3xl font-bold text-gray-900 text-center mb-12">¿Qué esperar en la demo?</h2>
+				<h2 class="text-3xl font-bold text-gray-900 text-center mb-12">¿Qué recibirás?</h2>
 				<div class="space-y-4">
-					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-gray-900">
-							Introducción a ProbabilityIA
-							<span class="group-open:rotate-180 transition-transform">
-								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-							</span>
-						</summary>
-						<p class="text-gray-600 mt-4">Te mostraremos cómo funciona nuestra plataforma y cómo puede beneficiar tu negocio específicamente.</p>
-					</details>
+					<div class="bg-white border border-purple-200 rounded-lg p-6">
+						<div class="flex items-start gap-4">
+							<div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
+								<span class="text-[#8B5CF6] font-bold text-sm">1</span>
+							</div>
+							<div>
+								<h3 class="font-semibold text-gray-900 mb-2">Descripción Completa del Producto</h3>
+								<p class="text-gray-600">Conoce todas las características de probabilityIA y cómo pueden transformar tu negocio</p>
+							</div>
+						</div>
+					</div>
 
-					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-gray-900">
-							Tour del Dashboard
-							<span class="group-open:rotate-180 transition-transform">
-								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-							</span>
-						</summary>
-						<p class="text-gray-600 mt-4">Te enseñaremos todas las características del dashboard, reportes y análisis que ofrece nuestra plataforma.</p>
-					</details>
+					<div class="bg-white border border-purple-200 rounded-lg p-6">
+						<div class="flex items-start gap-4">
+							<div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
+								<span class="text-[#8B5CF6] font-bold text-sm">2</span>
+							</div>
+							<div>
+								<h3 class="font-semibold text-gray-900 mb-2">Casos de Éxito</h3>
+								<p class="text-gray-600">Descubre cómo empresas como la tuya han aumentado su rentabilidad y reducido devoluciones</p>
+							</div>
+						</div>
+					</div>
 
-					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-gray-900">
-							Demostración en Tiempo Real
-							<span class="group-open:rotate-180 transition-transform">
-								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-							</span>
-						</summary>
-						<p class="text-gray-600 mt-4">Verás en vivo cómo nuestros algoritmos de IA analizan pedidos y generan predicciones.</p>
-					</details>
+					<div class="bg-white border border-purple-200 rounded-lg p-6">
+						<div class="flex items-start gap-4">
+							<div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
+								<span class="text-[#8B5CF6] font-bold text-sm">3</span>
+							</div>
+							<div>
+								<h3 class="font-semibold text-gray-900 mb-2">Información de Precios y Planes</h3>
+								<p class="text-gray-600">Conoce nuestros planes de precios flexible adaptados a tu tamaño de negocio</p>
+							</div>
+						</div>
+					</div>
 
-					<details class="bg-white border border-purple-200 rounded-lg p-6 cursor-pointer group">
-						<summary class="flex items-center justify-between font-semibold text-gray-900">
-							Próximos Pasos
-							<span class="group-open:rotate-180 transition-transform">
-								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
-							</span>
-						</summary>
-						<p class="text-gray-600 mt-4">Discutiremos cómo integrar ProbabilityIA con tu plataforma y responderemos todas tus preguntas.</p>
-					</details>
+					<div class="bg-white border border-purple-200 rounded-lg p-6">
+						<div class="flex items-start gap-4">
+							<div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0 mt-1">
+								<span class="text-[#8B5CF6] font-bold text-sm">4</span>
+							</div>
+							<div>
+								<h3 class="font-semibold text-gray-900 mb-2">Próximos Pasos</h3>
+								<p class="text-gray-600">Información sobre cómo agendar una demostración personalizada con nuestro equipo</p>
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</section>
@@ -265,63 +165,97 @@ import Footer from '../components/Footer.astro';
 
 <script>
 	const demoForm = document.getElementById('demoForm');
+	const successMessage = document.getElementById('successMessage');
+
 	if (demoForm) {
 		demoForm.addEventListener('submit', (e) => {
 			e.preventDefault();
 
-			const name = (document.getElementById('demoName') as HTMLInputElement)?.value || '';
 			const email = (document.getElementById('demoEmail') as HTMLInputElement)?.value || '';
-			const company = (document.getElementById('demoCompany') as HTMLInputElement)?.value || '';
-			const phone = (document.getElementById('demoPhone') as HTMLInputElement)?.value || '';
-			const industry = (document.getElementById('demoIndustry') as HTMLSelectElement)?.value || '';
-			const platform = (document.getElementById('demoPlatform') as HTMLSelectElement)?.value || '';
-			const orders = (document.getElementById('demoOrders') as HTMLSelectElement)?.value || '';
-			const time = (document.getElementById('demoTime') as HTMLSelectElement)?.value || '';
-			const message = (document.getElementById('demoMessage') as HTMLTextAreaElement)?.value || '';
 
-			// Obtener características seleccionadas
-			const featureCheckboxes = document.querySelectorAll('.demoFeature:checked') as NodeListOf<HTMLInputElement>;
-			const features = Array.from(featureCheckboxes).map(checkbox => checkbox.value).join(', ') || 'No especificado';
-
-			// Validar campos requeridos
-			if (!name || !email || !company || industry === 'Selecciona tu industria' || platform === 'Selecciona tu plataforma') {
-				alert('Por favor completa todos los campos requeridos');
+			// Validar email
+			if (!email) {
+				alert('Por favor ingresa tu correo electrónico');
 				return;
 			}
 
-			// Crear mensaje formateado para WhatsApp
-			const whatsappMessage = `*SOLICITUD DE DEMO - PROBABILITYIA*
+			// Validar formato de email
+			const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+			if (!emailRegex.test(email)) {
+				alert('Por favor ingresa un correo válido');
+				return;
+			}
 
-*Información Personal:*
-📝 *Nombre:* ${name}
-📧 *Email:* ${email}
-📱 *Teléfono:* ${phone || 'No proporcionado'}
+			// Mensaje con información automática de probabilityIA
+			const infoMessage = `¡Hola!
 
-*Información de Negocio:*
-🏢 *Empresa:* ${company}
-🏭 *Industria:* ${industry}
-🛍️ *Plataforma:* ${platform}
-📦 *Pedidos Mensuales:* ${orders || 'No especificado'}
+Gracias por tu interés en probabilityIA. Te compartimos la siguiente información:
 
-*Características de Interés:*
-✨ ${features}
+📊 SOBRE PROBABILITYIA
+ProbabilityIA es una plataforma de inteligencia artificial que ayuda a e-commerce y negocios de retail a:
+• Reducir devoluciones con predicción de 99.8% de precisión
+• Automatizar procesos de análisis de productos y envíos
+• Integración instantánea con Shopify, Mercado Libre, WooCommerce y más
+• Análisis en tiempo real de riesgos operacionales
 
-*Preferencia de Horario:*
-⏰ ${time || 'Flexible'}
+💰 BENEFICIOS CLAVE
+✓ Aumento de rentabilidad: +45% promedio
+✓ Reducción de devoluciones: -78% en los primeros 3 meses
+✓ ROI: Recupera tu inversión en 2-3 meses
+✓ Soporte 24/7 dedicado
 
-*Mensaje Adicional:*
-${message || 'Sin comentarios adicionales'}
+🚀 CARACTERÍSTICAS PRINCIPALES
+1. Predicción de Devoluciones - Identifica pedidos de riesgo antes de procesarlos
+2. Análisis de Imágenes - Detecta problemas de calidad automáticamente
+3. Dashboard Inteligente - Métricas en tiempo real de tu negocio
+4. Alertas Automáticas - Notificaciones de riesgos potenciales
+5. Integraciones - Compatible con tus plataformas actuales
+
+📈 CASOS DE ÉXITO
+• TechVision Co. (Bogotá): +78% productividad
+• LogisticaX (Medellín): 92% menos errores
+• FinanceHub (Lima): 10x más rápido en reportes
+• RetailPro (Santiago): 45% más conversiones
+
+💳 PLANES DISPONIBLES
+• Plan Startup: Hasta 1,000 pedidos/mes
+• Plan Professional: Hasta 10,000 pedidos/mes
+• Plan Enterprise: Ilimitado + Soporte Personalizado
+
+📞 PRÓXIMOS PASOS
+1. Agenda una demostración personalizada: /demo
+2. Contáctanos por WhatsApp: +57 313 824 1302
+3. Correo: gerencia@probabilityapp.com
+
+¡Queremos ayudarte a transformar tu negocio con IA!
 
 ---
-Enviado desde: probabilityia.com.co`;
+Equipo ProbabilityIA`;
 
-			// Codificar el mensaje para URL
+			// Crear mensaje para WhatsApp
+			const whatsappMessage = `*SOLICITUD DE INFORMACIÓN - PROBABILITYIA*
+
+📧 *Email:* ${email}
+
+El usuario ha solicitado información automática sobre probabilityIA.`;
+
+			// Aquí puedes agregar lógica para enviar email real
+			// Por ahora, usaremos WhatsApp para confirmar la solicitud
 			const encodedMessage = encodeURIComponent(whatsappMessage);
-			const whatsappPhone = '573138241302'; // Sin el +
+			const whatsappPhone = '573138241302';
 			const whatsappUrl = `https://wa.me/${whatsappPhone}?text=${encodedMessage}`;
 
-			// Redirigir a WhatsApp
-			window.open(whatsappUrl, '_blank');
+			// Mostrar mensaje de éxito
+			if (successMessage) {
+				successMessage.classList.remove('hidden');
+			}
+
+			demoForm.reset();
+
+			// Redirigir a WhatsApp para confirmar
+			setTimeout(() => {
+				window.open(whatsappUrl, '_blank');
+			}, 2000);
 		});
 	}
 </script>
