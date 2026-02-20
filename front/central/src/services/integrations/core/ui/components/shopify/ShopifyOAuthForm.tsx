@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Input, Button, Alert } from '@/shared/ui';
 import { TokenStorage } from '@/shared/utils';
+import ShopifyWebhookManager from './ShopifyWebhookManager';
 
 interface ShopifyOAuthFormProps {
     onCancel?: () => void;
@@ -178,6 +179,16 @@ export default function ShopifyOAuthForm({
                     </div>
                 </div>
             </div>
+
+            {/* Webhook Management - Solo en modo edición */}
+            {isEdit && integrationId && (
+                <div className="p-6 rounded-lg border border-gray-200 bg-white">
+                    <h3 className="text-base font-semibold text-gray-900 mb-4 pb-3 border-b border-gray-200">
+                        Webhooks
+                    </h3>
+                    <ShopifyWebhookManager integrationId={integrationId} />
+                </div>
+            )}
 
             {/* Action Buttons */}
             <div className="flex flex-row justify-end gap-3 pt-4 border-t">
