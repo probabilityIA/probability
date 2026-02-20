@@ -14,7 +14,7 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
-    const [uploadStats, setUploadStats] = useState<{ total: number; success: number; failed: number } | null>(null);
+    const [uploadStats, setUploadStats] = useState<{ total: number; success: number; failed: number, errors?: string[] } | null>(null);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
@@ -53,13 +53,18 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
             const result = await response.json();
 
             if (response.ok && result.success) {
-                setSuccess(`¡Carga exitosa! ${result.data.success_count} órdenes creadas.`);
+                if (result.data.success_count > 0) {
+                    setSuccess(`¡Proceso completado! ${result.data.success_count} órdenes creadas.`);
+                } else {
+                    setError('No se pudo crear ninguna orden. Revisa los errores abajo.');
+                }
                 setUploadStats({
                     total: result.data.total_rows,
                     success: result.data.success_count,
                     failed: result.data.failed_count,
+                    errors: result.data.errors,
                 });
-                if (onUploadComplete) {
+                if (onUploadComplete && result.data.success_count > 0) {
                     onUploadComplete(result.data.success_count);
                 }
             } else {
@@ -84,8 +89,8 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6">
-                <div className="flex justify-between items-center mb-6">
+            <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] flex flex-col">
+                <div className="flex justify-between items-center mb-6 flex-shrink-0">
                     <h2 className="text-2xl font-bold text-gray-800">Carga Masiva de Órdenes</h2>
                     <button
                         onClick={handleClose}
@@ -95,7 +100,7 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                     </button>
                 </div>
 
-                <div className="space-y-6">
+                <div className="space-y-6 overflow-y-auto pr-2">
                     {/* Instructions */}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <h3 className="font-semibold text-blue-800 mb-2">Instrucciones</h3>
@@ -108,64 +113,80 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                     </div>
 
                     {/* File Input */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Seleccionar archivo
-                        </label>
-                        <input
-                            type="file"
-                            accept=".csv,.xlsx,.xls"
-                            onChange={handleFileChange}
-                            className="block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-orange-50 file:text-orange-700
-                                hover:file:bg-orange-100"
-                        />
-                        {file && (
-                            <p className="mt-2 text-sm text-gray-600">
-                                Archivo seleccionado: <strong>{file.name}</strong>
-                            </p>
-                        )}
-                    </div>
-
-                    {/* Error */}
-                    {error && (
-                        <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                            {error}
+                    {!success && !uploadStats && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Seleccionar archivo
+                            </label>
+                            <input
+                                type="file"
+                                accept=".csv,.xlsx,.xls"
+                                onChange={handleFileChange}
+                                className="block w-full text-sm text-gray-500
+                                    file:mr-4 file:py-2 file:px-4
+                                    file:rounded-md file:border-0
+                                    file:text-sm file:font-semibold
+                                    file:bg-orange-50 file:text-orange-700
+                                    hover:file:bg-orange-100"
+                            />
+                            {file && (
+                                <p className="mt-2 text-sm text-gray-600">
+                                    Archivo seleccionado: <strong>{file.name}</strong>
+                                </p>
+                            )}
                         </div>
                     )}
 
-                    {/* Success */}
-                    {success && (
-                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
-                            {success}
+                    {/* Error / Results */}
+                    {(error || uploadStats) && (
+                        <div className={`p-4 rounded-lg border ${error ? 'bg-red-50 border-red-200 text-red-700' : 'bg-green-50 border-green-200 text-green-700'}`}>
+                            {error && <p className="font-bold mb-2">{error}</p>}
+                            {success && <p className="font-bold mb-2">{success}</p>}
+
                             {uploadStats && (
-                                <div className="mt-2 text-sm">
-                                    <p>Total de filas: {uploadStats.total}</p>
-                                    <p>Exitosas: {uploadStats.success}</p>
-                                    <p>Fallidas: {uploadStats.failed}</p>
+                                <div className="mt-2 text-sm space-y-1">
+                                    <p>Total de filas: <strong>{uploadStats.total}</strong></p>
+                                    <p>Exitosas: <strong className="text-green-600">{uploadStats.success}</strong></p>
+                                    <p>Fallidas: <strong className="text-red-600">{uploadStats.failed}</strong></p>
+
+                                    {uploadStats.errors && uploadStats.errors.length > 0 && (
+                                        <div className="mt-4">
+                                            <p className="font-bold text-red-800 mb-1">Detalle de errores:</p>
+                                            <ul className="list-disc list-inside text-xs max-h-40 overflow-y-auto bg-white/50 p-2 rounded">
+                                                {uploadStats.errors.map((err, idx) => (
+                                                    <li key={idx} className="mb-1">{err}</li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>
                     )}
 
                     {/* Actions */}
-                    <div className="flex justify-end space-x-3">
-                        <Button
-                            variant="outline"
-                            onClick={handleClose}
-                            disabled={loading}
-                        >
-                            Cancelar
-                        </Button>
-                        <Button
-                            onClick={handleUpload}
-                            disabled={!file || loading}
-                        >
-                            {loading ? 'Procesando...' : 'Cargar Órdenes'}
-                        </Button>
+                    <div className="flex justify-end space-x-3 pt-4 border-t border-gray-100 flex-shrink-0">
+                        {success || uploadStats ? (
+                            <Button onClick={handleClose}>
+                                Cerrar
+                            </Button>
+                        ) : (
+                            <>
+                                <Button
+                                    variant="outline"
+                                    onClick={handleClose}
+                                    disabled={loading}
+                                >
+                                    Cancelar
+                                </Button>
+                                <Button
+                                    onClick={handleUpload}
+                                    disabled={!file || loading}
+                                >
+                                    {loading ? 'Procesando...' : 'Cargar Órdenes'}
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

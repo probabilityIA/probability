@@ -11,6 +11,7 @@ import { OrderApiRepository } from "@/services/modules/orders/infra/repository/a
 import { Order } from "@/services/modules/orders/domain/types";
 import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
 import { getAIRecommendationAction } from "@/services/modules/orders/infra/actions";
+import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
 import daneCodes from "../resources/municipios_dane_extendido.json";
 
 // Zod Schema
@@ -53,6 +54,31 @@ const PACKAGE_SIZES = {
     medium: { weight: 5, height: 30, width: 30, length: 30, label: "Mediano (5kg - 30x30x30)" },
     large: { weight: 10, height: 50, width: 50, length: 50, label: "Grande (10kg - 50x50x50)" },
     custom: { weight: 0, height: 0, width: 0, length: 0, label: "Personalizado" },
+};
+
+const normalizeString = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+
+const findDaneCode = (city: string, state: string) => {
+    const targetCity = normalizeString(city);
+    const targetState = normalizeString(state);
+
+    const entries = Object.entries(daneCodes);
+
+    // 1. Try exact match with city and state
+    const exactMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity &&
+        normalizeString(data.departamento) === targetState
+    );
+    if (exactMatch) return exactMatch[0];
+
+    // 2. Try match with city only
+    const cityMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity
+    );
+    if (cityMatch) return cityMatch[0];
+
+    return null;
 };
 
 export const ShippingForm = () => {
@@ -154,9 +180,11 @@ export const ShippingForm = () => {
             setValue("destination.reference", "");
 
             // Set DANE code and city search label
-            const defaultDane = "11001000";
-            setValue("destination.daneCode", defaultDane);
-            const cityData = daneCodes[defaultDane as keyof typeof daneCodes];
+            const mappedDane = findDaneCode(order.shipping_city, order.shipping_state);
+            const finalDane = mappedDane || "11001000"; // Fallback to Bogota if not found
+
+            setValue("destination.daneCode", finalDane);
+            const cityData = daneCodes[finalDane as keyof typeof daneCodes];
             if (cityData) {
                 setDestSearch((cityData as any).ciudad);
             }
@@ -164,7 +192,7 @@ export const ShippingForm = () => {
             setValue("contentValue", order.total_amount);
             setValue("description", "Order " + order.order_number);
             setValue("external_order_id", order.order_number);
-            setValue("myShipmentReference", "Orden " + order.internal_number);
+            setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
 
             // Try to map dimensions if available
             if (order.weight && order.weight > 0) {
@@ -227,11 +255,9 @@ export const ShippingForm = () => {
 
         try {
             const payload = buildPayload(data);
-            const repo = new ShipmentApiRepository();
-            const res = await repo.quoteShipment(payload);
-
-            if (res.data && res.data.rates && res.data.rates.length > 0) {
-                setRates(res.data.rates);
+            const res = await quoteShipmentAction(payload);
+            if (res.success && res.data?.data?.rates && res.data.data.rates.length > 0) {
+                setRates(res.data.data.rates);
                 setHasQuoted(true);
 
                 // Perform AI Analysis on real rates
@@ -241,7 +267,7 @@ export const ShippingForm = () => {
                     try {
                         const aiRes = await getAIRecommendationAction((destDane as any).ciudad, (destDane as any).departamento);
                         if (aiRes) {
-                            const carrierExists = res.data.rates.some((r: any) =>
+                            const carrierExists = res.data.data.rates.some((r: any) =>
                                 r.carrier.toLowerCase() === aiRes.recommended_carrier.toLowerCase()
                             );
 
@@ -290,9 +316,12 @@ export const ShippingForm = () => {
 
         try {
             const payload = buildPayload(data, selectedRate.idRate);
-            const repo = new ShipmentApiRepository();
-            const res = await repo.generateGuide(payload);
-            setSuccess(`Guía generada exitosamente! Tracking: ${res.data.tracker}`);
+            const res = await generateGuideAction(payload);
+            if (res.success && res.data?.data) {
+                setSuccess(`Guía generada exitosamente! Tracking: ${res.data.data.tracker}`);
+            } else {
+                setError(res.message || "Error generando guía");
+            }
             // Reset logic if needed
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Error generando guía";

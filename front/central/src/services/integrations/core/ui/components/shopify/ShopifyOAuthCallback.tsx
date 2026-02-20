@@ -37,17 +37,19 @@ export default function ShopifyOAuthCallback() {
                 try {
                     setMessage('Obteniendo credenciales de forma segura...');
 
+                    const exchangeToken = searchParams.get('exchange_token');
+
                     // Obtener token desde storage unificado (soporta iframes/cookies/localstorage)
                     const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
                     const sessionToken = TokenStorage.getSessionToken();
 
                     const tokenResponse = await fetch(
-                        `${apiBaseUrl}/integrations/shopify/oauth/token?state=${state}&shop=${shop}&integration_name=${integrationName}&integration_code=${integrationCode}`,
+                        `${apiBaseUrl}/integrations/shopify/oauth/token?state=${state}&shop=${shop}&integration_name=${integrationName}&integration_code=${integrationCode}&exchange_token=${exchangeToken || ''}`,
                         {
                             headers: {
                                 'Authorization': `Bearer ${sessionToken}`,
                             },
-                            credentials: 'include', // Incluir cookies
+                            credentials: 'include', // Incluir cookies por si acaso
                         }
                     );
 

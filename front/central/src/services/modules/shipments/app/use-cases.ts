@@ -12,6 +12,14 @@ export class ShipmentUseCases {
         return this.repository.getShipments(params);
     }
 
+    async quoteShipment(req: any) {
+        return this.repository.quoteShipment(req);
+    }
+
+    async generateGuide(req: any) {
+        return this.repository.generateGuide(req);
+    }
+
     async trackShipment(trackingNumber: string) {
         return this.repository.trackShipment(trackingNumber);
     }

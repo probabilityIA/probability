@@ -28,15 +28,17 @@ type IIntegrationUseCase interface {
 	UpdateLastSync(ctx context.Context, integrationID string) error
 	RegisterObserver(observer IntegrationCreatedObserver)
 	WarmCache(ctx context.Context) error // ✅ NUEVO - Pre-carga cache al iniciar
+	SetWebhookCreator(creator IWebhookCreator)
 }
 
 type IntegrationUseCase struct {
-	repo       domain.IRepository
-	encryption domain.IEncryptionService
-	cache      domain.IIntegrationCache
-	testerReg  *IntegrationTesterRegistry
-	log        log.ILogger
-	observers  []IntegrationCreatedObserver
+	repo           domain.IRepository
+	encryption     domain.IEncryptionService
+	cache          domain.IIntegrationCache
+	testerReg      *IntegrationTesterRegistry
+	log            log.ILogger
+	observers      []IntegrationCreatedObserver
+	webhookCreator IWebhookCreator
 }
 
 // New crea una nueva instancia del caso de uso de integraciones
@@ -55,7 +57,17 @@ func (uc *IntegrationUseCase) RegisterObserver(observer IntegrationCreatedObserv
 	uc.observers = append(uc.observers, observer)
 }
 
+// IWebhookCreator define la capacidad de crear webhooks (implementado por integrationCore)
+type IWebhookCreator interface {
+	CreateWebhook(ctx context.Context, integrationID string) (interface{}, error)
+}
+
 // GetTesterRegistry retorna el registry de testers (para uso interno del core)
 func (uc *IntegrationUseCase) GetTesterRegistry() *IntegrationTesterRegistry {
 	return uc.testerReg
+}
+
+// SetWebhookCreator inyecta la dependencia de creación de webhooks (para romper ciclo con core)
+func (uc *IntegrationUseCase) SetWebhookCreator(creator IWebhookCreator) {
+	uc.webhookCreator = creator
 }

@@ -200,7 +200,37 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		Uint("id", integration.ID).
 		Uint("integration_type_id", integration.IntegrationTypeID).
 		Str("code", integration.Code).
+		Str("code", integration.Code).
 		Msg("Integración creada exitosamente")
+
+	// ✅ NUEVO - Crear webhooks automáticamente si es soportado
+	if uc.webhookCreator != nil {
+		// Convertir ID a string para el método
+		integrationIDStr := fmt.Sprintf("%d", integration.ID)
+
+		// Ejecutar en background para no bloquear si demora (Shopify puede tardar)
+		go func() {
+			bgCtx := context.Background()
+
+			// Esperar un momento breve para asegurar que la transacción de DB se haya commiteado si aplica
+			// (aunque aquí ya pasó por repo.CreateIntegration)
+
+			uc.log.Info(bgCtx).
+				Str("integration_id", integrationIDStr).
+				Msg("🔄 Iniciando creación automática de webhooks...")
+
+			if _, err := uc.webhookCreator.CreateWebhook(bgCtx, integrationIDStr); err != nil {
+				uc.log.Error(bgCtx).
+					Err(err).
+					Str("integration_id", integrationIDStr).
+					Msg("⚠️ Falló la creación automática de webhooks (se puede reintentar manualmente)")
+			} else {
+				uc.log.Info(bgCtx).
+					Str("integration_id", integrationIDStr).
+					Msg("✅ Webhooks creados automáticamente exitosamente")
+			}
+		}()
+	}
 
 	// Notificar observadores (e.g., para auto-sync)
 	// Hacemos esto de forma asíncrona para no bloquear la respuesta HTTP

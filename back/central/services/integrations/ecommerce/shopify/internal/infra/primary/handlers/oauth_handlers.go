@@ -312,22 +312,36 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	// Codificar datos para el frontend
 	integrationCode := generateIntegrationCode(stateData.IntegrationName)
 
-	// Almacenar credenciales completas en cookie segura (5 minutos de validez)
-	// Guardamos token, client_id y client_secret para persistirlos después
+	// Generar token de intercambio único (UUID simple)
+	exchangeTokenBytes := make([]byte, 16)
+	rand.Read(exchangeTokenBytes)
+	exchangeToken := hex.EncodeToString(exchangeTokenBytes)
+
+	// Almacenar en memoria (TTL 5 mins)
+	StoreExchangeToken(exchangeToken, TokenExchangeData{
+		AccessToken:  accessToken,
+		ClientID:     clientID,
+		ClientSecret: clientSecret,
+		Expiry:       time.Now().Add(5 * time.Minute),
+	})
+
+	// Mantener cookie por si acaso (fallback), pero el método principal será exchange_token
 	creds := map[string]string{
 		"access_token":  accessToken,
 		"client_id":     clientID,
 		"client_secret": clientSecret,
 	}
 	credsJSON, _ := json.Marshal(creds)
-
-	// Usar url.QueryEscape para que caracteres como { } " sean seguros en la cookie
 	middleware.SetSecureCookie(c, "shopify_temp_token", url.QueryEscape(string(credsJSON)), 300)
 
-	// Redirigir al frontend SIN el token en la URL (seguro)
-	frontendURL := h.config.Get("WEBHOOK_BASE_URL")
+	// Redirigir al frontend CON el exchange_token
+	frontendURL := h.config.Get("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000" // Default para desarrollo local
+	}
+
 	redirectURL := fmt.Sprintf(
-		"%s/integrations?shopify_oauth=success&shop=%s&integration_name=%s&integration_code=%s&state=%s&user_id=%d&business_id=%d",
+		"%s/integrations?shopify_oauth=success&shop=%s&integration_name=%s&integration_code=%s&state=%s&user_id=%d&business_id=%d&exchange_token=%s",
 		frontendURL,
 		url.QueryEscape(shop),
 		url.QueryEscape(stateData.IntegrationName),
@@ -335,6 +349,7 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 		url.QueryEscape(state),
 		stateData.UserID,
 		stateData.BusinessID,
+		exchangeToken,
 	)
 
 	h.logger.Info().
@@ -442,6 +457,17 @@ func generateIntegrationCode(name string) string {
 	code = fmt.Sprintf("%s_%d", code, time.Now().Unix())
 	return code
 }
+
+// GetOAuthTokenHandler recupera los tokens obtenidos durante el callback OAuth
+//
+//	@Summary		Obtener token de OAuth
+//	@Description	Recupera el access token y credenciales almacenadas temporalmente en cookie cifrada
+//	@Tags			Shopify OAuth
+//	@Produce		json
+//	@Security		BearerAuth
+//	@Success		200		{object}	map[string]string
+//	@Failure		400		{object}	map[string]string
+//	@Router			/integrations/shopify/oauth/token [get]
 
 // GetConfigHandler retorna la configuración pública de Shopify (Client ID)
 //

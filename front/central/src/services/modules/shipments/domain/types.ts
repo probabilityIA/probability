@@ -35,6 +35,7 @@ export interface GetShipmentsParams {
     tracking_number?: string;
     carrier?: string;
     status?: string;
+    business_id?: number;
     start_date?: string;
     end_date?: string;
     shipped_after?: string;

@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
 // RegisterRoutes registra todas las rutas del módulo shipments
 func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
-	shipments := router.Group("/shipments")
+	shipments := router.Group("/shipments", middleware.JWT())
 	{
 		// CRUD básico
 		shipments.GET("", h.ListShipments)

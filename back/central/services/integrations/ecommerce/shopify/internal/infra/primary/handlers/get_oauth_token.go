@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -41,6 +42,7 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 	shop := c.Query("shop")
 	integrationName := c.Query("integration_name")
 	integrationCode := c.Query("integration_code")
+	exchangeToken := c.Query("exchange_token")
 
 	if state == "" || shop == "" {
 		h.logger.Error().Msg("State o shop faltantes en petición de token")
@@ -51,28 +53,49 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 		return
 	}
 
-	// Leer cookie temporal con el token o JSON de credenciales
+	// 1. Intentar recuperar por exchange_token (prioridad)
+	if exchangeToken != "" {
+		if data, ok := RetrieveExchangeToken(exchangeToken); ok {
+			h.logger.Info().Str("shop", shop).Msg("Credenciales recuperadas vía token de intercambio")
+
+			c.JSON(http.StatusOK, GetOAuthTokenResponse{
+				Success:         true,
+				AccessToken:     data.AccessToken,
+				ClientID:        data.ClientID,
+				ClientSecret:    data.ClientSecret,
+				Shop:            shop,
+				IntegrationName: integrationName,
+				IntegrationCode: integrationCode,
+			})
+			return
+		}
+		// Si falla, logueamos y seguimos con cookie como fallback
+		h.logger.Warn().Str("exchange_token", exchangeToken).Msg("Token de intercambio inválido o expirado")
+	}
+
+	// 2. Intentar recuperar por cookie (fallback)
 	cookieData, err := c.Cookie("shopify_temp_token")
 	if err != nil {
 		h.logger.Error().
 			Err(err).
 			Str("state", state).
 			Msg("Cookie de token no encontrada o expirada")
+
 		c.JSON(http.StatusNotFound, GetOAuthTokenResponse{
 			Success: false,
-			Error:   "Token no encontrado o expirado",
+			Error:   fmt.Sprintf("Token no encontrado. Cookies count: %d", len(c.Request.Cookies())),
 		})
 		return
 	}
 
-	// URL-decode la cookie ya que fue escapada para ser segura en el header
+	// URL-decode la cookie
 	decodedData, err := url.QueryUnescape(cookieData)
 	if err != nil {
 		h.logger.Warn().Err(err).Msg("Error al de-escapar cookie de token, intentando usar raw")
 		decodedData = cookieData
 	}
 
-	// Decodificar JSON de la cookie (si es JSON)
+	// Decodificar JSON de la cookie
 	var creds struct {
 		AccessToken  string `json:"access_token"`
 		ClientID     string `json:"client_id"`
@@ -82,35 +105,37 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 	if strings.HasPrefix(decodedData, "{") {
 		if err := json.Unmarshal([]byte(decodedData), &creds); err != nil {
 			h.logger.Error().Err(err).Msg("Error al decodificar JSON de credenciales")
-			// Fallback: tratar como token simple si falla el unmarshal
 			creds.AccessToken = decodedData
 		}
 	} else {
-		// Compatible con versiones anteriores que guardaban solo el token
 		creds.AccessToken = decodedData
 	}
 
-	// Borrar la cookie inmediatamente después de leerla (one-time use)
+	// Borrar la cookie
 	host := c.Request.Host
 	domainName := ".probabilityia.com.co"
-	if strings.Contains(host, "localhost") || strings.Contains(host, "127.0.0.1") {
+
+	if strings.Contains(host, "localhost") ||
+		strings.Contains(host, "127.0.0.1") ||
+		strings.Contains(host, "ngrok") ||
+		strings.Contains(host, ".dev") {
 		domainName = ""
 	}
 
 	c.SetCookie(
 		"shopify_temp_token",
 		"",
-		-1, // MaxAge negativo elimina la cookie
+		-1,
 		"/",
 		domainName,
-		true, // Secure
-		true, // HttpOnly
+		true,
+		true,
 	)
 
 	h.logger.Info().
 		Str("shop", shop).
 		Str("integration_name", integrationName).
-		Msg("Credenciales OAuth recuperadas exitosamente")
+		Msg("Credenciales OAuth recuperadas exitosamente vía cookie")
 
 	c.JSON(http.StatusOK, GetOAuthTokenResponse{
 		Success:         true,

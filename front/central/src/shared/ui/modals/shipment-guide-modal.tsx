@@ -7,9 +7,34 @@ import { ShipmentApiRepository } from "@/services/modules/shipments/infra/reposi
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { Order } from "@/services/modules/orders/domain/types";
 import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
-import { getOriginAddressesAction } from "@/services/modules/shipments/infra/actions";
+import { getOriginAddressesAction, quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
 import { OriginAddress } from "@/services/modules/shipments/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+
+const normalizeString = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+
+const findDaneCode = (city: string, state: string) => {
+    const targetCity = normalizeString(city);
+    const targetState = normalizeString(state);
+
+    const entries = Object.entries(danes);
+
+    // 1. Try exact match with city and state
+    const exactMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity &&
+        normalizeString(data.departamento) === targetState
+    );
+    if (exactMatch) return exactMatch[0];
+
+    // 2. Try match with city only
+    const cityMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity
+    );
+    if (cityMatch) return cityMatch[0];
+
+    return null;
+};
 
 interface ShipmentGuideModalProps {
     isOpen: boolean;
@@ -100,7 +125,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
 
-    const repo = new ShipmentApiRepository();
+    // const repo = new ShipmentApiRepository(); // Eliminado para usar Server Actions
 
     // DANE options
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
@@ -216,13 +241,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             }
 
             // Try to find DANE code by city
-            const city = (order.shipping_city || "").toUpperCase();
-            const foundDane = Object.entries(danes).find(([_, data]: [string, any]) =>
-                (data as any).ciudad.includes(city)
-            );
-            if (foundDane) {
-                step1Form.setValue("destDaneCode", foundDane[0]);
-                setDestSearch(`${(foundDane[1] as any).ciudad} (${(foundDane[1] as any).departamento})`);
+            const mappedDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
+            const finalDane = mappedDane || "11001000"; // Fallback to Bogota
+
+            step1Form.setValue("destDaneCode", finalDane);
+            const cityData = danes[finalDane as keyof typeof danes];
+            if (cityData) {
+                setDestSearch(`${(cityData as any).ciudad} (${(cityData as any).departamento})`);
             }
 
             // Step 3
@@ -232,7 +257,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             step3Form.setValue("destEmail", order.customer_email);
             step3Form.setValue("destPhone", order.customer_phone);
             step3Form.setValue("destSuburb", order.shipping_state || "");
-            step3Form.setValue("myShipmentReference", `Orden ${order.internal_number}`);
+            step3Form.setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
             step3Form.setValue("external_order_id", order.order_number);
         }
     }, [isOpen, order]);
@@ -295,9 +320,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 },
             };
 
-            const response = await repo.quoteShipment(quotePayload);
-            if (response.data?.rates && response.data.rates.length > 0) {
-                setRates(response.data.rates);
+            const response = await quoteShipmentAction(quotePayload);
+            if (response.success && response.data?.data?.rates && response.data.data.rates.length > 0) {
+                setRates(response.data.data.rates);
                 setStep1Data(data);
                 setCurrentStep(2);
             } else {
@@ -384,14 +409,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 },
             };
 
-            const response = await repo.generateGuide(generatePayload);
-            if (response.data) {
-                setGeneratedPdfUrl(response.data.url);
-                setTrackingNumber(response.data.tracker);
-                setSuccess("¡Guía generada exitosamente!");
-                if (onGuideGenerated && response.data.tracker) {
-                    onGuideGenerated(response.data.tracker);
+            const response = await generateGuideAction(generatePayload);
+            if (response.success && response.data?.data) {
+                setGeneratedPdfUrl(response.data.data.url);
+                setTrackingNumber(response.data.data.tracker);
+                if (onGuideGenerated && response.data.data.tracker) {
+                    onGuideGenerated(response.data.data.tracker);
                 }
+                setSuccess("¡Guía generada exitosamente!");
             }
         } catch (err: any) {
             setError(err.message || "Error al generar guía");

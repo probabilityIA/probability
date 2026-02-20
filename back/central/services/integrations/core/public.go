@@ -418,9 +418,13 @@ func (ic *integrationCore) VerifyWebhooksByURL(ctx context.Context, integrationI
 	}
 
 	// Obtener baseURL desde configuración
-	baseURL := ic.config.Get("URL_BASE_SWAGGER")
+	// Prioridad: WEBHOOK_BASE_URL > URL_BASE_SWAGGER
+	baseURL := ic.config.Get("WEBHOOK_BASE_URL")
 	if baseURL == "" {
-		return nil, fmt.Errorf("URL_BASE_SWAGGER no está configurada")
+		baseURL = ic.config.Get("URL_BASE_SWAGGER")
+	}
+	if baseURL == "" {
+		return nil, fmt.Errorf("WEBHOOK_BASE_URL o URL_BASE_SWAGGER no está configurada")
 	}
 
 	// Verificar webhooks
@@ -448,9 +452,13 @@ func (ic *integrationCore) CreateWebhook(ctx context.Context, integrationID stri
 	}
 
 	// Obtener baseURL desde configuración
-	baseURL := ic.config.Get("URL_BASE_SWAGGER")
+	// Prioridad: WEBHOOK_BASE_URL > URL_BASE_SWAGGER
+	baseURL := ic.config.Get("WEBHOOK_BASE_URL")
 	if baseURL == "" {
-		return nil, fmt.Errorf("URL_BASE_SWAGGER no está configurada")
+		baseURL = ic.config.Get("URL_BASE_SWAGGER")
+	}
+	if baseURL == "" {
+		return nil, fmt.Errorf("WEBHOOK_BASE_URL o URL_BASE_SWAGGER no está configurada")
 	}
 
 	// Crear webhooks

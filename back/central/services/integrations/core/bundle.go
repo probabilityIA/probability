@@ -99,6 +99,9 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 		config:       config,
 	}
 
+	// 5.1 Inyectar webhook creator en el use case (resuelve dependencia circular)
+	IntegrationUseCase.SetWebhookCreator(coreIntegration)
+
 	handlerIntegrations := handlerintegrations.New(IntegrationUseCase, logger, coreIntegration, config)
 	handlerIntegrationType := handlerintegrationtype.New(integrationTypeUseCase, logger, config)
 

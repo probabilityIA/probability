@@ -47,7 +47,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '40
 
             try {
                 const response = await fetch(url, {
-                    headers: { "User-Agent": "ProbabilityApp_v1.0" }
+                    headers: { "Accept-Language": "es" }
                 });
                 const data = await response.json();
 
@@ -58,7 +58,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '40
                 } else {
                     // Fallback to just city
                     const cityUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(city + ", Colombia")}`;
-                    const cityRes = await fetch(cityUrl, { headers: { "User-Agent": "ProbabilityApp_v1.0" } });
+                    const cityRes = await fetch(cityUrl, { headers: { "Accept-Language": "es" } });
                     const cityData = await cityRes.json();
 
                     if (cityData && cityData.length > 0) {
