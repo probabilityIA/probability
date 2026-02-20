@@ -9,6 +9,7 @@ import { Business, GetBusinessesParams, ConfiguredResource, BusinessConfiguredRe
 import { BusinessForm } from './BusinessForm';
 import {
     getBusinessesAction,
+    getBusinessByIdAction,
     deleteBusinessAction,
     getBusinessTypesAction,
     getBusinessConfiguredResourcesAction,
@@ -20,8 +21,10 @@ import {
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { BusinessType } from '../../domain/types';
 import { Spinner } from '@/shared/ui/spinner';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 
 export const BusinessList: React.FC = () => {
+    const { isSuperAdmin, permissions } = usePermissions();
     const [businesses, setBusinesses] = useState<Business[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -171,20 +174,32 @@ export const BusinessList: React.FC = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await getBusinessesAction(filters);
-            setBusinesses(response.data || []);
-            if (response.pagination) {
-                setPage(response.pagination.current_page);
-                setTotalPages(response.pagination.last_page);
-                setTotal(response.pagination.total);
-                setPageSize(response.pagination.per_page);
+            if (isSuperAdmin) {
+                // Super admin: listar todos los negocios
+                const response = await getBusinessesAction(filters);
+                setBusinesses(response.data || []);
+                if (response.pagination) {
+                    setPage(response.pagination.current_page);
+                    setTotalPages(response.pagination.last_page);
+                    setTotal(response.pagination.total);
+                    setPageSize(response.pagination.per_page);
+                }
+            } else if (permissions?.business_id) {
+                // Usuario business: solo su propio negocio
+                const response = await getBusinessByIdAction(permissions.business_id);
+                if (response.data) {
+                    setBusinesses([response.data]);
+                    setTotal(1);
+                    setTotalPages(1);
+                    setPage(1);
+                }
             }
         } catch (err: any) {
             setError(err.message || 'Error al cargar negocios');
         } finally {
             setLoading(false);
         }
-    }, [filters]);
+    }, [filters, isSuperAdmin, permissions?.business_id]);
 
     useEffect(() => {
         loadBusinessTypes();
@@ -280,27 +295,32 @@ export const BusinessList: React.FC = () => {
             <div>
                 <div className="bg-white rounded-t-lg shadow-sm border border-gray-200 border-b-0">
                     <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 gap-4">
-                        <div className="flex-1 min-w-0">
-                            <DynamicFilters
-                                availableFilters={availableFilters}
-                                activeFilters={activeFilters}
-                                onAddFilter={handleAddFilter}
-                                onRemoveFilter={handleRemoveFilter}
-                                className="!p-0 !border-0 !shadow-none"
-                            />
-                        </div>
-                        <Button
-                            variant="primary"
-                            size="sm"
-                            onClick={() => { setEditingBusiness(null); setShowCreateModal(true); }}
-                            className="flex items-center justify-center flex-shrink-0"
-                            title="Crear negocio"
-                            aria-label="Crear negocio"
-                        >
-                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                            </svg>
-                        </Button>
+                        {isSuperAdmin && (
+                            <div className="flex-1 min-w-0">
+                                <DynamicFilters
+                                    availableFilters={availableFilters}
+                                    activeFilters={activeFilters}
+                                    onAddFilter={handleAddFilter}
+                                    onRemoveFilter={handleRemoveFilter}
+                                    className="!p-0 !border-0 !shadow-none"
+                                />
+                            </div>
+                        )}
+                        {!isSuperAdmin && <div className="flex-1" />}
+                        {isSuperAdmin && (
+                            <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={() => { setEditingBusiness(null); setShowCreateModal(true); }}
+                                className="flex items-center justify-center flex-shrink-0"
+                                title="Crear negocio"
+                                aria-label="Crear negocio"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                                </svg>
+                            </Button>
+                        )}
                     </div>
                 </div>
                 {/* Tabla */}
@@ -365,31 +385,43 @@ export const BusinessList: React.FC = () => {
                                             {business.name}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <button
-                                                onClick={() => handleToggleBusinessActive(business)}
-                                                disabled={togglingBusiness === business.id}
-                                                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait ${
+                                            {isSuperAdmin ? (
+                                                <button
+                                                    onClick={() => handleToggleBusinessActive(business)}
+                                                    disabled={togglingBusiness === business.id}
+                                                    className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait ${
+                                                        business.is_active
+                                                            ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                            : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                    }`}
+                                                >
+                                                    {togglingBusiness === business.id ? '...' : business.is_active ? 'Activo' : 'Inactivo'}
+                                                </button>
+                                            ) : (
+                                                <span className={`px-3 py-1 text-xs font-medium rounded-full ${
                                                     business.is_active
-                                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                        : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                                }`}
-                                            >
-                                                {togglingBusiness === business.id ? '...' : business.is_active ? 'Activo' : 'Inactivo'}
-                                            </button>
+                                                        ? 'bg-green-100 text-green-800'
+                                                        : 'bg-red-100 text-red-800'
+                                                }`}>
+                                                    {business.is_active ? 'Activo' : 'Inactivo'}
+                                                </span>
+                                            )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end gap-2">
-                                                <button
-                                                    onClick={() => handleOpenResources(business)}
-                                                    className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
-                                                    title="Configurar recursos"
-                                                    aria-label="Configurar recursos"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                                    </svg>
-                                                </button>
+                                                {isSuperAdmin && (
+                                                    <button
+                                                        onClick={() => handleOpenResources(business)}
+                                                        className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
+                                                        title="Configurar recursos"
+                                                        aria-label="Configurar recursos"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                                        </svg>
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => { setEditingBusiness(business); setShowCreateModal(true); }}
                                                     className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
@@ -400,16 +432,18 @@ export const BusinessList: React.FC = () => {
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                                     </svg>
                                                 </button>
-                                                <button
-                                                    onClick={() => setDeleteId(business.id)}
-                                                    className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                                                    title="Eliminar negocio"
-                                                    aria-label="Eliminar negocio"
-                                                >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                {isSuperAdmin && (
+                                                    <button
+                                                        onClick={() => setDeleteId(business.id)}
+                                                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                                                        title="Eliminar negocio"
+                                                        aria-label="Eliminar negocio"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                     </svg>
                                                 </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>

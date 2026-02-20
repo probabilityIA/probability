@@ -437,7 +437,7 @@ func (s *OrderSimulator) generateNoteAttributes() []domain.NoteAttribute {
 		},
 		{
 			Name:  "_customer_dni",
-			Value: "1019086678",
+			Value: "1098720627",
 		},
 	}
 }

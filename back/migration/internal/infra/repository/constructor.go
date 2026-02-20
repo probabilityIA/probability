@@ -123,6 +123,16 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to seed softpymes integration type: %w", err)
 	}
 
+	// Crear tipo de integración para Plataforma (órdenes manuales)
+	if err := r.seedPlatformIntegrationType(ctx); err != nil {
+		return fmt.Errorf("failed to seed platform integration type: %w", err)
+	}
+
+	// Crear integraciones de plataforma para negocios existentes
+	if err := r.seedPlatformIntegrationsForBusinesses(ctx); err != nil {
+		return fmt.Errorf("failed to seed platform integrations for businesses: %w", err)
+	}
+
 	// Migrar datos de invoicing_providers a integrations
 	if err := r.migrateInvoicingProvidersToIntegrations(ctx); err != nil {
 		return fmt.Errorf("failed to migrate invoicing providers: %w", err)
@@ -437,6 +447,17 @@ func (r *Repository) seedIntegrationCategories(ctx context.Context) error {
 			IsActive:     false,
 			IsVisible:    true,
 		},
+		{
+			Model:        gorm.Model{ID: 6},
+			Code:         "platform",
+			Name:         "Plataforma",
+			Description:  "Órdenes creadas directamente en la plataforma",
+			Icon:         "squares-plus",
+			Color:        "#6366F1",
+			DisplayOrder: 0,
+			IsActive:     true,
+			IsVisible:    true,
+		},
 	}
 
 	for _, category := range categories {
@@ -583,6 +604,55 @@ func (r *Repository) migrateInvoicingProvidersToIntegrations(ctx context.Context
 
 	if err != nil {
 		return fmt.Errorf("failed to update invoices: %w", err)
+	}
+
+	return nil
+}
+
+// seedPlatformIntegrationType crea el tipo de integración para Plataforma (órdenes manuales)
+func (r *Repository) seedPlatformIntegrationType(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	integrationType := models.IntegrationType{
+		Model:       gorm.Model{ID: 6},
+		Name:        "Plataforma",
+		Code:        "platform",
+		CategoryID:  ptrUint(6), // platform category
+		IsActive:    true,
+		Description: "Órdenes creadas directamente en la plataforma",
+		Icon:        "squares-plus",
+	}
+
+	var existing models.IntegrationType
+	err := db.Where("id = ?", 6).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		if err := db.Create(&integrationType).Error; err != nil {
+			return fmt.Errorf("failed to create platform integration type: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// seedPlatformIntegrationsForBusinesses crea una integración de plataforma por cada negocio activo que no tenga una
+func (r *Repository) seedPlatformIntegrationsForBusinesses(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	err := db.Exec(`
+		INSERT INTO integrations (name, code, category, integration_type_id, business_id, is_active, is_default, created_by_id, created_at, updated_at)
+		SELECT 'Plataforma', CONCAT('platform_', b.id), 'platform', 6, b.id, true, false, 1, NOW(), NOW()
+		FROM business b
+		WHERE b.deleted_at IS NULL
+		AND NOT EXISTS (
+			SELECT 1 FROM integrations i
+			WHERE i.business_id = b.id
+			AND i.integration_type_id = 6
+			AND i.deleted_at IS NULL
+		)
+	`).Error
+
+	if err != nil {
+		return fmt.Errorf("failed to seed platform integrations for businesses: %w", err)
 	}
 
 	return nil

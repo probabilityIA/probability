@@ -228,13 +228,13 @@ func (r *Repository) CreateResource(ctx context.Context, resource domain.Resourc
 		return 0, err
 	}
 
-	// Si el recurso tiene business_type_id, crear relaciones con todos los businesses de ese tipo
-	if resource.BusinessTypeID > 0 {
-		if err := r.createBusinessRelationsForResource(tx, modelResource.ID, resource.BusinessTypeID); err != nil {
-			tx.Rollback()
-			r.logger.Error().Err(err).Uint("resource_id", modelResource.ID).Uint("business_type_id", resource.BusinessTypeID).Msg("Error al crear relaciones con businesses")
-			return 0, err
-		}
+	// Crear relaciones con businesses:
+	// - Si tiene business_type_id: solo businesses de ese tipo
+	// - Si no tiene: todos los businesses
+	if err := r.createBusinessRelationsForResource(tx, modelResource.ID, resource.BusinessTypeID); err != nil {
+		tx.Rollback()
+		r.logger.Error().Err(err).Uint("resource_id", modelResource.ID).Uint("business_type_id", resource.BusinessTypeID).Msg("Error al crear relaciones con businesses")
+		return 0, err
 	}
 
 	// Confirmar transacción
@@ -251,17 +251,21 @@ func (r *Repository) CreateResource(ctx context.Context, resource domain.Resourc
 	return modelResource.ID, nil
 }
 
-// createBusinessRelationsForResource crea relaciones entre el recurso y todos los businesses del tipo especificado
+// createBusinessRelationsForResource crea relaciones entre el recurso y todos los businesses.
+// Si businessTypeID > 0, solo crea para businesses de ese tipo. Si es 0, crea para todos.
 func (r *Repository) createBusinessRelationsForResource(tx *gorm.DB, resourceID uint, businessTypeID uint) error {
-	// Obtener todos los businesses del tipo especificado
 	var businesses []models.Business
-	if err := tx.Where("business_type_id = ?", businessTypeID).Find(&businesses).Error; err != nil {
-		r.logger.Error().Err(err).Uint("business_type_id", businessTypeID).Msg("Error al obtener businesses del tipo")
+	query := tx.Model(&models.Business{})
+	if businessTypeID > 0 {
+		query = query.Where("business_type_id = ?", businessTypeID)
+	}
+	if err := query.Find(&businesses).Error; err != nil {
+		r.logger.Error().Err(err).Uint("business_type_id", businessTypeID).Msg("Error al obtener businesses")
 		return err
 	}
 
 	if len(businesses) == 0 {
-		r.logger.Info().Uint("business_type_id", businessTypeID).Msg("No hay businesses de este tipo, no se crean relaciones")
+		r.logger.Info().Uint("business_type_id", businessTypeID).Msg("No hay businesses, no se crean relaciones")
 		return nil
 	}
 

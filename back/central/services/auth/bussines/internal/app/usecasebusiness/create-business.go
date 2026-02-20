@@ -165,6 +165,12 @@ func (uc *BusinessUseCase) CreateBusiness(ctx context.Context, request domain.Bu
 		return nil, fmt.Errorf("error al guardar el negocio en la base de datos: %w", err)
 	}
 
+	// Auto-crear integración de plataforma para el negocio
+	if err := uc.repository.CreatePlatformIntegration(ctx, businessID); err != nil {
+		uc.log.Warn().Err(err).Uint("business_id", businessID).
+			Msg("Failed to auto-create platform integration")
+	}
+
 	// Obtener el negocio creado
 	created, err := uc.repository.GetBusinessByID(ctx, businessID)
 	if err != nil {

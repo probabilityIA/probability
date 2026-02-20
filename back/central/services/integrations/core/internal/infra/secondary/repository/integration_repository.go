@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
@@ -178,9 +179,15 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 	}
 	if filters.Category != nil {
 		// Filtrar por categoría a través de integration_types -> integration_categories
+		// Soporta múltiples categorías separadas por coma (e.g. "ecommerce,platform")
 		query = query.Joins("JOIN integration_types it ON integrations.integration_type_id = it.id").
-			Joins("JOIN integration_categories ic ON it.category_id = ic.id").
-			Where("ic.code = ?", *filters.Category)
+			Joins("JOIN integration_categories ic ON it.category_id = ic.id")
+		categories := strings.Split(*filters.Category, ",")
+		if len(categories) == 1 {
+			query = query.Where("ic.code = ?", categories[0])
+		} else {
+			query = query.Where("ic.code IN ?", categories)
+		}
 	}
 	if filters.BusinessID != nil {
 		query = query.Where("business_id = ?", *filters.BusinessID)

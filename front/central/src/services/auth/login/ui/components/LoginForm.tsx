@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { loginAction, getRolesPermissionsAction, loginServerAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
+import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-theme';
 import { useRouter } from 'next/navigation';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 
@@ -68,6 +69,13 @@ export const LoginForm = () => {
 
                     if (response.data.businesses) {
                         TokenStorage.setBusinessesData(response.data.businesses);
+                    }
+
+                    // Aplicar tema de colores del business
+                    if (!response.data.is_super_admin && response.data.businesses?.length > 0) {
+                        applyBusinessTheme(response.data.businesses[0]);
+                    } else {
+                        resetTheme();
                     }
 
                     // Obtener roles y permisos (cookie se envía automáticamente)

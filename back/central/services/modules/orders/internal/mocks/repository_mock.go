@@ -86,6 +86,11 @@ func (m *RepositoryMock) GetFirstIntegrationIDByBusinessID(ctx context.Context, 
 	return args.Get(0).(uint), args.Error(1)
 }
 
+func (m *RepositoryMock) GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
+	args := m.Called(ctx, businessID)
+	return args.Get(0).(uint), args.Error(1)
+}
+
 // ============================================
 // VALIDATION
 // ============================================

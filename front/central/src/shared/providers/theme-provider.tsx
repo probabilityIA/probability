@@ -43,15 +43,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 /**
  * Aplica los colores del negocio activo a las CSS variables
  */
+const DEFAULT_COLORS = {
+  primary: '#0f172a',
+  secondary: '#be185d',
+  tertiary: '#06b6d4',
+  quaternary: '#f59e0b',
+};
+
 function applyBusinessColors() {
   const colors = TokenStorage.getBusinessColors();
 
-  if (colors) {
-    document.documentElement.style.setProperty('--color-primary', colors.primary || '');
-    document.documentElement.style.setProperty('--color-secondary', colors.secondary || '');
-    document.documentElement.style.setProperty('--color-tertiary', colors.tertiary || '');
-    document.documentElement.style.setProperty('--color-quaternary', colors.quaternary || '');
-  }
+  document.documentElement.style.setProperty('--color-primary', colors?.primary || DEFAULT_COLORS.primary);
+  document.documentElement.style.setProperty('--color-secondary', colors?.secondary || DEFAULT_COLORS.secondary);
+  document.documentElement.style.setProperty('--color-tertiary', colors?.tertiary || DEFAULT_COLORS.tertiary);
+  document.documentElement.style.setProperty('--color-quaternary', colors?.quaternary || DEFAULT_COLORS.quaternary);
 }
 
 /**

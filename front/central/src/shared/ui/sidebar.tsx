@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -33,6 +33,14 @@ export function Sidebar({ user }: SidebarProps) {
   const [invoicingOpen, setInvoicingOpen] = useState(false);
   const [iamOpen, setIamOpen] = useState(false);
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
+
+  const businessLogo = useMemo(() => {
+    if (isSuperAdmin) return null;
+    const businesses = TokenStorage.getBusinessesData();
+    if (!businesses || !permissions?.business_id) return null;
+    const active = businesses.find(b => b.id === permissions.business_id);
+    return active?.logo_url || null;
+  }, [isSuperAdmin, permissions?.business_id]);
 
   useEffect(() => {
     // When primary sidebar collapses, ensure submenus collapse too
@@ -62,9 +70,10 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Verificar permisos para cada módulo
 
-  // Empresas y Recursos: Solo para super admins (Roles de Sistema/Plataforma)
-  const canViewBusinesses = isSuperAdmin;
+  // Recursos: Solo para super admins (Plataforma)
   const canViewResources = isSuperAdmin;
+  // Empresas: Visible para super admins y usuarios de negocio con permiso
+  const canViewBusinesses = isSuperAdmin || hasPermission('Empresas', 'Read');
 
   // IAM Core: Visible para super admins Y administradores de negocio
   // Agregamos variantes de nombres de recursos para robustez
@@ -85,10 +94,10 @@ export function Sidebar({ user }: SidebarProps) {
   // Integraciones: Visible para negocio (para crear integraciones)
   const canViewIntegrations = isSuperAdmin || user?.role === 'Administrador' || hasPermission('Integraciones', 'Read') || hasPermission('Integrations', 'Read');
 
-  // Facturación: Visible para administradores de negocio
-  const canViewInvoices = isSuperAdmin || hasPermission('Facturas', 'Read') || hasPermission('Invoices', 'Read');
-  const canViewInvoicingProviders = isSuperAdmin || hasPermission('Proveedores de Facturación', 'Read');
-  const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Configuración de Facturación', 'Read');
+  // Facturación: Usa recurso único "Facturacion" de la BD (ID 10)
+  const canViewInvoices = isSuperAdmin || hasPermission('Facturacion', 'Read');
+  const canViewInvoicingProviders = isSuperAdmin || hasPermission('Facturacion', 'Read');
+  const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Facturacion', 'Read');
 
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
@@ -192,14 +201,22 @@ export function Sidebar({ user }: SidebarProps) {
           {/* Logo */}
           <div className="flex items-center justify-center py-4 transition-all duration-300">
             <div className={`relative transition-all duration-300 flex items-center justify-center ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}>
-              <Image
-                src={primaryExpanded ? "/logo2recortado.png" : "/logo.ico"}
-                alt="Probability Logo"
-                fill
-                className="object-contain"
-                priority
-                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-              />
+              {businessLogo ? (
+                <img
+                  src={businessLogo}
+                  alt="Business Logo"
+                  className={`object-contain transition-all duration-300 ${primaryExpanded ? 'max-w-full max-h-full' : 'w-8 h-8 rounded'}`}
+                />
+              ) : (
+                <Image
+                  src={primaryExpanded ? "/logo2recortado.png" : "/logo.ico"}
+                  alt="Probability Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                />
+              )}
             </div>
           </div>
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
