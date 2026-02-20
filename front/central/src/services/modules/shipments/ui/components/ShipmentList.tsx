@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge, Button } from '@/shared/ui';
+import { useHasPermission } from '@/shared/contexts/permissions-context';
 import { getShipmentsAction, trackShipmentAction, cancelShipmentAction } from '../../infra/actions';
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import {
@@ -251,7 +252,8 @@ export default function ShipmentList() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { permissions, isSuperAdmin } = usePermissions();
-
+    const canCreate = useHasPermission('Envios', 'Create');
+    const canDelete = useHasPermission('Envios', 'Delete');
     const [loading, setLoading] = useState(true);
     const [shipments, setShipments] = useState<Shipment[]>([]);
     const [page, setPage] = useState(1);
@@ -343,14 +345,16 @@ export default function ShipmentList() {
                     <h2 className="text-xl font-bold text-gray-900">Envíos</h2>
                     {total > 0 && <p className="text-sm text-gray-500 mt-0.5">{total} envío{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>}
                 </div>
-                <button
-                    onClick={() => setIsManualModalOpen(true)}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all active:scale-95"
-                    style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-                >
-                    <Plus size={16} />
-                    Agregar Envío
-                </button>
+                {canCreate && (
+                    <button
+                        onClick={() => setIsManualModalOpen(true)}
+                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all active:scale-95"
+                        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                    >
+                        <Plus size={16} />
+                        Agregar Envío
+                    </button>
+                )}
             </div>
 
             {/* ─── Filters ─── */}

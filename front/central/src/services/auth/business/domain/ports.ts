@@ -20,6 +20,8 @@ export interface IBusinessRepository {
     createBusiness(data: CreateBusinessDTO): Promise<SingleResponse<Business>>;
     updateBusiness(id: number, data: UpdateBusinessDTO): Promise<SingleResponse<Business>>;
     deleteBusiness(id: number): Promise<ActionResponse>;
+    activateBusiness(id: number): Promise<ActionResponse>;
+    deactivateBusiness(id: number): Promise<ActionResponse>;
 
     // Configured Resources
     getConfiguredResources(params?: GetConfiguredResourcesParams): Promise<PaginatedResponse<BusinessConfiguredResources>>;

@@ -29,6 +29,7 @@ type IBusinessRepository interface {
 	GetBusinessesWithConfiguredResourcesPaginated(ctx context.Context, page, perPage int, businessID *uint, businessTypeID *uint) ([]BusinessWithConfiguredResourcesResponse, int64, error)
 	GetBusinessByIDWithConfiguredResources(ctx context.Context, businessID uint) (*BusinessWithConfiguredResourcesResponse, error)
 	ToggleBusinessResourceActive(ctx context.Context, businessID uint, resourceID uint, active bool) error
+	ToggleBusinessActive(ctx context.Context, businessID uint, active bool) error
 }
 
 // IS3Service define las operaciones de almacenamiento en S3

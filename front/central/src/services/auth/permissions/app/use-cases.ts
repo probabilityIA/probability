@@ -5,6 +5,7 @@ import {
     UpdatePermissionDTO
 } from '../domain/types';
 
+
 export class PermissionUseCases {
     constructor(private repository: IPermissionRepository) { }
 
@@ -34,5 +35,9 @@ export class PermissionUseCases {
 
     async deletePermission(id: number) {
         return this.repository.deletePermission(id);
+    }
+
+    async createPermissionsBulk(permissions: CreatePermissionDTO[]) {
+        return this.repository.createPermissionsBulk(permissions);
     }
 }

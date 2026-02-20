@@ -7,13 +7,15 @@ import { Modal } from '@/shared/ui/modal';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { Business, GetBusinessesParams, ConfiguredResource, BusinessConfiguredResources } from '../../domain/types';
 import { BusinessForm } from './BusinessForm';
-import { 
-    getBusinessesAction, 
-    deleteBusinessAction, 
+import {
+    getBusinessesAction,
+    deleteBusinessAction,
     getBusinessTypesAction,
     getBusinessConfiguredResourcesAction,
     activateResourceAction,
-    deactivateResourceAction
+    deactivateResourceAction,
+    activateBusinessAction,
+    deactivateBusinessAction
 } from '../../infra/actions';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { BusinessType } from '../../domain/types';
@@ -32,6 +34,25 @@ export const BusinessList: React.FC = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [editingBusiness, setEditingBusiness] = useState<Business | null>(null);
     const [deleteId, setDeleteId] = useState<number | null>(null);
+
+    const [previewLogo, setPreviewLogo] = useState<{ url: string; name: string } | null>(null);
+    const [togglingBusiness, setTogglingBusiness] = useState<number | null>(null);
+
+    const handleToggleBusinessActive = async (business: Business) => {
+        setTogglingBusiness(business.id);
+        try {
+            if (business.is_active) {
+                await deactivateBusinessAction(business.id);
+            } else {
+                await activateBusinessAction(business.id);
+            }
+            await loadBusinesses();
+        } catch (err: any) {
+            setError(err.message || 'Error al cambiar estado del negocio');
+        } finally {
+            setTogglingBusiness(null);
+        }
+    };
 
     // Estado para modal de recursos
     const [showResourcesModal, setShowResourcesModal] = useState(false);
@@ -292,13 +313,10 @@ export const BusinessList: React.FC = () => {
                                     ID
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Logo
+                                </th>
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Nombre
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Código
-                                </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tipo
                                 </th>
                                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                     Activo
@@ -311,13 +329,13 @@ export const BusinessList: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                                         Cargando negocios...
                                     </td>
                                 </tr>
                             ) : businesses.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                                         No hay negocios disponibles
                                     </td>
                                 </tr>
@@ -327,25 +345,37 @@ export const BusinessList: React.FC = () => {
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                             {business.id}
                                         </td>
+                                        <td className="px-6 py-4 whitespace-nowrap">
+                                            {business.logo_url ? (
+                                                <img
+                                                    src={business.logo_url}
+                                                    alt={business.name}
+                                                    className="w-10 h-10 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                                                    onClick={() => setPreviewLogo({ url: business.logo_url!, name: business.name })}
+                                                />
+                                            ) : (
+                                                <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                    <span className="text-sm font-medium text-gray-600">
+                                                        {business.name.charAt(0).toUpperCase()}
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                                             {business.name}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {business.code || '-'}
-                                        </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                            {business.business_type?.name || business.business_type_id || '-'}
-                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
-                                            <span
-                                                className={`px-2 py-1 text-xs font-medium rounded-full ${
+                                            <button
+                                                onClick={() => handleToggleBusinessActive(business)}
+                                                disabled={togglingBusiness === business.id}
+                                                className={`px-3 py-1 text-xs font-medium rounded-full transition-colors duration-200 disabled:opacity-50 disabled:cursor-wait ${
                                                     business.is_active
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-red-100 text-red-800'
+                                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                        : 'bg-red-100 text-red-800 hover:bg-red-200'
                                                 }`}
                                             >
-                                                {business.is_active ? 'Sí' : 'No'}
-                                            </span>
+                                                {togglingBusiness === business.id ? '...' : business.is_active ? 'Activo' : 'Inactivo'}
+                                            </button>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                             <div className="flex justify-end gap-2">
@@ -479,6 +509,22 @@ export const BusinessList: React.FC = () => {
                 onConfirm={handleDelete}
                 onClose={() => setDeleteId(null)}
             />
+
+            {/* Modal preview logo */}
+            <Modal
+                isOpen={!!previewLogo}
+                onClose={() => setPreviewLogo(null)}
+                title={previewLogo?.name || ''}
+                size="lg"
+            >
+                <div className="flex justify-center p-4">
+                    <img
+                        src={previewLogo?.url}
+                        alt={previewLogo?.name}
+                        className="max-w-full max-h-96 object-contain rounded-xl"
+                    />
+                </div>
+            </Modal>
 
             {/* Modal de configuración de recursos */}
             <Modal

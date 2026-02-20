@@ -5,7 +5,8 @@ import {
     SingleResponse,
     CreatePermissionDTO,
     UpdatePermissionDTO,
-    ActionResponse
+    ActionResponse,
+    BulkCreatePermissionsResponse
 } from './types';
 
 export interface IPermissionRepository {
@@ -16,4 +17,5 @@ export interface IPermissionRepository {
     createPermission(data: CreatePermissionDTO): Promise<SingleResponse<Permission>>;
     updatePermission(id: number, data: UpdatePermissionDTO): Promise<SingleResponse<Permission>>;
     deletePermission(id: number): Promise<ActionResponse>;
+    createPermissionsBulk(permissions: CreatePermissionDTO[]): Promise<BulkCreatePermissionsResponse>;
 }

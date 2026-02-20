@@ -188,6 +188,14 @@ export class BusinessApiRepository implements IBusinessRepository {
         });
     }
 
+    async activateBusiness(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/businesses/${id}/activate`, { method: 'PUT' });
+    }
+
+    async deactivateBusiness(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/businesses/${id}/deactivate`, { method: 'PUT' });
+    }
+
     // --- Business Types ---
 
     async getBusinessTypes(): Promise<PaginatedResponse<BusinessType>> {

@@ -12,11 +12,15 @@ import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';
 import { Label } from '@/shared/ui/label';
 import { useToast } from '@/shared/providers/toast-provider';
+import { useHasPermission } from '@/shared/contexts/permissions-context';
 import { Plus, Edit2, Trash2, CheckCircle, MapPin, Phone, Mail, Building, X } from 'lucide-react';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 
 export function OriginAddressManager() {
     const { showToast } = useToast();
+    const canCreate = useHasPermission('Envios', 'Create');
+    const canUpdate = useHasPermission('Envios', 'Update');
+    const canDelete = useHasPermission('Envios', 'Delete');
     const [addresses, setAddresses] = useState<OriginAddress[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<OriginAddress | null>(null);
@@ -42,10 +46,6 @@ export function OriginAddressManager() {
     const [citySearch, setCitySearch] = useState('');
     const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
 
-    useEffect(() => {
-        loadAddresses();
-    }, []);
-
     const loadAddresses = async () => {
         const result = await getOriginAddressesAction();
         if (result.success && result.data) {
@@ -54,6 +54,10 @@ export function OriginAddressManager() {
             showToast(result.message || 'Error al cargar direcciones', 'error');
         }
     };
+
+    useEffect(() => {
+        loadAddresses();
+    }, []);
 
     const handleCitySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -161,7 +165,7 @@ export function OriginAddressManager() {
                     <h2 className="text-2xl font-bold text-gray-800">Direcciones de Origen</h2>
                     <p className="text-gray-500 text-sm">Gestiona los lugares desde donde envías tus productos.</p>
                 </div>
-                {!isFormOpen && (
+                {!isFormOpen && canCreate && (
                     <Button onClick={() => setIsFormOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>
                         Nueva Dirección
                     </Button>
@@ -310,14 +314,16 @@ export function OriginAddressManager() {
                                 </div>
                             </div>
                             <div className="flex gap-1">
-                                <button
-                                    onClick={() => handleEdit(address)}
-                                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
-                                    title="Editar"
-                                >
-                                    <Edit2 className="w-4 h-4" />
-                                </button>
-                                {!address.is_default && (
+                                {canUpdate && (
+                                    <button
+                                        onClick={() => handleEdit(address)}
+                                        className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                        title="Editar"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                )}
+                                {canDelete && !address.is_default && (
                                     <button
                                         onClick={() => handleDelete(address.id)}
                                         className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
@@ -357,7 +363,7 @@ export function OriginAddressManager() {
                             </div>
                         </div>
 
-                        {!address.is_default && (
+                        {canUpdate && !address.is_default && (
                             <button
                                 onClick={() => handleSetDefault(address.id)}
                                 className="w-full mt-5 py-2 text-[11px] font-bold border border-gray-200 rounded-lg text-gray-500 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all uppercase tracking-wide"
@@ -375,9 +381,11 @@ export function OriginAddressManager() {
                         </div>
                         <h4 className="text-gray-900 font-bold mb-1">Sin direcciones guardadas</h4>
                         <p className="text-gray-500 text-sm max-w-xs mb-6">Configura tus bodegas o domicilios para generar guías con un solo clic.</p>
-                        <Button onClick={() => setIsFormOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>
-                            Agregar mi primera dirección
-                        </Button>
+                        {canCreate && (
+                            <Button onClick={() => setIsFormOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>
+                                Agregar mi primera dirección
+                            </Button>
+                        )}
                     </div>
                 )}
             </div>
