@@ -17,6 +17,7 @@ const RESOURCE_ROUTE_MAP: Record<string, string> = {
     'Integraciones': '/integrations',
     'Configuración de Notificaciones': '/notification-config',
     'Estado de Ordenes': '/order-status',
+    'Facturacion': '/invoicing',
 };
 
 // Mapeo inverso: rutas a recursos

@@ -85,10 +85,10 @@ export function Sidebar({ user }: SidebarProps) {
   // Integraciones: Visible para negocio (para crear integraciones)
   const canViewIntegrations = isSuperAdmin || user?.role === 'Administrador' || hasPermission('Integraciones', 'Read') || hasPermission('Integrations', 'Read');
 
-  // Facturación: Visible para administradores de negocio
-  const canViewInvoices = isSuperAdmin || hasPermission('Facturas', 'Read') || hasPermission('Invoices', 'Read');
-  const canViewInvoicingProviders = isSuperAdmin || hasPermission('Proveedores de Facturación', 'Read');
-  const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Configuración de Facturación', 'Read');
+  // Facturación: Usa recurso único "Facturacion" de la BD (ID 10)
+  const canViewInvoices = isSuperAdmin || hasPermission('Facturacion', 'Read');
+  const canViewInvoicingProviders = isSuperAdmin || hasPermission('Facturacion', 'Read');
+  const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Facturacion', 'Read');
 
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
