@@ -26,11 +26,15 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRe
 
 	// Lógica para plataforma manual (numeración automática)
 	if req.Platform == "manual" {
-		// Asignar integración por defecto si no trae una
+		// Asignar integración de plataforma si no trae una
 		if req.IntegrationID == 0 {
-			intID, err := uc.repo.GetFirstIntegrationIDByBusinessID(ctx, *req.BusinessID)
+			intID, err := uc.repo.GetPlatformIntegrationIDByBusinessID(ctx, *req.BusinessID)
 			if err != nil {
-				return nil, fmt.Errorf("error finding a default integration for manual order: %w", err)
+				// Fallback si no existe la integración de plataforma
+				intID, err = uc.repo.GetFirstIntegrationIDByBusinessID(ctx, *req.BusinessID)
+				if err != nil {
+					return nil, fmt.Errorf("error finding integration for manual order: %w", err)
+				}
 			}
 			req.IntegrationID = intID
 		}

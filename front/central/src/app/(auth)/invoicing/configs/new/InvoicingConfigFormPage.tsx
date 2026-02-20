@@ -29,7 +29,7 @@ export function InvoicingConfigFormPage() {
   const [selectedInvoicingIntegrationId, setSelectedInvoicingIntegrationId] = useState<number | null>(null);
   const [selectedEcommerceIntegrationIds, setSelectedEcommerceIntegrationIds] = useState<number[]>([]);
   const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
-  const [currentCategory, setCurrentCategory] = useState<'ecommerce' | 'invoicing'>('invoicing');
+  const [currentCategory, setCurrentCategory] = useState<string>('invoicing');
 
   const businessId = permissions?.business_id || 0;
   const isSuperAdmin = !businessId || businessId === 0;
@@ -178,7 +178,7 @@ export function InvoicingConfigFormPage() {
                   key={integration.id}
                   onClick={() => {
                     setSelectedInvoicingIntegrationId(integration.id);
-                    setCurrentCategory('ecommerce'); // Cambiar a e-commerce para el siguiente paso
+                    setCurrentCategory('ecommerce,platform'); // Cambiar a e-commerce + plataforma para el siguiente paso
                   }}
                   className="border-2 border-gray-200 rounded-lg p-4 cursor-pointer hover:border-green-500 hover:bg-green-50 transition-all"
                 >
@@ -212,10 +212,10 @@ export function InvoicingConfigFormPage() {
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold">
-                {isSuperAdmin ? 'Paso 3' : 'Paso 2'}: Selecciona tiendas de E-commerce
+                {isSuperAdmin ? 'Paso 3' : 'Paso 2'}: Selecciona origen de órdenes
               </h2>
               <p className="text-sm text-gray-600 mt-1">
-                Selecciona una o más tiendas cuyas órdenes se facturarán automáticamente
+                Selecciona una o más fuentes de órdenes cuyas órdenes se facturarán automáticamente
               </p>
             </div>
             <Button
@@ -233,7 +233,7 @@ export function InvoicingConfigFormPage() {
 
           {integrations.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <p>No hay integraciones de e-commerce disponibles.</p>
+              <p>No hay fuentes de órdenes disponibles.</p>
               <p className="text-sm mt-1">
                 Primero debes conectar una tienda (Shopify, MercadoLibre, etc.)
               </p>
@@ -276,12 +276,16 @@ export function InvoicingConfigFormPage() {
                           }}
                           className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        {integration.integration_type?.image_url && (
+                        {integration.integration_type?.image_url ? (
                           <img
                             src={integration.integration_type.image_url}
                             alt={integration.name}
                             className="w-10 h-10 object-contain"
                           />
+                        ) : (
+                          <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
+                            <span className="text-indigo-600 text-lg font-bold">P</span>
+                          </div>
                         )}
                         <div>
                           <h3 className="font-semibold text-gray-900">
@@ -341,7 +345,7 @@ export function InvoicingConfigFormPage() {
 
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <p className="text-xs text-blue-600 font-medium mb-2">
-                  TIENDAS E-COMMERCE ({selectedEcommerceIntegrationIds.length})
+                  FUENTES DE ÓRDENES ({selectedEcommerceIntegrationIds.length})
                 </p>
                 <div className="space-y-2">
                   {selectedEcommerceIntegrationIds.map((id) => {
@@ -366,11 +370,11 @@ export function InvoicingConfigFormPage() {
               size="sm"
               onClick={() => {
                 setSelectedEcommerceIntegrationIds([]);
-                setCurrentCategory('ecommerce');
+                setCurrentCategory('ecommerce,platform');
               }}
               className="mr-2"
             >
-              Cambiar tiendas
+              Cambiar fuentes
             </Button>
             <Button
               variant="secondary"

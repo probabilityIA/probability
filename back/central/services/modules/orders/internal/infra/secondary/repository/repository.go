@@ -619,6 +619,18 @@ func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (
 	return count, err
 }
 
+// GetPlatformIntegrationIDByBusinessID obtiene la integración de plataforma para un negocio
+func (r *Repository) GetPlatformIntegrationIDByBusinessID(ctx context.Context, businessID uint) (uint, error) {
+	var integration models.Integration
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND integration_type_id = 6 AND deleted_at IS NULL", businessID).
+		First(&integration).Error
+	if err != nil {
+		return 0, fmt.Errorf("platform integration not found for business %d: %w", businessID, err)
+	}
+	return integration.ID, nil
+}
+
 // GetLastManualOrderNumber obtiene el último número de secuencia para órdenes manuales
 func (r *Repository) GetLastManualOrderNumber(ctx context.Context, businessID uint) (int, error) {
 	var lastOrder models.Order

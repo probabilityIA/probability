@@ -221,3 +221,25 @@ func (r *Repository) ToggleBusinessActive(ctx context.Context, businessID uint, 
 	r.logger.Info().Uint("business_id", businessID).Bool("active", active).Msg("[business_repository] Estado del business actualizado exitosamente")
 	return nil
 }
+
+// CreatePlatformIntegration crea la integración de plataforma para un negocio si no existe
+func (r *Repository) CreatePlatformIntegration(ctx context.Context, businessID uint) error {
+	var count int64
+	r.database.Conn(ctx).Model(&models.Integration{}).
+		Where("business_id = ? AND integration_type_id = 6 AND deleted_at IS NULL", businessID).
+		Count(&count)
+	if count > 0 {
+		return nil
+	}
+
+	integration := models.Integration{
+		Name:              "Plataforma",
+		Code:              fmt.Sprintf("platform_%d", businessID),
+		Category:          "platform",
+		IntegrationTypeID: 6,
+		BusinessID:        &businessID,
+		IsActive:          true,
+		CreatedByID:       1,
+	}
+	return r.database.Conn(ctx).Create(&integration).Error
+}
