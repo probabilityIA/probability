@@ -88,10 +88,10 @@ func NewRandomDataGenerator() *RandomDataGenerator {
 
 // GenerateCustomer genera un cliente aleatorio
 func (g *RandomDataGenerator) GenerateCustomer() *domain.Customer {
-	// Usar datos específicos de Sebastian Camacho para testing
-	firstName := "Sebastian"
-	lastName := "Camacho"
-	email := "sebastian.camacho@example.com"
+	// Usar datos específicos de Carlos Arrieta para testing
+	firstName := "Carlos"
+	lastName := "Arrieta"
+	email := "carlos.arrieta@example.com"
 	phone := "+573023406789"
 
 	now := time.Now()

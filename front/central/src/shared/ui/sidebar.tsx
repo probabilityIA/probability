@@ -70,9 +70,10 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Verificar permisos para cada módulo
 
-  // Empresas y Recursos: Solo para super admins (Roles de Sistema/Plataforma)
-  const canViewBusinesses = isSuperAdmin;
+  // Recursos: Solo para super admins (Plataforma)
   const canViewResources = isSuperAdmin;
+  // Empresas: Visible para super admins y usuarios de negocio con permiso
+  const canViewBusinesses = isSuperAdmin || hasPermission('Empresas', 'Read');
 
   // IAM Core: Visible para super admins Y administradores de negocio
   // Agregamos variantes de nombres de recursos para robustez
