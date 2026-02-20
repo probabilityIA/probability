@@ -64,6 +64,26 @@ export const createShipmentAction = async (req: CreateShipmentRequest) => {
     }
 };
 
+export const quoteShipmentAction = async (req: any) => {
+    try {
+        const data = await (await getUseCases()).quoteShipment(req);
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Quote Shipment Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al cotizar envío' };
+    }
+};
+
+export const generateGuideAction = async (req: any) => {
+    try {
+        const data = await (await getUseCases()).generateGuide(req);
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Generate Guide Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al generar guía' };
+    }
+};
+
 // Origin Addresses Actions
 export const getOriginAddressesAction = async () => {
     try {

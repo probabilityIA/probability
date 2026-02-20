@@ -37,7 +37,7 @@ func (r *Repository) CreateOrder(ctx context.Context, order *entities.Probabilit
 	if order.ExternalID == "" {
 		return fmt.Errorf("error: intentando insertar orden sin external_id - OrderNumber: %s", order.OrderNumber)
 	}
-	if order.IntegrationID == 0 {
+	if order.IntegrationID == 0 && order.Platform != "manual" {
 		return fmt.Errorf("error: intentando insertar orden sin integration_id - ExternalID: %s", order.ExternalID)
 	}
 	if order.BusinessID == nil || *order.BusinessID == 0 {

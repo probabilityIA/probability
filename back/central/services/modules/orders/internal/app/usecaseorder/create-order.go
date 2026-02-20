@@ -30,9 +30,12 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRe
 		if req.IntegrationID == 0 {
 			intID, err := uc.repo.GetFirstIntegrationIDByBusinessID(ctx, *req.BusinessID)
 			if err != nil {
-				return nil, fmt.Errorf("error finding a default integration for manual order: %w", err)
+				// No bloqueamos la creación si no hay integración, permitimos 0 para manuales
+				uc.logger.Warn().Err(err).Msg("No default integration found for manual order, proceeding with ID 0")
+				req.IntegrationID = 0
+			} else {
+				req.IntegrationID = intID
 			}
-			req.IntegrationID = intID
 		}
 
 		// Generar ExternalID si no lo trae (usamos timestamp + algo aleatorio)

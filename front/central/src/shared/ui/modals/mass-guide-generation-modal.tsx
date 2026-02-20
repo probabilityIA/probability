@@ -4,10 +4,35 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/shared/ui';
 import { Order } from '@/services/modules/orders/domain/types';
 import { getOrdersAction } from '@/services/modules/orders/infra/actions';
-import { ShipmentApiRepository } from '@/services/modules/shipments/infra/repository/api-repository';
+import { quoteShipmentAction, generateGuideAction } from '@/services/modules/shipments/infra/actions';
 import { EnvioClickQuoteRequest, EnvioClickRate } from '@/services/modules/shipments/domain/types';
 import { getWalletBalanceAction } from '@/services/modules/wallet/infra/actions';
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+
+const normalizeString = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+
+const findDaneCode = (city: string, state: string) => {
+    const targetCity = normalizeString(city);
+    const targetState = normalizeString(state);
+
+    const entries = Object.entries(danes);
+
+    // 1. Try exact match with city and state
+    const exactMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity &&
+        normalizeString(data.departamento) === targetState
+    );
+    if (exactMatch) return exactMatch[0];
+
+    // 2. Try match with city only
+    const cityMatch = entries.find(([_, data]: [string, any]) =>
+        normalizeString(data.ciudad) === targetCity
+    );
+    if (cityMatch) return cityMatch[0];
+
+    return null;
+};
 
 interface MassGuideGenerationModalProps {
     isOpen: boolean;
@@ -36,7 +61,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<OrderWithQuote | null>(null);
     const [isEditingOrder, setIsEditingOrder] = useState(false);
 
-    const repo = new ShipmentApiRepository();
+    // const repo = new ShipmentApiRepository(); // Eliminado para usar Server Actions
 
     useEffect(() => {
         if (isOpen && step === 'select') {
@@ -132,15 +157,15 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     },
                 };
 
-                const response = await repo.quoteShipment(quotePayload);
-                if (response.data?.rates && response.data.rates.length > 0) {
-                    const cheapestRate = response.data.rates.reduce((prev, curr) =>
+                const response = await quoteShipmentAction(quotePayload);
+                if (response.success && response.data?.data?.rates && response.data.data.rates.length > 0) {
+                    const cheapestRate = response.data.data.rates.reduce((prev: EnvioClickRate, curr: EnvioClickRate) =>
                         curr.flete < prev.flete ? curr : prev
                     );
                     quotedOrders.push({ ...order, quote: cheapestRate });
                     total += cheapestRate.flete + (cheapestRate.minimumInsurance ?? 0);
                 } else {
-                    quotedOrders.push({ ...order, quoteError: 'No hay tarifas disponibles' });
+                    quotedOrders.push({ ...order, quoteError: response.message || 'No hay tarifas disponibles' });
                 }
             } catch (err: any) {
                 quotedOrders.push({ ...order, quoteError: err.message || 'Error al cotizar' });
@@ -169,14 +194,16 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         for (let i = 0; i < ordersToGenerate.length; i++) {
             const order = ordersToGenerate[i];
             try {
+                const destDane = findDaneCode(order.shipping_city || "", order.shipping_state || "") || "11001000";
+
                 const generatePayload: EnvioClickQuoteRequest = {
                     idRate: order.quote!.idRate,
-                    myShipmentReference: order.order_number,
+                    myShipmentReference: "Orden " + (order.internal_number || order.order_number),
                     external_order_id: order.order_number,
                     order_uuid: order.id,
                     requestPickup: false,
                     pickupDate: new Date().toISOString().split('T')[0],
-                    insurance: false,
+                    insurance: true, // Re-enable insurance as default
                     description: `Orden ${order.order_number}`,
                     contentValue: order.total_amount || 10000,
                     includeGuideCost: false,
@@ -188,33 +215,37 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         length: order.length || 10,
                     }],
                     origin: {
-                        daneCode: '11001000',
-                        address: 'Calle 1 # 1-1',
+                        daneCode: '11001000', // Still defaulting Bogota for origin as we don't have business address here easily
+                        address: 'Calle Principal',
                         company: 'Mi Empresa',
                         firstName: 'Admin',
                         lastName: 'User',
                         email: 'admin@example.com',
                         phone: '3001234567',
                         suburb: 'Centro',
-                        crossStreet: 'Calle 2',
-                        reference: 'Edificio principal',
+                        crossStreet: 'Calle Principal',
+                        reference: 'Oficina',
                     },
                     destination: {
-                        daneCode: '11001000',
+                        daneCode: destDane,
                         address: order.shipping_street || 'Dirección no especificada',
                         company: order.customer_name || 'Cliente',
                         firstName: order.customer_name?.split(' ')[0] || 'Cliente',
-                        lastName: order.customer_name?.split(' ')[1] || 'Apellido',
+                        lastName: order.customer_name?.split(' ').slice(1).join(' ') || 'Apellido',
                         email: order.customer_email || 'cliente@example.com',
                         phone: order.customer_phone || '3009876543',
-                        suburb: 'Barrio',
-                        crossStreet: 'Calle principal',
+                        suburb: order.shipping_state || 'Barrio',
+                        crossStreet: order.shipping_street || 'Calle principal',
                         reference: 'Casa',
                     },
                 };
 
-                await repo.generateGuide(generatePayload);
-                setGeneratedCount(prev => prev + 1);
+                const genRes = await generateGuideAction(generatePayload);
+                if (genRes.success && genRes.data) {
+                    setGeneratedCount(prev => prev + 1);
+                } else {
+                    throw new Error(genRes.message || "Error generando guía");
+                }
             } catch (err: any) {
                 setFailedCount(prev => prev + 1);
                 errors.push(`Orden ${order.order_number}: ${err.message || 'Error desconocido'}`);

@@ -356,7 +356,10 @@ func (r *Repository) GetOriginAddressByID(ctx context.Context, id uint) (*domain
 	}
 
 	return &domain.OriginAddress{
-		Model:        dbAddress.Model,
+		ID:           dbAddress.ID,
+		CreatedAt:    dbAddress.CreatedAt,
+		UpdatedAt:    dbAddress.UpdatedAt,
+		DeletedAt:    dbAddress.DeletedAt,
 		BusinessID:   dbAddress.BusinessID,
 		Alias:        dbAddress.Alias,
 		Company:      dbAddress.Company,
@@ -383,7 +386,10 @@ func (r *Repository) ListOriginAddressesByBusiness(ctx context.Context, business
 	addresses := make([]domain.OriginAddress, len(dbAddresses))
 	for i, dbAddress := range dbAddresses {
 		addresses[i] = domain.OriginAddress{
-			Model:        dbAddress.Model,
+			ID:           dbAddress.ID,
+			CreatedAt:    dbAddress.CreatedAt,
+			UpdatedAt:    dbAddress.UpdatedAt,
+			DeletedAt:    dbAddress.DeletedAt,
 			BusinessID:   dbAddress.BusinessID,
 			Alias:        dbAddress.Alias,
 			Company:      dbAddress.Company,
@@ -413,7 +419,10 @@ func (r *Repository) GetDefaultOriginAddress(ctx context.Context, businessID uin
 	}
 
 	return &domain.OriginAddress{
-		Model:        dbAddress.Model,
+		ID:           dbAddress.ID,
+		CreatedAt:    dbAddress.CreatedAt,
+		UpdatedAt:    dbAddress.UpdatedAt,
+		DeletedAt:    dbAddress.DeletedAt,
 		BusinessID:   dbAddress.BusinessID,
 		Alias:        dbAddress.Alias,
 		Company:      dbAddress.Company,
@@ -433,7 +442,6 @@ func (r *Repository) GetDefaultOriginAddress(ctx context.Context, businessID uin
 
 func (r *Repository) UpdateOriginAddress(ctx context.Context, address *domain.OriginAddress) error {
 	dbAddress := &models.OriginAddress{
-		Model:        address.Model,
 		BusinessID:   address.BusinessID,
 		Alias:        address.Alias,
 		Company:      address.Company,
@@ -449,6 +457,11 @@ func (r *Repository) UpdateOriginAddress(ctx context.Context, address *domain.Or
 		PostalCode:   address.PostalCode,
 		IsDefault:    address.IsDefault,
 	}
+	dbAddress.ID = address.ID
+	dbAddress.CreatedAt = address.CreatedAt
+	dbAddress.UpdatedAt = address.UpdatedAt
+	dbAddress.DeletedAt = address.DeletedAt
+
 	return r.db.Conn(ctx).Save(dbAddress).Error
 }
 
@@ -469,3 +482,5 @@ func (r *Repository) SetDefaultOriginAddress(ctx context.Context, businessID, ad
 		return nil
 	})
 }
+
+

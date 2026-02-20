@@ -196,11 +196,11 @@ func mapEnvioClickError(originalErr string) string {
 	if strings.Contains(lowerErr, "dimensions") || strings.Contains(lowerErr, "height") || strings.Contains(lowerErr, "width") || strings.Contains(lowerErr, "length") {
 		return "Las dimensiones del paquete son inválidas"
 	}
-	if strings.Contains(lowerErr, "missing") || strings.Contains(lowerErr, "falta") {
-		return "Faltan datos obligatorios para generar la guía"
+	if strings.Contains(lowerErr, "missing") || strings.Contains(lowerErr, "falta") || strings.Contains(lowerErr, "unprocessed entity") {
+		return "Error de validación: Faltan datos obligatorios o hay datos inválidos en la solicitud"
 	}
 	if strings.Contains(lowerErr, "phone") || strings.Contains(lowerErr, "telefóno") {
-		return "El número de teléfono es inválido"
+		return "error: el número de teléfono es inválido o tiene formato incorrecto"
 	}
 
 	return originalErr
