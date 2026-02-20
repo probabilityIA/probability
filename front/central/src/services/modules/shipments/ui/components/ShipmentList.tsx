@@ -1,21 +1,268 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge, Button } from '@/shared/ui';
 import { getShipmentsAction, trackShipmentAction, cancelShipmentAction } from '../../infra/actions';
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
-import { Search, Package, Truck, Calendar, MapPin, X, Eye, CreditCard, ExternalLink, RefreshCw, AlertTriangle, Plus } from 'lucide-react';
+import {
+    Search, Package, Truck, Calendar, MapPin, X, RefreshCw,
+    AlertTriangle, Plus, ChevronLeft, ChevronRight, FileText,
+    Download, CheckCircle2, Clock, XCircle, Navigation
+} from 'lucide-react';
 import { ManualShipmentModal } from './ManualShipmentModal';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+
+// Carga dinámica del mapa para evitar SSR issues
+const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
+    ssr: false,
+    loading: () => (
+        <div className="flex items-center justify-center h-full bg-gray-50 rounded-lg">
+            <RefreshCw size={20} className="animate-spin text-gray-400" />
+        </div>
+    ),
+});
+
+// ─── Helpers ───────────────────────────────────────────────────────────────
+
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
+    delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <CheckCircle2 size={12} /> },
+    in_transit: { label: 'En tránsito', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Truck size={12} /> },
+    pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock size={12} /> },
+    failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={12} /> },
+};
+
+function StatusBadge({ status }: { status: string }) {
+    const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-600 border-gray-200', icon: null };
+    return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.color}`}>
+            {cfg.icon}
+            {cfg.label}
+        </span>
+    );
+}
+
+function formatDate(dateStr?: string) {
+    if (!dateStr) return null;
+    return new Date(dateStr).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+// Extract city from destination_address (last word before any comma group tends to be city)
+function extractCity(destination?: string): string | null {
+    if (!destination) return null;
+    const parts = destination.split(',').map(s => s.trim()).filter(Boolean);
+    return parts.length > 1 ? parts[parts.length - 1] : null;
+}
+
+// ─── Tracking Detail Panel ──────────────────────────────────────────────────
+
+interface TrackingDetailProps {
+    shipment: Shipment;
+    onClose: () => void;
+    onCancel: (id: string) => void;
+    cancelingId: string | null;
+}
+
+function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDetailProps) {
+    const [tracking, setTracking] = useState<{ loading: boolean; data?: any; error?: string }>({ loading: false });
+
+    // Parse destination address for map
+    const destination = shipment.destination_address || '';
+    const city = extractCity(destination) || '';
+
+    useEffect(() => {
+        if (shipment.tracking_number) {
+            setTracking({ loading: true });
+            trackShipmentAction(shipment.tracking_number).then(res => {
+                if ('data' in res && res.success) {
+                    setTracking({ loading: false, data: res.data });
+                } else {
+                    setTracking({ loading: false, error: (res as any).message || 'No disponible' });
+                }
+            }).catch(err => {
+                setTracking({ loading: false, error: err.message });
+            });
+        }
+    }, [shipment.id, shipment.tracking_number]);
+
+    const canelId = shipment.tracking_number || shipment.id.toString();
+
+    return (
+        <div className="flex flex-col h-full">
+            {/* Header */}
+            <div className="flex items-start justify-between p-5 border-b border-gray-100">
+                <div className="flex-1 min-w-0">
+                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Detalle de Envío</p>
+                    <h3 className="text-base font-bold text-gray-900 truncate">
+                        {shipment.client_name || 'Cliente desconocido'}
+                    </h3>
+                    {shipment.destination_address && (
+                        <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500">
+                            <MapPin size={11} className="flex-shrink-0" />
+                            <span className="truncate">{shipment.destination_address}</span>
+                        </div>
+                    )}
+                </div>
+                <button
+                    onClick={onClose}
+                    className="ml-3 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                >
+                    <X size={16} />
+                </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto">
+                {/* Info strip */}
+                <div className="grid grid-cols-2 gap-3 p-4 border-b border-gray-50">
+                    <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Tracking</p>
+                        <p className="text-sm font-mono font-semibold text-gray-900 break-all">
+                            {shipment.tracking_number || 'Sin tracking'}
+                        </p>
+                    </div>
+                    <div className="bg-gray-50 rounded-lg p-3">
+                        <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Estado</p>
+                        <StatusBadge status={shipment.status} />
+                    </div>
+                    {shipment.carrier && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Transportista</p>
+                            <div className="flex items-center gap-1.5">
+                                <Truck size={13} className="text-gray-400" />
+                                <p className="text-sm font-semibold text-gray-900">{shipment.carrier}</p>
+                            </div>
+                        </div>
+                    )}
+                    {shipment.shipped_at && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Enviado</p>
+                            <div className="flex items-center gap-1.5">
+                                <Calendar size={13} className="text-gray-400" />
+                                <p className="text-sm font-semibold text-gray-900">{formatDate(shipment.shipped_at)}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2 px-4 pt-3 pb-2">
+                    {shipment.guide_url && (
+                        <a
+                            href={shipment.guide_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold transition-colors shadow-sm"
+                        >
+                            <FileText size={13} />
+                            Ver Guía
+                        </a>
+                    )}
+                    {shipment.tracking_url && (
+                        <a
+                            href={shipment.tracking_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold transition-colors"
+                        >
+                            <Navigation size={13} />
+                            Rastrear
+                        </a>
+                    )}
+                    <button
+                        onClick={() => onCancel(canelId)}
+                        disabled={cancelingId === canelId}
+                        className="flex items-center justify-center gap-1 py-2 px-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold transition-colors disabled:opacity-50"
+                        title="Cancelar envío"
+                    >
+                        {cancelingId === canelId
+                            ? <RefreshCw size={13} className="animate-spin" />
+                            : <><X size={13} /> Cancelar</>
+                        }
+                    </button>
+                </div>
+
+                {/* Tracking Timeline */}
+                <div className="px-4 py-3">
+                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Historial de rastreo</p>
+                    {tracking.loading ? (
+                        <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+                            <RefreshCw size={16} className="animate-spin" />
+                            <span>Consultando rastreo...</span>
+                        </div>
+                    ) : tracking.error ? (
+                        <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
+                            <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
+                            <span>{tracking.error}</span>
+                        </div>
+                    ) : tracking.data?.history?.length > 0 ? (
+                        <div className="relative pl-5">
+                            <div className="absolute left-1.5 top-1 bottom-2 w-px bg-gray-200" />
+                            <div className="space-y-4">
+                                {tracking.data.history.map((event: EnvioClickTrackHistory, idx: number) => (
+                                    <div key={idx} className="relative">
+                                        <div className={`absolute -left-5 top-0.5 w-3 h-3 rounded-full ring-2 ring-white ${idx === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
+                                        <div>
+                                            <div className="flex items-baseline justify-between gap-2">
+                                                <p className={`text-sm font-semibold ${idx === 0 ? 'text-blue-700' : 'text-gray-800'}`}>{event.status}</p>
+                                                <p className="text-[10px] text-gray-400 flex-shrink-0">{event.date}</p>
+                                            </div>
+                                            {event.description && <p className="text-xs text-gray-500 mt-0.5">{event.description}</p>}
+                                            {event.location && (
+                                                <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-400">
+                                                    <MapPin size={9} />
+                                                    <span>{event.location}</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    ) : !shipment.tracking_number ? (
+                        <p className="text-xs text-gray-400 italic">Este envío no tiene número de tracking.</p>
+                    ) : (
+                        <p className="text-xs text-gray-400 italic">No hay historial disponible.</p>
+                    )}
+                </div>
+
+                {/* Reference Map */}
+                {destination && (
+                    <div className="px-4 pb-5">
+                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mapa de referencia</p>
+                        <div style={{ height: '200px' }} className="rounded-xl overflow-hidden border border-gray-200">
+                            <MapComponent
+                                address={destination}
+                                city={city}
+                                height="200px"
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}
+
+// ─── Main Component ─────────────────────────────────────────────────────────
 
 export default function ShipmentList() {
     const router = useRouter();
     const searchParams = useSearchParams();
+    const { permissions, isSuperAdmin } = usePermissions();
+
     const [loading, setLoading] = useState(true);
     const [shipments, setShipments] = useState<Shipment[]>([]);
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [total, setTotal] = useState(0);
+    const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
+    const [cancelingId, setCancelingId] = useState<string | null>(null);
+    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+
+    // Auto-inject business_id for non-super-admins
+    const defaultBusinessId = (!isSuperAdmin && permissions?.business_id) ? permissions.business_id : undefined;
 
     const [filters, setFilters] = useState<GetShipmentsParams>({
         page: Number(searchParams.get('page')) || 1,
@@ -24,21 +271,17 @@ export default function ShipmentList() {
         order_id: searchParams.get('order_id') || undefined,
         carrier: searchParams.get('carrier') || undefined,
         status: searchParams.get('status') || undefined,
+        business_id: defaultBusinessId,
     });
-
-    // Tracking State
-    const [trackingModal, setTrackingModal] = useState<{ open: boolean; loading: boolean; data?: any; error?: string }>({
-        open: false,
-        loading: false
-    });
-
-    const [cancelingId, setCancelingId] = useState<string | null>(null);
-    const [isManualModalOpen, setIsManualModalOpen] = useState(false);
 
     const fetchShipments = async () => {
         setLoading(true);
         try {
-            const response = await getShipmentsAction(filters);
+            const params: GetShipmentsParams = {
+                ...filters,
+                business_id: defaultBusinessId ?? filters.business_id,
+            };
+            const response = await getShipmentsAction(params);
             if (response.success) {
                 setShipments(response.data);
                 setPage(response.page);
@@ -58,41 +301,29 @@ export default function ShipmentList() {
 
     const updateFilters = (newFilters: Partial<GetShipmentsParams>) => {
         const updated = { ...filters, ...newFilters };
-        if (!newFilters.page && newFilters.page !== 0) {
-            updated.page = 1;
-        }
+        if (!newFilters.page && newFilters.page !== 0) updated.page = 1;
         setFilters(updated);
 
         const params = new URLSearchParams();
         Object.entries(updated).forEach(([key, value]) => {
-            if (value) params.set(key, String(value));
+            if (value !== undefined && value !== null && value !== '' && key !== 'business_id') {
+                params.set(key, String(value));
+            }
         });
         router.push(`?${params.toString()}`);
     };
 
-    const handleTrack = async (trackingNumber: string) => {
-        setTrackingModal({ open: true, loading: true });
-        try {
-            const response = await trackShipmentAction(trackingNumber);
-            if ('data' in response && response.success) {
-                setTrackingModal({ open: true, loading: false, data: response.data });
-            } else {
-                setTrackingModal({ open: true, loading: false, error: response.message });
-            }
-        } catch (error: any) {
-            setTrackingModal({ open: true, loading: false, error: error.message });
-        }
-    };
-
     const handleCancel = async (id: string) => {
-        if (!confirm('¿Estás seguro de que deseas cancelar este envío en EnvioClick?')) return;
-
+        if (!confirm('¿Estás seguro de que deseas cancelar este envío?')) return;
         setCancelingId(id);
         try {
             const response = await cancelShipmentAction(id);
             if (response.success) {
-                alert('Envío cancelado exitosamente');
-                fetchShipments(); // Refresh list
+                fetchShipments();
+                if (selectedShipment) {
+                    const idStr = selectedShipment.tracking_number || selectedShipment.id.toString();
+                    if (idStr === id) setSelectedShipment(null);
+                }
             } else {
                 alert(`Error: ${response.message}`);
             }
@@ -104,51 +335,59 @@ export default function ShipmentList() {
     };
 
     return (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center">
-                <h2 className="text-xl font-bold text-gray-800">Envíos</h2>
-                <Button onClick={() => setIsManualModalOpen(true)}>
-                    <Plus size={16} className="mr-2" />
+        <div className="flex flex-col h-full gap-4" style={{ height: 'calc(100vh - 120px)' }}>
+
+            {/* ─── Top bar ─── */}
+            <div className="flex justify-between items-center flex-shrink-0">
+                <div>
+                    <h2 className="text-xl font-bold text-gray-900">Envíos</h2>
+                    {total > 0 && <p className="text-sm text-gray-500 mt-0.5">{total} envío{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>}
+                </div>
+                <button
+                    onClick={() => setIsManualModalOpen(true)}
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all active:scale-95"
+                    style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
+                >
+                    <Plus size={16} />
                     Agregar Envío
-                </Button>
+                </button>
             </div>
 
-            {/* Filters */}
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="relative flex-1">
+            {/* ─── Filters ─── */}
+            <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                    <div className="relative">
+                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
                             placeholder="Buscar por tracking..."
-                            className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white"
+                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-colors"
                             value={filters.tracking_number || ''}
                             onChange={(e) => updateFilters({ tracking_number: e.target.value || undefined })}
                         />
-                        <button
-                            onClick={() => filters.tracking_number && handleTrack(filters.tracking_number)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-colors disabled:opacity-50 disabled:text-gray-400"
-                            disabled={!filters.tracking_number}
-                            title="Consultar en EnvioClick"
-                        >
-                            <Search size={18} />
-                        </button>
                     </div>
-                    <input
-                        type="text"
-                        placeholder="Buscar por ID de orden..."
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white"
-                        value={filters.order_id || ''}
-                        onChange={(e) => updateFilters({ order_id: e.target.value || undefined })}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Buscar por transportista..."
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white"
-                        value={filters.carrier || ''}
-                        onChange={(e) => updateFilters({ carrier: e.target.value || undefined })}
-                    />
+                    <div className="relative">
+                        <Package size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Buscar por ID de orden..."
+                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-colors"
+                            value={filters.order_id || ''}
+                            onChange={(e) => updateFilters({ order_id: e.target.value || undefined })}
+                        />
+                    </div>
+                    <div className="relative">
+                        <Truck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                            type="text"
+                            placeholder="Buscar por transportista..."
+                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-colors"
+                            value={filters.carrier || ''}
+                            onChange={(e) => updateFilters({ carrier: e.target.value || undefined })}
+                        />
+                    </div>
                     <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 bg-white transition-colors"
                         value={filters.status || ''}
                         onChange={(e) => updateFilters({ status: e.target.value || undefined })}
                     >
@@ -161,313 +400,135 @@ export default function ShipmentList() {
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Tracking
-                                </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Orden
-                                </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
-                                    Transportista
-                                </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Estado
-                                </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
-                                    Enviado
-                                </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
-                                    Entrega Est.
-                                </th>
-                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Última Milla
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
-                            {loading ? (
-                                <tr>
-                                    <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
-                                        Cargando envíos...
-                                    </td>
-                                </tr>
-                            ) : shipments.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
-                                        No hay envíos disponibles
-                                    </td>
-                                </tr>
-                            ) : (
-                                shipments.map((shipment) => (
-                                    <tr key={shipment.id} className="hover:bg-gray-50">
-                                        <td className="px-3 sm:px-6 py-4">
-                                            <div className="font-medium text-gray-900 text-sm">
-                                                {shipment.tracking_number || 'Sin tracking'}
-                                            </div>
-                                            {shipment.tracking_url && (
-                                                <a
-                                                    href={shipment.tracking_url}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-xs text-blue-600 hover:underline flex items-center gap-1 mt-1"
-                                                >
-                                                    <ExternalLink size={12} /> External
-                                                </a>
-                                            )}
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4">
-                                            {shipment.order_id ? (
-                                                <span className="font-mono text-sm text-gray-900 bg-gray-100 px-2 py-1 rounded">
-                                                    {shipment.order_id.substring(0, 8)}...
-                                                </span>
-                                            ) : (
-                                                <div className="flex flex-col">
-                                                    <span className="text-sm font-medium text-gray-900">{shipment.client_name || 'Desconocido'}</span>
-                                                    <span className="text-xs text-gray-500">{shipment.destination_address || '-'}</span>
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
-                                            <div className="flex flex-col">
-                                                <div className="flex items-center gap-2">
-                                                    <Truck size={14} className="text-gray-400" />
-                                                    <span className="text-sm font-medium text-gray-700">{shipment.carrier || 'Manual'}</span>
-                                                </div>
-                                                {shipment.carrier_code && (
-                                                    <span className="text-[10px] text-gray-500 ml-5 uppercase font-bold tracking-wider">{shipment.carrier_code}</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                            <Badge type={
-                                                shipment.status === 'delivered' ? 'success' :
-                                                    shipment.status === 'in_transit' ? 'primary' :
-                                                        shipment.status === 'failed' ? 'error' : 'warning'
-                                            }>
-                                                {shipment.status}
-                                            </Badge>
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
-                                            <div className="flex items-center gap-2">
-                                                <Calendar size={14} className="text-gray-400" />
-                                                {shipment.shipped_at ? new Date(shipment.shipped_at).toLocaleDateString() : '-'}
-                                            </div>
-                                        </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right">
-                                            <div className="flex items-center justify-end gap-2">
-                                                <Button
-                                                    size="sm"
-                                                    variant="outline"
-                                                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                                    onClick={() => handleCancel(shipment.tracking_number || shipment.id.toString())}
-                                                    disabled={cancelingId === (shipment.tracking_number || shipment.id.toString())}
-                                                    title="Cancelar envío"
-                                                >
-                                                    {cancelingId === (shipment.tracking_number || shipment.id.toString()) ? (
-                                                        <RefreshCw size={14} className="animate-spin" />
-                                                    ) : (
-                                                        <X size={14} />
-                                                    )}
-                                                </Button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+            {/* ─── Split Panel ─── */}
+            <div className="flex gap-4 flex-1 min-h-0">
 
-                {/* Tracking Modal */}
-                {trackingModal.open && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                            <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-white sticky top-0">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-50 rounded-lg text-blue-600">
-                                        <Truck size={24} />
-                                    </div>
-                                    <div>
-                                        <h3 className="text-lg font-bold text-gray-900">Estado del Envío</h3>
-                                        <p className="text-sm text-gray-500">Rastreo oficial de EnvioClick</p>
-                                    </div>
-                                </div>
+                {/* LEFT — Shipment cards list */}
+                <div className="w-1/2 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    {/* List */}
+                    <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
+                        {loading ? (
+                            <div className="flex flex-col items-center justify-center h-40 gap-3 text-gray-400">
+                                <RefreshCw size={24} className="animate-spin" />
+                                <p className="text-sm">Cargando envíos...</p>
+                            </div>
+                        ) : shipments.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 gap-2 text-gray-400">
+                                <Package size={32} strokeWidth={1.5} />
+                                <p className="text-sm">No hay envíos disponibles</p>
+                            </div>
+                        ) : (
+                            shipments.map((shipment) => {
+                                const isSelected = selectedShipment?.id === shipment.id;
+                                const city = extractCity(shipment.destination_address);
+                                const title = shipment.client_name || 'Cliente desconocido';
+                                const subtitle = city
+                                    ? `→ ${city}`
+                                    : shipment.destination_address
+                                        ? `→ ${shipment.destination_address}`
+                                        : shipment.order_id
+                                            ? `Orden: ${shipment.order_id.substring(0, 8)}...`
+                                            : null;
+
+                                return (
+                                    <button
+                                        key={shipment.id}
+                                        onClick={() => setSelectedShipment(isSelected ? null : shipment)}
+                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${isSelected ? 'bg-blue-50 border-l-[3px] border-blue-500' : 'border-l-[3px] border-transparent'
+                                            }`}
+                                    >
+                                        <div className="flex items-start justify-between gap-2">
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    <p className="text-sm font-semibold text-gray-900 truncate">{title}</p>
+                                                    {subtitle && (
+                                                        <p className="text-xs text-gray-400 truncate flex-shrink-0">{subtitle}</p>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 flex-wrap">
+                                                    <StatusBadge status={shipment.status} />
+                                                    {shipment.tracking_number && (
+                                                        <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                            #{shipment.tracking_number.slice(-8)}
+                                                        </span>
+                                                    )}
+                                                    {shipment.carrier && (
+                                                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                                            <Truck size={9} />{shipment.carrier}
+                                                        </span>
+                                                    )}
+                                                    {shipment.shipped_at && (
+                                                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                                            <Calendar size={9} />{formatDate(shipment.shipped_at)}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            <ChevronRight
+                                                size={16}
+                                                className={`flex-shrink-0 mt-0.5 transition-colors ${isSelected ? 'text-blue-500' : 'text-gray-300'}`}
+                                            />
+                                        </div>
+                                    </button>
+                                );
+                            })
+                        )}
+                    </div>
+
+                    {/* Pagination */}
+                    {totalPages > 1 && (
+                        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
+                            <p className="text-xs text-gray-500">
+                                Pág. <span className="font-semibold text-gray-700">{page}</span> de {totalPages}
+                            </p>
+                            <div className="flex items-center gap-1">
                                 <button
-                                    onClick={() => setTrackingModal({ open: false, loading: false })}
-                                    className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                                    onClick={() => updateFilters({ page: page - 1 })}
+                                    disabled={page === 1}
+                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
-                                    <X size={20} className="text-gray-400" />
+                                    <ChevronLeft size={15} />
+                                </button>
+                                <button
+                                    onClick={() => updateFilters({ page: page + 1 })}
+                                    disabled={page === totalPages}
+                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                >
+                                    <ChevronRight size={15} />
                                 </button>
                             </div>
+                        </div>
+                    )}
+                </div>
 
-                            <div className="flex-1 overflow-y-auto p-6">
-                                {trackingModal.loading ? (
-                                    <div className="flex flex-col items-center justify-center py-12 gap-4">
-                                        <RefreshCw size={40} className="text-blue-500 animate-spin" />
-                                        <p className="text-gray-500 font-medium">Consultando API de EnvioClick...</p>
-                                    </div>
-                                ) : trackingModal.error ? (
-                                    <div className="flex flex-col items-center justify-center py-8 gap-4 text-center">
-                                        <div className="p-4 bg-red-50 rounded-full text-red-500">
-                                            <AlertTriangle size={48} />
-                                        </div>
-                                        <div>
-                                            <p className="text-gray-900 font-bold">No pudimos obtener el rastreo</p>
-                                            <p className="text-red-600 text-sm mt-1">{trackingModal.error}</p>
-                                        </div>
-                                        <Button variant="outline" onClick={() => setTrackingModal({ open: false, loading: false })}>
-                                            Cerrar
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-8">
-                                        <div className="grid grid-cols-2 gap-4">
-                                            <div className="bg-gray-50 p-4 rounded-xl">
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Carrier</p>
-                                                <p className="text-gray-900 font-semibold">{trackingModal.data?.carrier}</p>
-                                            </div>
-                                            <div className="bg-gray-50 p-4 rounded-xl">
-                                                <p className="text-[10px] text-gray-500 uppercase font-bold tracking-wider mb-1">Estado Actual</p>
-                                                <p className="text-blue-600 font-bold">{trackingModal.data?.status}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="relative pl-8 space-y-8 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-100">
-                                            {trackingModal.data?.history?.map((event: EnvioClickTrackHistory, idx: number) => (
-                                                <div key={idx} className="relative">
-                                                    <div className={`absolute -left-8 p-1.5 rounded-full ring-4 ring-white z-10 ${idx === 0 ? 'bg-blue-500' : 'bg-gray-300'}`}>
-                                                        <div className="w-2 h-2" />
-                                                    </div>
-                                                    <div>
-                                                        <div className="flex items-center justify-between mb-1">
-                                                            <p className={`text-sm font-bold ${idx === 0 ? 'text-blue-600' : 'text-gray-900'}`}>{event.status}</p>
-                                                            <p className="text-xs text-gray-400">{event.date}</p>
-                                                        </div>
-                                                        <p className="text-sm text-gray-600 leading-relaxed">{event.description}</p>
-                                                        {event.location && (
-                                                            <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
-                                                                <MapPin size={12} />
-                                                                <span>{event.location}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                {/* RIGHT — Detail panel */}
+                <div className="w-1/2 min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    {selectedShipment ? (
+                        <TrackingDetail
+                            shipment={selectedShipment}
+                            onClose={() => setSelectedShipment(null)}
+                            onCancel={handleCancel}
+                            cancelingId={cancelingId}
+                        />
+                    ) : (
+                        <div className="flex flex-col items-center justify-center h-full gap-4 text-gray-400 select-none">
+                            <div className="p-5 bg-gray-50 rounded-full">
+                                <Package size={36} strokeWidth={1.2} className="text-gray-300" />
+                            </div>
+                            <div className="text-center">
+                                <p className="text-sm font-medium text-gray-500">Selecciona un envío</p>
+                                <p className="text-xs text-gray-400 mt-1">para ver su información de rastreo</p>
+                            </div>
+                            <div className="flex items-center gap-1 text-xs text-gray-300">
+                                <ChevronLeft size={12} />
+                                <span>Elige de la lista</span>
                             </div>
                         </div>
-                    </div>
-                )}
-
-                {/* Pagination */}
-                {(totalPages > 1 || total > 0) && (
-                    <div className="bg-white px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200">
-                        {/* Mobile: Simple pagination */}
-                        <div className="flex-1 flex justify-between sm:hidden w-full">
-                            <Button
-                                variant="outline"
-                                onClick={() => updateFilters({ page: page - 1 })}
-                                disabled={page === 1}
-                                size="sm"
-                            >
-                                Anterior
-                            </Button>
-                            <Button
-                                variant="outline"
-                                onClick={() => updateFilters({ page: page + 1 })}
-                                disabled={page === totalPages}
-                                size="sm"
-                            >
-                                Siguiente
-                            </Button>
-                        </div>
-
-                        {/* Desktop: Full pagination */}
-                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
-                            <div className="flex items-center gap-3">
-                                <p className="text-xs sm:text-sm text-gray-700">
-                                    Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
-                                    <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
-                                    <span className="font-medium">{total}</span> resultados
-                                </p>
-                                <div className="flex items-center gap-2">
-                                    <label className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">
-                                        Mostrar:
-                                    </label>
-                                    <select
-                                        value={filters.page_size || 20}
-                                        onChange={(e) => {
-                                            const newPageSize = parseInt(e.target.value);
-                                            updateFilters({ page_size: newPageSize, page: 1 });
-                                        }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                                    >
-                                        <option value="10">10</option>
-                                        <option value="20">20</option>
-                                        <option value="50">50</option>
-                                        <option value="100">100</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-                                    <button
-                                        onClick={() => updateFilters({ page: page - 1 })}
-                                        disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Anterior
-                                    </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
-                                        Página {page} de {totalPages}
-                                    </span>
-                                    <button
-                                        onClick={() => updateFilters({ page: page + 1 })}
-                                        disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        Siguiente
-                                    </button>
-                                </nav>
-                            </div>
-                        </div>
-
-                        {/* Mobile: Page size selector */}
-                        <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
-                            <div className="flex items-center gap-2">
-                                <label className="text-xs text-gray-700 whitespace-nowrap">
-                                    Mostrar:
-                                </label>
-                                <select
-                                    value={filters.page_size || 20}
-                                    onChange={(e) => {
-                                        const newPageSize = parseInt(e.target.value);
-                                        updateFilters({ page_size: newPageSize, page: 1 });
-                                    }}
-                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                                >
-                                    <option value="10">10</option>
-                                    <option value="20">20</option>
-                                    <option value="50">50</option>
-                                    <option value="100">100</option>
-                                </select>
-                            </div>
-                            <p className="text-xs text-gray-500">
-                                Página {page} de {totalPages}
-                            </p>
-                        </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
+            {/* Modal para envío manual */}
             <ManualShipmentModal
                 isOpen={isManualModalOpen}
                 onClose={() => setIsManualModalOpen(false)}

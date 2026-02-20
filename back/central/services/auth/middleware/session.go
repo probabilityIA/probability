@@ -21,11 +21,23 @@ func SetSecureCookie(c *gin.Context, name, value string, maxAge int) {
 	var domainName string
 	var sameSite http.SameSite
 
-	if isLocal {
-		domainName = ""                 // Dejar que el navegador maneje el dominio en localhost
-		sameSite = http.SameSiteLaxMode // Lax es suficiente para localhost y no requiere Secure
+	// Si es localhost o dominios de desarrollo (ngrok), no forzar el dominio de producción
+	if isLocal || strings.Contains(host, "ngrok") || strings.Contains(host, ".dev") {
+		domainName = "" // Dejar que el navegador maneje el dominio (host-only)
+
+		if secure {
+			sameSite = http.SameSiteNoneMode // Necesario para iframes en https (ngrok)
+		} else {
+			sameSite = http.SameSiteLaxMode // Localhost http
+		}
 	} else {
-		domainName = ".probabilityia.com.co"
+		// En producción, usar el dominio raíz para compartir cookies entre subdominios
+		// Aseguramos que solo se use si realmente estamos en ese dominio
+		if strings.Contains(host, "probabilityia.com.co") {
+			domainName = ".probabilityia.com.co"
+		} else {
+			domainName = "" // Fallback para otros dominios de producción o staging
+		}
 		sameSite = http.SameSiteNoneMode
 	}
 

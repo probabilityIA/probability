@@ -20,8 +20,9 @@ func (h *ShopifyHandler) RegisterRoutes(router *gin.RouterGroup, logger log.ILog
 		shopifyGroup.POST("/connect", middleware.JWT(), h.InitiateOAuthHandler)
 		shopifyGroup.POST("/connect/custom", middleware.JWT(), h.InitiateCustomOAuthHandler)
 
-		// OAuth token retrieval - requiere autenticación JWT
-		shopifyGroup.GET("/oauth/token", middleware.JWT(), h.GetOAuthTokenHandler)
+		// OAuth token retrieval - NO requiere JWT (usa exchange_token o cookie)
+		// Se eliminó JWT porque el redirect desde Shopify a veces pierde la sesión en el frontend
+		shopifyGroup.GET("/oauth/token", h.GetOAuthTokenHandler)
 
 		// Webhook endpoint - sin autenticación JWT (Shopify valida con HMAC)
 		shopifyGroup.POST("/webhook", h.WebhookHandler)

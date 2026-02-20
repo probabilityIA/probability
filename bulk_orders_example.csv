@@ -1,0 +1,4 @@
+order_number,customer_name,customer_email,customer_phone,shipping_street,shipping_city,shipping_state,total_amount,weight,height,width,length,platform
+ORD-001,Juan Pérez,juan.perez@example.com,+573001234567,"Calle 123 # 45-67",Bogotá,Cundinamarca,50000,1,10,10,10,Manual
+ORD-002,María Garcia,maria.g@example.com,+573109876543,"Carrera 80 # 10-20",Medellín,Antioquia,120000,2,20,15,10,Instagram
+ORD-003,Carlos López,carlos.lopez@example.com,+573205551234,"Av. Siempre Viva 742",Cali,"Valle del Cauca",75000,0.5,5,10,5,WhatsApp

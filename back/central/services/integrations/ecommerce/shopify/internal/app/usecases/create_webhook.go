@@ -36,7 +36,18 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 	}
 
 	// Construir nuestra URL del webhook
-	webhookURL := fmt.Sprintf("%s/integrations/shopify/webhook", baseURL)
+	// Asegurar que usamos el prefijo /api/v1 ya que el router lo espera
+	// Si baseURL ya tiene /api/v1, lo manejamos (aunque asumimos que es el host base)
+	apiPath := "/api/v1/integrations/shopify/webhook"
+	if strings.HasSuffix(baseURL, "/") {
+		baseURL = strings.TrimSuffix(baseURL, "/")
+	}
+	// Si el usuario configuró baseURL con /api/v1, evitamos duplicarlo
+	if strings.HasSuffix(baseURL, "/api/v1") {
+		baseURL = strings.TrimSuffix(baseURL, "/api/v1")
+	}
+
+	webhookURL := fmt.Sprintf("%s%s", baseURL, apiPath)
 
 	// Validar si la URL es localhost (entorno de pruebas)
 	parsedURL, err := url.Parse(baseURL)
