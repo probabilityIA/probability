@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { getProductsAction, deleteProductAction } from '../../infra/actions';
 import { Product, GetProductsParams } from '../../domain/types';
 import { Button, Alert, Badge } from '@/shared/ui';
@@ -9,9 +9,15 @@ import ProductIntegrationsModal from './ProductIntegrationsModal';
 interface ProductListProps {
     onView?: (product: Product) => void;
     onEdit?: (product: Product) => void;
+    searchName?: string;
+    searchSku?: string;
+    searchIntegration?: string;
 }
 
-export default function ProductList({ onView, onEdit }: ProductListProps) {
+const ProductList = forwardRef(function ProductList(
+    { onView, onEdit, searchName = '', searchSku = '', searchIntegration = '' }: ProductListProps,
+    ref: any
+) {
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -29,9 +35,24 @@ export default function ProductList({ onView, onEdit }: ProductListProps) {
         page_size: 20,
     });
 
+    // Update filters when search params change
+    useEffect(() => {
+        setFilters(prev => ({
+            ...prev,
+            name: searchName || undefined,
+            sku: searchSku || undefined,
+            integration_type: searchIntegration || undefined,
+            page: 1,
+        }));
+    }, [searchName, searchSku, searchIntegration]);
+
     useEffect(() => {
         fetchProducts();
     }, [filters]);
+
+    useImperativeHandle(ref, () => ({
+        refreshProducts: fetchProducts,
+    }));
 
     const fetchProducts = async () => {
         setLoading(true);
@@ -99,69 +120,36 @@ export default function ProductList({ onView, onEdit }: ProductListProps) {
 
     return (
         <div className="space-y-4">
-            {/* Filters */}
-            <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border border-gray-200">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-                    <input
-                        type="text"
-                        placeholder="Buscar por nombre..."
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white"
-                        onChange={(e) => setFilters({ ...filters, name: e.target.value || undefined })}
-                    />
-                    <input
-                        type="text"
-                        placeholder="Buscar por SKU..."
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white"
-                        onChange={(e) => setFilters({ ...filters, sku: e.target.value || undefined })}
-                    />
-                    <select
-                        className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
-                        onChange={(e) => setFilters({ ...filters, integration_type: e.target.value || undefined })}
-                    >
-                        <option value="">Todas las integraciones</option>
-                        <option value="shopify">Shopify</option>
-                        <option value="woocommerce">WooCommerce</option>
-                        <option value="whatsapp">WhatsApp</option>
-                    </select>
-                    <button
-                        onClick={fetchProducts}
-                        className="px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto"
-                    >
-                        🔄 Actualizar
-                    </button>
-                </div>
-            </div>
-
             {/* Table */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="productTable">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                        <thead className="bg-gray-50">
-                            <tr>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <table className="min-w-full" style={{ borderCollapse: 'separate', borderSpacing: '0 10px', background: 'transparent' }}>
+                        <thead>
+                            <tr style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}>
+                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider rounded-l-lg">
                                     Producto
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden sm:table-cell">
                                     SKU
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                                     Precio
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">
                                     Stock
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
                                     Estado
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">
                                     Fecha
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-4 text-right text-xs font-bold text-white uppercase tracking-wider rounded-r-lg">
                                     Acciones
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody>
                             {products.length === 0 ? (
                                 <tr>
                                     <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
@@ -170,7 +158,7 @@ export default function ProductList({ onView, onEdit }: ProductListProps) {
                                 </tr>
                             ) : (
                                 products.map((product) => (
-                                    <tr key={product.id} className="hover:bg-gray-50">
+                                    <tr key={product.id}>
                                         <td className="px-3 sm:px-6 py-4">
                                             <div className="flex items-center">
                                                 {product.thumbnail && (
@@ -365,6 +353,91 @@ export default function ProductList({ onView, onEdit }: ProductListProps) {
                     }}
                 />
             )}
+
+        <style jsx>{`
+          /* Tabla similar a Facturas */
+          .productTable :global(.table) {
+            border-collapse: separate;
+            border-spacing: 0 10px;
+            background: transparent;
+          }
+
+          .productTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+            border: none !important;
+            background: transparent !important;
+          }
+
+          .productTable :global(.table th) {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+            color: #fff;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+          }
+
+          /* Header llamativo */
+          .productTable table th {
+            padding-top: 10px !important;
+            padding-bottom: 10px !important;
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            box-shadow: 0 10px 25px rgba(124, 58, 237, 0.18);
+          }
+
+          .productTable table thead th:first-child {
+            border-top-left-radius: 14px;
+            border-bottom-left-radius: 14px;
+          }
+
+          .productTable table thead th:last-child {
+            border-top-right-radius: 14px;
+            border-bottom-right-radius: 14px;
+          }
+
+          /* Filas con hover */
+          .productTable table tbody tr {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
+            transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+          }
+
+          /* Zebra pattern morado suave */
+          .productTable table tbody tr:nth-child(even) {
+            background: rgba(124, 58, 237, 0.03);
+          }
+
+          /* Hover effect */
+          .productTable table tbody tr:hover {
+            background: rgba(124, 58, 237, 0.06);
+            box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
+            transform: translateY(-1px);
+          }
+
+          .productTable table td {
+            border-top: none;
+          }
+
+          /* Bordes redondeados en filas */
+          .productTable table tbody td:first-child {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+          }
+
+          .productTable table tbody td:last-child {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+          }
+
+          /* Focus */
+          .productTable :global(a),
+          .productTable :global(button) {
+            outline-color: rgba(124, 58, 237, 0.35);
+          }
+        `}</style>
         </div>
     );
-}
+});
+
+export default ProductList;

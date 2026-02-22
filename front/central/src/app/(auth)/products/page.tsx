@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Button, Modal } from '@/shared/ui';
 import ProductList from '@/services/modules/products/ui/components/ProductList';
 import ProductForm from '@/services/modules/products/ui/components/ProductForm';
@@ -10,6 +10,16 @@ export default function ProductsPage() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'list' | 'create' | 'edit' | 'view'>('list');
+    const [searchName, setSearchName] = useState('');
+    const [searchSku, setSearchSku] = useState('');
+    const [searchIntegration, setSearchIntegration] = useState('');
+    const productListRef = useRef<any>(null);
+
+    const handleRefresh = () => {
+        if (productListRef.current?.refreshProducts) {
+            productListRef.current.refreshProducts();
+        }
+    };
 
     const handleCreate = () => {
         setSelectedProduct(undefined);
@@ -44,22 +54,83 @@ export default function ProductsPage() {
     };
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
-                    <p className="text-sm text-gray-500">
-                        Gestiona el catálogo de productos
+        <div className="space-y-8 p-8">
+            {/* Header: Título a la izquierda, Filtros a la derecha */}
+            <div className="flex items-start gap-6">
+                {/* Título y Descripción */}
+                <div className="flex-shrink-0 min-w-fit">
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
+                        Productos
+                    </h1>
+                    <p className="text-slate-600 text-base">
+                        Gestiona el catálogo de productos de tu negocio
                     </p>
                 </div>
-                <Button onClick={handleCreate}>
-                    + Nuevo Producto
-                </Button>
+
+                {/* Filtros y Botones */}
+                <div className="bg-gradient-to-br from-[#7c3aed]/8 to-[#6d28d9]/8 px-6 py-4 rounded-xl shadow-lg hover:shadow-xl border-2 border-[#7c3aed]/40 transition-all duration-300 backdrop-blur-sm flex-1">
+                    <div className="flex justify-between items-end gap-4">
+                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-2.5">Nombre</label>
+                            <input
+                                type="text"
+                                placeholder="Ej: Camiseta..."
+                                value={searchName}
+                                onChange={(e) => setSearchName(e.target.value)}
+                                className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-2.5">SKU</label>
+                            <input
+                                type="text"
+                                placeholder="Ej: PROD-001..."
+                                value={searchSku}
+                                onChange={(e) => setSearchSku(e.target.value)}
+                                className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-700 mb-2.5">Integraciones</label>
+                            <select
+                                value={searchIntegration}
+                                onChange={(e) => setSearchIntegration(e.target.value)}
+                                className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                            >
+                                <option value="">Todas las integraciones</option>
+                                <option value="shopify">Shopify</option>
+                                <option value="woocommerce">WooCommerce</option>
+                                <option value="whatsapp">WhatsApp</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div className="flex gap-3 flex-shrink-0">
+                        <button
+                            onClick={handleRefresh}
+                            className="group px-6 py-3 bg-gradient-to-r from-[#a855f7]/10 to-[#9333ea]/10 border-2 border-[#7c3aed]/40 hover:border-[#7c3aed] hover:from-[#7c3aed]/20 hover:to-[#6d28d9]/20 text-[#7c3aed] font-bold rounded-lg transition-all duration-300 text-sm shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                        >
+                            <span className="inline-block transition-transform duration-500 group-hover:rotate-180">↻</span>
+                            Actualizar
+                        </button>
+                        <button
+                            onClick={handleCreate}
+                            className="px-5 py-3 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white font-bold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 text-2xl font-black"
+                        >
+                            +
+                        </button>
+                    </div>
+                    </div>
+                </div>
             </div>
 
             <ProductList
+                ref={productListRef}
                 onView={handleView}
                 onEdit={handleEdit}
+                searchName={searchName}
+                searchSku={searchSku}
+                searchIntegration={searchIntegration}
             />
 
             <Modal
