@@ -9,6 +9,7 @@ import { createIntegrationAction, testConnectionRawAction } from '../../infra/ac
 
 // Importar formularios específicos por tipo de integración
 import { SoftpymesConfigForm } from '@/services/integrations/invoicing/softpymes/ui/components';
+import { FactusConfigForm } from '@/services/integrations/invoicing/factus/ui';
 import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 
 interface CreateIntegrationModalProps {
@@ -147,6 +148,15 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                         onCancel={onBack}
                     />
                 );
+
+            case 'factus':
+                return (
+                    <FactusConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
             // case 'whatsapp':
             //     return <WhatsAppConfigForm onSuccess={onSuccess} onCancel={onBack} />;
             // case 'mercadolibre':

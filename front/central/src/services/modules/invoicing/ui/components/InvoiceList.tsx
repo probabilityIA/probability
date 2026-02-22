@@ -324,6 +324,22 @@ export const InvoiceList = forwardRef(function InvoiceList(
       ),
     },
     {
+      key: 'provider',
+      label: 'Proveedor',
+      render: (_: unknown, invoice: Invoice) => (
+        invoice.provider_logo_url ? (
+          <img
+            src={invoice.provider_logo_url}
+            alt={invoice.provider_name || 'Proveedor'}
+            title={invoice.provider_name || 'Proveedor'}
+            className="h-6 w-auto object-contain"
+          />
+        ) : (
+          <span className="text-xs text-gray-400">{invoice.provider_name || '—'}</span>
+        )
+      ),
+    },
+    {
       key: 'status',
       label: 'Estado',
       render: (_: unknown, invoice: Invoice) => getStatusBadge(invoice.status),

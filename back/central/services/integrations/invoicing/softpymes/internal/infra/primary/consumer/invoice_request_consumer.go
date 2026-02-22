@@ -321,9 +321,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 	// Incluir audit data en la respuesta
 	if result.AuditData != nil {
 		resp.AuditRequestURL = result.AuditData.RequestURL
-		if payload, ok := result.AuditData.RequestPayload.(map[string]interface{}); ok {
-			resp.AuditRequestPayload = payload
-		}
+		resp.AuditRequestPayload = toMapPayload(result.AuditData.RequestPayload)
 		resp.AuditResponseStatus = result.AuditData.ResponseStatus
 		resp.AuditResponseBody = result.AuditData.ResponseBody
 	}
@@ -375,12 +373,29 @@ func (c *InvoiceRequestConsumer) createErrorResponse(
 	// Incluir audit data si está disponible (ej: cuando el HTTP request se hizo pero falló)
 	if auditData != nil {
 		resp.AuditRequestURL = auditData.RequestURL
-		if payload, ok := auditData.RequestPayload.(map[string]interface{}); ok {
-			resp.AuditRequestPayload = payload
-		}
+		resp.AuditRequestPayload = toMapPayload(auditData.RequestPayload)
 		resp.AuditResponseStatus = auditData.ResponseStatus
 		resp.AuditResponseBody = auditData.ResponseBody
 	}
 
 	return resp
+}
+
+// toMapPayload convierte cualquier valor (struct o map) a map[string]interface{} via JSON.
+func toMapPayload(v interface{}) map[string]interface{} {
+	if v == nil {
+		return nil
+	}
+	if m, ok := v.(map[string]interface{}); ok {
+		return m
+	}
+	data, err := json.Marshal(v)
+	if err != nil {
+		return nil
+	}
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		return nil
+	}
+	return result
 }

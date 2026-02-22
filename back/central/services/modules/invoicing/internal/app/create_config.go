@@ -12,13 +12,69 @@ import (
 func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) (*entities.InvoicingConfig, error) {
 	uc.log.Info(ctx).Uint("integration_id", dto.IntegrationID).Msg("Creating invoicing config")
 
-	// 1. Verificar que no existe config para esta integración
-	exists, err := uc.repo.ConfigExistsForIntegration(ctx, dto.IntegrationID)
-	if err != nil {
-		return nil, err
+	// 1. Verificar si ya existe config para esta integración
+	existingConfig, err := uc.repo.GetConfigByIntegration(ctx, dto.IntegrationID)
+	if err == nil && existingConfig != nil {
+		if existingConfig.Enabled {
+			// Config activa: bloquear — el usuario debe desactivarla primero
+			uc.log.Warn(ctx).
+				Uint("integration_id", dto.IntegrationID).
+				Uint("existing_config_id", existingConfig.ID).
+				Msg("Active config already exists for this integration")
+			return nil, errors.ErrConfigAlreadyExists
+		}
+		// Config inactiva: actualizarla con los nuevos datos (upsert)
+		uc.log.Info(ctx).
+			Uint("integration_id", dto.IntegrationID).
+			Uint("existing_config_id", existingConfig.ID).
+			Msg("Updating existing disabled config with new values")
+
+		invoicingIntegrationID := &dto.InvoicingIntegrationID
+		existingConfig.InvoicingIntegrationID = invoicingIntegrationID
+		existingConfig.Enabled = dto.Enabled
+		existingConfig.AutoInvoice = dto.AutoInvoice
+		existingConfig.Filters = dto.Filters
+		existingConfig.InvoiceConfig = dto.InvoiceConfig
+		if dto.Description != nil {
+			existingConfig.Description = *dto.Description
+		}
+
+		// Si se activa, verificar que no hay otro config activo en el negocio
+		if dto.Enabled {
+			activeConfig, err := uc.repo.GetEnabledConfigByBusiness(ctx, dto.BusinessID)
+			if err != nil {
+				return nil, err
+			}
+			if activeConfig != nil && activeConfig.ID != existingConfig.ID {
+				uc.log.Warn(ctx).
+					Uint("business_id", dto.BusinessID).
+					Uint("active_config_id", activeConfig.ID).
+					Msg("Business already has an active invoicing config")
+				return nil, errors.ErrActiveInvoicingConfigExists
+			}
+		}
+
+		if err := uc.repo.UpdateInvoicingConfig(ctx, existingConfig); err != nil {
+			uc.log.Error(ctx).Err(err).Msg("Failed to update existing config")
+			return nil, err
+		}
+		uc.log.Info(ctx).Uint("config_id", existingConfig.ID).Msg("Existing config updated successfully")
+		return existingConfig, nil
 	}
-	if exists {
-		return nil, errors.ErrConfigAlreadyExists
+
+	// 2. Si se crea activa, verificar que no hay otro config activo para este negocio
+	if dto.Enabled {
+		activeConfig, err := uc.repo.GetEnabledConfigByBusiness(ctx, dto.BusinessID)
+		if err != nil {
+			return nil, err
+		}
+		if activeConfig != nil {
+			uc.log.Warn(ctx).
+				Uint("business_id", dto.BusinessID).
+				Uint("active_config_id", activeConfig.ID).
+				Msg("Business already has an active invoicing config")
+			return nil, errors.ErrActiveInvoicingConfigExists
+		}
 	}
 
 	// 2. TODO: Validar que el proveedor existe y está activo usando integrationCore
@@ -66,6 +122,22 @@ func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateCo
 	config, err := uc.repo.GetInvoicingConfigByID(ctx, id)
 	if err != nil {
 		return nil, errors.ErrConfigNotFound
+	}
+
+	// Si se está activando, verificar que no hay otro config activo para este negocio
+	if dto.Enabled != nil && *dto.Enabled && !config.Enabled {
+		activeConfig, err := uc.repo.GetEnabledConfigByBusiness(ctx, config.BusinessID)
+		if err != nil {
+			return nil, err
+		}
+		if activeConfig != nil && activeConfig.ID != id {
+			uc.log.Warn(ctx).
+				Uint("business_id", config.BusinessID).
+				Uint("active_config_id", activeConfig.ID).
+				Uint("requested_config_id", id).
+				Msg("Cannot activate config: business already has an active invoicing config")
+			return nil, errors.ErrActiveInvoicingConfigExists
+		}
 	}
 
 	// Actualizar solo los campos proporcionados

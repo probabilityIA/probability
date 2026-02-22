@@ -63,6 +63,7 @@ export default async function RootLayout({
       </head>
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased min-h-screen flex flex-col`}
+        suppressHydrationWarning
       >
         <div className="flex-1">
           <ClientProviders>

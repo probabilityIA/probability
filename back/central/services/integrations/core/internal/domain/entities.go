@@ -46,6 +46,7 @@ type Integration struct {
 	IntegrationTypeID uint
 	IntegrationType   *IntegrationType
 	BusinessID        *uint
+	BusinessName      *string // Nombre del business asociado (cargado via Preload)
 	StoreID           string
 	IsActive          bool
 	IsDefault         bool

@@ -127,8 +127,10 @@ func (r *Repository) ListInvoices(ctx context.Context, filters map[string]interf
 
 	offset := (page - 1) * pageSize
 
-	// Ordenar y paginar
-	if err := query.Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&modelsList).Error; err != nil {
+	// Ordenar y paginar (con preload del logo del proveedor)
+	if err := query.
+		Preload("InvoicingIntegration.IntegrationType").
+		Order("created_at DESC").Offset(offset).Limit(pageSize).Find(&modelsList).Error; err != nil {
 		return nil, 0, fmt.Errorf("failed to list invoices: %w", err)
 	}
 

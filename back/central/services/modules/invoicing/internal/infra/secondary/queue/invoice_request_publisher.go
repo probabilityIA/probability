@@ -11,11 +11,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// Colas de requests por proveedor
+// QueueInvoicingRequests es la cola unificada de entrada para todas las solicitudes de facturación.
+// El router en services/integrations/invoicing/core consume esta cola y enruta
+// al proveedor correspondiente (invoicing.softpymes.requests / invoicing.factus.requests).
 const (
-	QueueSoftpymesRequests = "invoicing.softpymes.requests"
-	QueueSiigoRequests     = "invoicing.siigo.requests"
-	QueueFactusRequests    = "invoicing.factus.requests"
+	QueueInvoicingRequests = "invoicing.requests"
 )
 
 // InvoiceRequestPublisher implementa IInvoiceRequestPublisher
@@ -68,17 +68,9 @@ func (p *InvoiceRequestPublisher) PublishInvoiceRequest(ctx context.Context, req
 	return nil
 }
 
-// getQueueNameForProvider retorna el nombre de la cola según el proveedor
-func (p *InvoiceRequestPublisher) getQueueNameForProvider(provider string) string {
-	switch provider {
-	case dtos.ProviderSoftpymes:
-		return QueueSoftpymesRequests
-	case dtos.ProviderSiigo:
-		return QueueSiigoRequests
-	case dtos.ProviderFactus:
-		return QueueFactusRequests
-	default:
-		// Default a softpymes para mantener compatibilidad
-		return QueueSoftpymesRequests
-	}
+// getQueueNameForProvider retorna siempre la cola unificada invoicing.requests.
+// El router en integration/invoicing/core es quien decide a qué proveedor enrutar
+// basándose en el campo Provider del mensaje.
+func (p *InvoiceRequestPublisher) getQueueNameForProvider(_ string) string {
+	return QueueInvoicingRequests
 }

@@ -19,6 +19,9 @@ const (
 	IntegrationTypeMercadoLibre = 3
 	IntegrationTypeWoocommerce  = 4
 	IntegrationTypeInvoicing    = 5 // Softpymes - Facturación electrónica
+	IntegrationTypePlatform     = 6 // Plataforma interna
+	IntegrationTypeFactus       = 7 // Factus - Facturación electrónica
+	IntegrationTypeSiigo        = 8 // Siigo - Facturación electrónica
 )
 
 // SyncOrdersParams contiene los parámetros opcionales para sincronizar órdenes
@@ -262,6 +265,10 @@ func getIntegrationTypeCodeAsInt(code string) int {
 		return IntegrationTypeWoocommerce // 4
 	case "softpymes", "invoicing":
 		return IntegrationTypeInvoicing // 5
+	case "factus":
+		return IntegrationTypeFactus // 7
+	case "siigo":
+		return IntegrationTypeSiigo // 7
 	default:
 		return 0
 	}

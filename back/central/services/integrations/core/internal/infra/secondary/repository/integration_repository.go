@@ -224,10 +224,11 @@ func (r *Repository) ListIntegrations(ctx context.Context, filters domain.Integr
 	}
 	offset := (page - 1) * pageSize
 
-	// Obtener resultados con la relación IntegrationType y su categoría cargadas
+	// Obtener resultados con la relación IntegrationType, su categoría y Business cargadas
 	if err := query.
 		Preload("IntegrationType").
 		Preload("IntegrationType.Category").
+		Preload("Business").
 		Offset(offset).Limit(pageSize).Order("created_at DESC").Find(&integrationModels).Error; err != nil {
 		r.log.Error(ctx).Err(err).Msg("Error al listar integraciones")
 		return nil, 0, fmt.Errorf("error al listar integraciones: %w", err)
@@ -435,6 +436,11 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 		updatedByID = model.UpdatedByID
 	}
 
+	var businessName *string
+	if model.Business != nil {
+		businessName = &model.Business.Name
+	}
+
 	integration := &domain.Integration{
 		ID:                model.ID,
 		Name:              model.Name,
@@ -442,6 +448,7 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 		Category:          model.Category, // Mapear campo category desde modelo
 		IntegrationTypeID: model.IntegrationTypeID,
 		BusinessID:        businessID,
+		BusinessName:      businessName,
 		StoreID:           model.StoreID,
 		IsActive:          model.IsActive,
 		IsDefault:         model.IsDefault,

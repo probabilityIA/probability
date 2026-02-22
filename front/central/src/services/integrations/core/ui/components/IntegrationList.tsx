@@ -784,7 +784,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         { key: 'id', label: 'ID' },
         { key: 'logo', label: 'Logo' },
         { key: 'name', label: 'Nombre' },
+        { key: 'type', label: 'Tipo' },
         { key: 'category', label: 'Categoría' },
+        { key: 'business', label: 'Empresa' },
         { key: 'status', label: 'Estado' },
         { key: 'actions', label: 'Acciones' }
     ];
@@ -822,6 +824,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 )}
             </div>
         ),
+        type: (
+            <div className="text-sm text-gray-700">
+                {integration.integration_type?.name || (
+                    <span className="text-gray-400 text-xs">—</span>
+                )}
+            </div>
+        ),
         category: (
             <span
                 className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"
@@ -829,6 +838,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             >
                 {integration.category_name || integration.category || 'Sin categoría'}
             </span>
+        ),
+        business: (
+            <div className="text-sm text-gray-700">
+                {integration.business_name || (
+                    <span className="text-gray-400 text-xs">Sin empresa</span>
+                )}
+            </div>
         ),
         status: (
             <div className="flex items-center gap-2">

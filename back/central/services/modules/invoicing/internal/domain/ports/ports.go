@@ -65,6 +65,9 @@ type IRepository interface {
 	UpdateInvoicingConfig(ctx context.Context, config *entities.InvoicingConfig) error
 	DeleteInvoicingConfig(ctx context.Context, id uint) error
 	ConfigExistsForIntegration(ctx context.Context, integrationID uint) (bool, error)
+	// GetEnabledConfigByBusiness retorna la configuración activa (enabled=true) de un negocio,
+	// o nil si no existe ninguna activa. Usado para garantizar que solo un config esté activo a la vez.
+	GetEnabledConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error)
 
 	// ═══════════════════════════════════════════
 	// INVOICE SYNC LOGS
@@ -102,6 +105,16 @@ type IRepository interface {
 	GetOrderByID(ctx context.Context, orderID string) (*dtos.OrderData, error)
 	UpdateOrderInvoiceInfo(ctx context.Context, orderID string, invoiceID string, invoiceURL string) error
 	GetInvoiceableOrders(ctx context.Context, businessID uint, page, pageSize int) ([]*dtos.OrderData, int64, error)
+
+	// ============================================
+	// MÉTODOS DE CONSULTA A TABLAS DE INTEGRACIONES
+	// (Replicados localmente - no compartir repos)
+	// ============================================
+
+	// GetIntegrationTypeByIntegrationID obtiene el type_id de una integración
+	// Tabla consultada: integrations (gestionada por módulo integrations/core)
+	// Replicado localmente para determinar el proveedor de facturación dinámicamente
+	GetIntegrationTypeByIntegrationID(ctx context.Context, integrationID uint) (int, error)
 }
 
 // ═══════════════════════════════════════════════════════════════

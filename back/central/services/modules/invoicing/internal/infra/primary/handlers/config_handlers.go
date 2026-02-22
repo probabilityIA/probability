@@ -51,10 +51,7 @@ func (h *handler) CreateConfig(c *gin.Context) {
 	config, err := h.useCase.CreateConfig(ctx, dto)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Msg("Failed to create config")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "config_creation_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "config_creation_failed")
 		return
 	}
 
@@ -118,10 +115,7 @@ func (h *handler) ListConfigs(c *gin.Context) {
 	configs, err := h.useCase.ListConfigs(ctx, businessID)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Msg("Failed to list configs")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "list_configs_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "list_configs_failed")
 		return
 	}
 
@@ -149,10 +143,7 @@ func (h *handler) GetConfig(c *gin.Context) {
 	config, err := h.useCase.GetConfig(ctx, uint(id))
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("config_id", uint(id)).Msg("Failed to get config")
-		c.JSON(http.StatusNotFound, response.Error{
-			Error:   "config_not_found",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "config_not_found")
 		return
 	}
 
@@ -192,10 +183,7 @@ func (h *handler) UpdateConfig(c *gin.Context) {
 	config, err := h.useCase.UpdateConfig(ctx, uint(id), dto)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("config_id", uint(id)).Msg("Failed to update config")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "config_update_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "config_update_failed")
 		return
 	}
 
@@ -226,10 +214,7 @@ func (h *handler) DeleteConfig(c *gin.Context) {
 	err = h.useCase.DeleteConfig(ctx, uint(id))
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("config_id", uint(id)).Msg("Failed to delete config")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "config_deletion_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "config_deletion_failed")
 		return
 	}
 

@@ -5,6 +5,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify"
 	"github.com/secamc93/probability/back/central/services/integrations/events"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus"
+	invoicingcore "github.com/secamc93/probability/back/central/services/integrations/invoicing/core"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes"
 	whatsApp "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp"
 	"github.com/secamc93/probability/back/central/services/modules"
@@ -46,10 +49,27 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// E-commerce: Shopify
 	shopify.New(router, logger, config, integrationCore, rabbitMQ, db)
 
-	// Invoicing: Softpymes (Facturación Electrónica)
+	// Invoicing: Softpymes (Facturación Electrónica - type_id=5)
 	// NOTA: Softpymes NO usa base de datos - es un cliente HTTP puro + async RabbitMQ consumer
 	softpymesBundle := softpymes.New(config, logger, rabbitMQ, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeInvoicing, softpymesBundle)
+
+	// Invoicing: Factus (Facturación Electrónica - type_id=6)
+	// NOTA: Factus NO usa base de datos - es un cliente HTTP puro + async RabbitMQ consumer
+	factusBundle := factus.New(config, logger, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeFactus, factusBundle)
+
+	// Invoicing: Siigo (Facturación Electrónica - type_id=7)
+	// NOTA: Siigo NO usa base de datos - es un cliente HTTP puro + async RabbitMQ consumer
+	siigoBundle := siigo.New(config, logger, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeSiigo, siigoBundle)
+
+	// Invoicing Core: router centralizado de facturación electrónica.
+	// Consume invoicing.requests y enruta al proveedor correcto
+	// (invoicing.softpymes.requests / invoicing.factus.requests).
+	// Debe inicializarse DESPUÉS de los bundles de softpymes y factus para que
+	// las colas de proveedores ya estén declaradas cuando el router inicie.
+	invoicingcore.New(logger, rabbitMQ)
 
 	return integrationCore
 }

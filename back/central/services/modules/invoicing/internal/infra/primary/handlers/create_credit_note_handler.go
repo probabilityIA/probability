@@ -52,10 +52,7 @@ func (h *handler) CreateCreditNote(c *gin.Context) {
 	creditNote, err := h.useCase.CreateCreditNote(ctx, dto)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("invoice_id", req.InvoiceID).Msg("Failed to create credit note")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "credit_note_creation_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "credit_note_creation_failed")
 		return
 	}
 

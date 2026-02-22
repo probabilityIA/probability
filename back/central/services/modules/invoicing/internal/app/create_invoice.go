@@ -95,8 +95,13 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		return nil, err
 	}
 
-	// 7. Determinar proveedor de facturación
-	provider := dtos.ProviderSoftpymes
+	// 7. Determinar proveedor de facturación dinámicamente según tipo de integración
+	provider, err := uc.resolveProvider(ctx, integrationID)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Uint("integration_id", integrationID).Msg("Error al resolver proveedor de facturación")
+		// Fallback a softpymes para compatibilidad hacia atrás
+		provider = dtos.ProviderSoftpymes
+	}
 
 	// 8. Crear entidad de factura (estado pending)
 	invoice := &entities.Invoice{
@@ -318,6 +323,32 @@ func (uc *useCase) parseFilterConfig(filtersMap map[string]interface{}) (*entiti
 	}
 
 	return &config, nil
+}
+
+// resolveProvider determina el proveedor de facturación según el tipo de integración
+// Consulta la tabla integrations para obtener el integration_type_id y mapea al proveedor
+// Mapa: 5 (Softpymes) → "softpymes", 6 (Factus) → "factus"
+// Default: "softpymes" para compatibilidad hacia atrás
+func (uc *useCase) resolveProvider(ctx context.Context, integrationID uint) (string, error) {
+	typeID, err := uc.repo.GetIntegrationTypeByIntegrationID(ctx, integrationID)
+	if err != nil {
+		return dtos.ProviderSoftpymes, err
+	}
+
+	switch typeID {
+	case 5: // IntegrationTypeInvoicing = Softpymes
+		return dtos.ProviderSoftpymes, nil
+	case 7: // IntegrationTypeFactus
+		return dtos.ProviderFactus, nil
+	case 8: // IntegrationTypeSiigo
+		return dtos.ProviderSiigo, nil
+	default:
+		uc.log.Warn(ctx).
+			Uint("integration_id", integrationID).
+			Int("type_id", typeID).
+			Msg("Unknown integration type for invoicing, defaulting to softpymes")
+		return dtos.ProviderSoftpymes, nil
+	}
 }
 
 // handleInvoiceCreationError maneja errores durante la creación de factura

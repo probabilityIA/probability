@@ -7,13 +7,15 @@
 import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import {
-  ConfigList,
-  ConfigForm,
-  useNotificationConfigs,
-  type IntegrationNotificationConfig,
-  type CreateNotificationConfigDTO,
-  type UpdateNotificationConfigDTO,
-} from '@/services/integrations/notification-config';
+  IntegrationConfigList,
+  IntegrationConfigForm,
+  useIntegrationNotificationConfigs,
+} from '@/services/modules/notification-config/ui';
+import type {
+  IntegrationNotificationConfig,
+  CreateNotificationConfigDTO,
+  UpdateNotificationConfigDTO,
+} from '@/services/modules/notification-config/domain/integration-types';
 
 export default function NotificationConfigPage() {
   const params = useParams();
@@ -23,7 +25,7 @@ export default function NotificationConfigPage() {
   const [editingConfig, setEditingConfig] = useState<IntegrationNotificationConfig | null>(null);
   const [deletingConfig, setDeletingConfig] = useState<IntegrationNotificationConfig | null>(null);
 
-  const { createConfig, updateConfig, deleteConfig, refetch } = useNotificationConfigs({
+  const { createConfig, updateConfig, deleteConfig, refetch } = useIntegrationNotificationConfigs({
     integration_id: integrationId,
   });
 
@@ -41,7 +43,6 @@ export default function NotificationConfigPage() {
     }
   };
 
-  // Wrapper que maneja ambos tipos de submit
   const handleSubmit = async (data: CreateNotificationConfigDTO | UpdateNotificationConfigDTO) => {
     if (editingConfig) {
       await handleUpdate(data as UpdateNotificationConfigDTO);
@@ -111,7 +112,7 @@ export default function NotificationConfigPage() {
       {/* Form */}
       {showForm && (
         <div className="mb-8">
-          <ConfigForm
+          <IntegrationConfigForm
             integrationId={integrationId}
             initialData={editingConfig || undefined}
             onSubmit={handleSubmit}
@@ -125,7 +126,7 @@ export default function NotificationConfigPage() {
 
       {/* List */}
       {!showForm && (
-        <ConfigList
+        <IntegrationConfigList
           integrationId={integrationId}
           onEdit={handleEdit}
           onDelete={handleDelete}

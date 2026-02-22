@@ -40,10 +40,11 @@ var (
 
 // Errores de configuración
 var (
-	ErrConfigNotFound        = errors.New("invoicing config not found")
-	ErrConfigNotEnabled      = errors.New("invoicing config is not enabled")
-	ErrConfigAlreadyExists   = errors.New("invoicing config already exists for this integration")
-	ErrAutoInvoiceNotEnabled = errors.New("auto invoice is not enabled")
+	ErrConfigNotFound              = errors.New("invoicing config not found")
+	ErrConfigNotEnabled            = errors.New("invoicing config is not enabled")
+	ErrConfigAlreadyExists         = errors.New("invoicing config already exists for this integration")
+	ErrActiveInvoicingConfigExists = errors.New("active invoicing config already exists for this business")
+	ErrAutoInvoiceNotEnabled       = errors.New("auto invoice is not enabled")
 )
 
 // Errores de filtros

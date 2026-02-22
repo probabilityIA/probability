@@ -101,7 +101,8 @@ func (h *handler) ListInvoices(c *gin.Context) {
 	}
 
 	// Convertir a response
-	resp := mappers.InvoicesToResponse(invoices, total, page, pageSize)
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.InvoicesToResponse(invoices, total, page, pageSize, baseURL, bucket)
 
 	c.JSON(http.StatusOK, resp)
 }

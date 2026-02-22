@@ -21,8 +21,8 @@ export function InvoicingConfigFormPage() {
   const {
     integrations,
     loading: integrationsLoading,
-    refresh: refreshIntegrations,
     setFilterCategory,
+    setFilterBusinessId,
   } = useIntegrations();
   const { businesses, loading: businessesLoading } = useBusinessesSimple();
 
@@ -39,8 +39,8 @@ export function InvoicingConfigFormPage() {
 
   useEffect(() => {
     if (effectiveBusinessId) {
-      setFilterCategory(currentCategory); // Filtrar por categoría actual (ecommerce o invoicing)
-      refreshIntegrations();
+      setFilterBusinessId(effectiveBusinessId); // Filtrar por el negocio seleccionado/del usuario
+      setFilterCategory(currentCategory);       // Filtrar por categoría actual (invoicing o ecommerce)
     }
   }, [effectiveBusinessId, currentCategory]);
 
@@ -59,7 +59,7 @@ export function InvoicingConfigFormPage() {
     router.push('/invoicing/configs');
   };
 
-  if (integrationsLoading || (isSuperAdmin && businessesLoading)) {
+  if (isSuperAdmin && businessesLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
         <Spinner />
@@ -156,11 +156,15 @@ export function InvoicingConfigFormPage() {
             )}
           </div>
 
-          {integrations.length === 0 ? (
+          {integrationsLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : integrations.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <p>No hay proveedores de facturación disponibles.</p>
+              <p>No hay proveedores de facturación disponibles para este negocio.</p>
               <p className="text-sm mt-1">
-                Primero debes conectar un proveedor de facturación electrónica (Softpymes, Siigo, etc.)
+                Primero debes conectar un proveedor de facturación electrónica (Softpymes, Factus, etc.)
               </p>
               <Button
                 variant="primary"
@@ -231,9 +235,13 @@ export function InvoicingConfigFormPage() {
             </Button>
           </div>
 
-          {integrations.length === 0 ? (
+          {integrationsLoading ? (
+            <div className="flex justify-center py-8">
+              <Spinner />
+            </div>
+          ) : integrations.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
-              <p>No hay fuentes de órdenes disponibles.</p>
+              <p>No hay fuentes de órdenes disponibles para este negocio.</p>
               <p className="text-sm mt-1">
                 Primero debes conectar una tienda (Shopify, MercadoLibre, etc.)
               </p>

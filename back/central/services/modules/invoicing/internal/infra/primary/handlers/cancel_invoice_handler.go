@@ -30,10 +30,7 @@ func (h *handler) CancelInvoice(c *gin.Context) {
 	err = h.useCase.CancelInvoice(ctx, &dtos.CancelInvoiceDTO{InvoiceID: uint(id)})
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("invoice_id", uint(id)).Msg("Failed to cancel invoice")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "cancel_invoice_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "cancel_invoice_failed")
 		return
 	}
 

@@ -30,15 +30,13 @@ func (h *handler) GetInvoice(c *gin.Context) {
 	invoice, err := h.useCase.GetInvoice(ctx, uint(id))
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("invoice_id", uint(id)).Msg("Failed to get invoice")
-		c.JSON(http.StatusNotFound, response.Error{
-			Error:   "invoice_not_found",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "invoice_not_found")
 		return
 	}
 
 	// Convertir a response
-	resp := mappers.InvoiceToResponse(invoice, true) // Incluir items
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.InvoiceToResponse(invoice, true, baseURL, bucket) // Incluir items
 
 	c.JSON(http.StatusOK, resp)
 }

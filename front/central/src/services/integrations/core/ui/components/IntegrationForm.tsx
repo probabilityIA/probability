@@ -6,7 +6,8 @@ import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
 import { Alert } from '@/shared/ui';
 import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
 import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
-import { SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
+import { SoftpymesConfigForm, SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
+import { FactusConfigForm, FactusEditForm } from '@/services/integrations/invoicing/factus/ui';
 
 // IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
@@ -15,6 +16,7 @@ const INTEGRATION_TYPE_IDS = {
     MERCADO_LIBRE: 3,
     WOOCOMMERCE: 4,
     SOFTPYMES: 5,
+    FACTUS: 7,
 } as const;
 
 interface IntegrationFormProps {
@@ -198,7 +200,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
     if (integration) {
         console.log('📋 Integration recibida para editar:', integration);
 
-        // Parse config if it’s a string
+        // Parse config if it's a string
         let parsedConfig = integration.config || {};
         if (typeof integration.config === 'string') {
             try {
@@ -283,7 +285,25 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
-        // For other types that don’t have a specific form yet
+        // Show edit form for Factus
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.FACTUS) {
+            console.log('✅ Usando FactusEditForm');
+            return (
+                <FactusEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // For other types that don't have a specific form yet
         return (
             <Alert type="info">
                 <div className="space-y-3">
@@ -393,7 +413,23 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
-                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY && (
+                    {selectedType.id === INTEGRATION_TYPE_IDS.SOFTPYMES && (
+                        <SoftpymesConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.FACTUS && (
+                        <FactusConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.SOFTPYMES &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.FACTUS && (
                         <Alert type="warning">
                             <div className="space-y-3">
                                 <p className="font-semibold">Formulario No Disponible</p>

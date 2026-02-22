@@ -37,7 +37,7 @@ func (h *handler) EnableAutoInvoice(c *gin.Context) {
 	config, err := h.useCase.UpdateConfig(c.Request.Context(), uint(id), dto)
 	if err != nil {
 		h.log.Error(c.Request.Context()).Err(err).Uint("config_id", uint(id)).Msg("Failed to enable auto-invoice")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		handleDomainError(c, err, "auto_invoice_enable_failed")
 		return
 	}
 

@@ -23,6 +23,7 @@ export interface Integration {
     category_name?: string; // Nombre de la categoría (ej: 'E-commerce', 'Mensajería')
     category_color?: string; // Color hexadecimal de la categoría (ej: '#3B82F6')
     business_id: number | null;
+    business_name?: string | null; // Nombre del business asociado
     store_id?: string; // Identificador externo (ej: shop domain para Shopify)
     is_active: boolean;
     is_default: boolean;
@@ -118,7 +119,7 @@ export interface CreateIntegrationTypeDTO {
     code?: string;
     description?: string;
     icon?: string;
-    category: string;
+    category_id: number;
     is_active?: boolean;
     config_schema?: any;
     credentials_schema?: any;
@@ -131,7 +132,7 @@ export interface UpdateIntegrationTypeDTO {
     code?: string;
     description?: string;
     icon?: string;
-    category?: string;
+    category_id?: number;
     is_active?: boolean;
     config_schema?: any;
     credentials_schema?: any;

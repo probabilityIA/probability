@@ -99,8 +99,12 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		return errors.ErrProviderNotConfigured
 	}
 
-	// 10. Determinar proveedor
-	provider := dtos.ProviderSoftpymes
+	// 10. Determinar proveedor dinámicamente según tipo de integración
+	provider, err := uc.resolveProvider(ctx, integrationID)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Uint("integration_id", integrationID).Msg("Error al resolver proveedor de facturación para retry, usando softpymes por defecto")
+		provider = dtos.ProviderSoftpymes
+	}
 
 	// 11. Construir invoiceData tipado con items de la orden
 	invoiceItemDTOs := make([]dtos.InvoiceItemData, 0, len(order.Items))

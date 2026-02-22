@@ -59,7 +59,16 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   if (!response.ok) {
     const errorText = await response.text();
     console.error(`[INVOICING API Error] ${response.status} ${url}`, errorText);
-    throw new Error(`HTTP ${response.status}: ${errorText}`);
+
+    let errorMessage = `Error ${response.status}`;
+    try {
+      const errorBody = JSON.parse(errorText);
+      errorMessage = errorBody.message || errorBody.error || errorMessage;
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+
+    throw new Error(errorMessage);
   }
 
   const data = await response.json();

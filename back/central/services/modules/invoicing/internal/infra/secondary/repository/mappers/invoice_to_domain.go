@@ -64,6 +64,18 @@ func InvoiceToDomain(model *models.Invoice) *entities.Invoice {
 		}
 	}
 
+	// Extraer logo y nombre del proveedor desde la relación preloaded
+	if model.InvoicingIntegration.IntegrationType != nil {
+		if model.InvoicingIntegration.IntegrationType.ImageURL != "" {
+			logoURL := model.InvoicingIntegration.IntegrationType.ImageURL
+			entity.ProviderLogoURL = &logoURL
+		}
+		if model.InvoicingIntegration.IntegrationType.Name != "" {
+			providerName := model.InvoicingIntegration.IntegrationType.Name
+			entity.ProviderName = &providerName
+		}
+	}
+
 	return entity
 }
 

@@ -35,15 +35,13 @@ func (h *handler) CreateInvoice(c *gin.Context) {
 	invoice, err := h.useCase.CreateInvoice(ctx, dto)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Str("order_id", req.OrderID).Msg("Failed to create invoice")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "invoice_creation_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "invoice_creation_failed")
 		return
 	}
 
 	// Convertir a response
-	resp := mappers.InvoiceToResponse(invoice, true) // Incluir items
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.InvoiceToResponse(invoice, true, baseURL, bucket) // Incluir items
 
 	h.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).

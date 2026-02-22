@@ -162,6 +162,8 @@ func getIntegrationTypeCodeAsInt(code string) int {
 		return 4 // IntegrationTypeWoocommerce
 	case "softpymes", "invoicing":
 		return 5 // IntegrationTypeInvoicing
+	case "factus":
+		return 6 // IntegrationTypeFactus
 	default:
 		return 0
 	}

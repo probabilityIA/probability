@@ -27,10 +27,7 @@ func (h *handler) EnableRetry(c *gin.Context) {
 	err = h.useCase.EnableRetry(ctx, uint(id))
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("invoice_id", uint(id)).Msg("Failed to enable retries")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "enable_retry_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "enable_retry_failed")
 		return
 	}
 

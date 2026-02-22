@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useIntegrationTypes } from '../hooks/useIntegrationTypes';
-import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO } from '../../domain/types';
+import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO, IntegrationCategory } from '../../domain/types';
 import { Input, Select, Button, Alert, FileInput } from '@/shared/ui';
+import { getIntegrationCategoriesAction } from '../../infra/actions';
 
 interface IntegrationTypeFormProps {
     integrationType?: IntegrationType;
@@ -18,13 +19,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         name: '',
         code: '',
         description: '',
-        category: 'internal',
+        category_id: 0,
         is_active: true,
         config_schema: '{}',
         credentials_schema: '{}',
         setup_instructions: '',
     });
 
+    const [categories, setCategories] = useState<IntegrationCategory[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [imageFile, setImageFile] = useState<File | null>(null);
@@ -32,12 +34,26 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     const [imagePreview, setImagePreview] = useState<string | null>(null);
 
     useEffect(() => {
+        getIntegrationCategoriesAction()
+            .then((res) => {
+                if (res.success && res.data.length > 0) {
+                    setCategories(res.data);
+                    // Si no hay tipo existente, usar la primera categoría como default
+                    if (!integrationType) {
+                        setFormData((prev) => ({ ...prev, category_id: res.data[0].id }));
+                    }
+                }
+            })
+            .catch(() => {});
+    }, []);
+
+    useEffect(() => {
         if (integrationType) {
             setFormData({
                 name: integrationType.name,
                 code: integrationType.code,
                 description: integrationType.description || '',
-                category: integrationType.category?.code || integrationType.integration_category?.code || 'internal',
+                category_id: integrationType.category_id || 0,
                 is_active: integrationType.is_active,
                 config_schema: JSON.stringify(integrationType.config_schema || {}, null, 2),
                 credentials_schema: JSON.stringify(integrationType.credentials_schema || {}, null, 2),
@@ -79,7 +95,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     name: formData.name,
                     code: formData.code,
                     description: formData.description,
-                    category: formData.category,
+                    category_id: formData.category_id,
                     is_active: formData.is_active,
                     config_schema: formData.config_schema ? JSON.parse(formData.config_schema) : undefined,
                     credentials_schema: formData.credentials_schema ? JSON.parse(formData.credentials_schema) : undefined,
@@ -94,7 +110,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     name: formData.name,
                     code: formData.code,
                     description: formData.description,
-                    category: formData.category,
+                    category_id: formData.category_id,
                     is_active: formData.is_active,
                     config_schema: formData.config_schema ? JSON.parse(formData.config_schema) : undefined,
                     credentials_schema: formData.credentials_schema ? JSON.parse(formData.credentials_schema) : undefined,
@@ -151,12 +167,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     </label>
                     <Select
                         required
-                        value={formData.category}
-                        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                        options={[
-                            { value: 'internal', label: 'Interna' },
-                            { value: 'external', label: 'Externa' }
-                        ]}
+                        value={String(formData.category_id)}
+                        onChange={(e) => setFormData({ ...formData, category_id: Number(e.target.value) })}
+                        options={categories.map((cat) => ({ value: String(cat.id), label: cat.name }))}
                     />
                 </div>
             </div>

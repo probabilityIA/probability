@@ -24,6 +24,7 @@ export const useIntegrations = () => {
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState<string>('');
     const [filterCategory, setFilterCategory] = useState<string>('');
+    const [filterBusinessId, setFilterBusinessId] = useState<number | null>(null);
 
     const fetchIntegrations = useCallback(async () => {
         setLoading(true);
@@ -36,6 +37,7 @@ export const useIntegrations = () => {
                 search: search || undefined,
                 type: filterType || undefined,
                 category: filterCategory || undefined,
+                business_id: filterBusinessId || undefined,
             }, token);
             setIntegrations(response.data || []);
             setTotalPages(response.total_pages);
@@ -45,7 +47,7 @@ export const useIntegrations = () => {
         } finally {
             setLoading(false);
         }
-    }, [page, search, filterType, filterCategory]);
+    }, [page, search, filterType, filterCategory, filterBusinessId]);
 
     const deleteIntegration = async (id: number) => {
         try {
@@ -129,6 +131,8 @@ export const useIntegrations = () => {
         setFilterType,
         filterCategory,
         setFilterCategory,
+        filterBusinessId,
+        setFilterBusinessId,
         deleteIntegration,
         toggleActive,
         setAsDefault,

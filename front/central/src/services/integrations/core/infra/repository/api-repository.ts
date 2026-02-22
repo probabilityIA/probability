@@ -204,7 +204,7 @@ export class IntegrationApiRepository implements IIntegrationRepository {
             if (data.code) formData.append('code', data.code);
             if (data.description) formData.append('description', data.description);
             if (data.icon) formData.append('icon', data.icon);
-            formData.append('category', data.category);
+            formData.append('category_id', String(data.category_id));
             if (data.is_active !== undefined) formData.append('is_active', String(data.is_active));
             if (data.config_schema) formData.append('credentials_schema', JSON.stringify(data.config_schema));
             if (data.credentials_schema) formData.append('credentials_schema', JSON.stringify(data.credentials_schema));
@@ -232,7 +232,7 @@ export class IntegrationApiRepository implements IIntegrationRepository {
             if (data.code) formData.append('code', data.code);
             if (data.description) formData.append('description', data.description);
             if (data.icon) formData.append('icon', data.icon);
-            if (data.category) formData.append('category', data.category);
+            if (data.category_id !== undefined) formData.append('category_id', String(data.category_id));
             if (data.is_active !== undefined) formData.append('is_active', String(data.is_active));
             if (data.config_schema) formData.append('credentials_schema', JSON.stringify(data.config_schema));
             if (data.credentials_schema) formData.append('credentials_schema', JSON.stringify(data.credentials_schema));

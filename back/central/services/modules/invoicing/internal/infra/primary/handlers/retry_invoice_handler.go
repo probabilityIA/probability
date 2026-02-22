@@ -30,10 +30,7 @@ func (h *handler) RetryInvoice(c *gin.Context) {
 	err = h.useCase.RetryInvoice(ctx, uint(id))
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("invoice_id", uint(id)).Msg("Failed to retry invoice")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "retry_invoice_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "retry_invoice_failed")
 		return
 	}
 
@@ -41,15 +38,13 @@ func (h *handler) RetryInvoice(c *gin.Context) {
 	invoice, err := h.useCase.GetInvoice(ctx, uint(id))
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("invoice_id", uint(id)).Msg("Failed to get retried invoice")
-		c.JSON(http.StatusInternalServerError, response.Error{
-			Error:   "get_invoice_failed",
-			Message: err.Error(),
-		})
+		handleDomainError(c, err, "get_invoice_failed")
 		return
 	}
 
 	// Convertir a response
-	resp := mappers.InvoiceToResponse(invoice, true)
+	baseURL, bucket := h.getS3Config()
+	resp := mappers.InvoiceToResponse(invoice, true, baseURL, bucket)
 
 	h.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).

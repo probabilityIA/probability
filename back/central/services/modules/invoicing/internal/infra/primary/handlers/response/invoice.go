@@ -28,6 +28,8 @@ type Invoice struct {
 	XMLURL              *string                `json:"xml_url,omitempty"`
 	Metadata            map[string]interface{} `json:"metadata,omitempty"`
 	ProviderResponse    map[string]interface{} `json:"provider_response,omitempty"` // Respuesta completa del proveedor (incluye full_document)
+	ProviderLogoURL     *string                `json:"provider_logo_url,omitempty"` // URL del logo del proveedor de facturación
+	ProviderName        *string                `json:"provider_name,omitempty"`     // Nombre del tipo de integración de facturación
 	Items               []InvoiceItem          `json:"items,omitempty"`
 }
 

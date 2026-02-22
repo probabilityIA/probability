@@ -2,7 +2,11 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
+
+	"gorm.io/datatypes"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository/mappers"
@@ -18,6 +22,14 @@ func (r *Repository) CreateInvoicingConfig(ctx context.Context, config *entities
 	model := mappers.ConfigToModel(config)
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
+		// Detectar violación del unique constraint (business_id, integration_id)
+		if strings.Contains(err.Error(), "idx_business_integration_config") ||
+			strings.Contains(err.Error(), "duplicate key") {
+			r.log.Warn(ctx).
+				Uint("integration_id", config.IntegrationID).
+				Msg("Duplicate config detected at DB level")
+			return fmt.Errorf("config already exists: %w", err)
+		}
 		r.log.Error(ctx).Err(err).Msg("Failed to create invoicing config")
 		return fmt.Errorf("failed to create config: %w", err)
 	}
@@ -88,16 +100,31 @@ func (r *Repository) ListInvoicingConfigs(ctx context.Context, businessID uint) 
 	return mappers.ConfigListToDomain(configModels), nil
 }
 
-// UpdateInvoicingConfig actualiza una configuración de facturación existente en la base de datos
+// UpdateInvoicingConfig actualiza una configuración de facturación existente en la base de datos.
+// Usa map[string]interface{} para evitar que GORM ignore valores false/zero (bug clásico con Updates(struct)).
 func (r *Repository) UpdateInvoicingConfig(ctx context.Context, config *entities.InvoicingConfig) error {
-	model := mappers.ConfigToModel(config)
+	updates := map[string]interface{}{
+		"enabled":                  config.Enabled,
+		"auto_invoice":             config.AutoInvoice,
+		"invoicing_integration_id": config.InvoicingIntegrationID,
+		"description":              config.Description,
+	}
 
-	// Usar Updates() con Omit() para no actualizar campos de auditoría
-	// Save() actualiza TODOS los campos, incluyendo created_by_id con valor 0 (violación FK)
+	if config.Filters != nil {
+		if data, err := json.Marshal(config.Filters); err == nil {
+			updates["filters"] = datatypes.JSON(data)
+		}
+	}
+
+	if config.InvoiceConfig != nil {
+		if data, err := json.Marshal(config.InvoiceConfig); err == nil {
+			updates["invoice_config"] = datatypes.JSON(data)
+		}
+	}
+
 	if err := r.db.Conn(ctx).Model(&models.InvoicingConfig{}).
-		Where("id = ?", model.ID).
-		Omit("created_by_id", "created_at").
-		Updates(model).Error; err != nil {
+		Where("id = ? AND deleted_at IS NULL", config.ID).
+		Updates(updates).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("config_id", config.ID).Msg("Failed to update config")
 		return fmt.Errorf("failed to update config: %w", err)
 	}
@@ -150,6 +177,26 @@ func (r *Repository) ConfigExistsForIntegration(ctx context.Context, integration
 	}
 
 	return count > 0, nil
+}
+
+// GetEnabledConfigByBusiness retorna la primera configuración activa (enabled=true) de un negocio.
+// Retorna nil (sin error) si no existe ninguna activa.
+func (r *Repository) GetEnabledConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error) {
+	var model models.InvoicingConfig
+
+	err := r.db.Conn(ctx).
+		Where("business_id = ?", businessID).
+		Where("enabled = ?", true).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		First(&model).Error
+
+	if err != nil {
+		// No existe config activa — no es un error de negocio
+		return nil, nil
+	}
+
+	return mappers.ConfigToDomain(&model), nil
 }
 
 // ListAllActiveConfigs lista todas las configuraciones de facturación activas (enabled=true)

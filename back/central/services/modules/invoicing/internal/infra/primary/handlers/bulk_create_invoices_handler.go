@@ -40,7 +40,7 @@ func (h *handler) BulkCreateInvoices(c *gin.Context) {
 	jobID, err := h.useCase.BulkCreateInvoicesAsync(ctx, dto)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Msg("Failed to create bulk invoice job")
-		c.JSON(500, gin.H{"error": "Failed to create bulk invoice job: " + err.Error()})
+		handleDomainError(c, err, "bulk_invoice_job_failed")
 		return
 	}
 

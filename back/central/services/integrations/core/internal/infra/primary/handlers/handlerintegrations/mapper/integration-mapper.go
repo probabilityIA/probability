@@ -111,6 +111,7 @@ func ToIntegrationResponse(integration *domain.Integration, imageURLBase string)
 		CategoryName:      categoryName, // Derivado de IntegrationType.Category.Name
 		CategoryColor:     categoryColor, // Derivado de IntegrationType.Category.Color
 		BusinessID:        integration.BusinessID,
+		BusinessName:      integration.BusinessName,
 		StoreID:           integration.StoreID,
 		IsActive:          integration.IsActive,
 		IsDefault:         integration.IsDefault,

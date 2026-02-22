@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
 import { useInvoicingConfig } from '@/services/modules/invoicing/ui/hooks/useInvoicingConfig';
+import { Modal } from '@/shared/ui/modal';
+import { Alert } from '@/shared/ui/alert';
 import {
   TrashIcon,
   PencilIcon,
@@ -26,6 +28,7 @@ export function InvoicingConfigList({
 }: InvoicingConfigListProps) {
   const { deleteConfig, toggleConfig, toggleAutoInvoice, loading } = useInvoicingConfig();
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [errorModal, setErrorModal] = useState<string | null>(null);
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Está seguro de eliminar esta configuración?')) {
@@ -38,6 +41,8 @@ export function InvoicingConfigList({
 
     if (result.success) {
       onRefresh?.();
+    } else if (result.error) {
+      setErrorModal(result.error);
     }
   };
 
@@ -46,6 +51,8 @@ export function InvoicingConfigList({
 
     if (result.success) {
       onRefresh?.();
+    } else if (result.error) {
+      setErrorModal(result.error);
     }
   };
 
@@ -54,6 +61,8 @@ export function InvoicingConfigList({
 
     if (result.success) {
       onRefresh?.();
+    } else if (result.error) {
+      setErrorModal(result.error);
     }
   };
 
@@ -69,6 +78,7 @@ export function InvoicingConfigList({
   }
 
   return (
+    <>
     <div className="space-y-4">
       {configs.map((config) => {
         const isDeleting = deletingId === config.id;
@@ -253,5 +263,20 @@ export function InvoicingConfigList({
         );
       })}
     </div>
+
+    {/* Modal de error */}
+    {errorModal && (
+      <Modal
+        isOpen={!!errorModal}
+        onClose={() => setErrorModal(null)}
+        title="No se pudo completar la acción"
+        size="sm"
+      >
+        <div className="p-4">
+          <Alert type="error">{errorModal}</Alert>
+        </div>
+      </Modal>
+    )}
+    </>
   );
 }

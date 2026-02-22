@@ -33,7 +33,7 @@ func buildImageURL(relativePath string, baseURL string, fallbackBucket string) s
 }
 
 // InvoiceToResponse convierte entidad de dominio a response
-func InvoiceToResponse(invoice *entities.Invoice, includeItems bool) *response.Invoice {
+func InvoiceToResponse(invoice *entities.Invoice, includeItems bool, baseURL string, bucket string) *response.Invoice {
 	// Convert *uint to uint (dereference with default 0 if nil)
 	var invoicingProviderID uint
 	if invoice.InvoicingProviderID != nil {
@@ -65,6 +65,12 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool) *response.I
 		XMLURL:              invoice.XMLURL,
 		Metadata:            invoice.Metadata,
 		ProviderResponse:    invoice.ProviderResponse, // Incluir respuesta completa del proveedor
+		ProviderName: invoice.ProviderName,
+	}
+
+	if invoice.ProviderLogoURL != nil {
+		fullLogoURL := buildImageURL(*invoice.ProviderLogoURL, baseURL, bucket)
+		resp.ProviderLogoURL = &fullLogoURL
 	}
 
 	// Incluir items si se solicita
@@ -96,10 +102,10 @@ func InvoiceItemToResponse(item *entities.InvoiceItem) response.InvoiceItem {
 }
 
 // InvoicesToResponse convierte lista de entidades a response
-func InvoicesToResponse(invoices []*entities.Invoice, totalCount int64, page, pageSize int) *response.InvoiceList {
+func InvoicesToResponse(invoices []*entities.Invoice, totalCount int64, page, pageSize int, baseURL string, bucket string) *response.InvoiceList {
 	items := make([]response.Invoice, 0, len(invoices))
 	for _, invoice := range invoices {
-		items = append(items, *InvoiceToResponse(invoice, false)) // No incluir items en listado
+		items = append(items, *InvoiceToResponse(invoice, false, baseURL, bucket)) // No incluir items en listado
 	}
 
 	return &response.InvoiceList{

@@ -32,6 +32,8 @@ export interface Invoice {
   error_message?: string;
   metadata?: Record<string, any>;
   provider_response?: Record<string, any>; // Respuesta completa del proveedor (incluye full_document)
+  provider_logo_url?: string; // URL del logo del proveedor de facturación
+  provider_name?: string;     // Nombre del tipo de integración de facturación
   created_at: string;
   updated_at: string;
   items?: InvoiceItem[];
