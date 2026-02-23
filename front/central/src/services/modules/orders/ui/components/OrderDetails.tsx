@@ -202,7 +202,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         {isReady ? (
                             <>
                                 {loadingAI ? (
-                                    <div className="flex items-center gap-3 text-blue-600 bg-white/50 p-3 rounded-lg animate-pulse">
+                                    <div className="flex items-center gap-3 text-purple-600 bg-white/50 p-3 rounded-lg animate-pulse">
                                         <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                                         <span>Analizando mejores rutas y tarifas...</span>
                                     </div>
@@ -211,16 +211,16 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         <div className="flex-1 space-y-4">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                 <div>
-                                                    <span className="text-xs font-bold text-blue-600 uppercase tracking-wider bg-blue-100 px-2 py-1 rounded">
+                                                    <span className="text-xs font-bold text-purple-600 uppercase tracking-wider bg-purple-100 px-2 py-1 rounded">
                                                         Mejor Opción
                                                     </span>
-                                                    <p className="text-4xl font-extrabold text-blue-800 mt-2">
+                                                    <p className="text-4xl font-extrabold text-purple-800 mt-2">
                                                         {aiRecommendation.recommended_carrier}
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => setShowGuideModal(true)}
-                                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
+                                                    className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-6 rounded-lg shadow-lg shadow-purple-200 transition-all flex items-center gap-2"
                                                 >
                                                     <span>📦</span> Cotizar y Generar Guía
                                                 </button>
@@ -234,7 +234,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                                         {aiRecommendation.quotations && aiRecommendation.quotations.length > 0 && (
                                             <div className="border-t border-blue-200 pt-6 mt-2">
-                                                <h4 className="text-sm font-bold text-blue-800 uppercase tracking-wide mb-4 flex items-center gap-2">
+                                                <h4 className="text-sm font-bold text-purple-800 uppercase tracking-wide mb-4 flex items-center gap-2">
                                                     <span>📊</span> Cotizaciones Estimadas
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -245,7 +245,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 ? 'bg-white border-blue-300 shadow-sm ring-1 ring-blue-100 relative overflow-hidden'
                                                                 : 'bg-slate-50 border-slate-200 hover:bg-white'
                                                                 }`}>
-                                                                {isRecommended && <div className="absolute top-0 right-0 bg-blue-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">RECOMENDADO</div>}
+                                                                {isRecommended && <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">RECOMENDADO</div>}
                                                                 <div>
                                                                     <p className={`font-bold text-lg ${isRecommended ? 'text-blue-900' : 'text-gray-700'}`}>
                                                                         {quote.carrier}
@@ -257,7 +257,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 <div className="mt-4 pt-3 border-t border-gray-100">
                                                                     <p className="text-gray-500 text-xs uppercase mb-0.5">Costo Estimado</p>
                                                                     <div className="flex justify-between items-end">
-                                                                        <p className={`font-bold text-xl ${isRecommended ? 'text-blue-600' : 'text-gray-600'}`}>
+                                                                        <p className={`font-bold text-xl ${isRecommended ? 'text-purple-600' : 'text-gray-600'}`}>
                                                                             {formatCurrency(quote.estimated_cost, 'COP')}
                                                                         </p>
                                                                         <button
@@ -341,7 +341,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             {order.order_status.name || order.status}
                                         </span>
                                     ) : (
-                                        <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800 mt-1">
+                                        <span className="inline-block px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 mt-1">
                                             {order.order_status?.name || order.status || '-'}
                                         </span>
                                     )}
@@ -372,7 +372,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 <div className="flex flex-col">
                                     <label className="text-sm font-medium text-gray-700 mb-1">Confirmación de Pedido</label>
                                     <select
-                                        className={`block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md ${isConfirmed === true
+                                        className={`block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm rounded-md ${isConfirmed === true
                                             ? 'bg-green-50 text-green-700 border-green-500'
                                             : isConfirmed === false
                                                 ? 'bg-red-50 text-red-700 border-red-500'
@@ -394,7 +394,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Novedades / Notas</label>
                                 <textarea
                                     rows={2}
-                                    className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border text-gray-900"
+                                    className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full sm:text-sm border-gray-300 rounded-md p-2 border text-gray-900"
                                     placeholder="Escribe aquí novedades (ej: cambio de dirección, cliente contactado, etc.)"
                                     value={novelty}
                                     onChange={(e) => setNovelty(e.target.value)}
@@ -404,7 +404,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 <button
                                     onClick={handleSaveManagement}
                                     disabled={isSaving}
-                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+                                    className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
                                 >
                                     {isSaving ? 'Guardando...' : 'Guardar'}
                                 </button>
@@ -563,7 +563,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 </div>
                                 <div className="flex justify-between pt-3 border-t border-gray-300 mt-2">
                                     <span className="text-base font-semibold text-gray-900">Total</span>
-                                    <span className="text-base font-bold text-blue-600">
+                                    <span className="text-base font-bold text-purple-600">
                                         {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
                                     </span>
                                 </div>

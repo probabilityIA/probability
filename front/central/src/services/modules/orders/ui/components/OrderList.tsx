@@ -46,7 +46,7 @@ const OrderRow = memo(({
     isSuperAdmin: boolean;
 }) => {
     return (
-        <tr className={`hover:bg-gray-50 transition-all duration-300 ${isNew ? 'animate-slide-in bg-green-50/50' : ''}`}>
+        <tr className={`transition-all duration-300 hover:bg-purple-50 cursor-pointer ${isNew ? 'animate-slide-in' : ''}`}>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                 <div className="flex items-center gap-2">
                     <div
@@ -72,7 +72,7 @@ const OrderRow = memo(({
                             href={order.order_status_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-500 hover:bg-blue-600 text-white transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="flex items-center justify-center w-8 h-8 rounded-md bg-purple-500 hover:bg-purple-600 text-white transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                             title="Ver orden en Shopify"
                             aria-label="Ver orden en Shopify"
                             onClick={(e) => e.stopPropagation()}
@@ -201,7 +201,7 @@ const OrderRow = memo(({
                     {onViewRecommendation && (
                         <button
                             onClick={() => onViewRecommendation(order)}
-                            className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-md transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 flex items-center justify-center shadow-sm"
+                            className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-md transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 flex items-center justify-center shadow-sm"
                             title="Recomendación Inteligente IA"
                             aria-label="Ver recomendación IA"
                         >
@@ -230,7 +230,7 @@ const OrderRow = memo(({
                     {onView && (
                         <button
                             onClick={() => onView(order)}
-                            className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                             title="Ver orden"
                             aria-label="Ver orden"
                         >
@@ -243,7 +243,7 @@ const OrderRow = memo(({
                     {onEdit && (
                         <button
                             onClick={() => onEdit(order)}
-                            className="p-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2"
+                            className="p-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2"
                             title="Editar orden"
                             aria-label="Editar orden"
                         >
@@ -920,8 +920,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         sortBy={filters.sort_by || 'created_at'}
                         sortOrder={filters.sort_order || 'desc'}
                         onSortChange={handleSortChange}
-                        onCreate={onCreate}
-                        onTestGuide={onTestGuide}
                         sortOptions={[
                             { value: 'created_at', label: 'Ordenar por fecha' },
                             { value: 'updated_at', label: 'Ordenar por actualización' },
@@ -930,76 +928,76 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         ]}
                     />
                 </div>
-                {/* + Crear Orden button rendered inside DynamicFilters */}
             </div>
 
             {/* Table */}
-            <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden relative">
+            <div className="ordersTable relative">
                 {/* Overlay de carga solo para la tabla */}
                 {tableLoading && (
                     <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center transition-opacity duration-200">
                         <div className="flex flex-col items-center gap-2">
-                            <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
                             <p className="text-sm text-gray-600">Actualizando...</p>
                         </div>
                     </div>
                 )}
                 <div className="overflow-x-auto">
-                    <table className={`min-w-full divide-y divide-gray-200 transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
-                        <thead className="bg-gray-50">
+                    <table className={`min-w-full transition-opacity duration-200 ${tableLoading ? 'opacity-50' : 'opacity-100'}`}>
+                        <thead style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}>
                             <tr>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-16">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest w-16" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)', borderTopLeftRadius: '14px', borderBottomLeftRadius: '14px' }}>
                                     {/* Columna del logo - sin título */}
                                 </th>
                                 <th
-                                    className="px-3s sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors group"
+                                    className="px-3s sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest cursor-pointer transition-all group"
                                     onClick={() => handleSortChange('order_number', filters.sort_order === 'asc' ? 'desc' : 'asc')}
+                                    style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}
                                 >
                                     <div className="flex items-center gap-1">
                                         Orden
                                         {filters.sort_by === 'order_number' && (
-                                            <span className="text-gray-400">
+                                            <span className="text-purple-100">
                                                 {filters.sort_order === 'asc' ? '↑' : '↓'}
                                             </span>
                                         )}
                                     </div>
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden sm:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Cliente
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Total
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Estado
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Estado de Pago
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Probabilidad
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Datos Faltantes
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Confirmado
                                 </th>
 
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden md:table-cell">
+                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Fecha
                                 </th>
                                 {isSuperAdmin && (
-                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">
+                                    <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                         Business
                                     </th>
                                 )}
-                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
                                     Acciones
                                 </th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody>
                             {orders.length === 0 ? (
                                 <tr>
                                     <td colSpan={isSuperAdmin ? 11 : 10} className="px-4 sm:px-6 py-8 text-center text-gray-500">
@@ -1035,7 +1033,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                 {/* Pagination */}
                 {(totalPages > 1 || total > 0) && (
-                    <div className="bg-white px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200">
+                    <div className="px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3">
                         {/* Mobile: Simple pagination */}
                         <div className="flex-1 flex justify-between sm:hidden w-full">
                             <Button
@@ -1074,7 +1072,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                         }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -1088,17 +1086,17 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-l-md border-2 border-purple-200 bg-white text-xs sm:text-sm font-medium text-purple-700 hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 transition-all"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border-2 border-purple-200 bg-purple-50 text-xs sm:text-sm font-semibold text-purple-900">
                                         Página {page} de {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-r-md border-2 border-purple-200 bg-white text-xs sm:text-sm font-medium text-purple-700 hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 transition-all"
                                     >
                                         Siguiente
                                     </button>
@@ -1107,7 +1105,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         </div>
 
                         {/* Mobile: Page size selector */}
-                        <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-between w-full sm:hidden pt-2">
                             <div className="flex items-center gap-2">
                                 <label className="text-xs text-gray-700 whitespace-nowrap">
                                     Mostrar:
@@ -1118,7 +1116,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                     }}
-                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
                                 >
                                     <option value="10">10</option>
                                     <option value="20">20</option>
@@ -1132,6 +1130,87 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         </div>
                     </div>
                 )}
+
+                <style jsx>{`
+                    /* Tabla más "card-like" fila por fila */
+                    .ordersTable :global(.table) {
+                        border-collapse: separate;
+                        border-spacing: 0 10px; /* separación entre filas */
+                        background: transparent;
+                    }
+
+                    /* Quitar el borde del contenedor global de Table SOLO aquí */
+                    .ordersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+                        border: none !important;
+                        background: transparent !important;
+                    }
+
+                    .ordersTable :global(.table th) {
+                        background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+                        color: #fff;
+                        position: sticky;
+                        top: 0;
+                        z-index: 1;
+                    }
+
+                    /* Header más llamativo + bordes redondeados */
+                    .ordersTable :global(.table thead th) {
+                        padding-top: 10px;
+                        padding-bottom: 10px;
+                        font-size: 0.75rem; /* más pequeño */
+                        font-weight: 800;
+                        letter-spacing: 0.06em;
+                        text-transform: uppercase;
+                        box-shadow: 0 10px 25px rgba(124, 58, 237, 0.18);
+                    }
+
+                    .ordersTable :global(.table thead th:first-child) {
+                        border-top-left-radius: 14px;
+                        border-bottom-left-radius: 14px;
+                    }
+
+                    .ordersTable :global(.table thead th:last-child) {
+                        border-top-right-radius: 14px;
+                        border-bottom-right-radius: 14px;
+                    }
+
+                    .ordersTable :global(.table tbody tr) {
+                        background: rgba(255, 255, 255, 0.95);
+                        box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
+                        transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
+                    }
+
+                    /* Zebra suave en morado */
+                    .ordersTable :global(.table tbody tr:nth-child(even)) {
+                        background: rgba(124, 58, 237, 0.03);
+                    }
+
+                    .ordersTable :global(.table tbody tr:hover) {
+                        background: rgba(124, 58, 237, 0.06);
+                        box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
+                        transform: translateY(-1px);
+                    }
+
+                    .ordersTable :global(.table td) {
+                        border-top: none;
+                    }
+
+                    /* Redondeo de cada fila */
+                    .ordersTable :global(.table tbody td:first-child) {
+                        border-top-left-radius: 12px;
+                        border-bottom-left-radius: 12px;
+                    }
+                    .ordersTable :global(.table tbody td:last-child) {
+                        border-top-right-radius: 12px;
+                        border-bottom-right-radius: 12px;
+                    }
+
+                    /* Acciones: focus consistente */
+                    .ordersTable :global(a),
+                    .ordersTable :global(button) {
+                        outline-color: rgba(124, 58, 237, 0.35);
+                    }
+                `}</style>
             </div>
 
             {selectedOrderId && (

@@ -17,14 +17,14 @@
   /* secondary_color del negocio */
   --color-tertiary: #06b6d4;
   /* tertiary_color del negocio */
-  --color-quaternary: #f59e0b;
+  --color-quaternary: #7c3aed;
   /* quaternary_color del negocio */
 
   /* Colores de estado */
   --success: #10b981;
   --success-light: #d1fae5;
-  --warning: #f59e0b;
-  --warning-light: #fef3c7;
+  --warning: #7c3aed;
+  --warning-light: #ede9fe;
   --error: #ef4444;
   --error-light: #fee2e2;
   --info: #3b82f6;
