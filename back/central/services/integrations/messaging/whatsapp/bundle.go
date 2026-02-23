@@ -35,6 +35,7 @@ type IWhatsAppBundle interface {
 }
 
 type bundle struct {
+	core.BaseIntegration
 	wa          ports.IWhatsApp
 	useCase     usecasemessaging.IUseCase
 	testUsecase usecasetestconnection.ITestConnectionUseCase
@@ -105,11 +106,8 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 		orderQueries := repository.NewOrderQueries(database, logger)
 		integrationQueries := repository.NewIntegrationQueries(database, logger)
 
-		// Obtener canal de eventos de Redis desde configuración
-		redisChannel := config.Get("REDIS_ORDER_EVENTS_CHANNEL")
-		if redisChannel == "" {
-			redisChannel = "probability:orders:events" // Valor por defecto
-		}
+		// Canal de órdenes — constante centralizada en shared/redis
+		const redisChannel = redisclient.ChannelOrdersEvents
 
 		// ✅ CAMBIO: Crear cache adapter de notification_config (solo lectura desde Redis)
 		notificationConfigCache := cache.New(redisClient, logger)
@@ -167,22 +165,7 @@ func (b *bundle) TestConnection(ctx context.Context, config map[string]interface
 	return b.testUsecase.TestConnection(ctx, config, credentials, clientFactory)
 }
 
-// SyncOrdersByIntegrationID no está soportado para WhatsApp
-func (b *bundle) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
-	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
-}
-
-// SyncOrdersByIntegrationIDWithParams no está soportado para WhatsApp
-func (b *bundle) SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error {
-	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
-}
-
-// SyncOrdersByBusiness no está soportado para WhatsApp
-func (b *bundle) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {
-	return fmt.Errorf("order synchronization is not supported for WhatsApp integration")
-}
-
-// GetWebhookURL retorna la URL del webhook de WhatsApp
+// GetWebhookURL retorna la URL del webhook de WhatsApp (implementa IWebhookProvider)
 func (b *bundle) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*core.WebhookInfo, error) {
 	// Construir la URL del webhook
 	// El webhook se recibe en: /integrations/whatsapp/webhook

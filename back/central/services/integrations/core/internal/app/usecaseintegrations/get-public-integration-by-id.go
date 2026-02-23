@@ -4,24 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// PublicIntegration representa una integración en formato público
-type PublicIntegration struct {
-	ID              uint
-	BusinessID      *uint
-	Name            string
-	StoreID         string
-	IntegrationType int
-	Config          map[string]interface{}
-}
-
 // GetPublicIntegrationByID obtiene una integración por su ID en formato público
-func (uc *IntegrationUseCase) GetPublicIntegrationByID(ctx context.Context, integrationID string) (*PublicIntegration, error) {
+func (uc *IntegrationUseCase) GetPublicIntegrationByID(ctx context.Context, integrationID string) (*domain.PublicIntegration, error) {
 	ctx = log.WithFunctionCtx(ctx, "GetPublicIntegrationByID")
 
 	// Parsear ID de string a uint
@@ -121,13 +110,8 @@ func (uc *IntegrationUseCase) DecryptCredentialField(ctx context.Context, integr
 	return strValue, nil
 }
 
-// MapToPublicIntegration mapea una integración del dominio a formato público (método público para uso interno)
-func (uc *IntegrationUseCase) MapToPublicIntegration(integration *domain.Integration) *PublicIntegration {
-	return uc.mapToPublicIntegration(integration)
-}
-
 // mapToPublicIntegration mapea una integración del dominio a formato público
-func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integration) *PublicIntegration {
+func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integration) *domain.PublicIntegration {
 	var config map[string]interface{}
 	if len(integration.Config) > 0 {
 		_ = json.Unmarshal(integration.Config, &config)
@@ -136,35 +120,12 @@ func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integra
 	// Usar directamente el IntegrationTypeID (es el ID de la tabla integration_types)
 	integrationTypeID := int(integration.IntegrationTypeID)
 
-	return &PublicIntegration{
+	return &domain.PublicIntegration{
 		ID:              integration.ID,
 		BusinessID:      integration.BusinessID,
 		Name:            integration.Name,
 		StoreID:         integration.StoreID,
 		IntegrationType: integrationTypeID,
 		Config:          config,
-	}
-}
-
-// getIntegrationTypeCodeAsInt convierte el código de tipo de integración a int
-// Esta función mapea los códigos (strings) a los IDs de la tabla integration_types
-func getIntegrationTypeCodeAsInt(code string) int {
-	// Convertir a minúsculas para comparación case-insensitive
-	lowerCode := strings.ToLower(code)
-	switch lowerCode {
-	case "shopify":
-		return 1 // IntegrationTypeShopify
-	case "whatsapp", "whatsap", "whastap":
-		return 2 // IntegrationTypeWhatsApp
-	case "mercado_libre", "mercado libre":
-		return 3 // IntegrationTypeMercadoLibre
-	case "woocommerce", "woocormerce":
-		return 4 // IntegrationTypeWoocommerce
-	case "softpymes", "invoicing":
-		return 5 // IntegrationTypeInvoicing
-	case "factus":
-		return 6 // IntegrationTypeFactus
-	default:
-		return 0
 	}
 }

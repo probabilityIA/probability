@@ -7,7 +7,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrationtype"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
-
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrationtype"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/secondary/cache"
@@ -20,63 +19,83 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-type IIntegrationContract interface {
-	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
-	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
-	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
-	// GetWebhookURL construye la URL del webhook para esta integración
-	// baseURL es la URL base del servidor (ej: URL_BASE_SWAGGER)
-	// integrationID es el ID de la integración específica
-	GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*WebhookInfo, error)
-}
+// ============================================
+// Re-exports para backward compatibility
+// ============================================
 
-// IWebhookOperations es una interfaz opcional que las integraciones pueden implementar
-// para soportar operaciones de webhooks (listar, eliminar, verificar, crear)
-type IWebhookOperations interface {
-	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
-	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
-	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]interface{}, error)
-	CreateWebhook(ctx context.Context, integrationID string, baseURL string) (interface{}, error)
-}
-
-// WebhookInfo es un alias del tipo de domain
+// Type aliases — consumidores externos siguen usando core.IIntegrationContract etc.
+type IIntegrationContract = domain.IIntegrationContract
+type BaseIntegration = domain.BaseIntegration
 type WebhookInfo = domain.WebhookInfo
+type IntegrationWithCredentials = domain.IntegrationWithCredentials
+type PublicIntegration = domain.PublicIntegration
 
-type IIntegrationCore interface {
-	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
-	GetIntegrationByStoreID(ctx context.Context, storeID string, integrationType int) (*Integration, error)
+// Sentinel error
+var ErrNotSupported = domain.ErrNotSupported
+
+// Integration type constants
+const (
+	IntegrationTypeShopify      = domain.IntegrationTypeShopify
+	IntegrationTypeWhatsApp     = domain.IntegrationTypeWhatsApp
+	IntegrationTypeMercadoLibre = domain.IntegrationTypeMercadoLibre
+	IntegrationTypeWoocommerce  = domain.IntegrationTypeWoocommerce
+	IntegrationTypeInvoicing    = domain.IntegrationTypeInvoicing
+	IntegrationTypePlatform     = domain.IntegrationTypePlatform
+	IntegrationTypeFactus       = domain.IntegrationTypeFactus
+	IntegrationTypeSiigo        = domain.IntegrationTypeSiigo
+	IntegrationTypeAlegra       = domain.IntegrationTypeAlegra
+	IntegrationTypeWorldOffice  = domain.IntegrationTypeWorldOffice
+	IntegrationTypeHelisa       = domain.IntegrationTypeHelisa
+)
+
+// ============================================
+// Interfaces públicas
+// ============================================
+
+// IIntegrationService expone las operaciones de consulta y configuración que los módulos
+// consumidores (facturación, ecommerce, etc.) necesitan del core de integraciones.
+type IIntegrationService interface {
+	GetIntegrationByID(ctx context.Context, integrationID string) (*domain.PublicIntegration, error)
+	GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*domain.PublicIntegration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
+	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
+}
+
+// IIntegrationCore es la interfaz completa del core de integraciones.
+// Embeds IIntegrationService + métodos de registro y operaciones internas.
+// Solo debe usarse en integrations/bundle.go y shopify/bundle.go.
+type IIntegrationCore interface {
+	IIntegrationService
 	RegisterIntegration(integrationType int, integration IIntegrationContract)
-	// GetRegisteredIntegration obtiene el bundle registrado para un tipo de integración
+	OnIntegrationCreated(integrationType int, observer func(context.Context, *domain.PublicIntegration))
 	GetRegisteredIntegration(integrationType int) (IIntegrationContract, bool)
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
 	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
-	RegisterObserverForType(integrationType int, observer func(context.Context, *Integration))
-	// GetWebhookURL obtiene la URL del webhook para una integración específica
 	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
-	// UpdateIntegrationConfig actualiza el config de una integración haciendo merge con el config existente
-	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
-	// ListWebhooks lista todos los webhooks de una integración (solo para integraciones que lo soporten)
 	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
-	// DeleteWebhook elimina un webhook de una integración (solo para integraciones que lo soporten)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 }
 
+// ============================================
+// Thin facade wrapping the use case
+// ============================================
+
 type integrationCore struct {
-	useCase      usecaseintegrations.IIntegrationUseCase
-	integrations map[int]IIntegrationContract
-	logger       log.ILogger
-	config       env.IConfig
+	useCase domain.IIntegrationUseCase
 }
+
+// ============================================
+// Constructor
+// ============================================
 
 func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, logger log.ILogger, config env.IConfig, s3 storage.IS3Service) IIntegrationCore {
 	// 1. Inicializar Servicio de Encriptación
 	encryptionService := encryption.New(config, logger)
 
-	// 2. ✅ NUEVO - Inicializar Cache Service
+	// 2. Inicializar Cache Service
 	integrationCache := cache.New(redisClient, logger)
-	logger.Info(context.Background()).Msg("✅ Integration cache initialized")
+	logger.Info(context.Background()).Msg("Integration cache initialized")
 
 	// Registrar prefijos de caché para startup logs
 	redisClient.RegisterCachePrefix("integration:meta:*")
@@ -87,38 +106,82 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 	// 3. Inicializar Repositorio (con cache)
 	repo := repository.New(db, logger, encryptionService, integrationCache)
 
-	// 4. Inicializar Casos de Uso (con cache)
-	IntegrationUseCase := usecaseintegrations.New(repo, encryptionService, integrationCache, logger)
+	// 4. Inicializar Casos de Uso
+	integrationUseCase := usecaseintegrations.New(repo, encryptionService, integrationCache, logger, config)
 	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, logger, config)
 
-	// 5. Inicializar Handlers
-	coreIntegration := &integrationCore{
-		useCase:      IntegrationUseCase,
-		integrations: make(map[int]IIntegrationContract),
-		logger:       logger.WithModule("integrations-core"),
-		config:       config,
-	}
-
-	// 5.1 Inyectar webhook creator en el use case (resuelve dependencia circular)
-	IntegrationUseCase.SetWebhookCreator(coreIntegration)
-
-	handlerIntegrations := handlerintegrations.New(IntegrationUseCase, logger, coreIntegration, config)
+	// 5. Inicializar Handlers (solo dependen del use case)
+	handlerIntegrations := handlerintegrations.New(integrationUseCase, logger, config)
 	handlerIntegrationType := handlerintegrationtype.New(integrationTypeUseCase, logger, config)
 
 	// 6. Registrar Rutas
 	handlerIntegrations.RegisterRoutes(router, logger)
 	handlerIntegrationType.RegisterRoutes(router, logger)
 
-	// 7. ✅ NUEVO - Cache Warming en background (pre-carga integraciones activas)
+	// 7. Cache Warming en background
 	go func() {
 		bgCtx := context.Background()
-		logger.Info(bgCtx).Msg("🔥 Starting cache warming in background...")
-		if err := IntegrationUseCase.WarmCache(bgCtx); err != nil {
-			logger.Error(bgCtx).Err(err).Msg("❌ Cache warming failed")
+		logger.Info(bgCtx).Msg("Starting cache warming in background...")
+		if err := integrationUseCase.WarmCache(bgCtx); err != nil {
+			logger.Error(bgCtx).Err(err).Msg("Cache warming failed")
 		} else {
-			logger.Info(bgCtx).Msg("✅ Cache warming completed successfully")
+			logger.Info(bgCtx).Msg("Cache warming completed successfully")
 		}
 	}()
 
-	return coreIntegration
+	return &integrationCore{useCase: integrationUseCase}
+}
+
+// IIntegrationService pass-throughs
+func (ic *integrationCore) GetIntegrationByID(ctx context.Context, integrationID string) (*domain.PublicIntegration, error) {
+	return ic.useCase.GetPublicIntegrationByID(ctx, integrationID)
+}
+
+func (ic *integrationCore) GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*domain.PublicIntegration, error) {
+	return ic.useCase.GetIntegrationByExternalID(ctx, externalID, integrationType)
+}
+
+func (ic *integrationCore) DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	return ic.useCase.DecryptCredentialField(ctx, integrationID, fieldName)
+}
+
+func (ic *integrationCore) UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error {
+	return ic.useCase.UpdateIntegrationConfig(ctx, integrationID, newConfig)
+}
+
+// IIntegrationCore pass-throughs
+func (ic *integrationCore) RegisterIntegration(integrationType int, integration IIntegrationContract) {
+	ic.useCase.RegisterProvider(integrationType, integration)
+}
+
+func (ic *integrationCore) OnIntegrationCreated(integrationType int, observer func(context.Context, *domain.PublicIntegration)) {
+	ic.useCase.OnIntegrationCreated(integrationType, observer)
+}
+
+func (ic *integrationCore) GetRegisteredIntegration(integrationType int) (IIntegrationContract, bool) {
+	return ic.useCase.GetProvider(integrationType)
+}
+
+func (ic *integrationCore) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
+	return ic.useCase.TestConnectionFromConfig(ctx, config, credentials)
+}
+
+func (ic *integrationCore) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
+	return ic.useCase.SyncOrdersByIntegrationID(ctx, integrationID)
+}
+
+func (ic *integrationCore) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {
+	return ic.useCase.SyncOrdersByBusiness(ctx, businessID)
+}
+
+func (ic *integrationCore) GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error) {
+	return ic.useCase.GetWebhookURL(ctx, integrationID)
+}
+
+func (ic *integrationCore) ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error) {
+	return ic.useCase.ListWebhooks(ctx, integrationID)
+}
+
+func (ic *integrationCore) DeleteWebhook(ctx context.Context, integrationID, webhookID string) error {
+	return ic.useCase.DeleteWebhook(ctx, integrationID, webhookID)
 }

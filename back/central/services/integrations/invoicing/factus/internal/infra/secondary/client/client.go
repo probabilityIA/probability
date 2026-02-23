@@ -11,21 +11,19 @@ import (
 )
 
 // Client implementa IFactusClient para comunicarse con la API de Factus
+// La URL base se obtiene de las credenciales en la base de datos, no del cliente
 type Client struct {
-	baseURL    string
 	httpClient *httpclient.Client
 	tokenCache *TokenCache
 	log        log.ILogger
 }
 
 // New crea un nuevo cliente de Factus
-func New(baseURL string, logger log.ILogger) ports.IFactusClient {
-	logger.Info(context.Background()).
-		Str("base_url", baseURL).
-		Msg("🔍 Creating Factus HTTP client")
+// La URL base se obtiene de las credenciales almacenadas en la base de datos (req.Credentials.BaseURL)
+func New(logger log.ILogger) ports.IFactusClient {
+	logger.Info(context.Background()).Msg("🔍 Creating Factus HTTP client")
 
 	httpConfig := httpclient.HTTPClientConfig{
-		BaseURL:    baseURL,
 		Timeout:    30 * time.Second,
 		RetryCount: 2,
 		RetryWait:  3 * time.Second,
@@ -39,7 +37,6 @@ func New(baseURL string, logger log.ILogger) ports.IFactusClient {
 	httpClient.SetHeader("Accept", "application/json")
 
 	return &Client{
-		baseURL:    baseURL,
 		httpClient: httpClient,
 		tokenCache: NewTokenCache(),
 		log:        logger.WithModule("factus.client"),

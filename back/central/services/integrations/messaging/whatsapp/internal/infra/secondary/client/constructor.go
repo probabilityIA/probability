@@ -100,7 +100,7 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 			errorMsg = fmt.Sprintf("WhatsApp API error %d: %s", statusCode, errorBody)
 		}
 
-		return "", fmt.Errorf(errorMsg)
+		return "", fmt.Errorf("%s", errorMsg)
 	}
 
 	// Verificar que la respuesta contiene mensajes

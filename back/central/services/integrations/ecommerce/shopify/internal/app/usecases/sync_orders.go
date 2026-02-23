@@ -110,12 +110,18 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 		ctx,
 		uint(integrationIDUint),
 		integration.BusinessID,
-		"shopify",
-		syncParams.CreatedAtMin,
-		syncParams.CreatedAtMax,
-		syncParams.Status,
-		syncParams.FinancialStatus,
-		syncParams.FulfillmentStatus,
+		integrationevents.SyncStartedEvent{
+			IntegrationID:   uint(integrationIDUint),
+			IntegrationType: "shopify",
+			Params: integrationevents.SyncParams{
+				CreatedAtMin:      syncParams.CreatedAtMin,
+				CreatedAtMax:      syncParams.CreatedAtMax,
+				Status:            syncParams.Status,
+				FinancialStatus:   syncParams.FinancialStatus,
+				FulfillmentStatus: syncParams.FulfillmentStatus,
+			},
+			StartedAt: time.Now(),
+		},
 	)
 
 	go func() {
@@ -130,8 +136,12 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 				ctx,
 				uint(integrationIDUint),
 				integration.BusinessID,
-				"shopify",
-				err.Error(),
+				integrationevents.SyncFailedEvent{
+					IntegrationID:   uint(integrationIDUint),
+					IntegrationType: "shopify",
+					Error:           err.Error(),
+					FailedAt:        time.Now(),
+				},
 			)
 			return
 		}
@@ -143,12 +153,16 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 			ctx,
 			uint(integrationIDUint),
 			integration.BusinessID,
-			"shopify",
-			totalOrders,
-			createdOrders,
-			updatedOrders,
-			rejectedOrders,
-			time.Since(startTime),
+			integrationevents.SyncCompletedEvent{
+				IntegrationID:   uint(integrationIDUint),
+				IntegrationType: "shopify",
+				TotalOrders:     totalOrders,
+				CreatedOrders:   createdOrders,
+				UpdatedOrders:   updatedOrders,
+				RejectedOrders:  rejectedOrders,
+				Duration:        time.Since(startTime),
+				CompletedAt:     time.Now(),
+			},
 		)
 	}()
 

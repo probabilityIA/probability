@@ -19,49 +19,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-type integrationServiceAdapter struct {
-	coreIntegration core.IIntegrationCore
-}
-
-func (a *integrationServiceAdapter) GetIntegrationByID(ctx context.Context, integrationID string) (*domain.Integration, error) {
-	integration, err := a.coreIntegration.GetIntegrationByID(ctx, integrationID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domain.Integration{
-		ID:              integration.ID,
-		BusinessID:      integration.BusinessID,
-		Name:            integration.Name,
-		StoreID:         integration.StoreID,
-		IntegrationType: integration.IntegrationType,
-		Config:          integration.Config,
-	}, nil
-}
-
-func (a *integrationServiceAdapter) GetIntegrationByStoreID(ctx context.Context, storeID string) (*domain.Integration, error) {
-	integration, err := a.coreIntegration.GetIntegrationByStoreID(ctx, storeID, core.IntegrationTypeShopify)
-	if err != nil {
-		return nil, err
-	}
-
-	return &domain.Integration{
-		ID:              integration.ID,
-		BusinessID:      integration.BusinessID,
-		Name:            integration.Name,
-		StoreID:         integration.StoreID,
-		IntegrationType: integration.IntegrationType,
-		Config:          integration.Config,
-	}, nil
-}
-
-func (a *integrationServiceAdapter) DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
-	return a.coreIntegration.DecryptCredential(ctx, integrationID, fieldName)
-}
-
-func (a *integrationServiceAdapter) UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error {
-	return a.coreIntegration.UpdateIntegrationConfig(ctx, integrationID, config)
-}
 
 func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue, database db.IDatabase) {
 	shopifyClient := client.New()
@@ -84,14 +41,10 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 		orderPublisher = queue.NewNoOpPublisher(logger)
 	}
 
-	shopifyCore := shopifycore.New(coreIntegration, shopifyClient, orderPublisher, database, config, logger)
+	useCase := usecases.New(coreIntegration, shopifyClient, orderPublisher, database, logger)
+
+	shopifyCore := shopifycore.New(useCase)
 	coreIntegration.RegisterIntegration(core.IntegrationTypeShopify, shopifyCore)
-
-	integrationService := &integrationServiceAdapter{
-		coreIntegration: coreIntegration,
-	}
-
-	useCase := usecases.New(integrationService, shopifyClient, orderPublisher, database, logger)
 
 	// Registrar observador para crear webhook automáticamente cuando se crea una integración de Shopify
 	baseURL := config.Get("WEBHOOK_BASE_URL")
@@ -100,7 +53,7 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 	}
 
 	if baseURL != "" {
-		coreIntegration.RegisterObserverForType(core.IntegrationTypeShopify, func(obsCtx context.Context, integration *core.Integration) {
+		coreIntegration.OnIntegrationCreated(core.IntegrationTypeShopify, func(obsCtx context.Context, integration *core.PublicIntegration) {
 			// Crear webhook de forma asíncrona para no bloquear la respuesta
 			go func() {
 				bgCtx := context.Background()
@@ -123,6 +76,6 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 			Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER están configuradas, no se crearán webhooks automáticamente para Shopify")
 	}
 
-	shopifyHandler := handlers.New(useCase, logger, coreIntegration, config)
+	shopifyHandler := handlers.New(useCase, logger, config)
 	shopifyHandler.RegisterRoutes(router, logger)
 }

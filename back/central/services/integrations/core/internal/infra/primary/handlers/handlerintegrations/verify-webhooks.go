@@ -25,7 +25,7 @@ func (h *IntegrationHandler) VerifyWebhooksHandler(c *gin.Context) {
 	idStr := c.Param("id")
 
 	// Verificar webhooks a través del core
-	webhooks, err := h.orderSyncSvc.VerifyWebhooksByURL(c.Request.Context(), idStr)
+	webhooks, err := h.usecase.VerifyWebhooksByURL(c.Request.Context(), idStr)
 	if err != nil {
 		h.logger.Error().Err(err).Str("id", idStr).Msg("Error al verificar webhooks")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{

@@ -42,6 +42,10 @@ type ISiigoClient interface {
 type IInvoiceUseCase interface {
 	// ProcessOrderForInvoicing procesa un evento de orden para determinar si debe facturarse
 	ProcessOrderForInvoicing(ctx context.Context, event *OrderEventMessage) error
+
+	// TestConnection valida que las credenciales y configuración sean correctas
+	// contra la API de Siigo. Llamado desde el contrato global IIntegrationContract.
+	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 }
 
 // ═══════════════════════════════════════════════════════════════

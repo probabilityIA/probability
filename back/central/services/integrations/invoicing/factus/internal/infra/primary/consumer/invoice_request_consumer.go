@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"time"
 
-	integrationCore "github.com/secamc93/probability/back/central/services/integrations/core"
 	factDtos "github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/infra/secondary/queue"
@@ -15,7 +14,7 @@ import (
 )
 
 // ═══════════════════════════════════════════════════════════════
-// DTOs locales replicados del módulo Invoicing para deserialización
+// DTOs locales — structs de deserialización del mensaje RabbitMQ
 // (Regla de aislamiento: no importar entre módulos)
 // ═══════════════════════════════════════════════════════════════
 
@@ -54,7 +53,7 @@ type invoiceData struct {
 	Config        map[string]interface{} `json:"config"`
 }
 
-// InvoiceRequestMessage es el mensaje recibido desde Invoicing Module
+// InvoiceRequestMessage es el mensaje recibido desde el Invoicing Module
 type InvoiceRequestMessage struct {
 	InvoiceID     uint        `json:"invoice_id"`
 	Provider      string      `json:"provider"`
@@ -64,27 +63,26 @@ type InvoiceRequestMessage struct {
 	Timestamp     time.Time   `json:"timestamp"`
 }
 
-// InvoiceRequestConsumer consume solicitudes de facturación desde Invoicing Module
+// InvoiceRequestConsumer consume solicitudes de facturación desde RabbitMQ
+// y delega toda la lógica de negocio al use case.
 type InvoiceRequestConsumer struct {
 	rabbit            rabbitmq.IQueue
-	integrationCore   integrationCore.IIntegrationCore
-	factusClient      ports.IFactusClient
+	useCase           ports.IInvoiceUseCase
 	responsePublisher *queue.ResponsePublisher
 	log               log.ILogger
 }
 
-// NewInvoiceRequestConsumer crea una nueva instancia del consumer
+// NewInvoiceRequestConsumer crea una nueva instancia del consumer.
+// Solo recibe el use case — no adapters secundarios directamente.
 func NewInvoiceRequestConsumer(
 	rabbit rabbitmq.IQueue,
-	integrationCore integrationCore.IIntegrationCore,
-	factusClient ports.IFactusClient,
+	useCase ports.IInvoiceUseCase,
 	responsePublisher *queue.ResponsePublisher,
 	logger log.ILogger,
 ) *InvoiceRequestConsumer {
 	return &InvoiceRequestConsumer{
 		rabbit:            rabbit,
-		integrationCore:   integrationCore,
-		factusClient:      factusClient,
+		useCase:           useCase,
 		responsePublisher: responsePublisher,
 		log:               logger.WithModule("factus.invoice_request_consumer"),
 	}
@@ -122,7 +120,7 @@ func (c *InvoiceRequestConsumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleInvoiceRequest procesa una solicitud de facturación
+// handleInvoiceRequest deserializa el mensaje y despacha al handler correcto
 func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 	ctx := context.Background()
 	startTime := time.Now()
@@ -147,9 +145,7 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 	case "create", "retry":
 		response = c.processCreateInvoice(ctx, &request, startTime)
 	default:
-		c.log.Warn(ctx).
-			Str("operation", request.Operation).
-			Msg("Unknown operation")
+		c.log.Warn(ctx).Str("operation", request.Operation).Msg("Unknown operation")
 		response = c.createErrorResponse(&request, "unknown_operation", "Unknown operation: "+request.Operation, startTime, nil)
 	}
 
@@ -164,72 +160,24 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 	return nil
 }
 
-// processCreateInvoice procesa la creación de una factura en Factus
+// processCreateInvoice construye el DTO de dominio y delega al use case.
+// No contiene lógica de negocio — solo traducción del mensaje al dominio.
 func (c *InvoiceRequestConsumer) processCreateInvoice(
 	ctx context.Context,
 	request *InvoiceRequestMessage,
 	startTime time.Time,
 ) *queue.InvoiceResponseMessage {
-	// 1. Obtener integration_id del DTO
-	integrationID := request.InvoiceData.IntegrationID
-	if integrationID == 0 {
+	if request.InvoiceData.IntegrationID == 0 {
 		c.log.Error(ctx).Msg("integration_id is 0 in invoice_data")
 		return c.createErrorResponse(request, "missing_integration_id", "integration_id is 0", startTime, nil)
 	}
 
-	// 2. Obtener integración desde IntegrationCore
-	integrationIDStr := fmt.Sprintf("%d", integrationID)
-	integration, err := c.integrationCore.GetIntegrationByID(ctx, integrationIDStr)
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to get integration")
-		return c.createErrorResponse(request, "integration_not_found", err.Error(), startTime, nil)
-	}
-
-	// 3. Desencriptar credenciales de Factus
-	clientID, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "client_id")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt client_id")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt client_id", startTime, nil)
-	}
-
-	clientSecret, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "client_secret")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt client_secret")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt client_secret", startTime, nil)
-	}
-
-	username, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "username")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt username")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt username", startTime, nil)
-	}
-
-	password, err := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "password")
-	if err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to decrypt password")
-		return c.createErrorResponse(request, "decryption_failed", "Failed to decrypt password", startTime, nil)
-	}
-
-	// api_url es opcional: si no está configurado, el cliente usa su default
-	apiURL, _ := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_url")
-
-	// 4. Combinar config de integración con config de facturación
-	combinedConfig := make(map[string]interface{})
-
-	if integration.Config != nil {
-		if configMap, ok := integration.Config.(map[string]interface{}); ok {
-			for k, v := range configMap {
-				combinedConfig[k] = v
-			}
-		}
-	}
-
-	for k, v := range request.InvoiceData.Config {
-		combinedConfig[k] = v
-	}
-
-	// 5. Construir request tipado para el cliente Factus
-	invoiceReq := &factDtos.CreateInvoiceRequest{
+	// Construir el DTO de dominio para el use case
+	req := &factDtos.ProcessInvoiceRequest{
+		InvoiceID:     request.InvoiceID,
+		Operation:     request.Operation,
+		CorrelationID: request.CorrelationID,
+		IntegrationID: request.InvoiceData.IntegrationID,
 		Customer: factDtos.CustomerData{
 			Name:    request.InvoiceData.Customer.Name,
 			Email:   request.InvoiceData.Customer.Email,
@@ -237,7 +185,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 			DNI:     request.InvoiceData.Customer.DNI,
 			Address: request.InvoiceData.Customer.Address,
 		},
-		Items:        mapItemsToClientDTOs(request.InvoiceData.Items),
+		Items:        mapItemsToDomain(request.InvoiceData.Items),
 		Total:        request.InvoiceData.Total,
 		Subtotal:     request.InvoiceData.Subtotal,
 		Tax:          request.InvoiceData.Tax,
@@ -245,37 +193,25 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		ShippingCost: request.InvoiceData.ShippingCost,
 		Currency:     request.InvoiceData.Currency,
 		OrderID:      request.InvoiceData.OrderID,
-		Credentials: factDtos.Credentials{
-			ClientID:     clientID,
-			ClientSecret: clientSecret,
-			Username:     username,
-			Password:     password,
-			BaseURL:      apiURL,
-		},
-		Config: combinedConfig,
+		Config:       request.InvoiceData.Config,
 	}
 
-	// 6. Llamar al cliente HTTP de Factus
-	c.log.Info(ctx).
-		Uint("invoice_id", request.InvoiceID).
-		Str("order_id", request.InvoiceData.OrderID).
-		Msg("Calling Factus API")
-
-	result, err := c.factusClient.CreateInvoice(ctx, invoiceReq)
+	// Delegar toda la lógica de negocio al use case
+	result, err := c.useCase.CreateInvoice(ctx, req)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).
 			Uint("invoice_id", request.InvoiceID).
-			Msg("Factus API call failed")
+			Msg("Use case returned error")
 
 		var auditData *factDtos.AuditData
 		if result != nil {
 			auditData = result.AuditData
 		}
-		return c.createErrorResponse(request, "api_error", err.Error(), startTime, auditData)
+		return c.createErrorResponse(request, "processing_error", err.Error(), startTime, auditData)
 	}
 
-	// 7. Parsear issued_at
+	// Parsear issued_at
 	var issuedAt *time.Time
 	if result.IssuedAt != "" {
 		if parsed, parseErr := time.Parse(time.RFC3339, result.IssuedAt); parseErr == nil {
@@ -283,9 +219,8 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		}
 	}
 
-	// 8. Construir response exitosa
+	// Construir respuesta exitosa
 	processingTime := time.Since(startTime).Milliseconds()
-
 	resp := &queue.InvoiceResponseMessage{
 		InvoiceID:      request.InvoiceID,
 		Provider:       "factus",
@@ -308,8 +243,8 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 	return resp
 }
 
-// mapItemsToClientDTOs convierte items del mensaje a DTOs del cliente Factus
-func mapItemsToClientDTOs(items []invoiceItemData) []factDtos.ItemData {
+// mapItemsToDomain convierte items del mensaje RabbitMQ a DTOs de dominio
+func mapItemsToDomain(items []invoiceItemData) []factDtos.ItemData {
 	result := make([]factDtos.ItemData, 0, len(items))
 	for _, item := range items {
 		result = append(result, factDtos.ItemData{
@@ -328,7 +263,7 @@ func mapItemsToClientDTOs(items []invoiceItemData) []factDtos.ItemData {
 	return result
 }
 
-// createErrorResponse crea una respuesta de error
+// createErrorResponse construye una respuesta de error para la queue de respuestas
 func (c *InvoiceRequestConsumer) createErrorResponse(
 	request *InvoiceRequestMessage,
 	errorCode string,
@@ -359,17 +294,14 @@ func (c *InvoiceRequestConsumer) createErrorResponse(
 	return resp
 }
 
-// toMapPayload convierte cualquier valor (struct o map) a map[string]interface{} via JSON.
-// Necesario porque RequestPayload puede ser un struct tipado (no map[string]interface{}).
+// toMapPayload convierte cualquier valor a map[string]interface{} via JSON
 func toMapPayload(v interface{}) map[string]interface{} {
 	if v == nil {
 		return nil
 	}
-	// Intento directo primero (si ya es un map)
 	if m, ok := v.(map[string]interface{}); ok {
 		return m
 	}
-	// Convertir struct via JSON marshal/unmarshal
 	data, err := json.Marshal(v)
 	if err != nil {
 		return nil

@@ -47,7 +47,7 @@ func (h *IntegrationHandler) DeleteWebhookHandler(c *gin.Context) {
 	_ = id // Evitar warning de variable no usada
 
 	// Eliminar webhook a través del core
-	if err := h.orderSyncSvc.DeleteWebhook(c.Request.Context(), idStr, webhookID); err != nil {
+	if err := h.usecase.DeleteWebhook(c.Request.Context(), idStr, webhookID); err != nil {
 		h.logger.Error().Err(err).Str("id", idStr).Str("webhook_id", webhookID).Msg("Error al eliminar webhook")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
 			Error: err.Error(),

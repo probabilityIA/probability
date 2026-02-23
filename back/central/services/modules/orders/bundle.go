@@ -20,10 +20,7 @@ import (
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
 
-const (
-	// defaultRedisChannel es el canal por defecto para eventos de órdenes
-	defaultRedisChannel = "probability:orders:events"
-)
+const defaultRedisChannel = redisclient.ChannelOrdersEvents
 
 // New inicializa el módulo de orders y retorna el caso de uso de mapping para integraciones
 func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redisclient.IRedis) ports.IOrderMappingUseCase {
@@ -34,7 +31,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	repo := repository.New(database, environment)
 
 	// 2. Inicializar Publishers
-	eventPublisher := initRedisPublisher(redisClient, logger, environment)
+	eventPublisher := initRedisPublisher(redisClient, logger)
 	rabbitPublisher := initRabbitPublisher(rabbitMQ, logger)
 
 	// 3. Inicializar Use Cases
@@ -48,7 +45,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	h.RegisterRoutes(router)
 
 	// 5. Inicializar Consumers (background goroutines)
-	startRedisEventConsumer(redisClient, logger, environment, scoreUseCase)
+	startRedisEventConsumer(redisClient, logger, scoreUseCase)
 	startRabbitMQConsumer(rabbitMQ, logger, orderMapping, repo)
 	startWhatsAppConsumer(rabbitMQ, logger, orderCRUD, repo, eventPublisher)
 
@@ -56,17 +53,16 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 }
 
 // initRedisPublisher inicializa el publicador de eventos de Redis
-func initRedisPublisher(redisClient redisclient.IRedis, logger log.ILogger, environment env.IConfig) ports.IOrderEventPublisher {
+func initRedisPublisher(redisClient redisclient.IRedis, logger log.ILogger) ports.IOrderEventPublisher {
 	if redisClient == nil {
 		logger.Warn(context.Background()).Msg("Redis client not available, event publisher disabled")
 		return nil
 	}
 
-	channel := getRedisChannel(environment)
-	publisher := redisevents.NewOrderEventPublisher(redisClient, logger, channel)
+	publisher := redisevents.NewOrderEventPublisher(redisClient, logger, defaultRedisChannel)
 
 	// Registrar canal para mostrar en startup logs
-	redisClient.RegisterChannel(channel)
+	redisClient.RegisterChannel(defaultRedisChannel)
 
 	return publisher
 }
@@ -132,14 +128,13 @@ func initRequestConfirmationUseCase(repo ports.IRepository, rabbitPublisher port
 }
 
 // startRedisEventConsumer inicia el consumer de eventos de Redis para cálculo de score
-func startRedisEventConsumer(redisClient redisclient.IRedis, logger log.ILogger, environment env.IConfig, scoreUseCase ports.IOrderScoreUseCase) {
+func startRedisEventConsumer(redisClient redisclient.IRedis, logger log.ILogger, scoreUseCase ports.IOrderScoreUseCase) {
 	if redisClient == nil {
 		logger.Warn(context.Background()).Msg("Redis client not available, event consumer disabled")
 		return
 	}
 
-	channel := getRedisChannel(environment)
-	consumer := redisevents.NewOrderEventConsumer(redisClient, logger, channel, scoreUseCase)
+	consumer := redisevents.NewOrderEventConsumer(redisClient, logger, defaultRedisChannel, scoreUseCase)
 
 	go func() {
 		if err := consumer.Start(context.Background()); err != nil {
@@ -186,11 +181,3 @@ func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, orderCR
 	}()
 }
 
-// getRedisChannel obtiene el canal de Redis desde la configuración o retorna el valor por defecto
-func getRedisChannel(environment env.IConfig) string {
-	channel := environment.Get("REDIS_ORDER_EVENTS_CHANNEL")
-	if channel == "" {
-		return defaultRedisChannel
-	}
-	return channel
-}

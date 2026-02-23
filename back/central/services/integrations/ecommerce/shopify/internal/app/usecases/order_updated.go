@@ -13,7 +13,7 @@ func (uc *SyncOrdersUseCase) ProcessOrderUpdated(ctx context.Context, shopDomain
 		return fmt.Errorf("order payload is nil")
 	}
 
-	integration, err := uc.integrationService.GetIntegrationByStoreID(ctx, shopDomain)
+	integration, err := uc.integrationService.GetIntegrationByExternalID(ctx, shopDomain, domain.IntegrationTypeID)
 	if err != nil {
 		return fmt.Errorf("failed to get integration by store domain: %w", err)
 	}

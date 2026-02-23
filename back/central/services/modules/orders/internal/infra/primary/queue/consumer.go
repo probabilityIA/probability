@@ -159,12 +159,14 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				ctx,
 				orderDTO.IntegrationID,
 				orderDTO.BusinessID,
-				"", // orderID no existe aún
-				orderDTO.OrderNumber,
-				orderDTO.ExternalID,
-				orderDTO.Platform,
-				"Campos requeridos faltantes",
-				errStr,
+				integrationevents.SyncOrderRejectedEvent{
+					OrderNumber: orderDTO.OrderNumber,
+					ExternalID:  orderDTO.ExternalID,
+					Platform:    orderDTO.Platform,
+					Reason:      "Campos requeridos faltantes",
+					Error:       errStr,
+					RejectedAt:  time.Now(),
+				},
 			)
 			return nil
 		}
@@ -181,12 +183,14 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				ctx,
 				orderDTO.IntegrationID,
 				orderDTO.BusinessID,
-				"", // orderID no existe aún
-				orderDTO.OrderNumber,
-				orderDTO.ExternalID,
-				orderDTO.Platform,
-				"Error de integridad de datos (FK violation)",
-				errStr,
+				integrationevents.SyncOrderRejectedEvent{
+					OrderNumber: orderDTO.OrderNumber,
+					ExternalID:  orderDTO.ExternalID,
+					Platform:    orderDTO.Platform,
+					Reason:      "Error de integridad de datos (FK violation)",
+					Error:       errStr,
+					RejectedAt:  time.Now(),
+				},
 			)
 			return nil
 		}
@@ -215,12 +219,14 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			ctx,
 			orderDTO.IntegrationID,
 			orderDTO.BusinessID,
-			"", // orderID no existe aún
-			orderDTO.OrderNumber,
-			orderDTO.ExternalID,
-			orderDTO.Platform,
-			"Error al procesar orden",
-			errStr,
+			integrationevents.SyncOrderRejectedEvent{
+				OrderNumber: orderDTO.OrderNumber,
+				ExternalID:  orderDTO.ExternalID,
+				Platform:    orderDTO.Platform,
+				Reason:      "Error al procesar orden",
+				Error:       errStr,
+				RejectedAt:  time.Now(),
+			},
 		)
 
 		// Guardar error con JSON original

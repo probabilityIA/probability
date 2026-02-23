@@ -25,12 +25,7 @@ func (uc *SyncOrdersUseCase) VerifyWebhooksByURL(ctx context.Context, integratio
 	}
 
 	// Obtener el store_name del config
-	config, ok := integration.Config.(map[string]interface{})
-	if !ok {
-		return nil, fmt.Errorf("config no es un map válido")
-	}
-
-	storeName, ok := config["store_name"].(string)
+	storeName, ok := integration.Config["store_name"].(string)
 	if !ok || storeName == "" {
 		return nil, fmt.Errorf("store_name no encontrado en la configuración")
 	}

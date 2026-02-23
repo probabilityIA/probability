@@ -125,12 +125,14 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *dtos.Pr
 			ctx,
 			dto.IntegrationID,
 			dto.BusinessID,
-			"", // orderID aún no existe
-			dto.OrderNumber,
-			dto.ExternalID,
-			dto.Platform,
-			"Error al procesar cliente",
-			err.Error(),
+			integrationevents.SyncOrderRejectedEvent{
+				OrderNumber: dto.OrderNumber,
+				ExternalID:  dto.ExternalID,
+				Platform:    dto.Platform,
+				Reason:      "Error al procesar cliente",
+				Error:       err.Error(),
+				RejectedAt:  time.Now(),
+			},
 		)
 		return nil, fmt.Errorf("error processing customer: %w", err)
 	}
@@ -201,12 +203,14 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *dtos.Pr
 			ctx,
 			dto.IntegrationID,
 			dto.BusinessID,
-			"", // orderID aún no existe
-			dto.OrderNumber,
-			dto.ExternalID,
-			dto.Platform,
-			"Error al guardar en base de datos",
-			err.Error(),
+			integrationevents.SyncOrderRejectedEvent{
+				OrderNumber: dto.OrderNumber,
+				ExternalID:  dto.ExternalID,
+				Platform:    dto.Platform,
+				Reason:      "Error al guardar en base de datos",
+				Error:       err.Error(),
+				RejectedAt:  time.Now(),
+			},
 		)
 
 		return nil, fmt.Errorf("error creating order: %w", err)
@@ -239,15 +243,18 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *dtos.Pr
 		ctx,
 		dto.IntegrationID,
 		dto.BusinessID,
-		order.ID,
-		dto.OrderNumber,
-		dto.ExternalID,
-		dto.Platform,
-		dto.CustomerEmail,
-		dto.Currency,
-		order.Status,
-		order.CreatedAt,
-		&order.TotalAmount,
+		integrationevents.SyncOrderCreatedEvent{
+			OrderID:       order.ID,
+			OrderNumber:   dto.OrderNumber,
+			ExternalID:    dto.ExternalID,
+			Platform:      dto.Platform,
+			CustomerEmail: dto.CustomerEmail,
+			Currency:      dto.Currency,
+			Status:        order.Status,
+			CreatedAt:     order.CreatedAt,
+			TotalAmount:   &order.TotalAmount,
+			SyncedAt:      time.Now(),
+		},
 	)
 
 	// 4-8. Guardar entidades relacionadas

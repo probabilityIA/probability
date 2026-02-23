@@ -3,17 +3,15 @@ package domain
 import (
 	"time"
 
+	core "github.com/secamc93/probability/back/central/services/integrations/core"
 	"gorm.io/datatypes"
 )
 
-type Integration struct {
-	ID              uint
-	BusinessID      *uint
-	Name            string
-	StoreID         string
-	IntegrationType int
-	Config          interface{}
-}
+// Integration es un alias directo de core.PublicIntegration
+type Integration = core.PublicIntegration
+
+// IntegrationTypeID es el ID del tipo de integración Shopify en la base de datos.
+const IntegrationTypeID = 1
 
 type ShopifyOrderDTO struct {
 	ID                string

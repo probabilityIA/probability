@@ -61,7 +61,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de events (notificaciones en tiempo real)
 	if redisClient != nil {
-		events.New(router, database, logger, environment, redisClient)
+		events.New(router, database, logger, redisClient)
 	} else {
 		logger.Warn().
 			Msg("Redis no disponible, módulo de eventos no se inicializará")

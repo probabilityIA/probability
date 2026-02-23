@@ -18,6 +18,7 @@ type SyncOrdersUseCase struct {
 
 // IShopifyUseCase define la interfaz para los casos de uso de Shopify
 type IShopifyUseCase interface {
+	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 	SyncOrders(ctx context.Context, integrationID string) error
 	GetOrders(ctx context.Context, integration *domain.Integration, storeDomain, accessToken string, params *domain.GetOrdersParams) error
 	GetOrder(ctx context.Context, integrationID string, orderID string) error

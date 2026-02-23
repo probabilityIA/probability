@@ -47,19 +47,15 @@ func New(
 	invoiceRequestPublisher := queue.NewInvoiceRequestPublisher(rabbitMQ, moduleLogger)
 
 	// SSE publisher (Redis Pub/Sub) para notificaciones en tiempo real
-	sseChannel := config.Get("REDIS_INVOICE_EVENTS_CHANNEL")
-	if sseChannel == "" {
-		sseChannel = "probability:invoicing:events"
-	}
 	var ssePublisher = invoicingRedis.NewNoopSSEPublisher()
 	if redisClient != nil {
-		ssePublisher = invoicingRedis.NewSSEPublisher(redisClient, moduleLogger, sseChannel)
+		ssePublisher = invoicingRedis.NewSSEPublisher(redisClient, moduleLogger, redis.ChannelInvoicingEvents)
 
 		// ═══════════════════════════════════════════════════════════════
 		// REGISTRAR PREFIJOS DE CACHÉ Y CANALES PARA STARTUP LOGS
 		// ═══════════════════════════════════════════════════════════════
 		redisClient.RegisterCachePrefix("probability:invoicing:config:*")
-		redisClient.RegisterChannel(sseChannel)
+		redisClient.RegisterChannel(redis.ChannelInvoicingEvents)
 	} else {
 		moduleLogger.Warn(ctx).Msg("Redis no disponible - SSE deshabilitado")
 	}

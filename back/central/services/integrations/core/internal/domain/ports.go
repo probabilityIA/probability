@@ -50,17 +50,6 @@ type WebhookInfo struct {
 	Events      []string `json:"events,omitempty"`
 }
 
-type IOrderSyncService interface {
-	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
-	SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error
-	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
-	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
-	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
-	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
-	VerifyWebhooksByURL(ctx context.Context, integrationID string) ([]interface{}, error)
-	CreateWebhook(ctx context.Context, integrationID string) (interface{}, error)
-}
-
 type IS3Service interface {
 	GetImageURL(filename string) string
 	DeleteImage(ctx context.Context, filename string) error
@@ -70,6 +59,65 @@ type IS3Service interface {
 	FileExists(ctx context.Context, filename string) (bool, error)
 	GetFileURL(ctx context.Context, filename string) (string, error)
 	UploadImage(ctx context.Context, file *multipart.FileHeader, folder string) (string, error)
+}
+
+// ============================================
+// INTEGRATION USE CASE
+// ============================================
+
+// IntegrationCreatedObserver es un callback que se invoca al crear una integración
+type IntegrationCreatedObserver func(ctx context.Context, integration *Integration)
+
+// IIntegrationUseCase define las operaciones del caso de uso de integraciones.
+// Incluye CRUD, test, sync, webhooks, y registro de providers.
+type IIntegrationUseCase interface {
+	// CRUD
+	CreateIntegration(ctx context.Context, dto CreateIntegrationDTO) (*Integration, error)
+	UpdateIntegration(ctx context.Context, id uint, dto UpdateIntegrationDTO) (*Integration, error)
+	GetIntegrationByID(ctx context.Context, id uint) (*Integration, error)
+	GetIntegrationByIDWithCredentials(ctx context.Context, id uint) (*IntegrationWithCredentials, error)
+	GetIntegrationByType(ctx context.Context, integrationTypeCode string, businessID *uint) (*IntegrationWithCredentials, error)
+	GetPublicIntegrationByID(ctx context.Context, integrationID string) (*PublicIntegration, error)
+	GetIntegrationConfig(ctx context.Context, integrationType string, businessID *uint) (map[string]interface{}, error)
+	DecryptCredentialField(ctx context.Context, integrationID string, fieldName string) (string, error)
+	DeleteIntegration(ctx context.Context, id uint) error
+	ListIntegrations(ctx context.Context, filters IntegrationFilters) ([]*Integration, int64, error)
+	ActivateIntegration(ctx context.Context, id uint) error
+	DeactivateIntegration(ctx context.Context, id uint) error
+	SetAsDefault(ctx context.Context, id uint) error
+	UpdateLastSync(ctx context.Context, integrationID string) error
+
+	// Test
+	TestIntegration(ctx context.Context, id uint) error
+	TestConnectionRaw(ctx context.Context, integrationTypeCode string, config map[string]interface{}, credentials map[string]interface{}) error
+
+	// Observers
+	RegisterObserver(observer IntegrationCreatedObserver)
+
+	// Cache
+	WarmCache(ctx context.Context) error
+
+	// Provider registry
+	RegisterProvider(integrationType int, provider IIntegrationContract)
+	GetProvider(integrationType int) (IIntegrationContract, bool)
+
+	// Sync (absorbe ICoreOperationsService)
+	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
+	SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error
+	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
+
+	// Webhooks (absorbe ICoreOperationsService)
+	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
+	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
+	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+	VerifyWebhooksByURL(ctx context.Context, integrationID string) ([]interface{}, error)
+	CreateWebhookForIntegration(ctx context.Context, integrationID string) (interface{}, error)
+
+	// Consumer convenience
+	GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*PublicIntegration, error)
+	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
+	TestConnectionFromConfig(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
+	OnIntegrationCreated(integrationType int, observer func(context.Context, *PublicIntegration))
 }
 
 // ============================================

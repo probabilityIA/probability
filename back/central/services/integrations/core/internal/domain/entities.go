@@ -62,3 +62,13 @@ type Integration struct {
 type DecryptedCredentials map[string]interface{}
 
 type IntegrationConfig map[string]interface{}
+
+// PublicIntegration representa una integración en formato público (sin credenciales, con config deserializada)
+type PublicIntegration struct {
+	ID              uint
+	BusinessID      *uint
+	Name            string
+	StoreID         string
+	IntegrationType int
+	Config          map[string]interface{}
+}

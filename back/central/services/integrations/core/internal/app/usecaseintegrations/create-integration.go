@@ -71,19 +71,19 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 	}
 
 	// VALIDAR CONEXIÓN ANTES DE GUARDAR
-	// Convertir código string a int y obtener tester registrado para este tipo
-	integrationTypeInt := getIntegrationTypeCodeAsInt(integrationType.Code)
-	tester, err := uc.testerReg.GetTester(integrationTypeInt)
-	if err != nil {
+	// Obtener provider registrado para este tipo
+	integrationTypeInt := domain.IntegrationTypeCodeAsInt(integrationType.Code)
+	provider, hasProvider := uc.providerReg.Get(integrationTypeInt)
+	if !hasProvider {
 		uc.log.Warn(ctx).
 			Str("type_code", integrationType.Code).
-			Msg("No hay tester registrado, solo validando credenciales básicas")
-		// Fallback: validación básica si no hay tester
+			Msg("No hay provider registrado, solo validando credenciales básicas")
+		// Fallback: validación básica si no hay provider
 		if err := uc.validateBasicCredentials(ctx, integrationType.Code, dto.Credentials); err != nil {
 			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
 		}
 	} else {
-		// Deserializar Config a map para el tester
+		// Deserializar Config a map para el provider
 		var configMap map[string]interface{}
 		if len(dto.Config) > 0 {
 			if err := json.Unmarshal(dto.Config, &configMap); err != nil {
@@ -91,8 +91,8 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 			}
 		}
 
-		// Testear conexión con el tester específico
-		if err := tester.TestConnection(ctx, configMap, dto.Credentials); err != nil {
+		// Testear conexión con el provider específico
+		if err := provider.TestConnection(ctx, configMap, dto.Credentials); err != nil {
 			uc.log.Error(ctx).
 				Err(err).
 				Str("type_code", integrationType.Code).
@@ -203,23 +203,18 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		Str("code", integration.Code).
 		Msg("Integración creada exitosamente")
 
-	// ✅ NUEVO - Crear webhooks automáticamente si es soportado
-	if uc.webhookCreator != nil {
-		// Convertir ID a string para el método
+	// Crear webhooks automáticamente si el provider lo soporta
+	if hasProvider {
 		integrationIDStr := fmt.Sprintf("%d", integration.ID)
 
-		// Ejecutar en background para no bloquear si demora (Shopify puede tardar)
 		go func() {
 			bgCtx := context.Background()
-
-			// Esperar un momento breve para asegurar que la transacción de DB se haya commiteado si aplica
-			// (aunque aquí ya pasó por repo.CreateIntegration)
 
 			uc.log.Info(bgCtx).
 				Str("integration_id", integrationIDStr).
 				Msg("🔄 Iniciando creación automática de webhooks...")
 
-			if _, err := uc.webhookCreator.CreateWebhook(bgCtx, integrationIDStr); err != nil {
+			if _, err := uc.CreateWebhookForIntegration(bgCtx, integrationIDStr); err != nil {
 				uc.log.Error(bgCtx).
 					Err(err).
 					Str("integration_id", integrationIDStr).

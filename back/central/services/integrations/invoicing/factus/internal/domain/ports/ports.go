@@ -35,10 +35,18 @@ type IFactusClient interface {
 // USE CASE DE FACTURACIÓN AUTOMÁTICA (Primary Port - Driving Adapter)
 // ═══════════════════════════════════════════════════════════════
 
-// IInvoiceUseCase define el caso de uso para procesar órdenes y crear facturas automáticamente
+// IInvoiceUseCase define el caso de uso para procesar solicitudes de facturación de Factus.
+// El use case es el único punto de entrada para toda la lógica de negocio:
+// obtiene credenciales de la DB, construye el request y llama al cliente HTTP.
 type IInvoiceUseCase interface {
-	// ProcessOrderForInvoicing procesa un evento de orden para determinar si debe facturarse
-	ProcessOrderForInvoicing(ctx context.Context, event *OrderEventMessage) error
+	// CreateInvoice procesa una solicitud de facturación:
+	// descifra credenciales, construye el request tipado y llama a la API de Factus.
+	// Retorna siempre un resultado (incluso en error) para propagar el AuditData.
+	CreateInvoice(ctx context.Context, req *dtos.ProcessInvoiceRequest) (*dtos.ProcessInvoiceResult, error)
+
+	// TestConnection valida que las credenciales y configuración sean correctas
+	// contra la API de Factus. Llamado desde el contrato global IIntegrationContract.
+	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 }
 
 // ═══════════════════════════════════════════════════════════════

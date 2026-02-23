@@ -20,7 +20,7 @@ type ShopifyClient interface {
 
 type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
-	GetIntegrationByStoreID(ctx context.Context, storeID string) (*Integration, error)
+	GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*Integration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
-	UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error // Actualiza el config de una integración
+	UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error
 }

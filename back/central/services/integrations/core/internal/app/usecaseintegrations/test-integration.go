@@ -9,7 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// TestIntegration prueba la conexión de una integración usando el tester registrado
+// TestIntegration prueba la conexión de una integración usando el provider registrado
 func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) error {
 	ctx = log.WithFunctionCtx(ctx, "TestIntegration")
 
@@ -22,7 +22,6 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 	// Desencriptar credenciales
 	var credentials domain.DecryptedCredentials
 	if len(integration.Credentials) > 0 {
-		// Las credenciales están codificadas en base64 dentro de un JSON
 		encryptedBytes, err := decodeEncryptedCredentials([]byte(integration.Credentials))
 		if err != nil {
 			return fmt.Errorf("%w: %w", domain.ErrIntegrationCredentialsDecrypt, err)
@@ -42,12 +41,11 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 		}
 	}
 
-	// Obtener el código del tipo de integración para el tester
+	// Obtener el código del tipo de integración
 	integrationTypeCode := ""
 	if integration.IntegrationType != nil {
 		integrationTypeCode = integration.IntegrationType.Code
 	} else {
-		// Si no está cargado, obtenerlo del repositorio
 		integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, integration.IntegrationTypeID)
 		if err != nil {
 			return fmt.Errorf("error al obtener tipo de integración: %w", err)
@@ -56,10 +54,10 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 	}
 
 	// Convertir código string a int
-	integrationTypeInt := getIntegrationTypeCodeAsInt(integrationTypeCode)
+	integrationTypeInt := domain.IntegrationTypeCodeAsInt(integrationTypeCode)
 
-	// Obtener tester registrado para este tipo
-	registeredTypes := uc.testerReg.ListRegisteredTypes()
+	// Obtener provider registrado para este tipo
+	registeredTypes := uc.providerReg.ListRegisteredTypes()
 	registeredTypesStr := make([]string, len(registeredTypes))
 	for i, t := range registeredTypes {
 		registeredTypesStr[i] = fmt.Sprintf("%d", t)
@@ -68,26 +66,23 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 		Str("type_code", integrationTypeCode).
 		Int("type_int", integrationTypeInt).
 		Strs("registered_types", registeredTypesStr).
-		Msg("Buscando tester registrado para tipo de integración")
+		Msg("Buscando provider registrado para tipo de integración")
 
-	tester, err := uc.testerReg.GetTester(integrationTypeInt)
-	if err != nil {
+	provider, hasProvider := uc.providerReg.Get(integrationTypeInt)
+	if !hasProvider {
 		uc.log.Warn(ctx).
-			Err(err).
 			Str("type_code", integrationTypeCode).
 			Int("type_int", integrationTypeInt).
 			Strs("registered_types", registeredTypesStr).
-			Msg("No hay tester registrado, solo validando credenciales básicas")
-		// Fallback: validación básica si no hay tester
+			Msg("No hay provider registrado, solo validando credenciales básicas")
 		return uc.validateBasicCredentials(ctx, integrationTypeCode, credentials)
 	}
 
 	uc.log.Info(ctx).
 		Str("type_code", integrationTypeCode).
-		Msg("Tester encontrado, ejecutando test de conexión real")
+		Msg("Provider encontrado, ejecutando test de conexión real")
 
 	// Para integraciones existentes, verificar que test_phone_number esté presente
-	// (solo para WhatsApp, pero verificamos de forma genérica)
 	if testPhone, ok := configMap["test_phone_number"].(string); !ok || testPhone == "" {
 		uc.log.Error(ctx).
 			Uint("id", integration.ID).
@@ -96,8 +91,8 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 		return fmt.Errorf("%w: no hay número de prueba guardado en la configuración de la integración. Por favor, edita la integración y guarda un número de prueba en el campo 'Número de Prueba'", domain.ErrIntegrationTestFailed)
 	}
 
-	// Llamar al tester específico
-	if err := tester.TestConnection(ctx, configMap, credentials); err != nil {
+	// Llamar al provider específico
+	if err := provider.TestConnection(ctx, configMap, credentials); err != nil {
 		uc.log.Error(ctx).
 			Err(err).
 			Uint("id", integration.ID).
@@ -114,9 +109,8 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 	return nil
 }
 
-// validateBasicCredentials valida credenciales básicas cuando no hay tester registrado
+// validateBasicCredentials valida credenciales básicas cuando no hay provider registrado
 func (uc *IntegrationUseCase) validateBasicCredentials(ctx context.Context, integrationType string, credentials domain.DecryptedCredentials) error {
-	// Validación básica: verificar que exista access_token
 	accessToken, ok := credentials["access_token"].(string)
 	if !ok || accessToken == "" {
 		return domain.ErrIntegrationAccessTokenNotFound
@@ -124,7 +118,7 @@ func (uc *IntegrationUseCase) validateBasicCredentials(ctx context.Context, inte
 
 	uc.log.Info(ctx).
 		Str("type", integrationType).
-		Msg("Validación básica de credenciales exitosa (sin tester registrado)")
+		Msg("Validación básica de credenciales exitosa (sin provider registrado)")
 
 	return nil
 }
@@ -134,10 +128,10 @@ func (uc *IntegrationUseCase) TestConnectionRaw(ctx context.Context, integration
 	ctx = log.WithFunctionCtx(ctx, "TestConnectionRaw")
 
 	// Convertir código string a int
-	integrationTypeInt := getIntegrationTypeCodeAsInt(integrationTypeCode)
+	integrationTypeInt := domain.IntegrationTypeCodeAsInt(integrationTypeCode)
 
-	// Obtener tester registrado para este tipo
-	registeredTypes := uc.testerReg.ListRegisteredTypes()
+	// Obtener provider registrado para este tipo
+	registeredTypes := uc.providerReg.ListRegisteredTypes()
 	registeredTypesStr := make([]string, len(registeredTypes))
 	for i, t := range registeredTypes {
 		registeredTypesStr[i] = fmt.Sprintf("%d", t)
@@ -146,26 +140,24 @@ func (uc *IntegrationUseCase) TestConnectionRaw(ctx context.Context, integration
 		Str("type_code", integrationTypeCode).
 		Int("type_int", integrationTypeInt).
 		Strs("registered_types", registeredTypesStr).
-		Msg("Buscando tester registrado para tipo de integración (TestConnectionRaw)")
+		Msg("Buscando provider registrado para tipo de integración (TestConnectionRaw)")
 
-	tester, err := uc.testerReg.GetTester(integrationTypeInt)
-	if err != nil {
+	provider, hasProvider := uc.providerReg.Get(integrationTypeInt)
+	if !hasProvider {
 		uc.log.Warn(ctx).
-			Err(err).
 			Str("type_code", integrationTypeCode).
 			Int("type_int", integrationTypeInt).
 			Strs("registered_types", registeredTypesStr).
-			Msg("No hay tester registrado, solo validando credenciales básicas")
-		// Fallback: validación básica si no hay tester
+			Msg("No hay provider registrado, solo validando credenciales básicas")
 		return uc.validateBasicCredentials(ctx, integrationTypeCode, credentials)
 	}
 
 	uc.log.Info(ctx).
 		Str("type_code", integrationTypeCode).
-		Msg("Tester encontrado, ejecutando test de conexión real")
+		Msg("Provider encontrado, ejecutando test de conexión real")
 
-	// Llamar al tester específico
-	if err := tester.TestConnection(ctx, config, credentials); err != nil {
+	// Llamar al provider específico
+	if err := provider.TestConnection(ctx, config, credentials); err != nil {
 		uc.log.Error(ctx).
 			Err(err).
 			Str("type_code", integrationTypeCode).

@@ -26,7 +26,7 @@ func (h *IntegrationHandler) CreateWebhookHandler(c *gin.Context) {
 	idStr := c.Param("id")
 
 	// Crear webhooks a través del core
-	result, err := h.orderSyncSvc.CreateWebhook(c.Request.Context(), idStr)
+	result, err := h.usecase.CreateWebhookForIntegration(c.Request.Context(), idStr)
 	if err != nil {
 		h.logger.Error().Err(err).Str("id", idStr).Msg("Error al crear webhooks")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{

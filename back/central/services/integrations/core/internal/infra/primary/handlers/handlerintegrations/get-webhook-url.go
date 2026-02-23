@@ -35,7 +35,7 @@ func (h *IntegrationHandler) GetWebhookURLHandler(c *gin.Context) {
 
 	// Obtener la información del webhook a través del servicio de sincronización
 	// que tiene acceso al core de integraciones
-	webhookInfo, err := h.orderSyncSvc.GetWebhookURL(c.Request.Context(), uint(id))
+	webhookInfo, err := h.usecase.GetWebhookURL(c.Request.Context(), uint(id))
 	if err != nil {
 		h.logger.Error().Err(err).Uint64("id", id).Msg("Error al obtener URL del webhook")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{

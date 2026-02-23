@@ -3,13 +3,10 @@ package integrations
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
-	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce"
 	"github.com/secamc93/probability/back/central/services/integrations/events"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus"
-	invoicingcore "github.com/secamc93/probability/back/central/services/integrations/invoicing/core"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo"
-	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes"
-	whatsApp "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp"
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging"
 	"github.com/secamc93/probability/back/central/services/modules"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -19,21 +16,12 @@ import (
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
-// IntegrationEventService es el servicio de eventos de integraciones (exportado para uso en otros módulos)
-// Se accede a través de events.GetEventService()
-var IntegrationEventService interface{}
-
-// New inicializa todos los servicios de integraciones
-// Este bundle coordina la inicialización de todos los módulos de integraciones
-// (core, WhatsApp, Shopify, Softpymes, etc.) sin exponer dependencias externas
-// Retorna core.IIntegrationCore para que otros módulos puedan usarlo
+// New inicializa todos los servicios de integraciones.
+// Retorna core.IIntegrationCore para que otros módulos puedan usarlo.
 func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, moduleBundles *modules.ModuleBundles) core.IIntegrationCore {
 	// Inicializar módulo de eventos de integraciones
 	eventsRouter := router.Group("/integrations")
-	eventService, _ := events.New(eventsRouter, logger)
-	IntegrationEventService = eventService
-	// Establecer instancia global para acceso desde otros módulos
-	events.SetEventService(eventService)
+	events.New(eventsRouter, logger, redisClient)
 
 	// Inicializar Integration Core (hub central de integraciones)
 	integrationCore := core.New(router, db, redisClient, logger, config, s3)
@@ -42,34 +30,14 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// REGISTRO DE INTEGRACIONES
 	// ═══════════════════════════════════════════════════════════════
 
-	// Messaging: WhatsApp
-	whatsappBundle := whatsApp.New(config, logger, db, rabbitMQ, redisClient, moduleBundles)
-	integrationCore.RegisterIntegration(core.IntegrationTypeWhatsApp, whatsappBundle)
+	// Messaging: todos los proveedores de mensajería
+	messaging.New(config, logger, db, rabbitMQ, redisClient, moduleBundles, integrationCore)
 
-	// E-commerce: Shopify
-	shopify.New(router, logger, config, integrationCore, rabbitMQ, db)
+	// E-commerce: todos los proveedores de e-commerce
+	ecommerce.New(router, logger, config, rabbitMQ, db, integrationCore)
 
-	// Invoicing: Softpymes (Facturación Electrónica - type_id=5)
-	// NOTA: Softpymes NO usa base de datos - es un cliente HTTP puro + async RabbitMQ consumer
-	softpymesBundle := softpymes.New(config, logger, rabbitMQ, integrationCore)
-	integrationCore.RegisterIntegration(core.IntegrationTypeInvoicing, softpymesBundle)
-
-	// Invoicing: Factus (Facturación Electrónica - type_id=6)
-	// NOTA: Factus NO usa base de datos - es un cliente HTTP puro + async RabbitMQ consumer
-	factusBundle := factus.New(config, logger, rabbitMQ, integrationCore)
-	integrationCore.RegisterIntegration(core.IntegrationTypeFactus, factusBundle)
-
-	// Invoicing: Siigo (Facturación Electrónica - type_id=7)
-	// NOTA: Siigo NO usa base de datos - es un cliente HTTP puro + async RabbitMQ consumer
-	siigoBundle := siigo.New(config, logger, rabbitMQ, integrationCore)
-	integrationCore.RegisterIntegration(core.IntegrationTypeSiigo, siigoBundle)
-
-	// Invoicing Core: router centralizado de facturación electrónica.
-	// Consume invoicing.requests y enruta al proveedor correcto
-	// (invoicing.softpymes.requests / invoicing.factus.requests).
-	// Debe inicializarse DESPUÉS de los bundles de softpymes y factus para que
-	// las colas de proveedores ya estén declaradas cuando el router inicie.
-	invoicingcore.New(logger, rabbitMQ)
+	// Invoicing: todos los proveedores de facturación electrónica + router de colas
+	invoicing.New(config, logger, rabbitMQ, integrationCore)
 
 	return integrationCore
 }

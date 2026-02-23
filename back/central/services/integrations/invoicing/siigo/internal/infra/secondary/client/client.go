@@ -11,21 +11,19 @@ import (
 )
 
 // Client implementa ISiigoClient para comunicarse con la API de Siigo
+// La URL base se obtiene de las credenciales de cada integración, no del cliente
 type Client struct {
-	baseURL    string
 	httpClient *httpclient.Client
 	tokenCache *TokenCache
 	log        log.ILogger
 }
 
 // New crea un nuevo cliente de Siigo
-func New(baseURL string, logger log.ILogger) ports.ISiigoClient {
-	logger.Info(context.Background()).
-		Str("base_url", baseURL).
-		Msg("🔍 Creating Siigo HTTP client")
+// La URL base se obtiene de las credenciales almacenadas en la base de datos (req.Credentials.BaseURL)
+func New(logger log.ILogger) ports.ISiigoClient {
+	logger.Info(context.Background()).Msg("🔍 Creating Siigo HTTP client")
 
 	httpConfig := httpclient.HTTPClientConfig{
-		BaseURL:    baseURL,
 		Timeout:    30 * time.Second,
 		RetryCount: 2,
 		RetryWait:  3 * time.Second,
@@ -37,7 +35,6 @@ func New(baseURL string, logger log.ILogger) ports.ISiigoClient {
 	httpClient.SetHeader("Content-Type", "application/json")
 
 	return &Client{
-		baseURL:    baseURL,
 		httpClient: httpClient,
 		tokenCache: NewTokenCache(),
 		log:        logger.WithModule("siigo.client"),

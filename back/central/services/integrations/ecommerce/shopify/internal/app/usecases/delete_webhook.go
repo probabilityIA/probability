@@ -20,11 +20,7 @@ func (uc *SyncOrdersUseCase) DeleteWebhook(ctx context.Context, integrationID, w
 	}
 
 	// Obtener el store_name del config
-	config, ok := integration.Config.(map[string]interface{})
-	if !ok {
-		return fmt.Errorf("config no es un map válido")
-	}
-
+	config := integration.Config
 	storeName, ok := config["store_name"].(string)
 	if !ok || storeName == "" {
 		return fmt.Errorf("store_name no encontrado en la configuración")

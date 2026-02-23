@@ -67,7 +67,7 @@ type InvoiceRequestMessage struct {
 // InvoiceRequestConsumer consume solicitudes de facturación desde Invoicing Module
 type InvoiceRequestConsumer struct {
 	rabbit            rabbitmq.IQueue
-	integrationCore   integrationCore.IIntegrationCore
+	integrationCore   integrationCore.IIntegrationService
 	siigoClient       ports.ISiigoClient
 	responsePublisher *queue.ResponsePublisher
 	log               log.ILogger
@@ -76,7 +76,7 @@ type InvoiceRequestConsumer struct {
 // NewInvoiceRequestConsumer crea una nueva instancia del consumer
 func NewInvoiceRequestConsumer(
 	rabbit rabbitmq.IQueue,
-	integrationCore integrationCore.IIntegrationCore,
+	integrationCore integrationCore.IIntegrationService,
 	siigoClient ports.ISiigoClient,
 	responsePublisher *queue.ResponsePublisher,
 	logger log.ILogger,
@@ -215,13 +215,8 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 
 	// 4. Combinar config de integración con config de facturación
 	combinedConfig := make(map[string]interface{})
-
-	if integration.Config != nil {
-		if configMap, ok := integration.Config.(map[string]interface{}); ok {
-			for k, v := range configMap {
-				combinedConfig[k] = v
-			}
-		}
+	for k, v := range integration.Config {
+		combinedConfig[k] = v
 	}
 
 	for k, v := range request.InvoiceData.Config {

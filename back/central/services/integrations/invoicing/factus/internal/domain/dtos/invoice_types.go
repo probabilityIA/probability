@@ -47,6 +47,37 @@ type CreateInvoiceRequest struct {
 	Config       map[string]interface{}
 }
 
+// ProcessInvoiceRequest es el input del caso de uso para procesar una solicitud de facturación.
+// No contiene credenciales — el use case las obtiene y descifra desde la base de datos.
+type ProcessInvoiceRequest struct {
+	InvoiceID     uint
+	Operation     string
+	CorrelationID string
+	IntegrationID uint
+	Customer      CustomerData
+	Items         []ItemData
+	Total         float64
+	Subtotal      float64
+	Tax           float64
+	Discount      float64
+	ShippingCost  float64
+	Currency      string
+	OrderID       string
+	Config        map[string]interface{}
+}
+
+// ProcessInvoiceResult es el output del caso de uso.
+// Se retorna siempre (incluso en error) para propagar el AuditData hacia el consumer.
+type ProcessInvoiceResult struct {
+	InvoiceNumber string
+	ExternalID    string
+	CUFE          string
+	QRCode        string
+	Total         string
+	IssuedAt      string
+	AuditData     *AuditData
+}
+
 // AuditData captura el request/response HTTP para logging y debugging
 type AuditData struct {
 	RequestURL     string

@@ -32,8 +32,4 @@ var (
 	ErrIntegrationTypeImageUploadFailed = errors.New("error al subir imagen del tipo de integración")
 	ErrIntegrationTypeImageDeleteFailed = errors.New("error al eliminar imagen del tipo de integración")
 
-	// Errores de tester registry
-	ErrTesterTypeEmpty     = errors.New("tipo de integración no puede estar vacío")
-	ErrTesterNil           = errors.New("tester no puede ser nil")
-	ErrTesterNotRegistered = errors.New("tester no registrado para tipo")
 )

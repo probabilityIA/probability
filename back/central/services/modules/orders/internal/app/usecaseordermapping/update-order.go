@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
@@ -39,15 +40,18 @@ func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *e
 			ctx,
 			existingOrder.IntegrationID,
 			existingOrder.BusinessID,
-			existingOrder.ID,
-			existingOrder.OrderNumber,
-			existingOrder.ExternalID,
-			existingOrder.Platform,
-			existingOrder.CustomerEmail,
-			existingOrder.Currency,
-			existingOrder.Status,
-			existingOrder.CreatedAt,
-			&existingOrder.TotalAmount,
+			integrationevents.SyncOrderUpdatedEvent{
+				OrderID:       existingOrder.ID,
+				OrderNumber:   existingOrder.OrderNumber,
+				ExternalID:    existingOrder.ExternalID,
+				Platform:      existingOrder.Platform,
+				CustomerEmail: existingOrder.CustomerEmail,
+				Currency:      existingOrder.Currency,
+				Status:        existingOrder.Status,
+				CreatedAt:     existingOrder.CreatedAt,
+				TotalAmount:   &existingOrder.TotalAmount,
+				UpdatedAt:     time.Now(),
+			},
 		)
 	}
 

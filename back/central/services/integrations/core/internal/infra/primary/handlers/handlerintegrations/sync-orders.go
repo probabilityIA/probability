@@ -36,14 +36,6 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 		return
 	}
 
-	if h.orderSyncSvc == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Order sync service not configured",
-		})
-		return
-	}
-
 	// Parsear el body para obtener parámetros opcionales
 	var req SyncOrdersRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -100,10 +92,9 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 	// Usar método con parámetros si están presentes, sino usar el método por defecto
 	var err error
 	if syncParams != nil {
-		// Pasar directamente syncOrdersParams - el servicio acepta interface{}
-		err = h.orderSyncSvc.SyncOrdersByIntegrationIDWithParams(c.Request.Context(), integrationID, syncParams)
+		err = h.usecase.SyncOrdersByIntegrationIDWithParams(c.Request.Context(), integrationID, syncParams)
 	} else {
-		err = h.orderSyncSvc.SyncOrdersByIntegrationID(c.Request.Context(), integrationID)
+		err = h.usecase.SyncOrdersByIntegrationID(c.Request.Context(), integrationID)
 	}
 
 	if err != nil {
@@ -158,15 +149,7 @@ func (h *IntegrationHandler) SyncOrdersByBusinessHandler(c *gin.Context) {
 		return
 	}
 
-	if h.orderSyncSvc == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Order sync service not configured",
-		})
-		return
-	}
-
-	if err := h.orderSyncSvc.SyncOrdersByBusiness(c.Request.Context(), uint(businessID)); err != nil {
+	if err := h.usecase.SyncOrdersByBusiness(c.Request.Context(), uint(businessID)); err != nil {
 		h.logger.Error().Err(err).Uint("business_id", uint(businessID)).Msg("Failed to sync orders")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,

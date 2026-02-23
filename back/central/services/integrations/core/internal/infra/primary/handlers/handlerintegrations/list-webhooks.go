@@ -25,7 +25,7 @@ func (h *IntegrationHandler) ListWebhooksHandler(c *gin.Context) {
 	idStr := c.Param("id")
 
 	// Listar webhooks a través del core
-	webhooks, err := h.orderSyncSvc.ListWebhooks(c.Request.Context(), idStr)
+	webhooks, err := h.usecase.ListWebhooks(c.Request.Context(), idStr)
 	if err != nil {
 		h.logger.Error().Err(err).Str("id", idStr).Msg("Error al listar webhooks")
 		c.JSON(http.StatusInternalServerError, response.ErrorResponse{
