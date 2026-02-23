@@ -164,41 +164,38 @@ export function DynamicFilters({
     };
 
     return (
-        <div className={`bg-white p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-gray-200 border-b-0 ${className}`}>
+        <div className={`bg-purple-50 p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-purple-200 border-b-0 ${className}`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Botón Añadir Filtro y Chips */}
                 <div className="flex-1 flex flex-wrap items-center gap-2">
                     <div className="relative">
                         <div className="flex items-center gap-2">
-                            <Button
+                            <button
                                 ref={buttonRef}
-                                variant="primary"
-                                size="sm"
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="flex items-center gap-2"
+                                style={{ background: '#7c3aed' }}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                             >
                                 <FunnelIcon className="w-4 h-4" />
                                 Añadir Filtro
-                            </Button>
+                            </button>
 
                             {onTestGuide && (
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
+                                <button
+                                    style={{ background: '#7c3aed' }}
                                     onClick={() => {
                                         onTestGuide();
                                         setIsDropdownOpen(false);
                                     }}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                                 >
                                     Guía Envío
-                                </Button>
+                                </button>
                             )}
 
                             {onCreate && (
-                                <Button
-                                    variant="primary"
-                                    size="sm"
+                                <button
+                                    style={{ background: '#7c3aed' }}
                                     onClick={() => {
                                         onCreate();
                                         // close dropdown state
@@ -206,7 +203,7 @@ export function DynamicFilters({
                                         setSelectedFilterKey(null);
                                         setTempValue('');
                                     }}
-                                    className="flex items-center gap-2"
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                                     title={createButtonIconOnly ? 'Crear nuevo' : undefined}
                                 >
                                     {createButtonIconOnly ? (
@@ -216,7 +213,7 @@ export function DynamicFilters({
                                     ) : (
                                         createButtonText
                                     )}
-                                </Button>
+                                </button>
                             )}
                         </div>
 
@@ -245,7 +242,7 @@ export function DynamicFilters({
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
                                                         placeholder={filter.placeholder}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
                                                         autoFocus
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
@@ -288,7 +285,7 @@ export function DynamicFilters({
                                                     <select
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
                                                         autoFocus
                                                     >
                                                         <option value="">Seleccionar...</option>
@@ -394,14 +391,14 @@ export function DynamicFilters({
                     {activeFilters.map((filter) => (
                         <div
                             key={filter.key}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-800 rounded-full text-sm font-medium"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-800 rounded-full text-sm font-medium"
                         >
                             <span>
                                 {getFilterLabel(filter.key)}: {getFilterDisplayValue(filter)}
                             </span>
                             <button
                                 onClick={() => onRemoveFilter(filter.key)}
-                                className="hover:bg-blue-100 rounded-full p-0.5 transition-colors"
+                                className="hover:bg-purple-100 rounded-full p-0.5 transition-colors"
                                 aria-label={`Eliminar filtro ${filter.label}`}
                             >
                                 <XMarkIcon className="w-4 h-4" />
@@ -416,7 +413,7 @@ export function DynamicFilters({
                         <select
                             value={sortBy}
                             onChange={(e) => onSortChange(e.target.value, sortOrder)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white text-sm"
                         >
                             {sortOptions.map((opt) => (
                                 <option key={opt.value} value={opt.value}>
@@ -427,7 +424,7 @@ export function DynamicFilters({
                         <select
                             value={sortOrder}
                             onChange={(e) => onSortChange(sortBy, e.target.value as 'asc' | 'desc')}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white text-sm"
                         >
                             <option value="desc">Descendente</option>
                             <option value="asc">Ascendente</option>

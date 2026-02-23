@@ -95,6 +95,7 @@ export default function ProductSelector({
                             onClick={onCreateNew}
                             variant="secondary"
                             className="flex items-center gap-1"
+                            style={{ background: '#ede9fe', color: '#7c3aed', border: '1px solid #e9d5ff' }}
                         >
                             <Plus className="h-4 w-4" />
                             Nuevo

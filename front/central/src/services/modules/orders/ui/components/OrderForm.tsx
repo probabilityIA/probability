@@ -121,267 +121,291 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-2 bg-purple-50 p-2 rounded-lg">
             {error && (
                 <Alert type="error" onClose={() => setError(null)}>
                     {error}
                 </Alert>
             )}
 
-            {/* Customer Info */}
-            <div className="bg-blue-50 p-4 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Información del Cliente</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre Completo
-                        </label>
-                        <Input
-                            type="text"
-                            placeholder="Se autocompleta con nombre y apellido"
-                            value={formData.customer_name}
-                            onChange={(e) => setFormData({ ...formData, customer_name: e.target.value })}
-                        />
+            {/* 3-Column Layout with 2-Column below */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+                {/* Column 1: Customer Info */}
+                <div>
+                    {/* Customer Info */}
+                    <div className="bg-purple-300 p-5 rounded-lg">
+                        <h3 className="text-base font-semibold text-black mb-4">Información del Cliente</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Nombre *
+                                </label>
+                                <Input
+                                    type="text"
+                                    required
+                                    value={formData.customer_first_name}
+                                    onChange={(e) => setFormData({ ...formData, customer_first_name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Apellido *
+                                </label>
+                                <Input
+                                    type="text"
+                                    required
+                                    value={formData.customer_last_name}
+                                    onChange={(e) => setFormData({ ...formData, customer_last_name: e.target.value })}
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    📧 Email *
+                                </label>
+                                <Input
+                                    type="email"
+                                    value={formData.customer_email}
+                                    onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
+                                />
+                            </div>
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    📱 Teléfono *
+                                </label>
+                                <div className="flex items-center w-full">
+                                    <span className="px-3 py-2 bg-purple-200 text-black font-medium rounded-l-lg border border-r-0 border-gray-300">
+                                        +57
+                                    </span>
+                                    <div className="flex-1">
+                                        <Input
+                                            type="tel"
+                                            value={formData.customer_phone}
+                                            onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                                            placeholder="300 1234567"
+                                            className="rounded-l-none w-full"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Nombre *
-                        </label>
-                        <Input
-                            type="text"
-                            required
-                            value={formData.customer_first_name}
-                            onChange={(e) => setFormData({ ...formData, customer_first_name: e.target.value })}
-                        />
+                </div>
+                {/* Column 2: Shipping Address */}
+                <div>
+                    {/* Shipping Address */}
+                    <div className="bg-purple-300 p-5 rounded-lg">
+                        <h3 className="text-base font-semibold text-black mb-4">Dirección de Envío</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Dirección
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.shipping_street}
+                                    onChange={(e) => setFormData({ ...formData, shipping_street: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Ciudad
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.shipping_city}
+                                    onChange={(e) => setFormData({ ...formData, shipping_city: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Departamento
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.shipping_state}
+                                    onChange={(e) => setFormData({ ...formData, shipping_state: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    País
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.shipping_country}
+                                    onChange={(e) => setFormData({ ...formData, shipping_country: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Código Postal
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.shipping_postal_code}
+                                    onChange={(e) => setFormData({ ...formData, shipping_postal_code: e.target.value })}
+                                />
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Apellido *
-                        </label>
-                        <Input
-                            type="text"
-                            required
-                            value={formData.customer_last_name}
-                            onChange={(e) => setFormData({ ...formData, customer_last_name: e.target.value })}
-                        />
+                </div>
+
+                {/* Column 3: Financial Info only */}
+                <div>
+                    {/* Financial */}
+                    <div className="bg-purple-300 p-5 rounded-lg">
+                        <h3 className="text-base font-semibold text-black mb-4">Información Financiera</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Subtotal *
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    value={formData.subtotal}
+                                    onChange={(e) => setFormData({ ...formData, subtotal: parseFloat(e.target.value) || 0 })}
+                                    onBlur={calculateTotal}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Impuestos
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.tax}
+                                    onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
+                                    onBlur={calculateTotal}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Descuento
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.discount}
+                                    onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
+                                    onBlur={calculateTotal}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Costo de Envío
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.shipping_cost}
+                                    onChange={(e) => setFormData({ ...formData, shipping_cost: parseFloat(e.target.value) || 0 })}
+                                    onBlur={calculateTotal}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Total *
+                                </label>
+                                <Input
+                                    type="number"
+                                    step="0.01"
+                                    required
+                                    value={formData.total_amount}
+                                    onChange={(e) => setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })}
+                                    className="font-bold"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Moneda
+                                </label>
+                                <select
+                                    value={formData.currency}
+                                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="COP">COP</option>
+                                    <option value="USD">USD</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Email
-                        </label>
-                        <Input
-                            type="email"
-                            value={formData.customer_email}
-                            onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Teléfono
-                        </label>
-                        <Input
-                            type="tel"
-                            value={formData.customer_phone}
-                            onChange={(e) => setFormData({ ...formData, customer_phone: e.target.value })}
+                </div>
+
+                {/* Product Selection - spans 2 columns */}
+                <div className="lg:col-span-2">
+                    <div className="bg-purple-300 p-5 rounded-lg">
+                        <h3 className="text-base font-semibold text-black mb-4">Productos</h3>
+                        <ProductSelector
+                            businessId={formData.business_id || 0}
+                            selectedProducts={selectedProducts}
+                            onSelect={handleProductsChange}
+                            onCreateNew={() => setShowProductModal(true)}
                         />
                     </div>
                 </div>
-            </div>
 
-            {/* Product Selection */}
-            <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Productos</h3>
-                <ProductSelector
-                    businessId={formData.business_id || 0}
-                    selectedProducts={selectedProducts}
-                    onSelect={handleProductsChange}
-                    onCreateNew={() => setShowProductModal(true)}
-                />
-            </div>
-
-            {/* Shipping Address */}
-            <div className="bg-purple-50 p-4 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Dirección de Envío</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Dirección
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.shipping_street}
-                            onChange={(e) => setFormData({ ...formData, shipping_street: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Ciudad
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.shipping_city}
-                            onChange={(e) => setFormData({ ...formData, shipping_city: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Departamento
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.shipping_state}
-                            onChange={(e) => setFormData({ ...formData, shipping_state: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            País
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.shipping_country}
-                            onChange={(e) => setFormData({ ...formData, shipping_country: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Código Postal
-                        </label>
-                        <Input
-                            type="text"
-                            value={formData.shipping_postal_code}
-                            onChange={(e) => setFormData({ ...formData, shipping_postal_code: e.target.value })}
-                        />
-                    </div>
-                </div>
-            </div>
-
-            {/* Financial */}
-            <div className="bg-green-50 p-4 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Información Financiera</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Subtotal *
-                        </label>
-                        <Input
-                            type="number"
-                            step="0.01"
-                            required
-                            value={formData.subtotal}
-                            onChange={(e) => setFormData({ ...formData, subtotal: parseFloat(e.target.value) || 0 })}
-                            onBlur={calculateTotal}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Impuestos
-                        </label>
-                        <Input
-                            type="number"
-                            step="0.01"
-                            value={formData.tax}
-                            onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
-                            onBlur={calculateTotal}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Descuento
-                        </label>
-                        <Input
-                            type="number"
-                            step="0.01"
-                            value={formData.discount}
-                            onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                            onBlur={calculateTotal}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Costo de Envío
-                        </label>
-                        <Input
-                            type="number"
-                            step="0.01"
-                            value={formData.shipping_cost}
-                            onChange={(e) => setFormData({ ...formData, shipping_cost: parseFloat(e.target.value) || 0 })}
-                            onBlur={calculateTotal}
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Total *
-                        </label>
-                        <Input
-                            type="number"
-                            step="0.01"
-                            required
-                            value={formData.total_amount}
-                            onChange={(e) => setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })}
-                            className="font-bold"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Moneda
-                        </label>
-                        <select
-                            value={formData.currency}
-                            onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="COP">COP</option>
-                            <option value="USD">USD</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            {/* Payment & Status */}
-            <div className="bg-yellow-50 p-4 rounded-lg">
-                <h3 className="text-base font-semibold text-gray-800 mb-4">Pago y Estado</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label className="flex items-center">
-                            <input
-                                type="checkbox"
-                                checked={formData.is_paid}
-                                onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
-                                className="mr-2"
-                            />
-                            <span className="text-sm font-medium text-gray-700">Orden Pagada</span>
-                        </label>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Estado
-                        </label>
-                        <select
-                            value={formData.status}
-                            onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="pending">Pendiente</option>
-                            <option value="processing">Procesando</option>
-                            <option value="shipped">Enviado</option>
-                            <option value="delivered">Entregado</option>
-                            <option value="cancelled">Cancelado</option>
-                        </select>
+                {/* Payment & Status - right side */}
+                <div>
+                    <div className="bg-purple-300 p-5 rounded-lg">
+                        <h3 className="text-base font-semibold text-black mb-4">Pago y Estado</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.is_paid}
+                                        onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
+                                        className="mr-2"
+                                    />
+                                    <span className="text-sm font-medium text-black">Orden Pagada</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Estado
+                                </label>
+                                <select
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="pending">Pendiente</option>
+                                    <option value="processing">Procesando</option>
+                                    <option value="shipped">Enviado</option>
+                                    <option value="delivered">Entregado</option>
+                                    <option value="cancelled">Cancelado</option>
+                                </select>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-4 border-t">
+            <div className="flex justify-end space-x-3 pt-2 border-t">
                 {onCancel && (
-                    <Button type="button" onClick={onCancel} variant="outline">
+                    <button
+                        type="button"
+                        onClick={onCancel}
+                        style={{ background: '#6d28d9' }}
+                        className="px-6 py-3 text-base text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    >
                         Cancelar
-                    </Button>
+                    </button>
                 )}
-                <Button type="submit" disabled={loading} loading={loading} variant="primary">
+                <button
+                    type="submit"
+                    disabled={loading}
+                    style={{ background: '#6d28d9' }}
+                    className="px-6 py-3 text-base text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                    {loading && <div className="spinner w-4 h-4" />}
                     {isEdit ? 'Actualizar Orden' : 'Crear Orden'}
-                </Button>
+                </button>
             </div>
             <Modal
                 isOpen={showProductModal}
