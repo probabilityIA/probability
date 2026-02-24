@@ -11,6 +11,15 @@ import (
 type IWooCommerceUseCase interface {
 	// TestConnection verifica que las credenciales de una integración sean válidas.
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
+
+	// SyncOrders sincroniza órdenes de WooCommerce (últimos 30 días por defecto).
+	SyncOrders(ctx context.Context, integrationID string) error
+
+	// SyncOrdersWithParams sincroniza órdenes con parámetros personalizados.
+	SyncOrdersWithParams(ctx context.Context, integrationID string, params interface{}) error
+
+	// ProcessWebhookOrder procesa una orden recibida por webhook.
+	ProcessWebhookOrder(ctx context.Context, topic string, storeURL string, rawBody []byte) error
 }
 
 type wooCommerceUseCase struct {

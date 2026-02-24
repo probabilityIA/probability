@@ -3,9 +3,12 @@ package domain
 import "errors"
 
 var (
-	ErrIntegrationNotFound  = errors.New("woocommerce: integration not found")
-	ErrInvalidCredentials   = errors.New("woocommerce: invalid credentials")
-	ErrMissingConsumerKey   = errors.New("woocommerce: missing consumer_key in credentials")
-	ErrMissingConsumerSecret = errors.New("woocommerce: missing consumer_secret in credentials")
-	ErrMissingStoreURL      = errors.New("woocommerce: missing store_url in config")
+	ErrIntegrationNotFound    = errors.New("woocommerce: integration not found")
+	ErrInvalidCredentials     = errors.New("woocommerce: invalid credentials")
+	ErrMissingConsumerKey     = errors.New("woocommerce: missing consumer_key in credentials")
+	ErrMissingConsumerSecret  = errors.New("woocommerce: missing consumer_secret in credentials")
+	ErrMissingStoreURL        = errors.New("woocommerce: missing store_url in config")
+	ErrWebhookInvalidSignature = errors.New("woocommerce: invalid webhook signature")
+	ErrWebhookMissingSecret   = errors.New("woocommerce: missing webhook secret")
+	ErrNoOrdersFound          = errors.New("woocommerce: no orders found")
 )
