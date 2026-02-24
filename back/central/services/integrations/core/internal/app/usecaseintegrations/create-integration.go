@@ -78,9 +78,23 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		uc.log.Warn(ctx).
 			Str("type_code", integrationType.Code).
 			Msg("No hay provider registrado, solo validando credenciales básicas")
-		// Fallback: validación básica si no hay provider
-		if err := uc.validateBasicCredentials(ctx, integrationType.Code, dto.Credentials); err != nil {
-			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
+
+		// Verificar si usa token de plataforma (en ese caso no hay credenciales propias que validar)
+		var configMap map[string]interface{}
+		if len(dto.Config) > 0 {
+			json.Unmarshal(dto.Config, &configMap) //nolint:errcheck
+		}
+		usePlatformToken, _ := configMap["use_platform_token"].(bool)
+
+		if usePlatformToken {
+			uc.log.Info(ctx).
+				Str("type_code", integrationType.Code).
+				Msg("use_platform_token=true, omitiendo validación de credenciales propias")
+		} else {
+			// Fallback: validación básica si no hay provider y no usa token de plataforma
+			if err := uc.validateBasicCredentials(ctx, integrationType.Code, dto.Credentials); err != nil {
+				return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
+			}
 		}
 	} else {
 		// Deserializar Config a map para el provider
@@ -145,6 +159,7 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		StoreID:           dto.StoreID,
 		IsActive:          dto.IsActive,
 		IsDefault:         dto.IsDefault,
+		IsTesting:         dto.IsTesting,
 		Config:            configJSON,
 		Credentials:       credentialsJSON,
 		Description:       dto.Description,
@@ -174,6 +189,7 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 		StoreID:             integration.StoreID,
 		IsActive:            integration.IsActive,
 		IsDefault:           integration.IsDefault,
+		IsTesting:           integration.IsTesting,
 		Config:              configMap,
 		Description:         integration.Description,
 		CreatedAt:           integration.CreatedAt,

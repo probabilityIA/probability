@@ -14,9 +14,12 @@ type CreateIntegrationTypeDTO struct {
 	Icon              string
 	CategoryID        uint
 	IsActive          bool
+	InDevelopment     bool
 	ConfigSchema      datatypes.JSON
 	CredentialsSchema datatypes.JSON
 	ImageFile         *multipart.FileHeader // Archivo de imagen para subir a S3
+	BaseURL           string
+	BaseURLTest       string
 }
 
 // UpdateIntegrationTypeDTO representa los datos para actualizar un tipo de integración
@@ -27,10 +30,13 @@ type UpdateIntegrationTypeDTO struct {
 	Icon              *string
 	CategoryID        *uint
 	IsActive          *bool
+	InDevelopment     *bool
 	ConfigSchema      *datatypes.JSON
 	CredentialsSchema *datatypes.JSON
 	ImageFile         *multipart.FileHeader // Archivo de imagen para subir a S3
 	RemoveImage       bool                  // Flag para eliminar la imagen existente
+	BaseURL           *string
+	BaseURLTest       *string
 }
 
 // CreateIntegrationDTO representa los datos para crear una integración
@@ -42,6 +48,7 @@ type CreateIntegrationDTO struct {
 	StoreID           string // Identificador externo (ej: shop domain para Shopify)
 	IsActive          bool
 	IsDefault         bool
+	IsTesting         bool // Si está en modo de pruebas (usa base_url_test)
 	Config            datatypes.JSON
 	Credentials       map[string]interface{} // Se encriptará antes de guardar
 	Description       string
@@ -56,6 +63,7 @@ type UpdateIntegrationDTO struct {
 	StoreID           *string // Identificador externo (ej: shop domain para Shopify)
 	IsActive          *bool
 	IsDefault         *bool
+	IsTesting         *bool // Si está en modo de pruebas (usa base_url_test)
 	Config            *datatypes.JSON
 	Credentials       *map[string]interface{} // Se encriptará antes de guardar
 	Description       *string

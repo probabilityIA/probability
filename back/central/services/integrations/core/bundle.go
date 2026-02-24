@@ -46,6 +46,16 @@ const (
 	IntegrationTypeAlegra       = domain.IntegrationTypeAlegra
 	IntegrationTypeWorldOffice  = domain.IntegrationTypeWorldOffice
 	IntegrationTypeHelisa       = domain.IntegrationTypeHelisa
+	IntegrationTypeEnvioClick   = domain.IntegrationTypeEnvioClick
+	IntegrationTypeEnviame      = domain.IntegrationTypeEnviame
+	IntegrationTypeTu           = domain.IntegrationTypeTu
+	IntegrationTypeMiPaquete    = domain.IntegrationTypeMiPaquete
+	IntegrationTypeVTEX         = domain.IntegrationTypeVTEX
+	IntegrationTypeTiendanube   = domain.IntegrationTypeTiendanube
+	IntegrationTypeMagento      = domain.IntegrationTypeMagento
+	IntegrationTypeAmazon       = domain.IntegrationTypeAmazon
+	IntegrationTypeFalabella    = domain.IntegrationTypeFalabella
+	IntegrationTypeExito        = domain.IntegrationTypeExito
 )
 
 // ============================================
@@ -59,6 +69,7 @@ type IIntegrationService interface {
 	GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*domain.PublicIntegration, error)
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
+	GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error)
 }
 
 // IIntegrationCore es la interfaz completa del core de integraciones.
@@ -147,6 +158,17 @@ func (ic *integrationCore) DecryptCredential(ctx context.Context, integrationID 
 
 func (ic *integrationCore) UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error {
 	return ic.useCase.UpdateIntegrationConfig(ctx, integrationID, newConfig)
+}
+
+func (ic *integrationCore) GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error) {
+	integration, err := ic.useCase.GetPublicIntegrationByID(ctx, integrationID)
+	if err != nil {
+		return nil, err
+	}
+	if integration == nil {
+		return nil, nil
+	}
+	return integration.Config, nil
 }
 
 // IIntegrationCore pass-throughs

@@ -24,7 +24,7 @@ func (r *Repository) CreateIntegrationType(ctx context.Context, integrationType 
 // UpdateIntegrationType actualiza un tipo de integración
 func (r *Repository) UpdateIntegrationType(ctx context.Context, id uint, integrationType *domain.IntegrationType) error {
 	model := toIntegrationTypeModel(integrationType)
-	if err := r.db.Conn(ctx).Model(&models.IntegrationType{}).Where("id = ?", id).Updates(&model).Error; err != nil {
+	if err := r.db.Conn(ctx).Model(&models.IntegrationType{}).Where("id = ?", id).Select("*").Omit("id", "created_at").Updates(&model).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al actualizar tipo de integración")
 		return fmt.Errorf("error al actualizar tipo de integración: %w", err)
 	}
@@ -133,9 +133,12 @@ func toIntegrationTypeModel(d *domain.IntegrationType) models.IntegrationType {
 		ImageURL:          d.ImageURL,
 		CategoryID:        categoryID,
 		IsActive:          d.IsActive,
+		InDevelopment:     d.InDevelopment,
 		ConfigSchema:      d.ConfigSchema,
 		CredentialsSchema: d.CredentialsSchema,
 		SetupInstructions: d.SetupInstructions,
+		BaseURL:           d.BaseURL,
+		BaseURLTest:       d.BaseURLTest,
 	}
 }
 
@@ -174,9 +177,12 @@ func toIntegrationTypeDomain(m models.IntegrationType) domain.IntegrationType {
 		CategoryID:        categoryID,
 		Category:          category,
 		IsActive:          m.IsActive,
+		InDevelopment:     m.InDevelopment,
 		ConfigSchema:      m.ConfigSchema,
 		CredentialsSchema: m.CredentialsSchema,
 		SetupInstructions: m.SetupInstructions,
+		BaseURL:           m.BaseURL,
+		BaseURLTest:       m.BaseURLTest,
 		CreatedAt:         m.CreatedAt,
 		UpdatedAt:         m.UpdatedAt,
 	}

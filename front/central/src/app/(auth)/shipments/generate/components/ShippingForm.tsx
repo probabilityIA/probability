@@ -86,6 +86,7 @@ export const ShippingForm = () => {
     const [success, setSuccess] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [orders, setOrders] = useState<Order[]>([]);
+    const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
     const [rates, setRates] = useState<EnvioClickRate[]>([]);
     const [selectedRate, setSelectedRate] = useState<EnvioClickRate | null>(null);
     const [hasQuoted, setHasQuoted] = useState(false);
@@ -166,6 +167,7 @@ export const ShippingForm = () => {
     const handleOrderSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const orderId = e.target.value;
         const order = orders.find(o => o.id === orderId);
+        setSelectedOrder(order || null);
         if (order) {
             // Populate destination from order
             setValue("destination.company", order.customer_name); // Or business name if available
@@ -212,6 +214,7 @@ export const ShippingForm = () => {
                 : PACKAGE_SIZES[data.packageSize];
 
         return {
+            order_uuid: selectedOrder?.id,
             idRate: idRate,
             myShipmentReference: data.myShipmentReference || `REF-${Date.now()}`,
             external_order_id: data.external_order_id || `EXT-${Date.now()}`,
@@ -288,7 +291,7 @@ export const ShippingForm = () => {
                     }
                 }
             } else {
-                setError("No se encontraron cotizaciones.");
+                setError(res.message || "No se encontraron cotizaciones.");
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Error consultando cotizaciones";

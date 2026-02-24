@@ -35,6 +35,7 @@ type IntegrationResponse struct {
 	StoreID           string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)
 	IsActive          bool                   `json:"is_active" example:"true"`
 	IsDefault         bool                   `json:"is_default" example:"true"`
+	IsTesting         bool                   `json:"is_testing" example:"false"`
 	Config            map[string]interface{} `json:"config"`
 	Credentials       map[string]interface{} `json:"credentials,omitempty"` // Solo se incluye cuando se solicita para edición
 	Description       string                 `json:"description" example:"Integración principal de WhatsApp"`

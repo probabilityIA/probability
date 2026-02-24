@@ -99,43 +99,62 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
 
             {/* Providers Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {providers.map((provider) => (
-                    <button
-                        key={provider.id}
-                        onClick={() => onSelect(provider)}
-                        className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left group"
-                    >
-                        {/* Provider Logo */}
-                        {provider.image_url && (
-                            <div className="mb-4 h-16 flex items-center justify-center">
-                                <img
-                                    src={provider.image_url}
-                                    alt={provider.name}
-                                    className="max-h-full max-w-full object-contain"
-                                />
-                            </div>
-                        )}
+                {providers.map((provider) => {
+                    const isDev = provider.in_development === true;
+                    return (
+                        <button
+                            key={provider.id}
+                            onClick={() => !isDev && onSelect(provider)}
+                            disabled={isDev}
+                            className={`p-6 border-2 rounded-lg transition-all text-left group relative ${
+                                isDev
+                                    ? 'border-gray-200 opacity-60 grayscale cursor-not-allowed'
+                                    : 'border-gray-200 hover:border-blue-500 hover:shadow-md'
+                            }`}
+                        >
+                            {/* Coming Soon Badge */}
+                            {isDev && (
+                                <span className="absolute top-2 right-2 bg-amber-100 text-amber-800 text-xs font-semibold px-2 py-1 rounded-full">
+                                    Proximamente
+                                </span>
+                            )}
 
-                        {/* Provider Icon (fallback if no image) */}
-                        {!provider.image_url && provider.icon && (
-                            <div className="mb-4 text-3xl text-center">
-                                {provider.icon}
-                            </div>
-                        )}
+                            {/* Provider Logo */}
+                            {provider.image_url && (
+                                <div className="mb-4 h-16 flex items-center justify-center">
+                                    <img
+                                        src={provider.image_url}
+                                        alt={provider.name}
+                                        className="max-h-full max-w-full object-contain"
+                                    />
+                                </div>
+                            )}
 
-                        {/* Provider Name */}
-                        <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 mb-2 text-center">
-                            {provider.name}
-                        </h3>
+                            {/* Provider Icon (fallback if no image) */}
+                            {!provider.image_url && provider.icon && (
+                                <div className="mb-4 text-3xl text-center">
+                                    {provider.icon}
+                                </div>
+                            )}
 
-                        {/* Description */}
-                        {provider.description && (
-                            <p className="text-sm text-gray-600 text-center">
-                                {provider.description}
-                            </p>
-                        )}
-                    </button>
-                ))}
+                            {/* Provider Name */}
+                            <h3 className={`text-lg font-semibold mb-2 text-center ${
+                                isDev
+                                    ? 'text-gray-500'
+                                    : 'text-gray-900 group-hover:text-blue-600'
+                            }`}>
+                                {provider.name}
+                            </h3>
+
+                            {/* Description */}
+                            {provider.description && (
+                                <p className="text-sm text-gray-600 text-center">
+                                    {provider.description}
+                                </p>
+                            )}
+                        </button>
+                    );
+                })}
             </div>
 
             {providers.length === 0 && (

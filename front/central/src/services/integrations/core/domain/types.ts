@@ -27,6 +27,7 @@ export interface Integration {
     store_id?: string; // Identificador externo (ej: shop domain para Shopify)
     is_active: boolean;
     is_default: boolean;
+    is_testing: boolean;
     config: IntegrationConfig;
     credentials?: IntegrationCredentials; // Solo se incluye cuando se solicita para edición
     description?: string;
@@ -107,9 +108,12 @@ export interface IntegrationType {
     category_id?: number;             // FK to IntegrationCategory
     integration_category?: IntegrationCategory;  // Alias - same as category
     is_active: boolean;
+    in_development?: boolean;
     config_schema?: any;
     credentials_schema?: any;
     setup_instructions?: string;
+    base_url?: string;      // URL de producción global (read-only, desde integration_types)
+    base_url_test?: string; // URL de pruebas por integración (editable)
     created_at: string;
     updated_at: string;
 }
@@ -125,6 +129,8 @@ export interface CreateIntegrationTypeDTO {
     credentials_schema?: any;
     setup_instructions?: string;
     image_file?: File; // Archivo de imagen para subir
+    base_url?: string;
+    base_url_test?: string;
 }
 
 export interface UpdateIntegrationTypeDTO {
@@ -134,11 +140,14 @@ export interface UpdateIntegrationTypeDTO {
     icon?: string;
     category_id?: number;
     is_active?: boolean;
+    in_development?: boolean;
     config_schema?: any;
     credentials_schema?: any;
     setup_instructions?: string;
     image_file?: File; // Archivo de imagen para subir
     remove_image?: boolean; // Flag para eliminar la imagen existente
+    base_url?: string;
+    base_url_test?: string;
 }
 
 // Información del webhook para configurar en plataformas externas

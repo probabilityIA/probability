@@ -4,10 +4,24 @@ import { useState, useEffect } from 'react';
 import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction, getWebhookUrlAction } from '../../infra/actions';
 import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
 import { Alert } from '@/shared/ui';
-import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
-import WhatsAppIntegrationView from './whatsapp/WhatsAppIntegrationView';
+import { ShopifyIntegrationForm } from '@/services/integrations/ecommerce/shopify/ui';
+import { WhatsAppIntegrationView } from '@/services/integrations/messages/whatsapp/ui';
 import { SoftpymesConfigForm, SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
 import { FactusConfigForm, FactusEditForm } from '@/services/integrations/invoicing/factus/ui';
+import { SiigoConfigForm, SiigoEditForm } from '@/services/integrations/invoicing/siigo/ui';
+import { AlegraConfigForm, AlegraEditForm } from '@/services/integrations/invoicing/alegra/ui';
+import { WorldOfficeConfigForm, WorldOfficeEditForm } from '@/services/integrations/invoicing/world_office/ui';
+import { HelisaConfigForm, HelisaEditForm } from '@/services/integrations/invoicing/helisa/ui';
+import { EnvioClickConfigForm, EnvioClickEditForm } from '@/services/integrations/transport/envioclick/ui';
+import { EnviameConfigForm, EnviameEditForm } from '@/services/integrations/transport/enviame/ui';
+import { TuConfigForm, TuEditForm } from '@/services/integrations/transport/tu/ui';
+import { MiPaqueteConfigForm, MiPaqueteEditForm } from '@/services/integrations/transport/mipaquete/ui';
+import { VTEXConfigForm, VTEXEditForm } from '@/services/integrations/ecommerce/vtex/ui';
+import { TiendanubeConfigForm, TiendanubeEditForm } from '@/services/integrations/ecommerce/tiendanube/ui';
+import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecommerce/magento/ui';
+import { AmazonConfigForm, AmazonEditForm } from '@/services/integrations/ecommerce/amazon/ui';
+import { FalabellaConfigForm, FalabellaEditForm } from '@/services/integrations/ecommerce/falabella/ui';
+import { ExitoConfigForm, ExitoEditForm } from '@/services/integrations/ecommerce/exito/ui';
 
 // IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
@@ -17,6 +31,20 @@ const INTEGRATION_TYPE_IDS = {
     WOOCOMMERCE: 4,
     SOFTPYMES: 5,
     FACTUS: 7,
+    SIIGO: 8,
+    ALEGRA: 9,
+    WORLD_OFFICE: 10,
+    HELISA: 11,
+    ENVIOCLICK: 12,
+    ENVIAME: 13,
+    TU: 14,
+    MIPAQUETE: 15,
+    VTEX: 16,
+    TIENDANUBE: 17,
+    MAGENTO: 18,
+    AMAZON: 19,
+    FALABELLA: 20,
+    EXITO: 21,
 } as const;
 
 interface IntegrationFormProps {
@@ -303,6 +331,247 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             );
         }
 
+        // Show edit form for Siigo
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.SIIGO) {
+            return (
+                <SiigoEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Alegra
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.ALEGRA) {
+            return (
+                <AlegraEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for World Office
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.WORLD_OFFICE) {
+            return (
+                <WorldOfficeEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Helisa
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.HELISA) {
+            return (
+                <HelisaEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for EnvioClick
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.ENVIOCLICK) {
+            console.log('✅ Usando EnvioClickEditForm');
+            return (
+                <EnvioClickEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType.base_url_test,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Enviame
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.ENVIAME) {
+            return (
+                <EnviameEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for TU
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.TU) {
+            return (
+                <TuEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for MiPaquete
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.MIPAQUETE) {
+            return (
+                <MiPaqueteEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for VTEX
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.VTEX) {
+            return (
+                <VTEXEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Tiendanube
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.TIENDANUBE) {
+            return (
+                <TiendanubeEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Magento
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.MAGENTO) {
+            return (
+                <MagentoEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Amazon
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.AMAZON) {
+            return (
+                <AmazonEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Falabella
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.FALABELLA) {
+            return (
+                <FalabellaEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
+        // Show edit form for Exito
+        if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.EXITO) {
+            return (
+                <ExitoEditForm
+                    integrationId={integration.id}
+                    initialData={{
+                        name: integration.name,
+                        config: parsedConfig as any,
+                        credentials: integration.credentials as any,
+                        business_id: integration.business_id,
+                    }}
+                    onSuccess={onSuccess}
+                    onCancel={onCancel}
+                />
+            );
+        }
+
         // For other types that don't have a specific form yet
         return (
             <Alert type="info">
@@ -427,9 +696,123 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
+                    {selectedType.id === INTEGRATION_TYPE_IDS.SIIGO && (
+                        <SiigoConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.ALEGRA && (
+                        <AlegraConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.WORLD_OFFICE && (
+                        <WorldOfficeConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.HELISA && (
+                        <HelisaConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.ENVIOCLICK && (
+                        <EnvioClickConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                            integrationTypeBaseURL={selectedType.base_url}
+                            integrationTypeBaseURLTest={selectedType.base_url_test}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.ENVIAME && (
+                        <EnviameConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.TU && (
+                        <TuConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.MIPAQUETE && (
+                        <MiPaqueteConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.VTEX && (
+                        <VTEXConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.TIENDANUBE && (
+                        <TiendanubeConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.MAGENTO && (
+                        <MagentoConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.AMAZON && (
+                        <AmazonConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.FALABELLA && (
+                        <FalabellaConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
+                    {selectedType.id === INTEGRATION_TYPE_IDS.EXITO && (
+                        <ExitoConfigForm
+                            onSuccess={onSuccess}
+                            onCancel={onCancel}
+                        />
+                    )}
+
                     {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.SOFTPYMES &&
-                     selectedType.id !== INTEGRATION_TYPE_IDS.FACTUS && (
+                     selectedType.id !== INTEGRATION_TYPE_IDS.FACTUS &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.SIIGO &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.ALEGRA &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.WORLD_OFFICE &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.HELISA &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.ENVIOCLICK &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.ENVIAME &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.TU &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.MIPAQUETE &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.VTEX &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.TIENDANUBE &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.MAGENTO &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.AMAZON &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.FALABELLA &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.EXITO && (
                         <Alert type="warning">
                             <div className="space-y-3">
                                 <p className="font-semibold">Formulario No Disponible</p>

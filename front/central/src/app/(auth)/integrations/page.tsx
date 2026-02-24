@@ -16,7 +16,7 @@ import { IntegrationType, Integration } from '@/services/integrations/core/domai
 import { getIntegrationByIdAction } from '@/services/integrations/core/infra/actions';
 
 import { useSearchParams } from 'next/navigation';
-import ShopifyOAuthCallback from '@/services/integrations/core/ui/components/shopify/ShopifyOAuthCallback';
+import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
 
 export default function IntegrationsPage() {
     const searchParams = useSearchParams();

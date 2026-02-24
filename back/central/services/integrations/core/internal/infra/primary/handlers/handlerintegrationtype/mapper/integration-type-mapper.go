@@ -60,9 +60,12 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURL
 		CategoryID:        integrationType.CategoryID,
 		Category:          category,
 		IsActive:          integrationType.IsActive,
+		InDevelopment:     integrationType.InDevelopment,
 		ConfigSchema:      integrationType.ConfigSchema,
 		CredentialsSchema: integrationType.CredentialsSchema,
 		SetupInstructions: integrationType.SetupInstructions,
+		BaseURL:           integrationType.BaseURL,
+		BaseURLTest:       integrationType.BaseURLTest,
 		CreatedAt:         integrationType.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
 		UpdatedAt:         integrationType.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
@@ -83,9 +86,12 @@ func ToCreateIntegrationTypeDTO(req request.CreateIntegrationTypeRequest) domain
 		Icon:              req.Icon,
 		CategoryID:        req.CategoryID,
 		IsActive:          req.IsActive,
+		InDevelopment:     req.InDevelopment,
 		ConfigSchema:      configSchema,
 		CredentialsSchema: credentialsSchema,
 		ImageFile:         req.ImageFile,
+		BaseURL:           req.BaseURL,
+		BaseURLTest:       req.BaseURLTest,
 	}
 }
 
@@ -111,6 +117,9 @@ func ToUpdateIntegrationTypeDTO(req request.UpdateIntegrationTypeRequest) domain
 	if req.IsActive != nil {
 		dto.IsActive = req.IsActive
 	}
+	if req.InDevelopment != nil {
+		dto.InDevelopment = req.InDevelopment
+	}
 	if req.ConfigSchema != nil {
 		configBytes, _ := json.Marshal(*req.ConfigSchema)
 		configJSON := datatypes.JSON(configBytes)
@@ -121,6 +130,12 @@ func ToUpdateIntegrationTypeDTO(req request.UpdateIntegrationTypeRequest) domain
 	}
 	if req.RemoveImage != nil {
 		dto.RemoveImage = *req.RemoveImage
+	}
+	if req.BaseURL != nil {
+		dto.BaseURL = req.BaseURL
+	}
+	if req.BaseURLTest != nil {
+		dto.BaseURLTest = req.BaseURLTest
 	}
 
 	return dto

@@ -60,6 +60,7 @@ type Shipment struct {
 	DriverID      *uint  `gorm:"index"`         // ID del conductor
 	DriverName    string `gorm:"size:255"`      // Nombre del conductor
 	IsLastMile    bool   `gorm:"default:false"` // Si es última milla
+	IsTest        bool   `gorm:"default:false;index"` // Si es un envío de prueba (generado con modo testing)
 
 	// Información adicional
 	EstimatedDelivery *time.Time     `gorm:"index"`      // Entrega estimada

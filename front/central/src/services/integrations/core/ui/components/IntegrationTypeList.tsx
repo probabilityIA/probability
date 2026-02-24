@@ -15,6 +15,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         loading,
         error,
         setError,
+        updateIntegrationType,
         deleteIntegrationType,
         refresh
     } = useIntegrationTypes();
@@ -23,6 +24,13 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         show: false,
         id: null
     });
+    const [togglingId, setTogglingId] = useState<number | null>(null);
+
+    const handleToggleDevelopment = async (type: IntegrationType) => {
+        setTogglingId(type.id);
+        await updateIntegrationType(type.id, { in_development: !type.in_development });
+        setTogglingId(null);
+    };
 
     const handleDeleteClick = (id: number) => {
         setDeleteModal({ show: true, id });
@@ -51,6 +59,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         { key: 'name', label: 'Nombre' },
         { key: 'category', label: 'Categoría' },
         { key: 'status', label: 'Estado' },
+        { key: 'development', label: 'Desarrollo' },
         { key: 'actions', label: 'Acciones' }
     ];
 
@@ -101,6 +110,27 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
             <Badge type={type.is_active ? 'success' : 'error'}>
                 {type.is_active ? 'Activo' : 'Inactivo'}
             </Badge>
+        ),
+        development: (
+            <button
+                onClick={() => handleToggleDevelopment(type)}
+                disabled={togglingId === type.id}
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-all ${
+                    type.in_development
+                        ? 'bg-amber-100 text-amber-800 hover:bg-amber-200'
+                        : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'
+                } ${togglingId === type.id ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
+            >
+                <span className={`inline-block w-2 h-2 rounded-full ${
+                    type.in_development ? 'bg-amber-500' : 'bg-emerald-500'
+                }`} />
+                {togglingId === type.id
+                    ? '...'
+                    : type.in_development
+                        ? 'En Desarrollo'
+                        : 'Productivo'
+                }
+            </button>
         ),
         actions: (
             <div className="flex gap-2">

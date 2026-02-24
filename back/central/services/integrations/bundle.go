@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
+	"github.com/secamc93/probability/back/central/services/integrations/transport"
 	"github.com/secamc93/probability/back/central/services/modules"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -38,6 +39,9 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	// Invoicing: todos los proveedores de facturación electrónica + router de colas
 	invoicing.New(config, logger, rabbitMQ, integrationCore)
+
+	// Transport: todos los proveedores de transporte + router de colas
+	transport.New(logger, rabbitMQ, integrationCore)
 
 	return integrationCore
 }

@@ -61,11 +61,20 @@ func (uc *integrationTypeUseCase) UpdateIntegrationType(ctx context.Context, id 
 	if dto.IsActive != nil {
 		existing.IsActive = *dto.IsActive
 	}
+	if dto.InDevelopment != nil {
+		existing.InDevelopment = *dto.InDevelopment
+	}
 	if dto.ConfigSchema != nil {
 		existing.ConfigSchema = *dto.ConfigSchema
 	}
 	if dto.CredentialsSchema != nil {
 		existing.CredentialsSchema = *dto.CredentialsSchema
+	}
+	if dto.BaseURL != nil {
+		existing.BaseURL = *dto.BaseURL
+	}
+	if dto.BaseURLTest != nil {
+		existing.BaseURLTest = *dto.BaseURLTest
 	}
 
 	// Procesar imagen si se proporciona una nueva

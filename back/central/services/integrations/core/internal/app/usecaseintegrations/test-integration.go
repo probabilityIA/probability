@@ -149,6 +149,15 @@ func (uc *IntegrationUseCase) TestConnectionRaw(ctx context.Context, integration
 			Int("type_int", integrationTypeInt).
 			Strs("registered_types", registeredTypesStr).
 			Msg("No hay provider registrado, solo validando credenciales básicas")
+
+		// Si usa token de plataforma, no hay credenciales propias que validar
+		usePlatformToken, _ := config["use_platform_token"].(bool)
+		if usePlatformToken {
+			uc.log.Info(ctx).
+				Str("type_code", integrationTypeCode).
+				Msg("use_platform_token=true, omitiendo validación de credenciales propias")
+			return nil
+		}
 		return uc.validateBasicCredentials(ctx, integrationTypeCode, credentials)
 	}
 

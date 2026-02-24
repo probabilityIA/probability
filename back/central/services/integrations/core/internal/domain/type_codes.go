@@ -15,6 +15,16 @@ const (
 	IntegrationTypeAlegra       = 9  // Alegra - Facturación electrónica
 	IntegrationTypeWorldOffice  = 10 // World Office - Facturación electrónica
 	IntegrationTypeHelisa       = 11 // Helisa - Facturación electrónica
+	IntegrationTypeEnvioClick   = 12 // EnvioClick - Transporte
+	IntegrationTypeEnviame      = 13 // Enviame - Transporte
+	IntegrationTypeTu           = 14 // Tu - Transporte
+	IntegrationTypeMiPaquete    = 15 // MiPaquete - Transporte
+	IntegrationTypeVTEX         = 16 // VTEX - E-commerce
+	IntegrationTypeTiendanube   = 17 // Tiendanube - E-commerce
+	IntegrationTypeMagento      = 18 // Magento/Adobe Commerce - E-commerce
+	IntegrationTypeAmazon       = 19 // Amazon - Marketplace
+	IntegrationTypeFalabella    = 20 // Falabella - Marketplace
+	IntegrationTypeExito        = 21 // Exito - Marketplace
 )
 
 // IntegrationCategory representa la categoría de integración
@@ -50,6 +60,26 @@ func IntegrationTypeCodeAsInt(code string) int {
 		return IntegrationTypeWorldOffice // 10
 	case "helisa":
 		return IntegrationTypeHelisa // 11
+	case "envioclick":
+		return IntegrationTypeEnvioClick // 12
+	case "enviame":
+		return IntegrationTypeEnviame // 13
+	case "tu":
+		return IntegrationTypeTu // 14
+	case "mipaquete", "mi_paquete":
+		return IntegrationTypeMiPaquete // 15
+	case "vtex":
+		return IntegrationTypeVTEX // 16
+	case "tiendanube", "tienda_nube":
+		return IntegrationTypeTiendanube // 17
+	case "magento", "adobe_commerce":
+		return IntegrationTypeMagento // 18
+	case "amazon":
+		return IntegrationTypeAmazon // 19
+	case "falabella":
+		return IntegrationTypeFalabella // 20
+	case "exito":
+		return IntegrationTypeExito // 21
 	default:
 		return 0
 	}
