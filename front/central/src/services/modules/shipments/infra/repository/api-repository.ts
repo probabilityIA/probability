@@ -34,6 +34,10 @@ export class ShipmentApiRepository implements IShipmentRepository {
             throw new Error(data.message || data.error || 'An error occurred');
         }
 
+        if (!data.success && data.success !== undefined) {
+            throw new Error(data.message || 'Request failed');
+        }
+
         return data;
     }
 

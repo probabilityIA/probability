@@ -235,18 +235,7 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 			Where("integration_types.code = ?", integrationType)
 	}
 
-	// Usar DISTINCT si hay JOINs para evitar duplicados
-	hasJoins := filters["business_id"] != nil || filters["integration_id"] != nil || filters["integration_type"] != nil
-	if hasJoins {
-		query = query.Distinct("shipments.id")
-	}
-
-	// Contar total (antes de aplicar paginación y ordenamiento)
-	if err := query.Count(&total).Error; err != nil {
-		return nil, 0, err
-	}
-
-	// Aplicar ordenamiento
+	// Determinar campo de ordenamiento primero
 	sortBy := "shipments.created_at"
 	if sort, ok := filters["sort_by"].(string); ok && sort != "" {
 		// Mapear campos de ordenamiento
@@ -266,6 +255,17 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		if mappedField, exists := sortFieldMap[sort]; exists {
 			sortBy = mappedField
 		}
+	}
+
+	// Usar GROUP BY en lugar de DISTINCT para evitar duplicados con ORDER BY
+	hasJoins := filters["business_id"] != nil || filters["integration_id"] != nil || filters["integration_type"] != nil
+	if hasJoins {
+		query = query.Group("shipments.id")
+	}
+
+	// Contar total (antes de aplicar paginación y ordenamiento)
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
 	sortOrder := "desc"

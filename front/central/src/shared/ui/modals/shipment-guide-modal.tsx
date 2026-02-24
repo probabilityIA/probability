@@ -25,7 +25,7 @@ const normalizeLocationName = (str: string) => {
 
 const getCarrierLogoSize = (carrierName: string): { container: string; image: string } => {
     const largeLogoCarriers = ['COORDINADORA', '99MINUTOS', 'PIBOX', 'DEPRISA'];
-    const normalizedCarrier = normalizeString(carrierName);
+    const normalizedCarrier = normalizeLocationName(carrierName);
 
     if (largeLogoCarriers.includes(normalizedCarrier)) {
         return { container: 'w-24 h-24', image: 'w-20 h-20' };
@@ -53,7 +53,7 @@ const getCarrierLogo = (carrierName: string): string => {
         'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
     };
 
-    const normalizedCarrier = normalizeString(carrierName);
+    const normalizedCarrier = normalizeLocationName(carrierName);
     return carrierLogos[normalizedCarrier] || 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
 };
 

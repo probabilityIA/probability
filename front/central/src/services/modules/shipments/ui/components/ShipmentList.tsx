@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge, Button } from '@/shared/ui';
@@ -282,7 +282,15 @@ export default function ShipmentList() {
         business_id: defaultBusinessId,
     });
 
-    const fetchShipments = async () => {
+    // Update filters when defaultBusinessId changes
+    useEffect(() => {
+        setFilters(prev => ({
+            ...prev,
+            business_id: defaultBusinessId,
+        }));
+    }, [defaultBusinessId]);
+
+    const fetchShipments = useCallback(async () => {
         setLoading(true);
         try {
             const params: GetShipmentsParams = {
@@ -301,11 +309,11 @@ export default function ShipmentList() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [filters, defaultBusinessId]);
 
     useEffect(() => {
         fetchShipments();
-    }, [filters]);
+    }, [fetchShipments]);
 
     const updateFilters = (newFilters: Partial<GetShipmentsParams>) => {
         const updated = { ...filters, ...newFilters };
