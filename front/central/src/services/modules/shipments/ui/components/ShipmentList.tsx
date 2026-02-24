@@ -34,6 +34,13 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.
     failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={12} /> },
 };
 
+const CHIP_STATUS_OPTIONS = [
+    { value: 'pending', label: 'Pendiente', icon: Clock, activeClass: 'bg-amber-500 text-white' },
+    { value: 'in_transit', label: 'En tránsito', icon: Truck, activeClass: 'bg-blue-500 text-white' },
+    { value: 'delivered', label: 'Entregado', icon: CheckCircle2, activeClass: 'bg-emerald-500 text-white' },
+    { value: 'failed', label: 'Fallido', icon: XCircle, activeClass: 'bg-red-500 text-white' },
+];
+
 function StatusBadge({ status }: { status: string }) {
     const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-600 border-gray-200', icon: null };
     return (
@@ -348,58 +355,74 @@ export default function ShipmentList() {
         <div className="flex flex-col h-full gap-4" style={{ height: 'calc(100vh - 120px)' }}>
 
             {/* ─── Top bar ─── */}
-            <div className="flex justify-between items-center flex-shrink-0">
-                <div>
-                    <h2 className="text-xl font-bold text-gray-900">Envíos</h2>
-                    {total > 0 && <p className="text-sm text-gray-500 mt-0.5">{total} envío{total !== 1 ? 's' : ''} encontrado{total !== 1 ? 's' : ''}</p>}
+            <div className="flex items-start flex-shrink-0">
+                {/* Left: icon + title + subtitle */}
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <Package size={20} className="text-blue-600" />
+                    </div>
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-2xl font-bold text-gray-900">Envíos</h2>
+                            {total > 0 && (
+                                <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">
+                                    {total}
+                                </span>
+                            )}
+                        </div>
+                        <p className="text-sm text-gray-400 mt-0.5">Gestiona y rastrea todos tus envíos</p>
+                    </div>
                 </div>
-                {canCreate && (
-                    <button
-                        onClick={() => setIsManualModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all active:scale-95"
-                        style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}
-                    >
-                        <Plus size={16} />
-                        Agregar Envío
-                    </button>
-                )}
+            </div>
+
+            {/* ─── Status chips ─── */}
+            <div className="flex items-center gap-2 flex-shrink-0 overflow-x-auto pb-0.5">
+                {/* Chip "Todos" */}
+                <button
+                    onClick={() => updateFilters({ status: undefined })}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                        !filters.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    }`}
+                >
+                    Todos <span className="opacity-70">{total}</span>
+                </button>
+                {/* Chips por estado */}
+                {CHIP_STATUS_OPTIONS.map(({ value, label, icon: Icon, activeClass }) => {
+                    const count = shipments.filter((s) => s.status === value).length;
+                    const isActive = filters.status === value;
+                    return (
+                        <button
+                            key={value}
+                            onClick={() => updateFilters({ status: isActive ? undefined : value })}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                                isActive ? activeClass : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            }`}
+                        >
+                            <Icon size={11} />
+                            {label}
+                            {count > 0 && <span className="opacity-70">{count}</span>}
+                        </button>
+                    );
+                })}
             </div>
 
             {/* ─── Filters ─── */}
             <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-                    <div className="relative">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <div className="flex gap-3">
+                    {/* Búsqueda unificada */}
+                    <div className="relative flex-1">
+                        <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar por tracking..."
-                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-colors"
+                            placeholder="Buscar por tracking, orden o transportista..."
+                            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 text-gray-900 placeholder:text-gray-400 transition-colors"
                             value={filters.tracking_number || ''}
                             onChange={(e) => updateFilters({ tracking_number: e.target.value || undefined })}
                         />
                     </div>
-                    <div className="relative">
-                        <Package size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por ID de orden..."
-                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-colors"
-                            value={filters.order_id || ''}
-                            onChange={(e) => updateFilters({ order_id: e.target.value || undefined })}
-                        />
-                    </div>
-                    <div className="relative">
-                        <Truck size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-                        <input
-                            type="text"
-                            placeholder="Buscar por transportista..."
-                            className="w-full pl-8 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 placeholder:text-gray-400 bg-white transition-colors"
-                            value={filters.carrier || ''}
-                            onChange={(e) => updateFilters({ carrier: e.target.value || undefined })}
-                        />
-                    </div>
+                    {/* Select estado */}
                     <select
-                        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 text-sm text-gray-900 bg-white transition-colors"
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-blue-500/20 min-w-[140px] transition-colors"
                         value={filters.status || ''}
                         onChange={(e) => updateFilters({ status: e.target.value || undefined })}
                     >
@@ -409,15 +432,16 @@ export default function ShipmentList() {
                         <option value="delivered">Entregado</option>
                         <option value="failed">Fallido</option>
                     </select>
+                    {/* Select entorno */}
                     <select
-                        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 text-sm text-gray-900 bg-white transition-colors"
+                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-orange-500/20 min-w-[140px] transition-colors"
                         value={filters.is_test === undefined ? '' : filters.is_test ? 'test' : 'production'}
                         onChange={(e) => {
                             const val = e.target.value;
                             updateFilters({ is_test: val === '' ? undefined : val === 'test' });
                         }}
                     >
-                        <option value="">Producción + TEST</option>
+                        <option value="">Prod + TEST</option>
                         <option value="production">Solo producción</option>
                         <option value="test">Solo TEST</option>
                     </select>

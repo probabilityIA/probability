@@ -972,7 +972,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     Estado
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
-                                    Estado de Pago
+                                    Estatus Pago
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Probabilidad

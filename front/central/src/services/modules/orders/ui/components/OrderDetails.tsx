@@ -478,9 +478,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                     {/* Dirección de Envío, Resumen Financiero y Detalles de Pago - 3 Columnas */}
                     <div className="grid grid-cols-3 gap-4">
-                        {/* Dirección de Envío */}
+                        {/* Calle */}
                         <div className="bg-gray-50 rounded-lg p-5">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Dirección de Envío</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">Calle</h3>
                             {loadingDetails ? (
                                 <div className="py-4 text-center text-sm text-gray-500">Cargando dirección...</div>
                             ) : (

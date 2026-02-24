@@ -25,7 +25,7 @@ const normalizeLocationName = (str: string) => {
 
 const getCarrierLogoSize = (carrierName: string): { container: string; image: string } => {
     const largeLogoCarriers = ['COORDINADORA', '99MINUTOS', 'PIBOX', 'DEPRISA'];
-    const normalizedCarrier = normalizeString(carrierName);
+    const normalizedCarrier = normalizeLocationName(carrierName);
 
     if (largeLogoCarriers.includes(normalizedCarrier)) {
         return { container: 'w-24 h-24', image: 'w-20 h-20' };
@@ -53,7 +53,7 @@ const getCarrierLogo = (carrierName: string): string => {
         'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
     };
 
-    const normalizedCarrier = normalizeString(carrierName);
+    const normalizedCarrier = normalizeLocationName(carrierName);
     return carrierLogos[normalizedCarrier] || 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
 };
 
@@ -125,7 +125,7 @@ const step3Schema = z.object({
     originSuburb: z.string().min(2).max(30),
     originCrossStreet: z.string().min(2).max(35),
     originReference: z.string().min(2).max(25),
-    destCompany: z.string().min(2).max(28),
+    destCompany: z.string().min(2).max(28).optional(),
     destFirstName: z.string().min(2).max(14),
     destLastName: z.string().min(2).max(14),
     destEmail: z.string().email().min(8).max(60),
@@ -235,7 +235,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             originSuburb: "",
             originCrossStreet: "",
             originReference: "",
-            destCompany: "NA",
+            destCompany: "",
             destFirstName: "",
             destLastName: "",
             destEmail: "",
@@ -318,7 +318,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             step3Form.setValue("destLastName", order.customer_name.split(" ").slice(1).join(" ") || ".");
             step3Form.setValue("destEmail", order.customer_email);
             step3Form.setValue("destPhone", order.customer_phone);
-            step3Form.setValue("destSuburb", order.shipping_state || "");
+            step3Form.setValue("destCrossStreet", order.shipping_street || "");
+            // step3Form.setValue("destSuburb", order.shipping_state || ""); // Dejar vacío
             step3Form.setValue("myShipmentReference", "Orden " + (order.internal_number || order.order_number));
             step3Form.setValue("external_order_id", order.order_number);
         }
@@ -948,14 +949,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         label="Edificio/Interior/Apto *"
                                         {...step3Form.register("destReference")}
                                         error={step3Form.formState.errors.destReference?.message}
-                                        placeholder="apt 801"
+                                        placeholder="Edificio = casa #"
                                     />
                                     <Input
                                         compact
                                         label="Barrio *"
                                         {...step3Form.register("destSuburb")}
                                         error={step3Form.formState.errors.destSuburb?.message}
-                                        placeholder="sector Aves María"
+                                        placeholder="Barrio = Nombre barrio"
                                     />
                                 </div>
 
@@ -965,7 +966,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     label="Empresa"
                                     {...step3Form.register("destCompany")}
                                     error={step3Form.formState.errors.destCompany?.message}
-                                    placeholder="ProbabilityIA"
+                                    placeholder="Empresa = nombre (opcional)"
                                 />
 
                                 <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
