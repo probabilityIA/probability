@@ -9,7 +9,7 @@ import {
     TrashIcon
 } from '@heroicons/react/24/outline';
 import { useIntegrations } from '../hooks/useIntegrations';
-import { useIntegrationEvents } from '../hooks/useIntegrationEvents';
+import { useSSE } from '@/shared/hooks/use-sse';
 import { getActiveIntegrationTypesAction } from '../../infra/actions';
 import {
     Integration,
@@ -142,336 +142,124 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         }
     }, []);
 
-    // Hook para escuchar eventos de sincronización en tiempo real
+    // Hook para escuchar eventos de sincronización en tiempo real via SSE centralizado (modules/events)
     // Solo escuchar cuando el modal está abierto y hay una integración seleccionada
-    const { isConnected } = useIntegrationEvents({
+    const integrationEventTypes = syncModal.show ? [
+        'integration.sync.order.created',
+        'integration.sync.order.updated',
+        'integration.sync.order.rejected',
+        'integration.sync.started',
+        'integration.sync.completed',
+        'integration.sync.failed'
+    ] : [];
+
+    const { isConnected } = useSSE({
         businessId: currentBusinessId,
-        integrationId: syncModal.show && syncModal.id ? syncModal.id : undefined, // Filtrar por la integración actual si hay modal abierto
-        eventTypes: syncModal.show ? [
-            'integration.sync.order.created',
-            'integration.sync.order.updated',
-            'integration.sync.order.rejected',
-            'integration.sync.started',
-            'integration.sync.completed',
-            'integration.sync.failed'
-        ] : [], // No escuchar eventos si el modal no está abierto
-        onOrderCreated: (event) => {
-            console.log('✅ [IntegrationList] Evento order.created recibido:', event);
-            // Solo procesar si es de la integración que está sincronizando
-            if (syncModal.id && event.integration_id !== syncModal.id) {
-                console.log('✅ [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
-                return;
-            }
+        integrationId: syncModal.show && syncModal.id ? syncModal.id : undefined,
+        eventTypes: integrationEventTypes,
+        onMessage: (messageEvent: MessageEvent) => {
+            try {
+                const event = JSON.parse(messageEvent.data);
+                const eventType = event.event_type || event.type || messageEvent.type;
 
-            // El evento puede tener los datos en event.data directamente o en event.data.data
-            const eventData = event.data?.data || event.data || {};
-            const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
-            const orderId = eventData.order_id || event.metadata?.order_id;
-            const createdAt = eventData.created_at || eventData.synced_at || event.metadata?.created_at || null;
-            const orderStatus = eventData.status || event.metadata?.status || null;
+                // Solo procesar si es de la integración que está sincronizando
+                if (syncModal.id && event.integration_id !== syncModal.id) return;
 
-            console.log('✅ [IntegrationList] Actualizando progreso para orden creada:', orderNumber);
+                const eventData = event.data?.data || event.data || {};
 
-            // Actualizar progreso
-            setSyncProgress(prev => {
-                console.log('✅ [IntegrationList] Estado anterior del progreso:', prev);
-                if (!prev) {
-                    const newState = {
-                        total: 1,
-                        created: 1,
-                        rejected: 0,
-                        updated: 0,
-                        orders: [{
-                            orderNumber,
-                            status: 'created' as const,
-                            createdAt: createdAt || undefined,
-                            orderStatus: orderStatus || undefined,
-                            timestamp: new Date()
-                        }]
-                    };
-                    console.log('✅ [IntegrationList] Nuevo estado (sin prev):', newState);
-                    return newState;
+                switch (eventType) {
+                    case 'integration.sync.order.created': {
+                        const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
+                        const createdAt = eventData.created_at || eventData.synced_at || event.metadata?.created_at || null;
+                        const orderStatus = eventData.status || event.metadata?.status || null;
+
+                        setSyncProgress(prev => {
+                            if (!prev) {
+                                return { total: 1, created: 1, rejected: 0, updated: 0, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }] };
+                            }
+                            return { ...prev, created: prev.created + 1, total: prev.total + 1, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...prev.orders] };
+                        });
+                        playNotificationSound();
+                        showToast(`Orden creada: #${orderNumber}`, 'success');
+                        break;
+                    }
+                    case 'integration.sync.order.updated': {
+                        const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
+                        const createdAt = eventData.created_at || eventData.updated_at || event.metadata?.created_at || null;
+                        const orderStatus = eventData.status || event.metadata?.status || null;
+
+                        setSyncProgress(prev => {
+                            if (!prev) {
+                                return { total: 1, created: 0, rejected: 0, updated: 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }] };
+                            }
+                            return { ...prev, updated: prev.updated + 1, total: prev.total + 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...prev.orders] };
+                        });
+                        playNotificationSound();
+                        showToast(`Orden actualizada: #${orderNumber}`, 'info');
+                        break;
+                    }
+                    case 'integration.sync.order.rejected': {
+                        const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
+                        const reason = eventData.reason || event.metadata?.reason || 'Error desconocido';
+                        const error = eventData.error || event.metadata?.error || '';
+                        const createdAt = eventData.created_at || eventData.rejected_at || event.metadata?.created_at || null;
+                        const orderStatus = eventData.status || event.metadata?.status || null;
+
+                        setSyncProgress(prev => {
+                            if (!prev) {
+                                return { total: 1, created: 0, rejected: 1, updated: 0, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }] };
+                            }
+                            return { ...prev, rejected: prev.rejected + 1, total: prev.total + 1, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...prev.orders] };
+                        });
+                        playNotificationSound();
+                        showToast(`Orden rechazada: #${orderNumber} - ${reason}${error ? `: ${error}` : ''}`, 'error');
+                        break;
+                    }
+                    case 'integration.sync.started': {
+                        const integrationId = event.integration_id;
+                        const integration = integrations.find(i => i.id === integrationId);
+                        const integrationName = integration?.name || `Integración ${integrationId}`;
+
+                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, orders: [] });
+                        showToast(`Sincronización iniciada: ${integrationName}`, 'info');
+                        break;
+                    }
+                    case 'integration.sync.completed': {
+                        const integrationId = event.integration_id;
+                        const integration = integrations.find(i => i.id === integrationId);
+                        const integrationName = integration?.name || `Integración ${integrationId}`;
+                        const totalOrders = Number(eventData.total_orders) || 0;
+                        const createdOrders = Number(eventData.created_orders) || 0;
+                        const updatedOrders = Number(eventData.updated_orders) || 0;
+                        const rejectedOrders = Number(eventData.rejected_orders) || 0;
+
+                        setSyncProgress(prev => {
+                            if (!prev) return { total: totalOrders, created: createdOrders, rejected: rejectedOrders, updated: updatedOrders, orders: [] };
+                            return { ...prev, total: totalOrders, created: createdOrders, rejected: rejectedOrders, updated: updatedOrders, orders: prev.orders };
+                        });
+                        setSyncing(false);
+                        playNotificationSound();
+                        showToast(`Sincronización completada: ${integrationName} - Total: ${totalOrders}, Creadas: ${createdOrders}, Actualizadas: ${updatedOrders}, Rechazadas: ${rejectedOrders}`, 'success');
+                        break;
+                    }
+                    case 'integration.sync.failed': {
+                        const integrationId = event.integration_id;
+                        const integration = integrations.find(i => i.id === integrationId);
+                        const integrationName = integration?.name || `Integración ${integrationId}`;
+                        const error = eventData.error || event.metadata?.error || 'Error desconocido';
+
+                        setSyncProgress(null);
+                        playNotificationSound();
+                        showToast(`Sincronización fallida: ${integrationName} - ${error}`, 'error');
+                        break;
+                    }
                 }
-                const newState = {
-                    ...prev,
-                    created: prev.created + 1,
-                    total: prev.total + 1,
-                    orders: [{
-                        orderNumber,
-                        status: 'created' as const,
-                        createdAt: createdAt || undefined,
-                        orderStatus: orderStatus || undefined,
-                        timestamp: new Date()
-                    }, ...prev.orders]
-                };
-                console.log('✅ [IntegrationList] Nuevo estado (con prev):', newState);
-                return newState;
-            });
-
-            // Reproducir sonido de notificación
-            playNotificationSound();
-
-            // Mostrar toast de éxito
-            showToast(
-                `✅ Orden creada: #${orderNumber}`,
-                'success'
-            );
-        },
-        onOrderUpdated: (event) => {
-            // #region agent log
-            fetch('http://127.0.0.1:7246/ingest/75c49945-688b-42a7-9abc-0a24de34a930', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    location: 'IntegrationList.tsx:onOrderUpdated',
-                    message: 'onOrderUpdated callback invoked',
-                    data: { event, syncModalId: syncModal.id, eventIntegrationId: event.integration_id },
-                    timestamp: Date.now(),
-                    sessionId: 'debug-session',
-                    runId: 'run1',
-                    hypothesisId: 'G'
-                })
-            }).catch(() => { });
-            // #endregion
-            console.log('🔄 [IntegrationList] Evento order.updated recibido:', event);
-            // Solo procesar si es de la integración que está sincronizando
-            if (syncModal.id && event.integration_id !== syncModal.id) {
-                // #region agent log
-                fetch('http://127.0.0.1:7246/ingest/75c49945-688b-42a7-9abc-0a24de34a930', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        location: 'IntegrationList.tsx:onOrderUpdated',
-                        message: 'Event filtered out - integration_id mismatch',
-                        data: { eventIntegrationId: event.integration_id, syncModalId: syncModal.id },
-                        timestamp: Date.now(),
-                        sessionId: 'debug-session',
-                        runId: 'run1',
-                        hypothesisId: 'G'
-                    })
-                }).catch(() => { });
-                // #endregion
-                console.log('🔄 [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
-                return;
+            } catch (err) {
+                console.error('Error parsing integration SSE event:', err);
             }
-
-            // El evento puede tener los datos en event.data directamente o en event.data.data
-            const eventData = event.data?.data || event.data || {};
-            const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
-            const orderId = eventData.order_id || event.metadata?.order_id;
-            const createdAt = eventData.created_at || eventData.updated_at || event.metadata?.created_at || null;
-            const orderStatus = eventData.status || event.metadata?.status || null;
-
-            console.log('🔄 [IntegrationList] Actualizando progreso para orden actualizada:', orderNumber);
-
-            // Actualizar progreso
-            setSyncProgress(prev => {
-                console.log('🔄 [IntegrationList] Estado anterior del progreso:', prev);
-                if (!prev) {
-                    const newState = {
-                        total: 1,
-                        created: 0,
-                        rejected: 0,
-                        updated: 1,
-                        orders: [{
-                            orderNumber,
-                            status: 'updated' as const,
-                            createdAt: createdAt || undefined,
-                            orderStatus: orderStatus || undefined,
-                            timestamp: new Date()
-                        }]
-                    };
-                    console.log('🔄 [IntegrationList] Nuevo estado (sin prev):', newState);
-                    return newState;
-                }
-                const newState = {
-                    ...prev,
-                    updated: prev.updated + 1,
-                    total: prev.total + 1,
-                    orders: [{
-                        orderNumber,
-                        status: 'updated' as const,
-                        createdAt: createdAt || undefined,
-                        orderStatus: orderStatus || undefined,
-                        timestamp: new Date()
-                    }, ...prev.orders]
-                };
-                console.log('🔄 [IntegrationList] Nuevo estado (con prev):', newState);
-                return newState;
-            });
-
-            // Reproducir sonido de notificación
-            playNotificationSound();
-
-            // Mostrar toast de éxito
-            showToast(
-                `🔄 Orden actualizada: #${orderNumber}`,
-                'info'
-            );
         },
-        onOrderRejected: (event) => {
-            console.log('❌ [IntegrationList] Evento order.rejected recibido:', event);
-            // Solo procesar si es de la integración que está sincronizando
-            if (syncModal.id && event.integration_id !== syncModal.id) {
-                console.log('❌ [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
-                return;
-            }
-
-            // El evento puede tener los datos en event.data directamente o en event.data.data
-            const eventData = event.data?.data || event.data || {};
-            const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
-            const reason = eventData.reason || event.metadata?.reason || 'Error desconocido';
-            const error = eventData.error || event.metadata?.error || '';
-            const createdAt = eventData.created_at || eventData.rejected_at || event.metadata?.created_at || null;
-            const orderStatus = eventData.status || event.metadata?.status || null;
-
-            console.log('❌ [IntegrationList] Actualizando progreso para orden rechazada:', orderNumber);
-
-            // Actualizar progreso
-            setSyncProgress(prev => {
-                console.log('❌ [IntegrationList] Estado anterior del progreso:', prev);
-                if (!prev) {
-                    const newState = {
-                        total: 1,
-                        created: 0,
-                        rejected: 1,
-                        updated: 0,
-                        orders: [{
-                            orderNumber,
-                            status: 'rejected' as const,
-                            reason: reason + (error ? `: ${error}` : ''),
-                            createdAt: createdAt || undefined,
-                            orderStatus: orderStatus || undefined,
-                            timestamp: new Date()
-                        }]
-                    };
-                    console.log('❌ [IntegrationList] Nuevo estado (sin prev):', newState);
-                    return newState;
-                }
-                const newState = {
-                    ...prev,
-                    rejected: prev.rejected + 1,
-                    total: prev.total + 1,
-                    orders: [{
-                        orderNumber,
-                        status: 'rejected' as const,
-                        reason: reason + (error ? `: ${error}` : ''),
-                        createdAt: createdAt || undefined,
-                        orderStatus: orderStatus || undefined,
-                        timestamp: new Date()
-                    }, ...prev.orders]
-                };
-                console.log('❌ [IntegrationList] Nuevo estado (con prev):', newState);
-                return newState;
-            });
-
-            // Reproducir sonido de notificación
-            playNotificationSound();
-
-            // Mostrar toast de error
-            showToast(
-                `❌ Orden rechazada: #${orderNumber} - ${reason}${error ? `: ${error}` : ''}`,
-                'error'
-            );
-        },
-        onSyncStarted: (event) => {
-            console.log('🔄 [IntegrationList] Evento sync.started recibido:', event);
-            // Solo procesar si es de la integración que está sincronizando
-            if (syncModal.id && event.integration_id !== syncModal.id) {
-                console.log('🔄 [IntegrationList] Evento ignorado - integration_id no coincide:', event.integration_id, 'vs', syncModal.id);
-                return;
-            }
-
-            const integrationId = event.integration_id;
-            const integration = integrations.find(i => i.id === integrationId);
-            const integrationName = integration?.name || `Integración ${integrationId}`;
-
-            console.log('🔄 [IntegrationList] Inicializando progreso para sincronización:', integrationName);
-
-            // Inicializar progreso
-            setSyncProgress({
-                total: 0,
-                created: 0,
-                rejected: 0,
-                updated: 0,
-                orders: []
-            });
-
-            showToast(
-                `🔄 Sincronización iniciada: ${integrationName}`,
-                'info'
-            );
-        },
-        onSyncCompleted: (event) => {
-            // Solo procesar si es de la integración que está sincronizando
-            if (syncModal.id && event.integration_id !== syncModal.id) return;
-
-            const integrationId = event.integration_id;
-            const integration = integrations.find(i => i.id === integrationId);
-            const integrationName = integration?.name || `Integración ${integrationId}`;
-            // El evento puede tener los datos en event.data directamente o en event.data.data
-            const eventData = event.data?.data || event.data || {};
-            const totalOrders = Number(eventData.total_orders) || 0;
-            const createdOrders = Number(eventData.created_orders) || 0;
-            const updatedOrders = Number(eventData.updated_orders) || 0;
-            const rejectedOrders = Number(eventData.rejected_orders) || 0;
-
-            // Actualizar progreso final
-            setSyncProgress(prev => {
-                if (!prev) {
-                    return {
-                        total: totalOrders,
-                        created: createdOrders,
-                        rejected: rejectedOrders,
-                        updated: updatedOrders,
-                        orders: []
-                    };
-                }
-                return {
-                    ...prev,
-                    total: totalOrders,
-                    created: createdOrders,
-                    rejected: rejectedOrders,
-                    updated: updatedOrders,
-                    orders: prev.orders
-                };
-            });
-
-            // Marcar como completado (pero no cerrar el modal automáticamente)
-            setSyncing(false);
-
-            // Reproducir sonido de notificación
-            playNotificationSound();
-
-            showToast(
-                `✅ Sincronización completada: ${integrationName} - Total: ${totalOrders}, Creadas: ${createdOrders}, Actualizadas: ${updatedOrders}, Rechazadas: ${rejectedOrders}`,
-                'success'
-            );
-        },
-        onSyncFailed: (event) => {
-            // Solo procesar si es de la integración que está sincronizando
-            if (syncModal.id && event.integration_id !== syncModal.id) return;
-
-            const integrationId = event.integration_id;
-            const integration = integrations.find(i => i.id === integrationId);
-            const integrationName = integration?.name || `Integración ${integrationId}`;
-            // El evento puede tener los datos en event.data directamente o en event.data.data
-            const eventData = event.data?.data || event.data || {};
-            const error = eventData.error || event.metadata?.error || 'Error desconocido';
-
-            // Limpiar progreso
-            setSyncProgress(null);
-
-            // Reproducir sonido de notificación
-            playNotificationSound();
-
-            showToast(
-                `❌ Sincronización fallida: ${integrationName} - ${error}`,
-                'error'
-            );
-        },
-        onError: (error) => {
-            console.error('Error en conexión SSE de eventos de integraciones:', error);
+        onError: () => {
+            console.error('Error en conexión SSE de eventos de integraciones');
         },
         onOpen: () => {
             console.log('Conexión SSE de eventos de integraciones establecida');

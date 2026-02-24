@@ -68,18 +68,27 @@ export default function OrdersPage() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Órdenes</h1>
                 <div className="flex gap-2">
-                    <Button
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        style={{ background: '#7c3aed' }}
+                        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                    >
+                        ➕ Nueva Orden
+                    </button>
+                    <button
                         onClick={() => setShowMassUploadModal(true)}
-                        variant="outline"
+                        style={{ background: '#7c3aed' }}
+                        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                     >
                         📤 Carga Masiva
-                    </Button>
-                    <Button
+                    </button>
+                    <button
                         onClick={() => setShowMassGuideModal(true)}
-                        variant="outline"
+                        style={{ background: '#7c3aed' }}
+                        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                     >
                         📦 Guías Masivas
-                    </Button>
+                    </button>
                 </div>
             </div>
 

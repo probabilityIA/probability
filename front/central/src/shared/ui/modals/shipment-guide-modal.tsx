@@ -19,6 +19,40 @@ const normalizeLocationName = (str: string) => {
     return s;
 };
 
+const getCarrierLogoSize = (carrierName: string): { container: string; image: string } => {
+    const largeLogoCarriers = ['COORDINADORA', '99MINUTOS', 'PIBOX', 'DEPRISA'];
+    const normalizedCarrier = normalizeString(carrierName);
+
+    if (largeLogoCarriers.includes(normalizedCarrier)) {
+        return { container: 'w-24 h-24', image: 'w-20 h-20' };
+    }
+
+    return { container: 'w-20 h-20', image: 'w-18 h-18' };
+};
+
+const getCarrierLogo = (carrierName: string): string => {
+    const carrierLogos: { [key: string]: string } = {
+        'SERVIENTREGA': 'https://i.revistapym.com.co/old/2021/09/WhatsApp-Image-2021-09-25-at-1.08.55-PM.jpeg?w=400&r=1_1',
+        'COORDINADORA': 'https://olartemoure.com/wp-content/uploads/2023/05/coordinadora-logo.png',
+        'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+        'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+        'FEDEX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
+        'INTERRAPIDISIMO': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+        '472LOGISTICA': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
+        'SPEED': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+        'SPEEDCARGO': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+        'ENVIA': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
+        'PIBOX': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
+        'TCC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+        'TRANSPORTADORADECARACOLOMBIA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+        '99MINUTOS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
+        'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
+    };
+
+    const normalizedCarrier = normalizeString(carrierName);
+    return carrierLogos[normalizedCarrier] || 'https://via.placeholder.com/56?text=' + encodeURIComponent(carrierName.substring(0, 3));
+};
+
 const findDaneCode = (city: string, state: string) => {
     const targetCity = normalizeLocationName(city);
     const targetState = normalizeLocationName(state);
@@ -445,11 +479,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-2">
+            <div className="bg-white rounded-2xl shadow-xl" style={{ width: '85%', height: '85vh' }}>
                 {/* Header */}
-                <div className="sticky top-0 bg-white border-b px-6 py-4 z-10">
-                    <div className="flex justify-between items-center mb-4">
+                <div className="bg-white border-b px-3 py-3 z-10">
+                    <div className="flex justify-between items-center mb-2">
                         <h2 className="text-2xl font-bold text-gray-800">Generar Guía de Envío</h2>
                         <button
                             onClick={onClose}
@@ -462,30 +496,30 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 </div>
 
                 {/* Content */}
-                <div className="p-6">
+                <div className="p-3 flex flex-col flex-1 overflow-hidden">
                     {error && (
-                        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+                        <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700">
                             {error}
                         </div>
                     )}
 
                     {success && (
-                        <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                        <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded-lg text-green-700">
                             {success}
                         </div>
                     )}
 
                     {/* Step 1: Origin/Destination/Package */}
                     {currentStep === 1 && (
-                        <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-6">
-                            <div className="grid grid-cols-2 gap-6">
+                        <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-3">
+                            <div className="grid grid-cols-2 gap-3">
                                 {/* Origin */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-semibold text-lg text-gray-700">Origen</h3>
                                         {originAddresses.length > 0 && (
                                             <select
-                                                className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-orange-500"
+                                                className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
                                                 onChange={(e) => {
                                                     const addr = originAddresses.find(a => a.id === parseInt(e.target.value));
                                                     if (addr) handleOriginAddressSelect(addr);
@@ -512,7 +546,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 setShowOriginResults(true);
                                             }}
                                             onFocus={() => setShowOriginResults(true)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                                             placeholder="Buscar ciudad..."
                                         />
                                         {showOriginResults && filteredOriginOptions.length > 0 && (
@@ -535,6 +569,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
 
                                     <Input
+                                        compact
                                         label="Calle y Número *"
                                         {...step1Form.register("originAddress")}
                                         error={step1Form.formState.errors.originAddress?.message}
@@ -543,7 +578,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 </div>
 
                                 {/* Destination */}
-                                <div className="space-y-4">
+                                <div className="space-y-2">
                                     <h3 className="font-semibold text-lg text-gray-700">Destino</h3>
 
                                     <div ref={destRef} className="relative">
@@ -558,7 +593,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 setShowDestResults(true);
                                             }}
                                             onFocus={() => setShowDestResults(true)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                                             placeholder="Buscar ciudad..."
                                         />
                                         {showDestResults && filteredDestOptions.length > 0 && (
@@ -581,6 +616,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
 
                                     <Input
+                                        compact
                                         label="Calle y Número *"
                                         {...step1Form.register("destAddress")}
                                         error={step1Form.formState.errors.destAddress?.message}
@@ -590,10 +626,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             </div>
 
                             {/* Package Details */}
-                            <div className="border-t pt-6">
-                                <h3 className="font-semibold text-lg text-gray-700 mb-4">Características del paquete</h3>
-                                <div className="grid grid-cols-4 gap-4">
+                            <div className="border-t pt-2">
+                                <h3 className="font-semibold text-lg text-gray-700 mb-2">Características del paquete</h3>
+                                <div className="grid grid-cols-4 gap-2">
                                     <Input
+                                        compact
                                         label="Peso (kg) *"
                                         type="number"
                                         step="0.1"
@@ -601,18 +638,21 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         error={step1Form.formState.errors.weight?.message}
                                     />
                                     <Input
+                                        compact
                                         label="Alto (cm) *"
                                         type="number"
                                         {...step1Form.register("height", { valueAsNumber: true })}
                                         error={step1Form.formState.errors.height?.message}
                                     />
                                     <Input
+                                        compact
                                         label="Ancho (cm) *"
                                         type="number"
                                         {...step1Form.register("width", { valueAsNumber: true })}
                                         error={step1Form.formState.errors.width?.message}
                                     />
                                     <Input
+                                        compact
                                         label="Largo (cm) *"
                                         type="number"
                                         {...step1Form.register("length", { valueAsNumber: true })}
@@ -622,14 +662,16 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             </div>
 
                             {/* Additional Info */}
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2">
                                 <Input
+                                    compact
                                     label="Descripción *"
                                     {...step1Form.register("description")}
                                     error={step1Form.formState.errors.description?.message}
                                     placeholder="descripción"
                                 />
                                 <Input
+                                    compact
                                     label="Valor factura declarado *"
                                     type="number"
                                     {...step1Form.register("contentValue", { valueAsNumber: true })}
@@ -637,7 +679,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 />
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-2 gap-2">
                                 <div>
                                     <label className="flex items-center space-x-2">
                                         <input
@@ -654,7 +696,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </label>
                                     <select
                                         {...step1Form.register("codPaymentMethod")}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                                     >
                                         <option value="cash">Efectivo</option>
                                         <option value="data_phone">Datáfono</option>
@@ -668,7 +710,12 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             </div>
 
                             <div className="flex justify-end">
-                                <Button type="submit" disabled={loading}>
+                                <Button
+                                    variant="primary"
+                                    type="submit"
+                                    disabled={loading}
+                                    style={{ background: '#7c3aed' }}
+                                >
                                     {loading ? "Cotizando..." : "Siguiente"}
                                 </Button>
                             </div>
@@ -677,57 +724,75 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 2: Quote Selection */}
                     {currentStep === 2 && (
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-lg text-gray-700 mb-4">
-                                Filtra por servicio / Transportadora
-                            </h3>
-                            <p className="text-sm text-gray-600 mb-4">Todos los precios incluyen IVA</p>
+                        <div className="flex flex-col h-full overflow-y-auto">
+                            <div className="pb-2">
+                                <h3 className="font-semibold text-lg text-gray-700 mb-2">
+                                    Filtra por servicio / Transportadora
+                                </h3>
+                                <p className="text-sm text-gray-600 mb-2">Todos los precios incluyen IVA</p>
+                            </div>
 
-                            {rates.map((rate) => {
-                                const totalCost = rate.flete + (rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0);
-                                const isCOD = rate.cod;
+                            <div className="overflow-y-auto border border-purple-200 rounded-lg p-3 bg-purple-50" style={{ maxHeight: 'calc(85vh - 350px)' }}>
+                                <div className="grid grid-cols-4 gap-3 auto-rows-max">
+                                {rates.map((rate) => {
+                                    const totalCost = rate.flete + (rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0);
+                                    const isCOD = rate.cod;
 
-                                return (
-                                    <div
-                                        key={rate.idRate}
-                                        onClick={() => handleRateSelection(rate)}
-                                        className="border rounded-lg p-4 hover:border-orange-500 cursor-pointer transition-colors"
-                                    >
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center space-x-4">
-                                                <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center">
-                                                    <span className="font-bold text-xs">{rate.carrier}</span>
-                                                </div>
-                                                <div>
-                                                    <div className="font-semibold">{rate.carrier}</div>
-                                                    <div className="text-sm text-gray-600">{rate.product}</div>
-                                                    <div className="text-xs text-gray-500">
-                                                        Entrega aprox. {rate.deliveryDays} días
+                                    return (
+                                        <div
+                                            key={rate.idRate}
+                                            onClick={() => handleRateSelection(rate)}
+                                            className="border border-gray-200 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white"
+                                        >
+                                            <div className="flex flex-col h-full">
+                                                <div className="flex flex-col items-center mb-2">
+                                                    <div className={`${getCarrierLogoSize(rate.carrier).container} bg-purple-50 rounded-lg flex items-center justify-center mb-2 overflow-hidden`}>
+                                                        <img
+                                                            src={getCarrierLogo(rate.carrier)}
+                                                            alt={rate.carrier}
+                                                            className={`${getCarrierLogoSize(rate.carrier).image} object-contain`}
+                                                            onError={(e) => {
+                                                                e.currentTarget.style.display = 'none';
+                                                                e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-xs text-center text-purple-600">${rate.carrier.substring(0, 3)}</span>`;
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <div className="font-semibold text-sm">{rate.carrier}</div>
+                                                        <div className="text-xs text-gray-600">{rate.product}</div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-2xl font-bold text-orange-600">
-                                                    ${totalCost.toLocaleString()} COP
-                                                </div>
-                                                <div className="text-xs text-gray-500 mt-1">
-                                                    Entrega: {rate.deliveryDays} días
-                                                </div>
-                                                {isCOD && (
-                                                    <div className="text-xs text-blue-600 mt-1">
-                                                        COD disponible
+
+                                                <div className="border-t pt-2 mt-2 flex-1">
+                                                    <div className="text-center mb-1">
+                                                        <div className="text-xl font-bold text-purple-600">
+                                                            ${totalCost.toLocaleString()}
+                                                        </div>
+                                                        <div className="text-xs text-gray-500">COP</div>
                                                     </div>
-                                                )}
+                                                    <div className="text-center">
+                                                        <div className="text-xs text-gray-700 font-medium">
+                                                            {rate.deliveryDays} días
+                                                        </div>
+                                                    </div>
+                                                    {isCOD && (
+                                                        <div className="text-xs text-blue-600 mt-1 text-center font-medium">
+                                                            ✓ COD disponible
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    );
+                                })}
+                                </div>
+                            </div>
 
-                            <div className="flex justify-between mt-6">
+                            <div className="flex justify-between mt-3 pt-3 border-t">
                                 <Button
-                                    variant="outline"
+                                    variant="primary"
                                     onClick={() => setCurrentStep(1)}
+                                    style={{ background: '#7c3aed' }}
                                 >
                                     Atrás
                                 </Button>
@@ -737,24 +802,29 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 3: Details */}
                     {currentStep === 3 && (
-                        <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="space-y-6">
-                            {/* Origin Details */}
-                            <div>
-                                <h3 className="font-semibold text-lg text-gray-700 mb-4">Dirección - Remitente</h3>
-                                <div className="grid grid-cols-3 gap-4">
+                        <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="flex flex-col h-full overflow-hidden">
+                            <div className="border border-gray-200 rounded-lg p-0 bg-gray-50 overflow-y-auto flex-1">
+                            <div className="grid grid-cols-2 gap-1 p-1">
+                                {/* Origin Details - Columna 1 */}
+                                <div>
+                                    <h3 className="font-semibold text-sm text-gray-700 mb-1">Dirección - Remitente</h3>
+                                <div className="grid grid-cols-3 gap-1">
                                     <Input
+                                        compact
                                         label="Calle *"
                                         {...step3Form.register("originCrossStreet")}
                                         error={step3Form.formState.errors.originCrossStreet?.message}
                                         placeholder="calle 75 sur n 42-97"
                                     />
                                     <Input
+                                        compact
                                         label="Edificio/Interior/Apto *"
                                         {...step3Form.register("originReference")}
                                         error={step3Form.formState.errors.originReference?.message}
                                         placeholder="apt 801"
                                     />
                                     <Input
+                                        compact
                                         label="Barrio *"
                                         {...step3Form.register("originSuburb")}
                                         error={step3Form.formState.errors.originSuburb?.message}
@@ -762,35 +832,40 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     />
                                 </div>
 
-                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Referencias - Empresa</h4>
+                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
                                 <Input
+                                    compact
                                     label="Empresa"
                                     {...step3Form.register("originCompany")}
                                     error={step3Form.formState.errors.originCompany?.message}
                                     placeholder="ProbabilityIA"
                                 />
 
-                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Datos de contacto</h4>
-                                <div className="grid grid-cols-2 gap-4">
+                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
+                                <div className="grid grid-cols-2 gap-1">
                                     <Input
+                                        compact
                                         label="Nombre *"
                                         {...step3Form.register("originFirstName")}
                                         error={step3Form.formState.errors.originFirstName?.message}
                                         placeholder="Luisa"
                                     />
                                     <Input
+                                        compact
                                         label="Apellido *"
                                         {...step3Form.register("originLastName")}
                                         error={step3Form.formState.errors.originLastName?.message}
                                         placeholder="Muñoz"
                                     />
                                     <Input
+                                        compact
                                         label="Teléfono *"
                                         {...step3Form.register("originPhone")}
                                         error={step3Form.formState.errors.originPhone?.message}
                                         placeholder="3224098631"
                                     />
                                     <Input
+                                        compact
                                         label="Correo *"
                                         type="email"
                                         {...step3Form.register("originEmail")}
@@ -800,23 +875,26 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 </div>
                             </div>
 
-                            {/* Destination Details */}
-                            <div className="border-t pt-6">
-                                <h3 className="font-semibold text-lg text-gray-700 mb-4">Destinatario</h3>
-                                <div className="grid grid-cols-3 gap-4">
+                                {/* Destination Details - Columna 2 */}
+                                <div>
+                                    <h3 className="font-semibold text-sm text-gray-700 mb-1">Destinatario</h3>
+                                <div className="grid grid-cols-3 gap-1">
                                     <Input
+                                        compact
                                         label="Calle *"
                                         {...step3Form.register("destCrossStreet")}
                                         error={step3Form.formState.errors.destCrossStreet?.message}
                                         placeholder="calle 75 sur n 42-97"
                                     />
                                     <Input
+                                        compact
                                         label="Edificio/Interior/Apto *"
                                         {...step3Form.register("destReference")}
                                         error={step3Form.formState.errors.destReference?.message}
                                         placeholder="apt 801"
                                     />
                                     <Input
+                                        compact
                                         label="Barrio *"
                                         {...step3Form.register("destSuburb")}
                                         error={step3Form.formState.errors.destSuburb?.message}
@@ -824,35 +902,40 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     />
                                 </div>
 
-                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Referencias - Empresa</h4>
+                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
                                 <Input
+                                    compact
                                     label="Empresa"
                                     {...step3Form.register("destCompany")}
                                     error={step3Form.formState.errors.destCompany?.message}
                                     placeholder="ProbabilityIA"
                                 />
 
-                                <h4 className="font-medium text-gray-700 mt-6 mb-3">Datos de contacto</h4>
-                                <div className="grid grid-cols-2 gap-4">
+                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
+                                <div className="grid grid-cols-2 gap-2">
                                     <Input
+                                        compact
                                         label="Nombre *"
                                         {...step3Form.register("destFirstName")}
                                         error={step3Form.formState.errors.destFirstName?.message}
                                         placeholder="Luisa"
                                     />
                                     <Input
+                                        compact
                                         label="Apellido *"
                                         {...step3Form.register("destLastName")}
                                         error={step3Form.formState.errors.destLastName?.message}
                                         placeholder="Muñoz"
                                     />
                                     <Input
+                                        compact
                                         label="Teléfono *"
                                         {...step3Form.register("destPhone")}
                                         error={step3Form.formState.errors.destPhone?.message}
                                         placeholder="3224098631"
                                     />
                                     <Input
+                                        compact
                                         label="Correo *"
                                         type="email"
                                         {...step3Form.register("destEmail")}
@@ -861,53 +944,62 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     />
                                 </div>
                             </div>
+                            </div>
 
-                            {/* Additional Options */}
-                            <div className="border-t pt-6">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <Input
-                                        label="Mi referencia de envío"
+                            {/* Additional Options - Ocupa 2 columnas */}
+                            <div className="grid grid-cols-2 gap-1 mt-0.5 pt-1 px-1 border-t">
+                                <Input
+                                    compact
+                                    label="Mi referencia de envío"
                                         {...step3Form.register("myShipmentReference")}
                                         error={step3Form.formState.errors.myShipmentReference?.message}
                                         placeholder="Orden 5649"
                                     />
                                     <Input
+                                        compact
                                         label="Número de orden externo"
                                         {...step3Form.register("external_order_id")}
                                         error={step3Form.formState.errors.external_order_id?.message}
                                         placeholder="ORD345678"
-                                    />
-                                </div>
-
-                                <div className="mt-4 space-y-2">
-                                    <label className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            {...step3Form.register("requestPickup")}
-                                            className="rounded"
-                                        />
-                                        <span className="text-sm">Solicitar recolección</span>
-                                    </label>
-                                    <label className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            {...step3Form.register("insurance")}
-                                            className="rounded"
-                                        />
-                                        <span className="text-sm">Asegurar envío</span>
-                                    </label>
-                                </div>
+                                />
                             </div>
 
-                            <div className="flex justify-between mt-6">
+                            <div className="grid grid-cols-2 gap-1 mt-0.5 px-1">
+                                <label className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        {...step3Form.register("requestPickup")}
+                                        className="rounded w-5 h-5"
+                                    />
+                                    <span className="text-sm font-medium">Solicitar recolección</span>
+                                </label>
+                                <label className="flex items-center space-x-2">
+                                    <input
+                                        type="checkbox"
+                                        {...step3Form.register("insurance")}
+                                        className="rounded w-5 h-5"
+                                    />
+                                    <span className="text-sm font-medium">Asegurar envío</span>
+                                </label>
+                            </div>
+                            </div>
+
+                            <div className="flex justify-between mt-0 pt-1 px-1 border-t">
                                 <Button
-                                    variant="outline"
+                                    size="sm"
+                                    variant="primary"
                                     onClick={() => setCurrentStep(2)}
                                     type="button"
+                                    style={{ background: '#7c3aed' }}
                                 >
                                     Atrás
                                 </Button>
-                                <Button type="submit">
+                                <Button
+                                    size="sm"
+                                    variant="primary"
+                                    type="submit"
+                                    style={{ background: '#7c3aed' }}
+                                >
                                     Siguiente
                                 </Button>
                             </div>
@@ -916,11 +1008,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 4: Payment & Confirmation */}
                     {currentStep === 4 && selectedRate && (
-                        <div className="space-y-6">
+                        <div className="space-y-3">
                             <h3 className="font-semibold text-lg text-gray-700">Resumen de tu envío</h3>
 
-                            <div className="bg-gray-50 p-4 rounded-lg">
-                                <div className="flex items-center justify-between mb-4">
+                            <div className="bg-gray-50 p-2 rounded-lg">
+                                <div className="flex items-center justify-between mb-2">
                                     <div className="flex items-center space-x-2">
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -929,7 +1021,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
                                     <div className="text-right">
                                         <div className="text-sm text-gray-600">TOTAL:</div>
-                                        <div className="text-2xl font-bold text-orange-600">
+                                        <div className="text-2xl font-bold text-purple-600">
                                             ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0)).toLocaleString()}
                                         </div>
                                     </div>
@@ -943,10 +1035,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                             <div>
                                 <h4 className="font-medium text-gray-700 mb-3">Selecciona tu método de pago</h4>
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="border-2 border-orange-500 rounded-lg p-4 bg-orange-50">
+                                <div className="grid grid-cols-2 gap-2">
+                                    <div className="border-2 border-purple-500 rounded-lg p-2 bg-purple-50">
                                         <div className="flex items-center justify-center mb-2">
-                                            <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                                             </svg>
                                         </div>
@@ -960,7 +1052,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                             {generatedPdfUrl && trackingNumber ? (
                                 <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                                    <h4 className="font-semibold text-green-800 mb-4">¡Guía generada exitosamente!</h4>
+                                    <h4 className="font-semibold text-green-800 mb-2">¡Guía generada exitosamente!</h4>
                                     <div className="space-y-2">
                                         <p className="text-sm"><strong>Tracking:</strong> {trackingNumber}</p>
                                         <a
@@ -974,7 +1066,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex justify-between mt-6">
+                                <div className="flex justify-between mt-3">
                                     <Button
                                         variant="outline"
                                         onClick={() => setCurrentStep(3)}
