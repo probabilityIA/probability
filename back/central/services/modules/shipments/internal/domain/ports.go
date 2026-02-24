@@ -32,4 +32,8 @@ type IRepository interface {
 	UpdateOriginAddress(ctx context.Context, address *OriginAddress) error
 	DeleteOriginAddress(ctx context.Context, id uint) error
 	SetDefaultOriginAddress(ctx context.Context, businessID, addressID uint) error
+
+	// Wallet Integration
+	GetOrderBusinessID(ctx context.Context, orderID string) (*uint, error)
+	DeductWalletBalance(ctx context.Context, businessID uint, amount float64, reference string) error
 }

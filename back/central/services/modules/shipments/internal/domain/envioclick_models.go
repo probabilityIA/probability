@@ -15,6 +15,7 @@ type EnvioClickQuoteRequest struct {
 	CODValue            float64             `json:"codValue"`
 	IncludeGuideCost    bool                `json:"includeGuideCost"`
 	CODPaymentMethod    string              `json:"codPaymentMethod"` // "cash" or "data_phone"
+	TotalCost           float64             `json:"totalCost"`
 	Packages            []EnvioClickPackage `json:"packages"`
 	Origin              EnvioClickAddress   `json:"origin"`
 	Destination         EnvioClickAddress   `json:"destination"`

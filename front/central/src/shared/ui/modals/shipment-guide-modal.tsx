@@ -11,27 +11,43 @@ import { getOriginAddressesAction, quoteShipmentAction, generateGuideAction } fr
 import { OriginAddress } from "@/services/modules/shipments/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 
-const normalizeString = (str: string) =>
-    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+const normalizeLocationName = (str: string) => {
+    if (!str) return "";
+    let s = str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+    // Remove variations of D.C. to improve matching
+    s = s.replace(/,\s*D\.C\./g, "").replace(/\sD\.C\./g, "").replace(/\sDC\b/g, "").trim();
+    return s;
+};
 
 const findDaneCode = (city: string, state: string) => {
-    const targetCity = normalizeString(city);
-    const targetState = normalizeString(state);
+    const targetCity = normalizeLocationName(city);
+    const targetState = normalizeLocationName(state);
+
+    if (!targetCity) return null;
 
     const entries = Object.entries(danes);
 
     // 1. Try exact match with city and state
-    const exactMatch = entries.find(([_, data]: [string, any]) =>
-        normalizeString(data.ciudad) === targetCity &&
-        normalizeString(data.departamento) === targetState
-    );
+    const exactMatch = entries.find(([_, data]: [string, any]) => {
+        const dCity = normalizeLocationName(data.ciudad);
+        const dState = normalizeLocationName(data.departamento);
+        return dCity === targetCity && dState === targetState;
+    });
     if (exactMatch) return exactMatch[0];
 
     // 2. Try match with city only
-    const cityMatch = entries.find(([_, data]: [string, any]) =>
-        normalizeString(data.ciudad) === targetCity
-    );
+    const cityMatch = entries.find(([_, data]: [string, any]) => {
+        const dCity = normalizeLocationName(data.ciudad);
+        return dCity === targetCity;
+    });
     if (cityMatch) return cityMatch[0];
+
+    // 3. Try partial match
+    const partialMatch = entries.find(([_, data]: [string, any]) => {
+        const dCity = normalizeLocationName(data.ciudad);
+        return dCity.includes(targetCity) || targetCity.includes(dCity);
+    });
+    if (partialMatch) return partialMatch[0];
 
     return null;
 };
@@ -377,6 +393,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 codValue: step1Data.codValue,
                 includeGuideCost: step1Data.includeGuideCost,
                 codPaymentMethod: step1Data.codPaymentMethod,
+                totalCost: totalCost,
                 packages: [{
                     weight: step1Data.weight,
                     height: step1Data.height,

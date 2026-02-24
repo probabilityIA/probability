@@ -20,6 +20,14 @@ type OrderSummary struct {
 	CurrencyPresentment    string                 `json:"currency_presentment,omitempty"`
 	CustomerName           string                 `json:"customer_name"`
 	CustomerEmail          string                 `json:"customer_email"`
+	CustomerPhone          string                 `json:"customer_phone,omitempty"`
+	ShippingStreet         string                 `json:"shipping_street,omitempty"`
+	ShippingCity           string                 `json:"shipping_city,omitempty"`
+	ShippingState          string                 `json:"shipping_state,omitempty"`
+	Weight                 *float64               `json:"weight,omitempty"`
+	Height                 *float64               `json:"height,omitempty"`
+	Width                  *float64               `json:"width,omitempty"`
+	Length                 *float64               `json:"length,omitempty"`
 	Status                 string                 `json:"status"`
 	ItemsCount             int                    `json:"items_count"`
 	DeliveryProbability    *float64               `json:"delivery_probability"`
