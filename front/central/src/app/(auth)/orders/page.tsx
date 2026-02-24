@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
 import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
 import { Order } from '@/services/modules/orders/domain/types';
 import { Button, Modal } from '@/shared/ui';
@@ -27,9 +28,19 @@ export default function OrdersPage() {
         setShowViewModal(true);
     };
 
-    const handleViewRecommendation = (order: Order) => {
-        setSelectedOrder(order);
-        setShowGuideModal(true);
+    const handleViewRecommendation = async (order: Order) => {
+        try {
+            const response = await getOrderByIdAction(order.id);
+            if (response.success && response.data) {
+                setSelectedOrder(response.data);
+                setShowGuideModal(true);
+            } else {
+                alert('No se pudieron cargar los detalles de la orden');
+            }
+        } catch (error) {
+            console.error('Error fetching order details:', error);
+            alert('Error al cargar la orden completa');
+        }
     };
 
     const handleEdit = (order: Order) => {

@@ -26,6 +26,14 @@ type OrderSummary struct {
 	CustomerFirstName      string
 	CustomerLastName       string
 	CustomerEmail          string
+	CustomerPhone          string
+	ShippingStreet         string
+	ShippingCity           string
+	ShippingState          string
+	Weight                 *float64
+	Height                 *float64
+	Width                  *float64
+	Length                 *float64
 	Status                 string
 	ItemsCount             int
 	DeliveryProbability    *float64

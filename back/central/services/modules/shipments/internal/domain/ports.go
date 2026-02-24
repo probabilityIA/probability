@@ -44,6 +44,7 @@ type IRepository interface {
 	UpdateOriginAddress(ctx context.Context, address *OriginAddress) error
 	DeleteOriginAddress(ctx context.Context, id uint) error
 	SetDefaultOriginAddress(ctx context.Context, businessID, addressID uint) error
+
 }
 
 // ───────────────────────────────────────────

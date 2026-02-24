@@ -24,38 +24,41 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRe
 		return nil, errors.New("order with this external_id already exists for this integration")
 	}
 
-	// Lógica para plataforma manual (numeración automática)
-	if req.Platform == "manual" {
-		// Asignar integración de plataforma si no trae una
-		if req.IntegrationID == 0 {
-			intID, err := uc.repo.GetPlatformIntegrationIDByBusinessID(ctx, *req.BusinessID)
+	// Asignar integración por defecto si no trae una (aplica para masivos y manuales)
+	if req.IntegrationID == 0 {
+		intID, err := uc.repo.GetPlatformIntegrationIDByBusinessID(ctx, *req.BusinessID)
+		if err != nil {
+			// Fallback si no existe la integración de plataforma, intentamos obtener la primera disponible
+			intID, err = uc.repo.GetFirstIntegrationIDByBusinessID(ctx, *req.BusinessID)
 			if err != nil {
-				// Fallback si no existe la integración de plataforma, intentamos obtener la primera disponible
-				intID, err = uc.repo.GetFirstIntegrationIDByBusinessID(ctx, *req.BusinessID)
-				if err != nil {
-					// No bloqueamos la creación si no hay integración, permitimos 0 para manuales
-					uc.logger.Warn().Err(err).Msg("No default integration found for manual order, proceeding with ID 0")
-					req.IntegrationID = 0
-				} else {
-					req.IntegrationID = intID
-				}
+				// No bloqueamos la creación si no hay integración, permitimos 0
+				uc.logger.Warn().Err(err).Msg("No default integration found for order, proceeding with ID 0")
+				req.IntegrationID = 0
 			} else {
 				req.IntegrationID = intID
 			}
+		} else {
+			req.IntegrationID = intID
 		}
+	}
 
-		// Generar ExternalID si no lo trae (usamos timestamp + algo aleatorio)
-		if req.ExternalID == "" {
-			req.ExternalID = fmt.Sprintf("MAN-%d", time.Now().UnixNano())
+	// Generar ExternalID si no lo trae
+	if req.ExternalID == "" {
+		req.ExternalID = fmt.Sprintf("%s-%d", req.Platform, time.Now().UnixNano())
+	}
+
+	// Generar OrderNumber con formato prob-XXXX si está vacío
+	if req.OrderNumber == "" || req.OrderNumber == "AUTO" {
+		lastNum, err := uc.repo.GetLastManualOrderNumber(ctx, *req.BusinessID)
+		if err != nil {
+			return nil, fmt.Errorf("error getting last manual order number: %w", err)
 		}
-		// Generar OrderNumber con formato prob-XXXX si está vacío
-		if req.OrderNumber == "" || req.OrderNumber == "AUTO" {
-			lastNum, err := uc.repo.GetLastManualOrderNumber(ctx, *req.BusinessID)
-			if err != nil {
-				return nil, fmt.Errorf("error getting last manual order number: %w", err)
-			}
-			req.OrderNumber = fmt.Sprintf("prob-%04d", lastNum+1)
-		}
+		req.OrderNumber = fmt.Sprintf("prob-%04d", lastNum+1)
+	}
+
+	// Asignar PaymentMethodID por defecto si no lo trae
+	if req.PaymentMethodID == 0 {
+		req.PaymentMethodID = 1 // Valor por defecto para órdenes importadas sin pasarela
 	}
 
 	// Crear el modelo de orden

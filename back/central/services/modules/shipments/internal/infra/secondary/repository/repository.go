@@ -488,4 +488,3 @@ func (r *Repository) SetDefaultOriginAddress(ctx context.Context, businessID, ad
 	})
 }
 
-

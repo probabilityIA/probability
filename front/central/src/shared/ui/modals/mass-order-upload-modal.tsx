@@ -103,10 +103,19 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                 <div className="space-y-6 overflow-y-auto pr-2">
                     {/* Instructions */}
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <h3 className="font-semibold text-blue-800 mb-2">Instrucciones</h3>
+                        <div className="flex justify-between items-start mb-2">
+                            <h3 className="font-semibold text-blue-800">Instrucciones</h3>
+                            <a
+                                href="/template_orders.csv"
+                                download="plantilla_ordenes.csv"
+                                className="text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 px-3 py-1.5 rounded flex items-center gap-1 transition-colors"
+                            >
+                                Descargar Plantilla CSV
+                            </a>
+                        </div>
                         <ul className="text-sm text-blue-700 space-y-1 list-disc list-inside">
                             <li>El archivo debe ser CSV o Excel (.xlsx, .xls)</li>
-                            <li>La primera fila debe contener los encabezados de columna</li>
+                            <li>La primera fila debe contener los encabezados de columna tal cual la plantilla</li>
                             <li>Columnas requeridas: order_number, customer_name, customer_email, customer_phone, shipping_street, shipping_city, shipping_state, total_amount</li>
                             <li>Columnas opcionales: weight, height, width, length, platform</li>
                         </ul>
