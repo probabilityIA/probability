@@ -22,9 +22,10 @@ type CustomerSearchResponse struct {
 
 // ensureCustomerExists verifica que el cliente exista en Softpymes y lo crea si no existe.
 // Retorna el branchCode asignado por Softpymes al cliente.
-func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}) (string, error) {
+// baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
+func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}, baseURL string) (string, error) {
 	// Buscar si el cliente ya existe en Softpymes
-	branchCode, exists, err := c.customerExists(ctx, token, referer, customerNit)
+	branchCode, exists, err := c.customerExists(ctx, token, referer, customerNit, baseURL)
 	if err != nil {
 		return "", fmt.Errorf("error checking if customer exists: %w", err)
 	}
@@ -42,12 +43,12 @@ func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, custo
 		Str("customer_nit", customerNit).
 		Msg("Customer does not exist in Softpymes, creating...")
 
-	if err := c.createCustomer(ctx, token, referer, customerNit, customer, config); err != nil {
+	if err := c.createCustomer(ctx, token, referer, customerNit, customer, config, baseURL); err != nil {
 		return "", err
 	}
 
 	// Consultar el cliente recién creado para obtener su branchCode
-	branchCode, exists, err = c.customerExists(ctx, token, referer, customerNit)
+	branchCode, exists, err = c.customerExists(ctx, token, referer, customerNit, baseURL)
 	if err != nil || !exists {
 		c.log.Warn(ctx).
 			Str("customer_nit", customerNit).
@@ -60,13 +61,14 @@ func (c *Client) ensureCustomerExists(ctx context.Context, token, referer, custo
 
 // customerExists verifica si un cliente existe en Softpymes por su NIT.
 // Retorna (branchCode, exists, error).
-func (c *Client) customerExists(ctx context.Context, token, referer, customerNit string) (string, bool, error) {
+// baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
+func (c *Client) customerExists(ctx context.Context, token, referer, customerNit, baseURL string) (string, bool, error) {
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Referer", referer).
 		SetQueryParam("identification", customerNit).
-		Get("/app/integration/customer")
+		Get(c.resolveURL(baseURL, "/app/integration/customer"))
 
 	if err != nil {
 		return "", false, fmt.Errorf("customer search request failed: %w", err)
@@ -99,7 +101,8 @@ func (c *Client) customerExists(ctx context.Context, token, referer, customerNit
 // createCustomer crea un nuevo tercero y cliente en Softpymes
 // Usa el endpoint POST /app/integration/customer (guardar tercero y cliente)
 // Docs: https://api-integracion.softpymes.com.co/doc/#api-Clientes-SaveCustomers
-func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}) error {
+// baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
+func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit string, customer *dtos.CustomerData, config map[string]interface{}, baseURL string) error {
 	// Extraer datos del customer tipado
 	email := "noreply@probability.com"
 	if customer != nil && customer.Email != "" {
@@ -165,7 +168,7 @@ func (c *Client) createCustomer(ctx context.Context, token, referer, customerNit
 		SetHeader("Referer", referer).
 		SetBody(customerReq).
 		SetDebug(true).
-		Post("/app/integration/customer")
+		Post(c.resolveURL(baseURL, "/app/integration/customer"))
 
 	if err != nil {
 		return fmt.Errorf("customer creation request failed: %w", err)

@@ -34,4 +34,10 @@ type InvoicingConfig struct {
 	IntegrationName  *string
 	ProviderName     *string
 	ProviderImageURL *string // URL del logo del proveedor de facturación
+
+	// Parámetros de URL dinámica (cargados desde InvoicingIntegration)
+	// NO son columnas de DB - se inyectan desde relaciones preloaded
+	IsTesting   bool   // Desde Integration.IsTesting
+	BaseURL     string // Desde IntegrationType.BaseURL
+	BaseURLTest string // Desde IntegrationType.BaseURLTest
 }

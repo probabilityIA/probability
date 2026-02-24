@@ -15,11 +15,13 @@ import (
 type ISoftpymesClient interface {
 	// TestAuthentication verifica que las credenciales sean válidas
 	// referer: Identificación de la instancia del cliente (requerido por API)
-	TestAuthentication(ctx context.Context, apiKey, apiSecret, referer string) error
+	// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
+	TestAuthentication(ctx context.Context, apiKey, apiSecret, referer, baseURL string) error
 
 	// CreateInvoice crea una factura en Softpymes
 	// Retorna resultado con datos de la factura y audit data (incluso en caso de error)
-	CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error)
+	// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
+	CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest, baseURL string) (*dtos.CreateInvoiceResult, error)
 
 	// CreateCreditNote crea una nota crédito en Softpymes
 	CreateCreditNote(ctx context.Context, creditNoteData map[string]interface{}) error
@@ -27,7 +29,8 @@ type ISoftpymesClient interface {
 	// GetDocumentByNumber obtiene un documento completo por su número
 	// Usado para consulta posterior después de crear factura (esperar procesamiento DIAN)
 	// Retorna el documento con todos sus detalles (items, totales, información de envío)
-	GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber string) (map[string]interface{}, error)
+	// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
+	GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber, baseURL string) (map[string]interface{}, error)
 }
 
 // ═══════════════════════════════════════════════════════════════

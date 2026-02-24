@@ -180,9 +180,16 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 	if model.InvoicingIntegration.ID > 0 && model.InvoicingIntegration.Name != "" {
 		entity.ProviderName = &model.InvoicingIntegration.Name
 
-		// Extraer logo del IntegrationType si está preloaded
-		if model.InvoicingIntegration.IntegrationType.ID > 0 && model.InvoicingIntegration.IntegrationType.ImageURL != "" {
-			entity.ProviderImageURL = &model.InvoicingIntegration.IntegrationType.ImageURL
+		// Extraer IsTesting desde la integración de facturación
+		entity.IsTesting = model.InvoicingIntegration.IsTesting
+
+		// Extraer logo, BaseURL y BaseURLTest del IntegrationType si está preloaded
+		if model.InvoicingIntegration.IntegrationType != nil && model.InvoicingIntegration.IntegrationType.ID > 0 {
+			if model.InvoicingIntegration.IntegrationType.ImageURL != "" {
+				entity.ProviderImageURL = &model.InvoicingIntegration.IntegrationType.ImageURL
+			}
+			entity.BaseURL = model.InvoicingIntegration.IntegrationType.BaseURL
+			entity.BaseURLTest = model.InvoicingIntegration.IntegrationType.BaseURLTest
 		}
 	}
 

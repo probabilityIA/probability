@@ -70,7 +70,11 @@ func (r *Repository) GetConfigByIntegration(ctx context.Context, integrationID u
 	// 2. Cache MISS - consultar base de datos
 	var model models.InvoicingConfig
 
-	if err := r.db.Conn(ctx).Where("integration_id = ?", integrationID).First(&model).Error; err != nil {
+	if err := r.db.Conn(ctx).
+		Preload("InvoicingIntegration").
+		Preload("InvoicingIntegration.IntegrationType").
+		Where("integration_id = ?", integrationID).
+		First(&model).Error; err != nil {
 		return nil, fmt.Errorf("config not found for integration: %w", err)
 	}
 

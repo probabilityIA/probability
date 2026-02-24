@@ -50,8 +50,8 @@ func (c *Client) CreateCreditNote(ctx context.Context, creditNoteData map[string
 		return fmt.Errorf("referer not found in config")
 	}
 
-	// Autenticar
-	token, err := c.authenticate(ctx, apiKey, apiSecret, referer)
+	// Autenticar usando la URL base del constructor (credit notes no tienen URL dinámica)
+	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, "")
 	if err != nil {
 		return fmt.Errorf("authentication failed: %w", err)
 	}

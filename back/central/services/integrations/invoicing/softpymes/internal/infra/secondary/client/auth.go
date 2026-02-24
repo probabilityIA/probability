@@ -22,11 +22,17 @@ type AuthResponse struct {
 	Error        string `json:"error"`        // Error detallado si falla
 }
 
-// authenticate obtiene un token de autenticación de Softpymes
+// authenticate obtiene un token de autenticación de Softpymes.
+// baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
 // referer: Identificación de la instancia del cliente (requerido por API)
-func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer string) (string, error) {
-	// Verificar si tenemos un token válido en cache
-	if token, valid := c.tokenCache.Get(); valid {
+func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer, baseURL string) (string, error) {
+	effectiveBase := baseURL
+	if effectiveBase == "" {
+		effectiveBase = c.baseURL
+	}
+
+	// Verificar si tenemos un token válido en cache para esta URL
+	if token, valid := c.tokenCache.Get(effectiveBase); valid {
 		c.log.Debug(ctx).Msg("Using cached authentication token")
 		return token, nil
 	}
@@ -44,8 +50,10 @@ func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer st
 
 	var authResp AuthResponse
 
+	authURL := c.resolveURL(baseURL, "/oauth/integration/login/")
+
 	c.log.Info(ctx).
-		Str("endpoint", "/oauth/integration/login/").
+		Str("endpoint", authURL).
 		Interface("request_body", authReq).
 		Msg("📤 Sending authentication request to Softpymes")
 
@@ -57,7 +65,7 @@ func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer st
 		SetBody(authReq).
 		SetResult(&authResp).
 		SetDebug(true).
-		Post("/oauth/integration/login/")
+		Post(authURL)
 
 	if err != nil {
 		c.log.Error(ctx).
@@ -116,13 +124,13 @@ func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer st
 		return "", fmt.Errorf("authentication failed: %s", authResp.Message)
 	}
 
-	// Guardar token en cache
+	// Guardar token en cache keyed por URL efectiva
 	// Convertir minutos a segundos para el cache
 	expiresInSeconds := authResp.ExpiresInMin * 60
 	if expiresInSeconds == 0 {
 		expiresInSeconds = 3600 // Default 1 hora si no viene el tiempo
 	}
-	c.tokenCache.Set(authResp.AccessToken, expiresInSeconds)
+	c.tokenCache.Set(effectiveBase, authResp.AccessToken, expiresInSeconds)
 
 	c.log.Info(ctx).
 		Str("token_length", fmt.Sprintf("%d chars", len(authResp.AccessToken))).
@@ -133,9 +141,10 @@ func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer st
 	return authResp.AccessToken, nil
 }
 
-// TestAuthentication valida las credenciales haciendo una autenticación de prueba
+// TestAuthentication valida las credenciales haciendo una autenticación de prueba.
+// baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
 // referer: Identificación de la instancia del cliente (requerido por API)
-func (c *Client) TestAuthentication(ctx context.Context, apiKey, apiSecret, referer string) error {
+func (c *Client) TestAuthentication(ctx context.Context, apiKey, apiSecret, referer, baseURL string) error {
 	c.log.Info(ctx).
 		Str("api_key_prefix", apiKey[:min(10, len(apiKey))]).
 		Str("api_secret_length", fmt.Sprintf("%d chars", len(apiSecret))).
@@ -147,7 +156,7 @@ func (c *Client) TestAuthentication(ctx context.Context, apiKey, apiSecret, refe
 	c.log.Info(ctx).Msg("🗑️ Token cache cleared - forcing fresh authentication")
 
 	// Intentar autenticar con todas las credenciales
-	token, err := c.authenticate(ctx, apiKey, apiSecret, referer)
+	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, baseURL)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).

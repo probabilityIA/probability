@@ -45,3 +45,13 @@ func New(baseURL string, logger log.ILogger) ports.ISoftpymesClient {
 		log:        logger.WithModule("softpymes.client"),
 	}
 }
+
+// resolveURL construye la URL absoluta para una llamada HTTP.
+// Si baseURL es no-vacío, se usa como base; de lo contrario se usa c.baseURL.
+// Resty trata URLs que empiezan con "http" como absolutas, ignorando SetBaseURL.
+func (c *Client) resolveURL(baseURL, path string) string {
+	if baseURL != "" {
+		return baseURL + path
+	}
+	return c.baseURL + path
+}
