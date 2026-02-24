@@ -38,10 +38,26 @@ func (uc *UseCaseEnvioClick) GenerateGuide(ctx context.Context, req domain.Envio
 		return nil, err
 	}
 
-	// Persist shipment
+	// Deduct Wallet Balance
 	orderID := req.OrderUUID
 	if orderID == "" {
 		orderID = req.ExternalOrderID // Fallback to external ID if UUID not provided (though relation might fail)
+	}
+
+	if req.TotalCost > 0 && orderID != "" {
+		// Attempt to deduct balance
+		businessID, err := uc.repo.GetOrderBusinessID(ctx, orderID)
+		if err != nil {
+			uc.logger.Error().Err(err).Msg("Failed to find order business ID for wallet deduction")
+			return nil, fmt.Errorf("no se pudo validar la orden para descuento de billetera")
+		}
+		if businessID != nil {
+			reference := fmt.Sprintf("Guía: %s, Tracking: %s", req.MyShipmentReference, resp.Data.TrackingNumber)
+			if err := uc.repo.DeductWalletBalance(ctx, *businessID, req.TotalCost, reference); err != nil {
+				uc.logger.Error().Err(err).Msg("Failed to deduct wallet balance")
+				return nil, fmt.Errorf("no se pudo deducir el saldo de la billetera: %w", err)
+			}
+		}
 	}
 
 	shipment := &domain.Shipment{
@@ -51,6 +67,7 @@ func (uc *UseCaseEnvioClick) GenerateGuide(ctx context.Context, req domain.Envio
 		Status:             "pending",
 		ClientName:         req.Destination.FirstName + " " + req.Destination.LastName,
 		DestinationAddress: req.Destination.Address + ", " + req.Destination.Suburb + ", " + req.Destination.DaneCode,
+		TotalCost:          &req.TotalCost,
 		// Note: Carrier info is not available in GenerateResponse, purely IDRate based.
 		// We might need to fetch it or pass it in request if needed.
 	}

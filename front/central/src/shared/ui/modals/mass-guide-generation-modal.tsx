@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/shared/ui';
 import { Order } from '@/services/modules/orders/domain/types';
-import { getOrdersAction } from '@/services/modules/orders/infra/actions';
+import { getOrdersAction, updateOrderAction } from '@/services/modules/orders/infra/actions';
 import { quoteShipmentAction, generateGuideAction } from '@/services/modules/shipments/infra/actions';
 import { EnvioClickQuoteRequest, EnvioClickRate } from '@/services/modules/shipments/domain/types';
 import { getWalletBalanceAction } from '@/services/modules/wallet/infra/actions';
@@ -59,7 +59,9 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
     const [failedCount, setFailedCount] = useState(0);
     const [generationErrors, setGenerationErrors] = useState<string[]>([]);
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<OrderWithQuote | null>(null);
-    const [isEditingOrder, setIsEditingOrder] = useState(false);
+    const [selectedOrderForEdit, setSelectedOrderForEdit] = useState<OrderWithQuote | null>(null);
+    const [editForm, setEditForm] = useState<Partial<OrderWithQuote>>({});
+    const [isSaving, setIsSaving] = useState(false);
 
     // const repo = new ShipmentApiRepository(); // Eliminado para usar Server Actions
 
@@ -117,6 +119,49 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         setSelectedOrderIds(new Set());
     };
 
+    const handleOpenEdit = (e: React.MouseEvent, order: OrderWithQuote) => {
+        e.stopPropagation();
+        setSelectedOrderForEdit(order);
+        setEditForm({
+            shipping_city: order.shipping_city || '',
+            shipping_state: order.shipping_state || '',
+            shipping_street: order.shipping_street || '',
+            customer_phone: order.customer_phone || '',
+            weight: order.weight || 1,
+            length: order.length || 10,
+            height: order.height || 10,
+            width: order.width || 10,
+        });
+    };
+
+    const handleSaveEdit = async () => {
+        if (!selectedOrderForEdit) return;
+        setIsSaving(true);
+        try {
+            const payload = {
+                shipping_city: editForm.shipping_city,
+                shipping_state: editForm.shipping_state,
+                shipping_street: editForm.shipping_street,
+                customer_phone: editForm.customer_phone,
+                weight: Number(editForm.weight),
+                length: Number(editForm.length),
+                height: Number(editForm.height),
+                width: Number(editForm.width),
+            };
+            const res = await updateOrderAction(selectedOrderForEdit.id, payload);
+            if (res.success) {
+                setOrders(orders.map(o => o.id === selectedOrderForEdit.id ? { ...o, ...payload } as OrderWithQuote : o));
+                setSelectedOrderForEdit(null);
+            } else {
+                alert(res.message || 'Error guardando');
+            }
+        } catch (err) {
+            alert('Error conectando con el servidor');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
     const handleQuoteAll = async () => {
         setStep('quote');
         setLoading(true);
@@ -146,13 +191,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         address: 'Calle 1 # 1-1',
                     },
                     destination: {
-                        daneCode: (() => {
-                            const city = (order.shipping_city || "").toUpperCase();
-                            const foundDane = Object.entries(danes).find(([_, data]: [string, any]) =>
-                                (data as any).ciudad.includes(city)
-                            );
-                            return foundDane ? foundDane[0] : '11001001'; // Fallback to Bogotá if not found
-                        })(),
+                        daneCode: findDaneCode(order.shipping_city || "", order.shipping_state || "") || '11001001',
                         address: order.shipping_street || 'Dirección no especificada',
                     },
                 };
@@ -322,15 +361,24 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                         <div className="flex-1">
                                             <div className="font-semibold">{order.order_number}</div>
                                             <div className="text-sm text-gray-600">
-                                                {order.customer_name} - {order.shipping_city}
+                                                {order.customer_name} - {order.shipping_city || <span className="text-red-500 text-xs font-semibold">Sin ciudad (Edita para continuar)</span>}
                                             </div>
                                         </div>
-                                        <div className="text-right">
+                                        <div className="text-right mr-4">
                                             <div className="font-semibold">${order.total_amount?.toLocaleString()}</div>
                                             <div className="text-xs text-gray-500">
-                                                {order.weight}kg
+                                                {order.weight || 1}kg
                                             </div>
                                         </div>
+                                        <button
+                                            onClick={(e) => handleOpenEdit(e, order)}
+                                            className="p-2 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-full transition-colors"
+                                            title="Editar Orden"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                                <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                                            </svg>
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -583,7 +631,61 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                             <Button size="sm" onClick={() => {
                                 // Logic to re-quote could go here
                                 setSelectedOrderForDetails(null);
-                            }}>Volver a Cotizar</Button>
+                            }}>Cerrar</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Modal */}
+            {selectedOrderForEdit && (
+                <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-[70] p-4">
+                    <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="text-lg font-bold">Editar Orden - {selectedOrderForEdit.order_number}</h3>
+                            <button onClick={() => setSelectedOrderForEdit(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="space-y-1 col-span-2">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Ciudad Destino</label>
+                                <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_city || ''} onChange={e => setEditForm({ ...editForm, shipping_city: e.target.value })} placeholder="Ej. Bogota" />
+                            </div>
+                            <div className="space-y-1 col-span-2">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Departamento</label>
+                                <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_state || ''} onChange={e => setEditForm({ ...editForm, shipping_state: e.target.value })} placeholder="Ej. Cundinamarca" />
+                            </div>
+                            <div className="space-y-1 col-span-2">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Dirección</label>
+                                <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_street || ''} onChange={e => setEditForm({ ...editForm, shipping_street: e.target.value })} />
+                            </div>
+                            <div className="space-y-1 col-span-2">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Teléfono Cliente</label>
+                                <input type="text" className="w-full border p-2 rounded" value={editForm.customer_phone || ''} onChange={e => setEditForm({ ...editForm, customer_phone: e.target.value })} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Peso (kg)</label>
+                                <input type="number" className="w-full border p-2 rounded" value={editForm.weight || 1} onChange={e => setEditForm({ ...editForm, weight: Number(e.target.value) })} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Largo (cm)</label>
+                                <input type="number" className="w-full border p-2 rounded" value={editForm.length || 10} onChange={e => setEditForm({ ...editForm, length: Number(e.target.value) })} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Ancho (cm)</label>
+                                <input type="number" className="w-full border p-2 rounded" value={editForm.width || 10} onChange={e => setEditForm({ ...editForm, width: Number(e.target.value) })} />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="font-bold text-gray-500 uppercase text-[10px]">Alto (cm)</label>
+                                <input type="number" className="w-full border p-2 rounded" value={editForm.height || 10} onChange={e => setEditForm({ ...editForm, height: Number(e.target.value) })} />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-4">
+                            <Button variant="outline" size="sm" onClick={() => setSelectedOrderForEdit(null)}>Cancelar</Button>
+                            <Button size="sm" onClick={handleSaveEdit} disabled={isSaving}>
+                                {isSaving ? 'Guardando...' : 'Guardar Datos'}
+                            </Button>
                         </div>
                     </div>
                 </div>
