@@ -222,3 +222,33 @@ POST /api/integrations/{id}/sync
 | Shipping data | Inline in order | Separate endpoint GET /shipments/{id} |
 | Rate limit | 500ms between pages | 1s between pages |
 | Webhook signature | HMAC-SHA256 (base64) | x-signature: ts={ts},v0={hash} |
+
+## API Documentation References
+
+### Official MercadoLibre Developer Docs
+
+- **Developer Portal**: https://developers.mercadolibre.com.co/
+- **Authentication (OAuth 2.0)**: https://developers.mercadolibre.com.co/es_co/autenticacion-y-autorizacion
+- **Token Refresh**: https://developers.mercadolibre.com.co/es_co/registra-tu-aplicacion (sección OAuth)
+- **Notifications (IPN)**: https://developers.mercadolibre.com.co/es_co/recibir-notificaciones
+- **Orders API**: https://developers.mercadolibre.com.co/es_co/gestiona-ventas
+- **Orders Search**: https://developers.mercadolibre.com.co/es_co/gestiona-ventas#Buscar-ordenes
+- **Shipments API**: https://developers.mercadolibre.com.co/es_co/gestiona-envios
+- **Items API**: https://developers.mercadolibre.com.co/es_co/publica-productos
+
+### API Reference (Endpoints)
+
+- **Auth**: https://api.mercadolibre.com/oauth/token
+- **User**: https://api.mercadolibre.com/users/me
+- **Orders**: https://api.mercadolibre.com/orders/{id}
+- **Orders Search**: https://api.mercadolibre.com/orders/search?seller={id}
+- **Shipments**: https://api.mercadolibre.com/shipments/{id}
+
+### Guides & Resources
+
+- **Crear aplicacion**: https://developers.mercadolibre.com.co/devcenter
+- **IPN Topics disponibles**: `orders_v2`, `payments`, `items`, `shipments`, `questions`
+- **Rate Limits**: https://developers.mercadolibre.com.co/es_co/api-docs (varía por endpoint, ~10k requests/hora)
+- **Status codes de ordenes**: `confirmed`, `payment_required`, `payment_in_process`, `paid`, `partially_paid`, `cancelled`
+- **Status codes de pagos**: `approved`, `pending`, `in_process`, `in_mediation`, `rejected`, `refunded`, `cancelled`
+- **Status codes de envios**: `ready_to_ship`, `shipped`, `delivered`, `not_delivered`, `cancelled`
