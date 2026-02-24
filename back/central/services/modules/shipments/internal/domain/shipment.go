@@ -46,6 +46,7 @@ type Shipment struct {
 	DriverID      *uint  `json:"driver_id"`
 	DriverName    string `json:"driver_name"`
 	IsLastMile    bool   `json:"is_last_mile"`
+	IsTest        bool   `json:"is_test"`
 
 	EstimatedDelivery *time.Time     `json:"estimated_delivery"`
 	DeliveryNotes     *string        `json:"delivery_notes"`

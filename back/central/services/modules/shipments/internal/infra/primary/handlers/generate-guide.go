@@ -2,34 +2,78 @@ package handlers
 
 import (
 	"net/http"
-	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
 
 func (h *Handlers) GenerateGuide(c *gin.Context) {
-	var req domain.EnvioClickQuoteRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	// 1. Resolve business_id (JWT for normal users, order DB lookup for super admin)
+	businessID, err := h.resolveBusinessIDFromOrder(c)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	resp, err := h.envioClickUC.GenerateGuide(c.Request.Context(), req)
+	// 2. Resolve active shipping carrier
+	carrier, err := h.resolveCarrier(c, businessID)
 	if err != nil {
-		// Detectar si es un error de validación (422) para mostrarlo amigablemente
-		statusCode := http.StatusInternalServerError
-		errMsg := err.Error()
-		if strings.Contains(strings.ToLower(errMsg), "error:") ||
-			strings.Contains(strings.ToLower(errMsg), "inválido") ||
-			strings.Contains(strings.ToLower(errMsg), "unprocessed entity") ||
-			strings.Contains(strings.ToLower(errMsg), "falta") {
-			statusCode = http.StatusUnprocessableEntity
-		}
-
-		c.JSON(statusCode, gin.H{"error": errMsg})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, resp)
+	// 3. Parse request body
+	var raw map[string]interface{}
+	if err := c.ShouldBindJSON(&raw); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if _, ok := raw["origin"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "origin es requerido"})
+		return
+	}
+	if _, ok := raw["destination"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "destination es requerido"})
+		return
+	}
+	if _, ok := raw["packages"]; !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "packages es requerido"})
+		return
+	}
+
+	correlationID := uuid.New().String()
+
+	effectiveBaseURL := carrier.BaseURL
+	if carrier.IsTesting && carrier.BaseURLTest != "" {
+		effectiveBaseURL = carrier.BaseURLTest
+	}
+
+	msg := &domain.TransportRequestMessage{
+		Provider:          carrier.ProviderCode,
+		IntegrationTypeID: carrier.IntegrationTypeID,
+		Operation:         "generate",
+		CorrelationID:     correlationID,
+		BusinessID:        businessID,
+		IntegrationID:     carrier.IntegrationID,
+		BaseURL:           effectiveBaseURL,
+		IsTest:            carrier.IsTesting,
+		Timestamp:         time.Now(),
+		Payload:           raw,
+	}
+
+	if err := h.transportPub.PublishTransportRequest(c.Request.Context(), msg); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Error al enviar solicitud de generación de guía: " + err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusAccepted, gin.H{
+		"success":        true,
+		"message":        "Solicitud de generación de guía enviada. Será procesada en breve.",
+		"correlation_id": correlationID,
+	})
 }

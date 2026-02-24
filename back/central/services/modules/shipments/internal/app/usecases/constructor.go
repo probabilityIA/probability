@@ -26,6 +26,11 @@ func New(repo domain.IRepository) *UseCases {
 	}
 }
 
+// Repo exposes the repository for direct queries (e.g. business_id resolution in handlers)
+func (uc *UseCases) Repo() domain.IRepository {
+	return uc.repo
+}
+
 // ───────────────────────────────────────────
 // MÉTODOS DE COMPATIBILIDAD - Delegar al CRUD
 // ───────────────────────────────────────────

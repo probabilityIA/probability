@@ -54,7 +54,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	products.New(router, database, logger, environment)
 
 	// Inicializar módulo de shipments
-	shipments.New(router, database, logger, environment)
+	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
 
 	// Inicializar módulo de notification configs
 	notification_config.New(router, database, redisClient, logger)

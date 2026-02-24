@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,6 +12,8 @@ import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions"
 import { getOriginAddressesAction, quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
 import { OriginAddress } from "@/services/modules/shipments/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
+import { usePermissions } from "@/shared/contexts/permissions-context";
 
 const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -134,6 +138,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+
+    // Async quote tracking: saves correlation_id while waiting for SSE response
+    const [pendingCorrelationId, setPendingCorrelationId] = useState<string | null>(null);
+    const pendingStep1DataRef = useRef<Step1Values | null>(null);
+
+    // Get businessId from permissions for SSE connection
+    const { permissions } = usePermissions();
+    const businessId = permissions?.business_id || 0;
 
     // Step 1 data
     const [step1Data, setStep1Data] = useState<Step1Values | null>(null);
@@ -310,6 +322,47 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
+    // SSE: listen for async quote/guide results
+    useShipmentSSE({
+        businessId,
+        onQuoteReceived: (data) => {
+            if (pendingCorrelationId && data.correlation_id !== pendingCorrelationId) return;
+            setPendingCorrelationId(null);
+            const quotes = data.quotes as any;
+            const rates: EnvioClickRate[] = quotes?.data?.rates || quotes?.rates || [];
+            if (rates.length > 0) {
+                setRates(rates);
+                if (pendingStep1DataRef.current) {
+                    setStep1Data(pendingStep1DataRef.current);
+                    pendingStep1DataRef.current = null;
+                }
+                setCurrentStep(2);
+            } else {
+                setError("No se encontraron tarifas disponibles");
+            }
+            setLoading(false);
+        },
+        onQuoteFailed: (data) => {
+            if (pendingCorrelationId && data.correlation_id !== pendingCorrelationId) return;
+            setPendingCorrelationId(null);
+            pendingStep1DataRef.current = null;
+            setError(data.error_message || "Error al cotizar envío");
+            setLoading(false);
+        },
+    });
+
+    // Timeout: if SSE never arrives, stop loading after 30s
+    useEffect(() => {
+        if (!pendingCorrelationId) return;
+        const timeout = setTimeout(() => {
+            setPendingCorrelationId(null);
+            pendingStep1DataRef.current = null;
+            setError("Tiempo de espera agotado. Verifica tu conexión e intenta de nuevo.");
+            setLoading(false);
+        }, 30000);
+        return () => clearTimeout(timeout);
+    }, [pendingCorrelationId]);
+
     // Reset on close
     useEffect(() => {
         if (!isOpen) {
@@ -322,17 +375,20 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setTrackingNumber(null);
             setError(null);
             setSuccess(null);
+            setPendingCorrelationId(null);
+            pendingStep1DataRef.current = null;
             step1Form.reset();
             step3Form.reset();
         }
     }, [isOpen]);
 
-    // Step 1: Quote
+    // Step 1: Quote (async - sends to queue, result arrives via SSE)
     const handleStep1Submit = async (data: Step1Values) => {
         setLoading(true);
         setError(null);
         try {
             const quotePayload: EnvioClickQuoteRequest = {
+                order_uuid: order?.id,
                 packages: [{
                     weight: data.weight,
                     height: data.height,
@@ -355,16 +411,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             };
 
             const response = await quoteShipmentAction(quotePayload);
-            if (response.success && response.data?.data?.rates && response.data.data.rates.length > 0) {
-                setRates(response.data.data.rates);
-                setStep1Data(data);
-                setCurrentStep(2);
-            } else {
-                setError("No se encontraron tarifas disponibles");
+            if (!response.success) {
+                setError(response.message || "Error al enviar solicitud de cotización");
+                setLoading(false);
+                return;
             }
+            // Save form data and correlation_id, then wait for SSE response
+            pendingStep1DataRef.current = data;
+            setPendingCorrelationId(response.data?.correlation_id || null);
+            // loading stays true until SSE response arrives
         } catch (err: any) {
             setError(err.message || "Error al cotizar envío");
-        } finally {
             setLoading(false);
         }
     };

@@ -26,11 +26,11 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		shipments.PUT("/origin-addresses/:id", h.UpdateOriginAddress)
 		shipments.DELETE("/origin-addresses/:id", h.DeleteOriginAddress)
 
-		// EnvioClick Integration
+		// Transport Operations (carrier-agnostic — resolved dynamically per business)
 		shipments.POST("/quote", h.QuoteShipment)
 		shipments.POST("/generate", h.GenerateGuide)
-		shipments.POST("/tracking/:tracking_number/track", h.TrackEnvioclickShipment)
-		shipments.POST("/:id/cancel", h.CancelEnvioclickShipment)
+		shipments.POST("/tracking/:tracking_number/track", h.TrackShipment)
+		shipments.POST("/:id/cancel", h.CancelShipment)
 	}
 
 }

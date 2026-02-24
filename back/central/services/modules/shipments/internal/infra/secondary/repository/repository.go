@@ -163,6 +163,11 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.is_last_mile = ?", isLastMile)
 	}
 
+	// Filtro por is_test
+	if isTest, ok := filters["is_test"].(bool); ok {
+		query = query.Where("shipments.is_test = ?", isTest)
+	}
+
 	// Filtros de fecha - shipped_at
 	if shippedAfter, ok := filters["shipped_after"].(string); ok && shippedAfter != "" {
 		query = query.Where("shipments.shipped_at >= ?", shippedAfter)
