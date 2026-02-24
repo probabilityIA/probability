@@ -40,7 +40,7 @@ export function Sidebar({ user }: SidebarProps) {
     if (!businesses || !permissions?.business_id) return null;
     const active = businesses.find(b => b.id === permissions.business_id);
     return active?.logo_url || null;
-  }, [isSuperAdmin, permissions?.business_id]);
+  }, [isSuperAdmin, permissions]);
 
   useEffect(() => {
     // When primary sidebar collapses, ensure submenus collapse too

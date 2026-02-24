@@ -174,11 +174,12 @@ func (c *TransportRequestConsumer) resolveAPIKey(ctx context.Context, request *T
 	if config != nil {
 		if usePlatform, ok := config["use_platform_token"].(bool); ok && usePlatform {
 			apiKey := os.Getenv("ENVIOCLICK_API_KEY")
-			if apiKey == "" {
-				return "", fmt.Errorf("use_platform_token está activo pero ENVIOCLICK_API_KEY no está configurado en la plataforma")
+			if apiKey != "" {
+				c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform EnvioClick token")
+				return apiKey, nil
 			}
-			c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform EnvioClick token")
-			return apiKey, nil
+			// Fallback to integration credentials if platform token is not configured
+			c.log.Warn(ctx).Uint("integration_id", request.IntegrationID).Msg("Platform token not found, falling back to integration credentials")
 		}
 	}
 
