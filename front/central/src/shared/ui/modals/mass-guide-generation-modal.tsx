@@ -42,6 +42,7 @@ interface MassGuideGenerationModalProps {
 
 interface OrderWithQuote extends Order {
     quote?: EnvioClickRate;
+    quotePending?: boolean;
     quoteError?: string;
 }
 
@@ -197,14 +198,12 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 };
 
                 const response = await quoteShipmentAction(quotePayload);
-                if (response.success && response.data?.data?.rates && response.data.data.rates.length > 0) {
-                    const cheapestRate = response.data.data.rates.reduce((prev: EnvioClickRate, curr: EnvioClickRate) =>
-                        curr.flete < prev.flete ? curr : prev
-                    );
-                    quotedOrders.push({ ...order, quote: cheapestRate });
-                    total += cheapestRate.flete + (cheapestRate.minimumInsurance ?? 0);
+                if (response.success) {
+                    // Quote request accepted. Rates will arrive via SSE
+                    // For bulk generation, mark as pending quote
+                    quotedOrders.push({ ...order, quotePending: true });
                 } else {
-                    quotedOrders.push({ ...order, quoteError: response.message || 'No hay tarifas disponibles' });
+                    quotedOrders.push({ ...order, quoteError: response.message || 'Error al solicitar cotización' });
                 }
             } catch (err: any) {
                 quotedOrders.push({ ...order, quoteError: err.message || 'Error al cotizar' });

@@ -91,19 +91,20 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
         {/* Departamentos */}
         <g className="departments">
           {/* Amazonas */}
-          <path
-            d="M 380 620 L 420 630 L 440 600 L 400 590 Z"
-            fill={foundDepartment === 'Amazonas' ? highlightColor : '#e5e7eb'}
-            className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Amazonas"
-          />
+          <g>
+            <title>Amazonas</title>
+            <path
+              d="M 380 620 L 420 630 L 440 600 L 400 590 Z"
+              fill={foundDepartment === 'Amazonas' ? highlightColor : '#e5e7eb'}
+              className="transition-all duration-300 hover:opacity-80 cursor-pointer"
+            />
+          </g>
 
           {/* Antioquia */}
           <path
             d="M 120 200 L 180 180 L 200 260 L 140 280 Z"
             fill={foundDepartment === 'Antioquia' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Antioquia"
           />
 
           {/* Arauca */}
@@ -111,7 +112,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 300 250 L 360 240 L 370 280 L 310 290 Z"
             fill={foundDepartment === 'Arauca' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Arauca"
           />
 
           {/* Atlántico */}
@@ -119,7 +119,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 90 150 L 130 140 L 135 170 L 95 175 Z"
             fill={foundDepartment === 'Atlántico' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Atlántico"
           />
 
           {/* Bolívar */}
@@ -127,7 +126,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 120 240 L 160 230 L 170 290 L 130 300 Z"
             fill={foundDepartment === 'Bolívar' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Bolívar"
           />
 
           {/* Boyacá */}
@@ -135,7 +133,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 220 300 L 280 290 L 290 360 L 220 370 Z"
             fill={foundDepartment === 'Boyacá' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Boyacá"
           />
 
           {/* Caldas */}
@@ -143,7 +140,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 160 320 L 200 310 L 210 360 L 170 370 Z"
             fill={foundDepartment === 'Caldas' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Caldas"
           />
 
           {/* Caquetá */}
@@ -151,7 +147,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 340 480 L 400 470 L 410 540 L 350 550 Z"
             fill={foundDepartment === 'Caquetá' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Caquetá"
           />
 
           {/* Casanare */}
@@ -159,7 +154,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 320 360 L 380 350 L 390 420 L 330 430 Z"
             fill={foundDepartment === 'Casanare' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Casanare"
           />
 
           {/* Cauca */}
@@ -167,7 +161,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 160 420 L 220 410 L 230 480 L 170 490 Z"
             fill={foundDepartment === 'Cauca' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Cauca"
           />
 
           {/* Cesar */}
@@ -175,7 +168,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 150 160 L 210 150 L 220 210 L 160 220 Z"
             fill={foundDepartment === 'Cesar' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Cesar"
           />
 
           {/* Chocó */}
@@ -183,7 +175,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 80 320 L 140 310 L 150 380 L 90 390 Z"
             fill={foundDepartment === 'Chocó' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Chocó"
           />
 
           {/* Córdoba */}
@@ -191,7 +182,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 100 220 L 160 210 L 170 270 L 110 280 Z"
             fill={foundDepartment === 'Córdoba' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Córdoba"
           />
 
           {/* Cundinamarca */}
@@ -199,7 +189,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 240 330 L 310 320 L 320 390 L 250 400 Z"
             fill={foundDepartment === 'Cundinamarca' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Cundinamarca"
           />
 
           {/* Guainía */}
@@ -207,7 +196,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 420 580 L 480 570 L 490 640 L 430 650 Z"
             fill={foundDepartment === 'Guainía' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Guainía"
           />
 
           {/* Guaviare */}
@@ -215,7 +203,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 400 500 L 460 490 L 470 560 L 410 570 Z"
             fill={foundDepartment === 'Guaviare' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Guaviare"
           />
 
           {/* Huila */}
@@ -223,7 +210,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 240 420 L 300 410 L 310 480 L 250 490 Z"
             fill={foundDepartment === 'Huila' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Huila"
           />
 
           {/* La Guajira */}
@@ -231,7 +217,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 140 100 L 190 90 L 200 140 L 150 150 Z"
             fill={foundDepartment === 'La Guajira' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="La Guajira"
           />
 
           {/* Magdalena */}
@@ -239,7 +224,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 110 170 L 160 160 L 170 220 L 120 230 Z"
             fill={foundDepartment === 'Magdalena' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Magdalena"
           />
 
           {/* Meta */}
@@ -247,7 +231,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 320 410 L 380 400 L 390 470 L 330 480 Z"
             fill={foundDepartment === 'Meta' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Meta"
           />
 
           {/* Nariño */}
@@ -255,7 +238,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 180 540 L 240 530 L 250 600 L 190 610 Z"
             fill={foundDepartment === 'Nariño' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Nariño"
           />
 
           {/* Norte de Santander */}
@@ -263,7 +245,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 260 280 L 320 270 L 330 330 L 270 340 Z"
             fill={foundDepartment === 'Norte de Santander' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Norte de Santander"
           />
 
           {/* Putumayo */}
@@ -271,7 +252,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 300 540 L 360 530 L 370 600 L 310 610 Z"
             fill={foundDepartment === 'Putumayo' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Putumayo"
           />
 
           {/* Quindío */}
@@ -279,7 +259,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 180 380 L 220 370 L 225 410 L 185 420 Z"
             fill={foundDepartment === 'Quindío' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Quindío"
           />
 
           {/* Risaralda */}
@@ -287,7 +266,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 170 350 L 210 340 L 220 380 L 180 390 Z"
             fill={foundDepartment === 'Risaralda' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Risaralda"
           />
 
           {/* San Andrés */}
@@ -295,7 +273,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 40 100 L 60 95 L 65 115 L 45 120 Z"
             fill={foundDepartment === 'San Andrés' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="San Andrés"
           />
 
           {/* Santander */}
@@ -303,7 +280,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 240 300 L 300 290 L 310 350 L 250 360 Z"
             fill={foundDepartment === 'Santander' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Santander"
           />
 
           {/* Sucre */}
@@ -311,7 +287,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 130 280 L 180 270 L 190 320 L 140 330 Z"
             fill={foundDepartment === 'Sucre' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Sucre"
           />
 
           {/* Tolima */}
@@ -319,7 +294,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 200 380 L 260 370 L 270 440 L 210 450 Z"
             fill={foundDepartment === 'Tolima' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Tolima"
           />
 
           {/* Valle del Cauca */}
@@ -327,7 +301,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 140 440 L 200 430 L 210 500 L 150 510 Z"
             fill={foundDepartment === 'Valle del Cauca' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Valle del Cauca"
           />
 
           {/* Vaupés */}
@@ -335,7 +308,6 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 460 550 L 520 540 L 530 610 L 470 620 Z"
             fill={foundDepartment === 'Vaupés' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Vaupés"
           />
 
           {/* Vichada */}
@@ -343,14 +315,13 @@ export function ColombiaMap({ highlightedDepartment, status = 'in_transit' }: Co
             d="M 400 450 L 460 440 L 470 510 L 410 520 Z"
             fill={foundDepartment === 'Vichada' ? highlightColor : '#e5e7eb'}
             className="transition-all duration-300 hover:opacity-80 cursor-pointer"
-            title="Vichada"
           />
         </g>
 
         {/* Animación de pulso para el departamento resaltado */}
         {foundDepartment && (
           <style>{`
-            .departments path[title="${foundDepartment}"] {
+            .departments path[] {
               animation: departmentPulse 2s ease-in-out infinite;
             }
             @keyframes departmentPulse {

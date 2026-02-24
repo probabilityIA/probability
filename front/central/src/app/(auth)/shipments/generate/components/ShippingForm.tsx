@@ -259,30 +259,19 @@ export const ShippingForm = () => {
         try {
             const payload = buildPayload(data);
             const res = await quoteShipmentAction(payload);
-            if (res.success && res.data?.data?.rates && res.data.data.rates.length > 0) {
-                setRates(res.data.data.rates);
-                setHasQuoted(true);
-
-                // Perform AI Analysis on real rates
+            if (res.success) {
+                // Quote request accepted. Rates will arrive via SSE events
+                // Just provide AI recommendations based on destination
                 const destDane = daneCodes[data.destination.daneCode as keyof typeof daneCodes];
                 if (destDane) {
                     setLoadingAI(true);
                     try {
                         const aiRes = await getAIRecommendationAction((destDane as any).ciudad, (destDane as any).departamento);
                         if (aiRes) {
-                            const carrierExists = res.data.data.rates.some((r: any) =>
-                                r.carrier.toLowerCase() === aiRes.recommended_carrier.toLowerCase()
-                            );
-
-                            if (carrierExists) {
-                                setAiAnalysis({
-                                    recommended_carrier: aiRes.recommended_carrier,
-                                    reasoning: aiRes.reasoning
-                                });
-                            } else {
-                                console.warn(`AI recommended ${aiRes.recommended_carrier} but it's not in available quotes.`);
-                                setAiAnalysis(null);
-                            }
+                            setAiAnalysis({
+                                recommended_carrier: aiRes.recommended_carrier,
+                                reasoning: aiRes.reasoning
+                            });
                         }
                     } catch (e) {
                         console.error("AI Error:", e);
@@ -291,7 +280,7 @@ export const ShippingForm = () => {
                     }
                 }
             } else {
-                setError(res.message || "No se encontraron cotizaciones.");
+                setError(res.message || "Error al solicitar cotizaciones.");
             }
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : "Error consultando cotizaciones";

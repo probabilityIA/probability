@@ -228,7 +228,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
         <div className="px-4 py-5 border-t border-gray-100">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Departamento de destino</p>
           <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50 p-3">
-            <ColombiaMap highlightedDepartment={departmentName} status={shipment.status} />
+            <ColombiaMap highlightedDepartment={departmentName ?? undefined} status={shipment.status} />
           </div>
         </div>
 
