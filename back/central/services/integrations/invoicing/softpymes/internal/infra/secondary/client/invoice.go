@@ -61,9 +61,14 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		return result, fmt.Errorf("authentication failed: %w", err)
 	}
 
-	// Verificar idempotencia: consultar si ya existe una factura para esta orden
-	if req.OrderID != "" {
-		existing, err := c.findExistingInvoiceByOrderID(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer, req.OrderID, baseURL)
+	// Verificar idempotencia: solo en reintentos, consultar si ya existe la factura en Softpymes.
+	// En el primer intento no es necesario — se evita una llamada extra innecesaria.
+	if req.IsRetry && req.OrderID != "" {
+		branchCode := "001"
+		if bc, ok := req.Config["branch_code"].(string); ok && bc != "" {
+			branchCode = bc
+		}
+		existing, err := c.findExistingInvoiceByOrderID(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer, req.OrderID, branchCode, req.OrderCreatedAt, baseURL)
 		if err != nil {
 			// No bloqueamos la creación si la consulta falla — solo advertimos
 			c.log.Warn(ctx).Err(err).
@@ -73,7 +78,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			c.log.Info(ctx).
 				Str("order_id", req.OrderID).
 				Str("document_number", existing.DocumentNumber).
-				Msg("Invoice already exists for this order in Softpymes, skipping creation")
+				Msg("Invoice already exists for this order in Softpymes, skipping duplicate creation")
 			result.InvoiceNumber = existing.DocumentNumber
 			result.ExternalID = existing.DocumentNumber
 			result.IssuedAt = existing.DocumentDate
@@ -340,19 +345,38 @@ func mapCurrencyToSoftpymes(isoCurrency string) string {
 }
 
 // findExistingInvoiceByOrderID busca en Softpymes una factura ya creada para una orden.
-// La búsqueda se basa en el campo "comment" que almacena "order:<orderID>".
-// Consulta los últimos 30 días (límite de la API de Softpymes).
-// Retorna nil, nil si no se encuentra ninguna factura previa.
-func (c *Client) findExistingInvoiceByOrderID(ctx context.Context, apiKey, apiSecret, referer, orderID, baseURL string) (*Document, error) {
+// Solo se llama en reintentos. Filtra por branchCode y un rango de fechas acotado
+// (desde la fecha de creación de la orden hasta hoy) para minimizar resultados.
+// La búsqueda final es por el campo "comment" que almacena "order:<orderID>".
+// Retorna nil, nil si no existe ninguna factura previa para esta orden.
+func (c *Client) findExistingInvoiceByOrderID(ctx context.Context, apiKey, apiSecret, referer, orderID, branchCode, orderCreatedAt, baseURL string) (*Document, error) {
 	loc, _ := time.LoadLocation("America/Bogota")
 	now := time.Now().In(loc)
 	dateTo := now.Format("2006-01-02")
-	dateFrom := now.AddDate(0, 0, -30).Format("2006-01-02")
 
+	// dateFrom: fecha de creación de la orden si se provee, si no el día actual.
+	// Los reintentos suelen ocurrir el mismo día, así que el rango es mínimo.
+	dateFrom := dateTo
+	if orderCreatedAt != "" {
+		dateFrom = orderCreatedAt
+	}
+
+	pageSize := "50"
 	params := ListDocumentsParams{
 		DateFrom: dateFrom,
 		DateTo:   dateTo,
+		PageSize: &pageSize,
 	}
+	if branchCode != "" {
+		params.BranchCode = &branchCode
+	}
+
+	c.log.Info(ctx).
+		Str("order_id", orderID).
+		Str("date_from", dateFrom).
+		Str("date_to", dateTo).
+		Str("branch_code", branchCode).
+		Msg("Checking for existing Softpymes invoice (retry idempotency)")
 
 	docs, err := c.ListDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
 	if err != nil {
@@ -365,8 +389,7 @@ func (c *Client) findExistingInvoiceByOrderID(ctx context.Context, apiKey, apiSe
 			c.log.Info(ctx).
 				Str("order_id", orderID).
 				Str("document_number", doc.DocumentNumber).
-				Str("comment", doc.Comment).
-				Msg("Found existing Softpymes invoice for order")
+				Msg("Found existing Softpymes invoice for order — skipping duplicate")
 			return &(*docs)[i], nil
 		}
 	}

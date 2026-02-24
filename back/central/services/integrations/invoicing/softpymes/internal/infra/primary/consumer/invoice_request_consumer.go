@@ -257,7 +257,8 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 			APIKey:    apiKey,
 			APISecret: apiSecret,
 		},
-		Config: combinedConfig,
+		Config:  combinedConfig,
+		IsRetry: request.Operation == "retry",
 	}
 
 	// 7. Llamar al cliente HTTP de Softpymes con URL efectiva
