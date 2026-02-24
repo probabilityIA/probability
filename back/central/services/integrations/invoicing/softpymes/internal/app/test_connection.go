@@ -30,8 +30,23 @@ func (uc *invoicingUseCase) TestConnection(ctx context.Context, config, credenti
 		return fmt.Errorf("referer is required in config (identificación de instancia del cliente)")
 	}
 
-	uc.log.Info(ctx).Msg("🔌 Calling client.TestAuthentication...")
-	if err := uc.client.TestAuthentication(ctx, apiKey, apiSecret, referer); err != nil {
+	// Determinar URL efectiva para el test (producción o testing)
+	testBaseURL := ""
+	if isTesting, ok := config["is_testing"].(bool); ok && isTesting {
+		if u, ok := config["base_url_test"].(string); ok && u != "" {
+			testBaseURL = u
+		}
+	}
+	if testBaseURL == "" {
+		if u, ok := config["base_url"].(string); ok && u != "" {
+			testBaseURL = u
+		}
+	}
+
+	uc.log.Info(ctx).
+		Str("test_base_url", testBaseURL).
+		Msg("🔌 Calling client.TestAuthentication...")
+	if err := uc.client.TestAuthentication(ctx, apiKey, apiSecret, referer, testBaseURL); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("❌ Softpymes connection test failed")
 		return fmt.Errorf("failed to connect to Softpymes: %w", err)
 	}

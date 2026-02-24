@@ -112,6 +112,8 @@ func (uc *integrationTypeUseCase) CreateIntegrationType(ctx context.Context, dto
 		IsActive:          dto.IsActive,
 		ConfigSchema:      dto.ConfigSchema,
 		CredentialsSchema: dto.CredentialsSchema,
+		BaseURL:           dto.BaseURL,
+		BaseURLTest:       dto.BaseURLTest,
 	}
 
 	if err := uc.repo.CreateIntegrationType(ctx, integrationType); err != nil {

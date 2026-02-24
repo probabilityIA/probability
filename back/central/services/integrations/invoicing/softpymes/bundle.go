@@ -24,18 +24,11 @@ func New(
 	logger = logger.WithModule("softpymes")
 
 	// 1. Cliente HTTP de Softpymes
-	apiURL := config.Get("SOFTPYMES_API_URL")
-	if apiURL == "" {
-		apiURL = "https://api.softpymes.com"
-		logger.Warn(context.Background()).Msg("SOFTPYMES_API_URL not configured, using default URL")
-	} else {
-		logger.Info(context.Background()).
-			Str("api_url", apiURL).
-			Msg("🔍 Softpymes API URL loaded from environment")
-	}
-
-	httpClient := client.New(apiURL, logger)
-	logger.Info(context.Background()).Str("api_url", apiURL).Msg("✅ Softpymes HTTP client initialized")
+	// La URL base del constructor es el fallback cuando no viene base_url en el config del mensaje.
+	// La URL efectiva (producción/testing) se resuelve por llamada desde el consumer.
+	const fallbackURL = "https://api.softpymes.com"
+	httpClient := client.New(fallbackURL, logger)
+	logger.Info(context.Background()).Str("fallback_url", fallbackURL).Msg("✅ Softpymes HTTP client initialized (URL dinámica por llamada)")
 
 	// 2. Response Publisher (RabbitMQ)
 	responsePublisher := queue.NewResponsePublisher(rabbit, logger)

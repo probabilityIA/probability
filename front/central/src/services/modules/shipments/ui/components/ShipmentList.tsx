@@ -125,7 +125,12 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                     </div>
                     <div className="bg-gray-50 rounded-lg p-3">
                         <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Estado</p>
-                        <StatusBadge status={shipment.status} />
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                            <StatusBadge status={shipment.status} />
+                            {shipment.is_test && (
+                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
+                            )}
+                        </div>
                     </div>
                     {shipment.carrier && (
                         <div className="bg-gray-50 rounded-lg p-3">
@@ -273,6 +278,7 @@ export default function ShipmentList() {
         order_id: searchParams.get('order_id') || undefined,
         carrier: searchParams.get('carrier') || undefined,
         status: searchParams.get('status') || undefined,
+        is_test: searchParams.get('is_test') !== null ? searchParams.get('is_test') === 'true' : undefined,
         business_id: defaultBusinessId,
     });
 
@@ -314,6 +320,8 @@ export default function ShipmentList() {
         });
         router.push(`?${params.toString()}`);
     };
+
+    // Resolve business_id for transport operations (super admin needs explicit business context)
 
     const handleCancel = async (id: string) => {
         if (!confirm('¿Estás seguro de que deseas cancelar este envío?')) return;
@@ -359,7 +367,7 @@ export default function ShipmentList() {
 
             {/* ─── Filters ─── */}
             <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
                     <div className="relative">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
@@ -400,6 +408,18 @@ export default function ShipmentList() {
                         <option value="in_transit">En Tránsito</option>
                         <option value="delivered">Entregado</option>
                         <option value="failed">Fallido</option>
+                    </select>
+                    <select
+                        className="px-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-orange-500/30 focus:border-orange-400 text-sm text-gray-900 bg-white transition-colors"
+                        value={filters.is_test === undefined ? '' : filters.is_test ? 'test' : 'production'}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            updateFilters({ is_test: val === '' ? undefined : val === 'test' });
+                        }}
+                    >
+                        <option value="">Producción + TEST</option>
+                        <option value="production">Solo producción</option>
+                        <option value="test">Solo TEST</option>
                     </select>
                 </div>
             </div>
@@ -451,6 +471,9 @@ export default function ShipmentList() {
                                                 </div>
                                                 <div className="flex items-center gap-2 flex-wrap">
                                                     <StatusBadge status={shipment.status} />
+                                                    {shipment.is_test && (
+                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
+                                                    )}
                                                     {shipment.tracking_number && (
                                                         <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
                                                             #{shipment.tracking_number.slice(-8)}

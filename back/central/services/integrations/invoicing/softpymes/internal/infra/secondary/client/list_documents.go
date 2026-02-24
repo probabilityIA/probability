@@ -94,7 +94,9 @@ type ListDocumentsResponse []Document
 // - dateFrom y dateTo son REQUERIDOS (formato YYYY-MM-DD)
 // - El rango máximo entre fechas es de 30 días
 // - La respuesta es un array de documentos directamente (no un objeto con metadata)
-func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer string, params ListDocumentsParams) (*ListDocumentsResponse, error) {
+// ListDocuments obtiene la lista de documentos de Softpymes
+// baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
+func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer string, params ListDocumentsParams, baseURL string) (*ListDocumentsResponse, error) {
 	c.log.Info(ctx).
 		Interface("params", params).
 		Msg("📋 Listing documents from Softpymes")
@@ -105,8 +107,8 @@ func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer s
 		return nil, fmt.Errorf("dateFrom and dateTo are required parameters")
 	}
 
-	// Autenticar
-	token, err := c.authenticate(ctx, apiKey, apiSecret, referer)
+	// Autenticar usando la URL efectiva
+	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("authentication failed: %w", err)
 	}
@@ -127,7 +129,7 @@ func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer s
 		SetBody(params).
 		SetResult(&listResp).
 		SetDebug(true).
-		Post("/app/integration/search/documents/")
+		Post(c.resolveURL(baseURL, "/app/integration/search/documents/"))
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ Failed to list documents")

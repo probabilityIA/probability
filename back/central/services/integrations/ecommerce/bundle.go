@@ -3,8 +3,14 @@ package ecommerce
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/amazon"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/exito"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/falabella"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/magento"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/tiendanube"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -32,4 +38,28 @@ func New(
 	// WooCommerce (type_id=4)
 	wooProvider := woocommerce.New(router, logger, config, rabbitMQ, integrationCore)
 	integrationCore.RegisterIntegration(core.IntegrationTypeWoocommerce, wooProvider)
+
+	// VTEX (type_id=16)
+	vtexProvider := vtex.New(router, logger, config, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeVTEX, vtexProvider)
+
+	// Tiendanube (type_id=17)
+	tiendanubeProvider := tiendanube.New(router, logger, config, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeTiendanube, tiendanubeProvider)
+
+	// Magento (type_id=18)
+	magentoProvider := magento.New(router, logger, config, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeMagento, magentoProvider)
+
+	// Amazon (type_id=19)
+	amazonProvider := amazon.New(router, logger, config, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeAmazon, amazonProvider)
+
+	// Falabella (type_id=20)
+	falabellaProvider := falabella.New(router, logger, config, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeFalabella, falabellaProvider)
+
+	// Éxito (type_id=21)
+	exitoProvider := exito.New(router, logger, config, rabbitMQ, integrationCore)
+	integrationCore.RegisterIntegration(core.IntegrationTypeExito, exitoProvider)
 }

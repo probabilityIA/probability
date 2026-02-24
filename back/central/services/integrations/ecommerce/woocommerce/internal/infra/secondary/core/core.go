@@ -25,6 +25,16 @@ func (w *WooCommerceCore) TestConnection(ctx context.Context, config map[string]
 	return w.useCase.TestConnection(ctx, config, credentials)
 }
 
+// SyncOrdersByIntegrationID sincroniza órdenes de WooCommerce (últimos 30 días).
+func (w *WooCommerceCore) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
+	return w.useCase.SyncOrders(ctx, integrationID)
+}
+
+// SyncOrdersByIntegrationIDWithParams sincroniza órdenes con parámetros personalizados.
+func (w *WooCommerceCore) SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error {
+	return w.useCase.SyncOrdersWithParams(ctx, integrationID, params)
+}
+
 // GetWebhookURL retorna la URL para los webhooks de WooCommerce.
 func (w *WooCommerceCore) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*integrationcore.WebhookInfo, error) {
 	webhookURL := fmt.Sprintf("%s/integrations/woocommerce/webhook", baseURL)

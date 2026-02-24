@@ -42,3 +42,21 @@ func (a *integrationServiceAdapter) DecryptCredential(ctx context.Context, integ
 func (a *integrationServiceAdapter) UpdateIntegrationConfig(ctx context.Context, integrationID string, config map[string]interface{}) error {
 	return a.core.UpdateIntegrationConfig(ctx, integrationID, config)
 }
+
+func (a *integrationServiceAdapter) GetIntegrationByStoreID(ctx context.Context, storeID string) (*domain.Integration, error) {
+	pub, err := a.core.GetIntegrationByExternalID(ctx, storeID, integrationcore.IntegrationTypeMercadoLibre)
+	if err != nil {
+		return nil, err
+	}
+	if pub == nil {
+		return nil, nil
+	}
+	return &domain.Integration{
+		ID:              pub.ID,
+		BusinessID:      pub.BusinessID,
+		Name:            pub.Name,
+		StoreID:         pub.StoreID,
+		IntegrationType: pub.IntegrationType,
+		Config:          pub.Config,
+	}, nil
+}

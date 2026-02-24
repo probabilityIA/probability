@@ -2,10 +2,8 @@ package repository
 
 import (
 	"context"
-	cryptoRand "crypto/rand"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/repository/mappers"
@@ -163,6 +161,11 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 	// Filtro por is_last_mile
 	if isLastMile, ok := filters["is_last_mile"].(bool); ok {
 		query = query.Where("shipments.is_last_mile = ?", isLastMile)
+	}
+
+	// Filtro por is_test
+	if isTest, ok := filters["is_test"].(bool); ok {
+		query = query.Where("shipments.is_test = ?", isTest)
 	}
 
 	// Filtros de fecha - shipped_at
@@ -485,66 +488,3 @@ func (r *Repository) SetDefaultOriginAddress(ctx context.Context, businessID, ad
 	})
 }
 
-// ───────────────────────────────────────────
-// WALLET INTEGRATION
-// ───────────────────────────────────────────
-
-// GetOrderBusinessID obtiene el ID del negocio asociado a una orden
-func (r *Repository) GetOrderBusinessID(ctx context.Context, orderID string) (*uint, error) {
-	var order models.Order
-	if err := r.db.Conn(ctx).Select("business_id").Where("id = ?", orderID).First(&order).Error; err != nil {
-		return nil, err
-	}
-	return order.BusinessID, nil
-}
-
-// DeductWalletBalance descuenta el costo del envío de la billetera del negocio
-func (r *Repository) DeductWalletBalance(ctx context.Context, businessID uint, amount float64, reference string) error {
-	return r.db.Conn(ctx).Transaction(func(tx *gorm.DB) error {
-		// 1. Get Wallet
-		var wallet struct {
-			ID      string
-			Balance float64
-		}
-		// Notice: wallets ID is a uuid
-		if err := tx.Table("wallets").Select("id, balance").Where("business_id = ?", businessID).First(&wallet).Error; err != nil {
-			return fmt.Errorf("error finding wallet for business %d: %w", businessID, err)
-		}
-
-		if wallet.Balance < amount {
-			return fmt.Errorf("saldo de billetera insuficiente. necesitado: %.2f, disponible: %.2f", amount, wallet.Balance)
-		}
-
-		// 2. Insert Transaction
-		txRecord := map[string]interface{}{
-			"id":         generateUUID(),
-			"wallet_id":  wallet.ID,
-			"amount":     amount,
-			"type":       "USAGE",
-			"status":     "COMPLETED",
-			"reference":  reference,
-			"created_at": time.Now(),
-			"updated_at": time.Now(),
-		}
-
-		if err := tx.Table("transactions").Create(&txRecord).Error; err != nil {
-			return fmt.Errorf("error creating transaction for business %d: %w", businessID, err)
-		}
-
-		// 3. Update Balance
-		newBalance := wallet.Balance - amount
-		if err := tx.Table("wallets").Where("id = ?", wallet.ID).Update("balance", newBalance).Error; err != nil {
-			return fmt.Errorf("error updating wallet balance for business %d: %w", businessID, err)
-		}
-
-		return nil
-	})
-}
-
-// Helper function to generate a simple UUID-like string since standard math/rand is used locally, or use a proper external package if available.
-// Assuming external package is not imported, let's use a simple approach for the transaction ID if it's a varchar
-func generateUUID() string {
-	b := make([]byte, 16)
-	cryptoRand.Read(b)
-	return fmt.Sprintf("%x-%x-%x-%x-%x", b[0:4], b[4:6], b[6:8], b[8:10], b[10:16])
-}

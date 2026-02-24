@@ -208,6 +208,11 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		invoiceConfigData = config.InvoiceConfig
 	}
 
+	// Inyectar URL dinámica para que el consumer seleccione entre producción y testing
+	invoiceConfigData["is_testing"] = config.IsTesting
+	invoiceConfigData["base_url"] = config.BaseURL
+	invoiceConfigData["base_url_test"] = config.BaseURLTest
+
 	invoiceData := dtos.InvoiceData{
 		IntegrationID: integrationID,
 		Customer: dtos.InvoiceCustomerData{

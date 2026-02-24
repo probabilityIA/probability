@@ -136,6 +136,7 @@ type CachedIntegration struct {
 	StoreID             string                 `json:"store_id"`
 	IsActive            bool                   `json:"is_active"`
 	IsDefault           bool                   `json:"is_default"`
+	IsTesting           bool                   `json:"is_testing"`
 	Config              map[string]interface{} `json:"config"`
 	Description         string                 `json:"description"`
 	CreatedAt           time.Time              `json:"created_at"`

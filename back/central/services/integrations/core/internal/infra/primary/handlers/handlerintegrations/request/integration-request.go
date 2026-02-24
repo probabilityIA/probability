@@ -10,6 +10,7 @@ type CreateIntegrationRequest struct {
 	StoreID           string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)
 	IsActive          bool                   `json:"is_active" example:"true"`
 	IsDefault         bool                   `json:"is_default" example:"true"`
+	IsTesting         bool                   `json:"is_testing" example:"false"`
 	Config            map[string]interface{} `json:"config"`      // Configuración flexible
 	Credentials       map[string]interface{} `json:"credentials"` // Credenciales (se encriptarán)
 	Description       string                 `json:"description" example:"Integración principal de WhatsApp"`
@@ -23,6 +24,7 @@ type UpdateIntegrationRequest struct {
 	StoreID           *string                 `json:"store_id" example:"mystore.myshopify.com"` // Identificador externo (ej: shop domain)
 	IsActive          *bool                   `json:"is_active" example:"true"`
 	IsDefault         *bool                   `json:"is_default" example:"true"`
+	IsTesting         *bool                   `json:"is_testing" example:"false"`
 	Config            *map[string]interface{} `json:"config"`      // Configuración flexible
 	Credentials       *map[string]interface{} `json:"credentials"` // Credenciales (se encriptarán)
 	Description       *string                 `json:"description" example:"Nueva descripción"`

@@ -35,7 +35,8 @@ type DocsFe struct {
 }
 
 // CreateInvoice crea una factura electrónica en Softpymes
-func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error) {
+// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
+func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest, baseURL string) (*dtos.CreateInvoiceResult, error) {
 	result := &dtos.CreateInvoiceResult{}
 
 	// Validar credenciales
@@ -52,8 +53,8 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		return result, fmt.Errorf("referer not found in config")
 	}
 
-	// Autenticar
-	token, err := c.authenticate(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer)
+	// Autenticar usando la URL efectiva
+	token, err := c.authenticate(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer, baseURL)
 	if err != nil {
 		return result, fmt.Errorf("authentication failed: %w", err)
 	}
@@ -76,7 +77,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	// Asegurar que el cliente existe en Softpymes antes de facturar
 	// Retorna el branchCode real asignado por Softpymes
 	customerBranch := ""
-	if branch, err := c.ensureCustomerExists(ctx, token, referer, customerNit, &req.Customer, req.Config); err != nil {
+	if branch, err := c.ensureCustomerExists(ctx, token, referer, customerNit, &req.Customer, req.Config, baseURL); err != nil {
 		c.log.Warn(ctx).Err(err).
 			Str("customer_nit", customerNit).
 			Msg("Could not ensure customer exists in Softpymes, proceeding anyway")
@@ -196,7 +197,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 
 	var invoiceResp InvoiceResponse
 
-	requestURL := "/app/integration/sales_invoice/"
+	requestURL := c.resolveURL(baseURL, "/app/integration/sales_invoice/")
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetAuthToken(token).

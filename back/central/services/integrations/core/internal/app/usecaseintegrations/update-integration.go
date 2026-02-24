@@ -74,6 +74,9 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 	if dto.Description != nil {
 		existing.Description = *dto.Description
 	}
+	if dto.IsTesting != nil {
+		existing.IsTesting = *dto.IsTesting
+	}
 
 	// Solo actualizar UpdatedByID si es un ID válido (mayor que 0)
 	if dto.UpdatedByID > 0 {
@@ -116,6 +119,7 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		StoreID:             existing.StoreID,
 		IsActive:            existing.IsActive,
 		IsDefault:           existing.IsDefault,
+		IsTesting:           existing.IsTesting,
 		Config:              configMap,
 		Description:         existing.Description,
 		CreatedAt:           existing.CreatedAt,

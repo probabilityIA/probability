@@ -209,6 +209,8 @@ export class IntegrationApiRepository implements IIntegrationRepository {
             if (data.config_schema) formData.append('credentials_schema', JSON.stringify(data.config_schema));
             if (data.credentials_schema) formData.append('credentials_schema', JSON.stringify(data.credentials_schema));
             if (data.setup_instructions) formData.append('setup_instructions', data.setup_instructions);
+            if (data.base_url) formData.append('base_url', data.base_url);
+            if (data.base_url_test) formData.append('base_url_test', data.base_url_test);
             formData.append('image_file', data.image_file);
 
             return this.fetch<SingleResponse<IntegrationType>>('/integration-types', {
@@ -239,6 +241,8 @@ export class IntegrationApiRepository implements IIntegrationRepository {
             if (data.setup_instructions) formData.append('setup_instructions', data.setup_instructions);
             if (data.image_file) formData.append('image_file', data.image_file);
             if (data.remove_image !== undefined) formData.append('remove_image', String(data.remove_image));
+            if (data.base_url) formData.append('base_url', data.base_url);
+            if (data.base_url_test) formData.append('base_url_test', data.base_url_test);
 
             return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`, {
                 method: 'PUT',

@@ -148,6 +148,26 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate business_notification_configs data: %w", err)
 	}
 
+	// Crear tipo de integración para EnvioClick (transporte)
+	if err := r.seedEnvioClickIntegrationType(ctx); err != nil {
+		return fmt.Errorf("failed to seed envioclick integration type: %w", err)
+	}
+
+	// Seed base_url de EnvioClick si no está configurada
+	if err := r.seedEnvioClickBaseURL(ctx); err != nil {
+		return fmt.Errorf("failed to seed envioclick base url: %w", err)
+	}
+
+	// Marcar integration types en desarrollo (IDs 13-21)
+	if err := r.markInDevelopmentIntegrationTypes(ctx); err != nil {
+		return fmt.Errorf("failed to mark in-development integration types: %w", err)
+	}
+
+	// Agregar columnas de modo testing
+	if err := r.addIsTestingColumns(ctx); err != nil {
+		return fmt.Errorf("failed to add is_testing columns: %w", err)
+	}
+
 	return r.createDefaultUserIfNotExists(ctx)
 }
 
@@ -444,7 +464,7 @@ func (r *Repository) seedIntegrationCategories(ctx context.Context) error {
 			Icon:         "truck",
 			Color:        "#EF4444",
 			DisplayOrder: 5,
-			IsActive:     false,
+			IsActive:     true,
 			IsVisible:    true,
 		},
 		{
@@ -655,6 +675,72 @@ func (r *Repository) seedPlatformIntegrationsForBusinesses(ctx context.Context) 
 		return fmt.Errorf("failed to seed platform integrations for businesses: %w", err)
 	}
 
+	return nil
+}
+
+// seedEnvioClickIntegrationType crea el tipo de integración para EnvioClick (transporte)
+func (r *Repository) seedEnvioClickIntegrationType(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	integrationType := models.IntegrationType{
+		Model:       gorm.Model{ID: 12},
+		Name:        "EnvioClick",
+		Code:        "envioclick",
+		CategoryID:  ptrUint(5), // shipping category
+		IsActive:    true,
+		Description: "Plataforma de envíos EnvioClick",
+		Icon:        "truck",
+	}
+
+	var existing models.IntegrationType
+	err := db.Where("id = ?", 12).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		if err := db.Create(&integrationType).Error; err != nil {
+			return fmt.Errorf("failed to create envioclick integration type: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// seedEnvioClickBaseURL actualiza la base_url de producción para EnvioClick si no está configurada
+func (r *Repository) seedEnvioClickBaseURL(ctx context.Context) error {
+	return r.db.Conn(ctx).Exec(`
+		UPDATE integration_types
+		SET base_url = ?
+		WHERE id = 12
+		  AND (base_url IS NULL OR base_url = '')
+		  AND deleted_at IS NULL
+	`, "https://api.envioclickpro.com.co/api/v2").Error
+}
+
+// markInDevelopmentIntegrationTypes marca los integration types con IDs 13-21 como en desarrollo
+func (r *Repository) markInDevelopmentIntegrationTypes(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// IDs 13-21 corresponden a los skeleton de integraciones nuevas:
+	// enviame, tu, mipaquete, vtex, tiendanube, magento, amazon, falabella, exito
+	if err := db.Exec(`
+		UPDATE integration_types
+		SET in_development = true
+		WHERE id BETWEEN 13 AND 21
+		AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to mark in-development integration types: %w", err)
+	}
+
+	return nil
+}
+
+// addIsTestingColumns agrega las columnas de modo testing si no existen
+func (r *Repository) addIsTestingColumns(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+	if err := db.Exec(`ALTER TABLE integrations ADD COLUMN IF NOT EXISTS is_testing BOOLEAN NOT NULL DEFAULT FALSE`).Error; err != nil {
+		return fmt.Errorf("failed to add is_testing to integrations: %w", err)
+	}
+	if err := db.Exec(`ALTER TABLE shipments ADD COLUMN IF NOT EXISTS is_test BOOLEAN NOT NULL DEFAULT FALSE`).Error; err != nil {
+		return fmt.Errorf("failed to add is_test to shipments: %w", err)
+	}
 	return nil
 }
 

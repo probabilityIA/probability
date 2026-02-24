@@ -110,6 +110,7 @@ func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration
 		"store_id":            model.StoreID,
 		"is_active":           model.IsActive,
 		"is_default":          model.IsDefault,
+		"is_testing":          model.IsTesting,
 		"config":              model.Config,
 		"credentials":         model.Credentials,
 		"description":         model.Description,
@@ -417,6 +418,7 @@ func (r *Repository) toModel(integration *domain.Integration) *models.Integratio
 		StoreID:           integration.StoreID,
 		IsActive:          integration.IsActive,
 		IsDefault:         integration.IsDefault,
+		IsTesting:         integration.IsTesting,
 		Config:            integration.Config,
 		Credentials:       integration.Credentials,
 		Description:       integration.Description,
@@ -452,6 +454,7 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 		StoreID:           model.StoreID,
 		IsActive:          model.IsActive,
 		IsDefault:         model.IsDefault,
+		IsTesting:         model.IsTesting,
 		Config:            model.Config,
 		Credentials:       model.Credentials, // Mantener encriptado
 		Description:       model.Description,

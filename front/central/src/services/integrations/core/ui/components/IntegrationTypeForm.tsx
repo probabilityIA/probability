@@ -24,6 +24,8 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         config_schema: '{}',
         credentials_schema: '{}',
         setup_instructions: '',
+        base_url: '',
+        base_url_test: '',
     });
 
     const [categories, setCategories] = useState<IntegrationCategory[]>([]);
@@ -58,6 +60,8 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 config_schema: JSON.stringify(integrationType.config_schema || {}, null, 2),
                 credentials_schema: JSON.stringify(integrationType.credentials_schema || {}, null, 2),
                 setup_instructions: integrationType.setup_instructions || '',
+                base_url: integrationType.base_url || '',
+                base_url_test: integrationType.base_url_test || '',
             });
             // Cargar preview de imagen existente si hay
             if (integrationType.image_url) {
@@ -102,6 +106,8 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     setup_instructions: formData.setup_instructions,
                     image_file: imageFile || undefined,
                     remove_image: removeImage || undefined,
+                    base_url: formData.base_url || undefined,
+                    base_url_test: formData.base_url_test || undefined,
                 };
                 success = await updateIntegrationType(integrationType.id, updateData);
             } else {
@@ -116,6 +122,8 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     credentials_schema: formData.credentials_schema ? JSON.parse(formData.credentials_schema) : undefined,
                     setup_instructions: formData.setup_instructions,
                     image_file: imageFile || undefined,
+                    base_url: formData.base_url || undefined,
+                    base_url_test: formData.base_url_test || undefined,
                 };
                 success = await createIntegrationType(createData);
             }
@@ -277,6 +285,40 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     />
                     <p className="mt-1 text-xs text-gray-500">
                         Campos de credenciales (tokens, keys, etc.)
+                    </p>
+                </div>
+            </div>
+
+            {/* URLs de la API - 2 columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        URL de Producción
+                    </label>
+                    <Input
+                        type="url"
+                        value={formData.base_url}
+                        onChange={(e) => setFormData({ ...formData, base_url: e.target.value })}
+                        placeholder="https://api.ejemplo.com/v1"
+                        className="font-mono text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        URL base del API en producción
+                    </p>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        URL de Pruebas (Sandbox)
+                    </label>
+                    <Input
+                        type="url"
+                        value={formData.base_url_test}
+                        onChange={(e) => setFormData({ ...formData, base_url_test: e.target.value })}
+                        placeholder="https://sandbox.ejemplo.com/v1"
+                        className="font-mono text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        URL del entorno sandbox para modo de pruebas
                     </p>
                 </div>
             </div>

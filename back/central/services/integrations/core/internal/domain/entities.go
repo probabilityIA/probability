@@ -31,9 +31,12 @@ type IntegrationType struct {
 	CategoryID        uint
 	Category          *IntegrationCategory
 	IsActive          bool
+	InDevelopment     bool
 	ConfigSchema      datatypes.JSON
 	CredentialsSchema datatypes.JSON
 	SetupInstructions string
+	BaseURL           string
+	BaseURLTest       string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
 }
@@ -50,6 +53,7 @@ type Integration struct {
 	StoreID           string
 	IsActive          bool
 	IsDefault         bool
+	IsTesting         bool // Si está en modo de pruebas (usa base_url_test)
 	Config            datatypes.JSON
 	Credentials       datatypes.JSON
 	Description       string

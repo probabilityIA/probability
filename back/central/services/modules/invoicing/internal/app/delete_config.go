@@ -10,7 +10,7 @@ import (
 func (uc *useCase) DeleteConfig(ctx context.Context, id uint) error {
 	uc.log.Info(ctx).Uint("config_id", id).Msg("Deleting invoicing config")
 
-	_, err := uc.repo.GetInvoiceByID(ctx, id)
+	_, err := uc.repo.GetInvoicingConfigByID(ctx, id)
 	if err != nil {
 		return errors.ErrConfigNotFound
 	}

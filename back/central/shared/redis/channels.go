@@ -20,4 +20,10 @@ const (
 	// Publisher : services/integrations/events
 	// Consumers : modules/events (SSE)
 	ChannelIntegrationsSyncOrders = "probability:integrations:orders:sync:events"
+
+	// ChannelShipmentsEvents publica resultados de operaciones de envíos
+	// (cotizaciones, generación de guías, tracking, cancelaciones).
+	// Publisher : modules/shipments (response consumer)
+	// Consumers : modules/events (SSE)
+	ChannelShipmentsEvents = "probability:shipments:state:events"
 )

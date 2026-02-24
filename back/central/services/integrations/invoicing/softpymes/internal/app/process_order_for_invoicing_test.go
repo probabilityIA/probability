@@ -79,7 +79,7 @@ func TestProcessOrderForInvoicing_DoesNotCallClient(t *testing.T) {
 	// Arrange
 	clientCalled := false
 	mockClient := &mocks.SoftpymesClientMock{
-		CreateInvoiceFn: func(_ context.Context, _ *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error) {
+		CreateInvoiceFn: func(_ context.Context, _ *dtos.CreateInvoiceRequest, _ string) (*dtos.CreateInvoiceResult, error) {
 			clientCalled = true
 			return nil, nil
 		},

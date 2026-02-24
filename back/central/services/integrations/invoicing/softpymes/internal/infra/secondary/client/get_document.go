@@ -24,7 +24,7 @@ import (
 // el documento completo para obtener URLs de PDF/XML y CUFE
 //
 // Implementa: ports.ISoftpymesClient.GetDocumentByNumber
-func (c *Client) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber string) (map[string]interface{}, error) {
+func (c *Client) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber, baseURL string) (map[string]interface{}, error) {
 	c.log.Info(ctx).
 		Str("document_number", documentNumber).
 		Msg("📄 Getting document by number from Softpymes")
@@ -54,7 +54,7 @@ func (c *Client) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, ref
 		Msg("📤 Searching for document in last 30 days")
 
 	// Llamar al endpoint de lista con filtro de número
-	documents, err := c.ListDocuments(ctx, apiKey, apiSecret, referer, params)
+	documents, err := c.ListDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).

@@ -24,6 +24,7 @@ export interface Shipment {
     warehouse_name?: string;
     driver_name?: string;
     is_last_mile: boolean;
+    is_test: boolean;
     estimated_delivery?: string;
     delivery_notes?: string;
 }
@@ -44,6 +45,7 @@ export interface GetShipmentsParams {
     delivered_before?: string;
     sort_by?: string;
     sort_order?: 'asc' | 'desc';
+    is_test?: boolean;
 }
 
 export interface PaginatedResponse<T> {
@@ -77,6 +79,7 @@ export interface EnvioClickPackage {
 }
 
 export interface EnvioClickQuoteRequest {
+    business_id?: number;
     idRate?: number;
     myShipmentReference?: string;
     external_order_id?: string;
@@ -119,11 +122,11 @@ export interface EnvioClickRate {
     cod?: boolean;
 }
 
+// Response from POST /shipments/quote (202 Accepted - async, result via SSE)
 export interface EnvioClickQuoteResponse {
-    status: string;
-    data: {
-        rates: EnvioClickRate[];
-    };
+    success: boolean;
+    message: string;
+    correlation_id: string;
 }
 
 export interface EnvioClickTrackHistory {
@@ -187,4 +190,37 @@ export type CreateOriginAddressRequest = Omit<OriginAddress, 'id' | 'business_id
 };
 
 export type UpdateOriginAddressRequest = Partial<CreateOriginAddressRequest>;
+
+// ===================================
+// SSE EVENTS (Tiempo Real)
+// ===================================
+
+export type ShipmentSSEEventType =
+  | 'shipment.quote_received'
+  | 'shipment.quote_failed'
+  | 'shipment.guide_generated'
+  | 'shipment.guide_failed'
+  | 'shipment.tracking_updated'
+  | 'shipment.tracking_failed'
+  | 'shipment.cancelled'
+  | 'shipment.cancel_failed';
+
+export interface ShipmentSSEEvent {
+  id: string;
+  type: string;
+  business_id: string;
+  timestamp: string;
+  data: ShipmentSSEEventData;
+  metadata: Record<string, any>;
+}
+
+export interface ShipmentSSEEventData {
+  shipment_id?: number;
+  correlation_id?: string;
+  tracking_number?: string;
+  label_url?: string;
+  error_message?: string;
+  quotes?: Record<string, any>;
+  tracking?: Record<string, any>;
+}
 

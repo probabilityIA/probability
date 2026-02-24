@@ -322,7 +322,8 @@ type IntegrationType struct {
 	Description string `gorm:"size:500"`                 // Descripción del tipo de integración
 	Icon        string `gorm:"size:100"`                 // Icono para UI
 	ImageURL    string `gorm:"size:500"`                 // URL de la imagen del logo (path relativo en S3)
-	IsActive    bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
+	IsActive      bool `gorm:"default:true"`  // Si el tipo está activo y disponible
+	InDevelopment bool `gorm:"default:false"` // Si el tipo está en desarrollo (próximamente)
 
 	// Relación con IntegrationCategory
 	CategoryID *uint                `gorm:"index"`
@@ -338,6 +339,10 @@ type IntegrationType struct {
 
 	// Instrucciones paso a paso para configurar la integración
 	SetupInstructions string `gorm:"type:text"`
+
+	// URLs de la API (base_url = producción global, base_url_test = pruebas por integración)
+	BaseURL     string `gorm:"column:base_url;size:500"`
+	BaseURLTest string `gorm:"column:base_url_test;size:500"`
 
 	// Relaciones
 	Integrations []Integration `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
@@ -375,6 +380,7 @@ type Integration struct {
 	// Estado
 	IsActive  bool `gorm:"default:true;index"`
 	IsDefault bool `gorm:"default:false;index"` // Si es la integración por defecto para este tipo
+	IsTesting bool `gorm:"default:false;index"` // Si está en modo de pruebas (usa base_url_test)
 
 	// Configuración (JSON flexible - no contiene información sensible)
 	// Ejemplo WhatsApp: {"phone_number_id": "123", "webhook_url": "...", "template_language": "es"}

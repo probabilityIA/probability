@@ -20,6 +20,7 @@ const (
 	channelOrders      = redisclient.ChannelOrdersEvents
 	channelInvoicing   = redisclient.ChannelInvoicingEvents
 	channelIntegration = redisclient.ChannelIntegrationsSyncOrders
+	channelShipments   = redisclient.ChannelShipmentsEvents
 )
 
 // New inicializa el módulo de eventos adaptado a Gin y con soporte para eventos de órdenes
@@ -72,7 +73,27 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, red
 		}
 	}()
 
-	// 8. Init Integration Event Subscriber y Consumer (sincronización de integraciones)
+	// 8. Init Shipment Event Subscriber y Consumer (envíos en tiempo real)
+	shipmentEventSubscriber := redis.NewShipmentEventSubscriber(redisClient, logger, channelShipments)
+
+	shipmentEventConsumer := app.NewShipmentEventConsumer(
+		shipmentEventSubscriber,
+		eventManager,
+		logger,
+	)
+
+	// 9. Iniciar consumidor Redis de envíos en background
+	go func() {
+		ctx := context.Background()
+		if err := shipmentEventConsumer.Start(ctx); err != nil {
+			logger.Error(ctx).
+				Err(err).
+				Str("channel", channelShipments).
+				Msg("Error al iniciar consumidor de eventos de envíos")
+		}
+	}()
+
+	// 10. Init Integration Event Subscriber y Consumer (sincronización de integraciones)
 	integrationSubscriber := redis.NewIntegrationEventSubscriber(redisClient, logger, channelIntegration)
 
 	integrationConsumer := app.NewIntegrationEventConsumer(
@@ -82,7 +103,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, red
 		logger,
 	)
 
-	// 9. Iniciar consumidor Redis de integration events en background
+	// 11. Iniciar consumidor Redis de integration events en background
 	go func() {
 		ctx := context.Background()
 		if err := integrationConsumer.Start(ctx); err != nil {
@@ -93,9 +114,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, red
 		}
 	}()
 
-	// 10. Init SSE Handler (adaptado a Gin)
+	// 12. Init SSE Handler (adaptado a Gin)
 	sseHandler := handlers.New(eventManager, logger)
 
-	// 11. Register Routes
+	// 13. Register Routes
 	primary.New(sseHandler).RegisterRoutes(router)
 }

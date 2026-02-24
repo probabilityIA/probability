@@ -217,7 +217,26 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		combinedConfig[k] = v
 	}
 
-	// 5. Construir request tipado para el cliente Softpymes
+	// 5. Resolver URL efectiva basada en is_testing + base_url/base_url_test
+	effectiveURL := ""
+	if isTest, ok := combinedConfig["is_testing"].(bool); ok && isTest {
+		if u, ok := combinedConfig["base_url_test"].(string); ok && u != "" {
+			effectiveURL = u
+		}
+	}
+	if effectiveURL == "" {
+		if u, ok := combinedConfig["base_url"].(string); ok && u != "" {
+			effectiveURL = u
+		}
+	}
+	// Si sigue vacío, el cliente HTTP usará la URL configurada en su constructor (fallback)
+
+	c.log.Info(ctx).
+		Bool("is_testing", combinedConfig["is_testing"] == true).
+		Str("effective_url", effectiveURL).
+		Msg("Resolved effective Softpymes URL")
+
+	// 6. Construir request tipado para el cliente Softpymes
 	invoiceReq := &spDtos.CreateInvoiceRequest{
 		Customer: spDtos.CustomerData{
 			Name:    request.InvoiceData.Customer.Name,
@@ -241,12 +260,13 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		Config: combinedConfig,
 	}
 
-	// 6. Llamar al cliente HTTP de Softpymes
+	// 7. Llamar al cliente HTTP de Softpymes con URL efectiva
 	c.log.Info(ctx).
 		Uint("invoice_id", request.InvoiceID).
+		Str("effective_url", effectiveURL).
 		Msg("Calling Softpymes API")
 
-	result, err := c.softpymesClient.CreateInvoice(ctx, invoiceReq)
+	result, err := c.softpymesClient.CreateInvoice(ctx, invoiceReq, effectiveURL)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).
@@ -261,7 +281,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		return c.createErrorResponse(request, "api_error", err.Error(), startTime, auditData)
 	}
 
-	// 7. Consultar documento completo (GetDocumentByNumber)
+	// 8. Consultar documento completo (GetDocumentByNumber)
 	var fullDocument map[string]interface{}
 	if result.InvoiceNumber != "" {
 		referer, _ := combinedConfig["referer"].(string)
@@ -275,7 +295,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 			Str("invoice_number", result.InvoiceNumber).
 			Msg("Fetching full document from Softpymes")
 
-		doc, err := c.softpymesClient.GetDocumentByNumber(ctx, apiKey, apiSecret, referer, result.InvoiceNumber)
+		doc, err := c.softpymesClient.GetDocumentByNumber(ctx, apiKey, apiSecret, referer, result.InvoiceNumber, effectiveURL)
 		if err != nil {
 			c.log.Warn(ctx).
 				Err(err).
@@ -289,7 +309,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		}
 	}
 
-	// 8. Parsear issued_at
+	// 9. Parsear issued_at
 	var issuedAt *time.Time
 	if result.IssuedAt != "" {
 		if parsed, parseErr := time.Parse(time.RFC3339, result.IssuedAt); parseErr == nil {
@@ -297,7 +317,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		}
 	}
 
-	// 9. Construir response exitosa con audit data
+	// 10. Construir response exitosa con audit data
 	processingTime := time.Since(startTime).Milliseconds()
 
 	resp := &queue.InvoiceResponseMessage{

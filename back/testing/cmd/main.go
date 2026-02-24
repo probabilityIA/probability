@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/secamc93/probability/back/testing/integrations/envioclick"
 	"github.com/secamc93/probability/back/testing/integrations/shopify"
 	"github.com/secamc93/probability/back/testing/integrations/softpymes"
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
@@ -28,17 +29,29 @@ func main() {
 		}
 	}()
 
+	// 2. Iniciar servidor HTTP de EnvioClick (en background)
+	envioclickPort := getEnv("ENVIOCLICK_MOCK_PORT", "9091")
+	envioclickServer := envioclick.New(logger, envioclickPort)
+
+	go func() {
+		if err := envioclickServer.Start(); err != nil {
+			logger.Error().Msgf("❌ Error iniciando EnvioClick: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
+
 	fmt.Println("========================================")
 	fmt.Printf("🚀 Testing Server - Simuladores\n")
 	fmt.Printf("📡 Softpymes HTTP: http://localhost:%s\n", softpymesPort)
+	fmt.Printf("📡 EnvioClick HTTP: http://localhost:%s\n", envioclickPort)
 	fmt.Println("========================================")
 
-	// 2. Iniciar CLI interactivo para Shopify/WhatsApp
-	runCLIMode(logger, config, softpymesServer)
+	// 3. Iniciar CLI interactivo
+	runCLIMode(logger, config, softpymesServer, envioclickServer)
 }
 
 // runCLIMode inicia el modo CLI interactivo para simular webhooks
-func runCLIMode(logger log.ILogger, config env.IConfig, softpymesIntegration *softpymes.SoftPymesIntegration) {
+func runCLIMode(logger log.ILogger, config env.IConfig, softpymesIntegration *softpymes.SoftPymesIntegration, envioclickIntegration *envioclick.EnvioClickIntegration) {
 	webhookBaseURL := config.Get("WEBHOOK_BASE_URL")
 	if webhookBaseURL == "" {
 		logger.Fatal().Msg("WEBHOOK_BASE_URL no configurado en .env")
@@ -66,6 +79,7 @@ func runCLIMode(logger log.ILogger, config env.IConfig, softpymesIntegration *so
 		fmt.Println("\n1. 📦 Shopify")
 		fmt.Println("2. 💬 WhatsApp")
 		fmt.Println("3. 📄 Softpymes")
+		fmt.Println("4. 🚚 EnvioClick")
 		fmt.Println("\n0. Salir")
 		fmt.Print("\nSelecciona un módulo: ")
 
@@ -79,6 +93,8 @@ func runCLIMode(logger log.ILogger, config env.IConfig, softpymesIntegration *so
 			showWhatsAppMenu(reader, whatsappIntegration, logger)
 		case "3":
 			showSoftpymesMenu(reader, softpymesIntegration, logger)
+		case "4":
+			showEnvioClickMenu(reader, envioclickIntegration, logger)
 		case "0":
 			fmt.Println("Saliendo...")
 			os.Exit(0)
@@ -454,6 +470,206 @@ func listSoftpymesDocuments(integration *softpymes.SoftPymesIntegration) {
 					i+1, note.CreditNoteNumber, note.InvoiceID, note.Amount, note.NoteType)
 			}
 		}
+	}
+}
+
+// showEnvioClickMenu muestra el menu de EnvioClick
+func showEnvioClickMenu(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
+	for {
+		fmt.Println("\n=== 🚚 EnvioClick - Envios ===")
+		fmt.Println("\n1. Cotizar envio")
+		fmt.Println("2. Generar guia")
+		fmt.Println("3. Rastrear envio")
+		fmt.Println("4. Cancelar envio")
+		fmt.Println("5. Listar envios almacenados")
+		fmt.Println("\n0. Volver al menu principal")
+		fmt.Print("\nOpcion: ")
+
+		input, _ := reader.ReadString('\n')
+		input = strings.TrimSpace(input)
+
+		switch input {
+		case "1":
+			handleEnvioClickQuote(reader, integration, logger)
+		case "2":
+			handleEnvioClickGenerate(reader, integration, logger)
+		case "3":
+			handleEnvioClickTrack(reader, integration, logger)
+		case "4":
+			handleEnvioClickCancel(reader, integration, logger)
+		case "5":
+			listEnvioClickShipments(integration)
+		case "0":
+			return
+		default:
+			fmt.Println("❌ Opcion invalida")
+		}
+	}
+}
+
+// readEnvioClickRequest reads common shipment data from user
+func readEnvioClickRequest(reader *bufio.Reader) envioclick.QuoteRequest {
+	fmt.Print("DANE code origen (ej: 11001 para Bogota): ")
+	originInput, _ := reader.ReadString('\n')
+	originDane := strings.TrimSpace(originInput)
+
+	fmt.Print("DANE code destino (ej: 05001 para Medellin): ")
+	destInput, _ := reader.ReadString('\n')
+	destDane := strings.TrimSpace(destInput)
+
+	fmt.Print("Peso en kg (ej: 2.5): ")
+	weightInput, _ := reader.ReadString('\n')
+	var weight float64
+	fmt.Sscanf(strings.TrimSpace(weightInput), "%f", &weight)
+	if weight <= 0 {
+		weight = 1.0
+	}
+
+	fmt.Print("Alto en cm (ej: 20): ")
+	heightInput, _ := reader.ReadString('\n')
+	var height float64
+	fmt.Sscanf(strings.TrimSpace(heightInput), "%f", &height)
+	if height <= 0 {
+		height = 10.0
+	}
+
+	fmt.Print("Ancho en cm (ej: 15): ")
+	widthInput, _ := reader.ReadString('\n')
+	var width float64
+	fmt.Sscanf(strings.TrimSpace(widthInput), "%f", &width)
+	if width <= 0 {
+		width = 10.0
+	}
+
+	fmt.Print("Largo en cm (ej: 30): ")
+	lengthInput, _ := reader.ReadString('\n')
+	var length float64
+	fmt.Sscanf(strings.TrimSpace(lengthInput), "%f", &length)
+	if length <= 0 {
+		length = 10.0
+	}
+
+	fmt.Print("Valor declarado COP (ej: 50000): ")
+	valueInput, _ := reader.ReadString('\n')
+	var contentValue float64
+	fmt.Sscanf(strings.TrimSpace(valueInput), "%f", &contentValue)
+	if contentValue <= 0 {
+		contentValue = 10000
+	}
+
+	return envioclick.QuoteRequest{
+		Origin:       envioclick.Address{DaneCode: originDane},
+		Destination:  envioclick.Address{DaneCode: destDane},
+		Packages:     []envioclick.Package{{Weight: weight, Height: height, Width: width, Length: length}},
+		ContentValue: contentValue,
+	}
+}
+
+// handleEnvioClickQuote maneja cotizacion de envio
+func handleEnvioClickQuote(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
+	req := readEnvioClickRequest(reader)
+	logger.Info().Msg("Simulando cotizacion de envio")
+
+	resp, err := integration.SimulateQuote(req)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error al cotizar")
+		fmt.Printf("❌ Error: %v\n", err)
+		return
+	}
+
+	fmt.Printf("\n✅ Cotizacion exitosa - %d tarifas disponibles:\n", len(resp.Data.Rates))
+	for i, rate := range resp.Data.Rates {
+		fmt.Printf("  %d. [%s] %s - $%.0f COP - %d dias - ID: %d\n",
+			i+1, rate.Carrier, rate.Product, rate.Flete, rate.DeliveryDays, rate.IDRate)
+	}
+}
+
+// handleEnvioClickGenerate maneja generacion de guia
+func handleEnvioClickGenerate(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
+	req := readEnvioClickRequest(reader)
+
+	fmt.Print("ID de tarifa (de la cotizacion, ej: 1001): ")
+	rateInput, _ := reader.ReadString('\n')
+	var rateID int64
+	fmt.Sscanf(strings.TrimSpace(rateInput), "%d", &rateID)
+	req.IDRate = rateID
+
+	fmt.Print("Referencia de envio (ej: ORD-001): ")
+	refInput, _ := reader.ReadString('\n')
+	req.MyShipmentReference = strings.TrimSpace(refInput)
+
+	logger.Info().Msg("Simulando generacion de guia")
+
+	resp, err := integration.SimulateGenerate(req)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error al generar guia")
+		fmt.Printf("❌ Error: %v\n", err)
+		return
+	}
+
+	fmt.Printf("\n✅ Guia generada exitosamente:\n")
+	fmt.Printf("  Tracking: %s\n", resp.Data.TrackingNumber)
+	fmt.Printf("  Label URL: %s\n", resp.Data.LabelURL)
+	fmt.Printf("  Referencia: %s\n", resp.Data.MyGuideReference)
+}
+
+// handleEnvioClickTrack maneja rastreo de envio
+func handleEnvioClickTrack(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
+	fmt.Print("Tracking number: ")
+	trackInput, _ := reader.ReadString('\n')
+	trackingNumber := strings.TrimSpace(trackInput)
+
+	logger.Info().Str("tracking", trackingNumber).Msg("Simulando rastreo")
+
+	resp, err := integration.SimulateTrack(trackingNumber)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error al rastrear")
+		fmt.Printf("❌ Error: %v\n", err)
+		return
+	}
+
+	fmt.Printf("\n✅ Rastreo de %s:\n", resp.Data.TrackingNumber)
+	fmt.Printf("  Carrier: %s\n", resp.Data.Carrier)
+	fmt.Printf("  Estado: %s\n", resp.Data.Status)
+	fmt.Printf("  Eventos (%d):\n", len(resp.Data.Events))
+	for i, event := range resp.Data.Events {
+		fmt.Printf("    %d. [%s] %s - %s (%s)\n",
+			i+1, event.Date, event.Status, event.Description, event.Location)
+	}
+}
+
+// handleEnvioClickCancel maneja cancelacion de envio
+func handleEnvioClickCancel(reader *bufio.Reader, integration *envioclick.EnvioClickIntegration, logger log.ILogger) {
+	fmt.Print("Shipment ID (ej: EC-005001): ")
+	idInput, _ := reader.ReadString('\n')
+	shipmentID := strings.TrimSpace(idInput)
+
+	logger.Info().Str("shipment_id", shipmentID).Msg("Simulando cancelacion")
+
+	resp, err := integration.SimulateCancel(shipmentID)
+	if err != nil {
+		logger.Error().Err(err).Msg("Error al cancelar")
+		fmt.Printf("❌ Error: %v\n", err)
+		return
+	}
+
+	fmt.Printf("✅ %s: %s\n", resp.Status, resp.Message)
+}
+
+// listEnvioClickShipments lista todos los envios almacenados
+func listEnvioClickShipments(integration *envioclick.EnvioClickIntegration) {
+	shipments := integration.GetAllShipments()
+	if len(shipments) == 0 {
+		fmt.Println("📭 No hay envios almacenados")
+		return
+	}
+
+	fmt.Printf("\n🚚 Envios almacenados (%d):\n", len(shipments))
+	for i, s := range shipments {
+		fmt.Printf("  %d. ID: %s - Tracking: %s - %s - %s -> %s - $%.0f COP - Estado: %s\n",
+			i+1, s.ID, s.TrackingNumber, s.Carrier,
+			s.Origin.DaneCode, s.Destination.DaneCode,
+			s.Flete, s.Status)
 	}
 }
 

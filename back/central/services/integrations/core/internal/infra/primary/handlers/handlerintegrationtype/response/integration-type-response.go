@@ -33,9 +33,12 @@ type IntegrationTypeResponse struct {
 	CategoryID        uint                         `json:"category_id" example:"1"`                                                                    // ID de la categoría
 	Category          *IntegrationCategoryResponse `json:"category"`
 	IsActive          bool                         `json:"is_active" example:"true"`
+	InDevelopment     bool                         `json:"in_development" example:"false"`
 	ConfigSchema      datatypes.JSON               `json:"config_schema"`
 	CredentialsSchema datatypes.JSON               `json:"credentials_schema"`
 	SetupInstructions string                       `json:"setup_instructions" example:"1. Ve a Meta Business Suite\n2. Configura WhatsApp\n3. Copia credenciales"`
+	BaseURL           string                       `json:"base_url"`
+	BaseURLTest       string                       `json:"base_url_test"`
 	CreatedAt         string                       `json:"created_at"`
 	UpdatedAt         string                       `json:"updated_at"`
 }

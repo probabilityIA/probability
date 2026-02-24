@@ -10,7 +10,22 @@ import { createIntegrationAction, testConnectionRawAction } from '../../infra/ac
 // Importar formularios específicos por tipo de integración
 import { SoftpymesConfigForm } from '@/services/integrations/invoicing/softpymes/ui/components';
 import { FactusConfigForm } from '@/services/integrations/invoicing/factus/ui';
-import ShopifyIntegrationForm from './shopify/ShopifyIntegrationForm';
+import { SiigoConfigForm } from '@/services/integrations/invoicing/siigo/ui';
+import { AlegraConfigForm } from '@/services/integrations/invoicing/alegra/ui';
+import { WorldOfficeConfigForm } from '@/services/integrations/invoicing/world_office/ui';
+import { HelisaConfigForm } from '@/services/integrations/invoicing/helisa/ui';
+import { EnvioClickConfigForm } from '@/services/integrations/transport/envioclick/ui';
+import { EnviameConfigForm } from '@/services/integrations/transport/enviame/ui';
+import { TuConfigForm } from '@/services/integrations/transport/tu/ui';
+import { MiPaqueteConfigForm } from '@/services/integrations/transport/mipaquete/ui';
+import { ShopifyIntegrationForm } from '@/services/integrations/ecommerce/shopify/ui';
+import { VTEXConfigForm } from '@/services/integrations/ecommerce/vtex/ui';
+import { TiendanubeConfigForm } from '@/services/integrations/ecommerce/tiendanube/ui';
+import { MagentoConfigForm } from '@/services/integrations/ecommerce/magento/ui';
+import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
+import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
+import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
+import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
 
 interface CreateIntegrationModalProps {
     isOpen: boolean;
@@ -128,6 +143,30 @@ interface FormWrapperProps {
 }
 
 function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapperProps) {
+    // Si la integración está en desarrollo, mostrar mensaje
+    if (integrationType.in_development) {
+        return (
+            <div className="p-6">
+                <button
+                    onClick={onBack}
+                    className="text-blue-600 hover:text-blue-800 mb-6 flex items-center gap-2 font-medium transition-colors"
+                >
+                    <span>&larr;</span>
+                    <span>Volver a proveedores</span>
+                </button>
+                <Alert type="info">
+                    <div className="space-y-3">
+                        <p className="font-semibold">Proximamente</p>
+                        <p>
+                            La integración con <strong>{integrationType.name}</strong> estará disponible próximamente.
+                            Estamos trabajando para habilitarla lo antes posible.
+                        </p>
+                    </div>
+                </Alert>
+            </div>
+        );
+    }
+
     const integrationCode = integrationType.code.toLowerCase();
 
     // Renderizar formulario específico según el código del tipo de integración
@@ -152,6 +191,131 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
             case 'factus':
                 return (
                     <FactusConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'envioclick':
+                return (
+                    <EnvioClickConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                        integrationTypeBaseURL={integrationType.base_url}
+                        integrationTypeBaseURLTest={integrationType.base_url_test}
+                    />
+                );
+
+            case 'enviame':
+                return (
+                    <EnviameConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'tu':
+                return (
+                    <TuConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'mipaquete':
+            case 'mi_paquete':
+                return (
+                    <MiPaqueteConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'siigo':
+                return (
+                    <SiigoConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'alegra':
+                return (
+                    <AlegraConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'world_office':
+                return (
+                    <WorldOfficeConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'helisa':
+                return (
+                    <HelisaConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'vtex':
+                return (
+                    <VTEXConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'tiendanube':
+            case 'tienda_nube':
+                return (
+                    <TiendanubeConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'magento':
+            case 'adobe_commerce':
+                return (
+                    <MagentoConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'amazon':
+                return (
+                    <AmazonConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'falabella':
+                return (
+                    <FalabellaConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'exito':
+                return (
+                    <ExitoConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case 'woocommerce':
+                return (
+                    <WooCommerceConfigForm
                         onSuccess={onSuccess}
                         onCancel={onBack}
                     />

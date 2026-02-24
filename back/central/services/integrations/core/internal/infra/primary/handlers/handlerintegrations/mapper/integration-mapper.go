@@ -26,6 +26,7 @@ func ToCreateIntegrationDTO(req request.CreateIntegrationRequest, createdByID ui
 		StoreID:           req.StoreID,
 		IsActive:          req.IsActive,
 		IsDefault:         req.IsDefault,
+		IsTesting:         req.IsTesting,
 		Config:            configJSON,
 		Credentials:       req.Credentials,
 		Description:       req.Description,
@@ -63,6 +64,9 @@ func ToUpdateIntegrationDTO(req request.UpdateIntegrationRequest, updatedByID ui
 	}
 	if req.IsDefault != nil {
 		dto.IsDefault = req.IsDefault
+	}
+	if req.IsTesting != nil {
+		dto.IsTesting = req.IsTesting
 	}
 	if req.Description != nil {
 		dto.Description = req.Description
@@ -115,6 +119,7 @@ func ToIntegrationResponse(integration *domain.Integration, imageURLBase string)
 		StoreID:           integration.StoreID,
 		IsActive:          integration.IsActive,
 		IsDefault:         integration.IsDefault,
+		IsTesting:         integration.IsTesting,
 		Config:            config,
 		Description:       integration.Description,
 		CreatedByID:       integration.CreatedByID,

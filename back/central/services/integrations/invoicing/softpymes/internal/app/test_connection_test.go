@@ -35,7 +35,7 @@ func validConfig() map[string]interface{} {
 func TestTestConnection_Success(t *testing.T) {
 	// Arrange
 	mockClient := &mocks.SoftpymesClientMock{
-		TestAuthenticationFn: func(_ context.Context, apiKey, apiSecret, referer string) error {
+		TestAuthenticationFn: func(_ context.Context, apiKey, apiSecret, referer, baseURL string) error {
 			return nil
 		},
 	}
@@ -57,7 +57,7 @@ func TestTestConnection_PassesCorrectCredentialsToClient(t *testing.T) {
 	// Arrange
 	var capturedKey, capturedSecret, capturedReferer string
 	mockClient := &mocks.SoftpymesClientMock{
-		TestAuthenticationFn: func(_ context.Context, apiKey, apiSecret, referer string) error {
+		TestAuthenticationFn: func(_ context.Context, apiKey, apiSecret, referer, _ string) error {
 			capturedKey = apiKey
 			capturedSecret = apiSecret
 			capturedReferer = referer
@@ -309,7 +309,7 @@ func TestTestConnection_ClientAuthenticationError(t *testing.T) {
 	// Arrange
 	clientErr := errors.New("invalid credentials")
 	mockClient := &mocks.SoftpymesClientMock{
-		TestAuthenticationFn: func(_ context.Context, _, _, _ string) error {
+		TestAuthenticationFn: func(_ context.Context, _, _, _, _ string) error {
 			return clientErr
 		},
 	}
@@ -342,7 +342,7 @@ func TestTestConnection_ClientNetworkError(t *testing.T) {
 	// Arrange
 	networkErr := fmt.Errorf("connection timeout: dial tcp: i/o timeout")
 	mockClient := &mocks.SoftpymesClientMock{
-		TestAuthenticationFn: func(_ context.Context, _, _, _ string) error {
+		TestAuthenticationFn: func(_ context.Context, _, _, _, _ string) error {
 			return networkErr
 		},
 	}
@@ -454,7 +454,7 @@ func TestTestConnection_TableDriven(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			mockClient := &mocks.SoftpymesClientMock{
-				TestAuthenticationFn: func(_ context.Context, _, _, _ string) error {
+				TestAuthenticationFn: func(_ context.Context, _, _, _, _ string) error {
 					return tt.clientErr
 				},
 			}
