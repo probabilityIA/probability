@@ -25,6 +25,16 @@ func (m *MeliCore) TestConnection(ctx context.Context, config map[string]interfa
 	return m.useCase.TestConnection(ctx, config, credentials)
 }
 
+// SyncOrdersByIntegrationID delega la sincronización de órdenes al use case.
+func (m *MeliCore) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
+	return m.useCase.SyncOrders(ctx, integrationID)
+}
+
+// SyncOrdersByIntegrationIDWithParams delega la sincronización con parámetros al use case.
+func (m *MeliCore) SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error {
+	return m.useCase.SyncOrdersWithParams(ctx, integrationID, params)
+}
+
 // GetWebhookURL retorna la URL base para los webhooks de MercadoLibre.
 // MercadoLibre usa notificaciones (IPN) en lugar de webhooks clásicos.
 func (m *MeliCore) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*integrationcore.WebhookInfo, error) {
