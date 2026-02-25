@@ -1,0 +1,37 @@
+// ============================================
+// Grafana Alloy - Probability Production
+// Scrapes cAdvisor + backend metrics and sends to Grafana Cloud
+// ============================================
+
+// Remote Write to Grafana Cloud
+prometheus.remote_write "grafana_cloud" {
+  endpoint {
+    url = "https://prometheus-prod-40-prod-sa-east-1.grafana.net/api/prom/push"
+
+    basic_auth {
+      username = "3001366"
+      password = env("GRAFANA_CLOUD_API_KEY")
+    }
+  }
+}
+
+// Scrape cAdvisor - métricas de contenedores (CPU, RAM, red, disco)
+prometheus.scrape "cadvisor" {
+  targets = [{
+    __address__ = "cadvisor:8080",
+  }]
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+}
+
+// Scrape Backend Go - métricas HTTP (latencia, errores, requests)
+prometheus.scrape "backend" {
+  targets = [{
+    __address__ = "back-central:3050",
+  }]
+  metrics_path    = "/metrics"
+  forward_to      = [prometheus.remote_write.grafana_cloud.receiver]
+  scrape_interval = "15s"
+  scrape_timeout  = "10s"
+}
