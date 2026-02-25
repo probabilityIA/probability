@@ -209,17 +209,90 @@
       }
     },
     {
+      "id": 15,
+      "title": "Total RAM en contenedores",
+      "description": "Suma de la RAM consumida por todos los contenedores activos",
+      "type": "stat",
+      "gridPos": { "h": 10, "w": 5, "x": 0, "y": 14 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}) / 1024 / 1024",
+          "legendFormat": "Contenedores",
+          "refId": "A",
+          "instant": true
+        },
+        {
+          "expr": "(container_memory_usage_bytes{id=\"/\"} - scalar(sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}))) / 1024 / 1024",
+          "legendFormat": "Sistema OS",
+          "refId": "B",
+          "instant": true
+        },
+        {
+          "expr": "(scalar(machine_memory_bytes) - container_memory_usage_bytes{id=\"/\"}) / 1024 / 1024",
+          "legendFormat": "Libre",
+          "refId": "C",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "mbytes",
+          "color": { "mode": "palette-classic" }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Libre" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "semi-dark-green" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Sistema OS" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "gray" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Contenedores" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "vertical",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
       "id": 2,
-      "title": "Memoria por contenedor (% del servidor)",
-      "description": "Cuánto ocupa cada contenedor sobre el total de RAM del servidor",
+      "title": "Distribución de RAM del servidor",
+      "description": "Vista completa del uso de RAM: cada contenedor, procesos del sistema OS, y memoria libre",
       "type": "piechart",
-      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 14 },
+      "gridPos": { "h": 10, "w": 19, "x": 5, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
           "expr": "label_replace(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"} / scalar(machine_memory_bytes) * 100, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
           "legendFormat": "{{service}}",
           "refId": "A",
+          "instant": true
+        },
+        {
+          "expr": "(container_memory_usage_bytes{id=\"/\"} - scalar(sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}))) / scalar(machine_memory_bytes) * 100",
+          "legendFormat": "Sistema OS",
+          "refId": "B",
+          "instant": true
+        },
+        {
+          "expr": "(scalar(machine_memory_bytes) - container_memory_usage_bytes{id=\"/\"}) / scalar(machine_memory_bytes) * 100",
+          "legendFormat": "Libre",
+          "refId": "C",
           "instant": true
         }
       ],
@@ -229,7 +302,20 @@
           "color": { "mode": "palette-classic" },
           "custom": {}
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Libre" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "semi-dark-green" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Sistema OS" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "gray" } }
+            ]
+          }
+        ]
       },
       "options": {
         "pieType": "donut",
