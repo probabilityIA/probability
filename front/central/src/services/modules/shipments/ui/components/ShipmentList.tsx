@@ -29,11 +29,11 @@ const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <CheckCircle2 size={12} /> },
-    in_transit: { label: 'En tránsito', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Truck size={12} /> },
-    pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock size={12} /> },
-    failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={12} /> },
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; border: string }> = {
+    delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <CheckCircle2 size={12} />, border: 'border-emerald-400' },
+    in_transit: { label: 'En tránsito', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Truck size={12} />, border: 'border-blue-400' },
+    pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock size={12} />, border: 'border-amber-300' },
+    failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={12} />, border: 'border-red-400' },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -175,6 +175,15 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <div className="flex items-center gap-1.5">
                                 <Clock size={13} className="text-blue-500" />
                                 <p className="text-sm font-semibold text-blue-700">{formatDate(shipment.estimated_delivery)}</p>
+                            </div>
+                        </div>
+                    )}
+                    {shipment.created_at && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Creado</p>
+                            <div className="flex items-center gap-1.5">
+                                <Calendar size={13} className="text-gray-400" />
+                                <p className="text-sm font-semibold text-gray-900">{formatDate(shipment.created_at)}</p>
                             </div>
                         </div>
                     )}
@@ -614,56 +623,66 @@ export default function ShipmentList() {
                             shipments.map((shipment) => {
                                 const isSelected = selectedShipment?.id === shipment.id;
                                 const city = extractCity(shipment.destination_address);
-                                const title = shipment.client_name || 'Cliente desconocido';
-                                const subtitle = city
-                                    ? `→ ${city}`
-                                    : shipment.destination_address
-                                        ? `→ ${shipment.destination_address}`
-                                        : shipment.order_id
-                                            ? `Orden: ${shipment.order_id.substring(0, 8)}...`
-                                            : null;
+                                const clientName = shipment.client_name?.trim() || null;
+                                const statusCfg = STATUS_CONFIG[shipment.status] || { label: shipment.status, color: 'bg-gray-100 text-gray-600 border-gray-200', icon: null, border: 'border-gray-300' };
 
                                 return (
                                     <button
                                         key={shipment.id}
                                         onClick={() => setSelectedShipment(isSelected ? null : shipment)}
-                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${isSelected ? 'bg-blue-50 border-l-[3px] border-blue-500' : 'border-l-[3px] border-transparent'
-                                            }`}
+                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${
+                                            isSelected
+                                                ? 'bg-blue-50 border-l-[3px] border-blue-500'
+                                                : `border-l-[3px] ${statusCfg.border}`
+                                        }`}
                                     >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <p className="text-sm font-semibold text-gray-900 truncate">{title}</p>
-                                                    {subtitle && (
-                                                        <p className="text-xs text-gray-400 truncate flex-shrink-0">{subtitle}</p>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <StatusBadge status={shipment.status} />
-                                                    {shipment.is_test && (
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
-                                                    )}
-                                                    {shipment.tracking_number && (
-                                                        <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                                                            #{shipment.tracking_number.slice(-8)}
-                                                        </span>
-                                                    )}
-                                                    {shipment.carrier && (
-                                                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                                                            <Truck size={9} />{shipment.carrier}
-                                                        </span>
-                                                    )}
-                                                    {shipment.shipped_at && (
-                                                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                                                            <Calendar size={9} />{formatDate(shipment.shipped_at)}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                        {/* Row 1: Client name + destination city */}
+                                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                {!clientName && <Package size={11} className="text-gray-300 flex-shrink-0" />}
+                                                <p className={`text-sm font-semibold truncate ${clientName ? 'text-gray-900' : 'text-gray-400 italic'}`}>
+                                                    {clientName || 'Sin destinatario'}
+                                                </p>
                                             </div>
-                                            <ChevronRight
-                                                size={16}
-                                                className={`flex-shrink-0 mt-0.5 transition-colors ${isSelected ? 'text-blue-500' : 'text-gray-300'}`}
-                                            />
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                {city && (
+                                                    <span className="flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                                        <MapPin size={8} />{city}
+                                                    </span>
+                                                )}
+                                                {shipment.total_cost != null && (
+                                                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
+                                                        {formatMoney(shipment.total_cost)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Row 2: Status + TEST badge */}
+                                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                                            <StatusBadge status={shipment.status} />
+                                            {shipment.is_test && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
+                                            )}
+                                        </div>
+
+                                        {/* Row 3: Tracking + carrier + date */}
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {shipment.tracking_number && (
+                                                <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                    #{shipment.tracking_number.slice(-10)}
+                                                </span>
+                                            )}
+                                            {shipment.carrier && (
+                                                <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                                    <Truck size={9} />{shipment.carrier}
+                                                </span>
+                                            )}
+                                            {(shipment.shipped_at || shipment.created_at) && (
+                                                <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                                    <Calendar size={9} />{formatDate(shipment.shipped_at || shipment.created_at)}
+                                                </span>
+                                            )}
                                         </div>
                                     </button>
                                 );

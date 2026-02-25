@@ -128,11 +128,15 @@ export async function processRequestAction(id: string, action: 'approve' | 'reje
 
 /**
  * Get current business wallet balance
+ * @param businessId Optional - super admin can specify a business_id to view another business's balance
  */
-export async function getWalletBalanceAction() {
+export async function getWalletBalanceAction(businessId?: number) {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/balance`, {
+        const url = businessId
+            ? `${env.API_BASE_URL}/wallet/balance?business_id=${businessId}`
+            : `${env.API_BASE_URL}/wallet/balance`;
+        const res = await fetch(url, {
             headers,
             cache: 'no-store'
         });
@@ -151,14 +155,15 @@ export async function getWalletBalanceAction() {
 
 /**
  * Request a recharge
+ * @param businessId Optional - super admin can recharge on behalf of a specific business
  */
-export async function rechargeWalletAction(amount: number) {
+export async function rechargeWalletAction(amount: number, businessId?: number) {
     try {
         const headers = await getAuthHeader();
         const res = await fetch(`${env.API_BASE_URL}/wallet/recharge`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ amount })
+            body: JSON.stringify({ amount, ...(businessId ? { business_id: businessId } : {}) })
         });
 
         if (!res.ok) {
@@ -221,12 +226,16 @@ export async function manualDebitAction(businessId: number, amount: number, refe
 }
 
 /**
- * Get current business transaction history
+ * Get business transaction history
+ * @param businessId Optional - super admin can view history for a specific business
  */
-export async function getWalletHistoryAction() {
+export async function getWalletHistoryAction(businessId?: number) {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/history`, {
+        const url = businessId
+            ? `${env.API_BASE_URL}/wallet/history?business_id=${businessId}`
+            : `${env.API_BASE_URL}/wallet/history`;
+        const res = await fetch(url, {
             headers,
             cache: 'no-store'
         });

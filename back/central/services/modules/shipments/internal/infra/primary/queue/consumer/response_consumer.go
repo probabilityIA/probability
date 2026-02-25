@@ -9,6 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
+	"github.com/secamc93/probability/back/central/shared/redis"
 )
 
 const (
@@ -36,6 +37,7 @@ type ResponseConsumer struct {
 	repo         domain.IRepository
 	log          log.ILogger
 	ssePublisher domain.IShipmentSSEPublisher
+	redisClient  redis.IRedis
 }
 
 // NewResponseConsumer creates a new transport response consumer
@@ -44,12 +46,14 @@ func NewResponseConsumer(
 	repo domain.IRepository,
 	logger log.ILogger,
 	ssePublisher domain.IShipmentSSEPublisher,
+	redisClient redis.IRedis,
 ) *ResponseConsumer {
 	return &ResponseConsumer{
 		queue:        queue,
 		repo:         repo,
 		log:          logger.WithModule("shipments.transport_response_consumer"),
 		ssePublisher: ssePublisher,
+		redisClient:  redisClient,
 	}
 }
 
@@ -173,9 +177,23 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment with tracking data")
 			}
+
+			// Sync guide_link and tracking_number to the order immediately
+			if shipment.OrderID != nil && *shipment.OrderID != "" {
+				if err := c.repo.UpdateOrderGuideLink(ctx, *shipment.OrderID, labelURL, trackingNumber); err != nil {
+					c.log.Error(ctx).Err(err).
+						Str("order_id", *shipment.OrderID).
+						Msg("Failed to sync guide_link to order")
+				} else {
+					c.log.Info(ctx).
+						Str("order_id", *shipment.OrderID).
+						Str("guide_link", labelURL).
+						Msg("✅ guide_link synced to order")
+				}
+			}
 		}
 
-		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, trackingNumber, labelURL)
+		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL)
 	}
 }
 
@@ -189,6 +207,7 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 			Str("correlation_id", response.CorrelationID).
 			Msg("❌ Quote request failed")
 
+		c.storeQuoteResult(ctx, response.CorrelationID, nil, response.Error)
 		c.ssePublisher.PublishQuoteFailed(ctx, businessID, response.CorrelationID, response.Error)
 		return
 	}
@@ -197,7 +216,37 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 		Str("correlation_id", response.CorrelationID).
 		Msg("✅ Quote response received")
 
+	c.storeQuoteResult(ctx, response.CorrelationID, response.Data, "")
 	c.ssePublisher.PublishQuoteReceived(ctx, businessID, response.CorrelationID, response.Data)
+}
+
+// storeQuoteResult stores the quote result in Redis so the HTTP handler can poll for it synchronously.
+func (c *ResponseConsumer) storeQuoteResult(ctx context.Context, correlationID string, data map[string]interface{}, errMsg string) {
+	if c.redisClient == nil {
+		return
+	}
+
+	status := "success"
+	if errMsg != "" {
+		status = "error"
+	}
+
+	result := map[string]interface{}{
+		"status": status,
+		"data":   data,
+		"error":  errMsg,
+	}
+
+	bytes, err := json.Marshal(result)
+	if err != nil {
+		c.log.Warn(ctx).Err(err).Str("correlation_id", correlationID).Msg("Failed to marshal quote result for Redis")
+		return
+	}
+
+	key := fmt.Sprintf("shipment:quote:result:%s", correlationID)
+	if err := c.redisClient.Set(ctx, key, string(bytes), 60*time.Second); err != nil {
+		c.log.Warn(ctx).Err(err).Str("correlation_id", correlationID).Msg("Failed to store quote result in Redis")
+	}
 }
 
 // handleTrackResponse processes a tracking response

@@ -36,6 +36,10 @@ type IRepository interface {
 	GetShipmentBusinessIDByTracking(ctx context.Context, trackingNumber string) (uint, error)
 	GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error)
 
+	// Order guide sync (replicated write — module isolation, no shared repo)
+	// Updates guide_link and tracking_number on the orders table after guide generation.
+	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string) error
+
 	// Origin Addresses
 	CreateOriginAddress(ctx context.Context, address *OriginAddress) error
 	GetOriginAddressByID(ctx context.Context, id uint) (*OriginAddress, error)
@@ -104,7 +108,7 @@ type ITransportRequestPublisher interface {
 type IShipmentSSEPublisher interface {
 	PublishQuoteReceived(ctx context.Context, businessID uint, correlationID string, data map[string]interface{})
 	PublishQuoteFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)
-	PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, trackingNumber string, labelURL string)
+	PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string)
 	PublishGuideFailed(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string)
 	PublishTrackingUpdated(ctx context.Context, businessID uint, correlationID string, data map[string]interface{})
 	PublishTrackingFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)

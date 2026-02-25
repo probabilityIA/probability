@@ -21,9 +21,10 @@ const OrderRow = memo(({
     order,
     onView,
     onEdit,
-    onViewRecommendation, // NEW prop
+    onViewRecommendation,
     onDelete,
     onShowRaw,
+    onShowGuide,
     formatCurrency,
     formatDate,
     getStatusBadge,
@@ -35,9 +36,10 @@ const OrderRow = memo(({
     order: Order;
     onView?: (order: Order) => void;
     onEdit?: (order: Order) => void;
-    onViewRecommendation?: (order: Order) => void; // NEW prop definition
+    onViewRecommendation?: (order: Order) => void;
     onDelete: (id: string) => void;
     onShowRaw: (id: string) => void;
+    onShowGuide: (guideLink: string) => void;
     formatCurrency: (amount: number, currency?: string, amountPresentment?: number, currencyPresentment?: string) => string;
     formatDate: (dateString: string) => { date: string; time: string };
     getStatusBadge: (status: string, color?: string) => React.ReactNode;
@@ -120,8 +122,14 @@ const OrderRow = memo(({
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                 {order.payment_status?.name ? (
                     getStatusBadge(order.payment_status.name, order.payment_status.color)
+                ) : order.is_paid ? (
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        Pagado
+                    </span>
                 ) : (
-                    <span className="text-xs text-gray-400">-</span>
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        No pagado
+                    </span>
                 )}
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
@@ -253,6 +261,18 @@ const OrderRow = memo(({
                             </svg>
                         </button>
                     )}
+                    {order.guide_link && (
+                        <button
+                            onClick={() => onShowGuide(order.guide_link!)}
+                            className="p-2 bg-blue-500 hover:bg-blue-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            title="Ver guía de envío"
+                            aria-label="Ver guía de envío"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                        </button>
+                    )}
                     <button
                         onClick={() => onDelete(order.id)}
                         className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
@@ -293,6 +313,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const [total, setTotal] = useState(0);
     const isFirstLoad = useRef(true);
     const [newOrderIds, setNewOrderIds] = useState<Set<string>>(new Set());
+
+    // Guide Modal
+    const [guideUrl, setGuideUrl] = useState<string | null>(null);
 
     // Raw Data Modal
     const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
@@ -1057,6 +1080,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                             setSelectedOrderId(id);
                                             setIsRawModalOpen(true);
                                         }}
+                                        onShowGuide={(link) => setGuideUrl(link)}
                                         formatCurrency={formatCurrency}
                                         formatDate={formatDate}
                                         getStatusBadge={getStatusBadge}
@@ -1266,6 +1290,76 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     integrationLogoUrl={selectedOrderLogo}
                     platform={selectedOrderPlatform}
                 />
+            )}
+
+            {/* Guide Modal */}
+            {guideUrl && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center"
+                    onClick={() => setGuideUrl(null)}
+                >
+                    <div className="absolute inset-0 bg-black/60" />
+                    <div
+                        className="relative z-10 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
+                        style={{ width: '480px', maxWidth: '90vw' }}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-5 py-4 border-b bg-gray-50">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                                <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Guía de envío
+                            </div>
+                            <button
+                                onClick={() => setGuideUrl(null)}
+                                className="p-1.5 text-gray-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-50"
+                                aria-label="Cerrar"
+                            >
+                                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+                        {/* PDF download/open UI — iframes can't embed S3 PDFs reliably */}
+                        <div className="p-8 flex flex-col items-center gap-6">
+                            <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center">
+                                <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 4h5v7h7v9H6V4z"/>
+                                    <path d="M8 12h8v1.5H8V12zm0 3h8v1.5H8V15zm0 3h5v1.5H8V18z"/>
+                                </svg>
+                            </div>
+                            <div className="text-center">
+                                <p className="font-semibold text-gray-800 text-lg">Guía de Envío lista</p>
+                                <p className="text-sm text-gray-500 mt-1">El PDF está disponible para ver o descargar</p>
+                            </div>
+                            <div className="flex flex-col gap-3 w-full">
+                                <a
+                                    href={guideUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors shadow-sm"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                    </svg>
+                                    Abrir PDF en nueva pestaña
+                                </a>
+                                <a
+                                    href={guideUrl}
+                                    download
+                                    className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                    </svg>
+                                    Descargar PDF
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );
