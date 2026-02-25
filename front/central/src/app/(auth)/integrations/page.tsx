@@ -16,6 +16,17 @@ import { getIntegrationByIdAction } from '@/services/integrations/core/infra/act
 
 import { useSearchParams } from 'next/navigation';
 import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+
+// Mapeo de código de categoría → nombre del recurso en BD
+const CATEGORY_RESOURCE_MAP: Record<string, string> = {
+    'ecommerce': 'Integraciones-E-commerce',
+    'invoicing': 'Integraciones-Facturacion-Electronica',
+    'messaging': 'Integraciones-Mensajeria',
+    'payment': 'Integraciones-Pagos',
+    'shipping': 'Integraciones-Logistica',
+    'platform': 'Integraciones-Platform',
+};
 
 export default function IntegrationsPage() {
     const searchParams = useSearchParams();
@@ -33,26 +44,35 @@ export default function IntegrationsPage() {
 
     // Hooks for categories and integrations
     const { categories, loading: categoriesLoading } = useCategories();
+    const { hasPermission, isSuperAdmin } = usePermissions();
 
-    // Seleccionar primera categoría automáticamente cuando se cargan las categorías
+    // Permisos por tab/categoría
+    const canViewTypes = isSuperAdmin || hasPermission('Integraciones-Tipos-de-integracion', 'Read');
+
+    // Filtrar categorías según permisos del usuario
+    const allowedCategories = categories.filter(c => {
+        if (isSuperAdmin) return true;
+        const resource = CATEGORY_RESOURCE_MAP[c.code];
+        if (!resource) return true; // categoría sin recurso mapeado: visible por defecto
+        return hasPermission(resource, 'Read');
+    });
+
+    // Seleccionar primera categoría permitida automáticamente
     useEffect(() => {
-        if (!categoriesLoading && categories.length > 0 && activeCategoryCode === null) {
-            const firstCategory = categories
+        if (!categoriesLoading && allowedCategories.length > 0 && activeCategoryCode === null) {
+            const firstCategory = allowedCategories
                 .filter(c => c.is_visible && c.is_active)
                 .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))[0];
             if (firstCategory) {
                 setActiveCategoryCode(firstCategory.code);
             }
         }
-    }, [categories, categoriesLoading, activeCategoryCode]);
+    }, [categoriesLoading, allowedCategories, activeCategoryCode]);
 
     // Return condicional después de todos los hooks
     if (isOAuthCallback) {
         return <ShopifyOAuthCallback />;
     }
-
-    // TODO: Obtener del contexto de usuario si es super admin
-    const isSuperUser = true; // Por ahora en true, después conectar con el contexto de permisos
 
     const handleSuccess = () => {
         setShowCreateModal(false);
@@ -95,7 +115,7 @@ export default function IntegrationsPage() {
             {/* Category Tabs - navegación única */}
             {!categoriesLoading && (
                 <CategoryTabs
-                    categories={categories}
+                    categories={allowedCategories}
                     activeCategory={activeCategoryCode}
                     activeTab={activeTab}
                     onSelectCategory={(code) => {
@@ -103,7 +123,7 @@ export default function IntegrationsPage() {
                         handleCategoryChange(code);
                     }}
                     onSelectTypes={() => setActiveTab('types')}
-                    isSuperUser={isSuperUser}
+                    canViewTypes={canViewTypes}
                 />
             )}
 
@@ -141,7 +161,7 @@ export default function IntegrationsPage() {
                 <CreateIntegrationModal
                     isOpen={showCreateModal}
                     onClose={handleModalClose}
-                    categories={categories}
+                    categories={allowedCategories}
                     onSuccess={handleSuccess}
                 />
             ) : (

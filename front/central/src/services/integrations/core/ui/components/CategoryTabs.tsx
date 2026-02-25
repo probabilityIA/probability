@@ -8,7 +8,7 @@ interface CategoryTabsProps {
     activeTab: 'integrations' | 'types';
     onSelectCategory: (categoryCode: string | null) => void;
     onSelectTypes: () => void;
-    isSuperUser?: boolean;
+    canViewTypes?: boolean;
 }
 
 export function CategoryTabs({
@@ -17,7 +17,7 @@ export function CategoryTabs({
     activeTab,
     onSelectCategory,
     onSelectTypes,
-    isSuperUser = false
+    canViewTypes = false
 }: CategoryTabsProps) {
     // Filter and sort categories
     const sortedCategories = [...categories]
@@ -43,8 +43,8 @@ export function CategoryTabs({
                     </button>
                 ))}
 
-                {/* Tab "Tipos de Integración" - solo para super usuario */}
-                {isSuperUser && (
+                {/* Tab "Tipos de Integración" - controlado por permiso */}
+                {canViewTypes && (
                     <button
                         onClick={onSelectTypes}
                         className={`
