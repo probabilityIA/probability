@@ -76,6 +76,8 @@ export interface Order {
     shipping_state: string;
     shipping_country: string;
     shipping_postal_code: string;
+    shipping_house?: string;
+    shipping_barrio?: string;
     shipping_lat?: number;
     shipping_lng?: number;
 
@@ -240,6 +242,8 @@ export interface CreateOrderDTO {
     shipping_state?: string;
     shipping_country?: string;
     shipping_postal_code?: string;
+    shipping_house?: string;
+    shipping_barrio?: string;
     shipping_lat?: number;
     shipping_lng?: number;
 
@@ -326,6 +330,8 @@ export interface UpdateOrderDTO {
     shipping_state?: string;
     shipping_country?: string;
     shipping_postal_code?: string;
+    shipping_house?: string;
+    shipping_barrio?: string;
     shipping_lat?: number;
     shipping_lng?: number;
 

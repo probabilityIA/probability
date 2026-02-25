@@ -30,8 +30,8 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                                 <div
                                     className={cn(
                                         "w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors",
-                                        isCompleted && "bg-green-500 text-white",
-                                        isActive && "bg-orange-500 text-white",
+                                        isCompleted && "bg-purple-700 text-white",
+                                        isActive && "bg-purple-700 text-white",
                                         !isActive && !isCompleted && "bg-gray-200 text-gray-500"
                                     )}
                                 >
@@ -57,8 +57,8 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                                 <span
                                     className={cn(
                                         "mt-2 text-sm font-medium text-center",
-                                        isActive && "text-orange-600",
-                                        isCompleted && "text-green-600",
+                                        isActive && "text-purple-700",
+                                        isCompleted && "text-purple-700",
                                         !isActive && !isCompleted && "text-gray-500"
                                     )}
                                 >
@@ -71,7 +71,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                                 <div
                                     className={cn(
                                         "h-1 flex-1 mx-2 rounded transition-colors",
-                                        isCompleted ? "bg-green-500" : "bg-gray-200"
+                                        isCompleted ? "bg-purple-700" : "bg-gray-200"
                                     )}
                                     style={{ marginTop: '-2rem' }}
                                 />

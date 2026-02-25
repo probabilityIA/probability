@@ -605,7 +605,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 {/* Header */}
                 <div className="bg-white border-b px-3 py-3 z-10">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-2xl font-bold text-gray-800">Generar Guía de Envío</h2>
+                        <h2 className="text-2xl font-bold text-purple-700">Generar Guía de Envío</h2>
                         <button
                             onClick={onClose}
                             className="text-gray-500 hover:text-gray-700 text-2xl"
@@ -637,7 +637,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 {/* Origin */}
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="font-semibold text-lg text-gray-700">Origen</h3>
+                                        <h3 className="font-semibold text-lg text-purple-700">Origen</h3>
                                         {originAddresses.length > 0 && (
                                             <select
                                                 className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
@@ -700,7 +700,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                 {/* Destination */}
                                 <div className="space-y-2">
-                                    <h3 className="font-semibold text-lg text-gray-700">Destino</h3>
+                                    <h3 className="font-semibold text-lg text-purple-700">Destino</h3>
 
                                     <div ref={destRef} className="relative">
                                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -1129,101 +1129,105 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 4: Payment & Confirmation */}
                     {currentStep === 4 && selectedRate && (
-                        <div className="space-y-3">
-                            <h3 className="font-semibold text-lg text-gray-700">Resumen de tu envío</h3>
+                        <div className="flex flex-col h-full overflow-hidden">
+                            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                                <h3 className="font-semibold text-lg text-gray-700">Resumen de tu envío</h3>
 
-                            <div className="bg-gray-50 p-2 rounded-lg">
-                                <div className="flex items-center justify-between mb-2">
-                                    <div className="flex items-center space-x-2">
-                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                        </svg>
-                                        <span className="font-medium">1 Envíos</span>
+                                <div className="bg-gray-50 p-2 rounded-lg">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="flex items-center space-x-2">
+                                            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                                            </svg>
+                                            <span className="font-medium">1 Envíos</span>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-sm text-gray-600">TOTAL:</div>
+                                            <div className="text-2xl font-bold text-purple-600">
+                                                ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0)).toLocaleString()}
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div className="text-right">
-                                        <div className="text-sm text-gray-600">TOTAL:</div>
-                                        <div className="text-2xl font-bold text-purple-600">
-                                            ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0)).toLocaleString()}
+
+                                    <div className="border-t pt-4 flex items-center gap-4">
+                                        <img
+                                            src={getCarrierLogo(selectedRate.carrier)}
+                                            alt={selectedRate.carrier}
+                                            className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white p-1 flex-shrink-0"
+                                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                        />
+                                        <div>
+                                            <div className="font-medium text-gray-800">{selectedRate.carrier}</div>
+                                            <div className="text-sm text-gray-500">{selectedRate.product}</div>
+                                            {selectedRate.deliveryDays > 0 && (
+                                                <div className="text-xs text-gray-400 mt-1">{selectedRate.deliveryDays} día{selectedRate.deliveryDays !== 1 ? 's' : ''} hábil{selectedRate.deliveryDays !== 1 ? 'es' : ''}</div>
+                                            )}
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="border-t pt-4 flex items-center gap-4">
-                                    <img
-                                        src={getCarrierLogo(selectedRate.carrier)}
-                                        alt={selectedRate.carrier}
-                                        className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white p-1 flex-shrink-0"
-                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                    />
-                                    <div>
-                                        <div className="font-medium text-gray-800">{selectedRate.carrier}</div>
-                                        <div className="text-sm text-gray-500">{selectedRate.product}</div>
-                                        {selectedRate.deliveryDays > 0 && (
-                                            <div className="text-xs text-gray-400 mt-1">{selectedRate.deliveryDays} día{selectedRate.deliveryDays !== 1 ? 's' : ''} hábil{selectedRate.deliveryDays !== 1 ? 'es' : ''}</div>
-                                        )}
+                                <div>
+                                    <h4 className="font-medium text-gray-700 mb-3">Selecciona tu método de pago</h4>
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div className="border-2 border-purple-500 rounded-lg p-2 bg-purple-50">
+                                            <div className="flex items-center justify-center mb-2">
+                                                <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                                </svg>
+                                            </div>
+                                            <div className="text-center font-semibold">Monedero</div>
+                                            <div className="text-center text-sm text-gray-600">
+                                                ${walletBalance?.toLocaleString() || 0}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+
+                                {generatedPdfUrl ? (
+                                    /* ── Success state ── */
+                                    <div className="mt-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 p-6 flex flex-col items-center gap-4">
+                                        <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
+                                            <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                            </svg>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="font-bold text-emerald-800 text-lg">¡Guía generada exitosamente!</p>
+                                            {trackingNumber && (
+                                                <p className="text-sm text-emerald-700 mt-1 font-mono bg-emerald-100 px-3 py-1 rounded-full inline-block mt-2">
+                                                    {trackingNumber}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-col gap-2 w-full max-w-xs">
+                                            <a
+                                                href={generatedPdfUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                                Abrir PDF en nueva pestaña
+                                            </a>
+                                            <a
+                                                href={generatedPdfUrl}
+                                                download
+                                                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors text-sm"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                </svg>
+                                                Descargar PDF
+                                            </a>
+                                        </div>
+                                    </div>
+                                ) : null}
                             </div>
 
-                            <div>
-                                <h4 className="font-medium text-gray-700 mb-3">Selecciona tu método de pago</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="border-2 border-purple-500 rounded-lg p-2 bg-purple-50">
-                                        <div className="flex items-center justify-center mb-2">
-                                            <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                                            </svg>
-                                        </div>
-                                        <div className="text-center font-semibold">Monedero</div>
-                                        <div className="text-center text-sm text-gray-600">
-                                            ${walletBalance?.toLocaleString() || 0}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {generatedPdfUrl ? (
-                                /* ── Success state ── */
-                                <div className="mt-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 p-6 flex flex-col items-center gap-4">
-                                    <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-                                        <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    </div>
-                                    <div className="text-center">
-                                        <p className="font-bold text-emerald-800 text-lg">¡Guía generada exitosamente!</p>
-                                        {trackingNumber && (
-                                            <p className="text-sm text-emerald-700 mt-1 font-mono bg-emerald-100 px-3 py-1 rounded-full inline-block mt-2">
-                                                {trackingNumber}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col gap-2 w-full max-w-xs">
-                                        <a
-                                            href={generatedPdfUrl}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                            </svg>
-                                            Abrir PDF en nueva pestaña
-                                        </a>
-                                        <a
-                                            href={generatedPdfUrl}
-                                            download
-                                            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors text-sm"
-                                        >
-                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                            </svg>
-                                            Descargar PDF
-                                        </a>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="flex justify-between mt-3">
+                            {!generatedPdfUrl && (
+                                <div className="flex justify-between mt-3 pt-3 border-t">
                                     <Button
                                         variant="outline"
                                         onClick={() => setCurrentStep(3)}

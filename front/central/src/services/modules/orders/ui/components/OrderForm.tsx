@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Order, CreateOrderDTO, UpdateOrderDTO } from '../../domain/types';
 import { Product } from '../../../products/domain/types';
 import { Button, Input, Alert, Modal } from '@/shared/ui';
@@ -9,6 +9,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import ProductSelector from '../../../products/ui/components/ProductSelector';
 import ProductForm from '../../../products/ui/components/ProductForm';
 import { createOrderAction, updateOrderAction } from '../../infra/actions';
+import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 
 interface OrderFormProps {
     order?: Order;
@@ -92,10 +93,62 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
             } as Product))
             .filter((p: any) => p.id);
     });
+
+    const [shippingComplement, setShippingComplement] = useState(order?.shipping_complement || '');
     const [showProductModal, setShowProductModal] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+
+    // DANE search states
+    const [citySearch, setCitySearch] = useState('');
+    const [showCityResults, setShowCityResults] = useState(false);
+    const cityRef = useRef<HTMLDivElement>(null);
+
+    // Casa y Barrio states
+    const [house, setHouse] = useState(order?.shipping_house || '');
+    const [barrio, setBarrio] = useState(order?.shipping_barrio || '');
+
+    // DANE options
+    const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
+        value: code,
+        label: `${data.ciudad} (${data.departamento})`,
+        ciudad: data.ciudad,
+        departamento: data.departamento
+    })).sort((a, b) => a.label.localeCompare(b.label));
+
+    const filteredCityOptions = daneOptions.filter(opt =>
+        opt.label.toLowerCase().includes(citySearch.toLowerCase())
+    );
+
+    // Initialize citySearch when order is loaded
+    useEffect(() => {
+        if (order?.shipping_city && order?.shipping_state) {
+            setCitySearch(`${order.shipping_city} (${order.shipping_state})`);
+        }
+    }, [order]);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (cityRef.current && !cityRef.current.contains(event.target as Node)) {
+                setShowCityResults(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleCitySelect = (option: any) => {
+        setFormData({
+            ...formData,
+            shipping_city: option.ciudad,
+            shipping_state: option.departamento
+        });
+        setCitySearch(option.label);
+        setShowCityResults(false);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -110,6 +163,9 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
 
             const baseData = {
                 ...formData,
+                shipping_complement: shippingComplement,
+                shipping_house: house,
+                shipping_barrio: barrio,
                 items: selectedProducts.length > 0 ? selectedProducts : formData.items,
                 customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
             };
@@ -161,17 +217,17 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
     };
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-2 bg-purple-50 p-2 rounded-lg">
+        <form onSubmit={handleSubmit} className="space-y-4 bg-white p-6 rounded-lg">
             {isEdit && order && (
-                <div className="flex items-center gap-3 px-2 py-2 mb-1 bg-purple-100 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-3 px-4 py-3 mb-4 bg-gradient-to-r from-purple-600 to-purple-500 rounded-lg shadow-sm">
                     {order.integration_logo_url && (
                         <img src={order.integration_logo_url} alt="" className="h-8 w-8 object-contain rounded" />
                     )}
                     <div>
-                        <p className="text-xs text-purple-600 font-medium">
+                        <p className="text-xs text-white font-medium uppercase tracking-wide">
                             {order.integration_name || order.integration_type || 'Integración'}
                         </p>
-                        <p className="text-sm font-bold text-gray-800">
+                        <p className="text-sm font-bold text-white">
                             {order.order_number || order.internal_number || order.id}
                         </p>
                     </div>
@@ -184,15 +240,15 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
             )}
 
             {/* 3-Column Layout with 2-Column below */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Column 1: Customer Info */}
                 <div>
                     {/* Customer Info */}
-                    <div className="bg-purple-300 p-5 rounded-lg">
-                        <h3 className="text-base font-semibold text-black mb-4">Información del Cliente</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg">
+                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Información del Cliente</h3>
+                        <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Nombre *
                                 </label>
                                 <Input
@@ -203,7 +259,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Apellido *
                                 </label>
                                 <Input
@@ -213,9 +269,9 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                     onChange={(e) => setFormData({ ...formData, customer_last_name: e.target.value })}
                                 />
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    📧 Email *
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    📧 Email
                                 </label>
                                 <Input
                                     type="email"
@@ -223,12 +279,12 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                     onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
                                 />
                             </div>
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-black mb-2">
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     📱 Teléfono *
                                 </label>
                                 <div className="flex items-center w-full">
-                                    <span className="px-3 py-2 bg-purple-200 text-black font-medium rounded-l-lg border border-r-0 border-gray-300">
+                                    <span className="px-3 py-2.5 bg-purple-700 text-white font-semibold rounded-l-lg border border-r-0 border-purple-700">
                                         +57
                                     </span>
                                     <div className="flex-1">
@@ -248,59 +304,99 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                 {/* Column 2: Shipping Address */}
                 <div>
                     {/* Shipping Address */}
-                    <div className="bg-purple-300 p-5 rounded-lg">
-                        <h3 className="text-base font-semibold text-black mb-4">Dirección de Envío</h3>
+                    <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg">
+                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Dirección de Envío</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Calle
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Dirección
                                 </label>
                                 <Input
                                     type="text"
                                     value={formData.shipping_street}
                                     onChange={(e) => setFormData({ ...formData, shipping_street: e.target.value })}
+                                    placeholder="Calle/Carrera número"
                                 />
                             </div>
+
+                            {/* City with autocomplete */}
+                            <div ref={cityRef} className="relative md:col-span-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Ciudad y Departamento
+                                </label>
+                                <input
+                                    type="text"
+                                    value={citySearch}
+                                    onChange={(e) => {
+                                        setCitySearch(e.target.value);
+                                        setShowCityResults(true);
+                                    }}
+                                    onFocus={() => setShowCityResults(true)}
+                                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black"
+                                    placeholder="Buscar ciudad..."
+                                />
+                                {showCityResults && filteredCityOptions.length > 0 && (
+                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                        {filteredCityOptions.slice(0, 50).map((opt) => (
+                                            <div
+                                                key={opt.value}
+                                                onClick={() => handleCitySelect(opt)}
+                                                className="px-3 py-2 hover:bg-purple-100 cursor-pointer text-black"
+                                            >
+                                                {opt.label}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Ciudad
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Casa
                                 </label>
                                 <Input
                                     type="text"
-                                    value={formData.shipping_city}
-                                    onChange={(e) => setFormData({ ...formData, shipping_city: e.target.value })}
+                                    value={house}
+                                    onChange={(e) => setHouse(e.target.value)}
+                                    placeholder="Número de casa"
                                 />
                             </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Departamento
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    Barrio
                                 </label>
                                 <Input
                                     type="text"
-                                    value={formData.shipping_state}
-                                    onChange={(e) => setFormData({ ...formData, shipping_state: e.target.value })}
+                                    value={barrio}
+                                    onChange={(e) => setBarrio(e.target.value)}
+                                    placeholder="Nombre del barrio"
                                 />
                             </div>
+
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     País
                                 </label>
                                 <Input
                                     type="text"
                                     value={formData.shipping_country}
-                                    onChange={(e) => setFormData({ ...formData, shipping_country: e.target.value })}
+                                    disabled
+                                    className="bg-gray-100 cursor-not-allowed text-gray-600"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Código Postal
                                 </label>
                                 <Input
                                     type="text"
                                     value={formData.shipping_postal_code}
                                     onChange={(e) => setFormData({ ...formData, shipping_postal_code: e.target.value })}
+                                    placeholder="Código postal"
                                 />
                             </div>
+
                         </div>
                     </div>
                 </div>
@@ -308,105 +404,39 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                 {/* Column 3: Financial Info only */}
                 <div>
                     {/* Financial */}
-                    <div className="bg-purple-300 p-5 rounded-lg">
-                        <h3 className="text-base font-semibold text-black mb-4">Información Financiera</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg">
+                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Información Financiera</h3>
+                        <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Subtotal *
-                                </label>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    required
-                                    value={formData.subtotal}
-                                    onChange={(e) => setFormData({ ...formData, subtotal: parseFloat(e.target.value) || 0 })}
-                                    onBlur={calculateTotal}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Impuestos
-                                </label>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    value={formData.tax}
-                                    onChange={(e) => setFormData({ ...formData, tax: parseFloat(e.target.value) || 0 })}
-                                    onBlur={calculateTotal}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Descuento
-                                </label>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    value={formData.discount}
-                                    onChange={(e) => setFormData({ ...formData, discount: parseFloat(e.target.value) || 0 })}
-                                    onBlur={calculateTotal}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Costo de Envío
-                                </label>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    value={formData.shipping_cost}
-                                    onChange={(e) => setFormData({ ...formData, shipping_cost: parseFloat(e.target.value) || 0 })}
-                                    onBlur={calculateTotal}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Total *
                                 </label>
-                                <Input
-                                    type="number"
-                                    step="0.01"
-                                    required
-                                    value={formData.total_amount}
-                                    onChange={(e) => setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })}
-                                    className="font-bold"
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-sm font-medium text-black mb-2">
-                                    Moneda
-                                </label>
-                                <select
-                                    value={formData.currency}
-                                    onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                                >
-                                    <option value="COP">COP</option>
-                                    <option value="USD">USD</option>
-                                </select>
+                                <div className="flex items-center w-full">
+                                    <span className="px-3 py-2.5 bg-purple-700 text-white font-semibold rounded-l-lg border border-r-0 border-purple-700">
+                                        $
+                                    </span>
+                                    <div className="flex-1 relative">
+                                        <Input
+                                            type="number"
+                                            step="1"
+                                            required
+                                            value={formData.total_amount}
+                                            onChange={(e) => setFormData({ ...formData, total_amount: parseFloat(e.target.value) || 0 })}
+                                            className="rounded-l-none rounded-r-none w-full pr-16"
+                                            placeholder="0"
+                                        />
+                                    </div>
+                                    <span className="px-3 py-2.5 bg-purple-700 text-white font-semibold rounded-r-lg border border-l-0 border-purple-700">
+                                        COP
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Product Selection - spans 2 columns */}
-                <div className="lg:col-span-2">
-                    <div className="bg-purple-300 p-5 rounded-lg">
-                        <h3 className="text-base font-semibold text-black mb-4">Productos</h3>
-                        <ProductSelector
-                            businessId={formData.business_id || 0}
-                            selectedProducts={selectedProducts}
-                            onSelect={handleProductsChange}
-                            onCreateNew={() => setShowProductModal(true)}
-                        />
-                    </div>
-                </div>
-
-                {/* Payment & Status - right side */}
-                <div>
-                    <div className="bg-purple-300 p-5 rounded-lg">
-                        <h3 className="text-base font-semibold text-black mb-4">Pago y Estado</h3>
+                    {/* Payment & Status */}
+                    <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg mt-4">
+                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Pago y Estado</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label className="flex items-center">
@@ -416,17 +446,17 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                         onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
                                         className="mr-2"
                                     />
-                                    <span className="text-sm font-medium text-black">Orden Pagada</span>
+                                    <span className="text-sm font-medium text-gray-700">Orden Pagada</span>
                                 </label>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Estado
                                 </label>
                                 <select
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white text-gray-800"
                                 >
                                     <option value="pending">Pendiente</option>
                                     <option value="processing">Procesando</option>
@@ -443,11 +473,11 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                         onChange={(e) => setFormData({ ...formData, invoiceable: e.target.checked })}
                                         className="mr-2"
                                     />
-                                    <span className="text-sm font-medium text-black">Facturable</span>
+                                    <span className="text-sm font-medium text-gray-700">Facturable</span>
                                 </label>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Confirmación
                                 </label>
                                 <select
@@ -456,7 +486,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                         const v = e.target.value;
                                         setFormData({ ...formData, is_confirmed: v === 'yes' ? true : v === 'no' ? false : null });
                                     }}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white text-gray-800"
                                 >
                                     <option value="pending">Pendiente</option>
                                     <option value="yes">Confirmado</option>
@@ -465,15 +495,43 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                             </div>
                         </div>
                     </div>
+
+                </div>
+
+                {/* Product Selection - spans 2 columns */}
+                <div className="lg:col-span-2">
+                    <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg">
+                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Productos</h3>
+                        <ProductSelector
+                            businessId={formData.business_id || 0}
+                            selectedProducts={selectedProducts}
+                            onSelect={handleProductsChange}
+                            onCreateNew={() => setShowProductModal(true)}
+                        />
+                    </div>
+                </div>
+
+                {/* Notes */}
+                <div>
+                    <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg h-full">
+                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Notas</h3>
+                        <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            rows={5}
+                            placeholder="Notas internas sobre la orden..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent resize-none text-sm"
+                        />
+                    </div>
                 </div>
 
                 {/* Logistics */}
-                <div className="lg:col-span-2">
-                    <div className="bg-purple-300 p-5 rounded-lg">
-                        <h3 className="text-base font-semibold text-black mb-4">Logística</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="lg:col-span-3">
+                    <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg">
+                        <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Logística</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Número de Guía
                                 </label>
                                 <Input
@@ -484,7 +542,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     ID Guía
                                 </label>
                                 <Input
@@ -494,7 +552,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Bodega
                                 </label>
                                 <Input
@@ -504,7 +562,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-black mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Conductor
                                 </label>
                                 <Input
@@ -516,30 +574,15 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                         </div>
                     </div>
                 </div>
-
-                {/* Notes */}
-                <div className="lg:col-span-1">
-                    <div className="bg-purple-300 p-5 rounded-lg h-full">
-                        <h3 className="text-base font-semibold text-black mb-4">Notas</h3>
-                        <textarea
-                            value={formData.notes}
-                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                            rows={5}
-                            placeholder="Notas internas sobre la orden..."
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
-                        />
-                    </div>
-                </div>
             </div>
 
             {/* Actions */}
-            <div className="flex justify-end space-x-3 pt-2 border-t">
+            <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
                 {onCancel && (
                     <button
                         type="button"
                         onClick={onCancel}
-                        style={{ background: '#6d28d9' }}
-                        className="px-6 py-3 text-base text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                        className="px-6 py-3 text-base text-white font-semibold rounded-lg bg-purple-700 hover:bg-purple-800 shadow-sm hover:shadow-md transition-all"
                     >
                         Cancelar
                     </button>
@@ -547,8 +590,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                 <button
                     type="submit"
                     disabled={loading}
-                    style={{ background: '#6d28d9' }}
-                    className="px-6 py-3 text-base text-white font-semibold rounded-lg hover:shadow-lg hover:scale-105 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    className="px-6 py-3 text-base text-white font-semibold rounded-lg bg-purple-700 hover:bg-purple-800 shadow-sm hover:shadow-md transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                     {loading && <div className="spinner w-4 h-4" />}
                     {isEdit ? 'Actualizar Orden' : 'Crear Orden'}
