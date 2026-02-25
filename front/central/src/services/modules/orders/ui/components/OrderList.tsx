@@ -7,6 +7,7 @@ import { getOrderStatusesAction } from '@/services/modules/orderstatus/infra/act
 import { getPaymentStatusesAction } from '@/services/modules/paymentstatus/infra/actions';
 import { getFulfillmentStatusesAction } from '@/services/modules/fulfillmentstatus/infra/actions';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { Order, GetOrdersParams } from '../../domain/types';
 import { Button, Alert, DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useSSE } from '@/shared/hooks/use-sse';
@@ -281,6 +282,8 @@ interface OrderListProps {
 
 export default function OrderList({ onView, onEdit, onViewRecommendation, refreshKey, onCreate, onTestGuide }: OrderListProps) {
     const { isSuperAdmin, permissions } = usePermissions();
+    const { businesses } = useBusinessesSimple();
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
     const [orders, setOrders] = useState<Order[]>([]);
     const [initialLoading, setInitialLoading] = useState(true);
     const [tableLoading, setTableLoading] = useState(false);
@@ -727,7 +730,11 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const refreshTableOnly = useCallback(async () => {
         setTableLoading(true);
         try {
-            const response = await getOrdersAction(filters);
+            const params: GetOrdersParams = { ...filters };
+            if (isSuperAdmin && selectedBusinessId !== null) {
+                params.business_id = selectedBusinessId;
+            }
+            const response = await getOrdersAction(params);
             if (response.success && response.data) {
                 setOrders(response.data);
                 setTotal(response.total || 0);
@@ -739,7 +746,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         } finally {
             setTableLoading(false);
         }
-    }, [filters]);
+    }, [filters, isSuperAdmin, selectedBusinessId]);
 
     // Función unificada para cargar órdenes
     const loadOrders = useCallback(async (showInitialLoading = false) => {
@@ -750,7 +757,11 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
         setError(null);
         try {
-            const response = await getOrdersAction(filters);
+            const params: GetOrdersParams = { ...filters };
+            if (isSuperAdmin && selectedBusinessId !== null) {
+                params.business_id = selectedBusinessId;
+            }
+            const response = await getOrdersAction(params);
             if (response.success && response.data) {
                 setOrders(response.data);
                 setTotal(response.total || 0);
@@ -765,7 +776,14 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             setInitialLoading(false);
             setTableLoading(false);
         }
-    }, [filters]);
+    }, [filters, isSuperAdmin, selectedBusinessId]);
+
+    // Reset a página 1 cuando el super admin cambia el negocio seleccionado
+    useEffect(() => {
+        if (isSuperAdmin) {
+            setFilters(prev => ({ ...prev, page: 1 }));
+        }
+    }, [selectedBusinessId, isSuperAdmin]);
 
     // Carga inicial - solo una vez
     useEffect(() => {
@@ -909,6 +927,28 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     return (
         <div>
+            {/* Business Selector - Solo Super Admin */}
+            {isSuperAdmin && businesses.length > 0 && (
+                <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Seleccionar Negocio (Super Admin)
+                    </label>
+                    <select
+                        value={selectedBusinessId?.toString() ?? ''}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setSelectedBusinessId(val ? Number(val) : null);
+                        }}
+                        className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="">Todos los negocios</option>
+                        {businesses.map((b) => (
+                            <option key={b.id} value={b.id}>{b.name} (ID: {b.id})</option>
+                        ))}
+                    </select>
+                </div>
+            )}
+
             {/* Dynamic Filters */}
             <div className="flex items-start justify-between gap-4 mb-4">
                 <div className="flex-1">
