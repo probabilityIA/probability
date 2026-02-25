@@ -94,7 +94,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
             .filter((p: any) => p.id);
     });
 
-    const [shippingComplement, setShippingComplement] = useState(order?.shipping_complement || '');
+    const [shippingComplement, setShippingComplement] = useState('');
     const [showProductModal, setShowProductModal] = useState(false);
 
     const [loading, setLoading] = useState(false);
@@ -106,8 +106,8 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
     const cityRef = useRef<HTMLDivElement>(null);
 
     // Casa y Barrio states
-    const [house, setHouse] = useState(order?.shipping_house || '');
-    const [barrio, setBarrio] = useState(order?.shipping_barrio || '');
+    const [house, setHouse] = useState('');
+    const [barrio, setBarrio] = useState('');
 
     // DANE options
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
@@ -163,9 +163,6 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
 
             const baseData = {
                 ...formData,
-                shipping_complement: shippingComplement,
-                shipping_house: house,
-                shipping_barrio: barrio,
                 items: selectedProducts.length > 0 ? selectedProducts : formData.items,
                 customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
             };
