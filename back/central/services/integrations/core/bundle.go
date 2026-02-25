@@ -116,6 +116,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 	redisClient.RegisterCachePrefix("integration:creds:*")
 	redisClient.RegisterCachePrefix("integration:code:*")
 	redisClient.RegisterCachePrefix("integration:idx:*")
+	redisClient.RegisterCachePrefix("integration:platform_creds:*")
 
 	// 3. Inicializar Repositorio (con cache)
 	repo := repository.New(db, logger, encryptionService, integrationCache)
