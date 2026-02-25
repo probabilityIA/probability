@@ -192,10 +192,14 @@ services:
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
+    command:
+      - -containerd=/run/containerd/containerd.sock
+      - -containerd-namespace=moby
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
       - /sys:/sys:ro
       - /var/lib/docker/:/var/lib/docker:ro
     networks:

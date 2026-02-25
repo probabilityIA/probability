@@ -25,8 +25,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(container_cpu_usage_seconds_total{name!=\"\",name!~\".*cadvisor.*\"}[2m]) * 100",
-          "legendFormat": "{{name}}",
+          "expr": "label_replace(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m]) * 100, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "legendFormat": "{{service}}",
           "refId": "A"
         }
       ],
@@ -57,8 +57,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{name!=\"\",name!~\".*cadvisor.*\"} / 1024 / 1024",
-          "legendFormat": "{{name}}",
+          "expr": "label_replace(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"} / 1024 / 1024, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "legendFormat": "{{service}}",
           "refId": "A"
         }
       ],
@@ -89,8 +89,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(container_network_receive_bytes_total{name!=\"\",name!~\".*cadvisor.*\"}[2m])",
-          "legendFormat": "{{name}} - entrada",
+          "expr": "label_replace(rate(container_network_receive_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "legendFormat": "{{service}} - entrada",
           "refId": "A"
         }
       ],
@@ -121,8 +121,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(container_network_transmit_bytes_total{name!=\"\",name!~\".*cadvisor.*\"}[2m])",
-          "legendFormat": "{{name}} - salida",
+          "expr": "label_replace(rate(container_network_transmit_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "legendFormat": "{{service}} - salida",
           "refId": "A"
         }
       ],
@@ -153,8 +153,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(container_fs_reads_bytes_total{name!=\"\",name!~\".*cadvisor.*\"}[2m])",
-          "legendFormat": "{{name}} - lectura",
+          "expr": "label_replace(rate(container_fs_reads_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "legendFormat": "{{service}} - lectura",
           "refId": "A"
         }
       ],
@@ -185,8 +185,8 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(container_fs_writes_bytes_total{name!=\"\",name!~\".*cadvisor.*\"}[2m])",
-          "legendFormat": "{{name}} - escritura",
+          "expr": "label_replace(rate(container_fs_writes_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "legendFormat": "{{service}} - escritura",
           "refId": "A"
         }
       ],
