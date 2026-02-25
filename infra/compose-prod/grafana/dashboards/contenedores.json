@@ -217,19 +217,19 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}) / 1024 / 1024",
+          "expr": "sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}) / 1024 / 1024 / 1024",
           "legendFormat": "Contenedores",
           "refId": "A",
           "instant": true
         },
         {
-          "expr": "(container_memory_usage_bytes{id=\"/\"} - scalar(sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}))) / 1024 / 1024",
+          "expr": "(container_memory_usage_bytes{id=\"/\"} - scalar(sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}))) / 1024 / 1024 / 1024",
           "legendFormat": "Sistema OS",
           "refId": "B",
           "instant": true
         },
         {
-          "expr": "(scalar(machine_memory_bytes) - container_memory_usage_bytes{id=\"/\"}) / 1024 / 1024",
+          "expr": "(scalar(machine_memory_bytes) - container_memory_usage_bytes{id=\"/\"}) / 1024 / 1024 / 1024",
           "legendFormat": "Libre",
           "refId": "C",
           "instant": true
@@ -237,7 +237,7 @@
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "mbytes",
+          "unit": "gbytes",
           "color": { "mode": "palette-classic" }
         },
         "overrides": [
