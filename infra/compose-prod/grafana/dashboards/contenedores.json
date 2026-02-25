@@ -210,34 +210,36 @@
     },
     {
       "id": 2,
-      "title": "Memoria por contenedor",
-      "description": "Megabytes de RAM consumidos por cada servicio",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "title": "Memoria por contenedor (% del servidor)",
+      "description": "Cuánto ocupa cada contenedor sobre el total de RAM del servidor",
+      "type": "piechart",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 14 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "label_replace(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"} / 1024 / 1024, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "expr": "label_replace(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"} / scalar(machine_memory_bytes) * 100, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
           "legendFormat": "{{service}}",
-          "refId": "A"
+          "refId": "A",
+          "instant": true
         }
       ],
       "fieldConfig": {
         "defaults": {
-          "unit": "mbytes",
-          "min": 0,
+          "unit": "percent",
           "color": { "mode": "palette-classic" },
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never"
-          }
+          "custom": {}
         },
         "overrides": []
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "table", "placement": "bottom" }
+        "pieType": "donut",
+        "displayLabels": ["name", "percent"],
+        "tooltip": { "mode": "single" },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        }
       }
     },
     {
