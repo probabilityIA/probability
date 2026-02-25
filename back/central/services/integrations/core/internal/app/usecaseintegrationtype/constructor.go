@@ -22,23 +22,26 @@ type IIntegrationTypeUseCase interface {
 }
 
 type integrationTypeUseCase struct {
-	repo domain.IRepository
-	s3   domain.IS3Service
-	log  log.ILogger
-	env  env.IConfig
+	repo  domain.IRepository
+	s3    domain.IS3Service
+	cache domain.IIntegrationCache
+	log   log.ILogger
+	env   env.IConfig
 }
 
 // New crea una nueva instancia del caso de uso de tipos de integración
 func New(
 	repo domain.IRepository,
 	s3 domain.IS3Service,
+	cache domain.IIntegrationCache,
 	logger log.ILogger,
 	env env.IConfig,
 ) IIntegrationTypeUseCase {
 	return &integrationTypeUseCase{
-		repo: repo,
-		s3:   s3,
-		log:  logger,
-		env:  env,
+		repo:  repo,
+		s3:    s3,
+		cache: cache,
+		log:   logger,
+		env:   env,
 	}
 }

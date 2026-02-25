@@ -119,7 +119,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 
 	// 4. Inicializar Casos de Uso
 	integrationUseCase := usecaseintegrations.New(repo, encryptionService, integrationCache, logger, config)
-	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, logger, config)
+	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, integrationCache, logger, config)
 
 	// 5. Inicializar Handlers (solo dependen del use case)
 	handlerIntegrations := handlerintegrations.New(integrationUseCase, logger, config)

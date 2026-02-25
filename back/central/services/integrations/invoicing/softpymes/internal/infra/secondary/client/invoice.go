@@ -378,7 +378,7 @@ func (c *Client) findExistingInvoiceByOrderID(ctx context.Context, apiKey, apiSe
 		Str("branch_code", branchCode).
 		Msg("Checking for existing Softpymes invoice (retry idempotency)")
 
-	docs, err := c.ListDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
+	docs, err := c.listDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
 	if err != nil {
 		return nil, fmt.Errorf("error querying existing invoices: %w", err)
 	}

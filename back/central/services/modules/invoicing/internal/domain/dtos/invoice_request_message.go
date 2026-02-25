@@ -14,9 +14,10 @@ type InvoiceRequestMessage struct {
 
 // Operations
 const (
-	OperationCreate = "create"
-	OperationRetry  = "retry"
-	OperationCancel = "cancel"
+	OperationCreate  = "create"
+	OperationRetry   = "retry"
+	OperationCancel  = "cancel"
+	OperationCompare = "compare"
 )
 
 // Providers

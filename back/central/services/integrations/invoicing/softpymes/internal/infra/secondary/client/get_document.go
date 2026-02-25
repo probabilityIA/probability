@@ -54,7 +54,7 @@ func (c *Client) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, ref
 		Msg("📤 Searching for document in last 30 days")
 
 	// Llamar al endpoint de lista con filtro de número
-	documents, err := c.ListDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
+	documents, err := c.listDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).

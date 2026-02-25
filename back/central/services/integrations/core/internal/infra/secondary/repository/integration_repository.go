@@ -516,6 +516,8 @@ func (r *Repository) toDomain(model *models.Integration) *domain.Integration {
 			ConfigSchema:      model.IntegrationType.ConfigSchema,
 			CredentialsSchema: model.IntegrationType.CredentialsSchema,
 			SetupInstructions: model.IntegrationType.SetupInstructions,
+			BaseURL:           model.IntegrationType.BaseURL,
+			BaseURLTest:       model.IntegrationType.BaseURLTest,
 			CreatedAt:         model.IntegrationType.CreatedAt,
 			UpdatedAt:         model.IntegrationType.UpdatedAt,
 		}

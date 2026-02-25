@@ -25,6 +25,9 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			// Creación masiva de facturas
 			invoices.GET("/invoiceable-orders", middleware.JWT(), h.ListInvoiceableOrders) // Listar órdenes facturables
 			invoices.POST("/bulk", middleware.JWT(), h.BulkCreateInvoices)                 // Crear facturas masivamente
+
+			// Comparación con proveedor (auditoría esporádica)
+			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices) // Iniciar comparación
 		}
 
 		// Proveedores de facturación (DEPRECADO - Migrado a integrations/core)

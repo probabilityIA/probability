@@ -88,8 +88,12 @@ func (uc *IntegrationUseCase) cacheIntegrationMetadata(ctx context.Context, inte
 	}
 
 	integrationTypeCode := ""
+	baseURL := ""
+	baseURLTest := ""
 	if integration.IntegrationType != nil {
 		integrationTypeCode = integration.IntegrationType.Code
+		baseURL = integration.IntegrationType.BaseURL
+		baseURLTest = integration.IntegrationType.BaseURLTest
 	}
 
 	cachedMeta := &domain.CachedIntegration{
@@ -103,10 +107,13 @@ func (uc *IntegrationUseCase) cacheIntegrationMetadata(ctx context.Context, inte
 		StoreID:             integration.StoreID,
 		IsActive:            integration.IsActive,
 		IsDefault:           integration.IsDefault,
+		IsTesting:           integration.IsTesting,
 		Config:              configMap,
 		Description:         integration.Description,
 		CreatedAt:           integration.CreatedAt,
 		UpdatedAt:           integration.UpdatedAt,
+		BaseURL:             baseURL,
+		BaseURLTest:         baseURLTest,
 	}
 
 	return uc.cache.SetIntegration(ctx, cachedMeta)

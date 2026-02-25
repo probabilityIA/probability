@@ -60,3 +60,7 @@ func (m *IntegrationCoreMock) UpdateIntegrationConfig(ctx context.Context, integ
 	}
 	return nil
 }
+
+func (m *IntegrationCoreMock) GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error) {
+	return map[string]interface{}{}, nil
+}

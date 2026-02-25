@@ -322,3 +322,28 @@ export async function createBulkInvoicesAction(
     body: JSON.stringify(dto),
   });
 }
+
+// ============================================
+// COMPARACIÓN DE FACTURAS (Auditoría)
+// ============================================
+
+/**
+ * Inicia una comparación asíncrona entre facturas del sistema y el proveedor.
+ * El resultado llega via SSE con el evento "invoice.compare_ready".
+ *
+ * @param businessId - ID del negocio (solo requerido para super admin)
+ */
+export async function requestInvoiceComparisonAction(
+  dateFrom: string,
+  dateTo: string,
+  businessId?: number
+): Promise<{ correlation_id: string; message: string }> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/compare`, {
+    method: 'POST',
+    body: JSON.stringify({
+      date_from: dateFrom,
+      date_to: dateTo,
+      ...(businessId ? { business_id: businessId } : {}),
+    }),
+  });
+}

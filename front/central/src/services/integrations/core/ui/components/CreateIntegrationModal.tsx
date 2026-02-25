@@ -177,6 +177,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     <SoftpymesConfigForm
                         onSuccess={onSuccess}
                         onCancel={onBack}
+                        integrationTypeBaseURLTest={integrationType.base_url_test}
                     />
                 );
 

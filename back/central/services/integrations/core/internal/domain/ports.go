@@ -141,6 +141,9 @@ type CachedIntegration struct {
 	Description         string                 `json:"description"`
 	CreatedAt           time.Time              `json:"created_at"`
 	UpdatedAt           time.Time              `json:"updated_at"`
+	// URLs del tipo de integración (integration_types.base_url / base_url_test)
+	BaseURL     string `json:"base_url"`
+	BaseURLTest string `json:"base_url_test"`
 }
 
 // CachedCredentials representa credenciales desencriptadas en cache

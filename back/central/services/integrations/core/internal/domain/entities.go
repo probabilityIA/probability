@@ -75,4 +75,8 @@ type PublicIntegration struct {
 	StoreID         string
 	IntegrationType int
 	Config          map[string]interface{}
+	// URL resolution fields (desde integration_types)
+	IsTesting   bool   // Si la integración está en modo pruebas
+	BaseURL     string // URL de producción (integration_types.base_url)
+	BaseURLTest string // URL de pruebas (integration_types.base_url_test)
 }

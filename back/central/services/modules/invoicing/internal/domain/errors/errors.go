@@ -81,6 +81,11 @@ var (
 	ErrInvalidFilterConfig = errors.New("invalid filter configuration")
 )
 
+// Errores de comparación
+var (
+	ErrCompareDateRangeTooLarge = errors.New("comparison date range cannot exceed 7 days")
+)
+
 // Errores de sincronización
 var (
 	ErrSyncFailed         = errors.New("synchronization failed")

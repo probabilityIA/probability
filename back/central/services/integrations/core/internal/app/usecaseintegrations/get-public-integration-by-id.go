@@ -120,12 +120,20 @@ func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integra
 	// Usar directamente el IntegrationTypeID (es el ID de la tabla integration_types)
 	integrationTypeID := int(integration.IntegrationTypeID)
 
-	return &domain.PublicIntegration{
+	pub := &domain.PublicIntegration{
 		ID:              integration.ID,
 		BusinessID:      integration.BusinessID,
 		Name:            integration.Name,
 		StoreID:         integration.StoreID,
 		IntegrationType: integrationTypeID,
 		Config:          config,
+		IsTesting:       integration.IsTesting,
 	}
+
+	if integration.IntegrationType != nil {
+		pub.BaseURL = integration.IntegrationType.BaseURL
+		pub.BaseURLTest = integration.IntegrationType.BaseURLTest
+	}
+
+	return pub
 }
