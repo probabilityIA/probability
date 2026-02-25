@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/consumer/consumerevent"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumeralert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client"
@@ -96,6 +97,14 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 		go func() {
 			if err := orderConsumer.Start(context.Background()); err != nil {
 				logger.Error().Err(err).Msg("Error starting order confirmation consumer")
+			}
+		}()
+
+		// Inicializar consumidor de alertas de monitoreo
+		alertConsumer := consumeralert.New(rabbit, wa, config, logger)
+		go func() {
+			if err := alertConsumer.Start(context.Background()); err != nil {
+				logger.Error().Err(err).Msg("Error starting monitoring alert consumer")
 			}
 		}()
 	}

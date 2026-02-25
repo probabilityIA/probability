@@ -132,6 +132,17 @@ var Templates = map[string]TemplateDefinition{
 		ButtonLabels: []string{},
 		Description:  "Mensaje de espera mientras se conecta con un asesor humano",
 	},
+	"alerta_servidor": {
+		Name:     "alerta_servidor",
+		Language: "es",
+		Variables: []string{
+			"tipo_alerta", // {{1}} ej: "RAM"
+			"descripcion", // {{2}} ej: "87.3% - supera umbral de 85%"
+		},
+		HasButtons:   false,
+		ButtonLabels: []string{},
+		Description:  "Alerta de monitoreo del servidor para el administrador",
+	},
 }
 
 // GetTemplateDefinition retorna la definición de una plantilla por su nombre
