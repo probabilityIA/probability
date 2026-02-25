@@ -71,7 +71,7 @@
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "container_memory_usage_bytes{id=\"/\"} / machine_memory_bytes * 100",
+          "expr": "container_memory_usage_bytes{id=\"/\"} / scalar(machine_memory_bytes) * 100",
           "legendFormat": "RAM %",
           "refId": "A",
           "instant": true
@@ -116,7 +116,7 @@
           "instant": true
         },
         {
-          "expr": "machine_memory_bytes / 1024 / 1024",
+          "expr": "scalar(machine_memory_bytes) / 1024 / 1024",
           "legendFormat": "Total (MB)",
           "refId": "B",
           "instant": true
