@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/response"
 )
@@ -30,17 +29,6 @@ type TestConnectionRequest struct {
 //	@Failure		500		{object}	response.IntegrationErrorResponse
 //	@Router			/integrations/test [post]
 func (h *IntegrationHandler) TestConnectionRawHandler(c *gin.Context) {
-	// Solo super admins pueden probar integraciones
-	if !middleware.IsSuperAdmin(c) {
-		h.logger.Error().Str("endpoint", "/integrations/test").Str("method", "POST").Msg("Intento de probar integración sin permisos de super admin")
-		c.JSON(http.StatusForbidden, response.IntegrationErrorResponse{
-			Success: false,
-			Message: "Solo los super usuarios pueden probar integraciones",
-			Error:   "permisos insuficientes",
-		})
-		return
-	}
-
 	var req TestConnectionRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error().Err(err).Msg("❌ Error al bindear JSON para TestConnectionRaw")

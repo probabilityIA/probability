@@ -142,6 +142,21 @@ func (uc *IntegrationUseCase) TestConnectionRaw(ctx context.Context, integration
 		Strs("registered_types", registeredTypesStr).
 		Msg("Buscando provider registrado para tipo de integración (TestConnectionRaw)")
 
+	// Inyectar base_url y base_url_test desde integration_types si el config no los incluye
+	// El usuario no ingresa estas URLs — vienen del sistema (integration_types table)
+	integrationType, err := uc.repo.GetIntegrationTypeByCode(ctx, integrationTypeCode)
+	if err == nil && integrationType != nil {
+		if config == nil {
+			config = make(map[string]interface{})
+		}
+		if _, has := config["base_url"]; !has && integrationType.BaseURL != "" {
+			config["base_url"] = integrationType.BaseURL
+		}
+		if _, has := config["base_url_test"]; !has && integrationType.BaseURLTest != "" {
+			config["base_url_test"] = integrationType.BaseURLTest
+		}
+	}
+
 	provider, hasProvider := uc.providerReg.Get(integrationTypeInt)
 	if !hasProvider {
 		uc.log.Warn(ctx).

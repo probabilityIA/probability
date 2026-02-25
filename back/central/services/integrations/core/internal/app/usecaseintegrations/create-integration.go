@@ -104,6 +104,18 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 				return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationConfigDeserialize, err)
 			}
 		}
+		if configMap == nil {
+			configMap = make(map[string]interface{})
+		}
+
+		// Inyectar base_url del tipo de integración si no viene en el config del usuario
+		// El usuario no ingresa estas URLs — vienen de integration_types table
+		if _, has := configMap["base_url"]; !has && integrationType.BaseURL != "" {
+			configMap["base_url"] = integrationType.BaseURL
+		}
+		if _, has := configMap["base_url_test"]; !has && integrationType.BaseURLTest != "" {
+			configMap["base_url_test"] = integrationType.BaseURLTest
+		}
 
 		// Testear conexión con el provider específico
 		if err := provider.TestConnection(ctx, configMap, dto.Credentials); err != nil {
