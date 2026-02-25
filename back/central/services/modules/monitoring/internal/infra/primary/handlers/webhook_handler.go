@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"crypto/hmac"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring/internal/domain/dtos"
@@ -17,7 +15,22 @@ import (
 func (h *handler) WebhookGrafana(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	// 1. Leer el body raw (necesario para validación HMAC)
+	// 1. Validar Bearer token
+	// Grafana envía: Authorization: Bearer <GRAFANA_WEBHOOK_SECRET>
+	secret := h.env.Get("GRAFANA_WEBHOOK_SECRET")
+	if secret != "" {
+		authHeader := c.GetHeader("Authorization")
+		expectedAuth := "Bearer " + secret
+		if !strings.EqualFold(strings.TrimSpace(authHeader), strings.TrimSpace(expectedAuth)) {
+			h.log.Warn(ctx).Msg("[Monitoring] Authorization header inválido")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+	} else {
+		h.log.Warn(ctx).Msg("[Monitoring] GRAFANA_WEBHOOK_SECRET vacío - sin validación (dev mode)")
+	}
+
+	// 2. Leer y parsear body
 	rawBody, err := io.ReadAll(c.Request.Body)
 	if err != nil {
 		h.log.Error(ctx).Err(err).Msg("[Monitoring] Error leyendo body del webhook")
@@ -25,25 +38,6 @@ func (h *handler) WebhookGrafana(c *gin.Context) {
 		return
 	}
 
-	// 2. Validar firma HMAC-SHA256
-	secret := h.env.Get("GRAFANA_WEBHOOK_SECRET")
-	if secret != "" {
-		sig := c.GetHeader("X-Grafana-Signature-V2")
-		mac := hmac.New(sha256.New, []byte(secret))
-		mac.Write(rawBody)
-		expected := "sha256=" + hex.EncodeToString(mac.Sum(nil))
-		if !hmac.Equal([]byte(sig), []byte(expected)) {
-			h.log.Warn(ctx).
-				Str("received_sig", sig).
-				Msg("[Monitoring] Firma HMAC inválida")
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid signature"})
-			return
-		}
-	} else {
-		h.log.Warn(ctx).Msg("[Monitoring] GRAFANA_WEBHOOK_SECRET vacío - omitiendo validación de firma (dev mode)")
-	}
-
-	// 3. Deserializar payload
 	var req request.GrafanaWebhookRequest
 	if err := json.Unmarshal(rawBody, &req); err != nil {
 		h.log.Error(ctx).Err(err).Msg("[Monitoring] Error parseando payload de Grafana")
@@ -51,7 +45,7 @@ func (h *handler) WebhookGrafana(c *gin.Context) {
 		return
 	}
 
-	// 4. Mapear a DTO de dominio
+	// 3. Mapear a DTO de dominio
 	webhookDTO := dtos.GrafanaWebhookDTO{
 		Status: req.Status,
 		Title:  req.Title,
@@ -66,12 +60,12 @@ func (h *handler) WebhookGrafana(c *gin.Context) {
 		})
 	}
 
-	// 5. Procesar en el use case
+	// 4. Procesar en el use case
 	if err := h.useCase.ProcessGrafanaAlert(ctx, webhookDTO); err != nil {
-		// Log del error pero igual retornar 200 para evitar reenvíos de Grafana
+		// Log del error pero retornar 200 para evitar reintentos de Grafana
 		h.log.Error(ctx).Err(err).Msg("[Monitoring] Error procesando alerta de Grafana")
 	}
 
-	// 6. Siempre retornar 200 para que Grafana no reintente en loop
+	// 5. Siempre 200 para que Grafana no reintente en loop
 	c.JSON(http.StatusOK, gin.H{"status": "received"})
 }
