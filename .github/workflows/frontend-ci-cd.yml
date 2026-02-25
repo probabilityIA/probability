@@ -188,28 +188,41 @@ jobs:
             /usr/local/bin/aws ecr get-login-password --region us-east-1 | \
               docker login --username AWS --password-stdin 476702565908.dkr.ecr.us-east-1.amazonaws.com
 
-            # Obtener el ID de la imagen actual antes del pull
-            echo "📦 Pulling image with version tag: $VERSION_FULL"
-            OLD_IMAGE_ID=$(docker images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || echo "")
+            # Función para pull con retry automático ante snapshots corruptos
+            pull_with_retry() {
+              local image=$1
+              local max_attempts=2
+              local attempt=1
 
-            # Eliminar imágenes locales para forzar nuevo pull
-            docker rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest 2>/dev/null || true
-            docker rmi 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL 2>/dev/null || true
+              while [ $attempt -le $max_attempts ]; do
+                echo "📦 Pull intento $attempt/$max_attempts: $image"
+                if docker pull "$image"; then
+                  return 0
+                fi
 
-            # Pull image con versión específica (garantiza que es la imagen recién construida)
-            docker pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
+                if [ $attempt -lt $max_attempts ]; then
+                  echo "⚠️  Pull falló (posibles snapshots corruptos), limpiando cache Docker..."
+                  docker image prune -af 2>/dev/null || true
+                  docker system prune -f 2>/dev/null || true
+                  echo "🔄 Reintentando pull..."
+                fi
 
-            # Tag la imagen con versión como latest localmente
-            docker tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL \
-                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+                attempt=$((attempt + 1))
+              done
 
-            # Obtener el ID de la nueva imagen
-            NEW_IMAGE_ID=$(docker images --format "{{.ID}}" 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest)
+              echo "❌ Pull falló después de $max_attempts intentos"
+              return 1
+            }
 
-            echo "📊 Old image ID: ${OLD_IMAGE_ID:-none}"
-            echo "📊 New image ID: $NEW_IMAGE_ID"
+            REPO_URL="476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend"
+
+            # Limpiar imágenes locales previas para evitar conflictos de capas
+            echo "🧹 Limpiando imágenes locales previas..."
+            docker rmi ${REPO_URL}:latest 2>/dev/null || true
+            docker rmi ${REPO_URL}:$VERSION_FULL 2>/dev/null || true
+            docker image prune -f 2>/dev/null || true
+
             echo "📊 Version: $VERSION_FULL"
-
             # Nueva imagen detectada, actualizar solo frontend
             echo "✅ Nueva imagen detectada (Version: $VERSION_FULL), actualizando frontend..."
 
@@ -235,14 +248,13 @@ jobs:
             pkill -9 -f "rootlessport.*8080" || true
             sleep 2
 
-            # 3. Pull de la nueva imagen específica
+            # 3. Pull de la nueva imagen específica (con retry automático)
             echo "📦 Pulling nueva imagen $VERSION_FULL..."
-            docker pull 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL
+            pull_with_retry ${REPO_URL}:$VERSION_FULL
 
             # 4. Tag como latest localmente
             echo "🏷️  Tageando como latest..."
-            docker tag 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL \
-                       476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:latest
+            docker tag ${REPO_URL}:$VERSION_FULL ${REPO_URL}:latest
 
             # 5. Levantar solo el servicio front-central (contenedor: frontend_prod)
             echo "🚀 Levantando frontend con nueva imagen..."
@@ -303,7 +315,7 @@ jobs:
 
             # Verificar que el contenedor está usando la nueva imagen
             CONTAINER_IMAGE_ID=$(docker inspect frontend_prod --format '{{.Image}}' 2>/dev/null || echo "")
-            EXPECTED_IMAGE_ID=$(docker inspect 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-frontend:$VERSION_FULL --format '{{.Id}}' 2>/dev/null || echo "")
+            EXPECTED_IMAGE_ID=$(docker inspect ${REPO_URL}:$VERSION_FULL --format '{{.Id}}' 2>/dev/null || echo "")
 
             # Remover prefijo sha256: si existe
             EXPECTED_IMAGE_ID_CLEAN="${EXPECTED_IMAGE_ID#sha256:}"
