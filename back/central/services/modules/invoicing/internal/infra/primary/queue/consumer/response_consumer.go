@@ -14,6 +14,15 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
+// compareItemDetail ítem de documento del proveedor (local, sin compartir)
+type compareItemDetail struct {
+	ItemCode string `json:"item_code"`
+	ItemName string `json:"item_name"`
+	Quantity string `json:"quantity"`
+	Value    string `json:"value"`
+	IVA      string `json:"iva"`
+}
+
 // ResponseConsumer consume responses de proveedores de facturación
 type ResponseConsumer struct {
 	queue        rabbitmq.IQueue
@@ -44,6 +53,38 @@ const (
 	QueueInvoiceResponses = "invoicing.responses"
 )
 
+// ─── Compare response types (local, no compartidos entre módulos) ───
+
+// compareProviderDocument documento retornado por el proveedor en comparación
+type compareProviderDocument struct {
+	DocumentNumber string              `json:"document_number"`
+	DocumentDate   string              `json:"document_date"`
+	Total          string              `json:"total"`
+	CustomerNit    string              `json:"customer_nit"`
+	CustomerName   string              `json:"customer_name"`
+	Comment        string              `json:"comment"`
+	Prefix         string              `json:"prefix"`
+	Details        []compareItemDetail `json:"details,omitempty"`
+}
+
+// compareResponseMessage mensaje de respuesta de comparación del proveedor
+type compareResponseMessage struct {
+	Operation         string                    `json:"operation"`
+	CorrelationID     string                    `json:"correlation_id"`
+	BusinessID        uint                      `json:"business_id"`
+	DateFrom          string                    `json:"date_from"`
+	DateTo            string                    `json:"date_to"`
+	ProviderDocuments []compareProviderDocument `json:"provider_documents"`
+	Error             string                    `json:"error,omitempty"`
+	Timestamp         time.Time                 `json:"timestamp"`
+}
+
+// responseDiscriminator se usa para identificar el tipo de mensaje antes de rutear
+type responseDiscriminator struct {
+	Operation string `json:"operation,omitempty"`
+	InvoiceID uint   `json:"invoice_id"`
+}
+
 // Start inicia el consumo de responses de proveedores
 func (c *ResponseConsumer) Start(ctx context.Context) error {
 	// Declarar la cola si no existe
@@ -69,7 +110,19 @@ func (c *ResponseConsumer) Start(ctx context.Context) error {
 func (c *ResponseConsumer) handleResponse(message []byte) error {
 	ctx := context.Background()
 
-	// Deserializar response
+	// Peek at the operation field to route to the correct handler
+	var disc responseDiscriminator
+	if err := json.Unmarshal(message, &disc); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Error al deserializar discriminator")
+		return fmt.Errorf("failed to unmarshal discriminator: %w", err)
+	}
+
+	// Route compare responses to dedicated handler
+	if disc.Operation == dtos.OperationCompare {
+		return c.handleCompareResponse(ctx, message)
+	}
+
+	// Deserializar response normal de factura
 	var response dtos.InvoiceResponseMessage
 	if err := json.Unmarshal(message, &response); err != nil {
 		c.log.Error(ctx).Err(err).Msg("Error al deserializar response")
@@ -366,6 +419,206 @@ func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog
 			syncLog.ResponseBody = bodyMap
 		}
 	}
+}
+
+// handleCompareResponse procesa la respuesta de comparación del proveedor.
+// Cruza las facturas del proveedor contra las del sistema en memoria y publica SSE.
+func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []byte) error {
+	var msg compareResponseMessage
+	if err := json.Unmarshal(message, &msg); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to unmarshal compare response")
+		return fmt.Errorf("failed to unmarshal compare response: %w", err)
+	}
+
+	c.log.Info(ctx).
+		Str("correlation_id", msg.CorrelationID).
+		Uint("business_id", msg.BusinessID).
+		Str("date_from", msg.DateFrom).
+		Str("date_to", msg.DateTo).
+		Int("provider_docs", len(msg.ProviderDocuments)).
+		Msg("📊 Processing compare response")
+
+	// Si el proveedor reportó error, publicar SSE con resultado vacío + error en comment
+	if msg.Error != "" {
+		c.log.Warn(ctx).Str("error", msg.Error).Msg("Provider returned error in compare response")
+		data := &dtos.CompareResponseData{
+			CorrelationID: msg.CorrelationID,
+			BusinessID:    msg.BusinessID,
+			DateFrom:      msg.DateFrom,
+			DateTo:        msg.DateTo,
+			Results: []dtos.CompareResult{
+				{Status: dtos.CompareStatusProviderOnly, Comment: "Error del proveedor: " + msg.Error},
+			},
+			Summary: dtos.CompareSummary{},
+		}
+		return c.ssePublisher.PublishCompareReady(ctx, data)
+	}
+
+	// Obtener facturas del sistema en el rango de fechas (en memoria)
+	systemInvoices, err := c.repo.GetIssuedInvoicesByDateRange(ctx, msg.BusinessID, msg.DateFrom, msg.DateTo)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to get system invoices for comparison")
+		return fmt.Errorf("failed to get system invoices: %w", err)
+	}
+
+	// Construir mapa del sistema: invoiceNumber → invoice
+	systemMap := make(map[string]*entities.Invoice, len(systemInvoices))
+	for _, inv := range systemInvoices {
+		if inv.InvoiceNumber != "" {
+			systemMap[inv.InvoiceNumber] = inv
+		}
+	}
+
+	// Recolectar orderIDs para batch lookup de fechas de creación
+	orderIDs := make([]string, 0, len(systemInvoices))
+	for _, inv := range systemInvoices {
+		if inv.OrderID != "" {
+			orderIDs = append(orderIDs, inv.OrderID)
+		}
+	}
+	orderDates, _ := c.repo.GetOrderCreatedAtsByIDs(ctx, orderIDs)
+
+	// Construir mapa del proveedor: documentNumber → document
+	providerMap := make(map[string]compareProviderDocument, len(msg.ProviderDocuments))
+	for _, doc := range msg.ProviderDocuments {
+		if doc.DocumentNumber != "" {
+			providerMap[doc.DocumentNumber] = doc
+		}
+	}
+
+	// Cruzar resultados
+	results := make([]dtos.CompareResult, 0)
+	matched, systemOnly, providerOnly := 0, 0, 0
+
+	// 1. Recorrer documentos del proveedor
+	for docNum, doc := range providerMap {
+		if sysInv, found := systemMap[docNum]; found {
+			// Matched: existe en ambos
+			total := sysInv.TotalAmount
+			orderID := sysInv.OrderID
+			orderCreatedAt := formatOrderDate(orderDates, sysInv.OrderID)
+			results = append(results, dtos.CompareResult{
+				Status:          dtos.CompareStatusMatched,
+				InvoiceNumber:   docNum,
+				Prefix:          doc.Prefix,
+				DocumentDate:    doc.DocumentDate,
+				ProviderTotal:   doc.Total,
+				SystemInvoiceID: &sysInv.ID,
+				SystemOrderID:   &orderID,
+				SystemTotal:     &total,
+				CustomerNit:     doc.CustomerNit,
+				CustomerName:    doc.CustomerName,
+				Comment:         doc.Comment,
+				OrderCreatedAt:  orderCreatedAt,
+				ProviderDetails: mapProviderDetailsToCompareDetails(doc.Details),
+				SystemItems:     mapInvoiceItemsToCompareDetails(sysInv.Items),
+			})
+			matched++
+		} else {
+			// provider_only: está en proveedor pero no en sistema
+			results = append(results, dtos.CompareResult{
+				Status:          dtos.CompareStatusProviderOnly,
+				InvoiceNumber:   docNum,
+				Prefix:          doc.Prefix,
+				DocumentDate:    doc.DocumentDate,
+				ProviderTotal:   doc.Total,
+				CustomerNit:     doc.CustomerNit,
+				CustomerName:    doc.CustomerName,
+				Comment:         doc.Comment,
+				ProviderDetails: mapProviderDetailsToCompareDetails(doc.Details),
+			})
+			providerOnly++
+		}
+	}
+
+	// 2. Recorrer facturas del sistema que no están en el proveedor
+	for invNum, sysInv := range systemMap {
+		if _, found := providerMap[invNum]; !found {
+			total := sysInv.TotalAmount
+			orderID := sysInv.OrderID
+			// Extraer customerNit del DNI del cliente
+			customerNit := sysInv.CustomerDNI
+			orderCreatedAt := formatOrderDate(orderDates, sysInv.OrderID)
+			results = append(results, dtos.CompareResult{
+				Status:          dtos.CompareStatusSystemOnly,
+				InvoiceNumber:   invNum,
+				SystemInvoiceID: &sysInv.ID,
+				SystemOrderID:   &orderID,
+				SystemTotal:     &total,
+				CustomerNit:     customerNit,
+				OrderCreatedAt:  orderCreatedAt,
+				SystemItems:     mapInvoiceItemsToCompareDetails(sysInv.Items),
+			})
+			systemOnly++
+		}
+	}
+
+	summary := dtos.CompareSummary{
+		Matched:      matched,
+		SystemOnly:   systemOnly,
+		ProviderOnly: providerOnly,
+	}
+
+	responseData := &dtos.CompareResponseData{
+		CorrelationID: msg.CorrelationID,
+		BusinessID:    msg.BusinessID,
+		DateFrom:      msg.DateFrom,
+		DateTo:        msg.DateTo,
+		Results:       results,
+		Summary:       summary,
+	}
+
+	c.log.Info(ctx).
+		Str("correlation_id", msg.CorrelationID).
+		Int("matched", matched).
+		Int("system_only", systemOnly).
+		Int("provider_only", providerOnly).
+		Msg("📊 Comparison complete, publishing SSE")
+
+	return c.ssePublisher.PublishCompareReady(ctx, responseData)
+}
+
+// mapInvoiceItemsToCompareDetails convierte items de factura del sistema a CompareItemDetail
+func mapInvoiceItemsToCompareDetails(items []entities.InvoiceItem) []dtos.CompareItemDetail {
+	result := make([]dtos.CompareItemDetail, 0, len(items))
+	for _, it := range items {
+		iva := "0"
+		if it.TaxRate != nil {
+			iva = fmt.Sprintf("%.0f", *it.TaxRate*100)
+		}
+		result = append(result, dtos.CompareItemDetail{
+			ItemCode:  it.SKU,
+			ItemName:  it.Name,
+			Quantity:  fmt.Sprintf("%d", it.Quantity),
+			UnitValue: fmt.Sprintf("%.2f", it.UnitPrice),
+			IVA:       iva,
+		})
+	}
+	return result
+}
+
+// mapProviderDetailsToCompareDetails convierte items del proveedor a CompareItemDetail
+func mapProviderDetailsToCompareDetails(details []compareItemDetail) []dtos.CompareItemDetail {
+	result := make([]dtos.CompareItemDetail, 0, len(details))
+	for _, d := range details {
+		result = append(result, dtos.CompareItemDetail{
+			ItemCode:  d.ItemCode,
+			ItemName:  d.ItemName,
+			Quantity:  d.Quantity,
+			UnitValue: d.Value,
+			IVA:       d.IVA,
+		})
+	}
+	return result
+}
+
+// formatOrderDate retorna la fecha de creación de una orden formateada como YYYY-MM-DD, o nil
+func formatOrderDate(orderDates map[string]*time.Time, orderID string) *string {
+	if t, ok := orderDates[orderID]; ok && t != nil {
+		s := t.Format("2006-01-02")
+		return &s
+	}
+	return nil
 }
 
 // calculateNextRetry calcula el próximo intento (exponential backoff)

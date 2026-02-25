@@ -23,6 +23,9 @@ const normalizeLocationName = (str: string) => {
     return s;
 };
 
+const normalizeString = (str: string) =>
+    str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
+
 const getCarrierLogoSize = (carrierName: string): { container: string; image: string } => {
     const largeLogoCarriers = ['COORDINADORA', '99MINUTOS', 'PIBOX', 'DEPRISA'];
     const normalizedCarrier = normalizeLocationName(carrierName);

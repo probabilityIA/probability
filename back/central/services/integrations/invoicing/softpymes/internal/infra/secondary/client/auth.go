@@ -23,16 +23,11 @@ type AuthResponse struct {
 }
 
 // authenticate obtiene un token de autenticación de Softpymes.
-// baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
+// baseURL: URL base efectiva (producción o testing); siempre debe ser no-vacío.
 // referer: Identificación de la instancia del cliente (requerido por API)
 func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer, baseURL string) (string, error) {
-	effectiveBase := baseURL
-	if effectiveBase == "" {
-		effectiveBase = c.baseURL
-	}
-
 	// Verificar si tenemos un token válido en cache para esta URL
-	if token, valid := c.tokenCache.Get(effectiveBase); valid {
+	if token, valid := c.tokenCache.Get(baseURL); valid {
 		c.log.Debug(ctx).Msg("Using cached authentication token")
 		return token, nil
 	}
@@ -130,7 +125,7 @@ func (c *Client) authenticate(ctx context.Context, apiKey, apiSecret, referer, b
 	if expiresInSeconds == 0 {
 		expiresInSeconds = 3600 // Default 1 hora si no viene el tiempo
 	}
-	c.tokenCache.Set(effectiveBase, authResp.AccessToken, expiresInSeconds)
+	c.tokenCache.Set(baseURL, authResp.AccessToken, expiresInSeconds)
 
 	c.log.Info(ctx).
 		Str("token_length", fmt.Sprintf("%d chars", len(authResp.AccessToken))).

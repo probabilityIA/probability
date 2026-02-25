@@ -4,8 +4,6 @@ export interface SoftpymesConfig {
     company_nit: string;          // NIT de la empresa
     company_name: string;         // Nombre de la empresa
     referer: string;              // Identificación de instancia del cliente (requerido para header Referer)
-    api_url: string;              // URL de la API de Softpymes
-    test_mode?: boolean;          // Modo de pruebas
     default_customer_nit?: string; // NIT por defecto para clientes sin DNI (consumidor final: 222222222222)
     resolution_id?: number;       // ID de resolución de facturación (obtenido desde Softpymes /resolutions)
     branch_code?: string;         // Código de sucursal (default: "001")

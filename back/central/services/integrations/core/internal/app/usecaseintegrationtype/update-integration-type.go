@@ -129,5 +129,24 @@ func (uc *integrationTypeUseCase) UpdateIntegrationType(ctx context.Context, id 
 		Uint("id", id).
 		Msg("Tipo de integración actualizado exitosamente")
 
+	// Invalidar caché de todas las integraciones que usan este tipo
+	// para que en la próxima consulta se recarguen con las URLs actualizadas
+	if integrations, err := uc.repo.ListIntegrationsByIntegrationTypeID(ctx, id); err == nil {
+		for _, integration := range integrations {
+			if cacheErr := uc.cache.InvalidateIntegration(ctx, integration.ID); cacheErr != nil {
+				uc.log.Warn(ctx).
+					Err(cacheErr).
+					Uint("integration_id", integration.ID).
+					Msg("Error al invalidar caché de integración tras actualizar tipo")
+			}
+		}
+		uc.log.Info(ctx).
+			Uint("type_id", id).
+			Int("invalidated_count", len(integrations)).
+			Msg("Caché invalidado para integraciones del tipo actualizado")
+	} else {
+		uc.log.Warn(ctx).Err(err).Uint("type_id", id).Msg("No se pudo obtener integraciones para invalidar caché")
+	}
+
 	return existing, nil
 }

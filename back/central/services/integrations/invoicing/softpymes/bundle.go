@@ -24,11 +24,10 @@ func New(
 	logger = logger.WithModule("softpymes")
 
 	// 1. Cliente HTTP de Softpymes
-	// La URL base del constructor es el fallback cuando no viene base_url en el config del mensaje.
-	// La URL efectiva (producción/testing) se resuelve por llamada desde el consumer.
-	const fallbackURL = "https://api.softpymes.com"
-	httpClient := client.New(fallbackURL, logger)
-	logger.Info(context.Background()).Str("fallback_url", fallbackURL).Msg("✅ Softpymes HTTP client initialized (URL dinámica por llamada)")
+	// Sin URL quemada: la URL siempre viene de integration_types.base_url / base_url_test.
+	// El consumer valida que la URL no esté vacía antes de llamar al cliente.
+	httpClient := client.New(logger)
+	logger.Info(context.Background()).Msg("✅ Softpymes HTTP client initialized (URL dinámica desde integration_types)")
 
 	// 2. Response Publisher (RabbitMQ)
 	responsePublisher := queue.NewResponsePublisher(rabbit, logger)

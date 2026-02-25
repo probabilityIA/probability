@@ -235,12 +235,6 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 			Where("integration_types.code = ?", integrationType)
 	}
 
-	// Usar DISTINCT si hay JOINs para evitar duplicados
-	hasJoins := filters["business_id"] != nil || filters["integration_id"] != nil || filters["integration_type"] != nil
-	if hasJoins {
-		query = query.Distinct("shipments.id")
-	}
-
 	// Contar total (antes de aplicar paginación y ordenamiento)
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err

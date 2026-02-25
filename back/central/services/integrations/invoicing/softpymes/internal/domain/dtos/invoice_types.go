@@ -42,6 +42,11 @@ type CreateInvoiceRequest struct {
 	OrderID      string
 	Credentials  Credentials
 	Config       map[string]interface{}
+	// IsRetry indica que es un reintento: activa la consulta de idempotencia en Softpymes
+	IsRetry bool
+	// OrderCreatedAt es la fecha de creación de la orden (YYYY-MM-DD, zona Colombia).
+	// Se usa como dateFrom en la consulta de idempotencia. Si está vacío se usa la fecha actual.
+	OrderCreatedAt string
 }
 
 // AuditData captura el request/response HTTP para logging y debugging

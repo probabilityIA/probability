@@ -2,6 +2,8 @@ package usecases
 
 import (
 	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -74,6 +76,12 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 	// Verificar si expiró
 	if time.Now().After(authToken.ExpiresAt) {
 		return nil, fmt.Errorf("token expired")
+	}
+
+	// Extraer comment (usado para idempotencia: "order:<orderID>")
+	comment := ""
+	if c, ok := invoiceData["comment"].(string); ok {
+		comment = c
 	}
 
 	// Extraer customerNit del top level (formato Softpymes API)
@@ -156,6 +164,7 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 		InvoiceNumber: invoiceNumber,
 		ExternalID:    externalID,
 		OrderID:       "",
+		Comment:       comment,
 		CustomerName:  customerName,
 		CustomerEmail: customerEmail,
 		CustomerNIT:   customerNIT,
@@ -188,19 +197,39 @@ func (s *APISimulator) HandleCreateInvoice(token string, invoiceData map[string]
 		Invoice:    *invoice,
 		BranchCode: "001",
 		BranchName: "Sucursal Principal",
-		Prefix:     "FV",
+		Prefix:     "FEV",
 		SellerName: "Empresa Demo S.A.S.",
 		SellerNIT:  "900123456-7",
 	}, nil
 }
 
-// GetInvoiceByNumber busca una factura por su número
+// GetInvoiceByNumber busca una factura por su número.
+// Acepta múltiples formatos:
+//   - "0000001001" → padded 10 dígitos (formato listado, enviado por GetDocumentByNumber)
+//   - "FEV1001"    → combinado (formato retornado por creación)
+//   - "1001"       → bare sin ceros
 func (s *APISimulator) GetInvoiceByNumber(invoiceNumber string) (*InvoiceWithDetails, error) {
 	s.logger.Info().
 		Str("invoice_number", invoiceNumber).
 		Msg("Buscando factura por número")
 
+	// 1. Intento directo (el InvoiceNumber almacenado es "0000001001")
 	invoice, exists := s.Repository.GetInvoiceByNumber(invoiceNumber)
+
+	if !exists {
+		// 2. Formato combinado "FEV1001" → strip prefix → normalizar a padded
+		const prefix = "FEV"
+		candidate := invoiceNumber
+		if strings.HasPrefix(candidate, prefix) {
+			candidate = candidate[len(prefix):]
+		}
+		// Parsear como int y re-formatear a 10 dígitos (normaliza "1001" y "0000001001")
+		if n, err := strconv.ParseInt(candidate, 10, 64); err == nil {
+			padded := fmt.Sprintf("%010d", n)
+			invoice, exists = s.Repository.GetInvoiceByNumber(padded)
+		}
+	}
+
 	if !exists {
 		return nil, fmt.Errorf("invoice not found: %s", invoiceNumber)
 	}
@@ -210,7 +239,7 @@ func (s *APISimulator) GetInvoiceByNumber(invoiceNumber string) (*InvoiceWithDet
 		Invoice:    *invoice,
 		BranchCode: "001",
 		BranchName: "Sucursal Principal",
-		Prefix:     "FV",
+		Prefix:     "FEV",
 		SellerName: "Empresa Demo S.A.S.",
 		SellerNIT:  "900123456-7",
 	}, nil

@@ -31,6 +31,41 @@ type ISoftpymesClient interface {
 	// Retorna el documento con todos sus detalles (items, totales, información de envío)
 	// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
 	GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber, baseURL string) (map[string]interface{}, error)
+
+	// ListDocuments lista documentos de Softpymes en un rango de fechas con paginación opcional
+	// dateFrom y dateTo son requeridos (YYYY-MM-DD); máx 30 días entre fechas
+	// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
+	ListDocuments(ctx context.Context, apiKey, apiSecret, referer string, params ListDocumentsParams, baseURL string) ([]ListedDocument, error)
+}
+
+// ListDocumentsParams parámetros para listar documentos
+type ListDocumentsParams struct {
+	DateFrom     string  // REQUERIDO - Formato YYYY-MM-DD
+	DateTo       string  // REQUERIDO - Formato YYYY-MM-DD
+	DocumentType *string // OPCIONAL
+	Page         *string // OPCIONAL
+	PageSize     *string // OPCIONAL
+}
+
+// ListedDocumentDetail ítem de un documento listado
+type ListedDocumentDetail struct {
+	ItemCode string
+	ItemName string
+	Quantity string
+	Value    string
+	IVA      string
+}
+
+// ListedDocument documento simplificado retornado por ListDocuments
+type ListedDocument struct {
+	DocumentNumber string
+	DocumentDate   string
+	Total          string
+	CustomerNit    string
+	CustomerName   string
+	Comment        string
+	Prefix         string
+	Details        []ListedDocumentDetail
 }
 
 // ═══════════════════════════════════════════════════════════════

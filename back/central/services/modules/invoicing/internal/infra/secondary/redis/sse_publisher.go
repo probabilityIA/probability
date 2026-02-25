@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -137,6 +138,82 @@ func (p *SSEPublisher) PublishBulkJobProgress(ctx context.Context, job *entities
 	return p.publish(ctx, event)
 }
 
+// PublishCompareReady publica el resultado de una comparación de facturas
+func (p *SSEPublisher) PublishCompareReady(ctx context.Context, data *dtos.CompareResponseData) error {
+	// Convertir resultados a formato serializable
+	results := make([]map[string]interface{}, 0, len(data.Results))
+	for _, r := range data.Results {
+		row := map[string]interface{}{
+			"status":         r.Status,
+			"invoice_number": r.InvoiceNumber,
+			"prefix":         r.Prefix,
+			"document_date":  r.DocumentDate,
+			"provider_total": r.ProviderTotal,
+			"customer_nit":   r.CustomerNit,
+			"customer_name":  r.CustomerName,
+			"comment":        r.Comment,
+		}
+		if r.SystemInvoiceID != nil {
+			row["system_invoice_id"] = *r.SystemInvoiceID
+		}
+		if r.SystemOrderID != nil {
+			row["system_order_id"] = *r.SystemOrderID
+		}
+		if r.SystemTotal != nil {
+			row["system_total"] = *r.SystemTotal
+		}
+		if r.OrderCreatedAt != nil {
+			row["order_created_at"] = *r.OrderCreatedAt
+		}
+		if len(r.ProviderDetails) > 0 {
+			items := make([]map[string]interface{}, 0, len(r.ProviderDetails))
+			for _, d := range r.ProviderDetails {
+				items = append(items, map[string]interface{}{
+					"item_code":  d.ItemCode,
+					"item_name":  d.ItemName,
+					"quantity":   d.Quantity,
+					"unit_value": d.UnitValue,
+					"iva":        d.IVA,
+				})
+			}
+			row["provider_details"] = items
+		}
+		if len(r.SystemItems) > 0 {
+			items := make([]map[string]interface{}, 0, len(r.SystemItems))
+			for _, d := range r.SystemItems {
+				items = append(items, map[string]interface{}{
+					"item_code":  d.ItemCode,
+					"item_name":  d.ItemName,
+					"quantity":   d.Quantity,
+					"unit_value": d.UnitValue,
+					"iva":        d.IVA,
+				})
+			}
+			row["system_items"] = items
+		}
+		results = append(results, row)
+	}
+
+	event := invoiceSSEEvent{
+		ID:         generateEventID(),
+		EventType:  "invoice.compare_ready",
+		BusinessID: data.BusinessID,
+		Timestamp:  time.Now(),
+		Data: map[string]interface{}{
+			"correlation_id": data.CorrelationID,
+			"date_from":      data.DateFrom,
+			"date_to":        data.DateTo,
+			"results":        results,
+			"summary": map[string]interface{}{
+				"matched":       data.Summary.Matched,
+				"system_only":   data.Summary.SystemOnly,
+				"provider_only": data.Summary.ProviderOnly,
+			},
+		},
+	}
+	return p.publish(ctx, event)
+}
+
 // PublishBulkJobCompleted publica que un job masivo finalizó
 func (p *SSEPublisher) PublishBulkJobCompleted(ctx context.Context, job *entities.BulkInvoiceJob) error {
 	event := invoiceSSEEvent{
@@ -239,6 +316,9 @@ func (n *noopSSEPublisher) PublishBulkJobProgress(_ context.Context, _ *entities
 	return nil
 }
 func (n *noopSSEPublisher) PublishBulkJobCompleted(_ context.Context, _ *entities.BulkInvoiceJob) error {
+	return nil
+}
+func (n *noopSSEPublisher) PublishCompareReady(_ context.Context, _ *dtos.CompareResponseData) error {
 	return nil
 }
 

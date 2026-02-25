@@ -60,6 +60,7 @@ export interface UpdateIntegrationDTO {
     store_id?: string;
     is_active?: boolean;
     is_default?: boolean;
+    is_testing?: boolean;
     config?: IntegrationConfig;
     credentials?: IntegrationCredentials;
     description?: string;

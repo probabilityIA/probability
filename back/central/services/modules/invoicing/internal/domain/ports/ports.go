@@ -115,6 +115,18 @@ type IRepository interface {
 	// Tabla consultada: integrations (gestionada por módulo integrations/core)
 	// Replicado localmente para determinar el proveedor de facturación dinámicamente
 	GetIntegrationTypeByIntegrationID(ctx context.Context, integrationID uint) (int, error)
+
+	// ============================================
+	// COMPARACIÓN DE FACTURAS (in-memory, sin persistencia)
+	// ============================================
+
+	// GetIssuedInvoicesByDateRange retorna facturas emitidas de un negocio en un rango de fechas.
+	// Usado para comparación en memoria contra el proveedor de facturación.
+	GetIssuedInvoicesByDateRange(ctx context.Context, businessID uint, dateFrom, dateTo string) ([]*entities.Invoice, error)
+
+	// GetOrderCreatedAtsByIDs retorna map[orderID]createdAt para un batch de órdenes.
+	// Replica query de solo lectura sobre tabla orders (módulo orders — no compartir repo).
+	GetOrderCreatedAtsByIDs(ctx context.Context, orderIDs []string) (map[string]*time.Time, error)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -171,6 +183,8 @@ type IInvoiceSSEPublisher interface {
 	PublishCreditNoteCreated(ctx context.Context, creditNote *entities.CreditNote) error
 	PublishBulkJobProgress(ctx context.Context, job *entities.BulkInvoiceJob) error
 	PublishBulkJobCompleted(ctx context.Context, job *entities.BulkInvoiceJob) error
+	// Comparación de facturas
+	PublishCompareReady(ctx context.Context, data *dtos.CompareResponseData) error
 }
 
 // IInvoiceRequestPublisher publica solicitudes de facturación a colas específicas de proveedores
@@ -250,4 +264,8 @@ type IUseCase interface {
 	GetBulkJobStatus(ctx context.Context, jobID string) (*entities.BulkInvoiceJob, error)
 	GetBulkJobItems(ctx context.Context, jobID string) ([]*entities.BulkInvoiceJobItem, error)
 	ListBulkJobs(ctx context.Context, businessID uint, page, pageSize int) ([]*entities.BulkInvoiceJob, int64, error)
+
+	// Comparación de facturas con proveedor (auditoría esporádica, sin persistencia)
+	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.compare_ready"
+	RequestComparison(ctx context.Context, dto *dtos.CompareRequestDTO) (string, error)
 }

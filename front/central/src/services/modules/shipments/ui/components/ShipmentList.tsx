@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ManualShipmentModal } from './ManualShipmentModal';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
 // Carga dinámica del mapa para evitar SSR issues
 const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
@@ -264,6 +265,8 @@ export default function ShipmentList() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const { permissions, isSuperAdmin } = usePermissions();
+    const { businesses } = useBusinessesSimple();
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
     const canCreate = useHasPermission('Envios', 'Create');
     const canDelete = useHasPermission('Envios', 'Delete');
     const [loading, setLoading] = useState(true);
@@ -294,7 +297,9 @@ export default function ShipmentList() {
         try {
             const params: GetShipmentsParams = {
                 ...filters,
-                business_id: defaultBusinessId ?? filters.business_id,
+                business_id: isSuperAdmin
+                    ? (selectedBusinessId !== null ? selectedBusinessId : undefined)
+                    : defaultBusinessId,
             };
             const response = await getShipmentsAction(params);
             if (response.success) {
@@ -312,7 +317,7 @@ export default function ShipmentList() {
 
     useEffect(() => {
         fetchShipments();
-    }, [filters]);
+    }, [filters, selectedBusinessId]);
 
     const updateFilters = (newFilters: Partial<GetShipmentsParams>) => {
         const updated = { ...filters, ...newFilters };
@@ -405,6 +410,29 @@ export default function ShipmentList() {
                     );
                 })}
             </div>
+
+            {/* ─── Business Selector (Super Admin) ─── */}
+            {isSuperAdmin && businesses.length > 0 && (
+                <div className="flex-shrink-0 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Seleccionar Negocio (Super Admin)
+                    </label>
+                    <select
+                        value={selectedBusinessId?.toString() ?? ''}
+                        onChange={(e) => {
+                            const val = e.target.value;
+                            setSelectedBusinessId(val ? Number(val) : null);
+                            updateFilters({ page: 1 });
+                        }}
+                        className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="">Todos los negocios</option>
+                        {businesses.map((b) => (
+                            <option key={b.id} value={b.id}>{b.name} (ID: {b.id})</option>
+                        ))}
+                    </select>
+                </div>
+            )}
 
             {/* ─── Filters ─── */}
             <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">

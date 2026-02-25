@@ -16,7 +16,8 @@ import {
     InformationCircleIcon,
     ArrowLeftIcon,
     EyeIcon,
-    EyeSlashIcon
+    EyeSlashIcon,
+    BeakerIcon,
 } from '@heroicons/react/24/outline';
 
 interface SoftpymesEditFormProps {
@@ -26,6 +27,8 @@ interface SoftpymesEditFormProps {
         config: SoftpymesConfig;
         credentials?: SoftpymesCredentials;
         business_id?: number | null;
+        is_testing?: boolean;
+        base_url_test?: string;
     };
     onSuccess?: () => void;
     onCancel?: () => void;
@@ -37,6 +40,7 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
     const [testingConnection, setTestingConnection] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showApiSecret, setShowApiSecret] = useState(false);
+    const [isTesting, setIsTesting] = useState(initialData.is_testing || false);
 
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -49,8 +53,6 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
         company_nit: initialData.config.company_nit || '',
         company_name: initialData.config.company_name || '',
         referer: initialData.config.referer || '',
-        api_url: initialData.config.api_url || 'https://api-integracion.softpymes.com.co',
-        test_mode: initialData.config.test_mode || false,
         default_customer_nit: initialData.config.default_customer_nit || '',
         resolution_id: initialData.config.resolution_id ?? '' as string | number,
         branch_code: initialData.config.branch_code || '001',
@@ -107,8 +109,6 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
                 company_nit: formData.company_nit,
                 company_name: formData.company_name,
                 referer: formData.referer,
-                api_url: formData.api_url,
-                test_mode: formData.test_mode,
             };
 
             const credentials = {
@@ -148,8 +148,6 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
                 company_nit: formData.company_nit,
                 company_name: formData.company_name,
                 referer: formData.referer,
-                api_url: formData.api_url,
-                test_mode: formData.test_mode,
                 default_customer_nit: formData.default_customer_nit || undefined,
                 resolution_id: formData.resolution_id ? Number(formData.resolution_id) : undefined,
                 branch_code: formData.branch_code || undefined,
@@ -161,6 +159,7 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
             const updateData: any = {
                 name: formData.name,
                 config: config,
+                is_testing: isTesting,
             };
 
             // If credentials were entered, include them
@@ -560,49 +559,39 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
                 </div>
             </div>
 
-            {/* Configuración Avanzada */}
-            <div className="bg-gray-50 rounded-xl p-6 space-y-4">
-                <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700" />
+            {/* Modo de Pruebas */}
+            <div className="bg-orange-50 rounded-xl p-6 space-y-4 border border-orange-200">
+                <div className="flex items-center gap-2 mb-2">
+                    <BeakerIcon className="w-5 h-5 text-orange-600" />
                     <h3 className="text-lg font-semibold text-gray-900">
-                        Configuración Avanzada
+                        Modo de Pruebas
                     </h3>
                 </div>
-
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        URL de la API
-                    </label>
-                    <Input
-                        type="url"
-                        value={formData.api_url}
-                        onChange={(e) => setFormData({ ...formData, api_url: e.target.value })}
-                        placeholder="https://api.softpymes.com"
-                        className="bg-white font-mono text-sm"
-                    />
-                    <p className="text-xs text-gray-500 mt-1.5">
-                        URL base del servicio de Softpymes (no modificar salvo indicación del soporte)
-                    </p>
-                </div>
-
-                <div className="flex items-start gap-3 p-4 bg-white rounded-lg border border-gray-200">
-                    <input
-                        type="checkbox"
-                        id="test_mode"
-                        checked={formData.test_mode}
-                        onChange={(e) => setFormData({ ...formData, test_mode: e.target.checked })}
-                        className="h-4 w-4 mt-0.5 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                    <div>
-                        <label htmlFor="test_mode" className="block text-sm font-medium text-gray-900 cursor-pointer">
-                            Modo de Pruebas
-                        </label>
-                        <p className="text-xs text-gray-600 mt-1">
-                            Habilita esta opción para probar la integración sin afectar datos reales.
-                            Las facturas creadas no serán enviadas a la DIAN.
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                    <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">Activar modo testing</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                            Las facturas generadas quedarán marcadas como TEST y usarán la URL de pruebas de Softpymes.
                         </p>
                     </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsTesting(!isTesting)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ml-4 flex-shrink-0 ${isTesting ? 'bg-orange-500' : 'bg-gray-200'}`}
+                    >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
                 </div>
+                {isTesting && (
+                    <Alert type="warning">
+                        Modo de pruebas activado. Las facturas generadas con esta integración quedarán marcadas como <strong>TEST</strong> y no serán enviadas a la DIAN.
+                        {initialData.base_url_test && (
+                            <p className="mt-2 text-xs font-mono text-orange-800 break-all">
+                                URL sandbox: {initialData.base_url_test}
+                            </p>
+                        )}
+                    </Alert>
+                )}
             </div>
 
             {/* Action Buttons */}

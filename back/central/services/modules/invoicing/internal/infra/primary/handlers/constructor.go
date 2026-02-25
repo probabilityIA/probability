@@ -55,6 +55,9 @@ type IHandler interface {
 	// Jobs de facturación masiva
 	ListBulkJobs(c *gin.Context)
 	GetBulkJobStatus(c *gin.Context)
+
+	// Comparación con proveedor (auditoría esporádica)
+	CompareInvoices(c *gin.Context)
 }
 
 // handler implementa IHandler

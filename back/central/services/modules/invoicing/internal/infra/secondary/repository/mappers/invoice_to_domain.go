@@ -76,6 +76,36 @@ func InvoiceToDomain(model *models.Invoice) *entities.Invoice {
 		}
 	}
 
+	// Mapear items de factura si fueron preloaded
+	if len(model.InvoiceItems) > 0 {
+		items := make([]entities.InvoiceItem, 0, len(model.InvoiceItems))
+		for _, it := range model.InvoiceItems {
+			item := entities.InvoiceItem{
+				ID:             it.ID,
+				CreatedAt:      it.CreatedAt,
+				UpdatedAt:      it.UpdatedAt,
+				InvoiceID:      it.InvoiceID,
+				ProductID:      it.ProductID,
+				SKU:            it.SKU,
+				Name:           it.Name,
+				Description:    it.Description,
+				Quantity:       it.Quantity,
+				UnitPrice:      it.UnitPrice,
+				TotalPrice:     it.TotalPrice,
+				Currency:       it.Currency,
+				Tax:            it.Tax,
+				TaxRate:        it.TaxRate,
+				Discount:       it.Discount,
+				ProviderItemID: it.ProviderItemID,
+			}
+			if it.DeletedAt.Valid {
+				item.DeletedAt = &it.DeletedAt.Time
+			}
+			items = append(items, item)
+		}
+		entity.Items = items
+	}
+
 	return entity
 }
 

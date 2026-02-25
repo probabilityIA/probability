@@ -18,7 +18,8 @@ func (uc *IntegrationUseCase) GetIntegrationByID(ctx context.Context, id uint) (
 	if err == nil {
 		uc.log.Debug(ctx).Uint("id", id).Msg("✅ Cache hit - metadata")
 
-		// Convertir CachedIntegration a Integration
+		// Convertir CachedIntegration a Integration.
+		// Las URLs vienen del cache (populadas al momento de cachear), sin llamada DB adicional.
 		configJSON, _ := json.Marshal(cached.Config)
 		integration := &domain.Integration{
 			ID:                id,
@@ -35,10 +36,14 @@ func (uc *IntegrationUseCase) GetIntegrationByID(ctx context.Context, id uint) (
 			Description:       cached.Description,
 			CreatedAt:         cached.CreatedAt,
 			UpdatedAt:         cached.UpdatedAt,
+			// Reconstruir IntegrationType solo con los campos necesarios para URL resolution
+			IntegrationType: &domain.IntegrationType{
+				ID:          cached.IntegrationTypeID,
+				Code:        cached.IntegrationTypeCode,
+				BaseURL:     cached.BaseURL,
+				BaseURLTest: cached.BaseURLTest,
+			},
 		}
-		// Cargar IntegrationType para mantener compatibilidad
-		integrationType, _ := uc.repo.GetIntegrationTypeByID(ctx, cached.IntegrationTypeID)
-		integration.IntegrationType = integrationType
 
 		return integration, nil
 	}
@@ -58,8 +63,12 @@ func (uc *IntegrationUseCase) GetIntegrationByID(ctx context.Context, id uint) (
 	}
 
 	integrationTypeCode := ""
+	baseURL := ""
+	baseURLTest := ""
 	if integration.IntegrationType != nil {
 		integrationTypeCode = integration.IntegrationType.Code
+		baseURL = integration.IntegrationType.BaseURL
+		baseURLTest = integration.IntegrationType.BaseURLTest
 	}
 
 	cachedMeta := &domain.CachedIntegration{
@@ -78,6 +87,8 @@ func (uc *IntegrationUseCase) GetIntegrationByID(ctx context.Context, id uint) (
 		Description:         integration.Description,
 		CreatedAt:           integration.CreatedAt,
 		UpdatedAt:           integration.UpdatedAt,
+		BaseURL:             baseURL,
+		BaseURLTest:         baseURLTest,
 	}
 
 	if err := uc.cache.SetIntegration(ctx, cachedMeta); err != nil {

@@ -18,13 +18,15 @@ const (
 	CreditNoteEventTypeCreated    InvoiceEventType = "credit_note.created"
 	BulkJobEventTypeProgress      InvoiceEventType = "bulk_job.progress"
 	BulkJobEventTypeCompleted     InvoiceEventType = "bulk_job.completed"
+	InvoiceEventTypeCompareReady  InvoiceEventType = "invoice.compare_ready"
 )
 
 // IsValid verifica si el tipo de evento es válido
 func (t InvoiceEventType) IsValid() bool {
 	switch t {
 	case InvoiceEventTypeCreated, InvoiceEventTypeFailed, InvoiceEventTypeCancelled,
-		CreditNoteEventTypeCreated, BulkJobEventTypeProgress, BulkJobEventTypeCompleted:
+		CreditNoteEventTypeCreated, BulkJobEventTypeProgress, BulkJobEventTypeCompleted,
+		InvoiceEventTypeCompareReady:
 		return true
 	}
 	return false

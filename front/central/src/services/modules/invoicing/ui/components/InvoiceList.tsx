@@ -13,12 +13,16 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
 import { InvoiceDetailModal } from './InvoiceDetailPanel';
+import { InvoiceComparisonModal } from './InvoiceComparisonModal';
 import {
   getInvoicesAction,
   cancelInvoiceAction,
+  requestInvoiceComparisonAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
-import type { Invoice, InvoiceFilters } from '../../domain/types';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
+import type { Invoice, InvoiceFilters, CompareResponseData } from '../../domain/types';
 
 interface InvoiceListProps {
   businessId: number;
@@ -32,6 +36,9 @@ export const InvoiceList = forwardRef(function InvoiceList(
   ref
 ) {
   const { showToast } = useToast();
+  const { isSuperAdmin } = usePermissions();
+  const { businesses } = useBusinessesSimple();
+  const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [filters, setFilters] = useState<InvoiceFilters>({});
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -43,6 +50,10 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [showBulkModal, setShowBulkModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showCompareModal, setShowCompareModal] = useState(false);
+  const [compareLoading, setCompareLoading] = useState(false);
+  const [compareCorrelationId, setCompareCorrelationId] = useState<string | null>(null);
+  const [compareData, setCompareData] = useState<CompareResponseData | null>(null);
 
   useImperativeHandle(ref, () => ({
     openBulkModal: () => setShowBulkModal(true),
@@ -86,15 +97,23 @@ export const InvoiceList = forwardRef(function InvoiceList(
     onInvoiceCancelled: () => {
       loadInvoices(currentPage, pageSize);
     },
+    onCompareReady: (data) => {
+      if (!compareCorrelationId || data.correlation_id === compareCorrelationId) {
+        setCompareData(data);
+        setCompareLoading(false);
+      }
+    },
   });
 
   const loadInvoices = useCallback(async (page: number, size: number) => {
     try {
       setLoading(true);
-      const isSuperAdmin = !businessId || businessId === 0;
-      const finalFilters: InvoiceFilters = isSuperAdmin
-        ? { ...filters, page, page_size: size }
-        : { ...filters, business_id: businessId, page, page_size: size };
+      const effectiveBusinessId = isSuperAdmin
+        ? (selectedBusinessId ?? undefined)
+        : businessId;
+      const finalFilters: InvoiceFilters = effectiveBusinessId
+        ? { ...filters, business_id: effectiveBusinessId, page, page_size: size }
+        : { ...filters, page, page_size: size };
 
       const response = await getInvoicesAction(finalFilters);
 
@@ -134,12 +153,12 @@ export const InvoiceList = forwardRef(function InvoiceList(
     } finally {
       setLoading(false);
     }
-  }, [businessId, filters, showToast]);
+  }, [businessId, filters, showToast, isSuperAdmin, selectedBusinessId]);
 
   useEffect(() => {
     setCurrentPage(1);
     loadInvoices(1, pageSize);
-  }, [businessId, JSON.stringify(filters)]);
+  }, [businessId, JSON.stringify(filters), selectedBusinessId]);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -171,6 +190,27 @@ export const InvoiceList = forwardRef(function InvoiceList(
     setSelectedInvoice(invoice);
     setShowDetailModal(true);
   };
+
+  const handleRequestComparison = useCallback(async (dateFrom: string, dateTo: string) => {
+    if (isSuperAdmin && !selectedBusinessId) {
+      showToast('Selecciona un negocio antes de comparar', 'error');
+      return;
+    }
+    setCompareLoading(true);
+    setCompareData(null);
+    setCompareCorrelationId(null);
+    try {
+      const result = await requestInvoiceComparisonAction(
+        dateFrom,
+        dateTo,
+        isSuperAdmin ? selectedBusinessId ?? undefined : undefined
+      );
+      setCompareCorrelationId(result.correlation_id);
+    } catch (error: any) {
+      showToast('Error al iniciar comparación: ' + error.message, 'error');
+      setCompareLoading(false);
+    }
+  }, [showToast, isSuperAdmin, selectedBusinessId]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; type: 'success' | 'warning' | 'error' | 'secondary' }> = {
@@ -381,6 +421,29 @@ export const InvoiceList = forwardRef(function InvoiceList(
 
   return (
     <>
+      {/* Business Selector — solo Super Admin */}
+      {isSuperAdmin && businesses.length > 0 && (
+        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Seleccionar Negocio (Super Admin)
+          </label>
+          <select
+            value={selectedBusinessId?.toString() ?? ''}
+            onChange={(e) => {
+              const val = e.target.value;
+              setSelectedBusinessId(val ? Number(val) : null);
+              setCurrentPage(1);
+            }}
+            className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm"
+          >
+            <option value="">Todos los negocios</option>
+            {businesses.map((b) => (
+              <option key={b.id} value={b.id}>{b.name} (ID: {b.id})</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {/* Filtros + botón crear */}
       <div className="invoiceFilters flex items-center mb-4">
         <div className="flex-1 min-w-0">
@@ -393,8 +456,22 @@ export const InvoiceList = forwardRef(function InvoiceList(
           />
         </div>
         <button
+          onClick={() => {
+            setShowCompareModal(true);
+            setCompareData(null);
+            setCompareLoading(false);
+            setCompareCorrelationId(null);
+          }}
+          className="ml-3 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Comparar con proveedor"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </button>
+        <button
           onClick={() => setShowBulkModal(true)}
-          className="ml-4 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Crear Facturas"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -565,6 +642,15 @@ export const InvoiceList = forwardRef(function InvoiceList(
         onClose={() => setShowBulkModal(false)}
         onSuccess={() => loadInvoices(currentPage, pageSize)}
         businessId={businessId}
+      />
+
+      {/* Modal de auditoría comparativa */}
+      <InvoiceComparisonModal
+        isOpen={showCompareModal}
+        onClose={() => setShowCompareModal(false)}
+        loading={compareLoading}
+        compareData={compareData}
+        onRequestComparison={handleRequestComparison}
       />
     </>
   );

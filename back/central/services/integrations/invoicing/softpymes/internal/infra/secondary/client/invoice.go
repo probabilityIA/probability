@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
@@ -28,10 +29,11 @@ type InvoiceInfo struct {
 }
 
 // DocsFe contiene información de validación de la factura electrónica
+// NOTA: Softpymes retorna status como string ("Aceptado", "Pendiente", "Rechazado"), NO bool.
 type DocsFe struct {
-	Status  bool   `json:"status"`           // true = válido
-	Message string `json:"message"`          // "Documento válido enviado al proveedor tecnológico"
-	Error   string `json:"error,omitempty"`  // Error de la DIAN (ej: "Empresa no habilitada...")
+	Status  string `json:"status"`          // "Aceptado", "Pendiente", "Rechazado"
+	Message string `json:"message"`         // "Documento válido enviado al proveedor tecnológico"
+	Error   string `json:"error,omitempty"` // Error de la DIAN (ej: "Empresa no habilitada...")
 }
 
 // CreateInvoice crea una factura electrónica en Softpymes
@@ -57,6 +59,35 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	token, err := c.authenticate(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer, baseURL)
 	if err != nil {
 		return result, fmt.Errorf("authentication failed: %w", err)
+	}
+
+	// Verificar idempotencia: solo en reintentos, consultar si ya existe la factura en Softpymes.
+	// En el primer intento no es necesario — se evita una llamada extra innecesaria.
+	if req.IsRetry && req.OrderID != "" {
+		branchCode := "001"
+		if bc, ok := req.Config["branch_code"].(string); ok && bc != "" {
+			branchCode = bc
+		}
+		existing, err := c.findExistingInvoiceByOrderID(ctx, req.Credentials.APIKey, req.Credentials.APISecret, referer, req.OrderID, branchCode, req.OrderCreatedAt, baseURL)
+		if err != nil {
+			// No bloqueamos la creación si la consulta falla — solo advertimos
+			c.log.Warn(ctx).Err(err).
+				Str("order_id", req.OrderID).
+				Msg("Could not check for existing invoice, proceeding with creation")
+		} else if existing != nil {
+			c.log.Info(ctx).
+				Str("order_id", req.OrderID).
+				Str("document_number", existing.DocumentNumber).
+				Msg("Invoice already exists for this order in Softpymes, skipping duplicate creation")
+			result.InvoiceNumber = existing.DocumentNumber
+			result.ExternalID = existing.DocumentNumber
+			result.IssuedAt = existing.DocumentDate
+			result.ProviderInfo = map[string]interface{}{
+				"already_existed": true,
+				"document_number": existing.DocumentNumber,
+			}
+			return result, nil
+		}
 	}
 
 	// Determinar customerNit
@@ -164,6 +195,12 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	loc, _ := time.LoadLocation("America/Bogota")
 	documentDate := time.Now().In(loc).Format("2006-01-02")
 
+	// comment: identifica la orden de origen para idempotencia y trazabilidad
+	comment := ""
+	if req.OrderID != "" {
+		comment = "order:" + req.OrderID
+	}
+
 	// Construir request según formato de Softpymes
 	invoiceReq := map[string]interface{}{
 		"documentDate":   documentDate,
@@ -174,7 +211,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		"customerNit":    customerNit,
 		"termDays":       0,
 		"resolutionId":   resolutionID,
-		"comment":        "",
+		"comment":        comment,
 		"items":          softpymesItems,
 	}
 
@@ -245,14 +282,25 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		return result, fmt.Errorf("invoice response has no info: %s", invoiceResp.Message)
 	}
 
-	// Verificar docsFe.error (DIAN rejection - false positive fix)
-	if invoiceResp.Info.DocsFe != nil && invoiceResp.Info.DocsFe.Error != "" {
-		c.log.Error(ctx).
-			Str("docsFe_error", invoiceResp.Info.DocsFe.Error).
-			Str("document_number", invoiceResp.Info.DocumentNumber).
-			Bool("docsFe_status", invoiceResp.Info.DocsFe.Status).
-			Msg("DIAN rejected invoice")
-		return result, fmt.Errorf("DIAN rejection: %s", invoiceResp.Info.DocsFe.Error)
+	// Verificar rechazo DIAN: error explícito o status "Rechazado"
+	// Softpymes reporta rechazo con docsFe.error != "" O docsFe.status == "Rechazado"
+	if invoiceResp.Info.DocsFe != nil {
+		if invoiceResp.Info.DocsFe.Error != "" {
+			c.log.Error(ctx).
+				Str("docsFe_error", invoiceResp.Info.DocsFe.Error).
+				Str("docsFe_status", invoiceResp.Info.DocsFe.Status).
+				Str("document_number", invoiceResp.Info.DocumentNumber).
+				Msg("DIAN rejected invoice (error field)")
+			return result, fmt.Errorf("DIAN rejection: %s", invoiceResp.Info.DocsFe.Error)
+		}
+		if invoiceResp.Info.DocsFe.Status == "Rechazado" {
+			c.log.Error(ctx).
+				Str("docsFe_status", invoiceResp.Info.DocsFe.Status).
+				Str("docsFe_message", invoiceResp.Info.DocsFe.Message).
+				Str("document_number", invoiceResp.Info.DocumentNumber).
+				Msg("DIAN rejected invoice (status Rechazado)")
+			return result, fmt.Errorf("DIAN rejection: %s", invoiceResp.Info.DocsFe.Message)
+		}
 	}
 
 	c.log.Info(ctx).
@@ -276,7 +324,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	}
 
 	if invoiceResp.Info.DocsFe != nil {
-		result.ProviderInfo["dian_status"] = invoiceResp.Info.DocsFe.Status
+		result.ProviderInfo["dian_status"] = invoiceResp.Info.DocsFe.Status   // "Aceptado", "Pendiente", etc.
 		result.ProviderInfo["dian_message"] = invoiceResp.Info.DocsFe.Message
 	}
 
@@ -294,4 +342,57 @@ func mapCurrencyToSoftpymes(isoCurrency string) string {
 	default:
 		return "P"
 	}
+}
+
+// findExistingInvoiceByOrderID busca en Softpymes una factura ya creada para una orden.
+// Solo se llama en reintentos. Filtra por branchCode y un rango de fechas acotado
+// (desde la fecha de creación de la orden hasta hoy) para minimizar resultados.
+// La búsqueda final es por el campo "comment" que almacena "order:<orderID>".
+// Retorna nil, nil si no existe ninguna factura previa para esta orden.
+func (c *Client) findExistingInvoiceByOrderID(ctx context.Context, apiKey, apiSecret, referer, orderID, branchCode, orderCreatedAt, baseURL string) (*Document, error) {
+	loc, _ := time.LoadLocation("America/Bogota")
+	now := time.Now().In(loc)
+	dateTo := now.Format("2006-01-02")
+
+	// dateFrom: fecha de creación de la orden si se provee, si no el día actual.
+	// Los reintentos suelen ocurrir el mismo día, así que el rango es mínimo.
+	dateFrom := dateTo
+	if orderCreatedAt != "" {
+		dateFrom = orderCreatedAt
+	}
+
+	pageSize := "50"
+	params := ListDocumentsParams{
+		DateFrom: dateFrom,
+		DateTo:   dateTo,
+		PageSize: &pageSize,
+	}
+	if branchCode != "" {
+		params.BranchCode = &branchCode
+	}
+
+	c.log.Info(ctx).
+		Str("order_id", orderID).
+		Str("date_from", dateFrom).
+		Str("date_to", dateTo).
+		Str("branch_code", branchCode).
+		Msg("Checking for existing Softpymes invoice (retry idempotency)")
+
+	docs, err := c.listDocuments(ctx, apiKey, apiSecret, referer, params, baseURL)
+	if err != nil {
+		return nil, fmt.Errorf("error querying existing invoices: %w", err)
+	}
+
+	searchComment := "order:" + orderID
+	for i, doc := range *docs {
+		if strings.Contains(doc.Comment, searchComment) {
+			c.log.Info(ctx).
+				Str("order_id", orderID).
+				Str("document_number", doc.DocumentNumber).
+				Msg("Found existing Softpymes invoice for order — skipping duplicate")
+			return &(*docs)[i], nil
+		}
+	}
+
+	return nil, nil
 }
