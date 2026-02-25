@@ -43,8 +43,17 @@ export default function OrdersPage() {
         }
     };
 
-    const handleEdit = (order: Order) => {
-        setSelectedOrder(order);
+    const handleEdit = async (order: Order) => {
+        try {
+            const response = await getOrderByIdAction(order.id);
+            if (response.success && response.data) {
+                setSelectedOrder(response.data);
+            } else {
+                setSelectedOrder(order);
+            }
+        } catch {
+            setSelectedOrder(order);
+        }
         setShowEditModal(true);
     };
 

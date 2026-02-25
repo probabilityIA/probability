@@ -48,6 +48,7 @@ export interface IIntegrationRepository {
     createIntegrationType(data: CreateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>>;
     updateIntegrationType(id: number, data: UpdateIntegrationTypeDTO): Promise<SingleResponse<IntegrationType>>;
     deleteIntegrationType(id: number): Promise<ActionResponse>;
+    getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, string> }>;
 
     // Integration Categories
     getIntegrationCategories(): Promise<IntegrationCategoriesResponse>;

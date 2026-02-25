@@ -344,6 +344,10 @@ type IntegrationType struct {
 	BaseURL     string `gorm:"column:base_url;size:500"`
 	BaseURLTest string `gorm:"column:base_url_test;size:500"`
 
+	// Credenciales de plataforma encriptadas (JSON: {"api_key": "...", ...})
+	// Almacena credenciales globales del proveedor para integraciones con use_platform_token=true
+	PlatformCredentialsEncrypted []byte `gorm:"column:platform_credentials_encrypted;type:bytea"`
+
 	// Relaciones
 	Integrations []Integration `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }

@@ -1,8 +1,11 @@
 package usecases
 
 import (
+	"bytes"
+	"context"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/testing/integrations/envioclick/internal/domain"
@@ -107,7 +110,6 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 
 	shipmentID := s.Repository.GenerateShipmentID()
 	trackingNumber := GenerateTrackingNumber(*carrier, rng)
-	labelURL := fmt.Sprintf("https://envioclick-mock.local/labels/%s.pdf", shipmentID)
 
 	// Calculate flete
 	totalWeight := 0.0
@@ -116,6 +118,39 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 	}
 	flete := calculateFlete(totalWeight, req.ContentValue, rng)
 
+	// Pick product name
+	product := carrier.Products[rng.Intn(len(carrier.Products))].Name
+
+	// Generate and upload PDF to S3; fall back to mock URL on any error
+	labelURL := fmt.Sprintf("https://envioclick-mock.local/labels/%s.pdf", shipmentID)
+	if s.s3 != nil {
+		originCity := GetCityName(req.Origin.DaneCode)
+		destCity := GetCityName(req.Destination.DaneCode)
+		pdfBytes, pdfErr := GenerateMockGuidePDF(trackingNumber, carrier.Name, product, shipmentID, originCity, destCity, flete)
+		if pdfErr == nil {
+			s3Key := fmt.Sprintf("testing-guias/%s.pdf", shipmentID)
+			ctx := context.Background()
+			_, uploadErr := s.s3.UploadFile(ctx, bytes.NewReader(pdfBytes), s3Key)
+			if uploadErr == nil {
+				// Build public URL using URL_BASE_DOMAIN_S3
+				if s.urlBase != "" {
+					labelURL = strings.TrimRight(s.urlBase, "/") + "/" + strings.TrimLeft(s3Key, "/")
+				} else {
+					labelURL = s.s3.GetImageURL(s3Key)
+				}
+				s.logger.Info().
+					Str("shipment_id", shipmentID).
+					Str("s3_key", s3Key).
+					Str("label_url", labelURL).
+					Msg("PDF de guia subido exitosamente a S3")
+			} else {
+				s.logger.Warn().Err(uploadErr).Str("shipment_id", shipmentID).Msg("Error subiendo PDF a S3, usando URL mock")
+			}
+		} else {
+			s.logger.Warn().Err(pdfErr).Str("shipment_id", shipmentID).Msg("Error generando PDF, usando URL mock")
+		}
+	}
+
 	// Store the shipment
 	now := time.Now()
 	shipment := &domain.StoredShipment{
@@ -123,7 +158,7 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 		TrackingNumber: trackingNumber,
 		Carrier:        carrier.Name,
 		CarrierID:      carrier.ID,
-		Product:        carrier.Products[rng.Intn(len(carrier.Products))].Name,
+		Product:        product,
 		Origin:         req.Origin,
 		Destination:    req.Destination,
 		Packages:       req.Packages,

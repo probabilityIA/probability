@@ -19,6 +19,7 @@ type Order struct {
 	IntegrationID      uint    `json:"integration_id"`
 	IntegrationType    string  `json:"integration_type"`
 	IntegrationLogoURL *string `json:"integration_logo_url,omitempty"`
+	IntegrationName    string  `json:"integration_name,omitempty"`
 
 	// Identificadores de la orden
 	Platform       string `json:"platform"`
@@ -44,11 +45,13 @@ type Order struct {
 	CurrencyPresentment     string  `json:"currency_presentment,omitempty"`
 
 	// Información del cliente
-	CustomerID    *uint  `json:"customer_id,omitempty"`
-	CustomerName  string `json:"customer_name"`
-	CustomerEmail string `json:"customer_email"`
-	CustomerPhone string `json:"customer_phone"`
-	CustomerDNI   string `json:"customer_dni"`
+	CustomerID        *uint  `json:"customer_id,omitempty"`
+	CustomerName      string `json:"customer_name"`
+	CustomerFirstName string `json:"customer_first_name,omitempty"`
+	CustomerLastName  string `json:"customer_last_name,omitempty"`
+	CustomerEmail     string `json:"customer_email"`
+	CustomerPhone     string `json:"customer_phone"`
+	CustomerDNI       string `json:"customer_dni"`
 
 	// Dirección de envío
 	ShippingStreet     string   `json:"shipping_street"`

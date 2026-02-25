@@ -36,6 +36,7 @@ export interface Order {
     integration_id: number;
     integration_type: string;
     integration_logo_url?: string;
+    integration_name?: string;
 
     // Identificadores de la orden
     platform: string;
@@ -360,6 +361,9 @@ export interface UpdateOrderDTO {
     order_type_name?: string;
     status?: string;
     original_status?: string;
+    status_id?: number;
+    payment_status_id?: number;
+    fulfillment_status_id?: number;
 
     // Información adicional
     notes?: string;

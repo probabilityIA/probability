@@ -5,6 +5,7 @@ import { Order, CreateOrderDTO, UpdateOrderDTO } from '../../domain/types';
 import { Product } from '../../../products/domain/types';
 import { Button, Input, Alert, Modal } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useToast } from '@/shared/providers/toast-provider';
 import ProductSelector from '../../../products/ui/components/ProductSelector';
 import ProductForm from '../../../products/ui/components/ProductForm';
 import { createOrderAction, updateOrderAction } from '../../infra/actions';
@@ -19,6 +20,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
     const isEdit = !!order;
     const { permissions } = usePermissions();
     const defaultBusinessId = permissions?.business_id || 0;
+    const { showToast } = useToast();
 
     const [formData, setFormData] = useState({
         // Integration
@@ -26,10 +28,10 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
         platform: order?.platform || 'manual',
         business_id: order?.business_id || defaultBusinessId,
 
-        // Customer
+        // Customer — fallback: split customer_name if first/last aren't set separately
         customer_name: order?.customer_name || '',
-        customer_first_name: order?.customer_first_name || '',
-        customer_last_name: order?.customer_last_name || '',
+        customer_first_name: order?.customer_first_name || (order?.customer_name ? order.customer_name.split(' ')[0] : ''),
+        customer_last_name: order?.customer_last_name || (order?.customer_name ? order.customer_name.split(' ').slice(1).join(' ') : ''),
         customer_email: order?.customer_email || '',
         customer_phone: order?.customer_phone || '',
         customer_dni: order?.customer_dni || '',
@@ -56,6 +58,20 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
         // Status
         status: order?.status || 'pending',
 
+        // Logistics (preserved on update)
+        tracking_number: order?.tracking_number || '',
+        tracking_link: order?.tracking_link || '',
+        guide_id: order?.guide_id || '',
+        warehouse_name: order?.warehouse_name || '',
+        driver_name: order?.driver_name || '',
+        is_last_mile: order?.is_last_mile || false,
+
+        // Additional
+        notes: order?.notes || '',
+        invoiceable: order?.invoiceable ?? false,
+        is_confirmed: order?.is_confirmed ?? null,
+        novelty: order?.novelty || '',
+
         // Items
         items: order?.items || [],
 
@@ -64,7 +80,18 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
         external_id: order?.external_id || '',
     });
 
-    const [selectedProducts, setSelectedProducts] = useState<Product[]>([]);
+    const [selectedProducts, setSelectedProducts] = useState<Product[]>(() => {
+        if (!order?.items || !Array.isArray(order.items)) return [];
+        return (order.items as any[])
+            .map((item: any) => ({
+                ...item,
+                // Normalize field names that differ between stored format and Product interface
+                stock: item.stock ?? item.stock_quantity ?? 0,
+                manage_stock: item.manage_stock ?? item.track_inventory ?? false,
+                thumbnail: item.thumbnail || item.image_url || undefined,
+            } as Product))
+            .filter((p: any) => p.id);
+    });
     const [showProductModal, setShowProductModal] = useState(false);
 
     const [loading, setLoading] = useState(false);
@@ -81,27 +108,35 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                 throw new Error('Por favor completa los campos requeridos');
             }
 
-            const data: CreateOrderDTO = {
+            const baseData = {
                 ...formData,
                 items: selectedProducts.length > 0 ? selectedProducts : formData.items,
-                // Ensure customer_name is populated from first/last if missing
                 customer_name: formData.customer_name || `${formData.customer_first_name} ${formData.customer_last_name}`.trim()
             };
 
             let response;
             if (isEdit && order) {
-                response = await updateOrderAction(order.id, data as UpdateOrderDTO);
+                const updateData: UpdateOrderDTO = {
+                    ...baseData,
+                    // Map is_confirmed → confirmation_status so clearing to null works
+                    confirmation_status: formData.is_confirmed === true ? 'yes' : formData.is_confirmed === false ? 'no' : 'pending',
+                    is_confirmed: undefined,
+                };
+                response = await updateOrderAction(order.id, updateData);
             } else {
-                response = await createOrderAction(data);
+                response = await createOrderAction(baseData as CreateOrderDTO);
             }
 
             if (response.success) {
+                showToast(isEdit ? 'Orden actualizada exitosamente' : 'Orden creada exitosamente', 'success');
                 if (onSuccess) onSuccess();
             } else {
                 setError(response.message || 'Error al guardar la orden');
+                showToast(response.message || 'Error al guardar la orden', 'error');
             }
         } catch (err: any) {
             setError(err.message || 'Error al guardar la orden');
+            showToast(err.message || 'Error al guardar la orden', 'error');
         } finally {
             setLoading(false);
         }
@@ -110,18 +145,38 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
     const handleProductsChange = (products: Product[]) => {
         setSelectedProducts(products);
         const subtotal = products.reduce((acc, p) => acc + p.price, 0);
-        const total = subtotal + formData.tax - formData.discount + formData.shipping_cost;
-        setFormData({ ...formData, subtotal, total_amount: total });
+        setFormData(prev => ({
+            ...prev,
+            subtotal,
+            total_amount: subtotal + prev.tax - prev.discount + prev.shipping_cost,
+        }));
     };
 
     // Auto-calculate total
     const calculateTotal = () => {
-        const total = formData.subtotal + formData.tax - formData.discount + formData.shipping_cost;
-        setFormData({ ...formData, total_amount: total });
+        setFormData(prev => ({
+            ...prev,
+            total_amount: prev.subtotal + prev.tax - prev.discount + prev.shipping_cost,
+        }));
     };
 
     return (
         <form onSubmit={handleSubmit} className="space-y-2 bg-purple-50 p-2 rounded-lg">
+            {isEdit && order && (
+                <div className="flex items-center gap-3 px-2 py-2 mb-1 bg-purple-100 rounded-lg border border-purple-200">
+                    {order.integration_logo_url && (
+                        <img src={order.integration_logo_url} alt="" className="h-8 w-8 object-contain rounded" />
+                    )}
+                    <div>
+                        <p className="text-xs text-purple-600 font-medium">
+                            {order.integration_name || order.integration_type || 'Integración'}
+                        </p>
+                        <p className="text-sm font-bold text-gray-800">
+                            {order.order_number || order.internal_number || order.id}
+                        </p>
+                    </div>
+                </div>
+            )}
             {error && (
                 <Alert type="error" onClose={() => setError(null)}>
                     {error}
@@ -380,7 +435,99 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                     <option value="cancelled">Cancelado</option>
                                 </select>
                             </div>
+                            <div>
+                                <label className="flex items-center">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.invoiceable}
+                                        onChange={(e) => setFormData({ ...formData, invoiceable: e.target.checked })}
+                                        className="mr-2"
+                                    />
+                                    <span className="text-sm font-medium text-black">Facturable</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Confirmación
+                                </label>
+                                <select
+                                    value={formData.is_confirmed === true ? 'yes' : formData.is_confirmed === false ? 'no' : 'pending'}
+                                    onChange={(e) => {
+                                        const v = e.target.value;
+                                        setFormData({ ...formData, is_confirmed: v === 'yes' ? true : v === 'no' ? false : null });
+                                    }}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                >
+                                    <option value="pending">Pendiente</option>
+                                    <option value="yes">Confirmado</option>
+                                    <option value="no">No confirmado</option>
+                                </select>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* Logistics */}
+                <div className="lg:col-span-2">
+                    <div className="bg-purple-300 p-5 rounded-lg">
+                        <h3 className="text-base font-semibold text-black mb-4">Logística</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Número de Guía
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.tracking_number}
+                                    onChange={(e) => setFormData({ ...formData, tracking_number: e.target.value })}
+                                    placeholder="ej: 123456789"
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    ID Guía
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.guide_id}
+                                    onChange={(e) => setFormData({ ...formData, guide_id: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Bodega
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.warehouse_name}
+                                    onChange={(e) => setFormData({ ...formData, warehouse_name: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-black mb-2">
+                                    Conductor
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.driver_name}
+                                    onChange={(e) => setFormData({ ...formData, driver_name: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Notes */}
+                <div className="lg:col-span-1">
+                    <div className="bg-purple-300 p-5 rounded-lg h-full">
+                        <h3 className="text-base font-semibold text-black mb-4">Notas</h3>
+                        <textarea
+                            value={formData.notes}
+                            onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                            rows={5}
+                            placeholder="Notas internas sobre la orden..."
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent resize-none text-sm"
+                        />
                     </div>
                 </div>
             </div>

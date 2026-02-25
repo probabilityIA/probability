@@ -116,6 +116,16 @@ func (uc *integrationTypeUseCase) CreateIntegrationType(ctx context.Context, dto
 		BaseURLTest:       dto.BaseURLTest,
 	}
 
+	// Encriptar credenciales de plataforma si se proporcionan
+	if len(dto.PlatformCredentials) > 0 {
+		encrypted, err := uc.encryption.EncryptCredentials(ctx, dto.PlatformCredentials)
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Str("name", dto.Name).Msg("Error al encriptar credenciales de plataforma")
+			return nil, fmt.Errorf("error al encriptar credenciales de plataforma: %w", err)
+		}
+		integrationType.PlatformCredentialsEncrypted = encrypted
+	}
+
 	if err := uc.repo.CreateIntegrationType(ctx, integrationType); err != nil {
 		uc.log.Error(ctx).Err(err).
 			Str("name", dto.Name).

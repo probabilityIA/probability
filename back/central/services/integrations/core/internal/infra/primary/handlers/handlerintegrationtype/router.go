@@ -14,6 +14,7 @@ func (h *IntegrationTypeHandler) RegisterRoutes(router *gin.RouterGroup, logger 
 		integrationTypesGroup.GET("", middleware.JWT(), h.ListIntegrationTypesHandler)
 		integrationTypesGroup.GET("/active", middleware.JWT(), h.ListActiveIntegrationTypesHandler)
 		integrationTypesGroup.GET("/:id", middleware.JWT(), h.GetIntegrationTypeByIDHandler)
+		integrationTypesGroup.GET("/:id/platform-credentials", middleware.JWT(), h.GetPlatformCredentialsHandler)
 		integrationTypesGroup.GET("/code/:code", middleware.JWT(), h.GetIntegrationTypeByCodeHandler)
 		integrationTypesGroup.POST("", middleware.JWT(), h.CreateIntegrationTypeHandler)
 		integrationTypesGroup.PUT("/:id", middleware.JWT(), h.UpdateIntegrationTypeHandler)

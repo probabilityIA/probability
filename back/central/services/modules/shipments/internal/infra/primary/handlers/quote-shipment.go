@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -69,9 +71,85 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 		return
 	}
 
+	// If Redis is available, poll synchronously for the quote result
+	if h.redisClient != nil {
+		redisKey := fmt.Sprintf("shipment:quote:result:%s", correlationID)
+
+		ticker := time.NewTicker(200 * time.Millisecond)
+		defer ticker.Stop()
+		timeoutTimer := time.NewTimer(30 * time.Second)
+		defer timeoutTimer.Stop()
+
+		for {
+			select {
+			case <-c.Request.Context().Done():
+				return
+			case <-timeoutTimer.C:
+				c.JSON(http.StatusRequestTimeout, gin.H{
+					"success":        false,
+					"message":        "La cotización tardó demasiado. Por favor intente nuevamente.",
+					"correlation_id": correlationID,
+				})
+				return
+			case <-ticker.C:
+				val, err := h.redisClient.Get(c.Request.Context(), redisKey)
+				if err != nil {
+					continue // Key not yet available
+				}
+
+				var result struct {
+					Status string                 `json:"status"`
+					Data   map[string]interface{} `json:"data"`
+					Error  string                 `json:"error"`
+				}
+				if err := json.Unmarshal([]byte(val), &result); err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"success": false,
+						"error":   "Error al procesar resultado de cotización",
+					})
+					return
+				}
+
+				h.redisClient.Delete(c.Request.Context(), redisKey)
+
+				if result.Status == "error" {
+					c.JSON(http.StatusOK, gin.H{
+						"success":        false,
+						"message":        result.Error,
+						"correlation_id": correlationID,
+					})
+					return
+				}
+
+				c.JSON(http.StatusOK, gin.H{
+					"success":        true,
+					"message":        "Cotización exitosa",
+					"correlation_id": correlationID,
+					"data":           gin.H{"rates": extractRatesFromData(result.Data)},
+				})
+				return
+			}
+		}
+	}
+
+	// Fallback: async response when Redis is unavailable
 	c.JSON(http.StatusAccepted, gin.H{
 		"success":        true,
 		"message":        "Solicitud de cotización enviada. Será procesada en breve.",
 		"correlation_id": correlationID,
 	})
+}
+
+// extractRatesFromData extracts the rates array from the transport provider response data.
+// EnvioClick response format: { "status": "success", "data": { "rates": [...] } }
+func extractRatesFromData(data map[string]interface{}) interface{} {
+	if data == nil {
+		return nil
+	}
+	if innerData, ok := data["data"].(map[string]interface{}); ok {
+		if rates, ok := innerData["rates"]; ok {
+			return rates
+		}
+	}
+	return nil
 }

@@ -16,7 +16,7 @@ import {
     clearRechargeHistoryAction,
     Wallet
 } from '@/services/modules/wallet/infra/actions';
-import { getBusinessesAction } from '@/services/auth/business/infra/actions';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -28,16 +28,53 @@ const formatDate = (dateString: string) => {
 
 export default function WalletPage() {
     const { isSuperAdmin } = usePermissions();
+    const { businesses } = useBusinessesSimple();
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+
+    const selectedBusiness = businesses.find(b => b.id === selectedBusinessId);
 
     return (
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Billetera</h1>
+
+                {/* Business selector - solo para super admin */}
+                {isSuperAdmin && businesses.length > 0 && (
+                    <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+                        <label className="text-sm font-medium text-blue-800 whitespace-nowrap">
+                            Negocio:
+                        </label>
+                        <select
+                            value={selectedBusinessId?.toString() ?? ''}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSelectedBusinessId(val ? Number(val) : null);
+                            }}
+                            className="px-3 py-1.5 border border-blue-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                        >
+                            <option value="">Vista Administrativa</option>
+                            {businesses.map((b) => (
+                                <option key={b.id} value={b.id}>{b.name}</option>
+                            ))}
+                        </select>
+                    </div>
+                )}
             </div>
 
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-6">
-                    {isSuperAdmin ? <AdminWalletView /> : <BusinessWalletView />}
+                    {isSuperAdmin ? (
+                        selectedBusinessId ? (
+                            <BusinessWalletView
+                                businessId={selectedBusinessId}
+                                businessName={selectedBusiness?.name}
+                            />
+                        ) : (
+                            <AdminWalletView />
+                        )
+                    ) : (
+                        <BusinessWalletView />
+                    )}
                 </div>
             </div>
         </div>
@@ -54,12 +91,11 @@ function AdminWalletView() {
     const fetchWalletsAndBusinesses = useCallback(async () => {
         try {
             setLoading(true);
-            // Fetch Wallets
             const walletRes = await getWalletsAction();
             if (!walletRes.success) throw new Error(walletRes.error || 'Failed to fetch wallets');
             setWallets(walletRes.data || []);
 
-            // Fetch Businesses
+            const { getBusinessesAction } = await import('@/services/auth/business/infra/actions');
             const businessesRes = await getBusinessesAction({ per_page: 1000 });
             if (businessesRes.data) {
                 const businessMap: Record<number, string> = {};
@@ -153,7 +189,6 @@ function AdminWalletView() {
 
             {/* Bottom Row - Approved and Rejected (Side by Side) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {/* Approved Section */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                     <RequestsTableView
                         title="Aprobados"
@@ -170,7 +205,6 @@ function AdminWalletView() {
                     />
                 </div>
 
-                {/* Rejected Section */}
                 <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
                     <RequestsTableView
                         title="Rechazados"
@@ -317,8 +351,6 @@ function RequestsTableView({
     const [requests, setRequests] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
-
-    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
 
     const fetchRequests = useCallback(async () => {
@@ -348,8 +380,8 @@ function RequestsTableView({
         try {
             const res = await processRequestAction(id, action);
             if (res.success) {
-                await fetchRequests(); // Refresh list
-                onRequestsChanged(); // Notify parent
+                await fetchRequests();
+                onRequestsChanged();
             } else {
                 alert(`Error al procesar la solicitud: ${res.error}`);
             }
@@ -416,7 +448,6 @@ function RequestsTableView({
         });
     }
 
-    // Slice data for pagination
     const totalItems = requests.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const paginatedData = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
@@ -445,8 +476,17 @@ function RequestsTableView({
     );
 }
 
-function BusinessWalletView() {
+interface BusinessWalletViewProps {
+    /** Super admin: ID del negocio a gestionar. Undefined = negocio propio del usuario */
+    businessId?: number;
+    /** Super admin: nombre del negocio seleccionado para mostrar en la UI */
+    businessName?: string;
+}
+
+function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProps = {}) {
     const { permissions } = usePermissions();
+    const isSuperAdminView = !!businessId;
+
     const [wallet, setWallet] = useState<Wallet | null>(null);
     const [loading, setLoading] = useState(true);
     const [rechargeAmount, setRechargeAmount] = useState<string>('');
@@ -462,18 +502,18 @@ function BusinessWalletView() {
 
     const fetchHistory = useCallback(async () => {
         try {
-            const res = await getWalletHistoryAction();
+            const res = await getWalletHistoryAction(businessId);
             if (res.success) {
                 setHistory(res.data || []);
             }
         } catch (e) {
             console.error(e);
         }
-    }, []);
+    }, [businessId]);
 
     const fetchBalance = useCallback(async () => {
         try {
-            const res = await getWalletBalanceAction();
+            const res = await getWalletBalanceAction(businessId);
             if (!res.success) throw new Error(res.error || 'Failed to fetch balance');
             setWallet(res.data || null);
         } catch (err: any) {
@@ -481,9 +521,12 @@ function BusinessWalletView() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [businessId]);
 
     useEffect(() => {
+        setLoading(true);
+        setWallet(null);
+        setHistory([]);
         fetchBalance();
         fetchHistory();
     }, [fetchBalance, fetchHistory]);
@@ -504,20 +547,17 @@ function BusinessWalletView() {
         setMessage(null);
 
         try {
-            const res = await rechargeWalletAction(amount);
+            const res = await rechargeWalletAction(amount, businessId);
 
             if (!res.success) {
                 throw new Error(res.error || 'Error al reportar pago');
             }
 
-            // Save request ID for later reporting
             if (res.data?.ID) {
                 setCurrentRequestId(res.data.ID);
             }
 
-            // Show standardized success message in modal or alert, here we use the QR modal as "Next Step"
             setShowQrModal(true);
-            // Keep rechargeAmount to show in modal
 
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message });
@@ -528,8 +568,22 @@ function BusinessWalletView() {
 
     if (loading && !wallet) return <div className="p-8 text-center"><Spinner /></div>;
 
+    const displayName = businessName || permissions?.business_name || '....';
+
     return (
         <>
+            {/* Banner de contexto para super admin */}
+            {isSuperAdminView && (
+                <div className="mb-6 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                    <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <p className="text-sm text-blue-800">
+                        Vista de billetera de <strong>{displayName}</strong> (ID: {businessId}) — modo super admin
+                    </p>
+                </div>
+            )}
+
             <div className="grid gap-8 lg:grid-cols-2">
                 {/* Balance Card - Premium Design */}
                 <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white shadow-xl flex flex-col justify-between min-h-[240px]">
@@ -561,14 +615,16 @@ function BusinessWalletView() {
                             <span className="text-gray-400 text-xs tracking-widest">BILLETERA EMPRESARIAL</span>
                         </div>
                         <p className="font-mono text-gray-300 tracking-wider">
-                            {permissions?.business_name || '....'}
+                            {displayName}
                         </p>
                     </div>
                 </div>
 
                 {/* Recharge Section */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 lg:p-8">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6">Recargar Saldo</h2>
+                    <h2 className="text-xl font-bold text-gray-900 mb-6">
+                        {isSuperAdminView ? `Recargar Saldo — ${displayName}` : 'Recargar Saldo'}
+                    </h2>
 
                     <div className="space-y-6">
                         <Input
@@ -699,11 +755,9 @@ function BusinessWalletView() {
                     setShowConfirmationModal(false);
                     setRechargeAmount('');
                 }}
-
                 size="md"
             >
                 <div className="flex flex-col items-center justify-center p-6 text-center">
-                    {/* Success Icon */}
                     <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mb-6">
                         <svg className="w-12 h-12 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
@@ -769,7 +823,6 @@ function BusinessWalletView() {
 }
 
 function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[], emptyMessage: string }) {
-    // Pagination State
     const [currentPage, setCurrentPage] = useState(1);
     const [itemsPerPage, setItemsPerPage] = useState(10);
 
@@ -807,7 +860,6 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
         }
     ];
 
-    // Slice data for pagination
     const totalItems = data.length;
     const totalPages = Math.ceil(totalItems / itemsPerPage);
     const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);

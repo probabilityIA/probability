@@ -118,6 +118,9 @@ type IIntegrationUseCase interface {
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
 	TestConnectionFromConfig(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 	OnIntegrationCreated(integrationType int, observer func(context.Context, *PublicIntegration))
+
+	// Platform credentials — decrypts a field from integration_types.platform_credentials_encrypted
+	GetPlatformCredentialByIntegrationID(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
 // ============================================

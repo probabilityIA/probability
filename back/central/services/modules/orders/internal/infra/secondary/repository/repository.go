@@ -92,7 +92,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.Pro
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("order not found")
+			return nil, domainerrors.ErrOrderNotFound
 		}
 		return nil, err
 	}

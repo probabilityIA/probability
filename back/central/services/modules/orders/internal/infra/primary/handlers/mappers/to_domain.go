@@ -5,6 +5,80 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/request"
 )
 
+// MapUpdateOrderRequestToDomain convierte HTTP update request a DTO de dominio
+// ✅ Conversión: datatypes.JSON → []byte, maneja snake_case JSON tags
+func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRequest {
+	if req == nil {
+		return nil
+	}
+	return &dtos.UpdateOrderRequest{
+		Subtotal:            req.Subtotal,
+		Tax:                 req.Tax,
+		Discount:            req.Discount,
+		ShippingCost:        req.ShippingCost,
+		TotalAmount:         req.TotalAmount,
+		Currency:            req.Currency,
+		CodTotal:            req.CodTotal,
+		CustomerName:        req.CustomerName,
+		CustomerEmail:       req.CustomerEmail,
+		CustomerPhone:       req.CustomerPhone,
+		CustomerDNI:         req.CustomerDNI,
+		CustomerOrderCount:  req.CustomerOrderCount,
+		CustomerTotalSpent:  req.CustomerTotalSpent,
+		ShippingStreet:      req.ShippingStreet,
+		ShippingCity:        req.ShippingCity,
+		ShippingState:       req.ShippingState,
+		ShippingCountry:     req.ShippingCountry,
+		ShippingPostalCode:  req.ShippingPostalCode,
+		ShippingLat:         req.ShippingLat,
+		ShippingLng:         req.ShippingLng,
+		PaymentMethodID:     req.PaymentMethodID,
+		IsPaid:              req.IsPaid,
+		PaidAt:              req.PaidAt,
+		TrackingNumber:      req.TrackingNumber,
+		TrackingLink:        req.TrackingLink,
+		GuideID:             req.GuideID,
+		GuideLink:           req.GuideLink,
+		DeliveryDate:        req.DeliveryDate,
+		DeliveredAt:         req.DeliveredAt,
+		WarehouseID:         req.WarehouseID,
+		WarehouseName:       req.WarehouseName,
+		DriverID:            req.DriverID,
+		DriverName:          req.DriverName,
+		IsLastMile:          req.IsLastMile,
+		Weight:              req.Weight,
+		Height:              req.Height,
+		Width:               req.Width,
+		Length:              req.Length,
+		Boxes:               req.Boxes,
+		OrderTypeID:         req.OrderTypeID,
+		OrderTypeName:       req.OrderTypeName,
+		Status:              req.Status,
+		OriginalStatus:      req.OriginalStatus,
+		StatusID:            req.StatusID,
+		PaymentStatusID:     req.PaymentStatusID,
+		FulfillmentStatusID: req.FulfillmentStatusID,
+		Notes:               req.Notes,
+		Coupon:              req.Coupon,
+		Approved:            req.Approved,
+		UserID:              req.UserID,
+		UserName:            req.UserName,
+		IsConfirmed:         req.IsConfirmed,
+		ConfirmationStatus:  req.ConfirmationStatus,
+		Novelty:             req.Novelty,
+		Invoiceable:         req.Invoiceable,
+		InvoiceURL:          req.InvoiceURL,
+		InvoiceID:           req.InvoiceID,
+		InvoiceProvider:     req.InvoiceProvider,
+		Items:               []byte(req.Items),
+		Metadata:            []byte(req.Metadata),
+		FinancialDetails:    []byte(req.FinancialDetails),
+		ShippingDetails:     []byte(req.ShippingDetails),
+		PaymentDetails:      []byte(req.PaymentDetails),
+		FulfillmentDetails:  []byte(req.FulfillmentDetails),
+	}
+}
+
 // MapOrderRequestToDomain convierte HTTP request a DTO de dominio
 // ✅ Conversión: datatypes.JSON → []byte
 func MapOrderRequestToDomain(req *request.MapOrder) *dtos.ProbabilityOrderDTO {

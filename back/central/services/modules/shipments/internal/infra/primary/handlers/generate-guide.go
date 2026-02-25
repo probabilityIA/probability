@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -44,6 +45,15 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		return
 	}
 
+	// 4. Pre-create shipment record so the response consumer can update it
+	shipmentReq := buildShipmentRequest(raw, carrier)
+	shipmentResp, err := h.uc.CreateShipment(c.Request.Context(), shipmentReq)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear registro de envío: " + err.Error()})
+		return
+	}
+	shipmentID := shipmentResp.ID
+
 	correlationID := uuid.New().String()
 
 	effectiveBaseURL := carrier.BaseURL
@@ -52,6 +62,7 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 	}
 
 	msg := &domain.TransportRequestMessage{
+		ShipmentID:        &shipmentID,
 		Provider:          carrier.ProviderCode,
 		IntegrationTypeID: carrier.IntegrationTypeID,
 		Operation:         "generate",
@@ -75,5 +86,56 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 		"success":        true,
 		"message":        "Solicitud de generación de guía enviada. Será procesada en breve.",
 		"correlation_id": correlationID,
+		"shipment_id":    shipmentID,
 	})
 }
+
+// buildShipmentRequest extracts fields from the raw generate payload to pre-create the DB record.
+func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInfo) *domain.CreateShipmentRequest {
+	req := &domain.CreateShipmentRequest{
+		Status:      "pending",
+		CarrierCode: strPtr(carrier.ProviderCode),
+	}
+
+	// order_uuid
+	if v, ok := raw["order_uuid"].(string); ok && v != "" {
+		req.OrderID = strPtr(v)
+	}
+
+	// totalCost
+	if v, ok := raw["totalCost"].(float64); ok {
+		req.TotalCost = float64Ptr(v)
+	}
+
+	// destination → ClientName, DestinationAddress
+	if dest, ok := raw["destination"].(map[string]interface{}); ok {
+		firstName, _ := dest["firstName"].(string)
+		lastName, _ := dest["lastName"].(string)
+		address, _ := dest["address"].(string)
+		req.ClientName = fmt.Sprintf("%s %s", firstName, lastName)
+		req.DestinationAddress = address
+	}
+
+	// packages[0] → dimensions
+	if pkgs, ok := raw["packages"].([]interface{}); ok && len(pkgs) > 0 {
+		if pkg, ok := pkgs[0].(map[string]interface{}); ok {
+			if v, ok := pkg["weight"].(float64); ok {
+				req.Weight = float64Ptr(v)
+			}
+			if v, ok := pkg["height"].(float64); ok {
+				req.Height = float64Ptr(v)
+			}
+			if v, ok := pkg["width"].(float64); ok {
+				req.Width = float64Ptr(v)
+			}
+			if v, ok := pkg["length"].(float64); ok {
+				req.Length = float64Ptr(v)
+			}
+		}
+	}
+
+	return req
+}
+
+func strPtr(s string) *string    { return &s }
+func float64Ptr(f float64) *float64 { return &f }

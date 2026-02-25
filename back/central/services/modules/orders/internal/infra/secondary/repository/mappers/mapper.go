@@ -145,6 +145,7 @@ func ToDomainOrder(o *models.Order, imageURLBase string) *entities.ProbabilityOr
 		IntegrationID:           o.IntegrationID,
 		IntegrationType:         o.IntegrationType,
 		IntegrationLogoURL:      integrationLogoURL,
+		IntegrationName:         o.Integration.Name,
 		Platform:                o.Platform,
 		ExternalID:              o.ExternalID,
 		OrderNumber:             o.OrderNumber,

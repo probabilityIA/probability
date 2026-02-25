@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/envioclick/internal/domain"
 	"github.com/secamc93/probability/back/testing/integrations/envioclick/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/testing/shared/log"
+	"github.com/secamc93/probability/back/testing/shared/storage"
 )
 
 // Re-export domain types so external packages (cmd/) can use them
@@ -31,9 +32,11 @@ type EnvioClickIntegration struct {
 	port         string
 }
 
-// New inicializa el modulo de EnvioClick para pruebas de integracion
-func New(logger log.ILogger, port string) *EnvioClickIntegration {
-	apiSimulator := usecases.NewAPISimulator(logger)
+// New inicializa el modulo de EnvioClick para pruebas de integracion.
+// s3 puede ser nil si no se desea subir PDFs a S3 (se usará URL mock).
+// urlBase es el valor de URL_BASE_DOMAIN_S3 para construir URLs públicas.
+func New(logger log.ILogger, port string, s3 storage.IS3Service, urlBase string) *EnvioClickIntegration {
+	apiSimulator := usecases.NewAPISimulator(logger, s3, urlBase)
 	handler := handlers.New(apiSimulator, logger)
 
 	return &EnvioClickIntegration{

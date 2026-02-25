@@ -10,7 +10,8 @@ import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../doma
 import {
     Search, Package, Truck, Calendar, MapPin, X, RefreshCw,
     AlertTriangle, Plus, ChevronLeft, ChevronRight, FileText,
-    Download, CheckCircle2, Clock, XCircle, Navigation
+    Download, CheckCircle2, Clock, XCircle, Navigation,
+    DollarSign, Box, User, Building2, Hash, StickyNote
 } from 'lucide-react';
 import { ManualShipmentModal } from './ManualShipmentModal';
 import { usePermissions } from '@/shared/contexts/permissions-context';
@@ -28,11 +29,11 @@ const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
 
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode }> = {
-    delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <CheckCircle2 size={12} /> },
-    in_transit: { label: 'En tránsito', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Truck size={12} /> },
-    pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock size={12} /> },
-    failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={12} /> },
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; border: string }> = {
+    delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <CheckCircle2 size={12} />, border: 'border-emerald-400' },
+    in_transit: { label: 'En tránsito', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Truck size={12} />, border: 'border-blue-400' },
+    pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock size={12} />, border: 'border-amber-300' },
+    failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={12} />, border: 'border-red-400' },
 };
 
 const CHIP_STATUS_OPTIONS = [
@@ -55,6 +56,11 @@ function StatusBadge({ status }: { status: string }) {
 function formatDate(dateStr?: string) {
     if (!dateStr) return null;
     return new Date(dateStr).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function formatMoney(amount?: number) {
+    if (amount == null) return '—';
+    return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
 }
 
 // Extract city from destination_address (last word before any comma group tends to be city)
@@ -145,7 +151,10 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Transportista</p>
                             <div className="flex items-center gap-1.5">
                                 <Truck size={13} className="text-gray-400" />
-                                <p className="text-sm font-semibold text-gray-900">{shipment.carrier}</p>
+                                <p className="text-sm font-semibold text-gray-900">
+                                    {shipment.carrier}
+                                    {shipment.carrier_code && <span className="text-xs text-gray-400 ml-1">({shipment.carrier_code})</span>}
+                                </p>
                             </div>
                         </div>
                     )}
@@ -155,6 +164,42 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={13} className="text-gray-400" />
                                 <p className="text-sm font-semibold text-gray-900">{formatDate(shipment.shipped_at)}</p>
+                            </div>
+                        </div>
+                    )}
+                    {shipment.delivered_at && (
+                        <div className="bg-emerald-50 rounded-lg p-3">
+                            <p className="text-[10px] text-emerald-600 uppercase font-bold tracking-wider mb-1">Entregado</p>
+                            <div className="flex items-center gap-1.5">
+                                <CheckCircle2 size={13} className="text-emerald-500" />
+                                <p className="text-sm font-semibold text-emerald-700">{formatDate(shipment.delivered_at)}</p>
+                            </div>
+                        </div>
+                    )}
+                    {shipment.estimated_delivery && !shipment.delivered_at && (
+                        <div className="bg-blue-50 rounded-lg p-3">
+                            <p className="text-[10px] text-blue-600 uppercase font-bold tracking-wider mb-1">Entrega Est.</p>
+                            <div className="flex items-center gap-1.5">
+                                <Clock size={13} className="text-blue-500" />
+                                <p className="text-sm font-semibold text-blue-700">{formatDate(shipment.estimated_delivery)}</p>
+                            </div>
+                        </div>
+                    )}
+                    {shipment.created_at && (
+                        <div className="bg-gray-50 rounded-lg p-3">
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Creado</p>
+                            <div className="flex items-center gap-1.5">
+                                <Calendar size={13} className="text-gray-400" />
+                                <p className="text-sm font-semibold text-gray-900">{formatDate(shipment.created_at)}</p>
+                            </div>
+                        </div>
+                    )}
+                    {shipment.order_id && (
+                        <div className="col-span-2 bg-gray-50 rounded-lg p-3">
+                            <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">ID Orden</p>
+                            <div className="flex items-center gap-1.5">
+                                <Hash size={13} className="text-gray-400 flex-shrink-0" />
+                                <p className="text-xs font-mono text-gray-700 break-all">{shipment.order_id}</p>
                             </div>
                         </div>
                     )}
@@ -196,6 +241,111 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                         }
                     </button>
                 </div>
+
+                {/* ─── Costos ─────────────────────────────────────────── */}
+                {(shipment.shipping_cost != null || shipment.insurance_cost != null || shipment.total_cost != null) && (
+                    <div className="px-4 py-3 border-t border-gray-50">
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <DollarSign size={12} className="text-gray-400" />
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Costos</p>
+                        </div>
+                        <div className="grid grid-cols-3 gap-2">
+                            {shipment.shipping_cost != null && (
+                                <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Envío</p>
+                                    <p className="text-sm font-semibold text-gray-900">{formatMoney(shipment.shipping_cost)}</p>
+                                </div>
+                            )}
+                            {shipment.insurance_cost != null && (
+                                <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Seguro</p>
+                                    <p className="text-sm font-semibold text-gray-900">{formatMoney(shipment.insurance_cost)}</p>
+                                </div>
+                            )}
+                            {shipment.total_cost != null && (
+                                <div className="bg-emerald-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-emerald-600 uppercase font-bold mb-1">Total</p>
+                                    <p className="text-sm font-bold text-emerald-700">{formatMoney(shipment.total_cost)}</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ─── Paquete ─────────────────────────────────────────── */}
+                {(shipment.weight != null || shipment.length != null || shipment.width != null || shipment.height != null) && (
+                    <div className="px-4 py-3 border-t border-gray-50">
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <Box size={12} className="text-gray-400" />
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Paquete</p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            {shipment.weight != null && (
+                                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold">Peso</p>
+                                    <p className="text-sm font-semibold text-gray-900">{shipment.weight} kg</p>
+                                </div>
+                            )}
+                            {(shipment.length != null || shipment.width != null || shipment.height != null) && (
+                                <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold">Dim.</p>
+                                    <p className="text-sm font-semibold text-gray-900">
+                                        {shipment.length ?? '?'} × {shipment.width ?? '?'} × {shipment.height ?? '?'} cm
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ─── Logística ───────────────────────────────────────── */}
+                {(shipment.warehouse_name || shipment.driver_name || shipment.is_last_mile) && (
+                    <div className="px-4 py-3 border-t border-gray-50">
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <Building2 size={12} className="text-gray-400" />
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Logística</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                            {shipment.warehouse_name && (
+                                <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Almacén</p>
+                                    <div className="flex items-center gap-1.5">
+                                        <Building2 size={12} className="text-gray-400 flex-shrink-0" />
+                                        <p className="text-sm font-semibold text-gray-900">{shipment.warehouse_name}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {shipment.driver_name && (
+                                <div className="bg-gray-50 rounded-lg p-2.5">
+                                    <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Conductor</p>
+                                    <div className="flex items-center gap-1.5">
+                                        <User size={12} className="text-gray-400 flex-shrink-0" />
+                                        <p className="text-sm font-semibold text-gray-900">{shipment.driver_name}</p>
+                                    </div>
+                                </div>
+                            )}
+                            {shipment.is_last_mile && (
+                                <div className="col-span-2 flex items-center gap-2 bg-purple-50 border border-purple-100 rounded-lg px-3 py-2">
+                                    <div className="w-2 h-2 rounded-full bg-purple-500 flex-shrink-0" />
+                                    <p className="text-xs font-semibold text-purple-700">Envío de Última Milla</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ─── Notas de entrega ────────────────────────────────── */}
+                {shipment.delivery_notes && (
+                    <div className="px-4 py-3 border-t border-gray-50">
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <StickyNote size={12} className="text-gray-400" />
+                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Notas de Entrega</p>
+                        </div>
+                        <p className="text-sm text-gray-700 bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed">
+                            {shipment.delivery_notes}
+                        </p>
+                    </div>
+                )}
 
                 {/* Tracking Timeline */}
                 <div className="px-4 py-3">
@@ -497,56 +647,66 @@ export default function ShipmentList() {
                             shipments.map((shipment) => {
                                 const isSelected = selectedShipment?.id === shipment.id;
                                 const city = extractCity(shipment.destination_address);
-                                const title = shipment.client_name || 'Cliente desconocido';
-                                const subtitle = city
-                                    ? `→ ${city}`
-                                    : shipment.destination_address
-                                        ? `→ ${shipment.destination_address}`
-                                        : shipment.order_id
-                                            ? `Orden: ${shipment.order_id.substring(0, 8)}...`
-                                            : null;
+                                const clientName = shipment.client_name?.trim() || null;
+                                const statusCfg = STATUS_CONFIG[shipment.status] || { label: shipment.status, color: 'bg-gray-100 text-gray-600 border-gray-200', icon: null, border: 'border-gray-300' };
 
                                 return (
                                     <button
                                         key={shipment.id}
                                         onClick={() => setSelectedShipment(isSelected ? null : shipment)}
-                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${isSelected ? 'bg-blue-50 border-l-[3px] border-blue-500' : 'border-l-[3px] border-transparent'
-                                            }`}
+                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${
+                                            isSelected
+                                                ? 'bg-blue-50 border-l-[3px] border-blue-500'
+                                                : `border-l-[3px] ${statusCfg.border}`
+                                        }`}
                                     >
-                                        <div className="flex items-start justify-between gap-2">
-                                            <div className="flex-1 min-w-0">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <p className="text-sm font-semibold text-gray-900 truncate">{title}</p>
-                                                    {subtitle && (
-                                                        <p className="text-xs text-gray-400 truncate flex-shrink-0">{subtitle}</p>
-                                                    )}
-                                                </div>
-                                                <div className="flex items-center gap-2 flex-wrap">
-                                                    <StatusBadge status={shipment.status} />
-                                                    {shipment.is_test && (
-                                                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
-                                                    )}
-                                                    {shipment.tracking_number && (
-                                                        <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
-                                                            #{shipment.tracking_number.slice(-8)}
-                                                        </span>
-                                                    )}
-                                                    {shipment.carrier && (
-                                                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                                                            <Truck size={9} />{shipment.carrier}
-                                                        </span>
-                                                    )}
-                                                    {shipment.shipped_at && (
-                                                        <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                                                            <Calendar size={9} />{formatDate(shipment.shipped_at)}
-                                                        </span>
-                                                    )}
-                                                </div>
+                                        {/* Row 1: Client name + destination city */}
+                                        <div className="flex items-center justify-between gap-2 mb-1.5">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                                {!clientName && <Package size={11} className="text-gray-300 flex-shrink-0" />}
+                                                <p className={`text-sm font-semibold truncate ${clientName ? 'text-gray-900' : 'text-gray-400 italic'}`}>
+                                                    {clientName || 'Sin destinatario'}
+                                                </p>
                                             </div>
-                                            <ChevronRight
-                                                size={16}
-                                                className={`flex-shrink-0 mt-0.5 transition-colors ${isSelected ? 'text-blue-500' : 'text-gray-300'}`}
-                                            />
+                                            <div className="flex items-center gap-1 flex-shrink-0">
+                                                {city && (
+                                                    <span className="flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                                        <MapPin size={8} />{city}
+                                                    </span>
+                                                )}
+                                                {shipment.total_cost != null && (
+                                                    <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded-full border border-emerald-100">
+                                                        {formatMoney(shipment.total_cost)}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Row 2: Status + TEST badge */}
+                                        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+                                            <StatusBadge status={shipment.status} />
+                                            {shipment.is_test && (
+                                                <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">TEST</span>
+                                            )}
+                                        </div>
+
+                                        {/* Row 3: Tracking + carrier + date */}
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            {shipment.tracking_number && (
+                                                <span className="text-[10px] font-mono text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded">
+                                                    #{shipment.tracking_number.slice(-10)}
+                                                </span>
+                                            )}
+                                            {shipment.carrier && (
+                                                <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                                    <Truck size={9} />{shipment.carrier}
+                                                </span>
+                                            )}
+                                            {(shipment.shipped_at || shipment.created_at) && (
+                                                <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                                    <Calendar size={9} />{formatDate(shipment.shipped_at || shipment.created_at)}
+                                                </span>
+                                            )}
                                         </div>
                                     </button>
                                 );

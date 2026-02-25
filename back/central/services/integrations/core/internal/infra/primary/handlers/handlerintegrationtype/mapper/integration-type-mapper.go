@@ -10,6 +10,13 @@ import (
 	"gorm.io/datatypes"
 )
 
+// extractPlatformCredentialKeys decrypts the encrypted credentials and returns just the key names.
+// Since the mapper doesn't have the encryption service, we determine keys from the encrypted bytes
+// by checking if there are any (non-nil/non-empty). The actual keys are resolved at a higher layer.
+func hasPlatformCredentials(encrypted []byte) bool {
+	return len(encrypted) > 0
+}
+
 // ToIntegrationCategoryResponse convierte domain.IntegrationCategory a IntegrationCategoryResponse
 func ToIntegrationCategoryResponse(category *domain.IntegrationCategory) response.IntegrationCategoryResponse {
 	return response.IntegrationCategoryResponse{
@@ -51,23 +58,24 @@ func ToIntegrationTypeResponse(integrationType *domain.IntegrationType, imageURL
 	}
 
 	return response.IntegrationTypeResponse{
-		ID:                integrationType.ID,
-		Name:              integrationType.Name,
-		Code:              integrationType.Code,
-		Description:       integrationType.Description,
-		Icon:              integrationType.Icon,
-		ImageURL:          imageURL,
-		CategoryID:        integrationType.CategoryID,
-		Category:          category,
-		IsActive:          integrationType.IsActive,
-		InDevelopment:     integrationType.InDevelopment,
-		ConfigSchema:      integrationType.ConfigSchema,
-		CredentialsSchema: integrationType.CredentialsSchema,
-		SetupInstructions: integrationType.SetupInstructions,
-		BaseURL:           integrationType.BaseURL,
-		BaseURLTest:       integrationType.BaseURLTest,
-		CreatedAt:         integrationType.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:         integrationType.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		ID:                     integrationType.ID,
+		Name:                   integrationType.Name,
+		Code:                   integrationType.Code,
+		Description:            integrationType.Description,
+		Icon:                   integrationType.Icon,
+		ImageURL:               imageURL,
+		CategoryID:             integrationType.CategoryID,
+		Category:               category,
+		IsActive:               integrationType.IsActive,
+		InDevelopment:          integrationType.InDevelopment,
+		ConfigSchema:           integrationType.ConfigSchema,
+		CredentialsSchema:      integrationType.CredentialsSchema,
+		SetupInstructions:      integrationType.SetupInstructions,
+		BaseURL:                integrationType.BaseURL,
+		BaseURLTest:            integrationType.BaseURLTest,
+		HasPlatformCredentials: hasPlatformCredentials(integrationType.PlatformCredentialsEncrypted),
+		CreatedAt:              integrationType.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		UpdatedAt:              integrationType.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
 	}
 }
 
@@ -80,18 +88,19 @@ func ToCreateIntegrationTypeDTO(req request.CreateIntegrationTypeRequest) domain
 	}
 
 	return domain.CreateIntegrationTypeDTO{
-		Name:              req.Name,
-		Code:              req.Code,
-		Description:       req.Description,
-		Icon:              req.Icon,
-		CategoryID:        req.CategoryID,
-		IsActive:          req.IsActive,
-		InDevelopment:     req.InDevelopment,
-		ConfigSchema:      configSchema,
-		CredentialsSchema: credentialsSchema,
-		ImageFile:         req.ImageFile,
-		BaseURL:           req.BaseURL,
-		BaseURLTest:       req.BaseURLTest,
+		Name:                req.Name,
+		Code:                req.Code,
+		Description:         req.Description,
+		Icon:                req.Icon,
+		CategoryID:          req.CategoryID,
+		IsActive:            req.IsActive,
+		InDevelopment:       req.InDevelopment,
+		ConfigSchema:        configSchema,
+		CredentialsSchema:   credentialsSchema,
+		ImageFile:           req.ImageFile,
+		BaseURL:             req.BaseURL,
+		BaseURLTest:         req.BaseURLTest,
+		PlatformCredentials: req.PlatformCredentials,
 	}
 }
 
@@ -136,6 +145,9 @@ func ToUpdateIntegrationTypeDTO(req request.UpdateIntegrationTypeRequest) domain
 	}
 	if req.BaseURLTest != nil {
 		dto.BaseURLTest = req.BaseURLTest
+	}
+	if req.PlatformCredentials != nil {
+		dto.PlatformCredentials = req.PlatformCredentials
 	}
 
 	return dto

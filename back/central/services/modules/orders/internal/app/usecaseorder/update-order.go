@@ -164,6 +164,15 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	if req.OriginalStatus != nil {
 		order.OriginalStatus = *req.OriginalStatus
 	}
+	if req.StatusID != nil {
+		order.StatusID = req.StatusID
+	}
+	if req.PaymentStatusID != nil {
+		order.PaymentStatusID = req.PaymentStatusID
+	}
+	if req.FulfillmentStatusID != nil {
+		order.FulfillmentStatusID = req.FulfillmentStatusID
+	}
 
 	// Información adicional
 	if req.Notes != nil {

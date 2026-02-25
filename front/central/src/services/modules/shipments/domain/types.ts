@@ -99,12 +99,17 @@ export interface EnvioClickQuoteRequest {
 }
 
 export interface EnvioClickGenerateResponse {
-    status: string;
-    data: {
-        tracker: string; // The API returns 'tracker'
-        url: string; // PDF URL
+    status?: string;
+    // Async 202 fields
+    success?: boolean;
+    message?: string;
+    correlation_id?: string;
+    shipment_id?: number;
+    // Sync response fields (legacy)
+    data?: {
+        tracker: string;
+        url: string;
         myShipmentReference?: string;
-        // other fields if needed
     };
 }
 

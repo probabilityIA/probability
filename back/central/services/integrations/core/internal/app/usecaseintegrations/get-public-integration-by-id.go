@@ -110,6 +110,53 @@ func (uc *IntegrationUseCase) DecryptCredentialField(ctx context.Context, integr
 	return strValue, nil
 }
 
+// GetPlatformCredentialByIntegrationID obtiene un campo específico de las credenciales
+// de plataforma del tipo de integración asociado a la integración dada.
+// Se usa cuando una integración tiene use_platform_token=true en su configuración.
+func (uc *IntegrationUseCase) GetPlatformCredentialByIntegrationID(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	ctx = log.WithFunctionCtx(ctx, "GetPlatformCredentialByIntegrationID")
+
+	// Parsear ID
+	var id uint
+	if _, err := fmt.Sscanf(integrationID, "%d", &id); err != nil {
+		return "", fmt.Errorf("invalid integration ID: %w", err)
+	}
+
+	// Obtener integración para conocer el IntegrationTypeID
+	integration, err := uc.repo.GetIntegrationByID(ctx, id)
+	if err != nil {
+		return "", fmt.Errorf("error al obtener integración %s: %w", integrationID, err)
+	}
+
+	// Obtener tipo de integración (contiene las credenciales de plataforma encriptadas)
+	integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, integration.IntegrationTypeID)
+	if err != nil {
+		return "", fmt.Errorf("error al obtener tipo de integración %d: %w", integration.IntegrationTypeID, err)
+	}
+
+	if len(integrationType.PlatformCredentialsEncrypted) == 0 {
+		return "", fmt.Errorf("no hay credenciales de plataforma configuradas para el tipo de integración %d", integration.IntegrationTypeID)
+	}
+
+	// Desencriptar
+	credentials, err := uc.encryption.DecryptCredentials(ctx, integrationType.PlatformCredentialsEncrypted)
+	if err != nil {
+		return "", fmt.Errorf("error al desencriptar credenciales de plataforma: %w", err)
+	}
+
+	value, ok := credentials[fieldName]
+	if !ok {
+		return "", fmt.Errorf("campo '%s' no encontrado en las credenciales de plataforma del tipo de integración %d", fieldName, integration.IntegrationTypeID)
+	}
+
+	strValue, ok := value.(string)
+	if !ok {
+		return "", fmt.Errorf("el campo '%s' no es un string en las credenciales de plataforma", fieldName)
+	}
+
+	return strValue, nil
+}
+
 // mapToPublicIntegration mapea una integración del dominio a formato público
 func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integration) *domain.PublicIntegration {
 	var config map[string]interface{}

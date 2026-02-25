@@ -162,9 +162,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [pendingCorrelationId, setPendingCorrelationId] = useState<string | null>(null);
     const pendingStep1DataRef = useRef<Step1Values | null>(null);
 
+    // Async guide generation tracking
+    const [pendingGuideCorrelationId, setPendingGuideCorrelationId] = useState<string | null>(null);
+
     // Get businessId from permissions for SSE connection
-    const { permissions } = usePermissions();
+    const { permissions, isSuperAdmin } = usePermissions();
     const businessId = permissions?.business_id || 0;
+    // For wallet queries: super admin acts on behalf of the order's business
+    const effectiveBusinessId = isSuperAdmin ? (order?.business_id ?? 0) : 0;
 
     // Step 1 data
     const [step1Data, setStep1Data] = useState<Step1Values | null>(null);
@@ -256,7 +261,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     // Fetch initial data on open
     useEffect(() => {
         if (isOpen) {
-            getWalletBalanceAction().then(res => {
+            const balanceBusinessId = effectiveBusinessId || undefined;
+            getWalletBalanceAction(balanceBusinessId).then(res => {
                 if (res.success && res.data) setWalletBalance(res.data.Balance);
             });
             getOriginAddressesAction().then(res => {
@@ -369,9 +375,28 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setError(data.error_message || "Error al cotizar envío");
             setLoading(false);
         },
+        onGuideGenerated: (data) => {
+            if (!pendingGuideCorrelationId) return; // no pending guide request in this modal
+            // Only reject if correlation_id is present AND doesn't match (backend now includes it)
+            if (data.correlation_id && data.correlation_id !== pendingGuideCorrelationId) return;
+            setPendingGuideCorrelationId(null);
+            if (data.label_url) setGeneratedPdfUrl(data.label_url);
+            if (data.tracking_number) {
+                setTrackingNumber(data.tracking_number);
+                if (onGuideGenerated) onGuideGenerated(data.tracking_number);
+            }
+            setSuccess("¡Guía generada exitosamente!");
+            setLoading(false);
+        },
+        onGuideFailed: (data) => {
+            if (pendingGuideCorrelationId && data.correlation_id !== pendingGuideCorrelationId) return;
+            setPendingGuideCorrelationId(null);
+            setError(data.error_message || "Error al generar la guía");
+            setLoading(false);
+        },
     });
 
-    // Timeout: if SSE never arrives, stop loading after 30s
+    // Timeout: if quote SSE never arrives, stop loading after 30s
     useEffect(() => {
         if (!pendingCorrelationId) return;
         const timeout = setTimeout(() => {
@@ -382,6 +407,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         }, 30000);
         return () => clearTimeout(timeout);
     }, [pendingCorrelationId]);
+
+    // Timeout: if guide SSE never arrives, stop loading after 45s
+    useEffect(() => {
+        if (!pendingGuideCorrelationId) return;
+        const timeout = setTimeout(() => {
+            setPendingGuideCorrelationId(null);
+            setError("Tiempo de espera agotado al generar la guía. Verifica en la lista de envíos.");
+            setLoading(false);
+        }, 45000);
+        return () => clearTimeout(timeout);
+    }, [pendingGuideCorrelationId]);
 
     // Reset on close
     useEffect(() => {
@@ -396,6 +432,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setError(null);
             setSuccess(null);
             setPendingCorrelationId(null);
+            setPendingGuideCorrelationId(null);
             pendingStep1DataRef.current = null;
             step1Form.reset();
             step3Form.reset();
@@ -436,7 +473,18 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setLoading(false);
                 return;
             }
-            // Save form data and correlation_id, then wait for SSE response
+
+            // Synchronous path: backend polled Redis and returned rates directly
+            const syncRates: EnvioClickRate[] = response.data?.data?.rates || [];
+            if (syncRates.length > 0) {
+                setRates(syncRates);
+                setStep1Data(data);
+                setCurrentStep(2);
+                setLoading(false);
+                return;
+            }
+
+            // Asynchronous path: wait for SSE response
             pendingStep1DataRef.current = data;
             setPendingCorrelationId(response.data?.correlation_id || null);
             // loading stays true until SSE response arrives
@@ -522,17 +570,29 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             };
 
             const response = await generateGuideAction(generatePayload);
-            if (response.success && response.data?.data) {
+            if (!response.success) {
+                setError(response.message || "Error al enviar solicitud de generación de guía");
+                setLoading(false);
+                return;
+            }
+
+            // Sync path: backend returned guide data directly (legacy)
+            if (response.data?.data?.url) {
                 setGeneratedPdfUrl(response.data.data.url);
                 setTrackingNumber(response.data.data.tracker);
                 if (onGuideGenerated && response.data.data.tracker) {
                     onGuideGenerated(response.data.data.tracker);
                 }
                 setSuccess("¡Guía generada exitosamente!");
+                setLoading(false);
+                return;
             }
+
+            // Async path (202 Accepted): wait for SSE event shipment.guide_generated
+            setPendingGuideCorrelationId(response.data?.correlation_id || null);
+            // loading stays true until SSE arrives or timeout fires
         } catch (err: any) {
             setError(err.message || "Error al generar guía");
-        } finally {
             setLoading(false);
         }
     };
@@ -1088,9 +1148,20 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
                                 </div>
 
-                                <div className="border-t pt-4">
-                                    <div className="text-sm text-gray-600 mb-2">Carrier: {selectedRate.carrier}</div>
-                                    <div className="text-sm text-gray-600">Producto: {selectedRate.product}</div>
+                                <div className="border-t pt-4 flex items-center gap-4">
+                                    <img
+                                        src={getCarrierLogo(selectedRate.carrier)}
+                                        alt={selectedRate.carrier}
+                                        className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white p-1 flex-shrink-0"
+                                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                    />
+                                    <div>
+                                        <div className="font-medium text-gray-800">{selectedRate.carrier}</div>
+                                        <div className="text-sm text-gray-500">{selectedRate.product}</div>
+                                        {selectedRate.deliveryDays > 0 && (
+                                            <div className="text-xs text-gray-400 mt-1">{selectedRate.deliveryDays} día{selectedRate.deliveryDays !== 1 ? 's' : ''} hábil{selectedRate.deliveryDays !== 1 ? 'es' : ''}</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
@@ -1111,18 +1182,43 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 </div>
                             </div>
 
-                            {generatedPdfUrl && trackingNumber ? (
-                                <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                                    <h4 className="font-semibold text-green-800 mb-2">¡Guía generada exitosamente!</h4>
-                                    <div className="space-y-2">
-                                        <p className="text-sm"><strong>Tracking:</strong> {trackingNumber}</p>
+                            {generatedPdfUrl ? (
+                                /* ── Success state ── */
+                                <div className="mt-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 p-6 flex flex-col items-center gap-4">
+                                    <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
+                                        <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                        </svg>
+                                    </div>
+                                    <div className="text-center">
+                                        <p className="font-bold text-emerald-800 text-lg">¡Guía generada exitosamente!</p>
+                                        {trackingNumber && (
+                                            <p className="text-sm text-emerald-700 mt-1 font-mono bg-emerald-100 px-3 py-1 rounded-full inline-block mt-2">
+                                                {trackingNumber}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="flex flex-col gap-2 w-full max-w-xs">
                                         <a
                                             href={generatedPdfUrl}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="inline-block px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
+                                            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm"
                                         >
-                                            Descargar Guía PDF
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                            </svg>
+                                            Abrir PDF en nueva pestaña
+                                        </a>
+                                        <a
+                                            href={generatedPdfUrl}
+                                            download
+                                            className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors text-sm"
+                                        >
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                            </svg>
+                                            Descargar PDF
                                         </a>
                                     </div>
                                 </div>

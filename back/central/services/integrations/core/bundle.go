@@ -70,6 +70,9 @@ type IIntegrationService interface {
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfig(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
 	GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error)
+	// GetPlatformCredential decrypts a field from the integration type's platform credentials.
+	// Use when an integration has use_platform_token=true in its config.
+	GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
 // IIntegrationCore es la interfaz completa del core de integraciones.
@@ -119,7 +122,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 
 	// 4. Inicializar Casos de Uso
 	integrationUseCase := usecaseintegrations.New(repo, encryptionService, integrationCache, logger, config)
-	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, integrationCache, logger, config)
+	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, integrationCache, logger, config, encryptionService)
 
 	// 5. Inicializar Handlers (solo dependen del use case)
 	handlerIntegrations := handlerintegrations.New(integrationUseCase, logger, config)
@@ -169,6 +172,10 @@ func (ic *integrationCore) GetIntegrationConfig(ctx context.Context, integration
 		return nil, nil
 	}
 	return integration.Config, nil
+}
+
+func (ic *integrationCore) GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	return ic.useCase.GetPlatformCredentialByIntegrationID(ctx, integrationID, fieldName)
 }
 
 // IIntegrationCore pass-throughs

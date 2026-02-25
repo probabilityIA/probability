@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
+	orderErrors "github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/errors"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/mappers"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers/request"
 )
 
 // UpdateOrder godoc
@@ -13,8 +16,8 @@ import (
 // @Tags         Orders
 // @Accept       json
 // @Produce      json
-// @Param        id     path      string                     true  "ID de la orden (UUID)"
-// @Param        order  body      dtos.UpdateOrderRequest  true  "Datos a actualizar"
+// @Param        id     path      string                              true  "ID de la orden (UUID)"
+// @Param        order  body      request.UpdateOrder                 true  "Datos a actualizar"
 // @Security     BearerAuth
 // @Success      200  {object}  dtos.OrderResponse
 // @Failure      400  {object}  map[string]interface{}
@@ -33,9 +36,8 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	var req dtos.UpdateOrderRequest
+	var req request.UpdateOrder
 
-	// Validar el request body
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
@@ -45,10 +47,11 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 		return
 	}
 
-	// Llamar al caso de uso
-	order, err := h.orderCRUD.UpdateOrder(c.Request.Context(), id, &req)
+	domainReq := mappers.MapUpdateOrderRequestToDomain(&req)
+
+	order, err := h.orderCRUD.UpdateOrder(c.Request.Context(), id, domainReq)
 	if err != nil {
-		if err.Error() == "order not found" {
+		if errors.Is(err, orderErrors.ErrOrderNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{
 				"success": false,
 				"message": "Orden no encontrada",
@@ -68,6 +71,6 @@ func (h *Handlers) UpdateOrder(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Orden actualizada exitosamente",
-		"data":    order,
+		"data":    mappers.OrderToResponse(order),
 	})
 }
