@@ -177,35 +177,125 @@
       }
     },
     {
-      "id": 1,
-      "title": "CPU por contenedor",
-      "description": "Porcentaje de CPU que usa cada contenedor en tiempo real",
-      "type": "timeseries",
-      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 6 },
+      "id": 16,
+      "title": "Total CPU en contenedores",
+      "description": "Uso de CPU: contenedores activos, sistema OS y CPU disponible",
+      "type": "stat",
+      "gridPos": { "h": 10, "w": 5, "x": 0, "y": 6 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "label_replace(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m]) * 100, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
-          "legendFormat": "{{service}}",
-          "refId": "A"
+          "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m])) * 100 / scalar(machine_cpu_cores)",
+          "legendFormat": "Contenedores",
+          "refId": "A",
+          "instant": true
+        },
+        {
+          "expr": "(rate(container_cpu_usage_seconds_total{id=\"/\",cpu=\"total\"}[2m]) * 100 / scalar(machine_cpu_cores)) - scalar(sum(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m])) * 100 / scalar(machine_cpu_cores))",
+          "legendFormat": "Sistema OS",
+          "refId": "B",
+          "instant": true
+        },
+        {
+          "expr": "100 - rate(container_cpu_usage_seconds_total{id=\"/\",cpu=\"total\"}[2m]) * 100 / scalar(machine_cpu_cores)",
+          "legendFormat": "Disponible",
+          "refId": "C",
+          "instant": true
         }
       ],
       "fieldConfig": {
         "defaults": {
           "unit": "percent",
-          "min": 0,
-          "color": { "mode": "palette-classic" },
-          "custom": {
-            "lineWidth": 2,
-            "fillOpacity": 10,
-            "showPoints": "never"
-          }
+          "decimals": 1,
+          "color": { "mode": "palette-classic" }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Disponible" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "semi-dark-green" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Sistema OS" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "gray" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Contenedores" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "blue" } }
+            ]
+          }
+        ]
       },
       "options": {
-        "tooltip": { "mode": "multi" },
-        "legend": { "displayMode": "table", "placement": "bottom" }
+        "reduceOptions": { "calcs": ["lastNotNull"] },
+        "orientation": "vertical",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      }
+    },
+    {
+      "id": 1,
+      "title": "Distribución de CPU del servidor",
+      "description": "Vista completa del uso de CPU: cada contenedor, sistema OS y CPU disponible",
+      "type": "piechart",
+      "gridPos": { "h": 10, "w": 19, "x": 5, "y": 6 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "label_replace(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m]) * 100 / scalar(machine_cpu_cores), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
+          "legendFormat": "{{service}}",
+          "refId": "A",
+          "instant": true
+        },
+        {
+          "expr": "(rate(container_cpu_usage_seconds_total{id=\"/\",cpu=\"total\"}[2m]) * 100 / scalar(machine_cpu_cores)) - scalar(sum(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m])) * 100 / scalar(machine_cpu_cores))",
+          "legendFormat": "Sistema OS",
+          "refId": "B",
+          "instant": true
+        },
+        {
+          "expr": "100 - rate(container_cpu_usage_seconds_total{id=\"/\",cpu=\"total\"}[2m]) * 100 / scalar(machine_cpu_cores)",
+          "legendFormat": "Disponible",
+          "refId": "C",
+          "instant": true
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "decimals": 1,
+          "color": { "mode": "palette-classic" },
+          "custom": {}
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Disponible" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "semi-dark-green" } }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Sistema OS" },
+            "properties": [
+              { "id": "color", "value": { "mode": "fixed", "fixedColor": "gray" } }
+            ]
+          }
+        ]
+      },
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["name", "percent"],
+        "tooltip": { "mode": "single" },
+        "legend": {
+          "displayMode": "table",
+          "placement": "right",
+          "values": ["value", "percent"]
+        }
       }
     },
     {
