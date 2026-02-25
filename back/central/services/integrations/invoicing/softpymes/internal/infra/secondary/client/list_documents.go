@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
+	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
 )
 
 // Document representa un documento (factura/nota crédito) de Softpymes
@@ -87,16 +89,10 @@ type ListDocumentsParams struct {
 // La API retorna un array de documentos directamente (no un objeto con metadata)
 type ListDocumentsResponse []Document
 
-// ListDocuments obtiene la lista de documentos de Softpymes
-// Documentación: https://api-integracion.softpymes.com.co/doc/#api-Documentos-GetSearchDocument
-// Endpoint: POST /app/integration/search/documents/
-// IMPORTANTE:
-// - dateFrom y dateTo son REQUERIDOS (formato YYYY-MM-DD)
-// - El rango máximo entre fechas es de 30 días
-// - La respuesta es un array de documentos directamente (no un objeto con metadata)
-// ListDocuments obtiene la lista de documentos de Softpymes
+// listDocuments es la implementación interna: llama al endpoint de Softpymes con tipos locales.
+// Los callers internos (GetDocumentByNumber, findExistingInvoiceByOrderID) usan este método.
 // baseURL: URL base efectiva (producción o testing); vacío usa c.baseURL.
-func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer string, params ListDocumentsParams, baseURL string) (*ListDocumentsResponse, error) {
+func (c *Client) listDocuments(ctx context.Context, apiKey, apiSecret, referer string, params ListDocumentsParams, baseURL string) (*ListDocumentsResponse, error) {
 	c.log.Info(ctx).
 		Interface("params", params).
 		Msg("📋 Listing documents from Softpymes")
@@ -171,4 +167,53 @@ func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer s
 		Msg("✅ Documents retrieved successfully")
 
 	return &listResp, nil
+}
+
+// ListDocuments implementa ports.ISoftpymesClient.ListDocuments.
+// Acepta ports.ListDocumentsParams (tipos del dominio) y retorna []ports.ListedDocument.
+// Internamente delega a listDocuments (que usa los tipos locales de la API).
+func (c *Client) ListDocuments(ctx context.Context, apiKey, apiSecret, referer string, params ports.ListDocumentsParams, baseURL string) ([]ports.ListedDocument, error) {
+	// Mapear types del dominio a tipos internos de la API
+	internalParams := ListDocumentsParams{
+		DateFrom: params.DateFrom,
+		DateTo:   params.DateTo,
+		PageSize: params.PageSize,
+		Page:     params.Page,
+	}
+	if params.DocumentType != nil {
+		internalParams.DocumentType = params.DocumentType
+	}
+
+	docs, err := c.listDocuments(ctx, apiKey, apiSecret, referer, internalParams, baseURL)
+	if err != nil {
+		return nil, err
+	}
+	if docs == nil {
+		return []ports.ListedDocument{}, nil
+	}
+
+	result := make([]ports.ListedDocument, 0, len(*docs))
+	for _, doc := range *docs {
+		details := make([]ports.ListedDocumentDetail, 0, len(doc.Details))
+		for _, d := range doc.Details {
+			details = append(details, ports.ListedDocumentDetail{
+				ItemCode: d.ItemCode,
+				ItemName: d.ItemName,
+				Quantity: d.Quantity,
+				Value:    d.Value,
+				IVA:      d.Iva,
+			})
+		}
+		result = append(result, ports.ListedDocument{
+			DocumentNumber: doc.DocumentNumber,
+			DocumentDate:   doc.DocumentDate,
+			Total:          doc.Total,
+			CustomerNit:    doc.CustomerIdentification,
+			CustomerName:   doc.CustomerName,
+			Comment:        doc.Comment,
+			Prefix:         doc.Prefix,
+			Details:        details,
+		})
+	}
+	return result, nil
 }

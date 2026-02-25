@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository/mappers"
@@ -156,6 +157,60 @@ func (r *Repository) DeleteInvoice(ctx context.Context, id uint) error {
 	}
 
 	return nil
+}
+
+// GetIssuedInvoicesByDateRange retorna facturas con status "issued" de un negocio en un rango de fechas.
+// Usado para comparación en memoria contra el proveedor (sin persistencia adicional).
+// dateFrom y dateTo deben estar en formato YYYY-MM-DD.
+func (r *Repository) GetIssuedInvoicesByDateRange(ctx context.Context, businessID uint, dateFrom, dateTo string) ([]*entities.Invoice, error) {
+	var modelsList []*models.Invoice
+
+	if err := r.db.Conn(ctx).
+		Model(&models.Invoice{}).
+		Preload("InvoiceItems").
+		Where("business_id = ?", businessID).
+		Where("status = ?", "issued").
+		Where("issued_at::date BETWEEN ? AND ?", dateFrom, dateTo).
+		Order("issued_at DESC").
+		Find(&modelsList).Error; err != nil {
+		r.log.Error(ctx).Err(err).
+			Uint("business_id", businessID).
+			Str("date_from", dateFrom).
+			Str("date_to", dateTo).
+			Msg("Failed to get issued invoices by date range")
+		return nil, fmt.Errorf("failed to get issued invoices: %w", err)
+	}
+
+	return mappers.InvoiceListToDomain(modelsList), nil
+}
+
+// GetOrderCreatedAtsByIDs retorna map[orderID]createdAt para un batch de órdenes.
+// Replicado localmente para evitar compartir repositorios entre módulos (módulo orders gestiona tabla orders).
+func (r *Repository) GetOrderCreatedAtsByIDs(ctx context.Context, orderIDs []string) (map[string]*time.Time, error) {
+	if len(orderIDs) == 0 {
+		return map[string]*time.Time{}, nil
+	}
+
+	var rows []struct {
+		ID        string
+		CreatedAt time.Time
+	}
+
+	if err := r.db.Conn(ctx).
+		Table("orders").
+		Select("id, created_at").
+		Where("id IN (?)", orderIDs).
+		Where("deleted_at IS NULL").
+		Scan(&rows).Error; err != nil {
+		return nil, fmt.Errorf("failed to get order created_at: %w", err)
+	}
+
+	result := make(map[string]*time.Time, len(rows))
+	for _, row := range rows {
+		t := row.CreatedAt
+		result[row.ID] = &t
+	}
+	return result, nil
 }
 
 // InvoiceExistsForOrder verifica si existe una factura VÁLIDA para una orden e integración

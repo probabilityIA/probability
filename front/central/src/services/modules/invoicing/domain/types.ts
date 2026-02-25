@@ -418,7 +418,8 @@ export type InvoiceSSEEventType =
   | 'invoice.cancelled'
   | 'credit_note.created'
   | 'bulk_job.progress'
-  | 'bulk_job.completed';
+  | 'bulk_job.completed'
+  | 'invoice.compare_ready';
 
 export interface InvoiceSSEEvent {
   id: string;
@@ -449,4 +450,50 @@ export interface InvoiceSSEEventData {
   successful?: number;
   failed?: number;
   progress?: number;
+}
+
+// ===================================
+// AUDITORÍA COMPARATIVA (Sistema ↔ Proveedor)
+// ===================================
+
+export type CompareStatus = 'matched' | 'system_only' | 'provider_only';
+
+export interface CompareItemDetail {
+  item_code: string;
+  item_name: string;
+  quantity: string;
+  unit_value: string;
+  iva: string;
+}
+
+export interface CompareResult {
+  status: CompareStatus;
+  invoice_number: string;
+  prefix: string;
+  document_date: string;
+  provider_total: string;
+  system_invoice_id?: number;
+  system_order_id?: string;
+  system_total?: number;
+  customer_nit: string;
+  customer_name: string;
+  comment: string;
+  order_created_at?: string;
+  provider_details?: CompareItemDetail[];
+  system_items?: CompareItemDetail[];
+}
+
+export interface CompareSummary {
+  matched: number;
+  system_only: number;
+  provider_only: number;
+}
+
+export interface CompareResponseData {
+  correlation_id: string;
+  business_id: number;
+  date_from: string;
+  date_to: string;
+  results: CompareResult[];
+  summary: CompareSummary;
 }

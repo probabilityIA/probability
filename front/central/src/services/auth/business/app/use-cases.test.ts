@@ -73,10 +73,7 @@ const actionError: ActionResponse = { success: false, message: 'Error', error: '
  * Incluye también los métodos activateBusiness / deactivateBusiness
  * que el use case expone aunque no estén aún en el port formal.
  */
-function createMockRepository(): IBusinessRepository & {
-    activateBusiness: ReturnType<typeof vi.fn>;
-    deactivateBusiness: ReturnType<typeof vi.fn>;
-} {
+function createMockRepository(): IBusinessRepository {
     return {
         // Business
         getBusinesses: vi.fn(),
@@ -84,6 +81,8 @@ function createMockRepository(): IBusinessRepository & {
         createBusiness: vi.fn(),
         updateBusiness: vi.fn(),
         deleteBusiness: vi.fn(),
+        activateBusiness: vi.fn(),
+        deactivateBusiness: vi.fn(),
         // Configured Resources
         getConfiguredResources: vi.fn(),
         getBusinessConfiguredResources: vi.fn(),
@@ -95,10 +94,7 @@ function createMockRepository(): IBusinessRepository & {
         createBusinessType: vi.fn(),
         updateBusinessType: vi.fn(),
         deleteBusinessType: vi.fn(),
-        // Métodos de activación de negocio (no declarados en port aún)
-        activateBusiness: vi.fn(),
-        deactivateBusiness: vi.fn(),
-    };
+    } as unknown as IBusinessRepository;
 }
 
 // -----------------------------------------------------------------

@@ -127,6 +127,9 @@ export interface EnvioClickQuoteResponse {
     success: boolean;
     message: string;
     correlation_id: string;
+    data?: {
+        rates: EnvioClickRate[];
+    };
 }
 
 export interface EnvioClickTrackHistory {
