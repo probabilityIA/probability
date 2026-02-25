@@ -35,3 +35,9 @@ func codeKey(code string) string {
 func businessTypeIndexKey(businessID, typeID uint) string {
 	return fmt.Sprintf("integration:idx:biz:%d:type:%d", businessID, typeID)
 }
+
+// platformCredentialsKey retorna la key de credenciales de plataforma por integration_type_id
+// Formato: integration:platform_creds:{integration_type_id}
+func platformCredentialsKey(integrationTypeID uint) string {
+	return fmt.Sprintf("integration:platform_creds:%d", integrationTypeID)
+}

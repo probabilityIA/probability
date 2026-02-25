@@ -162,10 +162,14 @@ type IIntegrationCache interface {
 	SetIntegration(ctx context.Context, integration *CachedIntegration) error
 	GetIntegration(ctx context.Context, integrationID uint) (*CachedIntegration, error)
 
-	// Credentials (TTL: 1h - sensibles)
+	// Credentials (TTL: 24h)
 	SetCredentials(ctx context.Context, creds *CachedCredentials) error
 	GetCredentials(ctx context.Context, integrationID uint) (*CachedCredentials, error)
 	GetCredentialField(ctx context.Context, integrationID uint, field string) (string, error)
+
+	// Platform credentials — credenciales globales del tipo de integración (TTL: 24h)
+	SetPlatformCredentials(ctx context.Context, integrationTypeID uint, creds map[string]interface{}) error
+	GetPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]interface{}, error)
 
 	// Invalidación
 	InvalidateIntegration(ctx context.Context, integrationID uint) error

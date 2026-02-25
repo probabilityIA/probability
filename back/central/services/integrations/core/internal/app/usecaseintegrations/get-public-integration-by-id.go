@@ -113,6 +113,7 @@ func (uc *IntegrationUseCase) DecryptCredentialField(ctx context.Context, integr
 // GetPlatformCredentialByIntegrationID obtiene un campo específico de las credenciales
 // de plataforma del tipo de integración asociado a la integración dada.
 // Se usa cuando una integración tiene use_platform_token=true en su configuración.
+// Flujo: cache (24h) → DB + desencriptar → cachear resultado
 func (uc *IntegrationUseCase) GetPlatformCredentialByIntegrationID(ctx context.Context, integrationID string, fieldName string) (string, error) {
 	ctx = log.WithFunctionCtx(ctx, "GetPlatformCredentialByIntegrationID")
 
@@ -122,37 +123,67 @@ func (uc *IntegrationUseCase) GetPlatformCredentialByIntegrationID(ctx context.C
 		return "", fmt.Errorf("invalid integration ID: %w", err)
 	}
 
-	// Obtener integración para conocer el IntegrationTypeID
+	// Obtener integración para conocer el IntegrationTypeID (usa cache interno de GetIntegrationByID)
 	integration, err := uc.repo.GetIntegrationByID(ctx, id)
 	if err != nil {
 		return "", fmt.Errorf("error al obtener integración %s: %w", integrationID, err)
 	}
 
-	// Obtener tipo de integración (contiene las credenciales de plataforma encriptadas)
-	integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, integration.IntegrationTypeID)
+	integrationTypeID := integration.IntegrationTypeID
+
+	// Intentar leer credenciales de plataforma desde cache
+	cachedCreds, err := uc.cache.GetPlatformCredentials(ctx, integrationTypeID)
+	if err == nil {
+		// Cache hit — extraer campo directamente
+		value, ok := cachedCreds[fieldName]
+		if !ok {
+			return "", fmt.Errorf("campo '%s' no encontrado en las credenciales de plataforma del tipo de integración %d", fieldName, integrationTypeID)
+		}
+		strValue, ok := value.(string)
+		if !ok {
+			return "", fmt.Errorf("el campo '%s' no es un string en las credenciales de plataforma", fieldName)
+		}
+		uc.log.Info(ctx).
+			Str("integration_id", integrationID).
+			Uint("integration_type_id", integrationTypeID).
+			Msg("✅ Platform credential resolved from cache")
+		return strValue, nil
+	}
+
+	// Cache miss — leer de DB y desencriptar
+	integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, integrationTypeID)
 	if err != nil {
-		return "", fmt.Errorf("error al obtener tipo de integración %d: %w", integration.IntegrationTypeID, err)
+		return "", fmt.Errorf("error al obtener tipo de integración %d: %w", integrationTypeID, err)
 	}
 
 	if len(integrationType.PlatformCredentialsEncrypted) == 0 {
-		return "", fmt.Errorf("no hay credenciales de plataforma configuradas para el tipo de integración %d", integration.IntegrationTypeID)
+		return "", fmt.Errorf("no hay credenciales de plataforma configuradas para el tipo de integración %d", integrationTypeID)
 	}
 
-	// Desencriptar
 	credentials, err := uc.encryption.DecryptCredentials(ctx, integrationType.PlatformCredentialsEncrypted)
 	if err != nil {
 		return "", fmt.Errorf("error al desencriptar credenciales de plataforma: %w", err)
 	}
 
+	// Cachear para próximas llamadas (TTL: 24h)
+	if cacheErr := uc.cache.SetPlatformCredentials(ctx, integrationTypeID, credentials); cacheErr != nil {
+		uc.log.Warn(ctx).Err(cacheErr).Uint("integration_type_id", integrationTypeID).Msg("Failed to cache platform credentials")
+	}
+
 	value, ok := credentials[fieldName]
 	if !ok {
-		return "", fmt.Errorf("campo '%s' no encontrado en las credenciales de plataforma del tipo de integración %d", fieldName, integration.IntegrationTypeID)
+		return "", fmt.Errorf("campo '%s' no encontrado en las credenciales de plataforma del tipo de integración %d", fieldName, integrationTypeID)
 	}
 
 	strValue, ok := value.(string)
 	if !ok {
 		return "", fmt.Errorf("el campo '%s' no es un string en las credenciales de plataforma", fieldName)
 	}
+
+	uc.log.Info(ctx).
+		Str("integration_id", integrationID).
+		Uint("integration_type_id", integrationTypeID).
+		Msg("Platform credential resolved from DB and cached")
 
 	return strValue, nil
 }

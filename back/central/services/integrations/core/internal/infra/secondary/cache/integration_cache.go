@@ -143,6 +143,43 @@ func (c *IntegrationCache) GetCredentialField(ctx context.Context, integrationID
 	return strValue, nil
 }
 
+// SetPlatformCredentials cachea las credenciales de plataforma de un tipo de integración (TTL: 24h)
+func (c *IntegrationCache) SetPlatformCredentials(ctx context.Context, integrationTypeID uint, creds map[string]interface{}) error {
+	data, err := json.Marshal(creds)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Failed to marshal platform credentials")
+		return err
+	}
+
+	key := platformCredentialsKey(integrationTypeID)
+	if err := c.redis.Set(ctx, key, string(data), ttlMetadata); err != nil {
+		c.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Failed to cache platform credentials")
+		return err
+	}
+
+	c.log.Debug(ctx).Uint("integration_type_id", integrationTypeID).Msg("✅ Platform credentials cached (TTL: 24h)")
+	return nil
+}
+
+// GetPlatformCredentials lee las credenciales de plataforma de un tipo de integración desde cache
+func (c *IntegrationCache) GetPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]interface{}, error) {
+	key := platformCredentialsKey(integrationTypeID)
+
+	data, err := c.redis.Get(ctx, key)
+	if err != nil {
+		return nil, err // Cache miss
+	}
+
+	var creds map[string]interface{}
+	if err := json.Unmarshal([]byte(data), &creds); err != nil {
+		c.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Failed to unmarshal cached platform credentials")
+		return nil, err
+	}
+
+	c.log.Debug(ctx).Uint("integration_type_id", integrationTypeID).Msg("✅ Cache hit - platform credentials")
+	return creds, nil
+}
+
 // InvalidateIntegration elimina metadata + credentials de cache
 func (c *IntegrationCache) InvalidateIntegration(ctx context.Context, integrationID uint) error {
 	// Delete metadata
