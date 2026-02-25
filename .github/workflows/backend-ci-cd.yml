@@ -138,6 +138,21 @@ jobs:
             infra/compose-prod/docker-compose.yaml \
             ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
 
+      - name: Upload observability config
+        run: |
+          # Solo subir si existen (disponibles después de merge del PR de observabilidad)
+          if [ -f infra/compose-prod/prometheus.yml ]; then
+            scp -o StrictHostKeyChecking=no \
+              infra/compose-prod/prometheus.yml \
+              ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
+            scp -r -o StrictHostKeyChecking=no \
+              infra/compose-prod/grafana \
+              ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:~/probability/infra/compose-prod/
+            echo "✅ Observability config uploaded"
+          else
+            echo "ℹ️  No observability config found, skipping"
+          fi
+
       - name: Deploy to server
         env:
           VERSION_FULL: ${{ needs.build-and-push.outputs.version_full }}
@@ -336,6 +351,13 @@ jobs:
             docker restart nginx_prod
             sleep 3
             echo "✅ Nginx reiniciado correctamente"
+
+            # Arrancar stack de observabilidad si está definido (idempotente: no reinicia lo que ya corre)
+            if docker compose -f docker-compose.yaml config --services 2>/dev/null | grep -q "prometheus"; then
+              echo "📊 Iniciando stack de observabilidad (cAdvisor + Prometheus + Grafana)..."
+              docker compose -f docker-compose.yaml up -d --no-recreate cadvisor prometheus grafana
+              echo "✅ Stack de observabilidad iniciado"
+            fi
 
             echo "✅ Backend deployed successfully with version $VERSION_FULL"
           EOF
