@@ -8,8 +8,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/metrics"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 // BuildRouter construye y configura el *gin.Engine del monolito en un solo lugar
@@ -24,14 +26,19 @@ func BuildRouter(ctx context.Context, logger log.ILogger, environment env.IConfi
 	// Security headers para iframe de Shopify
 	r.Use(middleware.SecurityHeadersMiddleware())
 
+	// Prometheus metrics middleware
+	r.Use(metrics.PrometheusMiddleware())
+
 	// Logging centralizado
 	SetupGinLogging(r, logger)
 
 	// Recovery
 	r.Use(gin.Recovery())
 
-	// Health check endpoint
+	// Metrics endpoint (sin autenticación - solo métricas técnicas)
+	r.GET("/metrics", gin.WrapH(promhttp.Handler()))
 
+	// Health check endpoint
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "healthy",

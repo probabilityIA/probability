@@ -44,6 +44,10 @@ http {
         server front-website:80;  # Servicio del website (Astro)
     }
 
+    upstream probability_grafana {
+        server grafana:3000 max_fails=3 fail_timeout=30s;
+    }
+
     # Rechazar cualquier dominio que no sea ${DOMAIN}
     server {
         listen 80 default_server;
@@ -156,6 +160,20 @@ http {
         # Redirect /swagger to /swagger/
         location = /swagger {
             return 301 /swagger/;
+        }
+
+        # Grafana - panel de monitoreo
+        location /grafana/ {
+            proxy_pass http://probability_grafana/;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+
+        # Redirect /grafana to /grafana/
+        location = /grafana {
+            return 301 /grafana/;
         }
 
         # Next.js static files optimization
