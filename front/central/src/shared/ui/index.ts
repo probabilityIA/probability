@@ -18,6 +18,7 @@ export * from './input';
 export * from './modal';
 export * from './select';
 export * from './sidebar';
+export * from './orders-subnavbar';
 export * from './spinner';
 export * from './stepper';
 export * from './table';

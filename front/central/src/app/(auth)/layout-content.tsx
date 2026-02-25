@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sidebar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 
 interface LayoutContentProps {
@@ -59,10 +59,11 @@ function LayoutContent({ user, children }: LayoutContentProps) {
 
       {/* Contenido principal */}
       <main
-        className="flex-1 transition-all duration-300 w-full overflow-x-hidden main-content"
+        className="flex-1 transition-all duration-300 w-full overflow-x-hidden main-content flex flex-col"
         onMouseEnter={handleMainMouseEnter}
       >
-        <div className="w-full min-w-0">
+        <OrdersSubNavbar />
+        <div className="w-full min-w-0 flex-1">
           {children}
         </div>
         <style jsx>{`
@@ -81,4 +82,3 @@ function LayoutContent({ user, children }: LayoutContentProps) {
 }
 
 export default LayoutContent;
-

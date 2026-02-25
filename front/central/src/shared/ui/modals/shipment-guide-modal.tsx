@@ -133,9 +133,9 @@ const step3Schema = z.object({
     destLastName: z.string().min(2).max(14),
     destEmail: z.string().email().min(8).max(60),
     destPhone: z.string().length(10),
-    destSuburb: z.string().min(2).max(30),
+    destSuburb: z.string().min(2).max(30).optional(),
     destCrossStreet: z.string().min(2).max(35),
-    destReference: z.string().min(2).max(25),
+    destReference: z.string().min(2).max(25).optional(),
     requestPickup: z.boolean(),
     insurance: z.boolean(),
     myShipmentReference: z.string().min(2).max(28),
@@ -214,6 +214,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     // Step 1 Form
     const step1Form = useForm<Step1Values>({
         resolver: zodResolver(step1Schema),
+        mode: 'onChange',
         defaultValues: {
             originDaneCode: "11001000",
             originAddress: "",
@@ -234,6 +235,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     // Step 3 Form
     const step3Form = useForm<Step3Values>({
         resolver: zodResolver(step3Schema),
+        mode: 'onChange',
         defaultValues: {
             originCompany: "Mi Empresa",
             originFirstName: "",
@@ -441,6 +443,34 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Step 1: Quote (async - sends to queue, result arrives via SSE)
     const handleStep1Submit = async (data: Step1Values) => {
+        // Check for validation errors
+        const errors = step1Form.formState.errors;
+        if (Object.keys(errors).length > 0) {
+            const fieldLabels: { [key: string]: string } = {
+                originDaneCode: "Ciudad de Origen",
+                originAddress: "Dirección de Origen",
+                destDaneCode: "Ciudad de Destino",
+                destAddress: "Dirección de Destino",
+                weight: "Peso del paquete",
+                height: "Alto del paquete",
+                width: "Ancho del paquete",
+                length: "Largo del paquete",
+                description: "Descripción del contenido",
+                contentValue: "Valor de la mercancía",
+                codPaymentMethod: "Método de pago COD",
+            };
+
+            const errorFields: string[] = [];
+            Object.entries(errors).forEach(([field, error]) => {
+                const label = fieldLabels[field] || field;
+                errorFields.push(`  • ${label}`);
+            });
+
+            setError(`⚠️ Por favor completa los siguientes campos:\n${errorFields.join('\n')}`);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         setError(null);
         try {
@@ -502,18 +532,109 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Step 3: Details
     const handleStep3Submit = async (data: Step3Values) => {
+        // Collect all validation errors
+        const errors = step3Form.formState.errors;
+
+        // Debug: Log all data and errors
+        console.log('📋 Step 3 Data:', data);
+        console.log('❌ Step 3 Errors:', errors);
+        console.log('📊 Error Count:', Object.keys(errors).length);
+
+        if (Object.keys(errors).length > 0) {
+            const fieldLabels: { [key: string]: string } = {
+                originCrossStreet: "Calle",
+                originReference: "Referencia",
+                originSuburb: "Barrio",
+                originCompany: "Empresa",
+                originFirstName: "Nombre",
+                originLastName: "Apellido",
+                originPhone: "Teléfono",
+                originEmail: "Email",
+                destCrossStreet: "Calle",
+                destReference: "Edificio/Interior/Apto",
+                destSuburb: "Barrio",
+                destCompany: "Empresa",
+                destFirstName: "Nombre",
+                destLastName: "Apellido",
+                destPhone: "Teléfono",
+                destEmail: "Email",
+                myShipmentReference: "Mi Referencia de Envío",
+            };
+
+            // Group errors by section
+            const originErrors: string[] = [];
+            const destErrors: string[] = [];
+            const otherErrors: string[] = [];
+
+            Object.entries(errors).forEach(([field, error]) => {
+                const label = fieldLabels[field] || field;
+                const value = (data as any)[field];
+                const valueStr = typeof value === 'string' ? `"${value}"` : String(value);
+                const errorMsg = error?.message
+                    ? `${label}: ${error.message} (Valor actual: ${valueStr})`
+                    : `${label}: Campo inválido (Valor actual: ${valueStr})`;
+
+                // Log individual error
+                console.log(`Field: ${field}, Value: ${valueStr}, Error: ${error?.message}`);
+
+                if (field.startsWith('origin')) {
+                    originErrors.push(errorMsg);
+                } else if (field.startsWith('dest')) {
+                    destErrors.push(errorMsg);
+                } else {
+                    otherErrors.push(errorMsg);
+                }
+            });
+
+            const sections: string[] = [];
+            if (originErrors.length > 0) {
+                sections.push(`📍 REMITENTE (Origen):\n${originErrors.map(e => `  ❌ ${e}`).join('\n')}`);
+            }
+            if (destErrors.length > 0) {
+                sections.push(`📦 DESTINATARIO:\n${destErrors.map(e => `  ❌ ${e}`).join('\n')}`);
+            }
+            if (otherErrors.length > 0) {
+                sections.push(`📋 INFORMACIÓN:\n${otherErrors.map(e => `  ❌ ${e}`).join('\n')}`);
+            }
+
+            setError(`⚠️ Errores encontrados - Por favor corrige lo siguiente:\n\n${sections.join('\n\n')}`);
+
+            // Scroll al campo con error
+            setTimeout(() => {
+                const firstErrorField = Object.keys(errors)[0];
+                const input = document.querySelector(`[name="${firstErrorField}"]`) as HTMLElement;
+                if (input) {
+                    input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    input.focus();
+                }
+            }, 100);
+            return;
+        }
         setStep3Data(data);
         setCurrentStep(4);
     };
 
     // Step 4: Generate Guide
     const handleFinalGenerate = async () => {
-        if (!step1Data || !selectedRate || !step3Data) {
-            setError("Faltan datos para generar la guía");
+        const missingFields: string[] = [];
+
+        if (!step1Data) {
+            missingFields.push("⚠️ Paso 1: No completaste Origen, Destino o Paquete");
+        }
+        if (!selectedRate) {
+            missingFields.push("⚠️ Paso 2: No seleccionaste una transportadora o tarifa");
+        }
+        if (!step3Data) {
+            missingFields.push("⚠️ Paso 3: No completaste los detalles de dirección");
+        }
+
+        if (missingFields.length > 0) {
+            setError(missingFields.join("\n"));
             return;
         }
 
         // Check wallet balance
+        if (!selectedRate || !step3Data || !step1Data) return;
         const totalCost = selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
         if (walletBalance !== null && walletBalance < totalCost) {
             setError(`Saldo insuficiente. Necesitas $${totalCost.toLocaleString()} pero tienes $${walletBalance.toLocaleString()}`);
@@ -601,9 +722,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-2">
-            <div className="bg-white rounded-2xl shadow-xl" style={{ width: '85%', height: '85vh' }}>
+            <div className="bg-white rounded-2xl shadow-xl flex flex-col" style={{ width: '85%', height: '85vh' }}>
                 {/* Header */}
-                <div className="bg-white border-b px-3 py-3 z-10">
+                <div className="bg-white border-b px-3 py-3 flex-shrink-0">
                     <div className="flex justify-between items-center mb-2">
                         <h2 className="text-2xl font-bold text-purple-700">Generar Guía de Envío</h2>
                         <button
@@ -617,10 +738,21 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 </div>
 
                 {/* Content */}
-                <div className="p-3 flex flex-col flex-1 overflow-hidden">
+                <div className="p-3 flex flex-col flex-1 overflow-hidden min-h-0">
                     {error && (
-                        <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-red-700">
-                            {error}
+                        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                            {error.includes('\n') ? (
+                                <div>
+                                    <div className="font-semibold mb-2">⚠️ Por favor corrige los siguientes errores:</div>
+                                    <ul className="list-disc list-inside space-y-1">
+                                        {error.split('\n').filter(line => line.trim()).map((line, idx) => (
+                                            <li key={idx}>{line}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ) : (
+                                error
+                            )}
                         </div>
                     )}
 
@@ -632,7 +764,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 1: Origin/Destination/Package */}
                     {currentStep === 1 && (
-                        <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="space-y-3">
+                        <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="flex flex-col h-full overflow-hidden min-h-0" data-testid="step1-form">
+                            <div className="flex-1 overflow-y-auto min-h-0 pr-3">
+                                <div className="space-y-3">
                             <div className="grid grid-cols-2 gap-3">
                                 {/* Origin */}
                                 <div className="space-y-2">
@@ -829,16 +963,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     )}
                                 </div>
                             </div>
-
-                            <div className="flex justify-end">
-                                <Button
-                                    variant="primary"
-                                    type="submit"
-                                    disabled={loading}
-                                    style={{ background: '#7c3aed' }}
-                                >
-                                    {loading ? "Cotizando..." : "Siguiente"}
-                                </Button>
+                                </div>
                             </div>
                         </form>
                     )}
@@ -907,16 +1032,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     );
                                 })}
                                 </div>
-                            </div>
-
-                            <div className="flex justify-between mt-3 pt-3 border-t">
-                                <Button
-                                    variant="primary"
-                                    onClick={() => setCurrentStep(1)}
-                                    style={{ background: '#7c3aed' }}
-                                >
-                                    Atrás
-                                </Button>
                             </div>
                         </div>
                     )}
@@ -1009,14 +1124,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     />
                                     <Input
                                         compact
-                                        label="Edificio/Interior/Apto *"
+                                        label="Edificio/Interior/Apto"
                                         {...step3Form.register("destReference")}
                                         error={step3Form.formState.errors.destReference?.message}
                                         placeholder="Edificio = casa #"
                                     />
                                     <Input
                                         compact
-                                        label="Barrio *"
+                                        label="Barrio"
                                         {...step3Form.register("destSuburb")}
                                         error={step3Form.formState.errors.destSuburb?.message}
                                         placeholder="Barrio = Nombre barrio"
@@ -1104,33 +1219,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 </label>
                             </div>
                             </div>
-
-                            <div className="flex justify-between mt-0 pt-1 px-1 border-t">
-                                <Button
-                                    size="sm"
-                                    variant="primary"
-                                    onClick={() => setCurrentStep(2)}
-                                    type="button"
-                                    style={{ background: '#7c3aed' }}
-                                >
-                                    Atrás
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="primary"
-                                    type="submit"
-                                    style={{ background: '#7c3aed' }}
-                                >
-                                    Siguiente
-                                </Button>
-                            </div>
                         </form>
                     )}
 
                     {/* Step 4: Payment & Confirmation */}
                     {currentStep === 4 && selectedRate && (
-                        <div className="flex flex-col h-full overflow-hidden">
-                            <div className="flex-1 overflow-y-auto pr-2 space-y-3">
+                        <div className="flex flex-col h-full w-full overflow-hidden gap-3">
+                            {/* Resumen de Envío - No Scrolleable */}
+                            <div className="flex-shrink-0 space-y-3">
                                 <h3 className="font-semibold text-lg text-gray-700">Resumen de tu envío</h3>
 
                                 <div className="bg-gray-50 p-2 rounded-lg">
@@ -1165,10 +1261,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         </div>
                                     </div>
                                 </div>
+                            </div>
 
+                            {/* Información de Pago - Con Scroll */}
+                            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-3 pr-3" style={{ maxHeight: 'calc(85vh - 280px)' }}>
                                 <div>
                                     <h4 className="font-medium text-gray-700 mb-3">Selecciona tu método de pago</h4>
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className={`grid gap-2 ${generatedPdfUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                         <div className="border-2 border-purple-500 rounded-lg p-2 bg-purple-50">
                                             <div className="flex items-center justify-center mb-2">
                                                 <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1180,71 +1279,132 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 ${walletBalance?.toLocaleString() || 0}
                                             </div>
                                         </div>
+
+                                        {generatedPdfUrl && (
+                                            /* ── Success state ── */
+                                            <div className="rounded-xl border-2 border-emerald-200 bg-emerald-50 p-4 flex flex-col items-center gap-3">
+                                                <div className="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                                                    <svg className="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                </div>
+                                                <div className="text-center min-w-0">
+                                                    <p className="font-bold text-emerald-800 text-sm">¡Guía generada exitosamente!</p>
+                                                    {trackingNumber && (
+                                                        <p className="text-xs text-emerald-700 mt-1 font-mono bg-emerald-100 px-2 py-0.5 rounded-full inline-block">
+                                                            {trackingNumber}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col gap-1.5 w-full">
+                                                    <a
+                                                        href={generatedPdfUrl}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors text-xs"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                        </svg>
+                                                        Abrir
+                                                    </a>
+                                                    <a
+                                                        href={generatedPdfUrl}
+                                                        download
+                                                        className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors text-xs"
+                                                    >
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                        Descargar
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-
-                                {generatedPdfUrl ? (
-                                    /* ── Success state ── */
-                                    <div className="mt-4 rounded-xl border-2 border-emerald-200 bg-emerald-50 p-6 flex flex-col items-center gap-4">
-                                        <div className="w-14 h-14 rounded-full bg-emerald-100 flex items-center justify-center">
-                                            <svg className="w-7 h-7 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                                            </svg>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="font-bold text-emerald-800 text-lg">¡Guía generada exitosamente!</p>
-                                            {trackingNumber && (
-                                                <p className="text-sm text-emerald-700 mt-1 font-mono bg-emerald-100 px-3 py-1 rounded-full inline-block mt-2">
-                                                    {trackingNumber}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <div className="flex flex-col gap-2 w-full max-w-xs">
-                                            <a
-                                                href={generatedPdfUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-xl transition-colors text-sm"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                                                </svg>
-                                                Abrir PDF en nueva pestaña
-                                            </a>
-                                            <a
-                                                href={generatedPdfUrl}
-                                                download
-                                                className="flex items-center justify-center gap-2 w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors text-sm"
-                                            >
-                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                </svg>
-                                                Descargar PDF
-                                            </a>
-                                        </div>
-                                    </div>
-                                ) : null}
+                                <div className="pb-2" />
                             </div>
-
-                            {!generatedPdfUrl && (
-                                <div className="flex justify-between mt-3 pt-3 border-t">
-                                    <Button
-                                        variant="outline"
-                                        onClick={() => setCurrentStep(3)}
-                                        disabled={loading}
-                                    >
-                                        Atrás
-                                    </Button>
-                                    <Button
-                                        onClick={handleFinalGenerate}
-                                        disabled={loading}
-                                        className="bg-green-600 hover:bg-green-700"
-                                    >
-                                        {loading ? "Generando..." : "Pagar guías"}
-                                    </Button>
-                                </div>
-                            )}
                         </div>
+                    )}
+                </div>
+
+                {/* Footer with Buttons */}
+                <div className="bg-white border-t px-3 py-3 flex-shrink-0 flex justify-between items-center gap-3">
+                    {/* Back Button */}
+                    {(currentStep === 2 || currentStep === 3 || currentStep === 4) && !generatedPdfUrl && (
+                        <Button
+                            variant="outline"
+                            onClick={() => setCurrentStep(currentStep - 1)}
+                            disabled={loading}
+                        >
+                            Atrás
+                        </Button>
+                    )}
+
+                    {/* Spacer when no back button */}
+                    {(currentStep === 1 || (currentStep === 4 && generatedPdfUrl)) && (
+                        <div />
+                    )}
+
+                    {/* Step 1: Next Button */}
+                    {currentStep === 1 && (
+                        <Button
+                            variant="primary"
+                            onClick={() => {
+                                const form = document.querySelector('[data-testid="step1-form"]') as HTMLFormElement;
+                                form?.requestSubmit();
+                            }}
+                            disabled={loading}
+                            style={{ background: '#7c3aed' }}
+                        >
+                            {loading ? "Cotizando..." : "Siguiente"}
+                        </Button>
+                    )}
+
+                    {/* Step 2: NO "Siguiente" Button - User selects a rate to advance */}
+                    {currentStep === 2 && (
+                        <div className="text-sm text-gray-600 italic">
+                            📌 Selecciona una transportadora para continuar
+                        </div>
+                    )}
+
+                    {/* Step 3: Next Button - DISABLED if form has errors */}
+                    {currentStep === 3 && (
+                        <Button
+                            variant="primary"
+                            onClick={async () => {
+                                // Trigger validation
+                                const isValid = await step3Form.trigger();
+                                if (isValid) {
+                                    const data = step3Form.getValues();
+                                    setStep3Data(data);
+                                    setCurrentStep(4);
+                                }
+                            }}
+                            disabled={loading || Object.keys(step3Form.formState.errors).length > 0}
+                            title={Object.keys(step3Form.formState.errors).length > 0 ? "Completa todos los campos requeridos" : ""}
+                            style={{
+                                background: Object.keys(step3Form.formState.errors).length > 0 ? '#ccc' : '#7c3aed',
+                                cursor: Object.keys(step3Form.formState.errors).length > 0 ? 'not-allowed' : 'pointer'
+                            }}
+                        >
+                            {Object.keys(step3Form.formState.errors).length > 0
+                                ? `⚠️ ${Object.keys(step3Form.formState.errors).length} campo(s) incompleto(s)`
+                                : "Siguiente"
+                            }
+                        </Button>
+                    )}
+
+                    {/* Step 4: Pay Button */}
+                    {currentStep === 4 && !generatedPdfUrl && (
+                        <Button
+                            onClick={handleFinalGenerate}
+                            disabled={loading}
+                            className="bg-green-600 hover:bg-green-700"
+                        >
+                            {loading ? "Generando..." : "Pagar guías"}
+                        </Button>
                     )}
                 </div>
             </div>

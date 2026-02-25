@@ -50,10 +50,10 @@ const OrderRow = memo(({
 }) => {
     return (
         <tr className={`transition-all duration-300 hover:bg-purple-50 cursor-pointer ${isNew ? 'animate-slide-in' : ''}`}>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                <div className="flex items-center gap-2">
+            <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
+                <div className="flex items-center gap-1">
                     <div
-                        className="h-10 w-10 rounded-full shadow-md border-2 border-gray-200 hover:shadow-lg transition-all cursor-pointer bg-white flex items-center justify-center overflow-hidden"
+                        className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 hover:shadow-lg transition-all cursor-pointer bg-white flex items-center justify-center overflow-hidden"
                         title={`${order.platform} - Click para ver JSON crudo`}
                         onClick={() => onShowRaw(order.id)}
                     >
@@ -87,8 +87,8 @@ const OrderRow = memo(({
                     )}
                 </div>
             </td>
-            <td className="px-3 sm:px-6 py-4">
-                <div className="text-sm font-medium text-gray-900">
+            <td className="px-2 sm:px-3 py-2">
+                <div className="text-xs font-medium text-gray-900">
                     {order.order_number || order.external_id || order.id}
                 </div>
                 <div className="text-xs text-gray-500 sm:hidden">
@@ -109,12 +109,12 @@ const OrderRow = memo(({
                 <div className="text-sm text-gray-900">{order.customer_name}</div>
                 <div className="text-xs text-gray-500">{order.customer_email}</div>
             </td>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+            <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
                 <div className="text-sm font-semibold text-gray-900">
                     {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
                 </div>
             </td>
-            <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
+            <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
                 {getStatusBadge(order.order_status?.name || order.status, order.order_status?.color) || (
                     <span className="text-xs text-gray-400">-</span>
                 )}
@@ -1126,7 +1126,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
                                     <span className="font-medium">{total}</span> resultados
                                 </p>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-1">
                                     <label className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">
                                         Mostrar:
                                     </label>
@@ -1145,7 +1145,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     </select>
                                 </div>
                             </div>
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
@@ -1170,7 +1170,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                         {/* Mobile: Page size selector */}
                         <div className="flex items-center justify-between w-full sm:hidden pt-2">
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-1">
                                 <label className="text-xs text-gray-700 whitespace-nowrap">
                                     Mostrar:
                                 </label>

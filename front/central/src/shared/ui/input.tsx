@@ -44,7 +44,7 @@ export function Input({
       )}
 
       {/* Input Container */}
-      <div className="relative">
+      <div className={`relative ${error ? 'bg-red-50 p-2 rounded-lg' : ''}`}>
         {/* Left Icon */}
         {leftIcon && (
           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
@@ -55,7 +55,7 @@ export function Input({
         {/* Input */}
         <input
           id={inputId}
-          className={`input ${error ? 'input-error' : ''} ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''} ${className}`}
+          className={`input ${error ? 'input-error border-2 border-red-500 bg-white' : ''} ${leftIcon ? 'pl-10' : ''} ${rightIcon ? 'pr-10' : ''} ${className}`}
           {...props}
         />
 
@@ -69,8 +69,8 @@ export function Input({
 
       {/* Helper Text o Error */}
       {error && (
-        <p className="text-xs text-red-500">
-          {error}
+        <p className="text-xs text-red-600 font-semibold">
+          ❌ {error}
         </p>
       )}
 

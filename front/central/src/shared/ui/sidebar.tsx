@@ -29,7 +29,6 @@ export function Sidebar({ user }: SidebarProps) {
   const pathname = usePathname();
   const { primaryExpanded, requestExpand, requestCollapse, isMobileOpen, setIsMobileOpen } = useSidebar();
   const [showUserModal, setShowUserModal] = useState(false);
-  const [ordersOpen, setOrdersOpen] = useState(false);
   const [invoicingOpen, setInvoicingOpen] = useState(false);
   const [iamOpen, setIamOpen] = useState(false);
   const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
@@ -45,7 +44,6 @@ export function Sidebar({ user }: SidebarProps) {
   useEffect(() => {
     // When primary sidebar collapses, ensure submenus collapse too
     if (!primaryExpanded) {
-      setOrdersOpen(false);
       setInvoicingOpen(false);
       setIamOpen(false);
     }
@@ -330,159 +328,33 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Ordenes (Gestión de Ordenes) - Solo si tiene permiso */}
+              {/* Item Ordenes - Link simple a /orders */}
               {canAccessOrders && (
                 <li>
-                  <div>
-                    <div className="flex items-center justify-between">
-                      <button
-                        type="button"
-                        onClick={() => setOrdersOpen(v => {
-                          const nv = !v;
-                          if (nv) setIamOpen(false);
-                          return nv;
-                        })}
-                        aria-expanded={ordersOpen}
-                        aria-controls="orders-submenu"
-                        className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 text-left w-full
-                          ${isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')
-                            ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                            : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
-                          }
-                        `}
-                      >
-                        {(isActive('/orders') || isActive('/products') || isActive('/shipments') || isActive('/order-status') || isActive('/notification-config')) && (
-                          <div
-                            className="absolute left-0 w-1 h-8 rounded-r-full"
-                            style={{ backgroundColor: 'var(--color-tertiary)' }}
-                          />
-                        )}
-
-                        <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                        </svg>
-                        {primaryExpanded && (
-                          <>
-                            <span className="text-sm font-medium transition-opacity duration-300">Ordenes</span>
-                            <svg
-                              className={`w-4 h-4 transform transition-transform duration-150 ml-auto select-none ${ordersOpen ? '-rotate-90' : 'rotate-90'}`}
-                              viewBox="0 0 20 20"
-                              fill="none"
-                              stroke="currentColor"
-                            >
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 6l6 4-6 4" />
-                            </svg>
-                          </>
-                        )}
-                      </button>
-
-                      {primaryExpanded && (
-                        <Link
-                          href={getOrdersEntryRoute()}
-                          className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
-                          title="Ir a Ordenes"
-                        >
-
-                        </Link>
-                      )}
-                    </div>
-
-                    {/* Submenu: mostrar solo cuando se haga click para expandir */}
-                    {primaryExpanded && ordersOpen && (
-                      <div id="orders-submenu" className="mt-2 pl-8 pr-2">
-                        {/* CATÁLOGO */}
-                        {canViewProducts && (
-                          <div className="mb-3">
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CATÁLOGO</h4>
-                            <ul className="space-y-1">
-                              <li>
-                                <Link
-                                  href="/products"
-                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/products') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
-                                >
-                                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                                  </svg>
-                                  <span>Productos</span>
-                                </Link>
-                              </li>
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* OPERACIONES */}
-                        {(canViewOrders || canViewShipments) && (
-                          <div className="mb-3">
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">OPERACIONES</h4>
-                            <ul className="space-y-1">
-                              {canViewOrders && (
-                                <li>
-                                  <Link href="/orders" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/orders') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
-                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                                    </svg>
-                                    <span>Ordenes</span>
-                                  </Link>
-                                </li>
-                              )}
-                              {canViewShipments && (
-                                <>
-                                  <li>
-                                    <Link href="/shipments" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/shipments') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
-                                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
-                                      </svg>
-                                      <span>Envíos</span>
-                                    </Link>
-                                  </li>
-                                </>
-                              )}
-                            </ul>
-                          </div>
-                        )}
-
-                        {/* CONFIGURACIÓN */}
-                        {(canViewOrderStatus || canViewNotifications || canViewShipments) && (
-                          <div>
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CONFIGURACIÓN</h4>
-                            <ul className="space-y-1">
-                              {canViewOrderStatus && (
-                                <li>
-                                  <Link href="/order-status" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/order-status') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
-                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                    </svg>
-                                    <span>Estados de Orden</span>
-                                  </Link>
-                                </li>
-                              )}
-                              {canViewNotifications && (
-                                <li>
-                                  <Link href="/notification-config" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/notification-config') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
-                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                                    </svg>
-                                    <span>Notificaciones</span>
-                                  </Link>
-                                </li>
-                              )}
-                              {canViewShipments && (
-                                <li>
-                                  <Link href="/shipments/origin-addresses" className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/shipments/origin-addresses') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}>
-                                    <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    </svg>
-                                    <span>Direcciones de Origen</span>
-                                  </Link>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
+                  <Link
+                    href="/orders"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/orders') || pathname.startsWith('/products') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status') || pathname.startsWith('/notification-config')
+                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {(pathname.startsWith('/orders') || pathname.startsWith('/products') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status') || pathname.startsWith('/notification-config')) && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
                     )}
-                  </div>
+
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Ordenes</span>
+                    )}
+                  </Link>
                 </li>
               )}
 
@@ -553,11 +425,7 @@ export function Sidebar({ user }: SidebarProps) {
                       <div className="flex items-center justify-between">
                         <button
                           type="button"
-                          onClick={() => setIamOpen(v => {
-                            const nv = !v;
-                            if (nv) setOrdersOpen(false);
-                            return nv;
-                          })}
+                          onClick={() => setIamOpen(v => !v)}
                           aria-expanded={iamOpen}
                           aria-controls="iam-submenu"
                           className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 text-left w-full
