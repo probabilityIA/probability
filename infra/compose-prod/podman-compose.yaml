@@ -146,7 +146,7 @@ services:
   cadvisor:
     # NOTA: En Podman rootless, cAdvisor puede requerir permisos adicionales.
     # Si falla, agregar: security_opt: ["label=disable"]
-    image: gcr.io/cadvisor/cadvisor:v0.49.1
+    image: gcr.io/cadvisor/cadvisor:v0.50.0
     container_name: cadvisor
     restart: unless-stopped
     privileged: true
@@ -155,6 +155,7 @@ services:
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
       - /sys:/sys:ro
       - /var/lib/containers/storage:/var/lib/docker:ro
     networks:
