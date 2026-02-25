@@ -226,6 +226,15 @@ export const deleteIntegrationTypeAction = async (id: number, token?: string | n
     }
 };
 
+export const getIntegrationTypePlatformCredentialsAction = async (id: number, token?: string | null) => {
+    try {
+        return await (await getUseCases(token)).getIntegrationTypePlatformCredentials(id);
+    } catch (error: any) {
+        console.error('Get Integration Type Platform Credentials Action Error:', error.message);
+        return { success: false, message: error.message, data: {} as Record<string, string> };
+    }
+};
+
 export const getWebhookUrlAction = async (id: number, token?: string | null) => {
     try {
         return await (await getUseCases(token)).getWebhookUrl(id);

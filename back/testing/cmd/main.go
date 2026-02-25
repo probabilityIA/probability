@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
 	"github.com/secamc93/probability/back/testing/shared/env"
 	"github.com/secamc93/probability/back/testing/shared/log"
+	"github.com/secamc93/probability/back/testing/shared/storage"
 )
 
 func main() {
@@ -31,7 +32,16 @@ func main() {
 
 	// 2. Iniciar servidor HTTP de EnvioClick (en background)
 	envioclickPort := getEnv("ENVIOCLICK_MOCK_PORT", "9091")
-	envioclickServer := envioclick.New(logger, envioclickPort)
+	// Inicializar S3 para subir PDFs de guías simuladas
+	// Si las credenciales no están configuradas, s3Service será nil y se usará URL mock
+	var s3Service storage.IS3Service
+	urlBase := config.Get("URL_BASE_DOMAIN_S3")
+	if config.Get("S3_KEY") != "" && config.Get("S3_SECRET") != "" {
+		s3Service = storage.New(config, logger)
+	} else {
+		logger.Warn().Msg("⚠️  S3 no configurado (S3_KEY/S3_SECRET ausentes) — PDFs de guías usarán URL mock")
+	}
+	envioclickServer := envioclick.New(logger, envioclickPort, s3Service, urlBase)
 
 	go func() {
 		if err := envioclickServer.Start(); err != nil {

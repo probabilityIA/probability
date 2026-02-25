@@ -56,14 +56,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         testConnection,
         syncOrders,
         setError
-    } = useIntegrations();
+    } = useIntegrations(propFilterCategory || '');
 
-    // Sincronizar filtro de categoría desde las props
+    // Sincronizar cambios de categoría después del montaje inicial (cambio de pestaña)
+    // No causa doble fetch en el montaje porque el hook ya inicia con propFilterCategory
     useEffect(() => {
         if (propFilterCategory !== undefined && propFilterCategory !== filterCategory) {
+            setPage(1);
             setFilterCategory(propFilterCategory);
         }
-    }, [propFilterCategory, filterCategory, setFilterCategory]);
+    }, [propFilterCategory]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,

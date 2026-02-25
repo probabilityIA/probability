@@ -76,6 +76,19 @@ func (uc *integrationTypeUseCase) UpdateIntegrationType(ctx context.Context, id 
 	if dto.BaseURLTest != nil {
 		existing.BaseURLTest = *dto.BaseURLTest
 	}
+	if dto.PlatformCredentials != nil {
+		if len(*dto.PlatformCredentials) > 0 {
+			encrypted, err := uc.encryption.EncryptCredentials(ctx, *dto.PlatformCredentials)
+			if err != nil {
+				uc.log.Error(ctx).Err(err).Uint("id", id).Msg("Error al encriptar credenciales de plataforma")
+				return nil, fmt.Errorf("error al encriptar credenciales de plataforma: %w", err)
+			}
+			existing.PlatformCredentialsEncrypted = encrypted
+		} else {
+			// Map vacío = borrar credenciales
+			existing.PlatformCredentialsEncrypted = nil
+		}
+	}
 
 	// Procesar imagen si se proporciona una nueva
 	if dto.ImageFile != nil {

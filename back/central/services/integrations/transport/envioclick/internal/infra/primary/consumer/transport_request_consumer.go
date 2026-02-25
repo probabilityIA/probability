@@ -19,6 +19,9 @@ import (
 type ICredentialResolver interface {
 	DecryptCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 	GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error)
+	// GetPlatformCredential decrypts a field from the integration type's platform credentials.
+	// Used when the integration has use_platform_token=true in its config.
+	GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
 // TransportRequestMessage is the message received from the transport router
@@ -167,18 +170,30 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 }
 
 // resolveAPIKey resolves the API key for EnvioClick.
-// If config has use_platform_token=true, uses ENVIOCLICK_API_KEY env var (shared platform account).
-// Otherwise decrypts the api_key stored in integration credentials.
+// Priority:
+//  1. If config has use_platform_token=true → reads api_key from integration_types.platform_credentials_encrypted (DB)
+//  2. Otherwise → decrypts api_key from integration credentials (per-business)
+//  3. Fallback: ENVIOCLICK_API_KEY env var (legacy, kept for backwards compatibility)
 func (c *TransportRequestConsumer) resolveAPIKey(ctx context.Context, request *TransportRequestMessage, config map[string]interface{}) (string, error) {
+	integrationIDStr := fmt.Sprintf("%d", request.IntegrationID)
+
 	// Check if the integration uses the platform shared token
 	if config != nil {
 		if usePlatform, ok := config["use_platform_token"].(bool); ok && usePlatform {
-			apiKey := os.Getenv("ENVIOCLICK_API_KEY")
-			if apiKey == "" {
-				return "", fmt.Errorf("use_platform_token está activo pero ENVIOCLICK_API_KEY no está configurado en la plataforma")
+			if request.IntegrationID != 0 {
+				apiKey, err := c.credentialResolver.GetPlatformCredential(ctx, integrationIDStr, "api_key")
+				if err == nil {
+					c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform EnvioClick token from DB")
+					return apiKey, nil
+				}
+				c.log.Warn(ctx).Err(err).Uint("integration_id", request.IntegrationID).Msg("Failed to get platform credential from DB, trying env var fallback")
 			}
-			c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform EnvioClick token")
-			return apiKey, nil
+			// Fallback to env var (legacy)
+			if apiKey := os.Getenv("ENVIOCLICK_API_KEY"); apiKey != "" {
+				c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using ENVIOCLICK_API_KEY env var (platform token fallback)")
+				return apiKey, nil
+			}
+			return "", fmt.Errorf("use_platform_token está activo pero no hay credenciales de plataforma configuradas ni ENVIOCLICK_API_KEY definida")
 		}
 	}
 
@@ -191,7 +206,7 @@ func (c *TransportRequestConsumer) resolveAPIKey(ctx context.Context, request *T
 		return "", fmt.Errorf("integration_id is 0, cannot resolve credentials")
 	}
 
-	apiKey, err := c.credentialResolver.DecryptCredential(ctx, fmt.Sprintf("%d", request.IntegrationID), "api_key")
+	apiKey, err := c.credentialResolver.DecryptCredential(ctx, integrationIDStr, "api_key")
 	if err != nil {
 		// Fallback to env var when credentials are not stored in the integration
 		if envKey := os.Getenv("ENVIOCLICK_API_KEY"); envKey != "" {

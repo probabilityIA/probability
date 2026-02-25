@@ -64,3 +64,7 @@ func (m *IntegrationCoreMock) UpdateIntegrationConfig(ctx context.Context, integ
 func (m *IntegrationCoreMock) GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error) {
 	return map[string]interface{}{}, nil
 }
+
+func (m *IntegrationCoreMock) GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	return "", nil
+}

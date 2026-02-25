@@ -13,6 +13,7 @@ import (
 // (Replicated locally — module isolation rule)
 // Table consulted: orders, shipments
 // ============================================
+// NOTE: UpdateOrderGuideLink is also here (replicated write — module isolation rule)
 
 // GetOrderBusinessID retrieves the business_id for an order by its UUID.
 // Used by super admin handlers to resolve which business owns the order.
@@ -100,4 +101,26 @@ func (r *Repository) GetShipmentBusinessIDByID(ctx context.Context, shipmentID u
 	}
 
 	return result.BusinessID, nil
+}
+
+// UpdateOrderGuideLink updates guide_link and tracking_number on the orders table
+// after a guide is generated. Replicated write — orders table is owned by the orders
+// module but we update it directly to avoid inter-module repository sharing.
+func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string) error {
+	updates := map[string]interface{}{}
+	if guideLink != "" {
+		updates["guide_link"] = guideLink
+	}
+	if trackingNumber != "" {
+		updates["tracking_number"] = trackingNumber
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+
+	return r.db.Conn(ctx).
+		Table("orders").
+		Where("id = ?", orderID).
+		Where("deleted_at IS NULL").
+		Updates(updates).Error
 }

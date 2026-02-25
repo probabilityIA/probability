@@ -24,23 +24,25 @@ type IntegrationCategoryListResponse struct {
 
 // IntegrationTypeResponse representa la respuesta de un tipo de integración
 type IntegrationTypeResponse struct {
-	ID                uint                         `json:"id" example:"1"`
-	Name              string                       `json:"name" example:"WhatsApp"`
-	Code              string                       `json:"code" example:"whatsapp"`
-	Description       string                       `json:"description" example:"Integración con WhatsApp Cloud API"`
-	Icon              string                       `json:"icon" example:"whatsapp-icon"`
-	ImageURL          string                       `json:"image_url" example:"https://s3.amazonaws.com/bucket/integration-types/1234567890_logo.png"` // URL completa de la imagen
-	CategoryID        uint                         `json:"category_id" example:"1"`                                                                    // ID de la categoría
-	Category          *IntegrationCategoryResponse `json:"category"`
-	IsActive          bool                         `json:"is_active" example:"true"`
-	InDevelopment     bool                         `json:"in_development" example:"false"`
-	ConfigSchema      datatypes.JSON               `json:"config_schema"`
-	CredentialsSchema datatypes.JSON               `json:"credentials_schema"`
-	SetupInstructions string                       `json:"setup_instructions" example:"1. Ve a Meta Business Suite\n2. Configura WhatsApp\n3. Copia credenciales"`
-	BaseURL           string                       `json:"base_url"`
-	BaseURLTest       string                       `json:"base_url_test"`
-	CreatedAt         string                       `json:"created_at"`
-	UpdatedAt         string                       `json:"updated_at"`
+	ID                       uint                         `json:"id" example:"1"`
+	Name                     string                       `json:"name" example:"WhatsApp"`
+	Code                     string                       `json:"code" example:"whatsapp"`
+	Description              string                       `json:"description" example:"Integración con WhatsApp Cloud API"`
+	Icon                     string                       `json:"icon" example:"whatsapp-icon"`
+	ImageURL                 string                       `json:"image_url" example:"https://s3.amazonaws.com/bucket/integration-types/1234567890_logo.png"` // URL completa de la imagen
+	CategoryID               uint                         `json:"category_id" example:"1"`                                                                    // ID de la categoría
+	Category                 *IntegrationCategoryResponse `json:"category"`
+	IsActive                 bool                         `json:"is_active" example:"true"`
+	InDevelopment            bool                         `json:"in_development" example:"false"`
+	ConfigSchema             datatypes.JSON               `json:"config_schema"`
+	CredentialsSchema        datatypes.JSON               `json:"credentials_schema"`
+	SetupInstructions        string                       `json:"setup_instructions" example:"1. Ve a Meta Business Suite\n2. Configura WhatsApp\n3. Copia credenciales"`
+	BaseURL                  string                       `json:"base_url"`
+	BaseURLTest              string                       `json:"base_url_test"`
+	HasPlatformCredentials   bool                         `json:"has_platform_credentials" example:"true"`          // Indica si hay credenciales de plataforma configuradas
+	PlatformCredentialKeys   []string                     `json:"platform_credential_keys,omitempty" example:"api_key"` // Nombres de los campos configurados (sin valores)
+	CreatedAt                string                       `json:"created_at"`
+	UpdatedAt                string                       `json:"updated_at"`
 }
 
 // IntegrationTypeListResponse representa la respuesta de lista de tipos de integración

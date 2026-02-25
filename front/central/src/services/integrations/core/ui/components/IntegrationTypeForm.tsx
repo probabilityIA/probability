@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import { useIntegrationTypes } from '../hooks/useIntegrationTypes';
 import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO, IntegrationCategory } from '../../domain/types';
 import { Input, Select, Button, Alert, FileInput } from '@/shared/ui';
-import { getIntegrationCategoriesAction } from '../../infra/actions';
+import { getIntegrationCategoriesAction, getIntegrationTypePlatformCredentialsAction } from '../../infra/actions';
 
 interface IntegrationTypeFormProps {
     integrationType?: IntegrationType;
@@ -26,6 +27,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         setup_instructions: '',
         base_url: '',
         base_url_test: '',
+        platform_credentials: '{}',
     });
 
     const [categories, setCategories] = useState<IntegrationCategory[]>([]);
@@ -34,6 +36,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [removeImage, setRemoveImage] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [showPlatformCredentials, setShowPlatformCredentials] = useState(false);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -62,10 +65,24 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 setup_instructions: integrationType.setup_instructions || '',
                 base_url: integrationType.base_url || '',
                 base_url_test: integrationType.base_url_test || '',
+                platform_credentials: '{}',
             });
             // Cargar preview de imagen existente si hay
             if (integrationType.image_url) {
                 setImagePreview(integrationType.image_url);
+            }
+            // Cargar credenciales de plataforma desencriptadas si existen
+            if (integrationType.has_platform_credentials) {
+                getIntegrationTypePlatformCredentialsAction(integrationType.id)
+                    .then((res) => {
+                        if (res.success && res.data && Object.keys(res.data).length > 0) {
+                            setFormData((prev) => ({
+                                ...prev,
+                                platform_credentials: JSON.stringify(res.data, null, 2),
+                            }));
+                        }
+                    })
+                    .catch(() => {});
             }
         }
     }, [integrationType]);
@@ -93,6 +110,17 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
 
         try {
             let success = false;
+            // Parse platform_credentials — only send if non-empty
+            let platformCredentials: Record<string, string> | undefined;
+            try {
+                const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
+                if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                    platformCredentials = parsed;
+                }
+            } catch {
+                throw new Error('Las credenciales de plataforma no son un JSON válido');
+            }
+
             if (integrationType) {
                 // Update
                 const updateData: UpdateIntegrationTypeDTO = {
@@ -108,6 +136,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     remove_image: removeImage || undefined,
                     base_url: formData.base_url || undefined,
                     base_url_test: formData.base_url_test || undefined,
+                    platform_credentials: platformCredentials,
                 };
                 success = await updateIntegrationType(integrationType.id, updateData);
             } else {
@@ -124,6 +153,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                     image_file: imageFile || undefined,
                     base_url: formData.base_url || undefined,
                     base_url_test: formData.base_url_test || undefined,
+                    platform_credentials: platformCredentials,
                 };
                 success = await createIntegrationType(createData);
             }
@@ -337,6 +367,51 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 />
                 <p className="mt-1 text-xs text-gray-500">
                     Instrucciones paso a paso para el usuario
+                </p>
+            </div>
+
+            {/* Platform Credentials (encrypted) */}
+            <div>
+                <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                        Credenciales de Plataforma (JSON)
+                    </label>
+                    <button
+                        type="button"
+                        onClick={() => setShowPlatformCredentials((v) => !v)}
+                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                    >
+                        {showPlatformCredentials ? (
+                            <>
+                                <EyeSlashIcon className="w-4 h-4" />
+                                Ocultar
+                            </>
+                        ) : (
+                            <>
+                                <EyeIcon className="w-4 h-4" />
+                                Mostrar
+                            </>
+                        )}
+                    </button>
+                </div>
+                <textarea
+                    value={showPlatformCredentials
+                        ? formData.platform_credentials
+                        : formData.platform_credentials.replace(/:\s*"([^"]*)"/g, ': "••••••••"')
+                    }
+                    onChange={(e) => {
+                        if (showPlatformCredentials) {
+                            setFormData({ ...formData, platform_credentials: e.target.value });
+                        }
+                    }}
+                    readOnly={!showPlatformCredentials}
+                    rows={6}
+                    className={`w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs ${showPlatformCredentials ? 'text-green-400' : 'text-gray-500 cursor-default'}`}
+                    placeholder={showPlatformCredentials ? '{\n  "api_key": "tu-api-key-aqui"\n}' : ''}
+                    spellCheck={false}
+                />
+                <p className="mt-1 text-xs text-gray-500">
+                    Credenciales globales del proveedor (se encriptarán). Usadas por integraciones con <code>use_platform_token: true</code>. Deja <code>{'{}'}</code> para no cambiarlas.
                 </p>
             </div>
 

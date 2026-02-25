@@ -168,6 +168,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to add is_testing columns: %w", err)
 	}
 
+	// Agregar columna de credenciales de plataforma a integration_types
+	if err := r.addPlatformCredentialsToIntegrationTypes(ctx); err != nil {
+		return fmt.Errorf("failed to add platform_credentials_encrypted to integration_types: %w", err)
+	}
+
 	return r.createDefaultUserIfNotExists(ctx)
 }
 
@@ -742,6 +747,14 @@ func (r *Repository) addIsTestingColumns(ctx context.Context) error {
 		return fmt.Errorf("failed to add is_test to shipments: %w", err)
 	}
 	return nil
+}
+
+// addPlatformCredentialsToIntegrationTypes agrega la columna de credenciales de plataforma
+func (r *Repository) addPlatformCredentialsToIntegrationTypes(ctx context.Context) error {
+	return r.db.Conn(ctx).Exec(`
+		ALTER TABLE integration_types
+		ADD COLUMN IF NOT EXISTS platform_credentials_encrypted BYTEA
+	`).Error
 }
 
 // ptrUint es un helper para crear punteros a uint

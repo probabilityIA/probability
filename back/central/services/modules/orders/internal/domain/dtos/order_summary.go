@@ -41,6 +41,8 @@ type OrderSummary struct {
 	OrderStatus            *entities.OrderStatusInfo
 	PaymentStatus          *entities.PaymentStatusInfo
 	FulfillmentStatus      *entities.FulfillmentStatusInfo
+	GuideLink              *string
+	IsPaid                 bool
 	IsConfirmed            *bool
 	Novelty                *string
 }

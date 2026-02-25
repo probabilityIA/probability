@@ -13,7 +13,7 @@ import {
 import { Integration, SyncOrdersParams } from '../../domain/types';
 import { TokenStorage } from '@/shared/utils/token-storage';
 
-export const useIntegrations = () => {
+export const useIntegrations = (initialCategory: string = '') => {
     const [integrations, setIntegrations] = useState<Integration[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export const useIntegrations = () => {
     // Filters
     const [search, setSearch] = useState('');
     const [filterType, setFilterType] = useState<string>('');
-    const [filterCategory, setFilterCategory] = useState<string>('');
+    const [filterCategory, setFilterCategory] = useState<string>(initialCategory);
     const [filterBusinessId, setFilterBusinessId] = useState<number | null>(null);
 
     const fetchIntegrations = useCallback(async () => {

@@ -29,17 +29,6 @@ import (
 //	@Failure		500	{object}	map[string]interface{}
 //	@Router			/integrations/{id} [put]
 func (h *IntegrationHandler) UpdateIntegrationHandler(c *gin.Context) {
-	// Solo super admins pueden actualizar integraciones
-	if !middleware.IsSuperAdmin(c) {
-		h.logger.Error().Str("endpoint", "/integrations/:id").Str("method", "PUT").Msg("Intento de actualizar integración sin permisos de super admin")
-		c.JSON(http.StatusForbidden, response.IntegrationErrorResponse{
-			Success: false,
-			Message: "Solo los super usuarios pueden actualizar integraciones",
-			Error:   "permisos insuficientes",
-		})
-		return
-	}
-
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {
@@ -52,17 +41,6 @@ func (h *IntegrationHandler) UpdateIntegrationHandler(c *gin.Context) {
 		return
 	}
 
-	var req request.UpdateIntegrationRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
-		h.logger.Error().Err(err).Uint64("id", id).Str("endpoint", "/integrations/:id").Str("method", "PUT").Msg("Error al parsear datos JSON para actualizar integración")
-		c.JSON(http.StatusBadRequest, response.IntegrationErrorResponse{
-			Success: false,
-			Message: "Datos de entrada inválidos",
-			Error:   err.Error(),
-		})
-		return
-	}
-
 	userID, exists := middleware.GetUserID(c)
 	if !exists {
 		h.logger.Error().Uint64("integration_id", id).Str("endpoint", "/integrations/:id").Str("method", "PUT").Msg("Intento de actualizar integración sin usuario autenticado")
@@ -70,6 +48,53 @@ func (h *IntegrationHandler) UpdateIntegrationHandler(c *gin.Context) {
 			Success: false,
 			Message: "Usuario no autenticado",
 			Error:   "token de autenticación inválido o ausente",
+		})
+		return
+	}
+
+	// Si no es super admin, verificar que la integración pertenece al business del usuario
+	if !middleware.IsSuperAdmin(c) {
+		businessID, hasBusinessID := middleware.GetBusinessID(c)
+		if !hasBusinessID || businessID == 0 {
+			c.JSON(http.StatusForbidden, response.IntegrationErrorResponse{
+				Success: false,
+				Message: "No tienes permisos para actualizar esta integración",
+				Error:   "permisos insuficientes",
+			})
+			return
+		}
+		existing, err := h.usecase.GetIntegrationByID(c.Request.Context(), uint(id))
+		if err != nil {
+			c.JSON(http.StatusNotFound, response.IntegrationErrorResponse{
+				Success: false,
+				Message: "La integración especificada no existe",
+				Error:   err.Error(),
+			})
+			return
+		}
+		if existing.BusinessID == nil || *existing.BusinessID != businessID {
+			h.logger.Error().
+				Uint64("integration_id", id).
+				Uint("business_id", businessID).
+				Str("endpoint", "/integrations/:id").
+				Str("method", "PUT").
+				Msg("Intento de actualizar integración de otro negocio")
+			c.JSON(http.StatusForbidden, response.IntegrationErrorResponse{
+				Success: false,
+				Message: "No tienes permisos para actualizar esta integración",
+				Error:   "la integración no pertenece a tu negocio",
+			})
+			return
+		}
+	}
+
+	var req request.UpdateIntegrationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.logger.Error().Err(err).Uint64("id", id).Str("endpoint", "/integrations/:id").Str("method", "PUT").Msg("Error al parsear datos JSON para actualizar integración")
+		c.JSON(http.StatusBadRequest, response.IntegrationErrorResponse{
+			Success: false,
+			Message: "Datos de entrada inválidos",
+			Error:   err.Error(),
 		})
 		return
 	}

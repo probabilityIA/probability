@@ -40,6 +40,7 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		IntegrationID:      order.IntegrationID,
 		IntegrationType:    order.IntegrationType,
 		IntegrationLogoURL: order.IntegrationLogoURL,
+		IntegrationName:    order.IntegrationName,
 
 		// Identificadores de la orden
 		Platform:       order.Platform,
@@ -204,6 +205,8 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		OrderStatus:            order.OrderStatus,       // Información del estado de Probability
 		PaymentStatus:          order.PaymentStatus,     // Información completa del estado de pago
 		FulfillmentStatus:      order.FulfillmentStatus, // Información completa del estado de fulfillment
+		GuideLink:              order.GuideLink,
+		IsPaid:                 order.IsPaid,
 		IsConfirmed:            order.IsConfirmed,
 		Novelty:                order.Novelty,
 	}

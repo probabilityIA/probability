@@ -8,35 +8,37 @@ import (
 
 // CreateIntegrationTypeDTO representa los datos para crear un tipo de integración
 type CreateIntegrationTypeDTO struct {
-	Name              string
-	Code              string
-	Description       string
-	Icon              string
-	CategoryID        uint
-	IsActive          bool
-	InDevelopment     bool
-	ConfigSchema      datatypes.JSON
-	CredentialsSchema datatypes.JSON
-	ImageFile         *multipart.FileHeader // Archivo de imagen para subir a S3
-	BaseURL           string
-	BaseURLTest       string
+	Name                string
+	Code                string
+	Description         string
+	Icon                string
+	CategoryID          uint
+	IsActive            bool
+	InDevelopment       bool
+	ConfigSchema        datatypes.JSON
+	CredentialsSchema   datatypes.JSON
+	ImageFile           *multipart.FileHeader  // Archivo de imagen para subir a S3
+	BaseURL             string
+	BaseURLTest         string
+	PlatformCredentials map[string]interface{} // Credenciales de plataforma (se encriptarán)
 }
 
 // UpdateIntegrationTypeDTO representa los datos para actualizar un tipo de integración
 type UpdateIntegrationTypeDTO struct {
-	Name              *string
-	Code              *string
-	Description       *string
-	Icon              *string
-	CategoryID        *uint
-	IsActive          *bool
-	InDevelopment     *bool
-	ConfigSchema      *datatypes.JSON
-	CredentialsSchema *datatypes.JSON
-	ImageFile         *multipart.FileHeader // Archivo de imagen para subir a S3
-	RemoveImage       bool                  // Flag para eliminar la imagen existente
-	BaseURL           *string
-	BaseURLTest       *string
+	Name                *string
+	Code                *string
+	Description         *string
+	Icon                *string
+	CategoryID          *uint
+	IsActive            *bool
+	InDevelopment       *bool
+	ConfigSchema        *datatypes.JSON
+	CredentialsSchema   *datatypes.JSON
+	ImageFile           *multipart.FileHeader   // Archivo de imagen para subir a S3
+	RemoveImage         bool                    // Flag para eliminar la imagen existente
+	BaseURL             *string
+	BaseURLTest         *string
+	PlatformCredentials *map[string]interface{} // Credenciales de plataforma (se encriptarán)
 }
 
 // CreateIntegrationDTO representa los datos para crear una integración

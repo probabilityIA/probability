@@ -9,7 +9,6 @@ import {
     CategoryTabs,
     CreateIntegrationModal,
     useCategories,
-    useIntegrations
 } from '@/services/integrations/core/ui';
 import { Button, Modal } from '@/shared/ui';
 import { IntegrationType, Integration } from '@/services/integrations/core/domain/types';
@@ -34,7 +33,6 @@ export default function IntegrationsPage() {
 
     // Hooks for categories and integrations
     const { categories, loading: categoriesLoading } = useCategories();
-    const { setFilterCategory, refresh: refreshIntegrations } = useIntegrations();
 
     // Seleccionar primera categoría automáticamente cuando se cargan las categorías
     useEffect(() => {
@@ -44,10 +42,9 @@ export default function IntegrationsPage() {
                 .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))[0];
             if (firstCategory) {
                 setActiveCategoryCode(firstCategory.code);
-                setFilterCategory(firstCategory.code);
             }
         }
-    }, [categories, categoriesLoading, activeCategoryCode, setFilterCategory]);
+    }, [categories, categoriesLoading, activeCategoryCode]);
 
     // Return condicional después de todos los hooks
     if (isOAuthCallback) {
@@ -64,14 +61,10 @@ export default function IntegrationsPage() {
         setSelectedType(undefined);
         setSelectedIntegration(undefined);
         setRefreshKey(prev => prev + 1);
-        refreshIntegrations(); // Refresh integrations list
     };
 
     const handleCategoryChange = (categoryCode: string | null) => {
         setActiveCategoryCode(categoryCode);
-        setFilterCategory(categoryCode || '');
-        // No need to call refreshIntegrations() - the useEffect in useIntegrations will automatically
-        // trigger when filterCategory changes
     };
 
     const handleModalClose = () => {
@@ -114,10 +107,10 @@ export default function IntegrationsPage() {
                 />
             )}
 
-            {activeTab === 'integrations' ? (
+            {activeTab === 'integrations' && activeCategoryCode !== null ? (
                 <IntegrationList
-                    key={`list-${refreshKey}`}
-                    filterCategory={activeCategoryCode || ''}
+                    key={`cat-${activeCategoryCode}-${refreshKey}`}
+                    filterCategory={activeCategoryCode}
                     onEdit={async (integration) => {
                         try {
                             // Obtener la integración completa por ID

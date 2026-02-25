@@ -37,8 +37,10 @@ type IntegrationType struct {
 	SetupInstructions string
 	BaseURL           string
 	BaseURLTest       string
-	CreatedAt         time.Time
-	UpdatedAt         time.Time
+	// Credenciales de plataforma encriptadas — opacas al dominio, procesadas por el use case
+	PlatformCredentialsEncrypted []byte
+	CreatedAt                    time.Time
+	UpdatedAt                    time.Time
 }
 
 type Integration struct {

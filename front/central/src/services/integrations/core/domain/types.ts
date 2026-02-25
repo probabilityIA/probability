@@ -116,6 +116,8 @@ export interface IntegrationType {
     setup_instructions?: string;
     base_url?: string;      // URL de producción global (read-only, desde integration_types)
     base_url_test?: string; // URL de pruebas por integración (editable)
+    has_platform_credentials?: boolean; // Indica si hay credenciales de plataforma configuradas
+    platform_credential_keys?: string[]; // Nombres de los campos de credenciales de plataforma (sin valores)
     created_at: string;
     updated_at: string;
 }
@@ -133,6 +135,7 @@ export interface CreateIntegrationTypeDTO {
     image_file?: File; // Archivo de imagen para subir
     base_url?: string;
     base_url_test?: string;
+    platform_credentials?: Record<string, string>; // Credenciales de plataforma (se encriptarán en backend)
 }
 
 export interface UpdateIntegrationTypeDTO {
@@ -150,6 +153,7 @@ export interface UpdateIntegrationTypeDTO {
     remove_image?: boolean; // Flag para eliminar la imagen existente
     base_url?: string;
     base_url_test?: string;
+    platform_credentials?: Record<string, string>; // Credenciales de plataforma (se encriptarán en backend)
 }
 
 // Información del webhook para configurar en plataformas externas

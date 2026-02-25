@@ -211,6 +211,9 @@ export class IntegrationApiRepository implements IIntegrationRepository {
             if (data.setup_instructions) formData.append('setup_instructions', data.setup_instructions);
             if (data.base_url) formData.append('base_url', data.base_url);
             if (data.base_url_test) formData.append('base_url_test', data.base_url_test);
+            if (data.platform_credentials && Object.keys(data.platform_credentials).length > 0) {
+                formData.append('platform_credentials', JSON.stringify(data.platform_credentials));
+            }
             formData.append('image_file', data.image_file);
 
             return this.fetch<SingleResponse<IntegrationType>>('/integration-types', {
@@ -243,6 +246,9 @@ export class IntegrationApiRepository implements IIntegrationRepository {
             if (data.remove_image !== undefined) formData.append('remove_image', String(data.remove_image));
             if (data.base_url) formData.append('base_url', data.base_url);
             if (data.base_url_test) formData.append('base_url_test', data.base_url_test);
+            if (data.platform_credentials && Object.keys(data.platform_credentials).length > 0) {
+                formData.append('platform_credentials', JSON.stringify(data.platform_credentials));
+            }
 
             return this.fetch<SingleResponse<IntegrationType>>(`/integration-types/${id}`, {
                 method: 'PUT',
@@ -261,6 +267,10 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         return this.fetch<ActionResponse>(`/integration-types/${id}`, {
             method: 'DELETE',
         });
+    }
+
+    async getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, string> }> {
+        return this.fetch<{ success: boolean; message: string; data: Record<string, string> }>(`/integration-types/${id}/platform-credentials`);
     }
 
     async getWebhookUrl(id: number): Promise<WebhookResponse> {

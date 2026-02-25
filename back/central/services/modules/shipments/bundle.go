@@ -37,7 +37,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// 5. Transport Response Consumer
 	if rabbitMQ != nil {
-		responseConsumer := queueconsumer.NewResponseConsumer(rabbitMQ, repo, logger, ssePublisher)
+		responseConsumer := queueconsumer.NewResponseConsumer(rabbitMQ, repo, logger, ssePublisher, redisClient)
 		go func() {
 			ctx := context.Background()
 			logger.Info(ctx).Msg("🚀 Starting transport response consumer in background...")
@@ -48,7 +48,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	}
 
 	// 6. Init Handlers (repo satisfies ICarrierResolver via GetActiveShippingCarrier)
-	h := handlers.New(uc, transportPub, repo)
+	h := handlers.New(uc, transportPub, repo, redisClient)
 
 	// 7. Register Routes
 	h.RegisterRoutes(router)

@@ -15,6 +15,7 @@ type ProbabilityOrder struct {
 	IntegrationID      uint
 	IntegrationType    string
 	IntegrationLogoURL *string
+	IntegrationName    string
 
 	// Identificadores de la orden
 	Platform       string
