@@ -4,24 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 )
 
-// GetDocumentByNumber obtiene un documento específico por su número
-// Reutiliza el endpoint de búsqueda (/app/integration/search/documents/)
-// filtrando por DocumentNumber
+// GetDocumentByNumber obtiene un documento específico por su número.
+// Acepta el formato combinado que retorna la creación (ej: "FEV23") o el número bare ("23").
 //
-// Parámetros:
-// - documentNumber: Número del documento a buscar (ej: "ABC0000000000")
+// La API de Softpymes usa formatos distintos según el endpoint:
+//   - Creación  → documentNumber: "FEV23"  (prefix + número, sin ceros)
+//   - Búsqueda  → documentNumber: "0000000023" (solo número, con ceros), prefix: "FEV" (separado)
 //
-// Comportamiento:
-// - Busca en los últimos 30 días (límite de la API)
-// - Retorna el primer documento que coincida como map[string]interface{}
-// - Si no encuentra, retorna error
-// - Si encuentra múltiples, retorna el primero y logea warning
-//
-// Uso típico: Después de crear una factura, esperar 3 segundos y consultar
-// el documento completo para obtener URLs de PDF/XML y CUFE
+// Este método parsea el combinado en prefix + número bare antes de llamar al endpoint de búsqueda.
 //
 // Implementa: ports.ISoftpymesClient.GetDocumentByNumber
 func (c *Client) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, referer, documentNumber, baseURL string) (map[string]interface{}, error) {
@@ -35,22 +29,57 @@ func (c *Client) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, ref
 		return nil, fmt.Errorf("documentNumber is required")
 	}
 
+	// Parsear el formato combinado que retorna la creación (ej: "FEV26").
+	// La API de búsqueda espera:
+	//   - documentNumber: "0000000026" (10 dígitos, zero-padded)
+	//   - prefix: "FEV" (campo separado)
+	//
+	// El creation response retorna el número SIN ceros y con el prefix pegado.
+	// Ejemplo: creation devuelve "FEV26", búsqueda necesita documentNumber="0000000026" + prefix="FEV"
+	prefix := ""
+	bareNumber := documentNumber
+	for i, ch := range documentNumber {
+		if ch >= '0' && ch <= '9' {
+			prefix = documentNumber[:i]
+			bareNumber = documentNumber[i:]
+			break
+		}
+	}
+
+	// Zero-pad el número bare a 10 dígitos (formato estándar de Softpymes)
+	// Ej: "26" → "0000000026"
+	paddedNumber := bareNumber
+	if n, err := strconv.ParseInt(bareNumber, 10, 64); err == nil {
+		paddedNumber = fmt.Sprintf("%010d", n)
+	}
+
+	c.log.Info(ctx).
+		Str("raw_document_number", documentNumber).
+		Str("prefix", prefix).
+		Str("bare_number", bareNumber).
+		Str("padded_number", paddedNumber).
+		Msg("📄 Parsed document number for search")
+
 	// Preparar rango de fechas: últimos 30 días (máximo permitido por API)
 	now := time.Now()
-	dateFrom := now.AddDate(0, 0, -30).Format("2006-01-02") // 30 días atrás
-	dateTo := now.Format("2006-01-02")                       // Hoy
+	dateFrom := now.AddDate(0, 0, -30).Format("2006-01-02")
+	dateTo := now.Format("2006-01-02")
 
-	// Preparar parámetros de búsqueda
+	// Buscar con número padded y prefix separados
 	params := ListDocumentsParams{
 		DateFrom:       dateFrom,
 		DateTo:         dateTo,
-		DocumentNumber: &documentNumber,
+		DocumentNumber: &paddedNumber,
+	}
+	if prefix != "" {
+		params.Prefix = &prefix
 	}
 
 	c.log.Info(ctx).
 		Str("date_from", dateFrom).
 		Str("date_to", dateTo).
-		Str("document_number", documentNumber).
+		Str("document_number", paddedNumber).
+		Str("prefix", prefix).
 		Msg("📤 Searching for document in last 30 days")
 
 	// Llamar al endpoint de lista con filtro de número

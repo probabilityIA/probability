@@ -122,12 +122,13 @@ func (r *InvoiceRepository) GetToken(token string) (*AuthToken, bool) {
 	return t, exists
 }
 
-// GenerateInvoiceNumber genera un número de factura secuencial
+// GenerateInvoiceNumber genera un número de factura secuencial (10 dígitos zero-padded, igual que API real)
+// Ej: "0000001001"
 func (r *InvoiceRepository) GenerateInvoiceNumber() string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.invoiceSeq++
-	return fmt.Sprintf("SPY-%04d", r.invoiceSeq)
+	return fmt.Sprintf("%010d", r.invoiceSeq)
 }
 
 // GenerateCreditNoteNumber genera un número de nota de crédito secuencial

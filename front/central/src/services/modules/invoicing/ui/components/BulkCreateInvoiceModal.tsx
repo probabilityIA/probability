@@ -42,6 +42,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     status: 'pending' | 'processing' | 'success' | 'failed';
     error_message?: string;
     invoice_id?: number;
+    invoice_number?: string;
   }
   const [orderStatuses, setOrderStatuses] = useState<Record<string, OrderProcessingStatus>>({});
 
@@ -82,6 +83,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
         [data.order_id!]: {
           status: 'success',
           invoice_id: data.invoice_id,
+          invoice_number: data.invoice_number,
         },
       }));
     }
@@ -523,9 +525,11 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                                   <CheckCircleIcon className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
                                   <div>
                                     <p className="font-semibold">Factura creada exitosamente</p>
-                                    {orderStatus.invoice_id && (
+                                    {orderStatus.invoice_number ? (
+                                      <p className="mt-0.5 text-green-700 font-mono">{orderStatus.invoice_number}</p>
+                                    ) : orderStatus.invoice_id ? (
                                       <p className="mt-0.5 text-green-700">ID: {orderStatus.invoice_id}</p>
-                                    )}
+                                    ) : null}
                                   </div>
                                 </div>
                               </div>

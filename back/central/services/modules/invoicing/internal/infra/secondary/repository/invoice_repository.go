@@ -170,7 +170,7 @@ func (r *Repository) GetIssuedInvoicesByDateRange(ctx context.Context, businessI
 		Preload("InvoiceItems").
 		Where("business_id = ?", businessID).
 		Where("status = ?", "issued").
-		Where("issued_at::date BETWEEN ? AND ?", dateFrom, dateTo).
+		Where("DATE(issued_at AT TIME ZONE 'America/Bogota') BETWEEN ? AND ?", dateFrom, dateTo).
 		Order("issued_at DESC").
 		Find(&modelsList).Error; err != nil {
 		r.log.Error(ctx).Err(err).

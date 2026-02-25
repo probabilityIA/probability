@@ -8,6 +8,7 @@ type Invoice struct {
 	InvoiceNumber string
 	ExternalID    string
 	OrderID       string
+	Comment       string
 	CustomerName  string
 	CustomerEmail string
 	CustomerNIT   string

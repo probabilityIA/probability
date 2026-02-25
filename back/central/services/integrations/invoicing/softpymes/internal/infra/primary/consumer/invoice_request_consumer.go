@@ -483,6 +483,19 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 			c.log.Info(ctx).
 				Str("invoice_number", result.InvoiceNumber).
 				Msg("Full document retrieved")
+
+			// Usar el documentNumber del documento completo como número canónico.
+			// La creación retorna el formato corto (ej: "FEV1001") pero el listado
+			// del proveedor usa el formato padded (ej: "0000001001"). Guardamos el
+			// padded para que la auditoría comparativa pueda cruzar ambos correctamente.
+			if docNum, ok := fullDocument["documentNumber"].(string); ok && docNum != "" {
+				c.log.Info(ctx).
+					Str("old_invoice_number", result.InvoiceNumber).
+					Str("new_invoice_number", docNum).
+					Msg("Overriding invoice number with canonical padded format from full document")
+				result.InvoiceNumber = docNum
+				result.ExternalID = docNum
+			}
 		}
 	}
 

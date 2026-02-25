@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -198,15 +199,17 @@ func (h *Handler) handleCreateInvoice(c *gin.Context) {
 		"message": "Se ha creado la factura de venta en Pymes+ correctamente!",
 		"info": gin.H{
 			"date":           invoice.IssuedAt.Format(time.RFC3339),
-			"documentNumber": invoice.InvoiceNumber,
+			// Igual que la API real: prefix + número SIN ceros (ej: "FEV1001", no "FEV0000001001")
+		"documentNumber": fmt.Sprintf("%s%s", invoice.Prefix, strings.TrimLeft(invoice.InvoiceNumber, "0")),
 			"subtotal":       invoice.Subtotal,
 			"discount":       0.0,
 			"iva":            invoice.IVA,
 			"withholding":    0.0,
 			"total":          invoice.Total,
 			"docsFe": gin.H{
-				"status":  true,
-				"message": "Documento válido enviado al proveedor tecnológico",
+				"status":          "Aceptado",
+				"message":         "Documento válido enviado al proveedor tecnológico",
+				"quantitySlopes":  nil,
 			},
 		},
 	})
@@ -233,6 +236,7 @@ func (h *Handler) handleSearchDocuments(c *gin.Context) {
 		DateFrom       string  `json:"dateFrom"`
 		DateTo         string  `json:"dateTo"`
 		DocumentNumber *string `json:"documentNumber"`
+		Prefix         *string `json:"prefix"`
 	}
 
 	if err := c.ShouldBindJSON(&searchParams); err != nil {
@@ -284,7 +288,7 @@ func (h *Handler) invoiceToInvoiceWithDetails(inv *domain.Invoice) *usecases.Inv
 		Invoice:    *inv,
 		BranchCode: "001",
 		BranchName: "Sucursal Principal",
-		Prefix:     "FV",
+		Prefix:     "FEV",
 		SellerName: "Empresa Demo S.A.S.",
 		SellerNIT:  "900123456-7",
 	}
@@ -316,7 +320,7 @@ func (h *Handler) buildDocumentResponse(invoice *usecases.InvoiceWithDetails) ma
 	return map[string]interface{}{
 		"branchCode":             invoice.BranchCode,
 		"branchName":             invoice.BranchName,
-		"comment":                "",
+		"comment":                invoice.Comment,
 		"customerIdentification": invoice.CustomerNIT,
 		"customerName":           invoice.CustomerName,
 		"details":                items,
