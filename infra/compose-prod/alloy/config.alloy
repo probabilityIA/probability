@@ -3,6 +3,10 @@
 // Scrapes cAdvisor + backend metrics and sends to Grafana Cloud
 // ============================================
 
+logging {
+  level = "debug"
+}
+
 // Remote Write to Grafana Cloud
 prometheus.remote_write "grafana_cloud" {
   endpoint {

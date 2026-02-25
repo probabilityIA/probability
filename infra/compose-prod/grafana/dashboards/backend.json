@@ -22,7 +22,7 @@
       "description": "Cuántas peticiones HTTP llegan al backend cada minuto",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total[1m])) * 60",
@@ -58,7 +58,7 @@
       "description": "Porcentaje de respuestas con error sobre el total de peticiones",
       "type": "stat",
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total{status=~\"4..|5..\"}[5m])) / sum(rate(http_requests_total[5m])) * 100",
@@ -96,7 +96,7 @@
       "description": "Tiempo de respuesta del 50% de las peticiones (normal)",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
@@ -132,7 +132,7 @@
       "description": "Tiempo de respuesta del 95% de las peticiones (casi todos)",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
@@ -168,7 +168,7 @@
       "description": "Tiempo de respuesta del 99% de las peticiones (peores casos)",
       "type": "stat",
       "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
@@ -204,7 +204,7 @@
       "description": "Evolución del volumen de peticiones HTTP en el tiempo",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total[1m])) by (method) * 60",
@@ -236,7 +236,7 @@
       "description": "Tiempo de respuesta: 50% más rápido (normal), 95% (casi todos), 99% (peores casos)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 24, "x": 0, "y": 12 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) * 1000",
@@ -278,7 +278,7 @@
       "description": "Los endpoints del API que tardan más en responder",
       "type": "table",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 20 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "topk(10, histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, path)) * 1000)",
@@ -322,7 +322,7 @@
       "description": "Desglose de cuántas respuestas son 200, 400, 500, etc.",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "sum(rate(http_requests_total[5m])) by (status) * 60",

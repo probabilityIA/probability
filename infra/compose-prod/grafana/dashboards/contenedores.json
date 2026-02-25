@@ -29,7 +29,7 @@
       "description": "Porcentaje total de CPU consumido en el servidor (todos los procesos)",
       "type": "gauge",
       "gridPos": { "h": 5, "w": 6, "x": 0, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "rate(container_cpu_usage_seconds_total{id=\"/\",cpu=\"total\"}[2m]) * 100 / scalar(machine_cpu_cores)",
@@ -68,7 +68,7 @@
       "description": "Memoria RAM total consumida en el servidor (incluye OS y todos los procesos)",
       "type": "gauge",
       "gridPos": { "h": 5, "w": 6, "x": 6, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "container_memory_usage_bytes{id=\"/\"} / scalar(machine_memory_bytes) * 100",
@@ -107,7 +107,7 @@
       "description": "RAM consumida vs disponible en el servidor",
       "type": "stat",
       "gridPos": { "h": 5, "w": 6, "x": 12, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "container_memory_usage_bytes{id=\"/\"} / 1024 / 1024",
@@ -143,7 +143,7 @@
       "description": "Porcentaje del disco principal (/dev/root) utilizado",
       "type": "gauge",
       "gridPos": { "h": 5, "w": 6, "x": 18, "y": 1 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "container_fs_usage_bytes{id=\"/\",device=\"/dev/root\"} / container_fs_limit_bytes{id=\"/\",device=\"/dev/root\"} * 100",
@@ -182,7 +182,7 @@
       "description": "Uso de CPU: contenedores activos, sistema OS y CPU disponible",
       "type": "stat",
       "gridPos": { "h": 10, "w": 5, "x": 0, "y": 6 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "sum(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m])) * 100 / scalar(machine_cpu_cores)",
@@ -244,7 +244,7 @@
       "description": "Vista completa del uso de CPU: cada contenedor, sistema OS y CPU disponible",
       "type": "piechart",
       "gridPos": { "h": 10, "w": 19, "x": 5, "y": 6 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "label_replace(rate(container_cpu_usage_seconds_total{image!=\"\",image!~\".*cadvisor.*\",cpu=\"total\"}[2m]) * 100 / scalar(machine_cpu_cores), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
@@ -304,7 +304,7 @@
       "description": "Suma de la RAM consumida por todos los contenedores activos",
       "type": "stat",
       "gridPos": { "h": 10, "w": 5, "x": 0, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "sum(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}) / 1024 / 1024 / 1024",
@@ -365,7 +365,7 @@
       "description": "Vista completa del uso de RAM: cada contenedor, procesos del sistema OS, y memoria libre",
       "type": "piechart",
       "gridPos": { "h": 10, "w": 19, "x": 5, "y": 16 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "label_replace(container_memory_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"} / scalar(machine_memory_bytes) * 100, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
@@ -424,7 +424,7 @@
       "description": "Uso de disco: contenedores, sistema OS y espacio libre (en GB)",
       "type": "stat",
       "gridPos": { "h": 10, "w": 5, "x": 0, "y": 26 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "sum(container_fs_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"}) / 1024 / 1024 / 1024",
@@ -486,7 +486,7 @@
       "description": "Vista completa del uso de disco: cada contenedor, sistema OS y espacio libre",
       "type": "piechart",
       "gridPos": { "h": 10, "w": 19, "x": 5, "y": 26 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "label_replace(container_fs_usage_bytes{image!=\"\",image!~\".*cadvisor.*\"} / scalar(container_fs_limit_bytes{id=\"/\",device=\"/dev/root\"}) * 100, \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
@@ -546,7 +546,7 @@
       "description": "Tráfico de red que entra a cada contenedor (bytes/seg)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "label_replace(rate(container_network_receive_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
@@ -578,7 +578,7 @@
       "description": "Tráfico de red que sale de cada contenedor (bytes/seg)",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 36 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "label_replace(rate(container_network_transmit_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
@@ -610,7 +610,7 @@
       "description": "Velocidad de lectura del disco por contenedor",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 0, "y": 44 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "label_replace(rate(container_fs_reads_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
@@ -642,7 +642,7 @@
       "description": "Velocidad de escritura al disco por contenedor",
       "type": "timeseries",
       "gridPos": { "h": 8, "w": 12, "x": 12, "y": 44 },
-      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "datasource": { "type": "prometheus", "uid": "grafanacloud-prom" },
       "targets": [
         {
           "expr": "label_replace(rate(container_fs_writes_bytes_total{image!=\"\",image!~\".*cadvisor.*\"}[2m]), \"service\", \"$1\", \"image\", \".*/([^/:]+):.*\")",
