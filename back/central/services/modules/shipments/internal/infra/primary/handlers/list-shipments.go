@@ -25,6 +25,7 @@ import (
 // @Param        status            query    string  false  "Filtrar por estado (pending, in_transit, delivered, failed)"
 // @Param        statuses          query    string  false  "Filtrar por múltiples estados separados por coma"
 // @Param        guide_id          query    string  false  "Filtrar por ID de guía"
+// @Param        customer_name     query    string  false  "Filtrar por nombre del cliente (búsqueda parcial)"
 // @Param        warehouse_id      query    int     false  "Filtrar por ID de almacén"
 // @Param        driver_id         query    int     false  "Filtrar por ID de conductor"
 // @Param        is_last_mile      query    bool    false  "Filtrar por última milla"
@@ -153,6 +154,11 @@ func (h *Handlers) ListShipments(c *gin.Context) {
 	// Filtro por guide_id
 	if guideID := c.Query("guide_id"); guideID != "" {
 		filters["guide_id"] = strings.TrimSpace(guideID)
+	}
+
+	// Filtro por customer_name (búsqueda parcial)
+	if customerName := c.Query("customer_name"); customerName != "" {
+		filters["customer_name"] = strings.TrimSpace(customerName)
 	}
 
 	// Filtro por warehouse_id

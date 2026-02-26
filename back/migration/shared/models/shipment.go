@@ -67,8 +67,8 @@ type Shipment struct {
 	DeliveryNotes     *string        `gorm:"type:text"`  // Notas de entrega
 	Metadata          datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional del canal
 
-	// Relación
-	Order Order `gorm:"foreignKey:OrderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	// Relación con la orden
+	Order *Order `gorm:"foreignKey:OrderID;references:ID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName especifica el nombre de la tabla

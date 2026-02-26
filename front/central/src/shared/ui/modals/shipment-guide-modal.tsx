@@ -164,6 +164,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Async guide generation tracking
     const [pendingGuideCorrelationId, setPendingGuideCorrelationId] = useState<string | null>(null);
+    const [guideGenerationRequested, setGuideGenerationRequested] = useState(false);
 
     // Get businessId from permissions for SSE connection
     const { permissions, isSuperAdmin } = usePermissions();
@@ -253,8 +254,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             destSuburb: "",
             destCrossStreet: "",
             destReference: "",
-            requestPickup: false,
-            insurance: true,
+            requestPickup: true,
+            insurance: false,
             myShipmentReference: "",
             external_order_id: "",
         },
@@ -387,7 +388,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setTrackingNumber(data.tracking_number);
                 if (onGuideGenerated) onGuideGenerated(data.tracking_number);
             }
-            setSuccess("¡Guía generada exitosamente!");
             setLoading(false);
         },
         onGuideFailed: (data) => {
@@ -704,13 +704,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 if (onGuideGenerated && response.data.data.tracker) {
                     onGuideGenerated(response.data.data.tracker);
                 }
-                setSuccess("¡Guía generada exitosamente!");
                 setLoading(false);
                 return;
             }
 
             // Async path (202 Accepted): wait for SSE event shipment.guide_generated
             setPendingGuideCorrelationId(response.data?.correlation_id || null);
+            setGuideGenerationRequested(true);
+            setCurrentStep(4);
             // loading stays true until SSE arrives or timeout fires
         } catch (err: any) {
             setError(err.message || "Error al generar guía");

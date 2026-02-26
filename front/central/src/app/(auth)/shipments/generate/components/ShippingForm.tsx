@@ -136,8 +136,8 @@ export const ShippingForm = () => {
                 company: "", firstName: "", lastName: "", email: "", phone: "", address: "", suburb: "", crossStreet: "", reference: "", daneCode: ""
             },
             packageSize: "medium",
-            insurance: true,
-            requestPickup: false,
+            insurance: false,
+            requestPickup: true,
             contentValue: 0,
             codPaymentMethod: "cash",
             description: "E-commerce Order",
@@ -567,6 +567,29 @@ export const ShippingForm = () => {
                                 <option value="data_phone">Datáfono</option>
                             </select>
                             {errors.codPaymentMethod && <p className="text-red-500 text-xs mt-1">{errors.codPaymentMethod.message}</p>}
+                        </div>
+
+                        {/* Opciones de Envío */}
+                        <div className="col-span-2 border-t pt-4 mt-4">
+                            <h4 className="text-sm font-semibold text-gray-700 mb-4">Opciones de Envío</h4>
+                            <div className="flex items-center gap-6">
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        {...register("requestPickup")}
+                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700">Solicitar recolección</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        {...register("insurance")}
+                                        className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                                    />
+                                    <span className="text-sm text-gray-700">Asegurar envío</span>
+                                </label>
+                            </div>
                         </div>
                     </div>
                 </section>

@@ -133,6 +133,13 @@ type ShipmentResponse struct {
 	EstimatedDelivery *time.Time     `json:"estimated_delivery,omitempty"`
 	DeliveryNotes     *string        `json:"delivery_notes,omitempty"`
 	Metadata          datatypes.JSON `json:"metadata,omitempty"`
+
+	// Datos del cliente desde la orden
+	CustomerName  string `json:"customer_name,omitempty"`
+	CustomerEmail string `json:"customer_email,omitempty"`
+	CustomerPhone string `json:"customer_phone,omitempty"`
+	CustomerDNI   string `json:"customer_dni,omitempty"`
+	OrderNumber   string `json:"order_number,omitempty"`
 }
 
 // ShipmentsListResponse representa la respuesta paginada de envíos

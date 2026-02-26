@@ -359,6 +359,8 @@ func mapShipmentToResponse(shipment *domain.Shipment) *domain.ShipmentResponse {
 		UpdatedAt:         shipment.UpdatedAt,
 		DeletedAt:         shipment.DeletedAt,
 		OrderID:           shipment.OrderID,
+		ClientName:        shipment.ClientName,
+		DestinationAddress: shipment.DestinationAddress,
 		TrackingNumber:    shipment.TrackingNumber,
 		TrackingURL:       shipment.TrackingURL,
 		Carrier:           shipment.Carrier,
@@ -384,5 +386,10 @@ func mapShipmentToResponse(shipment *domain.Shipment) *domain.ShipmentResponse {
 		EstimatedDelivery: shipment.EstimatedDelivery,
 		DeliveryNotes:     shipment.DeliveryNotes,
 		Metadata:          shipment.Metadata,
+		CustomerName:      shipment.CustomerName,
+		CustomerEmail:     shipment.CustomerEmail,
+		CustomerPhone:     shipment.CustomerPhone,
+		CustomerDNI:       shipment.CustomerDNI,
+		OrderNumber:       shipment.OrderNumber,
 	}
 }

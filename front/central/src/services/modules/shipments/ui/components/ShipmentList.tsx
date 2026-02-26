@@ -455,6 +455,7 @@ export default function ShipmentList() {
         order_id: searchParams.get('order_id') || undefined,
         carrier: searchParams.get('carrier') || undefined,
         status: searchParams.get('status') || undefined,
+        customer_name: searchParams.get('customer_name') || undefined,
         is_test: searchParams.get('is_test') !== null ? searchParams.get('is_test') === 'true' : undefined,
         business_id: defaultBusinessId,
     });
@@ -604,15 +605,15 @@ export default function ShipmentList() {
             {/* ─── Filters ─── */}
             <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
                 <div className="flex gap-3">
-                    {/* Búsqueda unificada */}
+                    {/* Búsqueda por nombre del cliente */}
                     <div className="relative flex-1">
                         <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
                         <input
                             type="text"
-                            placeholder="Buscar por tracking, orden o transportista..."
+                            placeholder="Buscar por nombre del cliente..."
                             className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 text-gray-900 placeholder:text-gray-400 transition-colors"
-                            value={filters.tracking_number || ''}
-                            onChange={(e) => updateFilters({ tracking_number: e.target.value || undefined })}
+                            value={filters.customer_name || ''}
+                            onChange={(e) => updateFilters({ customer_name: e.target.value || undefined })}
                         />
                     </div>
                     {/* Select estado */}

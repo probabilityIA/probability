@@ -148,6 +148,11 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.guide_id = ?", guideID)
 	}
 
+	// Filtro por customer_name (búsqueda parcial en la orden asociada)
+	if customerName, ok := filters["customer_name"].(string); ok && customerName != "" {
+		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.customer_name ILIKE ?)", "%"+customerName+"%")
+	}
+
 	// Filtro por warehouse_id
 	if warehouseID, ok := filters["warehouse_id"].(uint); ok && warehouseID > 0 {
 		query = query.Where("shipments.warehouse_id = ?", warehouseID)
@@ -212,27 +217,19 @@ func (r *Repository) ListShipments(ctx context.Context, page, pageSize int, filt
 		query = query.Where("shipments.updated_at <= ?", updatedBefore)
 	}
 
-	// Filtro por business_id (a través de JOIN con Order -> Business)
+	// Filtro por business_id (a través de Preload de Order)
 	if businessID, ok := filters["business_id"].(uint); ok && businessID > 0 {
-		query = query.
-			Joins("INNER JOIN orders ON shipments.order_id = orders.id").
-			Where("orders.business_id = ?", businessID)
+		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.business_id = ?)", businessID)
 	}
 
-	// Filtro por integration_id (a través de JOIN con Order -> Integration)
+	// Filtro por integration_id (a través de Preload de Order)
 	if integrationID, ok := filters["integration_id"].(uint); ok && integrationID > 0 {
-		query = query.
-			Joins("INNER JOIN orders ON shipments.order_id = orders.id").
-			Where("orders.integration_id = ?", integrationID)
+		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.integration_id = ?)", integrationID)
 	}
 
-	// Filtro por integration_type (a través de JOIN con Order -> Integration -> IntegrationType)
+	// Filtro por integration_type (a través de Preload de Order)
 	if integrationType, ok := filters["integration_type"].(string); ok && integrationType != "" {
-		query = query.
-			Joins("INNER JOIN orders ON shipments.order_id = orders.id").
-			Joins("INNER JOIN integrations ON orders.integration_id = integrations.id").
-			Joins("INNER JOIN integration_types ON integrations.integration_type_id = integration_types.id").
-			Where("integration_types.code = ?", integrationType)
+		query = query.Where("EXISTS (SELECT 1 FROM orders WHERE orders.id = shipments.order_id AND orders.integration_type = ?)", integrationType)
 	}
 
 	// Contar total (antes de aplicar paginación y ordenamiento)
