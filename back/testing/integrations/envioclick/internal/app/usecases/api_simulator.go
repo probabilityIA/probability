@@ -227,6 +227,21 @@ func (s *APISimulator) HandleTrack(trackingNumber string) (*domain.TrackingRespo
 	}, nil
 }
 
+// ShouldSimulateNumericTracker returns true ~30% of the time to simulate
+// the known bug where EnvioClick returns the tracker field as a number instead of a string.
+// This caused: "json: cannot unmarshal number into Go struct field GenerateData.data.tracker of type string"
+func (s *APISimulator) ShouldSimulateNumericTracker() bool {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return rng.Intn(10) < 3 // 30% de probabilidad
+}
+
+// GenerateNumericTrackerValue generates a 12-digit numeric tracking number (int64)
+// to simulate the bug where EnvioClick returns tracker as a number
+func (s *APISimulator) GenerateNumericTrackerValue() int64 {
+	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
+	return rng.Int63n(900000000000) + 100000000000
+}
+
 // HandleCancel simulates the DELETE /api/v2/shipment/:id endpoint
 func (s *APISimulator) HandleCancel(shipmentID string) (*domain.CancelResponse, error) {
 	s.logger.Info().

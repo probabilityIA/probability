@@ -71,6 +71,26 @@ func (h *Handler) handleGenerate(c *gin.Context) {
 		return
 	}
 
+	// Simular bug conocido: EnvioClick a veces devuelve tracker como número en lugar de string.
+	// Bug original: "json: cannot unmarshal number into Go struct field GenerateData.data.tracker of type string"
+	// Ocurre ~30% de las veces para replicar el comportamiento intermitente de producción.
+	if h.apiSimulator.ShouldSimulateNumericTracker() {
+		numericTracker := h.apiSimulator.GenerateNumericTrackerValue()
+		h.logger.Warn().
+			Int64("numeric_tracker", numericTracker).
+			Str("label_url", resp.Data.LabelURL).
+			Msg("🐛 [BUG SIMULATION] tracker devuelto como número (replica bug conocido de EnvioClick)")
+		c.JSON(200, gin.H{
+			"status": resp.Status,
+			"data": gin.H{
+				"tracker":          numericTracker, // BUG: número en lugar de string
+				"url":              resp.Data.LabelURL,
+				"myGuideReference": resp.Data.MyGuideReference,
+			},
+		})
+		return
+	}
+
 	c.JSON(200, resp)
 }
 
