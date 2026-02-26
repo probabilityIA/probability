@@ -101,7 +101,8 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 		}()
 
 		// Inicializar consumidor de alertas de monitoreo
-		alertConsumer := consumeralert.New(rabbit, wa, config, logger)
+		// Usa integrationRepo para leer credenciales desde platform_credentials_encrypted
+		alertConsumer := consumeralert.New(rabbit, wa, integrationRepo, logger)
 		go func() {
 			if err := alertConsumer.Start(context.Background()); err != nil {
 				logger.Error().Err(err).Msg("Error starting monitoring alert consumer")

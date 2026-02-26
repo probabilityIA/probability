@@ -37,6 +37,13 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     const [removeImage, setRemoveImage] = useState(false);
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [showPlatformCredentials, setShowPlatformCredentials] = useState(false);
+    // Campos estructurados para WhatsApp
+    const [whatsappCredentials, setWhatsappCredentials] = useState({
+        phone_number_id: '',
+        access_token: '',
+        verify_token: '',
+    });
+    const [showWhatsappSecrets, setShowWhatsappSecrets] = useState(false);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -76,10 +83,19 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 getIntegrationTypePlatformCredentialsAction(integrationType.id)
                     .then((res) => {
                         if (res.success && res.data && Object.keys(res.data).length > 0) {
-                            setFormData((prev) => ({
-                                ...prev,
-                                platform_credentials: JSON.stringify(res.data, null, 2),
-                            }));
+                            if (integrationType.code === 'whatsapp') {
+                                // Poblar campos estructurados de WhatsApp
+                                setWhatsappCredentials({
+                                    phone_number_id: res.data.phone_number_id || '',
+                                    access_token: res.data.access_token || '',
+                                    verify_token: res.data.verify_token || '',
+                                });
+                            } else {
+                                setFormData((prev) => ({
+                                    ...prev,
+                                    platform_credentials: JSON.stringify(res.data, null, 2),
+                                }));
+                            }
                         }
                     })
                     .catch(() => {});
@@ -112,13 +128,22 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             let success = false;
             // Parse platform_credentials — only send if non-empty
             let platformCredentials: Record<string, string> | undefined;
-            try {
-                const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
-                if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-                    platformCredentials = parsed;
+            if (formData.code === 'whatsapp') {
+                // Para WhatsApp, construir desde campos estructurados
+                const wa: Record<string, string> = {};
+                if (whatsappCredentials.phone_number_id.trim()) wa.phone_number_id = whatsappCredentials.phone_number_id.trim();
+                if (whatsappCredentials.access_token.trim()) wa.access_token = whatsappCredentials.access_token.trim();
+                if (whatsappCredentials.verify_token.trim()) wa.verify_token = whatsappCredentials.verify_token.trim();
+                if (Object.keys(wa).length > 0) platformCredentials = wa;
+            } else {
+                try {
+                    const parsed = formData.platform_credentials ? JSON.parse(formData.platform_credentials) : {};
+                    if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+                        platformCredentials = parsed;
+                    }
+                } catch {
+                    throw new Error('Las credenciales de plataforma no son un JSON válido');
                 }
-            } catch {
-                throw new Error('Las credenciales de plataforma no son un JSON válido');
             }
 
             if (integrationType) {
@@ -371,49 +396,122 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             </div>
 
             {/* Platform Credentials (encrypted) */}
-            <div>
-                <div className="flex items-center justify-between mb-1">
-                    <label className="block text-sm font-medium text-gray-700">
-                        Credenciales de Plataforma (JSON)
-                    </label>
-                    <button
-                        type="button"
-                        onClick={() => setShowPlatformCredentials((v) => !v)}
-                        className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-                    >
-                        {showPlatformCredentials ? (
-                            <>
-                                <EyeSlashIcon className="w-4 h-4" />
-                                Ocultar
-                            </>
-                        ) : (
-                            <>
-                                <EyeIcon className="w-4 h-4" />
-                                Mostrar
-                            </>
-                        )}
-                    </button>
+            {formData.code === 'whatsapp' ? (
+                /* Campos estructurados para WhatsApp */
+                <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-medium text-gray-700">
+                            Credenciales de WhatsApp (se encriptarán)
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={() => setShowWhatsappSecrets((v) => !v)}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                        >
+                            {showWhatsappSecrets ? (
+                                <><EyeSlashIcon className="w-4 h-4" /> Ocultar</>
+                            ) : (
+                                <><EyeIcon className="w-4 h-4" /> Mostrar</>
+                            )}
+                        </button>
+                    </div>
+                    <div className="grid grid-cols-1 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Phone Number ID
+                            </label>
+                            <Input
+                                type="text"
+                                value={whatsappCredentials.phone_number_id}
+                                onChange={(e) => setWhatsappCredentials({ ...whatsappCredentials, phone_number_id: e.target.value })}
+                                placeholder="123456789012345"
+                                className="font-mono"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                                ID del número de teléfono en Meta Business Manager
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Access Token
+                            </label>
+                            <Input
+                                type={showWhatsappSecrets ? 'text' : 'password'}
+                                value={whatsappCredentials.access_token}
+                                onChange={(e) => setWhatsappCredentials({ ...whatsappCredentials, access_token: e.target.value })}
+                                placeholder="EAAxxxxxxxxx..."
+                                className="font-mono"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Token de acceso permanente de la app en Meta
+                            </p>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Verify Token (Webhook)
+                            </label>
+                            <Input
+                                type={showWhatsappSecrets ? 'text' : 'password'}
+                                value={whatsappCredentials.verify_token}
+                                onChange={(e) => setWhatsappCredentials({ ...whatsappCredentials, verify_token: e.target.value })}
+                                placeholder="mi_token_secreto"
+                                className="font-mono"
+                            />
+                            <p className="mt-1 text-xs text-gray-500">
+                                Token de verificación para el webhook (Meta → WhatsApp → Configuration)
+                            </p>
+                        </div>
+                    </div>
+                    <p className="text-xs text-gray-500">
+                        Deja los campos vacíos para no modificar los valores actuales.
+                    </p>
                 </div>
-                <textarea
-                    value={showPlatformCredentials
-                        ? formData.platform_credentials
-                        : formData.platform_credentials.replace(/:\s*"([^"]*)"/g, ': "••••••••"')
-                    }
-                    onChange={(e) => {
-                        if (showPlatformCredentials) {
-                            setFormData({ ...formData, platform_credentials: e.target.value });
+            ) : (
+                /* Editor JSON genérico para otros tipos */
+                <div>
+                    <div className="flex items-center justify-between mb-1">
+                        <label className="block text-sm font-medium text-gray-700">
+                            Credenciales de Plataforma (JSON)
+                        </label>
+                        <button
+                            type="button"
+                            onClick={() => setShowPlatformCredentials((v) => !v)}
+                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+                        >
+                            {showPlatformCredentials ? (
+                                <>
+                                    <EyeSlashIcon className="w-4 h-4" />
+                                    Ocultar
+                                </>
+                            ) : (
+                                <>
+                                    <EyeIcon className="w-4 h-4" />
+                                    Mostrar
+                                </>
+                            )}
+                        </button>
+                    </div>
+                    <textarea
+                        value={showPlatformCredentials
+                            ? formData.platform_credentials
+                            : formData.platform_credentials.replace(/:\s*"([^"]*)"/g, ': "••••••••"')
                         }
-                    }}
-                    readOnly={!showPlatformCredentials}
-                    rows={6}
-                    className={`w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs ${showPlatformCredentials ? 'text-green-400' : 'text-gray-500 cursor-default'}`}
-                    placeholder={showPlatformCredentials ? '{\n  "api_key": "tu-api-key-aqui"\n}' : ''}
-                    spellCheck={false}
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                    Credenciales globales del proveedor (se encriptarán). Usadas por integraciones con <code>use_platform_token: true</code>. Deja <code>{'{}'}</code> para no cambiarlas.
-                </p>
-            </div>
+                        onChange={(e) => {
+                            if (showPlatformCredentials) {
+                                setFormData({ ...formData, platform_credentials: e.target.value });
+                            }
+                        }}
+                        readOnly={!showPlatformCredentials}
+                        rows={6}
+                        className={`w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs ${showPlatformCredentials ? 'text-green-400' : 'text-gray-500 cursor-default'}`}
+                        placeholder={showPlatformCredentials ? '{\n  "api_key": "tu-api-key-aqui"\n}' : ''}
+                        spellCheck={false}
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        Credenciales globales del proveedor (se encriptarán). Deja <code>{'{}'}</code> para no cambiarlas.
+                    </p>
+                </div>
+            )}
 
             {/* Active Checkbox */}
             <div className="flex items-center space-x-4">

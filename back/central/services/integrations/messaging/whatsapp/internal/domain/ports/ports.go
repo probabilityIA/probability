@@ -45,6 +45,11 @@ type IIntegrationRepository interface {
 	// GetWhatsAppConfig obtiene la configuración de WhatsApp para un business
 	// Retorna phone_number_id y access_token desencriptado
 	GetWhatsAppConfig(ctx context.Context, businessID uint) (*WhatsAppConfig, error)
+
+	// GetWhatsAppDefaultConfig obtiene las credenciales globales de WhatsApp
+	// desde el tipo de integración (platform_credentials_encrypted).
+	// Usado para alertas de plataforma que no pertenecen a ningún business.
+	GetWhatsAppDefaultConfig(ctx context.Context) (*WhatsAppConfig, error)
 }
 
 // WhatsAppConfig contiene la configuración de WhatsApp obtenida desde la base de datos

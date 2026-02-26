@@ -3,7 +3,6 @@ package consumeralert
 import (
 	"context"
 	"encoding/json"
-	"strconv"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
@@ -68,22 +67,14 @@ func (c *consumerAlert) handleMessage(body []byte) error {
 		return nil
 	}
 
-	// Obtener credenciales desde env vars (no desde DB - es alerta de infra)
-	phoneNumberIDStr := c.env.Get("WHATSAPP_PHONE_NUMBER_ID")
-	phoneNumberID, err := strconv.ParseUint(phoneNumberIDStr, 10, 64)
+	// Obtener credenciales desde el tipo de integración WhatsApp (platform_credentials_encrypted)
+	config, err := c.integrationRepo.GetWhatsAppDefaultConfig(context.Background())
 	if err != nil {
 		c.log.Error().
 			Err(err).
-			Str("phone_number_id", phoneNumberIDStr).
-			Msg("[AlertConsumer] WHATSAPP_PHONE_NUMBER_ID inválido - verifica el .env en producción")
+			Msg("[AlertConsumer] Error obteniendo credenciales de WhatsApp desde tipo de integración - verifica platform_credentials en el admin")
 		// Retornar nil para hacer ack del mensaje y evitar loop infinito de reintentos.
 		// Este error es de configuración, no del mensaje — reintentar no lo resuelve.
-		return nil
-	}
-
-	token := c.env.Get("WHATSAPP_TOKEN")
-	if token == "" {
-		c.log.Error().Msg("[AlertConsumer] WHATSAPP_TOKEN no configurado")
 		return nil
 	}
 
@@ -97,7 +88,7 @@ func (c *consumerAlert) handleMessage(body []byte) error {
 	msg := buildAlertTemplateMessage(adminPhone, variables)
 
 	// Enviar mensaje de WhatsApp
-	messageID, err := c.wa.SendMessage(context.Background(), uint(phoneNumberID), msg, token)
+	messageID, err := c.wa.SendMessage(context.Background(), config.PhoneNumberID, msg, config.AccessToken)
 	if err != nil {
 		c.log.Error().
 			Err(err).
