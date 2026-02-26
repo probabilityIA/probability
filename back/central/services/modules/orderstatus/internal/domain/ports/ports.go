@@ -18,4 +18,5 @@ type IRepository interface {
 	Exists(ctx context.Context, integrationTypeID uint, originalStatus string) (bool, error)
 	GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error)
 	ListOrderStatuses(ctx context.Context, isActive *bool) ([]entities.OrderStatusInfo, error)
+	ListFulfillmentStatuses(ctx context.Context, isActive *bool) ([]entities.FulfillmentStatusInfo, error)
 }

@@ -17,6 +17,7 @@ type IUseCase interface {
 	DeleteOrderStatusMapping(ctx context.Context, id uint) error
 	ToggleOrderStatusMappingActive(ctx context.Context, id uint) (*entities.OrderStatusMapping, error)
 	ListOrderStatuses(ctx context.Context, isActive *bool) ([]entities.OrderStatusInfo, error)
+	ListFulfillmentStatuses(ctx context.Context, isActive *bool) ([]entities.FulfillmentStatusInfo, error)
 }
 
 // useCase implementa IUseCase

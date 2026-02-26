@@ -196,3 +196,32 @@ type FulfillmentStatus struct {
 func (FulfillmentStatus) TableName() string {
 	return "fulfillment_statuses"
 }
+
+// ───────────────────────────────────────────
+//
+//	CHANNEL PAYMENT METHODS - Métodos de pago nativos por canal
+//
+// ───────────────────────────────────────────
+
+// ChannelPaymentMethod representa un método de pago nativo de un canal de venta externo.
+// Son datos de catálogo cargados por el desarrollador (seed data), no configurables por el usuario.
+type ChannelPaymentMethod struct {
+	gorm.Model
+
+	// Canal de integración
+	IntegrationType string `gorm:"size:50;not null;index;uniqueIndex:idx_channel_payment_method,priority:1"` // "shopify", "mercado_libre", "whatsapp"
+
+	// Identificación del método
+	Code        string `gorm:"size:128;not null;uniqueIndex:idx_channel_payment_method,priority:2"` // "shopify_payments"
+	Name        string `gorm:"size:128;not null"`                                                    // "Shopify Payments"
+	Description string `gorm:"type:text"`                                                             // Descripción del método
+
+	// Configuración
+	IsActive     bool `gorm:"default:true;index"` // Si está activo
+	DisplayOrder int  `gorm:"default:0"`           // Orden de visualización
+}
+
+// TableName especifica el nombre de la tabla
+func (ChannelPaymentMethod) TableName() string {
+	return "channel_payment_methods"
+}

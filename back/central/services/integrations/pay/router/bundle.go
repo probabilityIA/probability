@@ -11,8 +11,14 @@ import (
 )
 
 const (
-	QueuePayRequests   = "pay.requests"
-	QueueNequiRequests = "pay.nequi.requests"
+	QueuePayRequests      = "pay.requests"
+	QueueNequiRequests    = "pay.nequi.requests"
+	QueueBoldRequests     = "pay.bold.requests"
+	QueueWompiRequests    = "pay.wompi.requests"
+	QueueStripeRequests   = "pay.stripe.requests"
+	QueuePayURequests     = "pay.payu.requests"
+	QueueEPaycoRequests   = "pay.epayco.requests"
+	QueueMeliPagoRequests = "pay.melipago.requests"
 )
 
 // payRequestHeader contiene solo los campos para enrutar
@@ -71,7 +77,15 @@ func (b *Bundle) startRouter(ctx context.Context) error {
 	}
 
 	// Declarar colas de gateways
-	for _, q := range []string{QueueNequiRequests} {
+	for _, q := range []string{
+		QueueNequiRequests,
+		QueueBoldRequests,
+		QueueWompiRequests,
+		QueueStripeRequests,
+		QueuePayURequests,
+		QueueEPaycoRequests,
+		QueueMeliPagoRequests,
+	} {
 		if err := b.rabbit.DeclareQueue(q, true); err != nil {
 			b.log.Warn(ctx).Err(err).Str("queue", q).Msg("Failed to declare gateway queue")
 		}
@@ -119,6 +133,18 @@ func (b *Bundle) getGatewayQueue(gateway string) string {
 	switch gateway {
 	case "nequi":
 		return QueueNequiRequests
+	case "bold":
+		return QueueBoldRequests
+	case "wompi":
+		return QueueWompiRequests
+	case "stripe":
+		return QueueStripeRequests
+	case "payu":
+		return QueuePayURequests
+	case "epayco":
+		return QueueEPaycoRequests
+	case "melipago":
+		return QueueMeliPagoRequests
 	default:
 		return ""
 	}

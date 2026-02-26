@@ -4,8 +4,20 @@ import "github.com/gin-gonic/gin"
 
 // RegisterRoutes registra todas las rutas del módulo de payments
 func (h *PaymentHandlers) RegisterRoutes(router *gin.RouterGroup) {
+	// Payment Statuses (catálogo)
+	paymentStatuses := router.Group("/payment-statuses")
+	{
+		paymentStatuses.GET("", h.ListPaymentStatuses) // GET /api/v1/payment-statuses
+	}
+
 	payments := router.Group("/payments")
 	{
+		// Channel Payment Methods routes
+		channelMethods := payments.Group("/channel-methods")
+		{
+			channelMethods.GET("", h.ListChannelPaymentMethods) // GET /api/v1/payments/channel-methods
+		}
+
 		// Payment Methods routes
 		methods := payments.Group("/methods")
 		{

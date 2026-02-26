@@ -11,6 +11,12 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		statuses.GET("/simple", h.ListOrderStatusesSimple) // GET /api/v1/order-statuses/simple
 	}
 
+	// Rutas para estados de fulfillment
+	fulfillmentStatuses := router.Group("/fulfillment-statuses")
+	{
+		fulfillmentStatuses.GET("", h.ListFulfillmentStatuses) // GET /api/v1/fulfillment-statuses
+	}
+
 	// Rutas para mapeos de estados
 	mappings := router.Group("/order-status-mappings")
 	{

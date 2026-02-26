@@ -22,6 +22,12 @@ type IUseCase interface {
 	DeletePaymentMethod(ctx context.Context, id uint) error
 	TogglePaymentMethodActive(ctx context.Context, id uint) (*dtos.PaymentMethodResponse, error)
 
+	// Payment Statuses
+	ListPaymentStatuses(ctx context.Context, isActive *bool) ([]dtos.PaymentStatusInfo, error)
+
+	// Channel Payment Methods
+	ListChannelPaymentMethods(ctx context.Context, integrationType *string, isActive *bool) ([]dtos.ChannelPaymentMethodInfo, error)
+
 	// Payment Mappings
 	ListPaymentMappings(ctx context.Context, filters map[string]interface{}) (*dtos.PaymentMappingsListResponse, error)
 	GetPaymentMappingByID(ctx context.Context, id uint) (*dtos.PaymentMappingResponse, error)

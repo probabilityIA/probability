@@ -31,4 +31,10 @@ type IRepository interface {
 	GetPaymentMappingsByIntegrationTypeWithMethods(ctx context.Context, integrationType string) ([]entities.PaymentMethodMapping, error)
 	TogglePaymentMappingActive(ctx context.Context, id uint) (*entities.PaymentMethodMapping, error)
 	PaymentMappingExists(ctx context.Context, integrationType, originalMethod string) (bool, error)
+
+	// PaymentStatuses - Catálogo de estados de pago
+	ListPaymentStatuses(ctx context.Context, isActive *bool) ([]entities.PaymentStatus, error)
+
+	// ChannelPaymentMethods - Catálogo de métodos por canal de venta
+	ListChannelPaymentMethods(ctx context.Context, integrationType *string, isActive *bool) ([]entities.ChannelPaymentMethod, error)
 }

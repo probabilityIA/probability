@@ -1,8 +1,14 @@
 package pay
 
 import (
+	"github.com/secamc93/probability/back/central/services/integrations/pay/bold"
+	"github.com/secamc93/probability/back/central/services/integrations/pay/epayco"
+	"github.com/secamc93/probability/back/central/services/integrations/pay/melipago"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/nequi"
+	"github.com/secamc93/probability/back/central/services/integrations/pay/payu"
 	"github.com/secamc93/probability/back/central/services/integrations/pay/router"
+	"github.com/secamc93/probability/back/central/services/integrations/pay/stripe"
+	"github.com/secamc93/probability/back/central/services/integrations/pay/wompi"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -16,8 +22,14 @@ func New(
 	database db.IDatabase,
 	rabbitMQ rabbitmq.IQueue,
 ) {
-	// Inicializar Nequi (gateway de pago)
+	// Inicializar gateways de pago
 	nequi.New(config, logger, database, rabbitMQ)
+	bold.New(config, logger, database, rabbitMQ)
+	wompi.New(config, logger, database, rabbitMQ)
+	stripe.New(config, logger, database, rabbitMQ)
+	payu.New(config, logger, database, rabbitMQ)
+	epayco.New(config, logger, database, rabbitMQ)
+	melipago.New(config, logger, database, rabbitMQ)
 
 	// Router: consume pay.requests y enruta al gateway correcto
 	// Se inicializa al final para que las colas de gateways ya estén declaradas

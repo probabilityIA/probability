@@ -11,6 +11,12 @@ import (
 
 // IHandlers define la interfaz de handlers del módulo payments
 type IHandlers interface {
+	// Payment Statuses
+	ListPaymentStatuses(c *gin.Context)
+
+	// Channel Payment Methods
+	ListChannelPaymentMethods(c *gin.Context)
+
 	// Payment Methods
 	ListPaymentMethods(c *gin.Context)
 	GetPaymentMethod(c *gin.Context)

@@ -46,6 +46,7 @@ func (r *Repository) Migrate(ctx context.Context) error {
 
 		// Payment Methods
 		&models.PaymentMethod{},
+		&models.ChannelPaymentMethod{},
 		&models.PaymentMethodMapping{},
 		&models.OrderStatusMapping{},
 		&models.OrderStatus{},
@@ -175,6 +176,16 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	// Agregar columna de credenciales de plataforma a integration_types
 	if err := r.addPlatformCredentialsToIntegrationTypes(ctx); err != nil {
 		return fmt.Errorf("failed to add platform_credentials_encrypted to integration_types: %w", err)
+	}
+
+	// Crear tipos de integración para pasarelas de pago
+	if err := r.seedPaymentIntegrationTypes(ctx); err != nil {
+		return fmt.Errorf("failed to seed payment integration types: %w", err)
+	}
+
+	// Seed channel payment methods
+	if err := r.seedChannelPaymentMethods(ctx); err != nil {
+		return fmt.Errorf("failed to seed channel payment methods: %w", err)
 	}
 
 	return r.createDefaultUserIfNotExists(ctx)
@@ -759,6 +770,153 @@ func (r *Repository) addPlatformCredentialsToIntegrationTypes(ctx context.Contex
 		ALTER TABLE integration_types
 		ADD COLUMN IF NOT EXISTS platform_credentials_encrypted BYTEA
 	`).Error
+}
+
+// seedPaymentIntegrationTypes crea los tipos de integración para pasarelas de pago
+func (r *Repository) seedPaymentIntegrationTypes(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// Activar la categoría de pagos (id=4) en caso de que esté desactivada
+	if err := db.Exec(`
+		UPDATE integration_categories
+		SET is_active = true
+		WHERE id = 4 AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to activate payment category: %w", err)
+	}
+
+	paymentTypes := []models.IntegrationType{
+		{
+			Model:         gorm.Model{ID: 22},
+			Name:          "Nequi",
+			Code:          "nequi",
+			CategoryID:    ptrUint(4),
+			IsActive:      true,
+			InDevelopment: false,
+			Description:   "Pasarela de pago Nequi - Colombia",
+			Icon:          "credit-card",
+			BaseURL:       "https://api.sandbox.connect.nequi.com",
+			BaseURLTest:   "https://api.sandbox.connect.nequi.com",
+		},
+		{
+			Model:         gorm.Model{ID: 23},
+			Name:          "Bold",
+			Code:          "bold",
+			CategoryID:    ptrUint(4),
+			IsActive:      true,
+			InDevelopment: false,
+			Description:   "Pasarela de pago Bold - Colombia",
+			Icon:          "credit-card",
+			BaseURL:       "https://integrations.api.bold.co",
+			BaseURLTest:   "https://integrations.api.bold.co",
+		},
+		{
+			Model:         gorm.Model{ID: 24},
+			Name:          "Wompi",
+			Code:          "wompi",
+			CategoryID:    ptrUint(4),
+			IsActive:      true,
+			InDevelopment: true,
+			Description:   "Pasarela de pago Wompi - Colombia",
+			Icon:          "credit-card",
+			BaseURL:       "https://production.wompi.co/v1",
+			BaseURLTest:   "https://sandbox.wompi.co/v1",
+		},
+		{
+			Model:         gorm.Model{ID: 25},
+			Name:          "Stripe",
+			Code:          "stripe",
+			CategoryID:    ptrUint(4),
+			IsActive:      true,
+			InDevelopment: true,
+			Description:   "Pasarela de pago Stripe - Internacional",
+			Icon:          "credit-card",
+			BaseURL:       "https://api.stripe.com",
+			BaseURLTest:   "https://api.stripe.com",
+		},
+		{
+			Model:         gorm.Model{ID: 26},
+			Name:          "PayU",
+			Code:          "payu",
+			CategoryID:    ptrUint(4),
+			IsActive:      true,
+			InDevelopment: true,
+			Description:   "Pasarela de pago PayU - Latam",
+			Icon:          "credit-card",
+			BaseURL:       "https://api.payulatam.com",
+			BaseURLTest:   "https://sandbox.api.payulatam.com",
+		},
+		{
+			Model:         gorm.Model{ID: 27},
+			Name:          "ePayco",
+			Code:          "epayco",
+			CategoryID:    ptrUint(4),
+			IsActive:      true,
+			InDevelopment: true,
+			Description:   "Pasarela de pago ePayco - Colombia",
+			Icon:          "credit-card",
+			BaseURL:       "https://secure.epayco.io",
+			BaseURLTest:   "https://secure.epayco.io",
+		},
+		{
+			Model:         gorm.Model{ID: 28},
+			Name:          "MercadoPago",
+			Code:          "melipago",
+			CategoryID:    ptrUint(4),
+			IsActive:      true,
+			InDevelopment: true,
+			Description:   "Pasarela de pago MercadoPago - Latam",
+			Icon:          "credit-card",
+			BaseURL:       "https://api.mercadopago.com",
+			BaseURLTest:   "https://api.mercadopago.com",
+		},
+	}
+
+	for _, pt := range paymentTypes {
+		var existing models.IntegrationType
+		err := db.Where("id = ?", pt.ID).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			if err := db.Create(&pt).Error; err != nil {
+				return fmt.Errorf("failed to create payment integration type %s: %w", pt.Code, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// seedChannelPaymentMethods inserta los métodos de pago nativos por canal de venta
+func (r *Repository) seedChannelPaymentMethods(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	methods := []models.ChannelPaymentMethod{
+		// Shopify
+		{Model: gorm.Model{ID: 1}, IntegrationType: "shopify", Code: "shopify_payments", Name: "Shopify Payments", IsActive: true, DisplayOrder: 1},
+		{Model: gorm.Model{ID: 2}, IntegrationType: "shopify", Code: "manual", Name: "Manual", IsActive: true, DisplayOrder: 2},
+		{Model: gorm.Model{ID: 3}, IntegrationType: "shopify", Code: "cash_on_delivery", Name: "Contra entrega", IsActive: true, DisplayOrder: 3},
+		{Model: gorm.Model{ID: 4}, IntegrationType: "shopify", Code: "bank_transfer", Name: "Transferencia bancaria", IsActive: true, DisplayOrder: 4},
+		// MercadoLibre
+		{Model: gorm.Model{ID: 5}, IntegrationType: "mercado_libre", Code: "account_money", Name: "Dinero en cuenta", IsActive: true, DisplayOrder: 1},
+		{Model: gorm.Model{ID: 6}, IntegrationType: "mercado_libre", Code: "credit_card", Name: "Tarjeta de crédito", IsActive: true, DisplayOrder: 2},
+		{Model: gorm.Model{ID: 7}, IntegrationType: "mercado_libre", Code: "debit_card", Name: "Tarjeta débito", IsActive: true, DisplayOrder: 3},
+		{Model: gorm.Model{ID: 8}, IntegrationType: "mercado_libre", Code: "ticket", Name: "Efectivo (ticket)", IsActive: true, DisplayOrder: 4},
+		// WhatsApp
+		{Model: gorm.Model{ID: 9}, IntegrationType: "whatsapp", Code: "cash", Name: "Efectivo", IsActive: true, DisplayOrder: 1},
+		{Model: gorm.Model{ID: 10}, IntegrationType: "whatsapp", Code: "bank_transfer", Name: "Transferencia bancaria", IsActive: true, DisplayOrder: 2},
+		{Model: gorm.Model{ID: 11}, IntegrationType: "whatsapp", Code: "nequi", Name: "Nequi", IsActive: true, DisplayOrder: 3},
+		{Model: gorm.Model{ID: 12}, IntegrationType: "whatsapp", Code: "daviplata", Name: "Daviplata", IsActive: true, DisplayOrder: 4},
+	}
+
+	for _, m := range methods {
+		var existing models.ChannelPaymentMethod
+		err := db.Where("id = ?", m.ID).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			if err := db.Create(&m).Error; err != nil {
+				return fmt.Errorf("failed to create channel_payment_method %s/%s: %w", m.IntegrationType, m.Code, err)
+			}
+		}
+	}
+	return nil
 }
 
 // ptrUint es un helper para crear punteros a uint

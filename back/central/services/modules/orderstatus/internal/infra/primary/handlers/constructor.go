@@ -18,6 +18,7 @@ type IHandler interface {
 	Toggle(c *gin.Context)
 	ListOrderStatuses(c *gin.Context)
 	ListOrderStatusesSimple(c *gin.Context)
+	ListFulfillmentStatuses(c *gin.Context)
 
 	// Método de registro de rutas
 	RegisterRoutes(router *gin.RouterGroup)
