@@ -17,6 +17,7 @@ import {
     Wallet
 } from '@/services/modules/wallet/infra/actions';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
+import { VirtualCard } from './virtual-card';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -585,39 +586,15 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             )}
 
             <div className="grid gap-8 lg:grid-cols-2">
-                {/* Balance Card - Premium Design */}
-                <div className="relative overflow-hidden bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 text-white shadow-xl flex flex-col justify-between min-h-[240px]">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <svg width="200" height="200" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M21 18v1c0 1.1-.9 2-2 2H5c-1.11 0-2-.9-2-2V5c0-1.1.89-2 2-2h14c1.1 0 2 .9 2 2v1h-9c-1.11 0-2 .9-2 2v8c0 1.1.89 2 2 2h9zm-9-2h10V8H12v8zm4-2.5c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z" />
-                        </svg>
-                    </div>
-
-                    <div className="relative z-10 flex justify-between items-start">
-                        <div>
-                            <p className="text-gray-400 text-sm font-medium tracking-wider uppercase mb-1">Saldo Disponible</p>
-                            <h3 className="text-4xl font-bold tracking-tight text-white drop-shadow-md">
-                                {wallet ? formatCurrency(wallet.Balance) : '$ 0.00'}
-                            </h3>
-                        </div>
-                        <div className="bg-white/10 backdrop-blur-md p-2 rounded-lg border border-white/20">
-                            <svg className="w-8 h-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                            </svg>
-                        </div>
-                    </div>
-
-                    <div className="relative z-10 mt-auto pt-8">
-                        <div className="flex items-center gap-2 mb-2">
-                            <div className="h-6 w-10 bg-yellow-500/80 rounded flex items-center justify-center overflow-hidden relative">
-                                <div className="absolute w-8 h-8 rounded-full border border-yellow-300 top-[-4px] left-[-8px]"></div>
-                            </div>
-                            <span className="text-gray-400 text-xs tracking-widest">BILLETERA EMPRESARIAL</span>
-                        </div>
-                        <p className="font-mono text-gray-300 tracking-wider">
-                            {displayName}
-                        </p>
-                    </div>
+                {/* Virtual Card - Pixel Perfect from Pencil Design */}
+                <div className="flex">
+                    <VirtualCard
+                        balance={wallet?.Balance || 0}
+                        cardLastFour={wallet?.ID?.slice(-4) || '7842'}
+                        brand={displayName || 'ProbabilityIA'}
+                        isActive={true}
+                        brandTag="FINTECH"
+                    />
                 </div>
 
                 {/* Recharge Section */}
