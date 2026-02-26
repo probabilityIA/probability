@@ -75,8 +75,10 @@ func (c *consumerAlert) handleMessage(body []byte) error {
 		c.log.Error().
 			Err(err).
 			Str("phone_number_id", phoneNumberIDStr).
-			Msg("[AlertConsumer] WHATSAPP_PHONE_NUMBER_ID inválido")
-		return err
+			Msg("[AlertConsumer] WHATSAPP_PHONE_NUMBER_ID inválido - verifica el .env en producción")
+		// Retornar nil para hacer ack del mensaje y evitar loop infinito de reintentos.
+		// Este error es de configuración, no del mensaje — reintentar no lo resuelve.
+		return nil
 	}
 
 	token := c.env.Get("WHATSAPP_TOKEN")
