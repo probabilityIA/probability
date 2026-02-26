@@ -26,4 +26,9 @@ const (
 	// Publisher : modules/shipments (response consumer)
 	// Consumers : modules/events (SSE)
 	ChannelShipmentsEvents = "probability:shipments:state:events"
+
+	// ChannelPayEvents publica resultados de transacciones de pago (completada, fallida, cancelada).
+	// Publisher : modules/pay (response consumer)
+	// Consumers : modules/events (SSE)
+	ChannelPayEvents = "probability:pay:state:events"
 )

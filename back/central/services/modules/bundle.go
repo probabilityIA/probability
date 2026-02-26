@@ -15,6 +15,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/paymentstatus"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
+	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/wallet"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -75,6 +76,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de wallet
 	wallet.New(router, database, logger, environment)
+
+	// Inicializar módulo de pagos (pasarelas externas)
+	pay.New(router, database, logger, rabbitMQ, redisClient)
 
 	// Inicializar módulo de invoicing
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)

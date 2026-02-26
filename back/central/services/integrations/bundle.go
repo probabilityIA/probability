@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
+	pay "github.com/secamc93/probability/back/central/services/integrations/pay"
 	"github.com/secamc93/probability/back/central/services/integrations/transport"
 	"github.com/secamc93/probability/back/central/services/modules"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -42,6 +43,9 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	// Transport: todos los proveedores de transporte + router de colas
 	transport.New(logger, rabbitMQ, integrationCore)
+
+	// Pay: todos los proveedores de pago (Nequi, etc.) + router de colas
+	pay.New(config, logger, db, rabbitMQ)
 
 	return integrationCore
 }
