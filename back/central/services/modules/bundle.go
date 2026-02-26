@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/events"
 	"github.com/secamc93/probability/back/central/services/modules/fulfillmentstatus"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
+	"github.com/secamc93/probability/back/central/services/modules/monitoring"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
@@ -77,6 +78,13 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de invoicing
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
+
+	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
+	if rabbitMQ != nil {
+		monitoring.New(router, logger, environment, rabbitMQ)
+	} else {
+		logger.Warn().Msg("RabbitMQ no disponible, módulo de monitoreo no se inicializará")
+	}
 
 	// Retornar referencias a bundles compartidos
 	return &ModuleBundles{

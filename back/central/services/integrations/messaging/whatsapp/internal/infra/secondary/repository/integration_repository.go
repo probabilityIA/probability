@@ -148,6 +148,84 @@ func (r *IntegrationRepository) GetWhatsAppConfig(ctx context.Context, businessI
 	}, nil
 }
 
+// GetWhatsAppDefaultConfig obtiene las credenciales globales de WhatsApp desde
+// la columna platform_credentials_encrypted del tipo de integración (code='whatsapp').
+// Es usado para alertas de plataforma que no pertenecen a ningún business.
+func (r *IntegrationRepository) GetWhatsAppDefaultConfig(ctx context.Context) (*ports.WhatsAppConfig, error) {
+	type IntegrationTypeRow struct {
+		ID                           uint   `json:"id"`
+		PlatformCredentialsEncrypted []byte `json:"platform_credentials_encrypted"`
+	}
+
+	var row IntegrationTypeRow
+	err := r.db.Conn(ctx).
+		Table("integration_types").
+		Select("id, platform_credentials_encrypted").
+		Where("code = ?", "whatsapp").
+		First(&row).Error
+
+	if err == gorm.ErrRecordNotFound {
+		r.log.Error(ctx).Msg("[Integration Repository] - no se encontró tipo de integración whatsapp")
+		return nil, fmt.Errorf("tipo de integración whatsapp no encontrado")
+	}
+	if err != nil {
+		r.log.Error(ctx).Err(err).Msg("[Integration Repository] - error consultando tipo de integración whatsapp")
+		return nil, fmt.Errorf("error consultando tipo de integración: %w", err)
+	}
+
+	if len(row.PlatformCredentialsEncrypted) == 0 {
+		r.log.Error(ctx).Msg("[Integration Repository] - platform_credentials_encrypted vacío en tipo whatsapp")
+		return nil, fmt.Errorf("credenciales de plataforma WhatsApp no configuradas")
+	}
+
+	// PlatformCredentialsEncrypted es bytes AES-GCM crudos (sin wrapper base64/JSON)
+	credentials, err := r.decryptCredentials(ctx, row.PlatformCredentialsEncrypted)
+	if err != nil {
+		r.log.Error(ctx).Err(err).Msg("[Integration Repository] - error desencriptando platform credentials de whatsapp")
+		return nil, fmt.Errorf("error desencriptando credenciales de plataforma: %w", err)
+	}
+
+	// Extraer phone_number_id
+	phoneNumberIDValue, exists := credentials["phone_number_id"]
+	if !exists {
+		r.log.Error(ctx).Msg("[Integration Repository] - phone_number_id no encontrado en platform credentials")
+		return nil, fmt.Errorf("phone_number_id no encontrado en credenciales de plataforma")
+	}
+	phoneNumberIDStr, ok := phoneNumberIDValue.(string)
+	if !ok {
+		r.log.Error(ctx).Msg("[Integration Repository] - phone_number_id no es string")
+		return nil, fmt.Errorf("phone_number_id debe ser string")
+	}
+	phoneNumberID, err := strconv.ParseUint(phoneNumberIDStr, 10, 64)
+	if err != nil {
+		r.log.Error(ctx).Err(err).Str("phone_number_id", phoneNumberIDStr).Msg("[Integration Repository] - error parseando phone_number_id")
+		return nil, fmt.Errorf("error parseando phone_number_id: %w", err)
+	}
+
+	// Extraer access_token
+	accessTokenValue, exists := credentials["access_token"]
+	if !exists {
+		r.log.Error(ctx).Msg("[Integration Repository] - access_token no encontrado en platform credentials")
+		return nil, fmt.Errorf("access_token no encontrado en credenciales de plataforma")
+	}
+	accessToken, ok := accessTokenValue.(string)
+	if !ok {
+		r.log.Error(ctx).Msg("[Integration Repository] - access_token no es string")
+		return nil, fmt.Errorf("access_token debe ser string")
+	}
+
+	r.log.Info(ctx).
+		Uint("integration_type_id", row.ID).
+		Uint("phone_number_id", uint(phoneNumberID)).
+		Msg("[Integration Repository] - Credenciales globales de WhatsApp obtenidas desde tipo de integración")
+
+	return &ports.WhatsAppConfig{
+		PhoneNumberID: uint(phoneNumberID),
+		AccessToken:   accessToken,
+		IntegrationID: 0, // Credenciales de tipo, no de instancia
+	}, nil
+}
+
 // decryptCredentials desencripta credenciales usando AES-256-GCM
 func (r *IntegrationRepository) decryptCredentials(ctx context.Context, ciphertext []byte) (map[string]interface{}, error) {
 	block, err := aes.NewCipher(r.encryptionKey)
