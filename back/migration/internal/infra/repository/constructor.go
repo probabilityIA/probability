@@ -104,6 +104,10 @@ func (r *Repository) Migrate(ctx context.Context) error {
 
 		// Origin Addresses
 		&models.OriginAddress{},
+
+		// Payment Transactions (pasarelas de pago externas)
+		&models.PaymentTransaction{},
+		&models.PaymentSyncLog{},
 	); err != nil {
 		return err
 	}
