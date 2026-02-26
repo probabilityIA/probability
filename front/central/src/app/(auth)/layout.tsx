@@ -12,6 +12,7 @@ import { Spinner, ShopifyIframeDetector } from '@/shared/ui';
 import { ToastProvider } from '@/shared/providers/toast-provider';
 import { SidebarProvider } from '@/shared/contexts/sidebar-context';
 import { PermissionsProvider } from '@/shared/contexts/permissions-context';
+import { NavbarProvider } from '@/shared/contexts/navbar-context';
 import { useShopifyAuth } from '@/providers/ShopifyAuthProvider';
 import LayoutContent from './layout-content';
 // import { BusinessSelector } from '@modules/auth/ui';
@@ -142,11 +143,13 @@ export default function AuthLayout({
     <ShopifyIframeDetector>
       <ToastProvider>
         <PermissionsProvider>
-          <SidebarProvider>
-            <LayoutContent user={user}>
-              {children}
-            </LayoutContent>
-          </SidebarProvider>
+          <NavbarProvider>
+            <SidebarProvider>
+              <LayoutContent user={user}>
+                {children}
+              </LayoutContent>
+            </SidebarProvider>
+          </NavbarProvider>
         </PermissionsProvider>
       </ToastProvider>
     </ShopifyIframeDetector>

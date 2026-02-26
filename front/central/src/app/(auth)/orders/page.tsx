@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
 import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
 import { Order } from '@/services/modules/orders/domain/types';
@@ -8,9 +8,11 @@ import { Button, Modal } from '@/shared/ui';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import MassOrderUploadModal from '@/shared/ui/modals/mass-order-upload-modal';
 import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-modal';
+import { useNavbarActions } from '@/shared/contexts/navbar-context';
 
 
 export default function OrdersPage() {
+    const { setActionButtons } = useNavbarActions();
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -21,6 +23,38 @@ export default function OrdersPage() {
     const [showMassUploadModal, setShowMassUploadModal] = useState(false);
     const [showMassGuideModal, setShowMassGuideModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Set action buttons in navbar
+    useEffect(() => {
+        const actionButtons = (
+            <>
+                <button
+                    onClick={() => setShowCreateModal(true)}
+                    style={{ background: '#7c3aed' }}
+                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                >
+                    ➕ Nueva Orden
+                </button>
+                <button
+                    onClick={() => setShowMassUploadModal(true)}
+                    style={{ background: '#7c3aed' }}
+                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                >
+                    📤 Carga Masiva
+                </button>
+                <button
+                    onClick={() => setShowMassGuideModal(true)}
+                    style={{ background: '#7c3aed' }}
+                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                >
+                    📦 Guías Masivas
+                </button>
+            </>
+        );
+        setActionButtons(actionButtons);
+
+        return () => setActionButtons(null);
+    }, [setActionButtons]);
 
     const handleView = (order: Order) => {
         setSelectedOrder(order);
@@ -74,32 +108,6 @@ export default function OrdersPage() {
 
     return (
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Órdenes</h1>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => setShowCreateModal(true)}
-                        style={{ background: '#7c3aed' }}
-                        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
-                    >
-                        ➕ Nueva Orden
-                    </button>
-                    <button
-                        onClick={() => setShowMassUploadModal(true)}
-                        style={{ background: '#7c3aed' }}
-                        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
-                    >
-                        📤 Carga Masiva
-                    </button>
-                    <button
-                        onClick={() => setShowMassGuideModal(true)}
-                        style={{ background: '#7c3aed' }}
-                        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
-                    >
-                        📦 Guías Masivas
-                    </button>
-                </div>
-            </div>
 
             <OrderList
                 refreshKey={refreshKey}

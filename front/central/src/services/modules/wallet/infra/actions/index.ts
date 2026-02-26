@@ -275,3 +275,28 @@ export async function clearRechargeHistoryAction(businessId: number) {
         return { success: false, error: error.message };
     }
 }
+
+/**
+ * Debit from wallet for guide generation
+ */
+export async function debitForGuideAction(amount: number, trackingNumber: string) {
+    try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${env.API_BASE_URL}/wallet/debit-guide`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ amount, tracking_number: trackingNumber })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to debit wallet: ${res.status}`);
+        }
+
+        const data = await res.json();
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('debitForGuideAction error:', error);
+        return { success: false, error: error.message };
+    }
+}

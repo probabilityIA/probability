@@ -101,3 +101,36 @@ func (h *WalletHandlers) ClearRechargeHistory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Recharge history cleared successfully"})
 }
+
+// DebitForGuide debits from the current user's wallet for guide generation
+func (h *WalletHandlers) DebitForGuide(c *gin.Context) {
+	var req struct {
+		Amount         float64 `json:"amount" binding:"required"`
+		TrackingNumber string  `json:"tracking_number" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if req.Amount <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Amount must be greater than 0"})
+		return
+	}
+
+	// Get business ID from JWT claims (assuming middleware sets it)
+	businessID, exists := c.Get("business_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Business ID not found in token"})
+		return
+	}
+
+	ref := fmt.Sprintf("Guide generation: %s", req.TrackingNumber)
+	if err := h.uc.ManualDebit(c.Request.Context(), businessID.(uint), req.Amount, ref); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Wallet debited successfully", "tracking_number": req.TrackingNumber})
+}

@@ -210,9 +210,14 @@ const OrderRow = memo(({
                     {onViewRecommendation && (
                         <button
                             onClick={() => onViewRecommendation(order)}
-                            className="p-2 bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white rounded-md transition-all duration-200 focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 flex items-center justify-center shadow-sm"
-                            title="Recomendación Inteligente IA"
-                            aria-label="Ver recomendación IA"
+                            disabled={!!order.guide_link}
+                            className={`p-2 rounded-md transition-all duration-200 flex items-center justify-center shadow-sm ${
+                                order.guide_link
+                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-60'
+                                    : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
+                            }`}
+                            title={order.guide_link ? 'Guía ya validada' : 'Recomendación Inteligente IA'}
+                            aria-label={order.guide_link ? 'Guía ya validada' : 'Ver recomendación IA'}
                         >
                             <svg
                                 xmlns="http://www.w3.org/2000/svg"

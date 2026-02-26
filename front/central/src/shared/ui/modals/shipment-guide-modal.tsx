@@ -8,7 +8,7 @@ import { Input, Button, Stepper } from "@/shared/ui";
 import { ShipmentApiRepository } from "@/services/modules/shipments/infra/repository/api-repository";
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { Order } from "@/services/modules/orders/domain/types";
-import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
+import { getWalletBalanceAction, debitForGuideAction } from "@/services/modules/wallet/infra/actions";
 import { getOriginAddressesAction, quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
 import { OriginAddress } from "@/services/modules/shipments/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
@@ -378,7 +378,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setError(data.error_message || "Error al cotizar envío");
             setLoading(false);
         },
-        onGuideGenerated: (data) => {
+        onGuideGenerated: async (data) => {
             if (!pendingGuideCorrelationId) return; // no pending guide request in this modal
             // Only reject if correlation_id is present AND doesn't match (backend now includes it)
             if (data.correlation_id && data.correlation_id !== pendingGuideCorrelationId) return;
@@ -386,6 +386,25 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             if (data.label_url) setGeneratedPdfUrl(data.label_url);
             if (data.tracking_number) {
                 setTrackingNumber(data.tracking_number);
+
+                // Debit from wallet for async guide generation
+                if (selectedRate) {
+                    const totalCost = selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
+                    const debitResponse = await debitForGuideAction(totalCost, data.tracking_number);
+                    if (debitResponse.success) {
+                        // Update wallet balance
+                        const balanceResponse = await getWalletBalanceAction();
+                        if (balanceResponse.success) {
+                            setWalletBalance(balanceResponse.data.Balance);
+                        }
+                        // Show success message
+                        setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera.`);
+                    } else {
+                        console.warn('Warning: Could not debit wallet:', debitResponse.error);
+                        // Don't fail the entire flow, just warn the user
+                    }
+                }
+
                 if (onGuideGenerated) onGuideGenerated(data.tracking_number);
             }
             setLoading(false);
@@ -699,10 +718,28 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
             // Sync path: backend returned guide data directly (legacy)
             if (response.data?.data?.url) {
+                const tracker = response.data.data.tracker;
                 setGeneratedPdfUrl(response.data.data.url);
-                setTrackingNumber(response.data.data.tracker);
-                if (onGuideGenerated && response.data.data.tracker) {
-                    onGuideGenerated(response.data.data.tracker);
+                setTrackingNumber(tracker);
+
+                // Debit from wallet
+                const debitResponse = await debitForGuideAction(totalCost, tracker);
+                if (debitResponse.success) {
+                    // Update wallet balance
+                    const balanceResponse = await getWalletBalanceAction();
+                    if (balanceResponse.success) {
+                        setWalletBalance(balanceResponse.data.Balance);
+                    }
+                    // Show success message
+                    setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera.`);
+                } else {
+                    console.warn('Warning: Could not debit wallet:', debitResponse.error);
+                    // Don't fail the entire flow, just warn the user
+                    setError(`Guía generada pero hubo un problema al descontar de la billetera: ${debitResponse.error}`);
+                }
+
+                if (onGuideGenerated && tracker) {
+                    onGuideGenerated(tracker);
                 }
                 setLoading(false);
                 return;

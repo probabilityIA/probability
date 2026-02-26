@@ -15,6 +15,7 @@ func (h *WalletHandlers) RegisterRoutes(router *gin.RouterGroup) {
 		wallet.GET("/balance", h.GetBalance)
 		wallet.POST("/recharge", h.RechargeWallet)
 		wallet.GET("/history", h.GetMyTransactions)
+		wallet.POST("/debit-guide", h.DebitForGuide)
 
 		// Admin Routes
 		// Simple role check middleware would be better here, but assuming handler checks permission or we trust JWT roles.
