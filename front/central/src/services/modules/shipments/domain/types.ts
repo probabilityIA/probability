@@ -27,6 +27,12 @@ export interface Shipment {
     is_test: boolean;
     estimated_delivery?: string;
     delivery_notes?: string;
+    // Datos del cliente desde la orden
+    customer_name?: string;
+    customer_email?: string;
+    customer_phone?: string;
+    customer_dni?: string;
+    order_number?: string;
 }
 
 export interface GetShipmentsParams {

@@ -110,7 +110,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                 <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Detalle de Envío</p>
                     <h3 className="text-base font-bold text-gray-900 truncate">
-                        {shipment.client_name || 'Cliente desconocido'}
+                        {shipment.customer_name || shipment.client_name || 'Cliente desconocido'}
                     </h3>
                     {shipment.destination_address && (
                         <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500">
@@ -202,6 +202,23 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                                 <p className="text-xs font-mono text-gray-700 break-all">{shipment.order_id}</p>
                             </div>
                         </div>
+                    )}
+                    {/* Sección de contacto del cliente */}
+                    {(shipment.customer_email || shipment.customer_phone) && (
+                        <>
+                            {shipment.customer_email && (
+                                <div className="bg-blue-50 rounded-lg p-3">
+                                    <p className="text-[10px] text-blue-600 uppercase font-bold tracking-wider mb-1">Email</p>
+                                    <p className="text-xs text-blue-900 break-all">{shipment.customer_email}</p>
+                                </div>
+                            )}
+                            {shipment.customer_phone && (
+                                <div className="bg-green-50 rounded-lg p-3">
+                                    <p className="text-[10px] text-green-600 uppercase font-bold tracking-wider mb-1">Teléfono</p>
+                                    <p className="text-xs text-green-900 break-all">{shipment.customer_phone}</p>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
 
@@ -647,7 +664,7 @@ export default function ShipmentList() {
                             shipments.map((shipment) => {
                                 const isSelected = selectedShipment?.id === shipment.id;
                                 const city = extractCity(shipment.destination_address);
-                                const clientName = shipment.client_name?.trim() || null;
+                                const clientName = (shipment.customer_name || shipment.client_name)?.trim() || null;
                                 const statusCfg = STATUS_CONFIG[shipment.status] || { label: shipment.status, color: 'bg-gray-100 text-gray-600 border-gray-200', icon: null, border: 'border-gray-300' };
 
                                 return (

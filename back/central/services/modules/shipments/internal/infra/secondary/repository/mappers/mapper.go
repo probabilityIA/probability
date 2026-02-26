@@ -56,6 +56,11 @@ func ToDBShipment(s *domain.Shipment) *models.Shipment {
 	return dbShipment
 }
 
+// ToDBShipmentWithoutCustomerData es para guardar, sin incluir datos de cliente
+func ToDBShipmentWithoutCustomerData(s *domain.Shipment) *models.Shipment {
+	return ToDBShipment(s)
+}
+
 // ToDomainShipment convierte un envío de base de datos a dominio
 func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 	if s == nil {
@@ -65,7 +70,8 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 	if s.DeletedAt.Valid {
 		deletedAt = &s.DeletedAt.Time
 	}
-	return &domain.Shipment{
+
+	shipment := &domain.Shipment{
 		ID:                 s.ID,
 		CreatedAt:          s.CreatedAt,
 		UpdatedAt:          s.UpdatedAt,
@@ -100,4 +106,15 @@ func ToDomainShipment(s *models.Shipment) *domain.Shipment {
 		DeliveryNotes:      s.DeliveryNotes,
 		Metadata:           s.Metadata,
 	}
+
+	// Incluir datos del cliente desde la orden si existe
+	if s.Order != nil {
+		shipment.CustomerName = s.Order.CustomerName
+		shipment.CustomerEmail = s.Order.CustomerEmail
+		shipment.CustomerPhone = s.Order.CustomerPhone
+		shipment.CustomerDNI = s.Order.CustomerDNI
+		shipment.OrderNumber = s.Order.OrderNumber
+	}
+
+	return shipment
 }

@@ -51,4 +51,11 @@ type Shipment struct {
 	EstimatedDelivery *time.Time     `json:"estimated_delivery"`
 	DeliveryNotes     *string        `json:"delivery_notes"`
 	Metadata          datatypes.JSON `json:"metadata"`
+
+	// Datos del cliente desde la orden
+	CustomerName  string `json:"customer_name,omitempty"`
+	CustomerEmail string `json:"customer_email,omitempty"`
+	CustomerPhone string `json:"customer_phone,omitempty"`
+	CustomerDNI   string `json:"customer_dni,omitempty"`
+	OrderNumber   string `json:"order_number,omitempty"`
 }
