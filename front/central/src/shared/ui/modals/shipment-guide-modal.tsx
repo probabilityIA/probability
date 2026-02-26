@@ -394,7 +394,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     if (debitResponse.success) {
                         // Update wallet balance
                         const balanceResponse = await getWalletBalanceAction();
-                        if (balanceResponse.success) {
+                        if (balanceResponse.success && balanceResponse.data) {
                             setWalletBalance(balanceResponse.data.Balance);
                         }
                         // Show success message
@@ -727,7 +727,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 if (debitResponse.success) {
                     // Update wallet balance
                     const balanceResponse = await getWalletBalanceAction();
-                    if (balanceResponse.success) {
+                    if (balanceResponse.success && balanceResponse.data) {
                         setWalletBalance(balanceResponse.data.Balance);
                     }
                     // Show success message
