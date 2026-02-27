@@ -412,7 +412,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     useEffect(() => {
         const fetchPaymentStatuses = async () => {
             try {
-                const response = await getPaymentStatusesAction(true); // Solo estados activos
+                const response = await getPaymentStatusesAction({ is_active: true }); // Solo estados activos
                 if (response.success && response.data) {
                     const options = response.data
                         .filter((status) => status?.name) // Filtrar registros sin nombre
