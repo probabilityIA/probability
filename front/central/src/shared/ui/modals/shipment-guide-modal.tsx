@@ -806,202 +806,202 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="flex flex-col h-full overflow-hidden min-h-0" data-testid="step1-form">
                             <div className="flex-1 overflow-y-auto min-h-0 pr-3">
                                 <div className="space-y-3">
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* Origin */}
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="font-semibold text-lg text-purple-700">Origen</h3>
-                                        {originAddresses.length > 0 && (
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {/* Origin */}
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <h3 className="font-semibold text-lg text-purple-700">Origen</h3>
+                                                {originAddresses.length > 0 && (
+                                                    <select
+                                                        className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                                        onChange={(e) => {
+                                                            const addr = originAddresses.find(a => a.id === parseInt(e.target.value));
+                                                            if (addr) handleOriginAddressSelect(addr);
+                                                        }}
+                                                        defaultValue=""
+                                                    >
+                                                        <option value="" disabled>Mis direcciones...</option>
+                                                        {originAddresses.map(a => (
+                                                            <option key={a.id} value={a.id}>{a.alias}</option>
+                                                        ))}
+                                                    </select>
+                                                )}
+                                            </div>
+
+                                            <div ref={originRef} className="relative">
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Ciudad remitente *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={originSearch}
+                                                    onChange={(e) => {
+                                                        setOriginSearch(e.target.value);
+                                                        setShowOriginResults(true);
+                                                    }}
+                                                    onFocus={() => setShowOriginResults(true)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="Buscar ciudad..."
+                                                />
+                                                {showOriginResults && filteredOriginOptions.length > 0 && (
+                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                        {filteredOriginOptions.slice(0, 50).map((opt) => (
+                                                            <div
+                                                                key={opt.value}
+                                                                onClick={() => {
+                                                                    step1Form.setValue("originDaneCode", opt.value);
+                                                                    setOriginSearch(opt.label);
+                                                                    setShowOriginResults(false);
+                                                                }}
+                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                            >
+                                                                {opt.label}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <Input
+                                                compact
+                                                label="Calle y Número *"
+                                                {...step1Form.register("originAddress")}
+                                                error={step1Form.formState.errors.originAddress?.message}
+                                                placeholder="Calle 98 62-37"
+                                            />
+                                        </div>
+
+                                        {/* Destination */}
+                                        <div className="space-y-2">
+                                            <h3 className="font-semibold text-lg text-purple-700">Destino</h3>
+
+                                            <div ref={destRef} className="relative">
+                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                    Ciudad destinatario *
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    value={destSearch}
+                                                    onChange={(e) => {
+                                                        setDestSearch(e.target.value);
+                                                        setShowDestResults(true);
+                                                    }}
+                                                    onFocus={() => setShowDestResults(true)}
+                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    placeholder="Buscar ciudad..."
+                                                />
+                                                {showDestResults && filteredDestOptions.length > 0 && (
+                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                        {filteredDestOptions.slice(0, 50).map((opt) => (
+                                                            <div
+                                                                key={opt.value}
+                                                                onClick={() => {
+                                                                    step1Form.setValue("destDaneCode", opt.value);
+                                                                    setDestSearch(opt.label);
+                                                                    setShowDestResults(false);
+                                                                }}
+                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                            >
+                                                                {opt.label}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <Input
+                                                compact
+                                                label="Calle y Número *"
+                                                {...step1Form.register("destAddress")}
+                                                error={step1Form.formState.errors.destAddress?.message}
+                                                placeholder="Carrera 46 # 93 - 45"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Package Details */}
+                                    <div className="border-t pt-2">
+                                        <h3 className="font-semibold text-lg text-gray-700 mb-2">Características del paquete</h3>
+                                        <div className="grid grid-cols-4 gap-2">
+                                            <Input
+                                                compact
+                                                label="Peso (kg) *"
+                                                type="number"
+                                                step="0.1"
+                                                {...step1Form.register("weight", { valueAsNumber: true })}
+                                                error={step1Form.formState.errors.weight?.message}
+                                            />
+                                            <Input
+                                                compact
+                                                label="Alto (cm) *"
+                                                type="number"
+                                                {...step1Form.register("height", { valueAsNumber: true })}
+                                                error={step1Form.formState.errors.height?.message}
+                                            />
+                                            <Input
+                                                compact
+                                                label="Ancho (cm) *"
+                                                type="number"
+                                                {...step1Form.register("width", { valueAsNumber: true })}
+                                                error={step1Form.formState.errors.width?.message}
+                                            />
+                                            <Input
+                                                compact
+                                                label="Largo (cm) *"
+                                                type="number"
+                                                {...step1Form.register("length", { valueAsNumber: true })}
+                                                error={step1Form.formState.errors.length?.message}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Additional Info */}
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <Input
+                                            compact
+                                            label="Descripción *"
+                                            {...step1Form.register("description")}
+                                            error={step1Form.formState.errors.description?.message}
+                                            placeholder="descripción"
+                                        />
+                                        <Input
+                                            compact
+                                            label="Valor factura declarado *"
+                                            type="number"
+                                            {...step1Form.register("contentValue", { valueAsNumber: true })}
+                                            error={step1Form.formState.errors.contentValue?.message}
+                                        />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <label className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    {...step1Form.register("includeGuideCost")}
+                                                    className="rounded"
+                                                />
+                                                <span className="text-sm">Incluir costo de guía en COD</span>
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                Método de pago COD
+                                            </label>
                                             <select
-                                                className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
-                                                onChange={(e) => {
-                                                    const addr = originAddresses.find(a => a.id === parseInt(e.target.value));
-                                                    if (addr) handleOriginAddressSelect(addr);
-                                                }}
-                                                defaultValue=""
+                                                {...step1Form.register("codPaymentMethod")}
+                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
                                             >
-                                                <option value="" disabled>Mis direcciones...</option>
-                                                {originAddresses.map(a => (
-                                                    <option key={a.id} value={a.id}>{a.alias}</option>
-                                                ))}
+                                                <option value="cash">Efectivo</option>
+                                                <option value="data_phone">Datáfono</option>
                                             </select>
-                                        )}
+                                            {step1Form.formState.errors.codPaymentMethod?.message && (
+                                                <p className="text-sm text-red-500 mt-1">
+                                                    {step1Form.formState.errors.codPaymentMethod.message}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-
-                                    <div ref={originRef} className="relative">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Ciudad remitente *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={originSearch}
-                                            onChange={(e) => {
-                                                setOriginSearch(e.target.value);
-                                                setShowOriginResults(true);
-                                            }}
-                                            onFocus={() => setShowOriginResults(true)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            placeholder="Buscar ciudad..."
-                                        />
-                                        {showOriginResults && filteredOriginOptions.length > 0 && (
-                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                                {filteredOriginOptions.slice(0, 50).map((opt) => (
-                                                    <div
-                                                        key={opt.value}
-                                                        onClick={() => {
-                                                            step1Form.setValue("originDaneCode", opt.value);
-                                                            setOriginSearch(opt.label);
-                                                            setShowOriginResults(false);
-                                                        }}
-                                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                    >
-                                                        {opt.label}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <Input
-                                        compact
-                                        label="Calle y Número *"
-                                        {...step1Form.register("originAddress")}
-                                        error={step1Form.formState.errors.originAddress?.message}
-                                        placeholder="Calle 98 62-37"
-                                    />
-                                </div>
-
-                                {/* Destination */}
-                                <div className="space-y-2">
-                                    <h3 className="font-semibold text-lg text-purple-700">Destino</h3>
-
-                                    <div ref={destRef} className="relative">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Ciudad destinatario *
-                                        </label>
-                                        <input
-                                            type="text"
-                                            value={destSearch}
-                                            onChange={(e) => {
-                                                setDestSearch(e.target.value);
-                                                setShowDestResults(true);
-                                            }}
-                                            onFocus={() => setShowDestResults(true)}
-                                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                            placeholder="Buscar ciudad..."
-                                        />
-                                        {showDestResults && filteredDestOptions.length > 0 && (
-                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                                {filteredDestOptions.slice(0, 50).map((opt) => (
-                                                    <div
-                                                        key={opt.value}
-                                                        onClick={() => {
-                                                            step1Form.setValue("destDaneCode", opt.value);
-                                                            setDestSearch(opt.label);
-                                                            setShowDestResults(false);
-                                                        }}
-                                                        className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                                                    >
-                                                        {opt.label}
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    <Input
-                                        compact
-                                        label="Calle y Número *"
-                                        {...step1Form.register("destAddress")}
-                                        error={step1Form.formState.errors.destAddress?.message}
-                                        placeholder="Carrera 46 # 93 - 45"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Package Details */}
-                            <div className="border-t pt-2">
-                                <h3 className="font-semibold text-lg text-gray-700 mb-2">Características del paquete</h3>
-                                <div className="grid grid-cols-4 gap-2">
-                                    <Input
-                                        compact
-                                        label="Peso (kg) *"
-                                        type="number"
-                                        step="0.1"
-                                        {...step1Form.register("weight", { valueAsNumber: true })}
-                                        error={step1Form.formState.errors.weight?.message}
-                                    />
-                                    <Input
-                                        compact
-                                        label="Alto (cm) *"
-                                        type="number"
-                                        {...step1Form.register("height", { valueAsNumber: true })}
-                                        error={step1Form.formState.errors.height?.message}
-                                    />
-                                    <Input
-                                        compact
-                                        label="Ancho (cm) *"
-                                        type="number"
-                                        {...step1Form.register("width", { valueAsNumber: true })}
-                                        error={step1Form.formState.errors.width?.message}
-                                    />
-                                    <Input
-                                        compact
-                                        label="Largo (cm) *"
-                                        type="number"
-                                        {...step1Form.register("length", { valueAsNumber: true })}
-                                        error={step1Form.formState.errors.length?.message}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Additional Info */}
-                            <div className="grid grid-cols-2 gap-2">
-                                <Input
-                                    compact
-                                    label="Descripción *"
-                                    {...step1Form.register("description")}
-                                    error={step1Form.formState.errors.description?.message}
-                                    placeholder="descripción"
-                                />
-                                <Input
-                                    compact
-                                    label="Valor factura declarado *"
-                                    type="number"
-                                    {...step1Form.register("contentValue", { valueAsNumber: true })}
-                                    error={step1Form.formState.errors.contentValue?.message}
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            {...step1Form.register("includeGuideCost")}
-                                            className="rounded"
-                                        />
-                                        <span className="text-sm">Incluir costo de guía en COD</span>
-                                    </label>
-                                </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                                        Método de pago COD
-                                    </label>
-                                    <select
-                                        {...step1Form.register("codPaymentMethod")}
-                                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                                    >
-                                        <option value="cash">Efectivo</option>
-                                        <option value="data_phone">Datáfono</option>
-                                    </select>
-                                    {step1Form.formState.errors.codPaymentMethod?.message && (
-                                        <p className="text-sm text-red-500 mt-1">
-                                            {step1Form.formState.errors.codPaymentMethod.message}
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
                                 </div>
                             </div>
                         </form>
@@ -1018,59 +1018,67 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             </div>
 
                             <div className="overflow-y-auto border border-purple-200 rounded-lg p-3 bg-purple-50" style={{ maxHeight: 'calc(85vh - 350px)' }}>
-                                <div className="grid grid-cols-4 gap-3 auto-rows-max">
-                                {rates.map((rate) => {
-                                    const totalCost = rate.flete + (rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0);
-                                    const isCOD = rate.cod;
+                                {rates.length === 0 ? (
+                                    <div className="flex items-center justify-center gap-3 py-10 text-purple-400">
+                                        <div style={{ width: 28, height: 28, border: '3px solid #a855f7', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                                        <span className="text-sm font-medium">Cargando cotizaciones...</span>
+                                        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-4 gap-3 auto-rows-max">
+                                        {rates.map((rate) => {
+                                            const totalCost = rate.flete + (rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0);
+                                            const isCOD = rate.cod;
 
-                                    return (
-                                        <div
-                                            key={rate.idRate}
-                                            onClick={() => handleRateSelection(rate)}
-                                            className="border border-gray-200 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white"
-                                        >
-                                            <div className="flex flex-col h-full">
-                                                <div className="flex flex-col items-center mb-2">
-                                                    <div className={`${getCarrierLogoSize(rate.carrier).container} bg-purple-50 rounded-lg flex items-center justify-center mb-2 overflow-hidden`}>
-                                                        <img
-                                                            src={getCarrierLogo(rate.carrier)}
-                                                            alt={rate.carrier}
-                                                            className={`${getCarrierLogoSize(rate.carrier).image} object-contain`}
-                                                            onError={(e) => {
-                                                                e.currentTarget.style.display = 'none';
-                                                                e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-xs text-center text-purple-600">${rate.carrier.substring(0, 3)}</span>`;
-                                                            }}
-                                                        />
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <div className="font-semibold text-sm">{rate.carrier}</div>
-                                                        <div className="text-xs text-gray-600">{rate.product}</div>
+                                            return (
+                                                <div
+                                                    key={rate.idRate}
+                                                    onClick={() => handleRateSelection(rate)}
+                                                    className="border border-gray-200 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white"
+                                                >
+                                                    <div className="flex flex-col h-full">
+                                                        <div className="flex flex-col items-center mb-2">
+                                                            <div className={`${getCarrierLogoSize(rate.carrier).container} bg-purple-50 rounded-lg flex items-center justify-center mb-2 overflow-hidden`}>
+                                                                <img
+                                                                    src={getCarrierLogo(rate.carrier)}
+                                                                    alt={rate.carrier}
+                                                                    className={`${getCarrierLogoSize(rate.carrier).image} object-contain`}
+                                                                    onError={(e) => {
+                                                                        e.currentTarget.style.display = 'none';
+                                                                        e.currentTarget.parentElement!.innerHTML = `<span class="font-bold text-xs text-center text-purple-600">${rate.carrier.substring(0, 3)}</span>`;
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <div className="font-semibold text-sm">{rate.carrier}</div>
+                                                                <div className="text-xs text-gray-600">{rate.product}</div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="border-t pt-2 mt-2 flex-1">
+                                                            <div className="text-center mb-1">
+                                                                <div className="text-xl font-bold text-purple-600">
+                                                                    ${totalCost.toLocaleString()}
+                                                                </div>
+                                                                <div className="text-xs text-gray-500">COP</div>
+                                                            </div>
+                                                            <div className="text-center">
+                                                                <div className="text-xs text-gray-700 font-medium">
+                                                                    {rate.deliveryDays} días
+                                                                </div>
+                                                            </div>
+                                                            {isCOD && (
+                                                                <div className="text-xs text-blue-600 mt-1 text-center font-medium">
+                                                                    ✓ COD disponible
+                                                                </div>
+                                                            )}
+                                                        </div>
                                                     </div>
                                                 </div>
-
-                                                <div className="border-t pt-2 mt-2 flex-1">
-                                                    <div className="text-center mb-1">
-                                                        <div className="text-xl font-bold text-purple-600">
-                                                            ${totalCost.toLocaleString()}
-                                                        </div>
-                                                        <div className="text-xs text-gray-500">COP</div>
-                                                    </div>
-                                                    <div className="text-center">
-                                                        <div className="text-xs text-gray-700 font-medium">
-                                                            {rate.deliveryDays} días
-                                                        </div>
-                                                    </div>
-                                                    {isCOD && (
-                                                        <div className="text-xs text-blue-600 mt-1 text-center font-medium">
-                                                            ✓ COD disponible
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    );
-                                })}
-                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
@@ -1079,153 +1087,153 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {currentStep === 3 && (
                         <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="flex flex-col h-full overflow-hidden">
                             <div className="border border-gray-200 rounded-lg p-0 bg-gray-50 overflow-y-auto flex-1">
-                            <div className="grid grid-cols-2 gap-1 p-1">
-                                {/* Origin Details - Columna 1 */}
-                                <div>
-                                    <h3 className="font-semibold text-sm text-gray-700 mb-1">Dirección - Remitente</h3>
-                                <div className="grid grid-cols-3 gap-1">
-                                    <Input
-                                        compact
-                                        label="Calle *"
-                                        {...step3Form.register("originCrossStreet")}
-                                        error={step3Form.formState.errors.originCrossStreet?.message}
-                                        placeholder="calle 75 sur n 42-97"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Edificio/Interior/Apto *"
-                                        {...step3Form.register("originReference")}
-                                        error={step3Form.formState.errors.originReference?.message}
-                                        placeholder="apt 801"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Barrio *"
-                                        {...step3Form.register("originSuburb")}
-                                        error={step3Form.formState.errors.originSuburb?.message}
-                                        placeholder="sector Aves María"
-                                    />
+                                <div className="grid grid-cols-2 gap-1 p-1">
+                                    {/* Origin Details - Columna 1 */}
+                                    <div>
+                                        <h3 className="font-semibold text-sm text-gray-700 mb-1">Dirección - Remitente</h3>
+                                        <div className="grid grid-cols-3 gap-1">
+                                            <Input
+                                                compact
+                                                label="Calle *"
+                                                {...step3Form.register("originCrossStreet")}
+                                                error={step3Form.formState.errors.originCrossStreet?.message}
+                                                placeholder="calle 75 sur n 42-97"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Edificio/Interior/Apto *"
+                                                {...step3Form.register("originReference")}
+                                                error={step3Form.formState.errors.originReference?.message}
+                                                placeholder="apt 801"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Barrio *"
+                                                {...step3Form.register("originSuburb")}
+                                                error={step3Form.formState.errors.originSuburb?.message}
+                                                placeholder="sector Aves María"
+                                            />
+                                        </div>
+
+                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
+                                        <Input
+                                            compact
+                                            label="Empresa"
+                                            {...step3Form.register("originCompany")}
+                                            error={step3Form.formState.errors.originCompany?.message}
+                                            placeholder="ProbabilityIA"
+                                        />
+
+                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
+                                        <div className="grid grid-cols-2 gap-1">
+                                            <Input
+                                                compact
+                                                label="Nombre *"
+                                                {...step3Form.register("originFirstName")}
+                                                error={step3Form.formState.errors.originFirstName?.message}
+                                                placeholder="Luisa"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Apellido *"
+                                                {...step3Form.register("originLastName")}
+                                                error={step3Form.formState.errors.originLastName?.message}
+                                                placeholder="Muñoz"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Teléfono *"
+                                                {...step3Form.register("originPhone")}
+                                                error={step3Form.formState.errors.originPhone?.message}
+                                                placeholder="3224098631"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Correo *"
+                                                type="email"
+                                                {...step3Form.register("originEmail")}
+                                                error={step3Form.formState.errors.originEmail?.message}
+                                                placeholder="probabilitysa@gmail.com"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {/* Destination Details - Columna 2 */}
+                                    <div>
+                                        <h3 className="font-semibold text-sm text-gray-700 mb-1">Destinatario</h3>
+                                        <div className="grid grid-cols-3 gap-1">
+                                            <Input
+                                                compact
+                                                label="Calle *"
+                                                {...step3Form.register("destCrossStreet")}
+                                                error={step3Form.formState.errors.destCrossStreet?.message}
+                                                placeholder="calle 75 sur n 42-97"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Edificio/Interior/Apto"
+                                                {...step3Form.register("destReference")}
+                                                error={step3Form.formState.errors.destReference?.message}
+                                                placeholder="Edificio = casa #"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Barrio"
+                                                {...step3Form.register("destSuburb")}
+                                                error={step3Form.formState.errors.destSuburb?.message}
+                                                placeholder="Barrio = Nombre barrio"
+                                            />
+                                        </div>
+
+                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
+                                        <Input
+                                            compact
+                                            label="Empresa"
+                                            {...step3Form.register("destCompany")}
+                                            error={step3Form.formState.errors.destCompany?.message}
+                                            placeholder="Empresa = nombre (opcional)"
+                                        />
+
+                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <Input
+                                                compact
+                                                label="Nombre *"
+                                                {...step3Form.register("destFirstName")}
+                                                error={step3Form.formState.errors.destFirstName?.message}
+                                                placeholder="Luisa"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Apellido *"
+                                                {...step3Form.register("destLastName")}
+                                                error={step3Form.formState.errors.destLastName?.message}
+                                                placeholder="Muñoz"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Teléfono *"
+                                                {...step3Form.register("destPhone")}
+                                                error={step3Form.formState.errors.destPhone?.message}
+                                                placeholder="3224098631"
+                                            />
+                                            <Input
+                                                compact
+                                                label="Correo *"
+                                                type="email"
+                                                {...step3Form.register("destEmail")}
+                                                error={step3Form.formState.errors.destEmail?.message}
+                                                placeholder="probabilitysa@gmail.com"
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
-                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
-                                <Input
-                                    compact
-                                    label="Empresa"
-                                    {...step3Form.register("originCompany")}
-                                    error={step3Form.formState.errors.originCompany?.message}
-                                    placeholder="ProbabilityIA"
-                                />
-
-                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
-                                <div className="grid grid-cols-2 gap-1">
+                                {/* Additional Options - Ocupa 2 columnas */}
+                                <div className="grid grid-cols-2 gap-1 mt-0.5 pt-1 px-1 border-t">
                                     <Input
                                         compact
-                                        label="Nombre *"
-                                        {...step3Form.register("originFirstName")}
-                                        error={step3Form.formState.errors.originFirstName?.message}
-                                        placeholder="Luisa"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Apellido *"
-                                        {...step3Form.register("originLastName")}
-                                        error={step3Form.formState.errors.originLastName?.message}
-                                        placeholder="Muñoz"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Teléfono *"
-                                        {...step3Form.register("originPhone")}
-                                        error={step3Form.formState.errors.originPhone?.message}
-                                        placeholder="3224098631"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Correo *"
-                                        type="email"
-                                        {...step3Form.register("originEmail")}
-                                        error={step3Form.formState.errors.originEmail?.message}
-                                        placeholder="probabilitysa@gmail.com"
-                                    />
-                                </div>
-                            </div>
-
-                                {/* Destination Details - Columna 2 */}
-                                <div>
-                                    <h3 className="font-semibold text-sm text-gray-700 mb-1">Destinatario</h3>
-                                <div className="grid grid-cols-3 gap-1">
-                                    <Input
-                                        compact
-                                        label="Calle *"
-                                        {...step3Form.register("destCrossStreet")}
-                                        error={step3Form.formState.errors.destCrossStreet?.message}
-                                        placeholder="calle 75 sur n 42-97"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Edificio/Interior/Apto"
-                                        {...step3Form.register("destReference")}
-                                        error={step3Form.formState.errors.destReference?.message}
-                                        placeholder="Edificio = casa #"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Barrio"
-                                        {...step3Form.register("destSuburb")}
-                                        error={step3Form.formState.errors.destSuburb?.message}
-                                        placeholder="Barrio = Nombre barrio"
-                                    />
-                                </div>
-
-                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
-                                <Input
-                                    compact
-                                    label="Empresa"
-                                    {...step3Form.register("destCompany")}
-                                    error={step3Form.formState.errors.destCompany?.message}
-                                    placeholder="Empresa = nombre (opcional)"
-                                />
-
-                                <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
-                                <div className="grid grid-cols-2 gap-2">
-                                    <Input
-                                        compact
-                                        label="Nombre *"
-                                        {...step3Form.register("destFirstName")}
-                                        error={step3Form.formState.errors.destFirstName?.message}
-                                        placeholder="Luisa"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Apellido *"
-                                        {...step3Form.register("destLastName")}
-                                        error={step3Form.formState.errors.destLastName?.message}
-                                        placeholder="Muñoz"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Teléfono *"
-                                        {...step3Form.register("destPhone")}
-                                        error={step3Form.formState.errors.destPhone?.message}
-                                        placeholder="3224098631"
-                                    />
-                                    <Input
-                                        compact
-                                        label="Correo *"
-                                        type="email"
-                                        {...step3Form.register("destEmail")}
-                                        error={step3Form.formState.errors.destEmail?.message}
-                                        placeholder="probabilitysa@gmail.com"
-                                    />
-                                </div>
-                            </div>
-                            </div>
-
-                            {/* Additional Options - Ocupa 2 columnas */}
-                            <div className="grid grid-cols-2 gap-1 mt-0.5 pt-1 px-1 border-t">
-                                <Input
-                                    compact
-                                    label="Mi referencia de envío"
+                                        label="Mi referencia de envío"
                                         {...step3Form.register("myShipmentReference")}
                                         error={step3Form.formState.errors.myShipmentReference?.message}
                                         placeholder="Orden 5649"
@@ -1236,27 +1244,27 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         {...step3Form.register("external_order_id")}
                                         error={step3Form.formState.errors.external_order_id?.message}
                                         placeholder="ORD345678"
-                                />
-                            </div>
+                                    />
+                                </div>
 
-                            <div className="grid grid-cols-2 gap-1 mt-0.5 px-1">
-                                <label className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        {...step3Form.register("requestPickup")}
-                                        className="rounded w-5 h-5"
-                                    />
-                                    <span className="text-sm font-medium">Solicitar recolección</span>
-                                </label>
-                                <label className="flex items-center space-x-2">
-                                    <input
-                                        type="checkbox"
-                                        {...step3Form.register("insurance")}
-                                        className="rounded w-5 h-5"
-                                    />
-                                    <span className="text-sm font-medium">Asegurar envío</span>
-                                </label>
-                            </div>
+                                <div className="grid grid-cols-2 gap-1 mt-0.5 px-1">
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            {...step3Form.register("requestPickup")}
+                                            className="rounded w-5 h-5"
+                                        />
+                                        <span className="text-sm font-medium">Solicitar recolección</span>
+                                    </label>
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            {...step3Form.register("insurance")}
+                                            className="rounded w-5 h-5"
+                                        />
+                                        <span className="text-sm font-medium">Asegurar envío</span>
+                                    </label>
+                                </div>
                             </div>
                         </form>
                     )}

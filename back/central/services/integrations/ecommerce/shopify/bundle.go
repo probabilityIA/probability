@@ -19,7 +19,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-
 func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue, database db.IDatabase) {
 	shopifyClient := client.New()
 
@@ -76,6 +75,6 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 			Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER están configuradas, no se crearán webhooks automáticamente para Shopify")
 	}
 
-	shopifyHandler := handlers.New(useCase, logger, config)
+	shopifyHandler := handlers.New(useCase, logger, config, coreIntegration)
 	shopifyHandler.RegisterRoutes(router, logger)
 }

@@ -42,37 +42,28 @@ const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '40
             setLoading(true);
             setError(null);
 
-            const query = `${address}, ${city}, Colombia`;
-            const url = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(query)}`;
-
             try {
-                const response = await fetch(url, {
-                    headers: { "Accept-Language": "es" }
-                });
-                const data = await response.json();
+                // Llamamos a nuestro propio backend como proxy para evitar restricciones CORS/User-Agent
+                // El backend hace la petición a Nominatim server-side sin restricciones
+                const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3050';
+                const url = `${backendBase}/geocode?address=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}`;
 
-                if (data && data.length > 0) {
-                    const lat = parseFloat(data[0].lat);
-                    const lon = parseFloat(data[0].lon);
-                    setPosition([lat, lon]);
-                } else {
-                    // Fallback to just city
-                    const cityUrl = `https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&q=${encodeURIComponent(city + ", Colombia")}`;
-                    const cityRes = await fetch(cityUrl, { headers: { "Accept-Language": "es" } });
-                    const cityData = await cityRes.json();
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('geocode request failed');
 
-                    if (cityData && cityData.length > 0) {
-                        const lat = parseFloat(cityData[0].lat);
-                        const lon = parseFloat(cityData[0].lon);
-                        setPosition([lat, lon]);
-                        setError("Dirección exacta no encontrada, mostrando ubicación de la ciudad.");
-                    } else {
-                        setError("No se pudo localizar la dirección.");
+                const data: { lat: number; lon: number; found: boolean; fallback: boolean } = await response.json();
+
+                if (data.found) {
+                    setPosition([data.lat, data.lon]);
+                    if (data.fallback) {
+                        setError('Dirección exacta no encontrada, mostrando ubicación de la ciudad.');
                     }
+                } else {
+                    setError('No se pudo localizar la dirección.');
                 }
             } catch (err) {
-                console.error("Geocoding error:", err);
-                setError("Error al cargar el mapa.");
+                console.error('Geocoding error:', err);
+                setError('Error al cargar el mapa.');
             } finally {
                 setLoading(false);
             }
@@ -83,18 +74,58 @@ const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '40
 
     if (loading) {
         return (
-            <div className="d-flex align-items-center justify-content-center bg-light rounded" style={{ height }}>
-                <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Cargando mapa...</span>
-                </div>
+            <div
+                style={{
+                    height,
+                    width: '100%',
+                    borderRadius: '0.475rem',
+                    background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    color: '#a0aec0',
+                }}
+            >
+                <div
+                    style={{
+                        width: 36,
+                        height: 36,
+                        border: '3px solid #3b82f6',
+                        borderTopColor: 'transparent',
+                        borderRadius: '50%',
+                        animation: 'spin 0.8s linear infinite',
+                    }}
+                />
+                <span style={{ fontSize: '0.85rem' }}>Cargando mapa...</span>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
             </div>
         );
     }
 
     if (!position) {
         return (
-            <div className="d-flex align-items-center justify-content-center bg-light rounded text-muted" style={{ height }}>
-                {error || "Ubicación no disponible"}
+            <div
+                style={{
+                    height,
+                    width: '100%',
+                    borderRadius: '0.475rem',
+                    background: 'linear-gradient(135deg, #1e1e2e 0%, #2a2a3e 100%)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    color: '#718096',
+                    fontSize: '0.875rem',
+                }}
+            >
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                    <circle cx="12" cy="9" r="2.5" />
+                </svg>
+                <span>{error || 'Ubicación no disponible'}</span>
             </div>
         );
     }
@@ -113,7 +144,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '40
                 </Marker>
                 <RecenterAutomatically lat={position[0]} lng={position[1]} />
             </MapContainer>
-            {error && <div className="text-warning small mt-1">{error}</div>}
+            {error && <div style={{ color: '#ecc94b', fontSize: '0.8rem', marginTop: 6 }}>{error}</div>}
         </div>
     );
 };
