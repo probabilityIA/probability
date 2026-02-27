@@ -24,182 +24,37 @@ func New(db db.IDatabase, cfg env.IConfig) *Repository {
 }
 
 func (r *Repository) Migrate(ctx context.Context) error {
+	// Clean up orphan wallet rows (business_id=0) that block FK constraint creation
+	if err := r.cleanOrphanWalletRows(ctx); err != nil {
+		return fmt.Errorf("failed to clean orphan wallet rows: %w", err)
+	}
+
+	// Solo migrar modelos nuevos/modificados (no todos)
 	if err := r.db.Conn(ctx).AutoMigrate(
-		&models.BusinessType{},
-		&models.Scope{},
-		&models.Business{},
-		&models.BusinessResourceConfigured{},
-		&models.Resource{},
-		&models.Role{},
-		&models.Permission{},
-		&models.User{},
-		&models.BusinessStaff{},
-		&models.Client{},
-		&models.Action{},
-		&models.APIKey{},
-		&models.IntegrationCategory{},
-		&models.IntegrationType{},
-		&models.Integration{},
+		// Wallet (agregar FK que faltaba)
+		&models.Wallet{},
+		&models.WalletTransaction{},
 
-		// Integration Notification Configs (debe ir después de Integration)
-		&models.IntegrationNotificationConfig{},
+		// Warehouses & Locations (tablas nuevas)
+		&models.Warehouse{},
+		&models.WarehouseLocation{},
 
-		// Payment Methods
-		&models.PaymentMethod{},
-		&models.ChannelPaymentMethod{},
-		&models.IntegrationChannelStatus{},
-		&models.PaymentMethodMapping{},
-		&models.OrderStatusMapping{},
-		&models.OrderStatus{},
-		&models.PaymentStatus{},
-		&models.FulfillmentStatus{},
+		// Stock Movement Types (debe ir antes de StockMovement por FK)
+		&models.StockMovementType{},
 
-		// Notification Types (nueva arquitectura)
-		&models.NotificationType{},
-		&models.NotificationEventType{},
-
-		// Business Notification Config (debe ir después de Integration, NotificationType, NotificationEventType)
-		&models.BusinessNotificationConfig{},
-
-		// Business Notification Config Order Status (tabla intermedia)
-		// Debe ir después de BusinessNotificationConfig y OrderStatus
-		&models.BusinessNotificationConfigOrderStatus{},
-
-		&models.Product{},
-
-		// Orders
-		&models.Order{},
-		&models.OrderHistory{},
-		&models.OrderError{},
-
-		// Order Channel Metadata
-		&models.OrderChannelMetadata{},
-
-		// Order Items
-		&models.OrderItem{},
-
-		// Addresses
-		&models.Address{},
-
-		// Payments
-		&models.Payment{},
-
-		// Shipments
-		&models.Shipment{},
-
-		// WhatsApp Integration
-		&models.WhatsAppConversation{},
-		&models.WhatsAppMessageLog{},
-
-		// Invoicing System
-		&models.InvoicingProviderType{},
-		&models.InvoicingProvider{},
-		&models.InvoicingConfig{},
-		&models.Invoice{},
-		&models.InvoiceItem{},
-		&models.InvoiceSyncLog{},
-		&models.CreditNote{},
-
-		// Bulk Invoice Jobs (Async Bulk Invoicing)
-		&models.BulkInvoiceJob{},
-		&models.BulkInvoiceJobItem{},
-
-		// Origin Addresses
-		&models.OriginAddress{},
-
-		// Payment Transactions (pasarelas de pago externas)
-		&models.PaymentTransaction{},
-		&models.PaymentSyncLog{},
+		// Inventory (tablas nuevas)
+		&models.InventoryLevel{},
+		&models.StockMovement{},
 	); err != nil {
 		return err
 	}
 
-	// Insertar datos iniciales de integration_categories
-	if err := r.seedIntegrationCategories(ctx); err != nil {
-		return fmt.Errorf("failed to seed integration categories: %w", err)
+	// Seed tipos de movimiento de inventario
+	if err := r.seedStockMovementTypes(ctx); err != nil {
+		return fmt.Errorf("failed to seed stock movement types: %w", err)
 	}
 
-	// Migrar integration_types existentes a las nuevas categorías
-	if err := r.migrateIntegrationTypesToCategories(ctx); err != nil {
-		return fmt.Errorf("failed to migrate integration types to categories: %w", err)
-	}
-
-	// Crear tipo de integración para Softpymes (facturación)
-	if err := r.seedSoftpymesIntegrationType(ctx); err != nil {
-		return fmt.Errorf("failed to seed softpymes integration type: %w", err)
-	}
-
-	// Crear tipo de integración para Plataforma (órdenes manuales)
-	if err := r.seedPlatformIntegrationType(ctx); err != nil {
-		return fmt.Errorf("failed to seed platform integration type: %w", err)
-	}
-
-	// Crear integraciones de plataforma para negocios existentes
-	if err := r.seedPlatformIntegrationsForBusinesses(ctx); err != nil {
-		return fmt.Errorf("failed to seed platform integrations for businesses: %w", err)
-	}
-
-	// Migrar datos de invoicing_providers a integrations
-	if err := r.migrateInvoicingProvidersToIntegrations(ctx); err != nil {
-		return fmt.Errorf("failed to migrate invoicing providers: %w", err)
-	}
-
-	// Insertar datos iniciales de notification_types y notification_event_types
-	if err := r.seedNotificationTypesAndEvents(ctx); err != nil {
-		return fmt.Errorf("failed to seed notification types and events: %w", err)
-	}
-
-	// Migrar datos de business_notification_configs después de crear columnas
-	if err := r.migrateBusinessNotificationConfigData(ctx); err != nil {
-		return fmt.Errorf("failed to migrate business_notification_configs data: %w", err)
-	}
-
-	// Crear tipo de integración para EnvioClick (transporte)
-	if err := r.seedEnvioClickIntegrationType(ctx); err != nil {
-		return fmt.Errorf("failed to seed envioclick integration type: %w", err)
-	}
-
-	// Seed base_url de EnvioClick si no está configurada
-	if err := r.seedEnvioClickBaseURL(ctx); err != nil {
-		return fmt.Errorf("failed to seed envioclick base url: %w", err)
-	}
-
-	// Marcar integration types en desarrollo (IDs 13-21)
-	if err := r.markInDevelopmentIntegrationTypes(ctx); err != nil {
-		return fmt.Errorf("failed to mark in-development integration types: %w", err)
-	}
-
-	// Agregar columnas de modo testing
-	if err := r.addIsTestingColumns(ctx); err != nil {
-		return fmt.Errorf("failed to add is_testing columns: %w", err)
-	}
-
-	// Agregar columna de credenciales de plataforma a integration_types
-	if err := r.addPlatformCredentialsToIntegrationTypes(ctx); err != nil {
-		return fmt.Errorf("failed to add platform_credentials_encrypted to integration_types: %w", err)
-	}
-
-	// Crear tipos de integración para pasarelas de pago
-	if err := r.seedPaymentIntegrationTypes(ctx); err != nil {
-		return fmt.Errorf("failed to seed payment integration types: %w", err)
-	}
-
-	// Seed channel payment methods
-	if err := r.seedChannelPaymentMethods(ctx); err != nil {
-		return fmt.Errorf("failed to seed channel payment methods: %w", err)
-	}
-
-	// Mover priority de order_status_mappings a order_statuses
-	if err := r.migrateOrderStatusPriority(ctx); err != nil {
-		return fmt.Errorf("failed to migrate order status priority: %w", err)
-	}
-
-	// Seed integration channel statuses (estados nativos por canal ecommerce)
-	if err := r.seedIntegrationChannelStatuses(ctx); err != nil {
-		return fmt.Errorf("failed to seed integration channel statuses: %w", err)
-	}
-
-	return r.createDefaultUserIfNotExists(ctx)
+	return nil
 }
 
 // createDefaultUserIfNotExists crea el usuario principal solo si no existe
@@ -1033,6 +888,74 @@ func (r *Repository) seedIntegrationChannelStatuses(ctx context.Context) error {
 				}
 			}
 		}
+	}
+
+	return nil
+}
+
+// seedStockMovementTypes inserta los tipos de movimiento de inventario por defecto
+func (r *Repository) seedStockMovementTypes(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	types := []models.StockMovementType{
+		{Model: gorm.Model{ID: 1}, Code: "inbound", Name: "Entrada de mercancía", Description: "Ingreso de productos al inventario", Direction: "in", IsActive: true},
+		{Model: gorm.Model{ID: 2}, Code: "outbound", Name: "Salida de mercancía", Description: "Salida de productos del inventario", Direction: "out", IsActive: true},
+		{Model: gorm.Model{ID: 3}, Code: "adjustment", Name: "Ajuste de inventario", Description: "Corrección manual de cantidades de inventario", Direction: "neutral", IsActive: true},
+		{Model: gorm.Model{ID: 4}, Code: "transfer", Name: "Transferencia entre bodegas", Description: "Movimiento de productos entre bodegas", Direction: "neutral", IsActive: true},
+		{Model: gorm.Model{ID: 5}, Code: "return", Name: "Devolución", Description: "Reingreso de productos por devolución", Direction: "in", IsActive: true},
+		{Model: gorm.Model{ID: 6}, Code: "sync", Name: "Sincronización desde canal", Description: "Actualización de inventario desde canal de venta", Direction: "neutral", IsActive: true},
+		{Model: gorm.Model{ID: 7}, Code: "reserve", Name: "Reserva de stock", Description: "Stock reservado por orden pendiente", Direction: "neutral", IsActive: true},
+		{Model: gorm.Model{ID: 8}, Code: "confirm_sale", Name: "Confirmación de venta", Description: "Stock confirmado como vendido", Direction: "out", IsActive: true},
+		{Model: gorm.Model{ID: 9}, Code: "release", Name: "Liberación de reserva", Description: "Stock reservado liberado por cancelación", Direction: "neutral", IsActive: true},
+	}
+
+	for _, t := range types {
+		var existing models.StockMovementType
+		err := db.Where("id = ?", t.ID).First(&existing).Error
+		if err == gorm.ErrRecordNotFound {
+			if err := db.Create(&t).Error; err != nil {
+				return fmt.Errorf("failed to create stock_movement_type %s: %w", t.Code, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// cleanOrphanWalletRows deletes wallet rows with business_id that don't exist in the business table.
+// This prevents FK constraint creation from failing during AutoMigrate.
+func (r *Repository) cleanOrphanWalletRows(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// Check if wallet table exists first
+	var count int64
+	if err := db.Raw(`
+		SELECT COUNT(*) FROM information_schema.tables
+		WHERE table_schema = CURRENT_SCHEMA() AND table_name = 'wallet'
+	`).Scan(&count).Error; err != nil || count == 0 {
+		return nil // Table doesn't exist yet, nothing to clean
+	}
+
+	// Delete transactions for orphan wallets first (FK dependency)
+	if err := db.Exec(`
+		DELETE FROM transaction
+		WHERE wallet_id IN (
+			SELECT w.id FROM wallet w
+			LEFT JOIN business b ON w.business_id = b.id
+			WHERE b.id IS NULL
+		)
+	`).Error; err != nil {
+		return fmt.Errorf("failed to delete orphan wallet transactions: %w", err)
+	}
+
+	// Delete orphan wallet rows
+	if err := db.Exec(`
+		DELETE FROM wallet w
+		WHERE NOT EXISTS (
+			SELECT 1 FROM business b WHERE b.id = w.business_id
+		)
+	`).Error; err != nil {
+		return fmt.Errorf("failed to delete orphan wallets: %w", err)
 	}
 
 	return nil
