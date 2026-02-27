@@ -14,11 +14,11 @@ import (
 type IRepository interface {
 	// CRUD Operations
 	CreateProduct(ctx context.Context, product *Product) error
-	GetProductByID(ctx context.Context, id string) (*Product, error)
+	GetProductByID(ctx context.Context, businessID uint, id string) (*Product, error)
 	GetProductBySKU(ctx context.Context, businessID uint, sku string) (*Product, error)
-	ListProducts(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]Product, int64, error)
+	ListProducts(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]Product, int64, error)
 	UpdateProduct(ctx context.Context, product *Product) error
-	DeleteProduct(ctx context.Context, id string) error
+	DeleteProduct(ctx context.Context, businessID uint, id string) error
 
 	// Validation
 	ProductExists(ctx context.Context, businessID uint, sku string) (bool, error)

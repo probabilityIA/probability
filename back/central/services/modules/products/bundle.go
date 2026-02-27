@@ -19,7 +19,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	uc := usecases.New(repo)
 
 	// 3. Init Handlers
-	h := handlers.New(uc)
+	h := handlers.New(uc, logger)
 
 	// 4. Register Routes
 	h.RegisterRoutes(router)

@@ -162,14 +162,11 @@ type Config struct {
 	RedisPassword           string `env:"REDIS_PASSWORD"`
 	RedisOrderEventsChannel string `env:"REDIS_ORDER_EVENTS_CHANNEL,required"`
 
-	// SMTP/Email
-	SMTPHost           string `env:"SMTP_HOST"`
-	SMTPPort           string `env:"SMTP_PORT"`
-	SMTPUser           string `env:"SMTP_USER"`
-	SMTPPass           string `env:"SMTP_PASS"`
-	FromEmail          string `env:"FROM_EMAIL"`
-	SMTPUseSTARTTLS    string `env:"SMTP_USE_STARTTLS"`
-	SMTPUseTLS         string `env:"SMTP_USE_TLS"`
+	// Email (Amazon SES)
+	SESRegion    string `env:"SES_REGION"`
+	SESAccessKey string `env:"SES_ACCESS_KEY"`
+	SESSecretKey string `env:"SES_SECRET_KEY"`
+	FromEmail    string `env:"FROM_EMAIL"`
 	UrlBaseDomainS3    string `env:"URL_BASE_DOMAIN_S3"`
 	WhatsAppURL        string `env:"WHATSAPP_URL,required"`
 	WhatsAppToken      string `env:"WHATSAPP_TOKEN,required"`

@@ -6,6 +6,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
+	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
@@ -15,7 +16,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/payments"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
-	"github.com/secamc93/probability/back/central/services/modules/wallet"
+	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -70,14 +71,17 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de dashboard
 	dashboard.New(router, database, logger)
 
-	// Inicializar módulo de wallet
-	wallet.New(router, database, logger, environment)
-
-	// Inicializar módulo de pagos (pasarelas externas)
+	// Inicializar módulo de pagos (pasarelas externas + wallet)
 	pay.New(router, database, logger, rabbitMQ, redisClient)
 
 	// Inicializar módulo de invoicing
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
+
+	// Inicializar módulo de warehouses (bodegas)
+	warehouses.New(router, database)
+
+	// Inicializar módulo de inventory (stock + movimientos + cache Redis)
+	inventory.New(router, database, logger, environment, rabbitMQ, redisClient)
 
 	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
 	if rabbitMQ != nil {

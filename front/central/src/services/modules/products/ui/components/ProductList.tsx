@@ -12,10 +12,11 @@ interface ProductListProps {
     searchName?: string;
     searchSku?: string;
     searchIntegration?: string;
+    selectedBusinessId?: number;
 }
 
 const ProductList = forwardRef(function ProductList(
-    { onView, onEdit, searchName = '', searchSku = '', searchIntegration = '' }: ProductListProps,
+    { onView, onEdit, searchName = '', searchSku = '', searchIntegration = '', selectedBusinessId }: ProductListProps,
     ref: any
 ) {
     const [products, setProducts] = useState<Product[]>([]);
@@ -46,6 +47,11 @@ const ProductList = forwardRef(function ProductList(
         }));
     }, [searchName, searchSku, searchIntegration]);
 
+    // Reset to page 1 when selected business changes
+    useEffect(() => {
+        setFilters(prev => ({ ...prev, page: 1 }));
+    }, [selectedBusinessId]);
+
     useEffect(() => {
         fetchProducts();
     }, [filters]);
@@ -58,7 +64,9 @@ const ProductList = forwardRef(function ProductList(
         setLoading(true);
         setError(null);
         try {
-            const response = await getProductsAction(filters);
+            const params = { ...filters };
+            if (selectedBusinessId) params.business_id = selectedBusinessId;
+            const response = await getProductsAction(params);
             if (response.success && response.data) {
                 setProducts(response.data);
                 setTotal(response.total || 0);
@@ -78,7 +86,7 @@ const ProductList = forwardRef(function ProductList(
         if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) return;
 
         try {
-            const response = await deleteProductAction(id);
+            const response = await deleteProductAction(id, selectedBusinessId);
             if (response.success) {
                 fetchProducts();
             } else {

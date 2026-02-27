@@ -98,6 +98,7 @@ func setupOrdersExchange(rabbitMQ rabbitmq.IQueue, logger log.ILogger) {
 		"orders.events.invoicing",
 		"orders.events.whatsapp",
 		"orders.events.score",
+		"orders.events.inventory",
 	}
 
 	for _, queueName := range queues {

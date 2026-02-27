@@ -1,24 +1,28 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Button, Modal } from '@/shared/ui';
+import { Modal } from '@/shared/ui';
 import ProductList from '@/services/modules/products/ui/components/ProductList';
 import ProductForm from '@/services/modules/products/ui/components/ProductForm';
 import { Product } from '@/services/modules/products/domain/types';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
 export default function ProductsPage() {
+    const { isSuperAdmin } = usePermissions();
+    const { businesses, loading: loadingBusinesses } = useBusinessesSimple();
+
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
-    const [viewMode, setViewMode] = useState<'list' | 'create' | 'edit' | 'view'>('list');
+    const [viewMode, setViewMode] = useState<'create' | 'edit' | 'view'>('create');
     const [searchName, setSearchName] = useState('');
     const [searchSku, setSearchSku] = useState('');
     const [searchIntegration, setSearchIntegration] = useState('');
     const productListRef = useRef<any>(null);
 
     const handleRefresh = () => {
-        if (productListRef.current?.refreshProducts) {
-            productListRef.current.refreshProducts();
-        }
+        productListRef.current?.refreshProducts();
     };
 
     const handleCreate = () => {
@@ -42,16 +46,16 @@ export default function ProductsPage() {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedProduct(undefined);
-        setViewMode('list');
     };
 
     const handleSuccess = () => {
         handleCloseModal();
-        // Trigger refresh in list (handled by useEffect dependency in ProductList)
-        // For now, closing modal is enough as list auto-refreshes on mount/update
-        // Ideally we'd pass a refresh trigger
-        window.location.reload(); // Simple refresh for now
+        handleRefresh();
     };
+
+    // Gate para super admin: debe seleccionar negocio antes de operar
+    const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
+    const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
 
     return (
         <div className="space-y-8 p-8">
@@ -67,71 +71,113 @@ export default function ProductsPage() {
                     </p>
                 </div>
 
-                {/* Filtros y Botones */}
-                <div className="bg-gradient-to-br from-[#7c3aed]/8 to-[#6d28d9]/8 px-6 py-4 rounded-xl shadow-lg hover:shadow-xl border-2 border-[#7c3aed]/40 transition-all duration-300 backdrop-blur-sm flex-1">
-                    <div className="flex justify-between items-end gap-4">
-                        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-2.5">Nombre</label>
-                            <input
-                                type="text"
-                                placeholder="Ej: Camiseta..."
-                                value={searchName}
-                                onChange={(e) => setSearchName(e.target.value)}
-                                className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-2.5">SKU</label>
-                            <input
-                                type="text"
-                                placeholder="Ej: PROD-001..."
-                                value={searchSku}
-                                onChange={(e) => setSearchSku(e.target.value)}
-                                className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-xs font-bold text-slate-700 mb-2.5">Integraciones</label>
-                            <select
-                                value={searchIntegration}
-                                onChange={(e) => setSearchIntegration(e.target.value)}
-                                className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
-                            >
-                                <option value="">Todas las integraciones</option>
-                                <option value="shopify">Shopify</option>
-                                <option value="woocommerce">WooCommerce</option>
-                                <option value="whatsapp">WhatsApp</option>
-                            </select>
+                {/* Filtros y Botones (solo cuando no requiere selección de negocio) */}
+                {!requiresBusinessSelection && (
+                    <div className="bg-gradient-to-br from-[#7c3aed]/8 to-[#6d28d9]/8 px-6 py-4 rounded-xl shadow-lg hover:shadow-xl border-2 border-[#7c3aed]/40 transition-all duration-300 backdrop-blur-sm flex-1">
+                        <div className="flex justify-between items-end gap-4">
+                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-2.5">Nombre</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: Camiseta..."
+                                        value={searchName}
+                                        onChange={(e) => setSearchName(e.target.value)}
+                                        className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-2.5">SKU</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Ej: PROD-001..."
+                                        value={searchSku}
+                                        onChange={(e) => setSearchSku(e.target.value)}
+                                        className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-700 mb-2.5">Integraciones</label>
+                                    <select
+                                        value={searchIntegration}
+                                        onChange={(e) => setSearchIntegration(e.target.value)}
+                                        className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                                    >
+                                        <option value="">Todas las integraciones</option>
+                                        <option value="shopify">Shopify</option>
+                                        <option value="woocommerce">WooCommerce</option>
+                                        <option value="whatsapp">WhatsApp</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div className="flex gap-3 flex-shrink-0">
+                                <button
+                                    onClick={handleRefresh}
+                                    className="group px-6 py-3 bg-gradient-to-r from-[#a855f7]/10 to-[#9333ea]/10 border-2 border-[#7c3aed]/40 hover:border-[#7c3aed] hover:from-[#7c3aed]/20 hover:to-[#6d28d9]/20 text-[#7c3aed] font-bold rounded-lg transition-all duration-300 text-sm shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                                >
+                                    <span className="inline-block transition-transform duration-500 group-hover:rotate-180">↻</span>
+                                    Actualizar
+                                </button>
+                                <button
+                                    onClick={handleCreate}
+                                    className="px-5 py-3 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white font-bold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 text-2xl font-black"
+                                >
+                                    +
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex gap-3 flex-shrink-0">
-                        <button
-                            onClick={handleRefresh}
-                            className="group px-6 py-3 bg-gradient-to-r from-[#a855f7]/10 to-[#9333ea]/10 border-2 border-[#7c3aed]/40 hover:border-[#7c3aed] hover:from-[#7c3aed]/20 hover:to-[#6d28d9]/20 text-[#7c3aed] font-bold rounded-lg transition-all duration-300 text-sm shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
-                        >
-                            <span className="inline-block transition-transform duration-500 group-hover:rotate-180">↻</span>
-                            Actualizar
-                        </button>
-                        <button
-                            onClick={handleCreate}
-                            className="px-5 py-3 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white font-bold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 text-2xl font-black"
-                        >
-                            +
-                        </button>
-                    </div>
-                    </div>
-                </div>
+                )}
             </div>
 
-            <ProductList
-                ref={productListRef}
-                onView={handleView}
-                onEdit={handleEdit}
-                searchName={searchName}
-                searchSku={searchSku}
-                searchIntegration={searchIntegration}
-            />
+            {/* Selector de negocio para super admin */}
+            {isSuperAdmin && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Negocio <span className="text-red-500">*</span>
+                        <span className="ml-1 text-xs text-gray-500 font-normal">(requerido para gestionar productos)</span>
+                    </label>
+                    {loadingBusinesses ? (
+                        <p className="text-sm text-gray-500">Cargando negocios...</p>
+                    ) : (
+                        <select
+                            value={selectedBusinessId?.toString() ?? ''}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setSelectedBusinessId(val ? Number(val) : null);
+                            }}
+                            className="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                            <option value="">— Selecciona un negocio —</option>
+                            {businesses.map((b) => (
+                                <option key={b.id} value={b.id}>
+                                    {b.name} (ID: {b.id})
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                </div>
+            )}
+
+            {/* Gate: super admin debe seleccionar negocio */}
+            {requiresBusinessSelection ? (
+                <div className="flex flex-col items-center justify-center py-16 text-center">
+                    <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    <p className="text-gray-500 text-sm">Selecciona un negocio para ver y gestionar sus productos</p>
+                </div>
+            ) : (
+                <ProductList
+                    ref={productListRef}
+                    onView={handleView}
+                    onEdit={handleEdit}
+                    searchName={searchName}
+                    searchSku={searchSku}
+                    searchIntegration={searchIntegration}
+                    selectedBusinessId={effectiveBusinessId}
+                />
+            )}
 
             <Modal
                 isOpen={isModalOpen}
@@ -182,6 +228,7 @@ export default function ProductsPage() {
                             product={selectedProduct}
                             onSuccess={handleSuccess}
                             onCancel={handleCloseModal}
+                            businessId={effectiveBusinessId}
                         />
                     )}
                 </div>

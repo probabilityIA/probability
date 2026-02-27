@@ -12,13 +12,13 @@ import {
 
 export interface IProductRepository {
     getProducts(params?: GetProductsParams): Promise<PaginatedResponse<Product>>;
-    getProductById(id: string): Promise<SingleResponse<Product>>;
-    createProduct(data: CreateProductDTO): Promise<SingleResponse<Product>>;
-    updateProduct(id: string, data: UpdateProductDTO): Promise<SingleResponse<Product>>;
-    deleteProduct(id: string): Promise<ActionResponse>;
+    getProductById(id: string, businessId?: number): Promise<SingleResponse<Product>>;
+    createProduct(data: CreateProductDTO, businessId?: number): Promise<SingleResponse<Product>>;
+    updateProduct(id: string, data: UpdateProductDTO, businessId?: number): Promise<SingleResponse<Product>>;
+    deleteProduct(id: string, businessId?: number): Promise<ActionResponse>;
 
     // Product-Integration Management
-    addProductIntegration(productId: string, data: AddProductIntegrationDTO): Promise<SingleResponse<any>>;
-    removeProductIntegration(productId: string, integrationId: number): Promise<ActionResponse>;
-    getProductIntegrations(productId: string): Promise<ProductIntegrationsResponse>;
+    addProductIntegration(productId: string, data: AddProductIntegrationDTO, businessId?: number): Promise<SingleResponse<any>>;
+    removeProductIntegration(productId: string, integrationId: number, businessId?: number): Promise<ActionResponse>;
+    getProductIntegrations(productId: string, businessId?: number): Promise<ProductIntegrationsResponse>;
 }

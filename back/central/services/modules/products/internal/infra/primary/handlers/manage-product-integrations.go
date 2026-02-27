@@ -14,8 +14,9 @@ import (
 // @Tags         Products
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string                                true   "ID del producto (hash alfanumérico)"
-// @Param        body body      domain.AddProductIntegrationRequest  true   "Datos de la integración"
+// @Param        id           path      string                               true   "ID del producto (hash alfanumérico)"
+// @Param        business_id  query     int                                  false  "ID del negocio (requerido para super admin)"
+// @Param        body         body      domain.AddProductIntegrationRequest  true   "Datos de la integración"
 // @Security     BearerAuth
 // @Success      201  {object}  map[string]interface{}
 // @Failure      400  {object}  map[string]interface{}
@@ -24,6 +25,12 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /products/{id}/integrations [post]
 func (h *Handlers) AddProductIntegration(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		h.respondBusinessIDRequired(c)
+		return
+	}
+
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -44,7 +51,7 @@ func (h *Handlers) AddProductIntegration(c *gin.Context) {
 		return
 	}
 
-	integration, err := h.uc.AddProductIntegration(c.Request.Context(), id, &req)
+	integration, err := h.uc.AddProductIntegration(c.Request.Context(), businessID, id, &req)
 	if err != nil {
 		if err == domain.ErrProductNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -101,8 +108,9 @@ func (h *Handlers) AddProductIntegration(c *gin.Context) {
 // @Tags         Products
 // @Accept       json
 // @Produce      json
-// @Param        id              path      string  true  "ID del producto (hash alfanumérico)"
-// @Param        integration_id  path      int  true  "ID de la integración"
+// @Param        id              path      string  true   "ID del producto (hash alfanumérico)"
+// @Param        integration_id  path      int     true   "ID de la integración"
+// @Param        business_id     query     int     false  "ID del negocio (requerido para super admin)"
 // @Security     BearerAuth
 // @Success      200  {object}  map[string]interface{}
 // @Failure      400  {object}  map[string]interface{}
@@ -110,6 +118,12 @@ func (h *Handlers) AddProductIntegration(c *gin.Context) {
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /products/{id}/integrations/{integration_id} [delete]
 func (h *Handlers) RemoveProductIntegration(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		h.respondBusinessIDRequired(c)
+		return
+	}
+
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -131,7 +145,7 @@ func (h *Handlers) RemoveProductIntegration(c *gin.Context) {
 		return
 	}
 
-	err = h.uc.RemoveProductIntegration(c.Request.Context(), id, uint(integrationID))
+	err = h.uc.RemoveProductIntegration(c.Request.Context(), businessID, id, uint(integrationID))
 	if err != nil {
 		if err == domain.ErrProductNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -171,7 +185,8 @@ func (h *Handlers) RemoveProductIntegration(c *gin.Context) {
 // @Tags         Products
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "ID del producto (hash alfanumérico)"
+// @Param        id           path      string  true   "ID del producto (hash alfanumérico)"
+// @Param        business_id  query     int     false  "ID del negocio (requerido para super admin)"
 // @Security     BearerAuth
 // @Success      200  {object}  map[string]interface{}
 // @Failure      400  {object}  map[string]interface{}
@@ -179,6 +194,12 @@ func (h *Handlers) RemoveProductIntegration(c *gin.Context) {
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /products/{id}/integrations [get]
 func (h *Handlers) GetProductIntegrations(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		h.respondBusinessIDRequired(c)
+		return
+	}
+
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -189,7 +210,7 @@ func (h *Handlers) GetProductIntegrations(c *gin.Context) {
 		return
 	}
 
-	integrations, err := h.uc.GetProductIntegrations(c.Request.Context(), id)
+	integrations, err := h.uc.GetProductIntegrations(c.Request.Context(), businessID, id)
 	if err != nil {
 		if err == domain.ErrProductNotFound {
 			c.JSON(http.StatusNotFound, gin.H{

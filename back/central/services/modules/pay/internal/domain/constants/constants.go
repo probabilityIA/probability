@@ -30,3 +30,8 @@ const (
 const (
 	MaxRetries = 3
 )
+
+// Wallet
+const (
+	WalletMinRechargeAmount = 15000
+)

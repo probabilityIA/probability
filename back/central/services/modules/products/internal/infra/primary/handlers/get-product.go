@@ -13,7 +13,8 @@ import (
 // @Tags         Products
 // @Accept       json
 // @Produce      json
-// @Param        id   path      string  true  "ID del producto (hash alfanumérico)"
+// @Param        id           path      string  true   "ID del producto (hash alfanumérico)"
+// @Param        business_id  query     int     false  "ID del negocio (requerido para super admin)"
 // @Security     BearerAuth
 // @Success      200  {object}  domain.ProductResponse
 // @Failure      400  {object}  map[string]interface{}
@@ -21,6 +22,12 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /products/{id} [get]
 func (h *Handlers) GetProductByID(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		h.respondBusinessIDRequired(c)
+		return
+	}
+
 	id := c.Param("id")
 	if id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -31,8 +38,8 @@ func (h *Handlers) GetProductByID(c *gin.Context) {
 		return
 	}
 
-	// Llamar al caso de uso
-	product, err := h.uc.GetProductByID(c.Request.Context(), id)
+	// Llamar al caso de uso (valida que el producto pertenezca al negocio)
+	product, err := h.uc.GetProductByID(c.Request.Context(), businessID, id)
 	if err != nil {
 		if err == domain.ErrProductNotFound {
 			c.JSON(http.StatusNotFound, gin.H{

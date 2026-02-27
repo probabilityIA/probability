@@ -31,4 +31,10 @@ const (
 	// Publisher : modules/pay (response consumer)
 	// Consumers : modules/events (SSE)
 	ChannelPayEvents = "probability:pay:state:events"
+
+	// ChannelInventoryEvents publica resultados de operaciones de inventario
+	// (reservas, confirmaciones, liberaciones, devoluciones por órdenes).
+	// Publisher : modules/inventory (order consumer)
+	// Consumers : modules/events (SSE)
+	ChannelInventoryEvents = "probability:inventory:state:events"
 )

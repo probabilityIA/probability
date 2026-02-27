@@ -10,11 +10,12 @@ interface ProductFormProps {
     product?: Product;
     onSuccess: () => void;
     onCancel: () => void;
+    businessId?: number;
 }
 
-export default function ProductForm({ product, onSuccess, onCancel }: ProductFormProps) {
+export default function ProductForm({ product, onSuccess, onCancel, businessId }: ProductFormProps) {
     const { permissions } = usePermissions();
-    const defaultBusinessId = permissions?.business_id || 0;
+    const defaultBusinessId = businessId || permissions?.business_id || 0;
 
     const [formData, setFormData] = useState<CreateProductDTO>({
         business_id: product?.business_id || defaultBusinessId,
@@ -54,11 +55,10 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
                     is_active: formData.is_active,
                     status: formData.status,
                 };
-                response = await updateProductAction(product.id, updateData);
+                response = await updateProductAction(product.id, updateData, businessId);
             } else {
                 // Create
-                // Note: business_id should ideally come from context or selection if creating new
-                response = await createProductAction(formData);
+                response = await createProductAction(formData, businessId);
             }
 
             if (response.success) {

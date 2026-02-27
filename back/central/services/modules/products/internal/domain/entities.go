@@ -15,7 +15,7 @@ import (
 // CreateProductRequest representa la solicitud para crear un producto
 type CreateProductRequest struct {
 	// Identificadores
-	BusinessID uint   `json:"business_id" binding:"required"`
+	BusinessID uint `json:"-"` // Set from JWT in handler, never from request body
 	SKU        string `json:"sku" binding:"required,max=128"`
 	ExternalID string `json:"external_id" binding:"omitempty,max=255"`
 

@@ -7,9 +7,9 @@ import (
 )
 
 // AddProductIntegration asocia un producto con una integración
-func (uc *UseCaseProduct) AddProductIntegration(ctx context.Context, productID string, req *domain.AddProductIntegrationRequest) (*domain.ProductBusinessIntegration, error) {
-	// Validar que el producto existe
-	product, err := uc.repo.GetProductByID(ctx, productID)
+func (uc *UseCaseProduct) AddProductIntegration(ctx context.Context, businessID uint, productID string, req *domain.AddProductIntegrationRequest) (*domain.ProductBusinessIntegration, error) {
+	// Validar que el producto existe y pertenece al negocio
+	product, err := uc.repo.GetProductByID(ctx, businessID, productID)
 	if err != nil {
 		return nil, err
 	}
@@ -29,9 +29,9 @@ func (uc *UseCaseProduct) AddProductIntegration(ctx context.Context, productID s
 }
 
 // RemoveProductIntegration remueve la asociación entre un producto y una integración
-func (uc *UseCaseProduct) RemoveProductIntegration(ctx context.Context, productID string, integrationID uint) error {
-	// Validar que el producto existe
-	_, err := uc.repo.GetProductByID(ctx, productID)
+func (uc *UseCaseProduct) RemoveProductIntegration(ctx context.Context, businessID uint, productID string, integrationID uint) error {
+	// Validar que el producto existe y pertenece al negocio
+	_, err := uc.repo.GetProductByID(ctx, businessID, productID)
 	if err != nil {
 		return err
 	}
@@ -41,9 +41,9 @@ func (uc *UseCaseProduct) RemoveProductIntegration(ctx context.Context, productI
 }
 
 // GetProductIntegrations obtiene todas las integraciones asociadas a un producto
-func (uc *UseCaseProduct) GetProductIntegrations(ctx context.Context, productID string) ([]domain.ProductBusinessIntegration, error) {
-	// Validar que el producto existe
-	_, err := uc.repo.GetProductByID(ctx, productID)
+func (uc *UseCaseProduct) GetProductIntegrations(ctx context.Context, businessID uint, productID string) ([]domain.ProductBusinessIntegration, error) {
+	// Validar que el producto existe y pertenece al negocio
+	_, err := uc.repo.GetProductByID(ctx, businessID, productID)
 	if err != nil {
 		return nil, err
 	}

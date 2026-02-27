@@ -11,7 +11,6 @@ import {
     processRequestAction,
     getWalletBalanceAction,
     rechargeWalletAction,
-    reportPaymentAction,
     manualDebitAction,
     getWalletHistoryAction,
     clearRechargeHistoryAction,
@@ -714,9 +713,6 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                     <Button
                         variant="secondary"
                         onClick={async () => {
-                            if (currentRequestId) {
-                                await reportPaymentAction(currentRequestId);
-                            }
                             setShowQrModal(false);
                             setShowConfirmationModal(true);
                             setCurrentRequestId(null);

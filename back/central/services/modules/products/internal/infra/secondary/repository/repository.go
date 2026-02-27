@@ -35,12 +35,12 @@ func (r *Repository) CreateProduct(ctx context.Context, product *domain.Product)
 	return nil
 }
 
-// GetProductByID obtiene un producto por su ID
-func (r *Repository) GetProductByID(ctx context.Context, id string) (*domain.Product, error) {
+// GetProductByID obtiene un producto por su ID, validando que pertenezca al negocio
+func (r *Repository) GetProductByID(ctx context.Context, businessID uint, id string) (*domain.Product, error) {
 	var product models.Product
 	err := r.db.Conn(ctx).
 		Preload("Business").
-		Where("id = ?", id).
+		Where("id = ? AND business_id = ?", id, businessID).
 		First(&product).Error
 
 	if err != nil {
@@ -71,18 +71,13 @@ func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku s
 	return mappers.ToDomainProduct(&product), nil
 }
 
-// ListProducts obtiene una lista paginada de productos con filtros optimizados
-func (r *Repository) ListProducts(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]domain.Product, int64, error) {
+// ListProducts obtiene una lista paginada de productos filtrados por negocio
+func (r *Repository) ListProducts(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) ([]domain.Product, int64, error) {
 	var products []models.Product
 	var total int64
 
-	// Construir query base
-	query := r.db.Conn(ctx).Model(&models.Product{})
-
-	// Filtro por business_id
-	if businessID, ok := filters["business_id"].(uint); ok && businessID > 0 {
-		query = query.Where("products.business_id = ?", businessID)
-	}
+	// Construir query base - siempre filtra por businessID
+	query := r.db.Conn(ctx).Model(&models.Product{}).Where("products.business_id = ?", businessID)
 
 	// Filtro por integration_id (JOIN con Business -> Integrations)
 	if integrationID, ok := filters["integration_id"].(uint); ok && integrationID > 0 {
@@ -216,9 +211,9 @@ func (r *Repository) UpdateProduct(ctx context.Context, product *domain.Product)
 	return r.db.Conn(ctx).Save(dbProduct).Error
 }
 
-// DeleteProduct elimina (soft delete) un producto
-func (r *Repository) DeleteProduct(ctx context.Context, id string) error {
-	return r.db.Conn(ctx).Where("id = ?", id).Delete(&models.Product{}).Error
+// DeleteProduct elimina (soft delete) un producto, validando que pertenezca al negocio
+func (r *Repository) DeleteProduct(ctx context.Context, businessID uint, id string) error {
+	return r.db.Conn(ctx).Where("id = ? AND business_id = ?", id, businessID).Delete(&models.Product{}).Error
 }
 
 // ProductExists verifica si existe un producto con el SKU para un negocio

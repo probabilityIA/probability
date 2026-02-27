@@ -15,19 +15,15 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
     const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
 
     // Verificar permisos para cada recurso
-    const canViewProducts = permissionsNotLoaded || isSuperAdmin || hasPermission('Productos', 'Read');
     const canViewOrders = permissionsNotLoaded || isSuperAdmin || hasPermission('Ordenes', 'Read');
     const canViewShipments = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
     const canViewOrderStatus = permissionsNotLoaded || isSuperAdmin || hasPermission('Estado de Ordenes', 'Read');
-    const canViewNotifications = permissionsNotLoaded || isSuperAdmin || hasPermission('Configuración de Notificaciones', 'Read');
     const canViewOriginAddresses = permissionsNotLoaded || isSuperAdmin || hasPermission('Envios', 'Read');
 
     // Solo mostrar si estamos en alguna de estas secciones
-    const isInOrdersModule = pathname.startsWith('/products') ||
-                            pathname.startsWith('/orders') ||
+    const isInOrdersModule = pathname.startsWith('/orders') ||
                             pathname.startsWith('/shipments') ||
                             pathname.startsWith('/order-status') ||
-                            pathname.startsWith('/notification-config') ||
                             pathname.startsWith('/shipments/origin-addresses');
 
     if (!isInOrdersModule) {
@@ -49,16 +45,12 @@ export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
 
     // Todos los items del sidebar de órdenes en orden
     const menuItems = [
-        { section: 'CATÁLOGO', items: [
-            canViewProducts && { href: '/products', label: 'Productos', icon: '🛍️' },
-        ].filter(Boolean) },
         { section: 'OPERACIONES', items: [
             canViewOrders && { href: '/orders', label: 'Órdenes', icon: '📦' },
             canViewShipments && { href: '/shipments', label: 'Envíos', icon: '🚚' },
         ].filter(Boolean) },
         { section: 'CONFIGURACIÓN', items: [
             canViewOrderStatus && { href: '/order-status', label: 'Estados de Orden', icon: '✅' },
-            canViewNotifications && { href: '/notification-config', label: 'Notificaciones', icon: '🔔' },
             canViewOriginAddresses && { href: '/shipments/origin-addresses', label: 'Direcciones de Origen', icon: '📍' },
         ].filter(Boolean) },
     ];
