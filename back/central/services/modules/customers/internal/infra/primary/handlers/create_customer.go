@@ -11,20 +11,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/infra/primary/handlers/response"
 )
 
-// CreateClient godoc
-// @Summary      Crear cliente
-// @Description  Crea un nuevo cliente en el negocio
-// @Tags         Clients
-// @Accept       json
-// @Produce      json
-// @Param        request  body  request.CreateClientRequest  true  "Datos del cliente"
-// @Security     BearerAuth
-// @Success      201  {object}  response.ClientResponse
-// @Router       /clients [post]
 func (h *Handlers) CreateClient(c *gin.Context) {
-	businessID := c.GetUint("business_id")
-	if businessID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "business_id not found in token"})
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
 		return
 	}
 

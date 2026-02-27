@@ -7,6 +7,7 @@ import { Spinner, Alert } from '@/shared/ui';
 
 interface CustomerDetailProps {
     customerId: number;
+    businessId?: number;
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -27,7 +28,7 @@ function Field({ label, value }: { label: string; value?: string | null }) {
     );
 }
 
-export default function CustomerDetailView({ customerId }: CustomerDetailProps) {
+export default function CustomerDetailView({ customerId, businessId }: CustomerDetailProps) {
     const [customer, setCustomer] = useState<CustomerDetail | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -37,7 +38,7 @@ export default function CustomerDetailView({ customerId }: CustomerDetailProps) 
             setLoading(true);
             setError(null);
             try {
-                const data = await getCustomerByIdAction(customerId);
+                const data = await getCustomerByIdAction(customerId, businessId);
                 setCustomer(data);
             } catch (err: any) {
                 setError(err.message || 'Error al cargar el cliente');
@@ -46,7 +47,7 @@ export default function CustomerDetailView({ customerId }: CustomerDetailProps) 
             }
         };
         fetch();
-    }, [customerId]);
+    }, [customerId, businessId]);
 
     if (loading) {
         return (

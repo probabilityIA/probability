@@ -10,19 +10,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/infra/primary/handlers/response"
 )
 
-// GetClient godoc
-// @Summary      Obtener cliente por ID
-// @Description  Obtiene un cliente específico con estadísticas de órdenes
-// @Tags         Clients
-// @Produce      json
-// @Param        id  path  int  true  "ID del cliente"
-// @Security     BearerAuth
-// @Success      200  {object}  response.ClientDetailResponse
-// @Router       /clients/{id} [get]
 func (h *Handlers) GetClient(c *gin.Context) {
-	businessID := c.GetUint("business_id")
-	if businessID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "business_id not found in token"})
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
 		return
 	}
 

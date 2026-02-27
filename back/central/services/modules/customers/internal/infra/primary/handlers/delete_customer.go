@@ -9,20 +9,10 @@ import (
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/customers/internal/domain/errors"
 )
 
-// DeleteClient godoc
-// @Summary      Eliminar cliente
-// @Description  Elimina un cliente. Retorna 409 si tiene órdenes asociadas.
-// @Tags         Clients
-// @Produce      json
-// @Param        id  path  int  true  "ID del cliente"
-// @Security     BearerAuth
-// @Success      200  {object}  map[string]string
-// @Failure      409  {object}  map[string]string
-// @Router       /clients/{id} [delete]
 func (h *Handlers) DeleteClient(c *gin.Context) {
-	businessID := c.GetUint("business_id")
-	if businessID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "business_id not found in token"})
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
 		return
 	}
 

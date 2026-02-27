@@ -12,21 +12,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/infra/primary/handlers/response"
 )
 
-// UpdateClient godoc
-// @Summary      Actualizar cliente
-// @Description  Actualiza los datos de un cliente existente
-// @Tags         Clients
-// @Accept       json
-// @Produce      json
-// @Param        id       path  int                          true  "ID del cliente"
-// @Param        request  body  request.UpdateClientRequest  true  "Datos a actualizar"
-// @Security     BearerAuth
-// @Success      200  {object}  response.ClientResponse
-// @Router       /clients/{id} [put]
 func (h *Handlers) UpdateClient(c *gin.Context) {
-	businessID := c.GetUint("business_id")
-	if businessID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "business_id not found in token"})
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
 		return
 	}
 

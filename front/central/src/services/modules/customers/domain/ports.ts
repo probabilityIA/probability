@@ -10,8 +10,8 @@ import {
 
 export interface ICustomerRepository {
     getCustomers(params?: GetCustomersParams): Promise<CustomersListResponse>;
-    getCustomerById(id: number): Promise<CustomerDetail>;
-    createCustomer(data: CreateCustomerDTO): Promise<CustomerInfo>;
-    updateCustomer(id: number, data: UpdateCustomerDTO): Promise<CustomerInfo>;
-    deleteCustomer(id: number): Promise<DeleteCustomerResponse>;
+    getCustomerById(id: number, businessId?: number): Promise<CustomerDetail>;
+    createCustomer(data: CreateCustomerDTO, businessId?: number): Promise<CustomerInfo>;
+    updateCustomer(id: number, data: UpdateCustomerDTO, businessId?: number): Promise<CustomerInfo>;
+    deleteCustomer(id: number, businessId?: number): Promise<DeleteCustomerResponse>;
 }

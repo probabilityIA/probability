@@ -8,19 +8,19 @@ export class CustomerUseCases {
         return this.repository.getCustomers(params);
     }
 
-    async getCustomerById(id: number) {
-        return this.repository.getCustomerById(id);
+    async getCustomerById(id: number, businessId?: number) {
+        return this.repository.getCustomerById(id, businessId);
     }
 
-    async createCustomer(data: CreateCustomerDTO) {
-        return this.repository.createCustomer(data);
+    async createCustomer(data: CreateCustomerDTO, businessId?: number) {
+        return this.repository.createCustomer(data, businessId);
     }
 
-    async updateCustomer(id: number, data: UpdateCustomerDTO) {
-        return this.repository.updateCustomer(id, data);
+    async updateCustomer(id: number, data: UpdateCustomerDTO, businessId?: number) {
+        return this.repository.updateCustomer(id, data, businessId);
     }
 
-    async deleteCustomer(id: number) {
-        return this.repository.deleteCustomer(id);
+    async deleteCustomer(id: number, businessId?: number) {
+        return this.repository.deleteCustomer(id, businessId);
     }
 }

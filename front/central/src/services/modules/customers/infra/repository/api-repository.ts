@@ -22,11 +22,6 @@ export class CustomerApiRepository implements ICustomerRepository {
     private async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
         const url = `${this.baseUrl}${path}`;
 
-        console.log(`[API Request] ${options.method || 'GET'} ${url}`, {
-            headers: options.headers,
-            body: options.body,
-        });
-
         const headers: Record<string, string> = {
             Accept: 'application/json',
             'Content-Type': 'application/json',
@@ -41,18 +36,21 @@ export class CustomerApiRepository implements ICustomerRepository {
             const res = await fetch(url, { ...options, headers });
             const data = await res.json();
 
-            console.log(`[API Response] ${res.status} ${url}`, data);
-
             if (!res.ok) {
-                console.error(`[API Error] ${res.status} ${url}`, data);
                 throw new Error(data.error || data.message || 'An error occurred');
             }
 
             return data;
         } catch (error) {
-            console.error(`[API Network Error] ${url}`, error);
             throw error;
         }
+    }
+
+    /** Agrega ?business_id=X a la url si se provee (para super admin) */
+    private withBusinessId(path: string, businessId?: number): string {
+        if (!businessId) return path;
+        const sep = path.includes('?') ? '&' : '?';
+        return `${path}${sep}business_id=${businessId}`;
     }
 
     async getCustomers(params?: GetCustomersParams): Promise<CustomersListResponse> {
@@ -68,26 +66,26 @@ export class CustomerApiRepository implements ICustomerRepository {
         return this.fetch<CustomersListResponse>(`/customers${query ? `?${query}` : ''}`);
     }
 
-    async getCustomerById(id: number): Promise<CustomerDetail> {
-        return this.fetch<CustomerDetail>(`/customers/${id}`);
+    async getCustomerById(id: number, businessId?: number): Promise<CustomerDetail> {
+        return this.fetch<CustomerDetail>(this.withBusinessId(`/customers/${id}`, businessId));
     }
 
-    async createCustomer(data: CreateCustomerDTO): Promise<CustomerInfo> {
-        return this.fetch<CustomerInfo>('/customers', {
+    async createCustomer(data: CreateCustomerDTO, businessId?: number): Promise<CustomerInfo> {
+        return this.fetch<CustomerInfo>(this.withBusinessId('/customers', businessId), {
             method: 'POST',
             body: JSON.stringify(data),
         });
     }
 
-    async updateCustomer(id: number, data: UpdateCustomerDTO): Promise<CustomerInfo> {
-        return this.fetch<CustomerInfo>(`/customers/${id}`, {
+    async updateCustomer(id: number, data: UpdateCustomerDTO, businessId?: number): Promise<CustomerInfo> {
+        return this.fetch<CustomerInfo>(this.withBusinessId(`/customers/${id}`, businessId), {
             method: 'PUT',
             body: JSON.stringify(data),
         });
     }
 
-    async deleteCustomer(id: number): Promise<DeleteCustomerResponse> {
-        return this.fetch<DeleteCustomerResponse>(`/customers/${id}`, {
+    async deleteCustomer(id: number, businessId?: number): Promise<DeleteCustomerResponse> {
+        return this.fetch<DeleteCustomerResponse>(this.withBusinessId(`/customers/${id}`, businessId), {
             method: 'DELETE',
         });
     }

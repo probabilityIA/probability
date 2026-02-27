@@ -9,9 +9,10 @@ interface CustomerFormProps {
     customer?: CustomerInfo;
     onSuccess: () => void;
     onCancel: () => void;
+    businessId?: number;
 }
 
-export default function CustomerForm({ customer, onSuccess, onCancel }: CustomerFormProps) {
+export default function CustomerForm({ customer, onSuccess, onCancel, businessId }: CustomerFormProps) {
     const [formData, setFormData] = useState<CreateCustomerDTO>({
         name: customer?.name || '',
         email: customer?.email || '',
@@ -41,7 +42,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     phone: formData.phone || undefined,
                     dni: formData.dni || null,
                 };
-                await updateCustomerAction(customer.id, updateData);
+                await updateCustomerAction(customer.id, updateData, businessId);
             } else {
                 const createData: CreateCustomerDTO = {
                     name: formData.name,
@@ -49,7 +50,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
                     phone: formData.phone || undefined,
                     dni: formData.dni || null,
                 };
-                await createCustomerAction(createData);
+                await createCustomerAction(createData, businessId);
             }
 
             setSuccess(customer ? 'Cliente actualizado exitosamente' : 'Cliente creado exitosamente');

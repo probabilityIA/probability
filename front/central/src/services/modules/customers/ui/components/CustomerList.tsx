@@ -4,15 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { getCustomersAction, deleteCustomerAction } from '../../infra/actions';
 import { CustomerInfo, GetCustomersParams } from '../../domain/types';
-import { Alert, Badge, Table, Spinner } from '@/shared/ui';
+import { Alert, Table, Spinner } from '@/shared/ui';
 
 interface CustomerListProps {
     onView?: (customer: CustomerInfo) => void;
     onEdit?: (customer: CustomerInfo) => void;
     onRefreshRef?: (ref: () => void) => void;
+    selectedBusinessId?: number;
 }
 
-export default function CustomerList({ onView, onEdit, onRefreshRef }: CustomerListProps) {
+export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBusinessId }: CustomerListProps) {
     const [customers, setCustomers] = useState<CustomerInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -31,6 +32,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef }: CustomerL
         try {
             const params: GetCustomersParams = { page, page_size: pageSize };
             if (search) params.search = search;
+            if (selectedBusinessId) params.business_id = selectedBusinessId;
 
             const response = await getCustomersAction(params);
             setCustomers(response.data || []);
@@ -42,16 +44,22 @@ export default function CustomerList({ onView, onEdit, onRefreshRef }: CustomerL
         } finally {
             setLoading(false);
         }
-    }, [page, pageSize, search]);
+    }, [page, pageSize, search, selectedBusinessId]);
 
     useEffect(() => {
         fetchCustomers();
     }, [fetchCustomers]);
 
-    // Exponer refresh al padre
     useEffect(() => {
         onRefreshRef?.(fetchCustomers);
     }, [fetchCustomers, onRefreshRef]);
+
+    // Resetear a página 1 cuando cambia el negocio seleccionado
+    useEffect(() => {
+        setPage(1);
+        setSearch('');
+        setSearchInput('');
+    }, [selectedBusinessId]);
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
@@ -68,7 +76,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef }: CustomerL
     const handleDelete = async (customer: CustomerInfo) => {
         if (!confirm(`¿Eliminar al cliente "${customer.name}"? Esta acción no se puede deshacer.`)) return;
         try {
-            await deleteCustomerAction(customer.id);
+            await deleteCustomerAction(customer.id, selectedBusinessId);
             fetchCustomers();
         } catch (err: any) {
             setError(err.message || 'Error al eliminar el cliente');

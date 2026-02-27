@@ -41,6 +41,7 @@ export interface GetCustomersParams {
     page?: number;
     page_size?: number;
     search?: string;
+    business_id?: number;
 }
 
 // ============================================

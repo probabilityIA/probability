@@ -16,43 +16,38 @@ export const getCustomersAction = async (params?: GetCustomersParams) => {
     try {
         return await (await getUseCases()).getCustomers(params);
     } catch (error: any) {
-        console.error('Get Customers Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const getCustomerByIdAction = async (id: number) => {
+export const getCustomerByIdAction = async (id: number, businessId?: number) => {
     try {
-        return await (await getUseCases()).getCustomerById(id);
+        return await (await getUseCases()).getCustomerById(id, businessId);
     } catch (error: any) {
-        console.error('Get Customer By Id Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const createCustomerAction = async (data: CreateCustomerDTO) => {
+export const createCustomerAction = async (data: CreateCustomerDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).createCustomer(data);
+        return await (await getUseCases()).createCustomer(data, businessId);
     } catch (error: any) {
-        console.error('Create Customer Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const updateCustomerAction = async (id: number, data: UpdateCustomerDTO) => {
+export const updateCustomerAction = async (id: number, data: UpdateCustomerDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).updateCustomer(id, data);
+        return await (await getUseCases()).updateCustomer(id, data, businessId);
     } catch (error: any) {
-        console.error('Update Customer Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const deleteCustomerAction = async (id: number) => {
+export const deleteCustomerAction = async (id: number, businessId?: number) => {
     try {
-        return await (await getUseCases()).deleteCustomer(id);
+        return await (await getUseCases()).deleteCustomer(id, businessId);
     } catch (error: any) {
-        console.error('Delete Customer Action Error:', error.message);
         throw new Error(error.message);
     }
 };

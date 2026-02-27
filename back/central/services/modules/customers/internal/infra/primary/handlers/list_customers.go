@@ -9,21 +9,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/customers/internal/infra/primary/handlers/response"
 )
 
-// ListClients godoc
-// @Summary      Listar clientes
-// @Description  Obtiene una lista paginada de clientes del negocio
-// @Tags         Clients
-// @Produce      json
-// @Param        page       query  int     false  "Página (default: 1)"
-// @Param        page_size  query  int     false  "Tamaño de página (default: 20, max: 100)"
-// @Param        search     query  string  false  "Buscar por nombre, email o teléfono"
-// @Security     BearerAuth
-// @Success      200  {object}  response.ClientsListResponse
-// @Router       /clients [get]
 func (h *Handlers) ListClients(c *gin.Context) {
-	businessID := c.GetUint("business_id")
-	if businessID == 0 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "business_id not found in token"})
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
 		return
 	}
 
