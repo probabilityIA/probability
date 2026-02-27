@@ -65,7 +65,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             setPage(1);
             setFilterCategory(propFilterCategory);
         }
-    }, [propFilterCategory]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [propFilterCategory]);
 
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,

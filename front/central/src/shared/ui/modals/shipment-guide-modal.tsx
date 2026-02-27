@@ -262,6 +262,23 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     });
 
     // Fetch initial data on open
+    const handleOriginAddressSelect = (addr: OriginAddress) => {
+        // Step 1
+        step1Form.setValue("originDaneCode", addr.city_dane_code);
+        step1Form.setValue("originAddress", addr.street);
+        setOriginSearch(`${addr.city} (${addr.state})`);
+
+        // Step 3
+        step3Form.setValue("originCompany", addr.company);
+        step3Form.setValue("originFirstName", addr.first_name);
+        step3Form.setValue("originLastName", addr.last_name);
+        step3Form.setValue("originEmail", addr.email);
+        step3Form.setValue("originPhone", addr.phone);
+        step3Form.setValue("originSuburb", addr.suburb || "");
+        step3Form.setValue("originCrossStreet", addr.street);
+        step3Form.setValue("originReference", ""); // Opcional
+    };
+
     useEffect(() => {
         if (isOpen) {
             const balanceBusinessId = effectiveBusinessId || undefined;
@@ -280,23 +297,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             });
         }
     }, [isOpen]);
-
-    const handleOriginAddressSelect = (addr: OriginAddress) => {
-        // Step 1
-        step1Form.setValue("originDaneCode", addr.city_dane_code);
-        step1Form.setValue("originAddress", addr.street);
-        setOriginSearch(`${addr.city} (${addr.state})`);
-
-        // Step 3
-        step3Form.setValue("originCompany", addr.company);
-        step3Form.setValue("originFirstName", addr.first_name);
-        step3Form.setValue("originLastName", addr.last_name);
-        step3Form.setValue("originEmail", addr.email);
-        step3Form.setValue("originPhone", addr.phone);
-        step3Form.setValue("originSuburb", addr.suburb || "");
-        step3Form.setValue("originCrossStreet", addr.street);
-        step3Form.setValue("originReference", ""); // Opcional
-    };
 
     // Pre-fill from order
     useEffect(() => {
@@ -802,6 +802,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 1: Origin/Destination/Package */}
                     {currentStep === 1 && (
+                        // eslint-disable-next-line react-hooks/refs
                         <form onSubmit={step1Form.handleSubmit(handleStep1Submit)} className="flex flex-col h-full overflow-hidden min-h-0" data-testid="step1-form">
                             <div className="flex-1 overflow-y-auto min-h-0 pr-3">
                                 <div className="space-y-3">

@@ -171,7 +171,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
 
         const selectedOrders = orders.filter(o => selectedOrderIds.has(o.id));
         const quotedOrders: OrderWithQuote[] = [];
-        let total = 0;
+        const total = 0;
 
         for (let i = 0; i < selectedOrders.length; i++) {
             const order = selectedOrders[i];
