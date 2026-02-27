@@ -19,6 +19,7 @@ export * from './modal';
 export * from './select';
 export * from './sidebar';
 export * from './orders-subnavbar';
+export * from './inventory-subnavbar';
 export * from './spinner';
 export * from './stepper';
 export * from './table';
