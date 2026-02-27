@@ -3,6 +3,7 @@ package modules
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
+	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/events"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
@@ -10,10 +11,10 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
+	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
-	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/wallet"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -46,6 +47,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de products
 	products.New(router, database, logger, environment)
+
+	// Inicializar módulo de customers
+	customers.New(router, database)
 
 	// Inicializar módulo de shipments
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
