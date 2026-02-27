@@ -20,6 +20,19 @@ type IHandler interface {
 	ListOrderStatusesSimple(c *gin.Context)
 	ListFulfillmentStatuses(c *gin.Context)
 
+	// CRUD estados de Probability
+	CreateOrderStatus(c *gin.Context)
+	GetOrderStatus(c *gin.Context)
+	UpdateOrderStatus(c *gin.Context)
+	DeleteOrderStatus(c *gin.Context)
+
+	// Estados por canal de integración (ecommerce)
+	ListEcommerceIntegrationTypes(c *gin.Context)
+	ListChannelStatuses(c *gin.Context)
+	CreateChannelStatus(c *gin.Context)
+	UpdateChannelStatus(c *gin.Context)
+	DeleteChannelStatus(c *gin.Context)
+
 	// Método de registro de rutas
 	RegisterRoutes(router *gin.RouterGroup)
 }

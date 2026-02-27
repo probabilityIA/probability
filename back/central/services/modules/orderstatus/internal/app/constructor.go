@@ -18,6 +18,20 @@ type IUseCase interface {
 	ToggleOrderStatusMappingActive(ctx context.Context, id uint) (*entities.OrderStatusMapping, error)
 	ListOrderStatuses(ctx context.Context, isActive *bool) ([]entities.OrderStatusInfo, error)
 	ListFulfillmentStatuses(ctx context.Context, isActive *bool) ([]entities.FulfillmentStatusInfo, error)
+
+	// CRUD para estados de Probability
+	CreateOrderStatus(ctx context.Context, status *entities.OrderStatusInfo) (*entities.OrderStatusInfo, error)
+	GetOrderStatus(ctx context.Context, id uint) (*entities.OrderStatusInfo, error)
+	UpdateOrderStatus(ctx context.Context, id uint, status *entities.OrderStatusInfo) (*entities.OrderStatusInfo, error)
+	DeleteOrderStatus(ctx context.Context, id uint) error
+
+	// Estados por canal de integración (ecommerce)
+	ListEcommerceIntegrationTypes(ctx context.Context, businessID uint) ([]entities.IntegrationTypeInfo, error)
+	ListChannelStatuses(ctx context.Context, integrationTypeID uint, isActive *bool) ([]entities.ChannelStatusInfo, error)
+	CreateChannelStatus(ctx context.Context, status *entities.ChannelStatusInfo) (*entities.ChannelStatusInfo, error)
+	GetChannelStatus(ctx context.Context, id uint) (*entities.ChannelStatusInfo, error)
+	UpdateChannelStatus(ctx context.Context, id uint, status *entities.ChannelStatusInfo) (*entities.ChannelStatusInfo, error)
+	DeleteChannelStatus(ctx context.Context, id uint) error
 }
 
 // useCase implementa IUseCase

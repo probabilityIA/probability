@@ -11,7 +11,6 @@ func CreateRequestToDomain(req *request.CreateOrderStatusMappingRequest) *entiti
 		IntegrationTypeID: req.IntegrationTypeID,
 		OriginalStatus:    req.OriginalStatus,
 		OrderStatusID:     req.OrderStatusID,
-		Priority:          req.Priority,
 		Description:       req.Description,
 		IsActive:          true,
 	}
@@ -22,7 +21,6 @@ func UpdateRequestToDomain(req *request.UpdateOrderStatusMappingRequest) *entiti
 	return &entities.OrderStatusMapping{
 		OriginalStatus: req.OriginalStatus,
 		OrderStatusID:  req.OrderStatusID,
-		Priority:       req.Priority,
 		Description:    req.Description,
 	}
 }

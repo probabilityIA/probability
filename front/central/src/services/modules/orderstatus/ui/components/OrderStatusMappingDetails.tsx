@@ -47,13 +47,16 @@ export default function OrderStatusMappingDetails({ mapping }: OrderStatusMappin
                     )}
                 </div>
 
-                {/* Priority */}
+                {/* Priority (inherited from order status) */}
                 <div>
                     <label className="block text-sm font-medium text-gray-500 mb-1">
                         Prioridad
                     </label>
                     <p className="text-base font-medium text-gray-900">
-                        {mapping.priority}
+                        {mapping.order_status?.priority ?? '—'}
+                    </p>
+                    <p className="text-xs text-gray-400 mt-1">
+                        Heredada del estado de Probability
                     </p>
                 </div>
 

@@ -36,8 +36,11 @@ func (r *repository) List(ctx context.Context, filters map[string]interface{}) (
 		}
 	}
 
-	// Obtener resultados
-	if err := query.Order("integration_type_id ASC, priority DESC, created_at DESC").Find(&modelsList).Error; err != nil {
+	// Obtener resultados (se ordena por la prioridad del estado de Probability vía JOIN)
+	if err := query.
+		Joins("LEFT JOIN order_statuses ON order_statuses.id = order_status_mappings.order_status_id").
+		Order("integration_type_id ASC, order_statuses.priority ASC, order_status_mappings.created_at DESC").
+		Find(&modelsList).Error; err != nil {
 		return nil, 0, err
 	}
 

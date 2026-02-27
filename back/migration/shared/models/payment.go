@@ -89,6 +89,7 @@ type OrderStatus struct {
 
 	// Configuración
 	IsActive bool `gorm:"default:true;index"` // Si está activo
+	Priority int  `gorm:"default:0;index"`    // Prioridad en el ciclo de vida (mayor = más avanzado)
 
 	// UI/UX
 	Icon     string         `gorm:"size:255"`   // URL del ícono
@@ -119,7 +120,6 @@ type OrderStatusMapping struct {
 
 	// Configuración
 	IsActive    bool           `gorm:"default:true;index"` // Si el mapeo está activo
-	Priority    int            `gorm:"default:0"`          // Prioridad en caso de múltiples mapeos
 	Description string         `gorm:"type:text"`          // Descripción del mapeo
 	Metadata    datatypes.JSON `gorm:"type:jsonb"`         // Metadata adicional
 
@@ -224,4 +224,35 @@ type ChannelPaymentMethod struct {
 // TableName especifica el nombre de la tabla
 func (ChannelPaymentMethod) TableName() string {
 	return "channel_payment_methods"
+}
+
+// ───────────────────────────────────────────
+//
+//	INTEGRATION CHANNEL STATUSES - Estados nativos por canal de integración
+//
+// ───────────────────────────────────────────
+
+// IntegrationChannelStatus representa un estado de orden nativo de un canal de integración.
+// Son los estados que reportan plataformas como Shopify o MercadoLibre (ej. "paid", "pending").
+// El administrador los gestiona; los usuarios los ven al configurar los mapeos de estado.
+type IntegrationChannelStatus struct {
+	gorm.Model
+
+	// Canal de integración (FK a integration_types)
+	IntegrationTypeID uint   `gorm:"not null;index;uniqueIndex:idx_integration_channel_status,priority:1"`
+	Code              string `gorm:"size:128;not null;uniqueIndex:idx_integration_channel_status,priority:2"` // "paid", "pending"
+	Name              string `gorm:"size:128;not null"`                                                        // "Pagada", "Pendiente"
+	Description       string `gorm:"type:text"`                                                                // Descripción del estado en la plataforma
+
+	// Configuración
+	IsActive     bool `gorm:"default:true;index"` // Si está activo
+	DisplayOrder int  `gorm:"default:0"`           // Orden de visualización
+
+	// Relación
+	IntegrationType IntegrationType `gorm:"foreignKey:IntegrationTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+}
+
+// TableName especifica el nombre de la tabla
+func (IntegrationChannelStatus) TableName() string {
+	return "integration_channel_statuses"
 }

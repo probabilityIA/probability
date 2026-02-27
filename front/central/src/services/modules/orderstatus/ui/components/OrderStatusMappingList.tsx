@@ -14,6 +14,7 @@ import {
 import { getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
 import { OrderStatusMapping, GetOrderStatusMappingsParams } from '../../domain/types';
 import { Alert, Badge, Table, Spinner } from '@/shared/ui';
+import OrderStatusBadge from './OrderStatusBadge';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui/dynamic-filters';
 
 interface OrderStatusMappingListProps {
@@ -196,6 +197,7 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
         { key: 'integration_type', label: 'Tipo de Integración' },
         { key: 'original_status', label: 'Estado Original' },
         { key: 'order_status', label: 'Estado de Probability' },
+        { key: 'description', label: 'Descripción' },
         { key: 'priority', label: 'Prioridad', align: 'center' as const },
         { key: 'is_active', label: 'Estado', align: 'center' as const },
         { key: 'actions', label: 'Acciones', align: 'right' as const },
@@ -232,13 +234,19 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
             </span>
         ),
         order_status: (
-            <span className="text-sm font-medium text-gray-900">
-                {mapping.order_status?.name || `ID: ${mapping.order_status_id}`}
+            <OrderStatusBadge
+                status={mapping.order_status}
+                fallback={`ID: ${mapping.order_status_id}`}
+            />
+        ),
+        description: (
+            <span className="text-sm text-gray-500">
+                {mapping.description || <span className="text-gray-300">—</span>}
             </span>
         ),
         priority: (
             <span className="text-sm text-gray-900">
-                {mapping.priority}
+                {mapping.order_status?.priority ?? '—'}
             </span>
         ),
         is_active: (

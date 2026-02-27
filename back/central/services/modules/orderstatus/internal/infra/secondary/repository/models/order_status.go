@@ -15,6 +15,7 @@ type OrderStatus struct {
 	Description string `gorm:"type:text"`
 	Category    string `gorm:"size:64;index"`
 	IsActive    bool   `gorm:"default:true;index"`
+	Priority    int    `gorm:"default:0;index"`
 
 	// UI/UX
 	Icon     string         `gorm:"size:255"`
@@ -36,5 +37,7 @@ func (m *OrderStatus) ToDomain() entities.OrderStatusInfo {
 		Description: m.Description,
 		Category:    m.Category,
 		Color:       m.Color,
+		Priority:    m.Priority,
+		IsActive:    m.IsActive,
 	}
 }

@@ -16,7 +16,6 @@ func DomainToResponse(m *entities.OrderStatusMapping, imageURLBase string) *resp
 		OriginalStatus:    m.OriginalStatus,
 		OrderStatusID:     m.OrderStatusID,
 		IsActive:          m.IsActive,
-		Priority:          m.Priority,
 		Description:       m.Description,
 		CreatedAt:         m.CreatedAt,
 		UpdatedAt:         m.UpdatedAt,
@@ -46,6 +45,7 @@ func DomainToResponse(m *entities.OrderStatusMapping, imageURLBase string) *resp
 			Description: m.OrderStatus.Description,
 			Category:    m.OrderStatus.Category,
 			Color:       m.OrderStatus.Color,
+			Priority:    m.OrderStatus.Priority,
 		}
 	}
 

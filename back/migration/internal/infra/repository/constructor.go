@@ -47,6 +47,7 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		// Payment Methods
 		&models.PaymentMethod{},
 		&models.ChannelPaymentMethod{},
+		&models.IntegrationChannelStatus{},
 		&models.PaymentMethodMapping{},
 		&models.OrderStatusMapping{},
 		&models.OrderStatus{},
@@ -186,6 +187,16 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	// Seed channel payment methods
 	if err := r.seedChannelPaymentMethods(ctx); err != nil {
 		return fmt.Errorf("failed to seed channel payment methods: %w", err)
+	}
+
+	// Mover priority de order_status_mappings a order_statuses
+	if err := r.migrateOrderStatusPriority(ctx); err != nil {
+		return fmt.Errorf("failed to migrate order status priority: %w", err)
+	}
+
+	// Seed integration channel statuses (estados nativos por canal ecommerce)
+	if err := r.seedIntegrationChannelStatuses(ctx); err != nil {
+		return fmt.Errorf("failed to seed integration channel statuses: %w", err)
 	}
 
 	return r.createDefaultUserIfNotExists(ctx)
@@ -916,6 +927,114 @@ func (r *Repository) seedChannelPaymentMethods(ctx context.Context) error {
 			}
 		}
 	}
+	return nil
+}
+
+// migrateOrderStatusPriority mueve el campo priority de order_status_mappings a order_statuses.
+// El mapeo hereda la prioridad del estado de Probability al que apunta.
+func (r *Repository) migrateOrderStatusPriority(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Agregar columna priority a order_statuses si no existe (AutoMigrate ya lo hace,
+	//    pero el ALTER explícito garantiza ejecución ordenada)
+	if err := db.Exec(`
+		ALTER TABLE order_statuses ADD COLUMN IF NOT EXISTS priority INT NOT NULL DEFAULT 0
+	`).Error; err != nil {
+		return fmt.Errorf("failed to add priority to order_statuses: %w", err)
+	}
+
+	// 2. Seed de prioridades según el ciclo de vida de una orden
+	//    Mayor número = estado más avanzado en el ciclo
+	type prioritySeed struct {
+		id       uint
+		priority int
+	}
+	seeds := []prioritySeed{
+		{1, 1},  // pending
+		{2, 2},  // processing
+		{9, 3},  // on_hold
+		{3, 4},  // shipped
+		{4, 5},  // delivered
+		{5, 6},  // completed
+		{7, 7},  // refunded
+		{6, 8},  // cancelled
+		{8, 9},  // failed
+	}
+	for _, s := range seeds {
+		if err := db.Exec(`
+			UPDATE order_statuses SET priority = ? WHERE id = ? AND priority = 0
+		`, s.priority, s.id).Error; err != nil {
+			return fmt.Errorf("failed to seed priority for order_status id=%d: %w", s.id, err)
+		}
+	}
+
+	// 3. Eliminar columna priority de order_status_mappings si existe
+	if err := db.Exec(`
+		ALTER TABLE order_status_mappings DROP COLUMN IF EXISTS priority
+	`).Error; err != nil {
+		return fmt.Errorf("failed to drop priority from order_status_mappings: %w", err)
+	}
+
+	return nil
+}
+
+// seedIntegrationChannelStatuses inserta los estados nativos de los canales ecommerce.
+// Se hace lookup por code (no hardcoded IDs) para que sea idempotente.
+func (r *Repository) seedIntegrationChannelStatuses(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	type typeSeed struct {
+		code     string
+		statuses []models.IntegrationChannelStatus
+	}
+
+	channelData := []typeSeed{
+		{
+			code: "Shopify",
+			statuses: []models.IntegrationChannelStatus{
+				{Code: "pending", Name: "Pendiente", DisplayOrder: 1, IsActive: true},
+				{Code: "authorized", Name: "Autorizada", DisplayOrder: 2, IsActive: true},
+				{Code: "paid", Name: "Pagada", DisplayOrder: 3, IsActive: true},
+				{Code: "partially_paid", Name: "Parcialmente pagada", DisplayOrder: 4, IsActive: true},
+				{Code: "refunded", Name: "Reembolsada", DisplayOrder: 5, IsActive: true},
+				{Code: "partially_refunded", Name: "Parcialmente reembolsada", DisplayOrder: 6, IsActive: true},
+				{Code: "voided", Name: "Anulada", DisplayOrder: 7, IsActive: true},
+				{Code: "cancelled", Name: "Cancelada", DisplayOrder: 8, IsActive: true},
+			},
+		},
+		{
+			code: "Mercado Libre",
+			statuses: []models.IntegrationChannelStatus{
+				{Code: "pending", Name: "Pendiente", DisplayOrder: 1, IsActive: true},
+				{Code: "payment_required", Name: "Pago requerido", DisplayOrder: 2, IsActive: true},
+				{Code: "payment_in_process", Name: "Pago en proceso", DisplayOrder: 3, IsActive: true},
+				{Code: "partially_paid", Name: "Parcialmente pagado", DisplayOrder: 4, IsActive: true},
+				{Code: "paid", Name: "Pagado", DisplayOrder: 5, IsActive: true},
+				{Code: "money_returned", Name: "Dinero devuelto", DisplayOrder: 6, IsActive: true},
+				{Code: "cancelled", Name: "Cancelado", DisplayOrder: 7, IsActive: true},
+			},
+		},
+	}
+
+	for _, ch := range channelData {
+		var it models.IntegrationType
+		if err := db.Where("code = ?", ch.code).First(&it).Error; err != nil {
+			// Si el tipo no existe aún, saltamos
+			continue
+		}
+
+		for _, s := range ch.statuses {
+			s.IntegrationTypeID = it.ID
+			var existing models.IntegrationChannelStatus
+			err := db.Where("integration_type_id = ? AND code = ?", it.ID, s.Code).First(&existing).Error
+			if err == gorm.ErrRecordNotFound {
+				if err := db.Create(&s).Error; err != nil {
+					return fmt.Errorf("failed to create channel status %s/%s: %w", ch.code, s.Code, err)
+				}
+			}
+		}
+	}
+
 	return nil
 }
 

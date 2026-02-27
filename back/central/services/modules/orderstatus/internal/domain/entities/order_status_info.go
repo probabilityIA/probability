@@ -9,4 +9,6 @@ type OrderStatusInfo struct {
 	Description string
 	Category    string
 	Color       string
+	Priority    int
+	IsActive    bool
 }

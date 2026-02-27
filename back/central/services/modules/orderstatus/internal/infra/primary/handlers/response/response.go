@@ -10,6 +10,7 @@ type OrderStatusInfo struct {
 	Description string `json:"description"`
 	Category    string `json:"category"`
 	Color       string `json:"color"`
+	Priority    int    `json:"priority"`
 }
 
 // IntegrationTypeInfo representa la información del tipo de integración
@@ -29,7 +30,6 @@ type OrderStatusMappingResponse struct {
 	OrderStatusID     uint                 `json:"order_status_id"`
 	OrderStatus       *OrderStatusInfo     `json:"order_status,omitempty"`
 	IsActive          bool                 `json:"is_active"`
-	Priority          int                  `json:"priority"`
 	Description       string               `json:"description"`
 	CreatedAt         time.Time            `json:"created_at"`
 	UpdatedAt         time.Time            `json:"updated_at"`

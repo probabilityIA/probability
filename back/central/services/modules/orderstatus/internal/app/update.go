@@ -16,7 +16,6 @@ func (uc *useCase) UpdateOrderStatusMapping(ctx context.Context, id uint, mappin
 	// Actualizar solo los campos permitidos
 	current.OriginalStatus = mapping.OriginalStatus
 	current.OrderStatusID = mapping.OrderStatusID
-	current.Priority = mapping.Priority
 	current.Description = mapping.Description
 
 	if err := uc.repo.Update(ctx, current); err != nil {

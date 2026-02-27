@@ -5,6 +5,28 @@ export interface OrderStatusInfo {
     description?: string;
     category?: string;
     color?: string;
+    priority?: number;
+    is_active?: boolean;
+}
+
+export interface CreateOrderStatusDTO {
+    code: string;
+    name: string;
+    description?: string;
+    category?: string;
+    color?: string;
+    priority?: number;
+    is_active?: boolean;
+}
+
+export interface UpdateOrderStatusDTO {
+    code: string;
+    name: string;
+    description?: string;
+    category?: string;
+    color?: string;
+    priority?: number;
+    is_active?: boolean;
 }
 
 export interface IntegrationTypeInfo {
@@ -22,7 +44,6 @@ export interface OrderStatusMapping {
     order_status_id: number;
     order_status?: OrderStatusInfo;
     is_active: boolean;
-    priority: number;
     description: string;
     created_at: string;
     updated_at: string;
@@ -61,14 +82,12 @@ export interface CreateOrderStatusMappingDTO {
     integration_type_id: number;
     original_status: string;
     order_status_id: number;
-    priority?: number;
     description?: string;
 }
 
 export interface UpdateOrderStatusMappingDTO {
     original_status: string;
     order_status_id: number;
-    priority?: number;
     description?: string;
 }
 
@@ -87,4 +106,43 @@ export interface OrderStatusesSimpleResponse {
     success: boolean;
     message: string;
     data: OrderStatusSimple[];
+}
+
+// ============================================
+// Channel Statuses - Estados nativos por canal
+// ============================================
+
+export interface EcommerceIntegrationType {
+    id: number;
+    code: string;
+    name: string;
+    image_url?: string;
+}
+
+export interface ChannelStatusInfo {
+    id: number;
+    integration_type_id: number;
+    integration_type?: EcommerceIntegrationType;
+    code: string;
+    name: string;
+    description?: string;
+    is_active: boolean;
+    display_order: number;
+}
+
+export interface CreateChannelStatusDTO {
+    integration_type_id: number;
+    code: string;
+    name: string;
+    description?: string;
+    is_active: boolean;
+    display_order: number;
+}
+
+export interface UpdateChannelStatusDTO {
+    code: string;
+    name: string;
+    description?: string;
+    is_active: boolean;
+    display_order: number;
 }

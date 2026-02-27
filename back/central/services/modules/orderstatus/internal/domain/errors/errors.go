@@ -14,4 +14,16 @@ var (
 
 	// ErrInvalidFilters indica que los filtros proporcionados son inválidos
 	ErrInvalidFilters = errors.New("invalid filters")
+
+	// ErrOrderStatusNotFound indica que no se encontró el estado de orden
+	ErrOrderStatusNotFound = errors.New("order status not found")
+
+	// ErrOrderStatusHasMappings indica que el estado de orden tiene mapeos activos y no puede eliminarse
+	ErrOrderStatusHasMappings = errors.New("order status has mappings and cannot be deleted")
+
+	// ErrChannelStatusNotFound indica que no se encontró el estado de canal
+	ErrChannelStatusNotFound = errors.New("channel status not found")
+
+	// ErrChannelStatusHasMappings indica que el estado de canal tiene mapeos activos y no puede eliminarse
+	ErrChannelStatusHasMappings = errors.New("channel status has order status mappings and cannot be deleted")
 )

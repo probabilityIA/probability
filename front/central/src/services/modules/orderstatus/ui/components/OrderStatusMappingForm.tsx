@@ -17,7 +17,6 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
         integration_type_id: mapping?.integration_type_id || 0,
         original_status: mapping?.original_status || '',
         order_status_id: mapping?.order_status_id || 0,
-        priority: mapping?.priority || 0,
         description: mapping?.description || '',
     });
 
@@ -73,7 +72,6 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                         integration_type_id: mapping.integration_type_id,
                         original_status: mapping.original_status,
                         order_status_id: mapping.order_status_id,
-                        priority: mapping.priority,
                         description: mapping.description,
                     });
                 }
@@ -101,7 +99,6 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                 const updateData: UpdateOrderStatusMappingDTO = {
                     original_status: formData.original_status,
                     order_status_id: formData.order_status_id,
-                    priority: formData.priority,
                     description: formData.description,
                 };
                 response = await updateOrderStatusMappingAction(mapping.id, updateData);
@@ -115,13 +112,15 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                 response = await createOrderStatusMappingAction(formData);
             }
 
-            if (response.success) {
+            // El backend puede devolver { success, data } o el objeto directo (con id)
+            const ok = (response as any).success === true || !!(response as any).id;
+            if (ok) {
                 setSuccess(mapping ? 'Mapping actualizado exitosamente' : 'Mapping creado exitosamente');
                 setTimeout(() => {
                     onSuccess();
                 }, 1000);
             } else {
-                setError(response.message || 'Error al guardar el mapping');
+                setError((response as any).message || 'Error al guardar el mapping');
             }
         } catch (err: any) {
             setError(err.message || 'Error al guardar el mapping');
@@ -212,22 +211,6 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                     </p>
                 </div>
 
-                {/* Priority */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Prioridad
-                    </label>
-                    <Input
-                        type="number"
-                        value={formData.priority}
-                        onChange={(e) => handleChange('priority', parseInt(e.target.value) || 0)}
-                        placeholder="0"
-                        min="0"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                        Mayor prioridad = mayor número
-                    </p>
-                </div>
             </div>
 
             {/* Description */}

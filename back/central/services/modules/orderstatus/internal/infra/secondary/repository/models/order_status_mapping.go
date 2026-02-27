@@ -18,7 +18,6 @@ type OrderStatusMapping struct {
 
 	// Configuración
 	IsActive    bool           `gorm:"default:true;index"`
-	Priority    int            `gorm:"default:0"`
 	Description string         `gorm:"type:text"`
 	Metadata    datatypes.JSON `gorm:"type:jsonb"`
 
@@ -40,7 +39,6 @@ func (m *OrderStatusMapping) ToDomain() entities.OrderStatusMapping {
 		OriginalStatus:    m.OriginalStatus,
 		OrderStatusID:     m.OrderStatusID,
 		IsActive:          m.IsActive,
-		Priority:          m.Priority,
 		Description:       m.Description,
 		CreatedAt:         m.CreatedAt,
 		UpdatedAt:         m.UpdatedAt,
@@ -65,6 +63,7 @@ func (m *OrderStatusMapping) ToDomain() entities.OrderStatusMapping {
 			Description: m.OrderStatus.Description,
 			Category:    m.OrderStatus.Category,
 			Color:       m.OrderStatus.Color,
+			Priority:    m.OrderStatus.Priority,
 		}
 	}
 
@@ -83,7 +82,6 @@ func FromDomain(e entities.OrderStatusMapping) *OrderStatusMapping {
 		OriginalStatus:    e.OriginalStatus,
 		OrderStatusID:     e.OrderStatusID,
 		IsActive:          e.IsActive,
-		Priority:          e.Priority,
 		Description:       e.Description,
 	}
 }

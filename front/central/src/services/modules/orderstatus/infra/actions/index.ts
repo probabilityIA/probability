@@ -7,7 +7,11 @@ import {
     GetOrderStatusMappingsParams,
     CreateOrderStatusMappingDTO,
     UpdateOrderStatusMappingDTO,
-    OrderStatusInfo
+    OrderStatusInfo,
+    CreateOrderStatusDTO,
+    UpdateOrderStatusDTO,
+    CreateChannelStatusDTO,
+    UpdateChannelStatusDTO
 } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
@@ -82,8 +86,97 @@ export const toggleOrderStatusMappingActiveAction = async (id: number) => {
 };
 
 // ============================================
+// CRUD para estados de Probability
+// ============================================
+
+export const createOrderStatusAction = async (data: CreateOrderStatusDTO) => {
+    try {
+        return await (await getUseCases()).createOrderStatus(data);
+    } catch (error: any) {
+        console.error('Create Order Status Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const getOrderStatusByIdAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).getOrderStatusById(id);
+    } catch (error: any) {
+        console.error('Get Order Status By Id Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const updateOrderStatusAction = async (id: number, data: UpdateOrderStatusDTO) => {
+    try {
+        return await (await getUseCases()).updateOrderStatus(id, data);
+    } catch (error: any) {
+        console.error('Update Order Status Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const deleteOrderStatusAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).deleteOrderStatus(id);
+    } catch (error: any) {
+        console.error('Delete Order Status Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+// ============================================
 // Simple Actions - Para Dropdowns/Selectores
 // ============================================
+
+// ============================================
+// Estados por canal de integración (ecommerce)
+// ============================================
+
+export const getEcommerceIntegrationTypesAction = async () => {
+    try {
+        return await (await getUseCases()).getEcommerceIntegrationTypes();
+    } catch (error: any) {
+        console.error('Get Ecommerce Integration Types Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const getChannelStatusesAction = async (integrationTypeId: number, isActive?: boolean) => {
+    try {
+        return await (await getUseCases()).getChannelStatuses(integrationTypeId, isActive);
+    } catch (error: any) {
+        console.error('Get Channel Statuses Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const createChannelStatusAction = async (data: CreateChannelStatusDTO) => {
+    try {
+        return await (await getUseCases()).createChannelStatus(data);
+    } catch (error: any) {
+        console.error('Create Channel Status Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const updateChannelStatusAction = async (id: number, data: UpdateChannelStatusDTO) => {
+    try {
+        return await (await getUseCases()).updateChannelStatus(id, data);
+    } catch (error: any) {
+        console.error('Update Channel Status Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
+
+export const deleteChannelStatusAction = async (id: number) => {
+    try {
+        return await (await getUseCases()).deleteChannelStatus(id);
+    } catch (error: any) {
+        console.error('Delete Channel Status Action Error:', error.message);
+        throw new Error(error.message);
+    }
+};
 
 export const getOrderStatusesSimpleAction = async (isActive: boolean = true): Promise<import('../../domain/types').OrderStatusesSimpleResponse> => {
     try {

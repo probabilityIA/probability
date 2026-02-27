@@ -14,3 +14,22 @@ type OrderStatusesSimpleResponse struct {
 	Message string                      `json:"message"`
 	Data    []OrderStatusSimpleResponse `json:"data"`
 }
+
+// OrderStatusCatalogResponse representa un estado de orden completo para el catálogo
+type OrderStatusCatalogResponse struct {
+	ID          uint   `json:"id"`
+	Code        string `json:"code"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Category    string `json:"category"`
+	Color       string `json:"color"`
+	Priority    int    `json:"priority"`
+	IsActive    bool   `json:"is_active"`
+}
+
+// OrderStatusesCatalogResponse es el envelope de la lista completa
+type OrderStatusesCatalogResponse struct {
+	Success bool                         `json:"success"`
+	Message string                       `json:"message"`
+	Data    []OrderStatusCatalogResponse `json:"data"`
+}

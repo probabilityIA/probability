@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { OrderStatusMappingList, OrderStatusMappingDetails, OrderStatusMappingForm } from '@/services/modules/orderstatus/ui';
+import { OrderStatusMappingList, OrderStatusMappingDetails, OrderStatusMappingForm, OrderStatusCatalogModal, ChannelStatusManager } from '@/services/modules/orderstatus/ui';
 import { OrderStatusMapping } from '@/services/modules/orderstatus/domain/types';
 import { Button, Modal } from '@/shared/ui';
 
@@ -9,6 +9,8 @@ export default function OrderStatusPage() {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showCatalogModal, setShowCatalogModal] = useState(false);
+    const [showChannelStatusModal, setShowChannelStatusModal] = useState(false);
     const [selectedMapping, setSelectedMapping] = useState<OrderStatusMapping | null>(null);
     const [refreshKey, setRefreshKey] = useState(0);
 
@@ -46,12 +48,26 @@ export default function OrderStatusPage() {
                         Gestiona los mapeos de estados de órdenes desde diferentes integraciones
                     </p>
                 </div>
-                <Button
-                    variant="primary"
-                    onClick={() => setShowCreateModal(true)}
-                >
-                    + Crear Mapping
-                </Button>
+                <div className="flex gap-2">
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowChannelStatusModal(true)}
+                    >
+                        Estados por Canal
+                    </Button>
+                    <Button
+                        variant="outline"
+                        onClick={() => setShowCatalogModal(true)}
+                    >
+                        Estados de Probability
+                    </Button>
+                    <Button
+                        variant="primary"
+                        onClick={() => setShowCreateModal(true)}
+                    >
+                        + Crear Mapping
+                    </Button>
+                </div>
             </div>
 
             <OrderStatusMappingList
@@ -98,6 +114,18 @@ export default function OrderStatusPage() {
                     />
                 )}
             </Modal>
+
+            {/* Catalog Modal */}
+            <OrderStatusCatalogModal
+                isOpen={showCatalogModal}
+                onClose={() => setShowCatalogModal(false)}
+            />
+
+            {/* Channel Status Manager */}
+            <ChannelStatusManager
+                isOpen={showChannelStatusModal}
+                onClose={() => setShowChannelStatusModal(false)}
+            />
         </div>
     );
 }

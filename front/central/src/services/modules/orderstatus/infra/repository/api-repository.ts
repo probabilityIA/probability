@@ -8,7 +8,13 @@ import {
     CreateOrderStatusMappingDTO,
     UpdateOrderStatusMappingDTO,
     ActionResponse,
-    OrderStatusInfo
+    OrderStatusInfo,
+    CreateOrderStatusDTO,
+    UpdateOrderStatusDTO,
+    EcommerceIntegrationType,
+    ChannelStatusInfo,
+    CreateChannelStatusDTO,
+    UpdateChannelStatusDTO
 } from '../../domain/types';
 
 export class OrderStatusMappingApiRepository implements IOrderStatusMappingRepository {
@@ -106,6 +112,60 @@ export class OrderStatusMappingApiRepository implements IOrderStatusMappingRepos
     async toggleOrderStatusMappingActive(id: number): Promise<SingleResponse<OrderStatusMapping>> {
         return this.fetch<SingleResponse<OrderStatusMapping>>(`/order-status-mappings/${id}/toggle`, {
             method: 'PATCH',
+        });
+    }
+
+    async createOrderStatus(data: CreateOrderStatusDTO): Promise<SingleResponse<OrderStatusInfo>> {
+        return this.fetch<SingleResponse<OrderStatusInfo>>('/order-statuses', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async getOrderStatusById(id: number): Promise<SingleResponse<OrderStatusInfo>> {
+        return this.fetch<SingleResponse<OrderStatusInfo>>(`/order-statuses/${id}`);
+    }
+
+    async updateOrderStatus(id: number, data: UpdateOrderStatusDTO): Promise<SingleResponse<OrderStatusInfo>> {
+        return this.fetch<SingleResponse<OrderStatusInfo>>(`/order-statuses/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteOrderStatus(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/order-statuses/${id}`, {
+            method: 'DELETE',
+        });
+    }
+
+    async getEcommerceIntegrationTypes(): Promise<{ success: boolean; data: EcommerceIntegrationType[]; message?: string }> {
+        return this.fetch<{ success: boolean; data: EcommerceIntegrationType[]; message?: string }>('/ecommerce-integration-types');
+    }
+
+    async getChannelStatuses(integrationTypeId: number, isActive?: boolean): Promise<{ success: boolean; data: ChannelStatusInfo[]; message?: string }> {
+        const params = new URLSearchParams({ integration_type_id: String(integrationTypeId) });
+        if (isActive !== undefined) params.append('is_active', String(isActive));
+        return this.fetch<{ success: boolean; data: ChannelStatusInfo[]; message?: string }>(`/channel-statuses?${params.toString()}`);
+    }
+
+    async createChannelStatus(data: CreateChannelStatusDTO): Promise<SingleResponse<ChannelStatusInfo>> {
+        return this.fetch<SingleResponse<ChannelStatusInfo>>('/channel-statuses', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async updateChannelStatus(id: number, data: UpdateChannelStatusDTO): Promise<SingleResponse<ChannelStatusInfo>> {
+        return this.fetch<SingleResponse<ChannelStatusInfo>>(`/channel-statuses/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async deleteChannelStatus(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/channel-statuses/${id}`, {
+            method: 'DELETE',
         });
     }
 }

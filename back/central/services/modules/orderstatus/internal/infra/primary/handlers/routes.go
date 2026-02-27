@@ -9,6 +9,22 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		statuses.GET("", h.ListOrderStatuses)              // GET /api/v1/order-statuses
 		statuses.GET("/simple", h.ListOrderStatusesSimple) // GET /api/v1/order-statuses/simple
+		statuses.POST("", h.CreateOrderStatus)             // POST /api/v1/order-statuses
+		statuses.GET("/:id", h.GetOrderStatus)             // GET /api/v1/order-statuses/:id
+		statuses.PUT("/:id", h.UpdateOrderStatus)          // PUT /api/v1/order-statuses/:id
+		statuses.DELETE("/:id", h.DeleteOrderStatus)       // DELETE /api/v1/order-statuses/:id
+	}
+
+	// Rutas para tipos de integración ecommerce (scope-aware)
+	router.GET("/ecommerce-integration-types", h.ListEcommerceIntegrationTypes) // GET /api/v1/ecommerce-integration-types
+
+	// Rutas para estados de canales de integración
+	channelStatuses := router.Group("/channel-statuses")
+	{
+		channelStatuses.GET("", h.ListChannelStatuses)      // GET /api/v1/channel-statuses?integration_type_id=1
+		channelStatuses.POST("", h.CreateChannelStatus)     // POST /api/v1/channel-statuses
+		channelStatuses.PUT("/:id", h.UpdateChannelStatus)  // PUT /api/v1/channel-statuses/:id
+		channelStatuses.DELETE("/:id", h.DeleteChannelStatus) // DELETE /api/v1/channel-statuses/:id
 	}
 
 	// Rutas para estados de fulfillment

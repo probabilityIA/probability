@@ -5,6 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/modules/orderstatus/internal/infra/primary/handlers/response"
 )
 
 // ListOrderStatuses godoc
@@ -14,7 +15,7 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        is_active  query     bool    false  "Filtrar por estado activo/inactivo (true=activos, false=inactivos, omitir=todos)"
-// @Success      200        {object}  map[string]interface{}
+// @Success      200        {object}  response.OrderStatusesCatalogResponse
 // @Failure      500        {object}  map[string]string
 // @Router       /order-statuses [get]
 func (h *handler) ListOrderStatuses(c *gin.Context) {
@@ -37,9 +38,24 @@ func (h *handler) ListOrderStatuses(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"message": "Estados de órdenes obtenidos exitosamente",
-		"data":    result,
+	// Mapear a response con JSON tags lowercase
+	data := make([]response.OrderStatusCatalogResponse, len(result))
+	for i, s := range result {
+		data[i] = response.OrderStatusCatalogResponse{
+			ID:          s.ID,
+			Code:        s.Code,
+			Name:        s.Name,
+			Description: s.Description,
+			Category:    s.Category,
+			Color:       s.Color,
+			Priority:    s.Priority,
+			IsActive:    s.IsActive,
+		}
+	}
+
+	c.JSON(http.StatusOK, response.OrderStatusesCatalogResponse{
+		Success: true,
+		Message: "Estados de órdenes obtenidos exitosamente",
+		Data:    data,
 	})
 }

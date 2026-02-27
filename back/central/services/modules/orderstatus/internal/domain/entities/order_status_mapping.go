@@ -10,7 +10,6 @@ type OrderStatusMapping struct {
 	OriginalStatus    string
 	OrderStatusID     uint
 	IsActive          bool
-	Priority          int
 	Description       string
 	CreatedAt         time.Time
 	UpdatedAt         time.Time
