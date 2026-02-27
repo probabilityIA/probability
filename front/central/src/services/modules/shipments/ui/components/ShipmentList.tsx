@@ -63,11 +63,24 @@ function formatMoney(amount?: number) {
     return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
 }
 
-// Extract city from destination_address (last word before any comma group tends to be city)
+// Extract city from destination_address.
+// Tries multiple strategies:
+// 1. Last segment after a comma (e.g., "Calle 28 # 85-36, Montería")
+// 2. Second-to-last segment if last is a country (e.g., "..., Montería, Colombia")
+// 3. Falls back to the full address as city hint (Nominatim handles fuzzy matching)
 function extractCity(destination?: string): string | null {
     if (!destination) return null;
     const parts = destination.split(',').map(s => s.trim()).filter(Boolean);
-    return parts.length > 1 ? parts[parts.length - 1] : null;
+    if (parts.length >= 2) {
+        // If last part is "Colombia" (country), use the one before it
+        const last = parts[parts.length - 1];
+        if (last.toLowerCase() === 'colombia' && parts.length >= 3) {
+            return parts[parts.length - 2];
+        }
+        return last;
+    }
+    // No commas: return the full address string and let Nominatim figure it out
+    return destination.trim() || null;
 }
 
 // ─── Tracking Detail Panel ──────────────────────────────────────────────────
@@ -553,9 +566,8 @@ export default function ShipmentList() {
                 {/* Chip "Todos" */}
                 <button
                     onClick={() => updateFilters({ status: undefined })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                        !filters.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                    }`}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${!filters.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                        }`}
                 >
                     Todos <span className="opacity-70">{total}</span>
                 </button>
@@ -567,9 +579,8 @@ export default function ShipmentList() {
                         <button
                             key={value}
                             onClick={() => updateFilters({ status: isActive ? undefined : value })}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
-                                isActive ? activeClass : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
-                            }`}
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${isActive ? activeClass : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                                }`}
                         >
                             <Icon size={11} />
                             {label}
@@ -672,11 +683,10 @@ export default function ShipmentList() {
                                     <button
                                         key={shipment.id}
                                         onClick={() => setSelectedShipment(isSelected ? null : shipment)}
-                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${
-                                            isSelected
+                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${isSelected
                                                 ? 'bg-blue-50 border-l-[3px] border-blue-500'
                                                 : `border-l-[3px] ${statusCfg.border}`
-                                        }`}
+                                            }`}
                                     >
                                         {/* Row 1: Client name + destination city */}
                                         <div className="flex items-center justify-between gap-2 mb-1.5">

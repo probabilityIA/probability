@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
@@ -16,6 +17,37 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
+
+// shopifyTypeID es el ID del tipo de integración Shopify en la tabla integration_types.
+const shopifyTypeID = uint(1)
+
+// shopifyConfigEnvFallback mapea nombre de campo en platform_credentials → variable de entorno de fallback.
+var shopifyConfigEnvFallback = map[string]string{
+	"client_id":     "SHOPIFY_CLIENT_ID",
+	"client_secret": "SHOPIFY_CLIENT_SECRET",
+	"redirect_uri":  "SHOPIFY_REDIRECT_URI",
+	"frontend_url":  "FRONTEND_URL",
+	"scopes":        "SHOPIFY_SCOPES",
+}
+
+// getShopifyConfig lee un campo de configuración de Shopify.
+// Orden de prioridad:
+//  1. platform_credentials_encrypted del IntegrationType en BD (cacheado en Redis 24h)
+//  2. Variable de entorno como fallback
+func (h *ShopifyHandler) getShopifyConfig(ctx context.Context, field string) string {
+	if h.coreIntegration != nil {
+		creds, err := h.coreIntegration.GetPlatformCredential(ctx, fmt.Sprintf("%d", shopifyTypeID), field)
+		if err == nil && creds != "" {
+			return creds
+		}
+	}
+	// Fallback a variable de entorno
+	envKey, ok := shopifyConfigEnvFallback[field]
+	if !ok {
+		envKey = "SHOPIFY_" + strings.ToUpper(field)
+	}
+	return h.config.Get(envKey)
+}
 
 // OAuthStateData almacena información temporal durante el flujo OAuth
 type OAuthStateData struct {
@@ -157,37 +189,32 @@ func (h *ShopifyHandler) initiateOAuthProcess(c *gin.Context, integrationName, s
 		ClientSecret:    customClientSecret,
 	}
 
-	// Determinar credenciales a usar
+	// Determinar credenciales a usar (BD/Redis primero, luego env vars como fallback)
 	var clientID, redirectURI, scopes string
 
 	if customClientID != "" {
 		// Usar credenciales custom proporcionadas por el usuario
 		clientID = customClientID
-		redirectURI = h.config.Get("SHOPIFY_REDIRECT_URI")
-		scopes = h.config.Get("SHOPIFY_SCOPES")
 	} else {
-		// Usar credenciales globales configuradas por el administrador
-		clientID = h.config.Get("SHOPIFY_CLIENT_ID")
-		redirectURI = h.config.Get("SHOPIFY_REDIRECT_URI")
-		scopes = h.config.Get("SHOPIFY_SCOPES")
+		clientID = h.getShopifyConfig(c.Request.Context(), "client_id")
 	}
+	redirectURI = h.getShopifyConfig(c.Request.Context(), "redirect_uri")
+	scopes = h.getShopifyConfig(c.Request.Context(), "scopes")
 
 	// 1. Fallback para Scopes: si no están configurados, usar los mínimos necesarios
 	if scopes == "" {
 		scopes = "read_customers,read_fulfillments,read_orders,write_orders,read_products"
-		h.logger.Info().Msg("SHOPIFY_SCOPES no configurado, usando valores por defecto")
+		h.logger.Info().Msg("scopes no configurados en BD ni env, usando valores por defecto")
 	}
 
 	// 2. Fallback para Redirect URI: si no está configurada, generarla dinámicamente
 	if redirectURI == "" {
 		scheme := "https"
-		// Si estamos en desarrollo y no hay TLS, usar http
 		if h.config.Get("APP_ENV") == "development" {
 			scheme = "http"
 		}
-		// Construir URL: esquema://host_actual/api/v1/shopify/callback
 		redirectURI = fmt.Sprintf("%s://%s/api/v1/shopify/callback", scheme, c.Request.Host)
-		h.logger.Info().Str("redirect_uri", redirectURI).Msg("SHOPIFY_REDIRECT_URI no configurado, generada URL dinámica")
+		h.logger.Info().Str("redirect_uri", redirectURI).Msg("redirect_uri no configurada en BD ni env, generada URL dinámica")
 	}
 
 	// 3. Validar Client ID (crítico)
@@ -196,7 +223,7 @@ func (h *ShopifyHandler) initiateOAuthProcess(c *gin.Context, integrationName, s
 		c.JSON(http.StatusInternalServerError, InitiateOAuthResponse{
 			Success: false,
 			Message: "Error de configuración: falta el Client ID de Shopify",
-			Error:   "SHOPIFY_CLIENT_ID is missing",
+			Error:   "client_id is missing (configurar en BD o en SHOPIFY_CLIENT_ID)",
 		})
 		return
 	}
@@ -271,11 +298,10 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	// Eliminar state usado
 	delete(oauthStateStore, state)
 
-	// Validar HMAC
-	// Nota: Si usamos custom credentials, necesitamos el secret CORRECTO para validar el HMAC.
-	clientSecret := h.config.Get("SHOPIFY_CLIENT_SECRET") // Default
+	// Validar HMAC (custom secret > BD/Redis > env var)
+	clientSecret := h.getShopifyConfig(c.Request.Context(), "client_secret")
 	if stateData.ClientSecret != "" {
-		clientSecret = stateData.ClientSecret // Custom
+		clientSecret = stateData.ClientSecret // Custom app override
 	}
 
 	if !h.validateHMACWithSecret(c.Request.URL.Query(), hmacParam, clientSecret) {
@@ -287,10 +313,10 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 		return
 	}
 
-	// Intercambiar código por access token
-	clientID := h.config.Get("SHOPIFY_CLIENT_ID") // Default
+	// Intercambiar código por access token (custom > BD/Redis > env var)
+	clientID := h.getShopifyConfig(c.Request.Context(), "client_id")
 	if stateData.ClientID != "" {
-		clientID = stateData.ClientID
+		clientID = stateData.ClientID // Custom app override
 	}
 
 	accessToken, scope, err := h.exchangeCodeForToken(shop, code, clientID, clientSecret)
@@ -334,10 +360,16 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 	credsJSON, _ := json.Marshal(creds)
 	middleware.SetSecureCookie(c, "shopify_temp_token", url.QueryEscape(string(credsJSON)), 300)
 
-	// Redirigir al frontend CON el exchange_token
-	frontendURL := h.config.Get("FRONTEND_URL")
+	// Redirigir al frontend CON el exchange_token (BD/Redis > env var > fallback dinámico)
+	frontendURL := h.getShopifyConfig(c.Request.Context(), "frontend_url")
 	if frontendURL == "" {
-		frontendURL = "http://localhost:3000" // Default para desarrollo local
+		// Fallback dinámico: derivar del host actual del request
+		scheme := "https"
+		if h.config.Get("APP_ENV") == "development" {
+			scheme = "http"
+		}
+		frontendURL = fmt.Sprintf("%s://%s", scheme, c.Request.Host)
+		h.logger.Warn().Str("frontend_url", frontendURL).Msg("frontend_url no configurada en BD ni env, usando host del request")
 	}
 
 	redirectURL := fmt.Sprintf(

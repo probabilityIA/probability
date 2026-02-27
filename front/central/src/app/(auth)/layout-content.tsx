@@ -3,6 +3,7 @@
 import React from 'react';
 import { Sidebar, OrdersSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
+import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 
 interface LayoutContentProps {
   user: {
@@ -77,6 +78,12 @@ function LayoutContent({ user, children }: LayoutContentProps) {
           }
         `}</style>
       </main>
+
+      {/* Lina — Asistente Virtual (solo para roles business / super admin) */}
+      <LinaChatbot
+        userScope={user?.scope}
+        isSuperAdmin={user?.is_super_admin}
+      />
     </div>
   );
 }
