@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { Spinner, Button, Input, Table, TableColumn, Alert, Modal } from '@/shared/ui';
+import { PaymentMethodSelectorModal } from '@/services/modules/pay/ui';
 import {
     getWalletsAction,
     getPendingRequestsAction,
@@ -492,6 +493,9 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     const [rechargeAmount, setRechargeAmount] = useState<string>('');
     const [showQrModal, setShowQrModal] = useState(false);
     const [showConfirmationModal, setShowConfirmationModal] = useState(false);
+    const [showPaymentSelector, setShowPaymentSelector] = useState(false);
+    const [showComingSoonModal, setShowComingSoonModal] = useState(false);
+    const [comingSoonGatewayName, setComingSoonGatewayName] = useState('');
     const [message, setMessage] = useState<{ type: 'success' | 'warning' | 'error', text: string } | null>(null);
     const [processing, setProcessing] = useState(false);
     const [currentRequestId, setCurrentRequestId] = useState<string | null>(null);
@@ -531,7 +535,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
         fetchHistory();
     }, [fetchBalance, fetchHistory]);
 
-    const handleRechargeRequest = async () => {
+    const handleRechargeRequest = () => {
         if (!rechargeAmount || isNaN(Number(rechargeAmount))) {
             setMessage({ type: 'error', text: 'Ingrese un monto válido' });
             return;
@@ -543,11 +547,16 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             return;
         }
 
-        setProcessing(true);
         setMessage(null);
+        setShowPaymentSelector(true);
+    };
+
+    const handleSelectNequi = async () => {
+        setShowPaymentSelector(false);
+        setProcessing(true);
 
         try {
-            const res = await rechargeWalletAction(amount, businessId);
+            const res = await rechargeWalletAction(Number(rechargeAmount), businessId);
 
             if (!res.success) {
                 throw new Error(res.error || 'Error al reportar pago');
@@ -558,12 +567,17 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             }
 
             setShowQrModal(true);
-
         } catch (err: any) {
             setMessage({ type: 'error', text: err.message });
         } finally {
             setProcessing(false);
         }
+    };
+
+    const handleSelectOtherGateway = (gatewayName: string) => {
+        setShowPaymentSelector(false);
+        setComingSoonGatewayName(gatewayName);
+        setShowComingSoonModal(true);
     };
 
     if (loading && !wallet) return <div className="p-8 text-center"><Spinner /></div>;
@@ -744,6 +758,47 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         className="w-full py-2 text-sm"
                     >
                         Regresar
+                    </Button>
+                </div>
+            </Modal>
+
+            {/* Payment Method Selector Modal */}
+            <PaymentMethodSelectorModal
+                isOpen={showPaymentSelector}
+                onClose={() => setShowPaymentSelector(false)}
+                amount={rechargeAmount}
+                onSelectNequi={handleSelectNequi}
+                onSelectOther={handleSelectOtherGateway}
+            />
+
+            {/* Coming Soon Modal */}
+            <Modal
+                isOpen={showComingSoonModal}
+                onClose={() => setShowComingSoonModal(false)}
+                title="Próximamente"
+                size="sm"
+            >
+                <div className="flex flex-col items-center text-center p-4 space-y-4">
+                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center">
+                        <span className="text-3xl">🚀</span>
+                    </div>
+                    <div>
+                        <p className="font-semibold text-gray-900 mb-1">
+                            {comingSoonGatewayName} estará disponible próximamente
+                        </p>
+                        <p className="text-sm text-gray-500">
+                            Por ahora puedes usar Nequi para recargar tu billetera.
+                        </p>
+                    </div>
+                    <Button
+                        variant="secondary"
+                        className="w-full"
+                        onClick={() => {
+                            setShowComingSoonModal(false);
+                            setShowPaymentSelector(true);
+                        }}
+                    >
+                        Volver a métodos de pago
                     </Button>
                 </div>
             </Modal>
