@@ -56,10 +56,12 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Determinar si hay sidebar secundario basado en la ruta actual
   const iamRoutes = ['/users', '/roles', '/permissions', '/businesses', '/resources'];
-  const ordersRoutes = ['/products', '/orders', '/shipments', '/order-status', '/notification-config'];
+  const ordersRoutes = ['/orders', '/shipments', '/order-status'];
+  const inventoryRoutes = ['/products', '/warehouses', '/inventory'];
   const invoicingRoutes = ['/invoicing'];
   const hasSecondarySidebar = iamRoutes.some(route => pathname.startsWith(route)) ||
     ordersRoutes.some(route => pathname.startsWith(route)) ||
+    inventoryRoutes.some(route => pathname.startsWith(route)) ||
     invoicingRoutes.some(route => pathname.startsWith(route));
 
   // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
@@ -87,6 +89,10 @@ export function Sidebar({ user }: SidebarProps) {
   // Clientes: Visible para negocio
   const canViewCustomers = isSuperAdmin || hasPermission('Clientes', 'Read') || hasPermission('Customers', 'Read');
 
+  // Bodegas e Inventario
+  const canViewWarehouses = isSuperAdmin || hasPermission('Bodegas', 'Read') || hasPermission('Warehouses', 'Read');
+  const canViewInventory = isSuperAdmin || hasPermission('Inventario', 'Read') || hasPermission('Inventory', 'Read');
+
   // Configuración de Ordenes: Solo para super admins (Plataforma)
   const canViewOrderStatus = isSuperAdmin;
   const canViewNotifications = isSuperAdmin;
@@ -102,7 +108,8 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
-  const canAccessOrders = canViewProducts || canViewOrders || canViewShipments || canViewOrderStatus || canViewNotifications;
+  const canAccessOrders = canViewOrders || canViewShipments || canViewOrderStatus;
+  const canAccessInventory = canViewProducts || canViewWarehouses || canViewInventory;
   const canAccessInvoicing = canViewInvoices || canViewInvoicingProviders || canViewInvoicingConfigs;
 
 
@@ -124,6 +131,13 @@ export function Sidebar({ user }: SidebarProps) {
     if (canViewOrderStatus) return '/order-status';
     if (canViewNotifications) return '/notification-config';
     return '/orders';
+  };
+
+  const getInventoryEntryRoute = () => {
+    if (canViewProducts) return '/products';
+    if (canViewWarehouses) return '/warehouses';
+    if (canViewInventory) return '/inventory';
+    return '/products';
   };
 
   const getInvoicingEntryRoute = () => {
@@ -331,31 +345,88 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Ordenes - Link simple a /orders */}
+              {/* Item Inventario (consolidado: Productos, Bodegas, Inventario) */}
+              {canAccessInventory && (
+                <li>
+                  <Link
+                    href={getInventoryEntryRoute()}
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/products') || pathname.startsWith('/warehouses') || pathname.startsWith('/inventory')
+                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {(pathname.startsWith('/products') || pathname.startsWith('/warehouses') || pathname.startsWith('/inventory')) && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Inventario</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {/* Item Ordenes */}
               {canAccessOrders && (
                 <li>
                   <Link
                     href="/orders"
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${pathname.startsWith('/orders') || pathname.startsWith('/products') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status') || pathname.startsWith('/notification-config')
+                      ${pathname.startsWith('/orders') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status')
                         ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
                       }
                     `}
                   >
-                    {(pathname.startsWith('/orders') || pathname.startsWith('/products') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status') || pathname.startsWith('/notification-config')) && (
+                    {(pathname.startsWith('/orders') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status')) && (
                       <div
                         className="absolute left-0 w-1 h-8 rounded-r-full"
                         style={{ backgroundColor: 'var(--color-tertiary)' }}
                       />
                     )}
-
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Ordenes</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {/* Item Notificaciones */}
+              {canViewNotifications && (
+                <li>
+                  <Link
+                    href="/notification-config"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/notification-config')
+                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/notification-config') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Notificaciones</span>
                     )}
                   </Link>
                 </li>
