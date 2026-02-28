@@ -44,9 +44,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '40
 
             try {
                 // Llamamos a nuestro propio backend como proxy para evitar restricciones CORS/User-Agent
-                // El backend hace la petición a Nominatim server-side sin restricciones
-                const backendBase = process.env.NEXT_PUBLIC_API_BASE_URL?.replace('/api/v1', '') || 'http://localhost:3050';
-                const url = `${backendBase}/geocode?address=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}`;
+                // Usamos /api/v1/geocode para que funcione a través del proxy Nginx en producción
+                const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1';
+                const url = `${apiBase}/geocode?address=${encodeURIComponent(address)}&city=${encodeURIComponent(city)}`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('geocode request failed');
