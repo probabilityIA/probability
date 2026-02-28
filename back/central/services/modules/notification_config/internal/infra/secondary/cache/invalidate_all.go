@@ -6,8 +6,9 @@ import (
 )
 
 // InvalidateAll invalida todo el cache de notification configs
+// Limpia primary keys, secondary keys (evt), e índices inversos
 func (c *cacheManager) InvalidateAll(ctx context.Context) error {
-	// Obtener todas las keys de notification configs
+	// Primary keys: notification:configs:*
 	pattern := "notification:configs:*"
 	keys, err := c.redis.Keys(ctx, pattern)
 	if err != nil {
@@ -15,7 +16,8 @@ func (c *cacheManager) InvalidateAll(ctx context.Context) error {
 		return fmt.Errorf("error obteniendo keys: %w", err)
 	}
 
-	// Eliminar todas las keys
+	// Eliminar primary + secondary keys (pattern notification:configs:* catches both
+	// notification:configs:{id}:{type}:{evt} AND notification:configs:evt:{id}:{code})
 	if len(keys) > 0 {
 		if err := c.redis.Delete(ctx, keys...); err != nil {
 			c.logger.Error(ctx).Err(err).Msg("❌ Error eliminando keys")

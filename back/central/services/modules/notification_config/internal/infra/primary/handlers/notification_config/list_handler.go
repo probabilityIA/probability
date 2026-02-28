@@ -24,6 +24,12 @@ import (
 func (h *handler) List(c *gin.Context) {
 	h.logger.Info().Msg("🌐 [GET /notification-configs] Request received")
 
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
+		return
+	}
+
 	var query request.FilterNotificationConfig
 	if err := c.ShouldBindQuery(&query); err != nil {
 		h.logger.Error().Err(err).Msg("❌ Invalid query parameters")
@@ -32,11 +38,13 @@ func (h *handler) List(c *gin.Context) {
 	}
 
 	h.logger.Info().
+		Uint("business_id", businessID).
 		Interface("query_params", query).
 		Msg("📋 Query params parsed")
 
 	// Convertir query params a DTO de dominio usando mapper
 	filters := mappers.FilterRequestToDomain(&query)
+	filters.BusinessID = &businessID
 
 	h.logger.Info().Msg("🔍 Fetching notification configs from use case")
 

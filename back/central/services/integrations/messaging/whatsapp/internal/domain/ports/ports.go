@@ -57,4 +57,5 @@ type WhatsAppConfig struct {
 	PhoneNumberID uint
 	AccessToken   string
 	IntegrationID uint
+	WhatsAppURL   string
 }

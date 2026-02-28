@@ -27,6 +27,20 @@ type IRepository interface {
 	// GetActiveConfigsByIntegrationAndTrigger obtiene configuraciones activas por integración y trigger
 	// Ordenadas por prioridad descendente
 	GetActiveConfigsByIntegrationAndTrigger(ctx context.Context, integrationID uint, trigger string) ([]entities.IntegrationNotificationConfig, error)
+
+	// SyncConfigs ejecuta create/update/delete en una transacción atómica
+	SyncConfigs(ctx context.Context, businessID uint, integrationID uint,
+		toCreate []*entities.IntegrationNotificationConfig,
+		toUpdate []*entities.IntegrationNotificationConfig,
+		toDeleteIDs []uint,
+	) error
+}
+
+// IOrderStatusQuerier define el contrato para consultar estados de orden
+// Replicado localmente (no compartir repositorios entre módulos)
+type IOrderStatusQuerier interface {
+	// GetOrderStatusCodesByIDs retorna un map de id→code para los IDs dados
+	GetOrderStatusCodesByIDs(ctx context.Context, ids []uint) (map[uint]string, error)
 }
 
 // INotificationTypeRepository define el contrato del repositorio de tipos de notificaciones

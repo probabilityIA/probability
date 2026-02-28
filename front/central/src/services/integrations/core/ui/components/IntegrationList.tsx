@@ -656,14 +656,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 >
                     <PlayIcon className="w-4 h-4" />
                 </button>
-                <button
-                    onClick={() => handleSyncClick(integration.id, integration.name)}
-                    className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
-                    title="Sincronizar órdenes"
-                    aria-label="Sincronizar órdenes"
-                >
-                    <ArrowPathIcon className="w-4 h-4" />
-                </button>
+                {integration.category !== 'messaging' && (
+                    <button
+                        onClick={() => handleSyncClick(integration.id, integration.name)}
+                        className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                        title="Sincronizar órdenes"
+                        aria-label="Sincronizar órdenes"
+                    >
+                        <ArrowPathIcon className="w-4 h-4" />
+                    </button>
+                )}
                 {onEdit && (
                     <button
                         onClick={() => onEdit(integration)}

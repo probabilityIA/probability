@@ -50,31 +50,7 @@ func (c *consumer) handleOrderEvent(ctx context.Context, payload string) {
 		return
 	}
 
-	// 4. Obtener configs activas para este trigger desde Redis cache
-	configs, err := c.notificationConfigCache.GetActiveConfigsByIntegrationAndTrigger(
-		ctx,
-		whatsappIntegration.ID,
-		string(event.Type), // "order.created", "order.updated", "order.status_changed"
-	)
-
-	if err != nil {
-		c.logger.Error().
-			Err(err).
-			Uint("integration_id", whatsappIntegration.ID).
-			Str("trigger", string(event.Type)).
-			Msg("Error getting notification configs")
-		return
-	}
-
-	if len(configs) == 0 {
-		c.logger.Debug().
-			Uint("integration_id", whatsappIntegration.ID).
-			Str("trigger", string(event.Type)).
-			Msg("No active notification configs found for trigger")
-		return
-	}
-
-	// 5. Obtener orden completa (necesitamos PaymentMethodID y Status)
+	// 4. Obtener orden completa PRIMERO (necesitamos IntegrationID como source)
 	order, err := c.orderRepo.GetByID(ctx, event.OrderID)
 	if err != nil {
 		c.logger.Error().
@@ -84,9 +60,34 @@ func (c *consumer) handleOrderEvent(ctx context.Context, payload string) {
 		return
 	}
 
+	// 5. Obtener configs activas usando la integración ORIGEN (source) que generó el evento
+	// Las notification configs están registradas por source integration ID (ej: Shopify ID=5)
+	configs, err := c.notificationConfigCache.GetActiveConfigsByIntegrationAndTrigger(
+		ctx,
+		order.IntegrationID, // Source integration (e.g., Shopify), NOT WhatsApp destination
+		string(event.Type),  // "order.created", "order.updated", "order.status_changed"
+	)
+
+	if err != nil {
+		c.logger.Error().
+			Err(err).
+			Uint("source_integration_id", order.IntegrationID).
+			Str("trigger", string(event.Type)).
+			Msg("Error getting notification configs")
+		return
+	}
+
+	if len(configs) == 0 {
+		c.logger.Debug().
+			Uint("source_integration_id", order.IntegrationID).
+			Str("trigger", string(event.Type)).
+			Msg("No active notification configs found for trigger")
+		return
+	}
+
 	// 6. Validar contra cada config (por prioridad)
 	for _, config := range configs {
-		// Validar condiciones - PASAR integration_id de la orden
+		// Validar condiciones
 		if c.notificationConfigCache.ValidateConditions(&config, order.Status, order.PaymentMethodID, order.IntegrationID) {
 			c.logger.Info().
 				Uint("config_id", config.ID).

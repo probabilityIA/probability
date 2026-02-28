@@ -24,6 +24,12 @@ import (
 func (h *handler) Create(c *gin.Context) {
 	h.logger.Info().Msg("🌐 [POST /notification-configs] Request received")
 
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})
+		return
+	}
+
 	var req request.CreateNotificationConfig
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error().Err(err).Msg("❌ Invalid request body")
@@ -32,11 +38,13 @@ func (h *handler) Create(c *gin.Context) {
 	}
 
 	h.logger.Info().
+		Uint("business_id", businessID).
 		Interface("request_body", req).
 		Msg("📋 Request body parsed")
 
 	// Convertir request HTTP a DTO de dominio usando mapper
 	dto := mappers.CreateRequestToDomain(&req)
+	dto.BusinessID = &businessID
 
 	h.logger.Info().Msg("➕ Creating notification config via use case")
 

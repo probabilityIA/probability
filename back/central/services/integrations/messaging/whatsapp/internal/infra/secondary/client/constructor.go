@@ -2,14 +2,16 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
+	whaerrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client/mappers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client/response"
-	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/httpclient"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
@@ -22,10 +24,12 @@ type whatsAppClient struct {
 }
 
 // New construye y devuelve un cliente que implementa ports.IWhatsApp.
-// La baseURL se toma de las variables de entorno WHATSAPP_URL.
+// La baseURL se recibe como parámetro (obtenida de platform credentials o .env).
 // Utiliza el cliente HTTP compartido de /back/central/shared/httpclient.
-func New(config env.IConfig, logger log.ILogger) ports.IWhatsApp {
-	baseURL := config.Get("WHATSAPP_URL")
+func New(baseURL string, logger log.ILogger) ports.IWhatsApp {
+
+	// Limpiar trailing slash de la baseURL para evitar doble slash en endpoints
+	baseURL = strings.TrimRight(baseURL, "/")
 
 	// Configurar el cliente HTTP compartido
 	httpClient := httpclient.New(httpclient.HTTPClientConfig{
@@ -94,13 +98,9 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 			Uint("phone_number_id", phoneNumberID).
 			Msg("WhatsApp API returned error status")
 
-		// Intentar extraer mensaje de error de la respuesta
-		errorMsg := fmt.Sprintf("WhatsApp API retornó error %d", statusCode)
-		if errorBody != "" {
-			errorMsg = fmt.Sprintf("WhatsApp API error %d: %s", statusCode, errorBody)
-		}
-
-		return "", fmt.Errorf("%s", errorMsg)
+		// Parsear error de Meta Graph API y retornar error del dominio
+		metaErr := parseMetaGraphError(errorBody, statusCode, phoneNumberID)
+		return "", metaErr
 	}
 
 	// Verificar que la respuesta contiene mensajes
@@ -120,4 +120,23 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 		Str("to", msg.To).
 		Msg("WhatsApp message sent successfully")
 	return messageID, nil
+}
+
+// metaGraphErrorResponse estructura JSON de error de la Graph API de Meta (solo para parseo)
+type metaGraphErrorResponse struct {
+	Error struct {
+		Message      string `json:"message"`
+		Type         string `json:"type"`
+		Code         int    `json:"code"`
+		ErrorSubcode int    `json:"error_subcode"`
+	} `json:"error"`
+}
+
+// parseMetaGraphError parsea el JSON de error de Meta y retorna un error de dominio
+func parseMetaGraphError(body string, statusCode int, phoneNumberID uint) *whaerrors.MetaGraphError {
+	var raw metaGraphErrorResponse
+	if err := json.Unmarshal([]byte(body), &raw); err != nil {
+		return whaerrors.NewMetaGraphErrorUnparseable(statusCode)
+	}
+	return whaerrors.NewMetaGraphError(raw.Error.Code, raw.Error.ErrorSubcode, raw.Error.Message, statusCode, phoneNumberID)
 }

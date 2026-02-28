@@ -27,7 +27,7 @@ type IRepository interface {
 	GetIntegrationTypeByCode(ctx context.Context, code string) (*IntegrationType, error)
 	GetIntegrationTypeByName(ctx context.Context, name string) (*IntegrationType, error)
 	DeleteIntegrationType(ctx context.Context, id uint) error
-	ListIntegrationTypes(ctx context.Context) ([]*IntegrationType, error)
+	ListIntegrationTypes(ctx context.Context, categoryID *uint) ([]*IntegrationType, error)
 	ListActiveIntegrationTypes(ctx context.Context) ([]*IntegrationType, error)
 
 	// Integration Categories

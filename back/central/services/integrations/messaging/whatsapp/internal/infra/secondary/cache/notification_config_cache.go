@@ -8,8 +8,8 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache/mappers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
-	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 	"github.com/secamc93/probability/back/central/shared/log"
+	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
 
 // INotificationConfigCache define la interfaz para consultar configuraciones desde Redis (read-only)
@@ -31,61 +31,64 @@ func NewNotificationConfigCache(redis redisclient.IRedis, logger log.ILogger) IN
 	}
 }
 
-// GetActiveConfigsByIntegrationAndTrigger obtiene configuraciones activas desde Redis cache
+// GetActiveConfigsByIntegrationAndTrigger obtiene configuraciones activas desde el cache de notification_config
+// Lee de la secondary key: notification:configs:evt:{integrationID}:{trigger}
 func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 	ctx context.Context,
 	integrationID uint,
 	trigger string,
 ) ([]repository.NotificationConfigData, error) {
-	// Construir key de Redis
-	key := fmt.Sprintf("notification:configs:%d:%s", integrationID, trigger)
+	// Leer del secondary cache key del módulo notification_config
+	key := fmt.Sprintf("notification:configs:evt:%d:%s", integrationID, trigger)
 
-	// HGETALL - obtiene todos los fields del hash
-	results, err := c.redis.HGetAll(ctx, key)
+	entries, err := c.redis.HGetAll(ctx, key)
 	if err != nil {
 		c.logger.Error().
 			Err(err).
 			Str("key", key).
-			Msg("❌ Error obteniendo configs desde Redis")
+			Msg("❌ Error obteniendo configs desde Redis cache")
 		return nil, fmt.Errorf("error getting configs from Redis: %w", err)
 	}
 
-	// Si no hay resultados, retornar array vacío (no es error)
-	if len(results) == 0 {
+	if len(entries) == 0 {
 		c.logger.Debug().
 			Str("key", key).
-			Msg("ℹ️  No hay configuraciones cacheadas para esta integración y trigger")
+			Uint("integration_id", integrationID).
+			Str("trigger", trigger).
+			Msg("ℹ️  No hay configs cacheadas para este trigger")
 		return []repository.NotificationConfigData{}, nil
 	}
 
-	// Deserializar cada config
-	configs := make([]repository.NotificationConfigData, 0, len(results))
-	for field, jsonData := range results {
-		var cachedConfig mappers.CachedNotificationConfig
-		if err := json.Unmarshal([]byte(jsonData), &cachedConfig); err != nil {
-			c.logger.Error().
+	// Parsear cada entrada JSON → CachedNotificationConfig → NotificationConfigData
+	configs := make([]repository.NotificationConfigData, 0, len(entries))
+	for configIDStr, jsonData := range entries {
+		var cached mappers.CachedNotificationConfig
+		if err := json.Unmarshal([]byte(jsonData), &cached); err != nil {
+			c.logger.Warn().
 				Err(err).
-				Str("field", field).
-				Str("key", key).
-				Msg("❌ Error deserializando config desde cache - saltando")
+				Str("config_id", configIDStr).
+				Msg("⚠️  Error parseando config desde cache")
 			continue
 		}
 
-		// Solo agregar configs activas
-		if cachedConfig.IsActive {
-			configs = append(configs, mappers.FromCachedConfig(&cachedConfig))
+		// Filtrar por Enabled
+		if !cached.Enabled {
+			continue
 		}
+
+		configs = append(configs, mappers.FromCachedConfig(&cached))
 	}
 
-	// Ordenar por prioridad descendente
+	// Ordenar por ID ascendente (más antiguo primero como prioridad implícita)
 	sort.Slice(configs, func(i, j int) bool {
-		return configs[i].Priority > configs[j].Priority
+		return configs[i].ID < configs[j].ID
 	})
 
 	c.logger.Info().
-		Str("key", key).
+		Uint("integration_id", integrationID).
+		Str("trigger", trigger).
 		Int("count", len(configs)).
-		Msg("✅ Configuraciones obtenidas desde Redis cache")
+		Msg("✅ Configs obtenidas desde notification_config secondary cache")
 
 	return configs, nil
 }
@@ -97,20 +100,7 @@ func (c *notificationConfigCache) ValidateConditions(
 	paymentMethodID uint,
 	sourceIntegrationID uint,
 ) bool {
-	// 1. Validar source_integration_id PRIMERO (más específico)
-	if config.SourceIntegrationID != nil {
-		// Si la config especifica una integración origen, DEBE coincidir
-		if *config.SourceIntegrationID != sourceIntegrationID {
-			c.logger.Debug().
-				Uint("expected", *config.SourceIntegrationID).
-				Uint("actual", sourceIntegrationID).
-				Msg("Config no aplica - source_integration_id no coincide")
-			return false
-		}
-	}
-	// Si config.SourceIntegrationID == nil → aplica a todas las integraciones
-
-	// 2. Validar statuses
+	// 1. Validar statuses (OrderStatusCodes resueltos desde cache)
 	if len(config.Statuses) > 0 {
 		statusMatch := false
 		for _, status := range config.Statuses {
@@ -128,7 +118,7 @@ func (c *notificationConfigCache) ValidateConditions(
 		}
 	}
 
-	// 3. Validar payment methods
+	// 2. Validar payment methods
 	if len(config.PaymentMethods) > 0 {
 		pmMatch := false
 		for _, methodID := range config.PaymentMethods {
@@ -146,6 +136,5 @@ func (c *notificationConfigCache) ValidateConditions(
 		}
 	}
 
-	// Todas las validaciones pasaron
 	return true
 }

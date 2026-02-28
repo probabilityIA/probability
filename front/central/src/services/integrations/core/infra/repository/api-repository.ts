@@ -130,14 +130,14 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
-    async activateIntegration(id: number): Promise<SingleResponse<Integration>> {
-        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}/activate`, {
+    async activateIntegration(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/activate`, {
             method: 'PUT',
         });
     }
 
-    async deactivateIntegration(id: number): Promise<SingleResponse<Integration>> {
-        return this.fetch<SingleResponse<Integration>>(`/integrations/${id}/deactivate`, {
+    async deactivateIntegration(id: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/integrations/${id}/deactivate`, {
             method: 'PUT',
         });
     }
@@ -180,8 +180,9 @@ export class IntegrationApiRepository implements IIntegrationRepository {
     }
 
     // Integration Types
-    async getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
-        return this.fetch<SingleResponse<IntegrationType[]>>('/integration-types');
+    async getIntegrationTypes(categoryId?: number): Promise<SingleResponse<IntegrationType[]>> {
+        const params = categoryId ? `?category_id=${categoryId}` : '';
+        return this.fetch<SingleResponse<IntegrationType[]>>(`/integration-types${params}`);
     }
 
     async getActiveIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {

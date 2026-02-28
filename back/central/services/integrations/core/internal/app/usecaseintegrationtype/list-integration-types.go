@@ -7,11 +7,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// ListIntegrationTypes obtiene todos los tipos de integración
-func (uc *integrationTypeUseCase) ListIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error) {
+// ListIntegrationTypes obtiene todos los tipos de integración, opcionalmente filtrados por categoría
+func (uc *integrationTypeUseCase) ListIntegrationTypes(ctx context.Context, categoryID *uint) ([]*domain.IntegrationType, error) {
 	ctx = log.WithFunctionCtx(ctx, "ListIntegrationTypes")
 
-	integrationTypes, err := uc.repo.ListIntegrationTypes(ctx)
+	integrationTypes, err := uc.repo.ListIntegrationTypes(ctx, categoryID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Error al listar tipos de integración")
 		return nil, err

@@ -31,11 +31,12 @@ type ICacheManager interface {
 }
 
 // New crea una nueva instancia del cache manager
-func New(redis redis.IRedis, repo ports.IRepository, logger log.ILogger) ICacheManager {
+func New(redis redis.IRedis, repo ports.IRepository, orderStatusQuerier IOrderStatusQuerier, logger log.ILogger) ICacheManager {
 	return &cacheManager{
-		redis:  redis,
-		repo:   repo,
-		logger: logger.WithModule("notification-config-cache"),
+		redis:              redis,
+		repo:               repo,
+		orderStatusQuerier: orderStatusQuerier,
+		logger:             logger.WithModule("notification-config-cache"),
 	}
 }
 

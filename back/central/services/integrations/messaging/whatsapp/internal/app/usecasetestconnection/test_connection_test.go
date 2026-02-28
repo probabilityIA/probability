@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
-	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -75,8 +74,8 @@ func (m *testWhatsApp) SendMessage(ctx context.Context, phoneNumberID uint, msg 
 }
 
 // waFactory construye una factory que siempre retorna el mismo mock de IWhatsApp
-func waFactory(wa ports.IWhatsApp) func(env.IConfig, log.ILogger) ports.IWhatsApp {
-	return func(_ env.IConfig, _ log.ILogger) ports.IWhatsApp {
+func waFactory(wa ports.IWhatsApp) func(string, log.ILogger) ports.IWhatsApp {
+	return func(_ string, _ log.ILogger) ports.IWhatsApp {
 		return wa
 	}
 }
@@ -148,6 +147,7 @@ func TestTestConnection_ConTestPhone_EnviaMensaje_Exito(t *testing.T) {
 	uc := newUseCase()
 
 	config := map[string]interface{}{
+		"whatsapp_url":      "https://graph.facebook.com/v22.0",
 		"phone_number_id":   "111222333",
 		"test_phone_number": "+573001234567",
 	}
@@ -183,6 +183,7 @@ func TestTestConnection_ConTestPhone_ErrorEnvioMensaje(t *testing.T) {
 	uc := newUseCase()
 
 	config := map[string]interface{}{
+		"whatsapp_url":      "https://graph.facebook.com/v22.0",
 		"phone_number_id":   "111222333",
 		"test_phone_number": "+573001234567",
 	}
@@ -260,6 +261,7 @@ func TestTestConnection_ErrorPhoneNumberIDInvalidoConTestPhone(t *testing.T) {
 	uc := newUseCase()
 
 	config := map[string]interface{}{
+		"whatsapp_url":      "https://graph.facebook.com/v22.0",
 		"phone_number_id":   "no_es_numero",
 		"test_phone_number": "+573001234567",
 	}
@@ -274,36 +276,3 @@ func TestTestConnection_ErrorPhoneNumberIDInvalidoConTestPhone(t *testing.T) {
 	}
 }
 
-// ---------------------------------------------------------------------------
-// tempEnvConfig (implementación interna)
-// ---------------------------------------------------------------------------
-
-func TestTempEnvConfig_Get(t *testing.T) {
-	cfg := &tempEnvConfig{
-		values: map[string]string{
-			"WHATSAPP_URL":   "https://graph.facebook.com",
-			"WHATSAPP_TOKEN": "mi-token",
-		},
-	}
-
-	if got := cfg.Get("WHATSAPP_URL"); got != "https://graph.facebook.com" {
-		t.Errorf("Get(WHATSAPP_URL) = %q, quería %q", got, "https://graph.facebook.com")
-	}
-	if got := cfg.Get("CLAVE_INEXISTENTE"); got != "" {
-		t.Errorf("Get(CLAVE_INEXISTENTE) = %q, quería string vacío", got)
-	}
-}
-
-func TestTempEnvConfig_GetInt_RetornaCero(t *testing.T) {
-	cfg := &tempEnvConfig{values: map[string]string{"KEY": "123"}}
-	if got := cfg.GetInt("KEY"); got != 0 {
-		t.Errorf("GetInt() = %d, quería 0 (no implementado)", got)
-	}
-}
-
-func TestTempEnvConfig_GetBool_RetornaFalse(t *testing.T) {
-	cfg := &tempEnvConfig{values: map[string]string{"KEY": "true"}}
-	if got := cfg.GetBool("KEY"); got != false {
-		t.Errorf("GetBool() = %v, quería false (no implementado)", got)
-	}
-}

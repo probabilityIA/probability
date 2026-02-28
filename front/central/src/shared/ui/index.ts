@@ -20,6 +20,7 @@ export * from './select';
 export * from './sidebar';
 export * from './orders-subnavbar';
 export * from './inventory-subnavbar';
+export * from './integrations-subnavbar';
 export * from './spinner';
 export * from './stepper';
 export * from './table';

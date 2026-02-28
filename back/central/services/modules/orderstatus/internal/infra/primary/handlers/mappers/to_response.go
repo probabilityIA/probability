@@ -79,6 +79,7 @@ func StatusInfoToSimpleResponse(status entities.OrderStatusInfo) response.OrderS
 		ID:       status.ID,
 		Name:     status.Name,
 		Code:     status.Code,
+		Color:    status.Color,
 		IsActive: true, // Por defecto activo si viene de la lista
 	}
 }

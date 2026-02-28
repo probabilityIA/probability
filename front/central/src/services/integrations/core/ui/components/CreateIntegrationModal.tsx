@@ -1,11 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { Modal, Alert } from '@/shared/ui';
+import { Modal, Alert, Button } from '@/shared/ui';
+import { ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
 import { IntegrationCategory, IntegrationType } from '../../domain/types';
 import { CategorySelector } from './CategorySelector';
 import { ProviderSelector } from './ProviderSelector';
 import { createIntegrationAction, testConnectionRawAction } from '../../infra/actions';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 
 // Importar formularios específicos por tipo de integración
 import { SoftpymesConfigForm } from '@/services/integrations/invoicing/softpymes/ui/components';
@@ -26,6 +29,30 @@ import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
+
+// IDs constantes de tipos de integración (tabla integration_types)
+const INTEGRATION_TYPE_IDS = {
+    SHOPIFY: 1,
+    WHATSAPP: 2,
+    MERCADO_LIBRE: 3,
+    WOOCOMMERCE: 4,
+    SOFTPYMES: 5,
+    FACTUS: 7,
+    SIIGO: 8,
+    ALEGRA: 9,
+    WORLD_OFFICE: 10,
+    HELISA: 11,
+    ENVIOCLICK: 12,
+    ENVIAME: 13,
+    TU: 14,
+    MIPAQUETE: 15,
+    VTEX: 16,
+    TIENDANUBE: 17,
+    MAGENTO: 18,
+    AMAZON: 19,
+    FALABELLA: 20,
+    EXITO: 21,
+} as const;
 
 interface CreateIntegrationModalProps {
     isOpen: boolean;
@@ -167,12 +194,21 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
         );
     }
 
-    const integrationCode = integrationType.code.toLowerCase();
-
-    // Renderizar formulario específico según el código del tipo de integración
+    // Renderizar formulario específico según el ID del tipo de integración
     const renderSpecificForm = () => {
-        switch (integrationCode) {
-            case 'softpymes':
+        switch (integrationType.id) {
+            case INTEGRATION_TYPE_IDS.SHOPIFY:
+                return (
+                    <ShopifyIntegrationForm
+                        onSubmit={async () => onSuccess()}
+                        onCancel={onBack}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.WHATSAPP:
+                return <WhatsAppActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
+
+            case INTEGRATION_TYPE_IDS.SOFTPYMES:
                 return (
                     <SoftpymesConfigForm
                         onSuccess={onSuccess}
@@ -181,15 +217,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'shopify':
-                return (
-                    <ShopifyIntegrationForm
-                        onSubmit={async () => onSuccess()}
-                        onCancel={onBack}
-                    />
-                );
-
-            case 'factus':
+            case INTEGRATION_TYPE_IDS.FACTUS:
                 return (
                     <FactusConfigForm
                         onSuccess={onSuccess}
@@ -197,7 +225,39 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'envioclick':
+            case INTEGRATION_TYPE_IDS.SIIGO:
+                return (
+                    <SiigoConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.ALEGRA:
+                return (
+                    <AlegraConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.WORLD_OFFICE:
+                return (
+                    <WorldOfficeConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.HELISA:
+                return (
+                    <HelisaConfigForm
+                        onSuccess={onSuccess}
+                        onCancel={onBack}
+                    />
+                );
+
+            case INTEGRATION_TYPE_IDS.ENVIOCLICK:
                 return (
                     <EnvioClickConfigForm
                         onSuccess={onSuccess}
@@ -207,7 +267,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'enviame':
+            case INTEGRATION_TYPE_IDS.ENVIAME:
                 return (
                     <EnviameConfigForm
                         onSuccess={onSuccess}
@@ -215,7 +275,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'tu':
+            case INTEGRATION_TYPE_IDS.TU:
                 return (
                     <TuConfigForm
                         onSuccess={onSuccess}
@@ -223,8 +283,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'mipaquete':
-            case 'mi_paquete':
+            case INTEGRATION_TYPE_IDS.MIPAQUETE:
                 return (
                     <MiPaqueteConfigForm
                         onSuccess={onSuccess}
@@ -232,39 +291,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'siigo':
-                return (
-                    <SiigoConfigForm
-                        onSuccess={onSuccess}
-                        onCancel={onBack}
-                    />
-                );
-
-            case 'alegra':
-                return (
-                    <AlegraConfigForm
-                        onSuccess={onSuccess}
-                        onCancel={onBack}
-                    />
-                );
-
-            case 'world_office':
-                return (
-                    <WorldOfficeConfigForm
-                        onSuccess={onSuccess}
-                        onCancel={onBack}
-                    />
-                );
-
-            case 'helisa':
-                return (
-                    <HelisaConfigForm
-                        onSuccess={onSuccess}
-                        onCancel={onBack}
-                    />
-                );
-
-            case 'vtex':
+            case INTEGRATION_TYPE_IDS.VTEX:
                 return (
                     <VTEXConfigForm
                         onSuccess={onSuccess}
@@ -272,8 +299,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'tiendanube':
-            case 'tienda_nube':
+            case INTEGRATION_TYPE_IDS.TIENDANUBE:
                 return (
                     <TiendanubeConfigForm
                         onSuccess={onSuccess}
@@ -281,8 +307,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'magento':
-            case 'adobe_commerce':
+            case INTEGRATION_TYPE_IDS.MAGENTO:
                 return (
                     <MagentoConfigForm
                         onSuccess={onSuccess}
@@ -290,7 +315,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'amazon':
+            case INTEGRATION_TYPE_IDS.AMAZON:
                 return (
                     <AmazonConfigForm
                         onSuccess={onSuccess}
@@ -298,7 +323,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'falabella':
+            case INTEGRATION_TYPE_IDS.FALABELLA:
                 return (
                     <FalabellaConfigForm
                         onSuccess={onSuccess}
@@ -306,7 +331,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'exito':
+            case INTEGRATION_TYPE_IDS.EXITO:
                 return (
                     <ExitoConfigForm
                         onSuccess={onSuccess}
@@ -314,18 +339,13 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     />
                 );
 
-            case 'woocommerce':
+            case INTEGRATION_TYPE_IDS.WOOCOMMERCE:
                 return (
                     <WooCommerceConfigForm
                         onSuccess={onSuccess}
                         onCancel={onBack}
                     />
                 );
-
-            // case 'whatsapp':
-            //     return <WhatsAppConfigForm onSuccess={onSuccess} onCancel={onBack} />;
-            // case 'mercadolibre':
-            //     return <MercadoLibreConfigForm onSuccess={onSuccess} onCancel={onBack} />;
 
             default:
                 return (
@@ -356,6 +376,140 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
             </button>
 
             {renderSpecificForm()}
+        </div>
+    );
+}
+
+// Formulario simple para activar WhatsApp (sin configuración, usa defaults del tipo)
+// Super admin debe seleccionar negocio antes de crear
+function WhatsAppActivateForm({
+    integrationType,
+    onSuccess,
+    onBack,
+}: {
+    integrationType: IntegrationType;
+    onSuccess: () => void;
+    onBack: () => void;
+}) {
+    const { isSuperAdmin } = usePermissions();
+    const { businesses, loading: loadingBusinesses } = useBusinessesSimple();
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+    const [usePlatformToken, setUsePlatformToken] = useState(true);
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
+
+    const handleActivate = async () => {
+        if (isSuperAdmin && !selectedBusinessId) return;
+
+        setLoading(true);
+        setError(null);
+
+        try {
+            const result = await createIntegrationAction({
+                name: 'WhatsApp',
+                code: 'whatsapp',
+                integration_type_id: integrationType.id,
+                category: integrationType.category?.code || integrationType.integration_category?.code || 'messaging',
+                business_id: isSuperAdmin ? selectedBusinessId : null,
+                is_active: true,
+                is_default: true,
+                config: { use_platform_token: usePlatformToken },
+                credentials: {},
+            });
+
+            if (result.success) {
+                onSuccess();
+            } else {
+                setError(result.message || 'Error al activar WhatsApp');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Error al activar WhatsApp');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <div className="max-w-md mx-auto py-8 space-y-6">
+            <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <ChatBubbleLeftRightIcon className="w-8 h-8 text-green-600" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900">Activar WhatsApp</h3>
+                <p className="text-sm text-gray-500 mt-2">
+                    La integración de WhatsApp usa la configuración global del tipo de integración.
+                    Las notificaciones se configuran desde el módulo de Notificaciones.
+                </p>
+            </div>
+
+            {/* Selector de negocio - solo para super admin */}
+            {isSuperAdmin && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-blue-800 mb-2">
+                        Selecciona un negocio *
+                    </label>
+                    {loadingBusinesses ? (
+                        <p className="text-sm text-blue-600">Cargando negocios...</p>
+                    ) : (
+                        <select
+                            value={selectedBusinessId?.toString() ?? ''}
+                            onChange={(e) => setSelectedBusinessId(e.target.value ? Number(e.target.value) : null)}
+                            className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                            <option value="">— Selecciona un negocio —</option>
+                            {businesses.map(b => (
+                                <option key={b.id} value={b.id}>{b.name} (ID: {b.id})</option>
+                            ))}
+                        </select>
+                    )}
+                </div>
+            )}
+
+            {/* Usar credenciales del tipo de integración */}
+            <label className="flex items-start gap-3 cursor-pointer p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <input
+                    type="checkbox"
+                    checked={usePlatformToken}
+                    onChange={(e) => setUsePlatformToken(e.target.checked)}
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <div>
+                    <span className="text-sm font-medium text-gray-900">Usar credenciales del tipo de integración</span>
+                    <p className="text-xs text-gray-500 mt-1">
+                        Usa las credenciales globales configuradas en el tipo de integración WhatsApp (access_token, phone_number_id).
+                        Desactiva esta opción si este negocio tiene sus propias credenciales de Meta.
+                    </p>
+                </div>
+            </label>
+
+            {error && (
+                <Alert type="error" onClose={() => setError(null)}>
+                    {error}
+                </Alert>
+            )}
+
+            <div className="flex gap-3">
+                <Button
+                    type="button"
+                    variant="outline"
+                    onClick={onBack}
+                    className="flex-1"
+                >
+                    Cancelar
+                </Button>
+                <Button
+                    type="button"
+                    variant="primary"
+                    onClick={handleActivate}
+                    disabled={loading || requiresBusinessSelection}
+                    loading={loading}
+                    className="flex-1"
+                >
+                    Activar WhatsApp
+                </Button>
+            </div>
         </div>
     );
 }

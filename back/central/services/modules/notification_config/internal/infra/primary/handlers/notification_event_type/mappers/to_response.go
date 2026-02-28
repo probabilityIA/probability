@@ -8,15 +8,16 @@ import (
 // DomainToResponse convierte una entidad NotificationEventType de dominio a respuesta HTTP
 func DomainToResponse(entity entities.NotificationEventType) response.NotificationEventType {
 	resp := response.NotificationEventType{
-		ID:                 entity.ID,
-		NotificationTypeID: entity.NotificationTypeID,
-		EventCode:          entity.EventCode,
-		EventName:          entity.EventName,
-		Description:        entity.Description,
-		TemplateConfig:     entity.TemplateConfig,
-		IsActive:           entity.IsActive,
-		CreatedAt:          entity.CreatedAt,
-		UpdatedAt:          entity.UpdatedAt,
+		ID:                    entity.ID,
+		NotificationTypeID:    entity.NotificationTypeID,
+		EventCode:             entity.EventCode,
+		EventName:             entity.EventName,
+		Description:           entity.Description,
+		TemplateConfig:        entity.TemplateConfig,
+		IsActive:              entity.IsActive,
+		AllowedOrderStatusIDs: entity.AllowedOrderStatusIDs,
+		CreatedAt:             entity.CreatedAt,
+		UpdatedAt:             entity.UpdatedAt,
 	}
 
 	// Incluir relación si está cargada

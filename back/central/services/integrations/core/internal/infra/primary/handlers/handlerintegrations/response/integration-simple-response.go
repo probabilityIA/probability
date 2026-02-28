@@ -4,11 +4,12 @@ package response
 type IntegrationSimpleResponse struct {
 	ID            uint   `json:"id"`
 	Name          string `json:"name"`
-	Type          string `json:"type"`          // Código del tipo de integración (whatsapp, shopify, etc.)
-	Category      string `json:"category"`      // Código de la categoría (ecommerce, messaging, etc.)
-	CategoryName  string `json:"category_name"` // Nombre de la categoría (E-commerce, Mensajería, etc.)
-	CategoryColor string `json:"category_color,omitempty"` // Color hexadecimal de la categoría
-	BusinessID    *uint  `json:"business_id"` // Puede ser null para integraciones globales
+	Type          string `json:"type"`                      // Código del tipo de integración (whatsapp, shopify, etc.)
+	Category      string `json:"category"`                  // Código de la categoría (ecommerce, messaging, etc.)
+	CategoryName  string `json:"category_name"`             // Nombre de la categoría (E-commerce, Mensajería, etc.)
+	CategoryColor string `json:"category_color,omitempty"`  // Color hexadecimal de la categoría
+	ImageURL      string `json:"image_url,omitempty"`       // URL del logo del tipo de integración
+	BusinessID    *uint  `json:"business_id"`               // Puede ser null para integraciones globales
 	IsActive      bool   `json:"is_active"`
 }
 

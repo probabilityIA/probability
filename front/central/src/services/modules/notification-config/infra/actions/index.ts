@@ -32,4 +32,5 @@ export {
   listConfigsAction,
   getConfigsAction,
   getConfigAction,
+  syncConfigsAction,
 } from "./notification-configs";

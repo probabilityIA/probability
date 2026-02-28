@@ -3,6 +3,7 @@ package dtos
 // FilterNotificationConfigDTO representa los filtros para listar configuraciones
 // NUEVA ESTRUCTURA: Usa IDs de tablas normalizadas
 type FilterNotificationConfigDTO struct {
+	BusinessID              *uint
 	IntegrationID           *uint
 	NotificationTypeID      *uint
 	NotificationEventTypeID *uint

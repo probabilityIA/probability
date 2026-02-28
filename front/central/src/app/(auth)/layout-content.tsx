@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Sidebar, OrdersSubNavbar, InventorySubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 
 interface LayoutContentProps {
@@ -64,6 +64,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
       >
         <OrdersSubNavbar />
         <InventorySubNavbar />
+        <IntegrationsSubNavbar />
         <div className="w-full min-w-0 flex-1">
           {children}
         </div>

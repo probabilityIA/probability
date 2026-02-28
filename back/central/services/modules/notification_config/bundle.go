@@ -23,9 +23,10 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	repo := repository.New(database, logger)
 	notificationTypeRepo := repository.NewNotificationTypeRepository(database, logger)
 	notificationEventTypeRepo := repository.NewNotificationEventTypeRepository(database, logger)
+	orderStatusQuerier := repository.NewOrderStatusQuerier(database, logger)
 
 	// Cache Manager
-	cacheManager := cache.New(redisClient, repo, logger)
+	cacheManager := cache.New(redisClient, repo, orderStatusQuerier, logger)
 
 	// Warmup inicial del cache
 	ctx := context.Background()

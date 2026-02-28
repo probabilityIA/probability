@@ -99,6 +99,7 @@ export interface OrderStatusSimple {
     id: number;
     name: string;
     code: string;
+    color?: string;
     is_active: boolean;
 }
 

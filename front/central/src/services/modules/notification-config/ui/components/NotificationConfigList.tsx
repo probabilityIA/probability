@@ -62,12 +62,11 @@ export function NotificationConfigList({ onEdit, onCreate }: NotificationConfigL
 
             <div className="border rounded-lg overflow-hidden">
                 <table className="w-full text-sm text-left">
-                    <thead className="bg-gray-50 text-gray-700 uppercase">
+                    <thead className="bg-gray-50 text-gray-700 uppercase text-xs">
                         <tr>
-                            <th className="px-6 py-3">ID</th>
-                            <th className="px-6 py-3">Business ID</th>
+                            <th className="px-6 py-3">Canal</th>
                             <th className="px-6 py-3">Evento</th>
-                            <th className="px-6 py-3">Canales</th>
+                            <th className="px-6 py-3">Integración</th>
                             <th className="px-6 py-3">Estado</th>
                             <th className="px-6 py-3">Acciones</th>
                         </tr>
@@ -75,31 +74,30 @@ export function NotificationConfigList({ onEdit, onCreate }: NotificationConfigL
                     <tbody>
                         {configs.length === 0 ? (
                             <tr>
-                                <td colSpan={6} className="px-6 py-4 text-center text-gray-500">
+                                <td colSpan={5} className="px-6 py-4 text-center text-gray-500">
                                     No hay configuraciones encontradas
                                 </td>
                             </tr>
                         ) : (
                             configs.map((config) => (
                                 <tr key={config.id} className="bg-white border-b hover:bg-gray-50">
-                                    <td className="px-6 py-4 text-gray-900">{config.id}</td>
-                                    <td className="px-6 py-4 text-gray-900">{config.business_id}</td>
-                                    <td className="px-6 py-4 font-medium text-gray-900">{config.event_type}</td>
-                                    <td className="px-6 py-4 text-gray-900">
-                                        <div className="flex gap-1 flex-wrap">
-                                            {(config.channels || []).map((channel) => (
-                                                <Badge key={channel} type="secondary">
-                                                    {channel}
-                                                </Badge>
-                                            ))}
-                                        </div>
+                                    <td className="px-6 py-4">
+                                        <Badge type="primary">
+                                            {config.notification_type_name || `Tipo #${config.notification_type_id}`}
+                                        </Badge>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-900">
+                                    <td className="px-6 py-4 font-medium text-gray-900">
+                                        {config.notification_event_name || config.event_type || "—"}
+                                    </td>
+                                    <td className="px-6 py-4 text-gray-600">
+                                        ID: {config.integration_id}
+                                    </td>
+                                    <td className="px-6 py-4">
                                         <Badge type={config.enabled ? "success" : "secondary"}>
                                             {config.enabled ? "Activo" : "Inactivo"}
                                         </Badge>
                                     </td>
-                                    <td className="px-6 py-4 text-gray-900">
+                                    <td className="px-6 py-4">
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" onClick={() => onEdit(config)}>
                                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

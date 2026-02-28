@@ -4,43 +4,29 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
 )
 
-// CachedNotificationConfig representa una configuración de notificación en Redis
-// Debe coincidir con la estructura del cache manager de notification_config
+// CachedNotificationConfig mirrors the cache struct from notification_config module
+// Used for deserializing JSON from Redis secondary keys
 type CachedNotificationConfig struct {
-	ID               uint     `json:"id"`
-	IntegrationID    uint     `json:"integration_id"`
-	NotificationType string   `json:"notification_type"`
-	IsActive         bool     `json:"is_active"`
-	Priority         int      `json:"priority"`
-	Description      string   `json:"description"`
-
-	// Conditions (aplanadas)
-	Trigger             string   `json:"trigger"`
-	Statuses            []string `json:"statuses"`
-	PaymentMethods      []uint   `json:"payment_methods"`
-	SourceIntegrationID *uint    `json:"source_integration_id"`
-
-	// Config (aplanadas)
-	TemplateName  string `json:"template_name"`
-	RecipientType string `json:"recipient_type"`
-	Language      string `json:"language"`
+	ID                      uint     `json:"id"`
+	BusinessID              *uint    `json:"business_id,omitempty"`
+	IntegrationID           uint     `json:"integration_id"`
+	NotificationTypeID      uint     `json:"notification_type_id"`
+	NotificationEventTypeID uint     `json:"notification_event_type_id"`
+	Enabled                 bool     `json:"enabled"`
+	Description             string   `json:"description"`
+	OrderStatusIDs          []uint   `json:"order_status_ids"`
+	EventCode               string   `json:"event_code,omitempty"`
+	OrderStatusCodes        []string `json:"order_status_codes,omitempty"`
 }
 
 // FromCachedConfig convierte una configuración cacheada a NotificationConfigData
 func FromCachedConfig(cached *CachedNotificationConfig) repository.NotificationConfigData {
 	return repository.NotificationConfigData{
-		ID:                  cached.ID,
-		IntegrationID:       cached.IntegrationID,
-		NotificationType:    cached.NotificationType,
-		IsActive:            cached.IsActive,
-		TemplateName:        cached.TemplateName,
-		Language:            cached.Language,
-		RecipientType:       cached.RecipientType,
-		Trigger:             cached.Trigger,
-		Statuses:            cached.Statuses,
-		PaymentMethods:      cached.PaymentMethods,
-		SourceIntegrationID: cached.SourceIntegrationID,
-		Priority:            cached.Priority,
-		Description:         cached.Description,
+		ID:            cached.ID,
+		IntegrationID: cached.IntegrationID,
+		IsActive:      cached.Enabled,
+		Trigger:       cached.EventCode,
+		Statuses:      cached.OrderStatusCodes,
+		Description:   cached.Description,
 	}
 }

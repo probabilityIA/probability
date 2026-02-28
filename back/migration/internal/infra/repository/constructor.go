@@ -54,6 +54,23 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to seed stock movement types: %w", err)
 	}
 
+	// Fix notification config unique index: el viejo idx_business_event_type
+	// usaba (business_id, event_type) donde event_type es deprecated y siempre ''.
+	// Reemplazar con partial unique index sobre las columnas nuevas, excluyendo soft-deleted.
+	if err := r.fixNotificationConfigIndex(ctx); err != nil {
+		return fmt.Errorf("failed to fix notification config index: %w", err)
+	}
+
+	// Migrar tabla pivote AllowedOrderStatuses para NotificationEventType
+	if err := r.db.Conn(ctx).AutoMigrate(&models.NotificationEventType{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate notification_event_type (allowed statuses): %w", err)
+	}
+
+	// Seed allowed statuses por tipo de evento
+	if err := r.seedAllowedOrderStatusesByEventType(ctx); err != nil {
+		return fmt.Errorf("failed to seed allowed order statuses by event type: %w", err)
+	}
+
 	return nil
 }
 
@@ -956,6 +973,72 @@ func (r *Repository) cleanOrphanWalletRows(ctx context.Context) error {
 		)
 	`).Error; err != nil {
 		return fmt.Errorf("failed to delete orphan wallets: %w", err)
+	}
+
+	return nil
+}
+
+// fixNotificationConfigIndex reemplaza el índice único viejo idx_business_event_type
+// (business_id, event_type) por uno parcial que usa las columnas nuevas y excluye soft-deleted.
+func (r *Repository) fixNotificationConfigIndex(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Eliminar el índice viejo (sobre campo deprecated event_type)
+	if err := db.Exec(`DROP INDEX IF EXISTS idx_business_event_type`).Error; err != nil {
+		return fmt.Errorf("failed to drop old idx_business_event_type: %w", err)
+	}
+
+	// 2. Crear nuevo índice único parcial sobre las columnas correctas.
+	// Una config es única por: business + integration + notification_type + event_type (solo activos).
+	if err := db.Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_notification_config_unique
+		ON business_notification_configs (business_id, integration_id, notification_type_id, notification_event_type_id)
+		WHERE deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to create idx_notification_config_unique: %w", err)
+	}
+
+	return nil
+}
+
+// seedAllowedOrderStatusesByEventType inserta los estados de orden permitidos por tipo de evento
+// Si vacío → significa "todos los estados permitidos"
+func (r *Repository) seedAllowedOrderStatusesByEventType(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// Mapeo: eventTypeID → []orderStatusID
+	// IDs de order_statuses: pending=1, processing=2, shipped=3, delivered=4, completed=5, cancelled=6, refunded=7
+	allowedMap := map[uint][]uint{
+		1: {1, 2},       // SSE order.created → pending, processing
+		2: {},            // SSE order.status_changed → todos (vacío)
+		3: {1, 2},       // WA order.created → pending, processing
+		4: {3, 4},       // WA order.shipped → shipped, delivered
+		5: {4, 5},       // WA order.delivered → delivered, completed
+		6: {6, 7},       // WA order.canceled → cancelled, refunded
+		7: {},            // WA invoice.created → todos (vacío)
+	}
+
+	for eventTypeID, statusIDs := range allowedMap {
+		if len(statusIDs) == 0 {
+			continue // vacío = todos permitidos, no insertar nada
+		}
+
+		// Verificar que el event type existe
+		var eventType models.NotificationEventType
+		if err := db.Where("id = ?", eventTypeID).First(&eventType).Error; err != nil {
+			continue // No existe, saltar
+		}
+
+		// Insertar solo si no existen ya
+		for _, statusID := range statusIDs {
+			if err := db.Exec(`
+				INSERT INTO notification_event_type_allowed_statuses (notification_event_type_id, order_status_id)
+				VALUES (?, ?)
+				ON CONFLICT DO NOTHING
+			`, eventTypeID, statusID).Error; err != nil {
+				return fmt.Errorf("failed to seed allowed status %d for event type %d: %w", statusID, eventTypeID, err)
+			}
+		}
 	}
 
 	return nil

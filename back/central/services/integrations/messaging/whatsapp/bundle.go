@@ -48,9 +48,6 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 	logger = logger.WithModule("whatsapp")
 
 	// 1. Capa de infraestructura secundaria (adaptadores de salida)
-	// Cliente HTTP de WhatsApp
-	wa := client.New(config, logger)
-
 	// Preparar encryption key para IntegrationRepository
 	encryptionKeyStr := config.Get("ENCRYPTION_KEY")
 	var encryptionKey []byte
@@ -63,6 +60,19 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 
 	// Repositorios (constructor consolidado)
 	conversationRepo, messageLogRepo, integrationRepo := repository.New(database, logger, encryptionKey)
+
+	// Obtener whatsapp_url desde platform credentials, con fallback a .env
+	whatsappURL := config.Get("WHATSAPP_URL") // fallback
+	platformConfig, platErr := integrationRepo.GetWhatsAppDefaultConfig(context.Background())
+	if platErr == nil && platformConfig.WhatsAppURL != "" {
+		whatsappURL = platformConfig.WhatsAppURL
+		logger.Info().Str("whatsapp_url", whatsappURL).Msg("WhatsApp URL loaded from platform credentials")
+	} else {
+		logger.Info().Str("whatsapp_url", whatsappURL).Msg("WhatsApp URL loaded from .env (fallback)")
+	}
+
+	// Cliente HTTP de WhatsApp
+	wa := client.New(whatsappURL, logger)
 
 	// Publisher de eventos RabbitMQ
 	publisher := queue.NewWebhookPublisher(rabbit, logger)
@@ -166,9 +176,9 @@ func (b *bundle) SendMessage(ctx context.Context, orderNumber, phoneNumber strin
 
 // TestConnection prueba la conexión enviando un mensaje de prueba
 func (b *bundle) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
-	// Factory para crear clientes de WhatsApp con configuración dinámica
-	clientFactory := func(cfg env.IConfig, logger log.ILogger) ports.IWhatsApp {
-		return client.New(cfg, logger)
+	// Factory para crear clientes de WhatsApp con URL dinámica
+	clientFactory := func(baseURL string, logger log.ILogger) ports.IWhatsApp {
+		return client.New(baseURL, logger)
 	}
 
 	// Delegar al caso de uso pasando los mapas directamente

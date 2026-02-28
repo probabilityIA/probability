@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import { env } from "@/shared/config/env";
 import { NotificationConfigApiRepository } from "../repository/api-repository";
-import { CreateConfigDTO, UpdateConfigDTO, ConfigFilter } from "../../domain/types";
+import { CreateConfigDTO, UpdateConfigDTO, ConfigFilter, SyncConfigsDTO } from "../../domain/types";
 
 const getRepository = async () => {
   const cookieStore = await cookies();
@@ -90,6 +90,16 @@ export async function getConfigsAction(params?: any) {
       total: 0,
       total_pages: 0,
     };
+  }
+}
+
+export async function syncConfigsAction(dto: SyncConfigsDTO, businessId?: number) {
+  try {
+    const repo = await getRepository();
+    const result = await repo.syncByIntegration(dto, businessId);
+    return { success: true, data: result };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }
 

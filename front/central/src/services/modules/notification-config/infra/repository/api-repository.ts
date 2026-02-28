@@ -1,5 +1,5 @@
 import { INotificationConfigRepository } from "../../domain/ports";
-import { NotificationConfig, CreateConfigDTO, UpdateConfigDTO, ConfigFilter } from "../../domain/types";
+import { NotificationConfig, CreateConfigDTO, UpdateConfigDTO, ConfigFilter, SyncConfigsDTO, SyncConfigsResponse } from "../../domain/types";
 
 export class NotificationConfigApiRepository implements INotificationConfigRepository {
     private baseUrl: string;
@@ -10,8 +10,15 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
         this.token = token;
     }
 
-    async create(dto: CreateConfigDTO): Promise<NotificationConfig> {
-        const response = await fetch(`${this.baseUrl}/notification-configs`, {
+    private withBusinessId(path: string, businessId?: number): string {
+        if (!businessId) return path;
+        const sep = path.includes('?') ? '&' : '?';
+        return `${path}${sep}business_id=${businessId}`;
+    }
+
+    async create(dto: CreateConfigDTO, businessId?: number): Promise<NotificationConfig> {
+        const url = this.withBusinessId(`${this.baseUrl}/notification-configs`, businessId || dto.business_id);
+        const response = await fetch(url, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -28,8 +35,9 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
         return response.json();
     }
 
-    async getById(id: number): Promise<NotificationConfig> {
-        const response = await fetch(`${this.baseUrl}/notification-configs/${id}`, {
+    async getById(id: number, businessId?: number): Promise<NotificationConfig> {
+        const url = this.withBusinessId(`${this.baseUrl}/notification-configs/${id}`, businessId);
+        const response = await fetch(url, {
             headers: {
                 Authorization: `Bearer ${this.token}`,
             },
@@ -43,8 +51,9 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
         return response.json();
     }
 
-    async update(id: number, dto: UpdateConfigDTO): Promise<NotificationConfig> {
-        const response = await fetch(`${this.baseUrl}/notification-configs/${id}`, {
+    async update(id: number, dto: UpdateConfigDTO, businessId?: number): Promise<NotificationConfig> {
+        const url = this.withBusinessId(`${this.baseUrl}/notification-configs/${id}`, businessId);
+        const response = await fetch(url, {
             method: "PATCH",
             headers: {
                 "Content-Type": "application/json",
@@ -61,8 +70,9 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
         return response.json();
     }
 
-    async delete(id: number): Promise<void> {
-        const response = await fetch(`${this.baseUrl}/notification-configs/${id}`, {
+    async delete(id: number, businessId?: number): Promise<void> {
+        const url = this.withBusinessId(`${this.baseUrl}/notification-configs/${id}`, businessId);
+        const response = await fetch(url, {
             method: "DELETE",
             headers: {
                 Authorization: `Bearer ${this.token}`,
@@ -75,6 +85,25 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
         }
     }
 
+    async syncByIntegration(dto: SyncConfigsDTO, businessId?: number): Promise<SyncConfigsResponse> {
+        const url = this.withBusinessId(`${this.baseUrl}/notification-configs/sync`, businessId);
+        const response = await fetch(url, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${this.token}`,
+            },
+            body: JSON.stringify(dto),
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to sync notification configs");
+        }
+
+        return response.json();
+    }
+
     async list(filter?: ConfigFilter): Promise<NotificationConfig[]> {
         const params = new URLSearchParams();
         if (filter) {
@@ -85,8 +114,6 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
         }
 
         const url = `${this.baseUrl}/notification-configs?${params.toString()}`;
-        console.log("🌐 [Repository] URL completa:", url);
-        console.log("🔑 [Repository] Token presente:", this.token ? "Sí" : "No");
 
         const response = await fetch(url, {
             headers: {
@@ -94,17 +121,11 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
             },
         });
 
-        console.log("📡 [Repository] Status HTTP:", response.status, response.statusText);
-
         if (!response.ok) {
             const error = await response.json();
-            console.error("❌ [Repository] Error del backend:", error);
             throw new Error(error.error || "Failed to list notification configs");
         }
 
-        const data = await response.json();
-        console.log("✅ [Repository] Datos recibidos del backend:", JSON.stringify(data, null, 2));
-
-        return data;
+        return response.json();
     }
 }

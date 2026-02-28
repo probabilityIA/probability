@@ -117,19 +117,28 @@ func (uc *IntegrationUseCase) CreateIntegration(ctx context.Context, dto domain.
 			configMap["base_url_test"] = integrationType.BaseURLTest
 		}
 
-		// Testear conexión con el provider específico
-		if err := provider.TestConnection(ctx, configMap, dto.Credentials); err != nil {
-			uc.log.Error(ctx).
-				Err(err).
+		// Si usa token de plataforma, omitir test de conexión (usa credenciales del tipo)
+		usePlatformToken, _ := configMap["use_platform_token"].(bool)
+		if usePlatformToken {
+			uc.log.Info(ctx).
 				Str("type_code", integrationType.Code).
 				Str("integration_code", dto.Code).
-				Msg("Test de conexión falló al crear integración")
-			return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
+				Msg("use_platform_token=true, omitiendo test de conexión con provider")
+		} else {
+			// Testear conexión con el provider específico
+			if err := provider.TestConnection(ctx, configMap, dto.Credentials); err != nil {
+				uc.log.Error(ctx).
+					Err(err).
+					Str("type_code", integrationType.Code).
+					Str("integration_code", dto.Code).
+					Msg("Test de conexión falló al crear integración")
+				return nil, fmt.Errorf("%w: %w", domain.ErrIntegrationTestFailed, err)
+			}
+			uc.log.Info(ctx).
+				Str("type_code", integrationType.Code).
+				Str("integration_code", dto.Code).
+				Msg("Test de conexión exitoso antes de crear integración")
 		}
-		uc.log.Info(ctx).
-			Str("type_code", integrationType.Code).
-			Str("integration_code", dto.Code).
-			Msg("Test de conexión exitoso antes de crear integración")
 	}
 
 	// Convertir Config a datatypes.JSON

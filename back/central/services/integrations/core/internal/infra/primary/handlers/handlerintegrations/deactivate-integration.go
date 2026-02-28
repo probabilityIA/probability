@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations/response"
 )
@@ -27,16 +26,6 @@ import (
 //	@Failure		500	{object}	map[string]interface{}
 //	@Router			/integrations/{id}/deactivate [put]
 func (h *IntegrationHandler) DeactivateIntegrationHandler(c *gin.Context) {
-	if !middleware.IsSuperAdmin(c) {
-		h.logger.Error().Str("endpoint", "/integrations/:id/deactivate").Str("method", "PUT").Msg("Intento de desactivar integración sin permisos de super admin")
-		c.JSON(http.StatusForbidden, response.IntegrationErrorResponse{
-			Success: false,
-			Message: "Solo los super usuarios pueden desactivar integraciones",
-			Error:   "permisos insuficientes",
-		})
-		return
-	}
-
 	idStr := c.Param("id")
 	id, err := strconv.ParseUint(idStr, 10, 32)
 	if err != nil {

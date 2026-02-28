@@ -89,10 +89,14 @@ func (r *repository) List(ctx context.Context, filters dtos.FilterNotificationCo
 	query := r.db.Conn(ctx).Model(&mappers.IntegrationNotificationConfigModel{})
 
 	// PRELOAD de relaciones para traer datos completos
-	query = query.Preload("NotificationType").Preload("NotificationEventType")
+	query = query.Preload("NotificationType").Preload("NotificationEventType").Preload("OrderStatuses")
 
 	// Log de filtros aplicados
 	logEvent := r.logger.Info()
+	if filters.BusinessID != nil {
+		logEvent = logEvent.Uint("filter_business_id", *filters.BusinessID)
+		query = query.Where("business_id = ?", *filters.BusinessID)
+	}
 	if filters.IntegrationID != nil {
 		logEvent = logEvent.Uint("filter_integration_id", *filters.IntegrationID)
 		query = query.Where("integration_id = ?", *filters.IntegrationID)

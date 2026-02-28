@@ -381,10 +381,10 @@ func TestListIntegrationTypes_RetornaLista(t *testing.T) {
 		{ID: 7, Name: "Factus", Code: "factus"},
 		{ID: 8, Name: "Siigo", Code: "siigo"},
 	}
-	repo.On("ListIntegrationTypes", mock.Anything).Return(tipos, nil)
+	repo.On("ListIntegrationTypes", mock.Anything, mock.Anything).Return(tipos, nil)
 
 	// Act
-	resultado, err := uc.ListIntegrationTypes(ctx)
+	resultado, err := uc.ListIntegrationTypes(ctx, nil)
 
 	// Assert
 	assert.NoError(t, err)
@@ -402,10 +402,10 @@ func TestListIntegrationTypes_ErrorDeRepositorio(t *testing.T) {
 	uc := newTestIntegrationTypeUseCase(repo, s3, logger, cfg)
 	ctx := context.Background()
 
-	repo.On("ListIntegrationTypes", mock.Anything).Return(nil, errors.New("db error"))
+	repo.On("ListIntegrationTypes", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 
 	// Act
-	resultado, err := uc.ListIntegrationTypes(ctx)
+	resultado, err := uc.ListIntegrationTypes(ctx, nil)
 
 	// Assert
 	assert.Error(t, err)

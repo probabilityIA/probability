@@ -9,7 +9,7 @@ import {
 } from '../../infra/actions';
 import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO } from '../../domain/types';
 
-export const useIntegrationTypes = () => {
+export const useIntegrationTypes = (categoryId?: number) => {
     const [integrationTypes, setIntegrationTypes] = useState<IntegrationType[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -18,7 +18,7 @@ export const useIntegrationTypes = () => {
         setLoading(true);
         setError(null);
         try {
-            const response = await getIntegrationTypesAction();
+            const response = await getIntegrationTypesAction(categoryId);
             if (response.success) {
                 setIntegrationTypes(response.data);
             } else {
@@ -30,7 +30,7 @@ export const useIntegrationTypes = () => {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [categoryId]);
 
     const createIntegrationType = async (data: CreateIntegrationTypeDTO) => {
         try {

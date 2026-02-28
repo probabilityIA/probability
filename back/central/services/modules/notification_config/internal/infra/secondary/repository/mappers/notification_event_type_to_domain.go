@@ -41,6 +41,15 @@ func NotificationEventTypeToDomain(model *models.NotificationEventType) (*entiti
 		entity.NotificationType = notificationType
 	}
 
+	// Mapear AllowedOrderStatuses M2M a lista de IDs
+	if len(model.AllowedOrderStatuses) > 0 {
+		ids := make([]uint, len(model.AllowedOrderStatuses))
+		for i, status := range model.AllowedOrderStatuses {
+			ids[i] = status.ID
+		}
+		entity.AllowedOrderStatusIDs = ids
+	}
+
 	return entity, nil
 }
 

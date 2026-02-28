@@ -5,6 +5,7 @@ type OrderStatusSimpleResponse struct {
 	ID       uint   `json:"id"`
 	Name     string `json:"name"`
 	Code     string `json:"code"`
+	Color    string `json:"color"`
 	IsActive bool   `json:"is_active"`
 }
 

@@ -1,12 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
     IntegrationList,
     IntegrationForm,
     IntegrationTypeList,
     IntegrationTypeForm,
-    CategoryTabs,
     CreateIntegrationModal,
     useCategories,
 } from '@/services/integrations/core/ui';
@@ -17,6 +16,7 @@ import { getIntegrationByIdAction } from '@/services/integrations/core/infra/act
 import { useSearchParams } from 'next/navigation';
 import { ShopifyOAuthCallback } from '@/services/integrations/ecommerce/shopify/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useNavbarActions } from '@/shared/contexts/navbar-context';
 
 // Mapeo de código de categoría → nombre del recurso en BD
 const CATEGORY_RESOURCE_MAP: Record<string, string> = {
@@ -32,9 +32,6 @@ export default function IntegrationsPage() {
     const searchParams = useSearchParams();
     const isOAuthCallback = searchParams.get('shopify_oauth');
 
-    // Hooks deben estar antes de cualquier return condicional
-    const [activeTab, setActiveTab] = useState<'integrations' | 'types'>('integrations');
-    const [activeCategoryCode, setActiveCategoryCode] = useState<string | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showEditIntegrationModal, setShowEditIntegrationModal] = useState(false);
@@ -42,34 +39,48 @@ export default function IntegrationsPage() {
     const [selectedIntegration, setSelectedIntegration] = useState<Integration | undefined>(undefined);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // Hooks for categories and integrations
     const { categories, loading: categoriesLoading } = useCategories();
     const { hasPermission, isSuperAdmin } = usePermissions();
+    const { setActionButtons } = useNavbarActions();
 
-    // Permisos por tab/categoría
-    const canViewTypes = isSuperAdmin || hasPermission('Integraciones-Tipos-de-integracion', 'Read');
+    // Read active tab and category from URL (driven by subnavbar)
+    const currentTab = searchParams.get('tab');
+    const currentCategory = searchParams.get('category');
+    const isTypesTab = currentTab === 'types';
 
-    // Filtrar categorías según permisos del usuario
-    const allowedCategories = categories.filter(c => {
-        if (isSuperAdmin) return true;
-        const resource = CATEGORY_RESOURCE_MAP[c.code];
-        if (!resource) return true; // categoría sin recurso mapeado: visible por defecto
-        return hasPermission(resource, 'Read');
-    });
+    // Filter categories by permissions
+    const allowedCategories = useMemo(() => {
+        return categories.filter(c => {
+            if (isSuperAdmin) return true;
+            const resource = CATEGORY_RESOURCE_MAP[c.code];
+            if (!resource) return true;
+            return hasPermission(resource, 'Read');
+        });
+    }, [categories, isSuperAdmin, hasPermission]);
 
-    // Seleccionar primera categoría permitida automáticamente
+    // Determine active category code
+    const activeCategoryCode = useMemo(() => {
+        if (isTypesTab) return null;
+        if (currentCategory) return currentCategory;
+        const first = allowedCategories
+            .filter(c => c.is_visible && c.is_active)
+            .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))[0];
+        return first?.code || null;
+    }, [isTypesTab, currentCategory, allowedCategories]);
+
+    // Set action buttons in navbar
     useEffect(() => {
-        if (!categoriesLoading && allowedCategories.length > 0 && activeCategoryCode === null) {
-            const firstCategory = allowedCategories
-                .filter(c => c.is_visible && c.is_active)
-                .sort((a, b) => (a.display_order || 0) - (b.display_order || 0))[0];
-            if (firstCategory) {
-                setActiveCategoryCode(firstCategory.code);
-            }
-        }
-    }, [categoriesLoading, allowedCategories, activeCategoryCode]);
+        setActionButtons(
+            <Button
+                variant="primary"
+                onClick={() => setShowCreateModal(true)}
+            >
+                {isTypesTab ? 'Crear Tipo' : 'Crear Integración'}
+            </Button>
+        );
+        return () => setActionButtons(null);
+    }, [isTypesTab, setActionButtons]);
 
-    // Return condicional después de todos los hooks
     if (isOAuthCallback) {
         return <ShopifyOAuthCallback />;
     }
@@ -81,10 +92,6 @@ export default function IntegrationsPage() {
         setSelectedType(undefined);
         setSelectedIntegration(undefined);
         setRefreshKey(prev => prev + 1);
-    };
-
-    const handleCategoryChange = (categoryCode: string | null) => {
-        setActiveCategoryCode(categoryCode);
     };
 
     const handleModalClose = () => {
@@ -102,39 +109,12 @@ export default function IntegrationsPage() {
 
     return (
         <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-3xl font-bold text-gray-900">Integraciones</h1>
-                <Button
-                    variant="primary"
-                    onClick={() => setShowCreateModal(true)}
-                >
-                    {activeTab === 'integrations' ? 'Crear Integración' : 'Crear Tipo'}
-                </Button>
-            </div>
-
-            {/* Category Tabs - navegación única */}
-            {!categoriesLoading && (
-                <CategoryTabs
-                    categories={allowedCategories}
-                    activeCategory={activeCategoryCode}
-                    activeTab={activeTab}
-                    onSelectCategory={(code) => {
-                        setActiveTab('integrations');
-                        handleCategoryChange(code);
-                    }}
-                    onSelectTypes={() => setActiveTab('types')}
-                    canViewTypes={canViewTypes}
-                />
-            )}
-
-            {activeTab === 'integrations' && activeCategoryCode !== null ? (
+            {!isTypesTab && activeCategoryCode !== null ? (
                 <IntegrationList
                     key={`cat-${activeCategoryCode}-${refreshKey}`}
                     filterCategory={activeCategoryCode}
                     onEdit={async (integration) => {
                         try {
-                            // Obtener la integración completa por ID
-                            // Si el usuario es super admin, el endpoint devolverá credenciales desencriptadas automáticamente
                             const response = await getIntegrationByIdAction(integration.id);
                             if (response.success && response.data) {
                                 setSelectedIntegration(response.data);
@@ -157,7 +137,7 @@ export default function IntegrationsPage() {
             )}
 
             {/* Create Modal */}
-            {activeTab === 'integrations' ? (
+            {!isTypesTab ? (
                 <CreateIntegrationModal
                     isOpen={showCreateModal}
                     onClose={handleModalClose}

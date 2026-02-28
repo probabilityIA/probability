@@ -12,6 +12,7 @@ import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
 import { useToast } from "@/shared/providers/toast-provider";
+import { useOrderStatuses } from "@/services/modules/orderstatus/ui";
 import {
   getNotificationTypesAction,
   createNotificationEventTypeAction,
@@ -35,6 +36,7 @@ export function NotificationEventTypeForm({
   >([]);
   const [loadingTypes, setLoadingTypes] = useState(false);
   const { showToast } = useToast();
+  const { orderStatuses, loading: loadingOrderStatuses } = useOrderStatuses(true);
 
   const [formData, setFormData] = useState<
     CreateNotificationEventTypeDTO | UpdateNotificationEventTypeDTO
@@ -44,6 +46,7 @@ export function NotificationEventTypeForm({
     event_name: "",
     description: "",
     is_active: true,
+    allowed_order_status_ids: [],
   } as CreateNotificationEventTypeDTO);
 
   // Cargar notification types
@@ -72,6 +75,7 @@ export function NotificationEventTypeForm({
         event_name: eventType.event_name,
         description: eventType.description || "",
         is_active: eventType.is_active,
+        allowed_order_status_ids: eventType.allowed_order_status_ids || [],
       } as UpdateNotificationEventTypeDTO);
     }
   }, [eventType]);
@@ -131,6 +135,16 @@ export function NotificationEventTypeForm({
     } finally {
       setLoading(false);
     }
+  };
+
+  const selectedStatusIds = (formData as any).allowed_order_status_ids || [];
+
+  const toggleStatusId = (statusId: number) => {
+    const current: number[] = (formData as any).allowed_order_status_ids || [];
+    const newIds = current.includes(statusId)
+      ? current.filter((id: number) => id !== statusId)
+      : [...current, statusId];
+    setFormData({ ...formData, allowed_order_status_ids: newIds } as any);
   };
 
   return (
@@ -224,6 +238,73 @@ export function NotificationEventTypeForm({
             }
             placeholder="Descripción opcional del evento"
           />
+        </div>
+
+        {/* Allowed Order Statuses */}
+        <div className="grid gap-2">
+          <Label className="flex items-center gap-1">
+            Estados de Orden Permitidos
+          </Label>
+          <p className="text-xs text-gray-500">
+            Selecciona qué estados de orden puede usar este evento. Si no seleccionas ninguno, se permiten todos.
+          </p>
+          <div className="border rounded-lg max-h-52 overflow-y-auto p-3">
+            {loadingOrderStatuses ? (
+              <p className="text-sm text-gray-500">Cargando estados...</p>
+            ) : orderStatuses.length === 0 ? (
+              <p className="text-sm text-gray-500">No hay estados disponibles</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {orderStatuses.map((status) => {
+                  const isChecked = selectedStatusIds.includes(status.id);
+                  const statusColor = status.color || "#9CA3AF";
+                  return (
+                    <button
+                      key={status.id}
+                      type="button"
+                      onClick={() => toggleStatusId(status.id)}
+                      className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border transition-colors ${
+                        isChecked
+                          ? "bg-blue-50 border-blue-200"
+                          : "bg-white border-gray-200 hover:bg-gray-50"
+                      }`}
+                    >
+                      <span
+                        className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium truncate"
+                        style={{
+                          backgroundColor: statusColor + "20",
+                          color: statusColor,
+                        }}
+                      >
+                        {status.name}
+                      </span>
+                      <div
+                        className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${
+                          isChecked ? "bg-blue-500" : "bg-gray-300"
+                        }`}
+                      >
+                        <div
+                          className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                            isChecked ? "translate-x-4" : "translate-x-0.5"
+                          }`}
+                        />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          {selectedStatusIds.length === 0 && (
+            <p className="text-xs text-amber-600">
+              Sin selección = todos los estados permitidos
+            </p>
+          )}
+          {selectedStatusIds.length > 0 && (
+            <p className="text-xs text-blue-600">
+              {selectedStatusIds.length} estado(s) seleccionado(s)
+            </p>
+          )}
         </div>
 
         {/* Is Active */}

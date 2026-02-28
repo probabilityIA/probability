@@ -38,6 +38,11 @@ type NotificationEventType struct {
 
 	// Relaciones
 	BusinessNotificationConfigs []BusinessNotificationConfig `gorm:"foreignKey:NotificationEventTypeID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
+
+	// Estados de orden permitidos para este tipo de evento (M2M)
+	// Si está vacío, significa "todos los estados permitidos"
+	// Ejemplo: order.created → [pending, processing], order.shipped → [shipped, delivered]
+	AllowedOrderStatuses []OrderStatus `gorm:"many2many:notification_event_type_allowed_statuses;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
 // TableName especifica el nombre de la tabla

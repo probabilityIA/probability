@@ -4,6 +4,7 @@ package handlerintegrationtype
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrationtype/mapper"
@@ -23,7 +24,15 @@ import (
 //	@Failure		500	{object}	map[string]interface{}
 //	@Router			/integration-types [get]
 func (h *IntegrationTypeHandler) ListIntegrationTypesHandler(c *gin.Context) {
-	integrationTypes, err := h.usecase.ListIntegrationTypes(c.Request.Context())
+	var categoryID *uint
+	if param := c.Query("category_id"); param != "" {
+		if id, err := strconv.ParseUint(param, 10, 64); err == nil && id > 0 {
+			uid := uint(id)
+			categoryID = &uid
+		}
+	}
+
+	integrationTypes, err := h.usecase.ListIntegrationTypes(c.Request.Context(), categoryID)
 	if err != nil {
 		h.logger.Error().
 			Err(err).

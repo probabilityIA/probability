@@ -214,15 +214,25 @@ func (r *IntegrationRepository) GetWhatsAppDefaultConfig(ctx context.Context) (*
 		return nil, fmt.Errorf("access_token debe ser string")
 	}
 
+	// Extraer whatsapp_url (opcional)
+	var whatsappURL string
+	if urlValue, exists := credentials["whatsapp_url"]; exists {
+		if urlStr, ok := urlValue.(string); ok {
+			whatsappURL = urlStr
+		}
+	}
+
 	r.log.Info(ctx).
 		Uint("integration_type_id", row.ID).
 		Uint("phone_number_id", uint(phoneNumberID)).
+		Str("whatsapp_url", whatsappURL).
 		Msg("[Integration Repository] - Credenciales globales de WhatsApp obtenidas desde tipo de integración")
 
 	return &ports.WhatsAppConfig{
 		PhoneNumberID: uint(phoneNumberID),
 		AccessToken:   accessToken,
 		IntegrationID: 0, // Credenciales de tipo, no de instancia
+		WhatsAppURL:   whatsappURL,
 	}, nil
 }
 
