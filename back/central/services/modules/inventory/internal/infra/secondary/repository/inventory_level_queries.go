@@ -37,7 +37,7 @@ func (r *Repository) GetProductInventory(ctx context.Context, params dtos.GetPro
 			Name string
 			Code string
 		}
-		r.db.Conn(ctx).Table("warehouses").Select("name, code").Where("id = ? AND deleted_at IS NULL", m.WarehouseID).Scan(&wh)
+		r.db.Conn(ctx).Model(&models.Warehouse{}).Select("name, code").Where("id = ? AND deleted_at IS NULL", m.WarehouseID).Scan(&wh)
 		e.WarehouseName = wh.Name
 		e.WarehouseCode = wh.Code
 
@@ -85,7 +85,7 @@ func (r *Repository) ListWarehouseInventory(ctx context.Context, params dtos.Lis
 			Name string
 			SKU  string
 		}
-		r.db.Conn(ctx).Table("products").Select("name, sku").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
+		r.db.Conn(ctx).Model(&models.Product{}).Select("name, sku").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
 		e.ProductName = prod.Name
 		e.ProductSKU = prod.SKU
 

@@ -8,7 +8,7 @@ import (
 
 // ConfirmSaleForOrder confirma la venta cuando una orden es shipped/completed.
 // Quantity -= qty, ReservedQty -= qty.
-func (uc *UseCase) ConfirmSaleForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
+func (uc *useCase) ConfirmSaleForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
 	// Resolver warehouse
 	whID, err := uc.resolveWarehouse(ctx, warehouseID, businessID)
 	if err != nil {

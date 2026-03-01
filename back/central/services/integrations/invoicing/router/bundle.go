@@ -13,15 +13,15 @@ import (
 const (
 	// QueueInvoicingRequests es la cola unificada de entrada para todas las solicitudes de facturación.
 	// modules/invoicing publica aquí; el router decide a qué facturador enrutar.
-	QueueInvoicingRequests = "invoicing.requests"
+	QueueInvoicingRequests = rabbitmq.QueueInvoicingRequests
 
 	// Colas de cada proveedor (lectura de los consumers de cada módulo)
-	QueueSoftpymesRequests  = "invoicing.softpymes.requests"
-	QueueFactusRequests     = "invoicing.factus.requests"
-	QueueSiigoRequests      = "invoicing.siigo.requests"
-	QueueAlegraRequests     = "invoicing.alegra.requests"
-	QueueWorldOfficeRequests = "invoicing.world_office.requests"
-	QueueHelisaRequests     = "invoicing.helisa.requests"
+	QueueSoftpymesRequests   = rabbitmq.QueueInvoicingSoftpymesRequests
+	QueueFactusRequests      = rabbitmq.QueueInvoicingFactusRequests
+	QueueSiigoRequests       = rabbitmq.QueueInvoicingSiigoRequests
+	QueueAlegraRequests      = rabbitmq.QueueInvoicingAlegraRequests
+	QueueWorldOfficeRequests = rabbitmq.QueueInvoicingWorldOfficeRequests
+	QueueHelisaRequests      = rabbitmq.QueueInvoicingHelisaRequests
 )
 
 // invoiceRequestHeader contiene solo los campos necesarios para enrutar el mensaje.

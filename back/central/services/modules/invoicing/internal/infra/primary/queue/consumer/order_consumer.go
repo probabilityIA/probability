@@ -30,7 +30,7 @@ func NewOrderConsumer(queue rabbitmq.IQueue, useCase ports.IUseCase, logger log.
 }
 
 const (
-	QueueOrderEvents = "orders.events.invoicing"
+	QueueOrderEvents = rabbitmq.QueueOrdersToInvoicing
 )
 
 // Start inicia el consumo de eventos de órdenes

@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce"
-	"github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
 	pay "github.com/secamc93/probability/back/central/services/integrations/pay"
@@ -21,9 +20,7 @@ import (
 // New inicializa todos los servicios de integraciones.
 // Retorna core.IIntegrationCore para que otros módulos puedan usarlo.
 func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, moduleBundles *modules.ModuleBundles) core.IIntegrationCore {
-	// Inicializar publisher de eventos de integraciones (publica a Redis)
-	// La entrega SSE al frontend la maneja modules/events (centralizada)
-	events.Init(logger, redisClient)
+	// Events publisher se inicializa en init.go (módulo unificado services/events)
 
 	// Inicializar Integration Core (hub central de integraciones)
 	integrationCore := core.New(router, db, redisClient, logger, config, s3)

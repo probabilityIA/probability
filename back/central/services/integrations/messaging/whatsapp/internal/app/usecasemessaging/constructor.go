@@ -29,8 +29,8 @@ type IUseCase interface {
 	IsTerminalState(state entities.ConversationState) bool
 }
 
-// useCase contiene todas las dependencias compartidas
-type Usecases struct {
+// usecases contiene todas las dependencias compartidas
+type usecases struct {
 	whatsApp         ports.IWhatsApp
 	conversationRepo ports.IConversationRepository
 	messageLogRepo   ports.IMessageLogRepository
@@ -50,7 +50,7 @@ func New(
 	logger log.ILogger,
 	config env.IConfig,
 ) IUseCase {
-	return &Usecases{
+	return &usecases{
 		whatsApp:         whatsApp,
 		conversationRepo: conversationRepo,
 		messageLogRepo:   messageLogRepo,

@@ -6,17 +6,12 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache/mappers"
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/log"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
-
-// INotificationConfigCache define la interfaz para consultar configuraciones desde Redis (read-only)
-type INotificationConfigCache interface {
-	GetActiveConfigsByIntegrationAndTrigger(ctx context.Context, integrationID uint, trigger string) ([]repository.NotificationConfigData, error)
-	ValidateConditions(config *repository.NotificationConfigData, orderStatus string, paymentMethodID uint, sourceIntegrationID uint) bool
-}
 
 type notificationConfigCache struct {
 	redis  redisclient.IRedis
@@ -24,7 +19,7 @@ type notificationConfigCache struct {
 }
 
 // NewNotificationConfigCache crea una nueva instancia del cache adapter
-func NewNotificationConfigCache(redis redisclient.IRedis, logger log.ILogger) INotificationConfigCache {
+func NewNotificationConfigCache(redis redisclient.IRedis, logger log.ILogger) ports.INotificationConfigCache {
 	return &notificationConfigCache{
 		redis:  redis,
 		logger: logger.WithModule("whatsapp-notification-config-cache"),
@@ -37,7 +32,7 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 	ctx context.Context,
 	integrationID uint,
 	trigger string,
-) ([]repository.NotificationConfigData, error) {
+) ([]dtos.NotificationConfigData, error) {
 	// Leer del secondary cache key del módulo notification_config
 	key := fmt.Sprintf("notification:configs:evt:%d:%s", integrationID, trigger)
 
@@ -46,7 +41,7 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 		c.logger.Error().
 			Err(err).
 			Str("key", key).
-			Msg("❌ Error obteniendo configs desde Redis cache")
+			Msg("Error obteniendo configs desde Redis cache")
 		return nil, fmt.Errorf("error getting configs from Redis: %w", err)
 	}
 
@@ -55,19 +50,19 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 			Str("key", key).
 			Uint("integration_id", integrationID).
 			Str("trigger", trigger).
-			Msg("ℹ️  No hay configs cacheadas para este trigger")
-		return []repository.NotificationConfigData{}, nil
+			Msg("No hay configs cacheadas para este trigger")
+		return []dtos.NotificationConfigData{}, nil
 	}
 
 	// Parsear cada entrada JSON → CachedNotificationConfig → NotificationConfigData
-	configs := make([]repository.NotificationConfigData, 0, len(entries))
+	configs := make([]dtos.NotificationConfigData, 0, len(entries))
 	for configIDStr, jsonData := range entries {
 		var cached mappers.CachedNotificationConfig
 		if err := json.Unmarshal([]byte(jsonData), &cached); err != nil {
 			c.logger.Warn().
 				Err(err).
 				Str("config_id", configIDStr).
-				Msg("⚠️  Error parseando config desde cache")
+				Msg("Error parseando config desde cache")
 			continue
 		}
 
@@ -88,14 +83,14 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 		Uint("integration_id", integrationID).
 		Str("trigger", trigger).
 		Int("count", len(configs)).
-		Msg("✅ Configs obtenidas desde notification_config secondary cache")
+		Msg("Configs obtenidas desde notification_config secondary cache")
 
 	return configs, nil
 }
 
 // ValidateConditions valida si una orden cumple las condiciones de una configuración
 func (c *notificationConfigCache) ValidateConditions(
-	config *repository.NotificationConfigData,
+	config *dtos.NotificationConfigData,
 	orderStatus string,
 	paymentMethodID uint,
 	sourceIntegrationID uint,

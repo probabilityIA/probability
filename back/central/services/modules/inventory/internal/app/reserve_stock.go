@@ -12,7 +12,7 @@ import (
 // ReserveStockForOrder reserva stock para una orden nueva.
 // Para cada item: ReservedQty += qty, AvailableQty -= qty.
 // Si no hay stock suficiente, reserva parcial + publica evento "inventory.insufficient".
-func (uc *UseCase) ReserveStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
+func (uc *useCase) ReserveStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
 	// Resolver warehouse
 	whID, err := uc.resolveWarehouse(ctx, warehouseID, businessID)
 	if err != nil {
@@ -97,7 +97,7 @@ func (uc *UseCase) ReserveStockForOrder(ctx context.Context, orderID string, bus
 }
 
 // resolveWarehouse determina la bodega a usar: explícita o default
-func (uc *UseCase) resolveWarehouse(ctx context.Context, warehouseID *uint, businessID uint) (uint, error) {
+func (uc *useCase) resolveWarehouse(ctx context.Context, warehouseID *uint, businessID uint) (uint, error) {
 	if warehouseID != nil && *warehouseID > 0 {
 		return *warehouseID, nil
 	}
@@ -111,7 +111,7 @@ func (uc *UseCase) resolveWarehouse(ctx context.Context, warehouseID *uint, busi
 }
 
 // publishEvent publica un evento de inventario a Redis SSE (fire-and-forget)
-func (uc *UseCase) publishEvent(ctx context.Context, eventType string, orderID string, businessID uint, warehouseID uint, data interface{}) {
+func (uc *useCase) publishEvent(ctx context.Context, eventType string, orderID string, businessID uint, warehouseID uint, data interface{}) {
 	if uc.eventPublisher == nil {
 		return
 	}

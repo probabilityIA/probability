@@ -7,11 +7,12 @@ import (
 )
 
 type UseCaseOrderMapping struct {
-	repo                  ports.IRepository
-	logger                log.ILogger
-	redisEventPublisher   ports.IOrderEventPublisher   // Redis Pub/Sub
-	rabbitEventPublisher  ports.IOrderRabbitPublisher  // RabbitMQ
-	scoreUseCase          ports.IOrderScoreUseCase
+	repo                     ports.IRepository
+	logger                   log.ILogger
+	redisEventPublisher      ports.IOrderEventPublisher
+	rabbitEventPublisher     ports.IOrderRabbitPublisher
+	integrationEventPublisher ports.IIntegrationEventPublisher
+	scoreUseCase             ports.IOrderScoreUseCase
 }
 
 func New(
@@ -19,12 +20,14 @@ func New(
 	logger log.ILogger,
 	redisPublisher ports.IOrderEventPublisher,
 	rabbitPublisher ports.IOrderRabbitPublisher,
+	integrationEventPub ports.IIntegrationEventPublisher,
 ) ports.IOrderMappingUseCase {
 	return &UseCaseOrderMapping{
-		repo:                 repo,
-		logger:               logger,
-		redisEventPublisher:  redisPublisher,
-		rabbitEventPublisher: rabbitPublisher,
-		scoreUseCase:         usecaseorderscore.New(repo),
+		repo:                      repo,
+		logger:                    logger,
+		redisEventPublisher:       redisPublisher,
+		rabbitEventPublisher:      rabbitPublisher,
+		integrationEventPublisher: integrationEventPub,
+		scoreUseCase:              usecaseorderscore.New(repo),
 	}
 }

@@ -29,7 +29,7 @@ func New(
 	integrationCore core.IIntegrationCore,
 ) {
 	// Shopify (type_id=1) — se auto-registra internamente (incluye OnIntegrationCreated)
-	shopify.New(router, logger, config, integrationCore, rabbitMQ, database)
+	shopify.New(router, logger, config, integrationCore, rabbitMQ)
 
 	// MercadoLibre (type_id=3)
 	meliProvider := meli.New(router, logger, config, rabbitMQ, integrationCore)

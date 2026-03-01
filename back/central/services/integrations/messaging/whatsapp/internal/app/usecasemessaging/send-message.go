@@ -10,7 +10,7 @@ import (
 )
 
 // SendMessage envía un mensaje de WhatsApp con el número de orden
-func (u *Usecases) SendMessage(ctx context.Context, req dtos.SendMessageRequest) (string, error) {
+func (u *usecases) SendMessage(ctx context.Context, req dtos.SendMessageRequest) (string, error) {
 	// Validar número de teléfono
 	if err := ValidatePhoneNumber(req.PhoneNumber); err != nil {
 		u.log.Error(ctx).Err(err).

@@ -10,7 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/infra/primary/handlers/response"
 )
 
-func (h *Handlers) CreateMovementType(c *gin.Context) {
+func (h *handlers) CreateMovementType(c *gin.Context) {
 	_, ok := h.resolveBusinessID(c)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})

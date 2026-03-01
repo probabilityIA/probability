@@ -8,7 +8,7 @@ import (
 
 // ReleaseStockForOrder libera reservas cuando una orden es cancelada.
 // ReservedQty -= qty, AvailableQty += qty.
-func (uc *UseCase) ReleaseStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
+func (uc *useCase) ReleaseStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
 	// Resolver warehouse
 	whID, err := uc.resolveWarehouse(ctx, warehouseID, businessID)
 	if err != nil {

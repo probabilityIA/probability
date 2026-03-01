@@ -6,10 +6,11 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 const (
-	queueName    = "monitoring.alerts"
+	queueName    = rabbitmq.QueueMonitoringAlerts
 	adminPhone   = "573023406789"
 	templateName = "alerta_servidor"
 )

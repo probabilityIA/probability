@@ -14,13 +14,13 @@ import (
 const (
 	// QueueTransportRequests is the unified input queue for all transport requests.
 	// modules/shipments publishes here; the router decides which carrier to route to.
-	QueueTransportRequests = "transport.requests"
+	QueueTransportRequests = rabbitmq.QueueTransportRequests
 
 	// Per-carrier queues
-	QueueEnvioclickRequests = "transport.envioclick.requests"
-	QueueEnviameRequests    = "transport.enviame.requests"
-	QueueTuRequests         = "transport.tu.requests"
-	QueueMiPaqueteRequests  = "transport.mipaquete.requests"
+	QueueEnvioclickRequests = rabbitmq.QueueTransportEnvioclickRequests
+	QueueEnviameRequests    = rabbitmq.QueueTransportEnviameRequests
+	QueueTuRequests         = rabbitmq.QueueTransportTuRequests
+	QueueMiPaqueteRequests  = rabbitmq.QueueTransportMiPaqueteRequests
 )
 
 // transportRequestHeader contains only the fields needed for routing.

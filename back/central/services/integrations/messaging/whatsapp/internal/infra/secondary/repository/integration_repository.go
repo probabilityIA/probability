@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/migration/shared/models"
 	"gorm.io/gorm"
 )
 
@@ -35,7 +36,7 @@ func (r *IntegrationRepository) GetWhatsAppConfig(ctx context.Context, businessI
 
 	// Primero intentar obtener la integración del business específico
 	err := r.db.Conn(ctx).
-		Table("integrations").
+		Model(&models.Integration{}).
 		Select("id, config, credentials").
 		Where("integration_type_id = ?", 2).
 		Where("business_id = ?", businessID).
@@ -48,7 +49,7 @@ func (r *IntegrationRepository) GetWhatsAppConfig(ctx context.Context, businessI
 			Msg("[Integration Repository] - no se encontró integración específica, usando global")
 
 		err = r.db.Conn(ctx).
-			Table("integrations").
+			Model(&models.Integration{}).
 			Select("id, config, credentials").
 			Where("integration_type_id = ?", 2).
 			Where("business_id IS NULL").
@@ -159,7 +160,7 @@ func (r *IntegrationRepository) GetWhatsAppDefaultConfig(ctx context.Context) (*
 
 	var row IntegrationTypeRow
 	err := r.db.Conn(ctx).
-		Table("integration_types").
+		Model(&models.IntegrationType{}).
 		Select("id, platform_credentials_encrypted").
 		Where("code = ?", "whatsapp").
 		First(&row).Error

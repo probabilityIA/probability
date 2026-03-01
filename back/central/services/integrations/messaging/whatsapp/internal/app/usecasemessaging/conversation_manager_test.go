@@ -9,7 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/mocks"
 )
 
-// newUsecasesForTest construye la instancia de Usecases con todos los mocks.
+// newUsecasesForTest construye la instancia de usecases con todos los mocks.
 // Centraliza el setup para que cada test solo sobreescriba lo que necesita.
 func newUsecasesForTest(
 	waClient *mocks.WhatsAppMock,
@@ -18,8 +18,8 @@ func newUsecasesForTest(
 	integRepo *mocks.IntegrationRepositoryMock,
 	publisher *mocks.EventPublisherMock,
 	cfg *mocks.ConfigMock,
-) *Usecases {
-	return &Usecases{
+) *usecases {
+	return &usecases{
 		whatsApp:         waClient,
 		conversationRepo: convRepo,
 		messageLogRepo:   msgRepo,

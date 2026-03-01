@@ -10,7 +10,7 @@ import (
 )
 
 // SendTemplate envía una plantilla de WhatsApp y crea/actualiza la conversación
-func (u *Usecases) SendTemplate(
+func (u *usecases) SendTemplate(
 	ctx context.Context,
 	templateName string,
 	phoneNumber string,
@@ -125,7 +125,7 @@ func (u *Usecases) SendTemplate(
 }
 
 // SendTemplateWithConversation envía una plantilla usando una conversación existente
-func (u *Usecases) SendTemplateWithConversation(
+func (u *usecases) SendTemplateWithConversation(
 	ctx context.Context,
 	templateName string,
 	phoneNumber string,
@@ -200,7 +200,7 @@ func (u *Usecases) SendTemplateWithConversation(
 }
 
 // buildTemplateMessage construye el mensaje de plantilla con todos sus componentes
-func (u *Usecases) buildTemplateMessage(
+func (u *usecases) buildTemplateMessage(
 	templateName string,
 	phoneNumber string,
 	variables map[string]string,
@@ -243,7 +243,7 @@ func (u *Usecases) buildTemplateMessage(
 }
 
 // getOrCreateConversation obtiene una conversación existente o crea una nueva
-func (u *Usecases) getOrCreateConversation(
+func (u *usecases) getOrCreateConversation(
 	ctx context.Context,
 	phoneNumber string,
 	orderNumber string,

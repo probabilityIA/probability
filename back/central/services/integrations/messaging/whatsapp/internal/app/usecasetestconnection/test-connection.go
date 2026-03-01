@@ -16,14 +16,14 @@ type ITestConnectionUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}, clientFactory func(string, log.ILogger) ports.IWhatsApp) error
 }
 
-type TestConnectionUseCase struct {
+type testConnectionUseCase struct {
 	config env.IConfig
 	logger log.ILogger
 }
 
 // New crea una nueva instancia del caso de uso de prueba de conexión
-func New(config env.IConfig, logger log.ILogger) *TestConnectionUseCase {
-	return &TestConnectionUseCase{
+func New(config env.IConfig, logger log.ILogger) ITestConnectionUseCase {
+	return &testConnectionUseCase{
 		config: config,
 		logger: logger,
 	}
@@ -32,7 +32,7 @@ func New(config env.IConfig, logger log.ILogger) *TestConnectionUseCase {
 // TestConnection prueba la conexión enviando un mensaje de prueba con credenciales dinámicas
 // Si test_phone_number está presente en config, envía mensaje hello_world.
 // Si no está presente, solo valida credenciales básicas (para creación sin test_phone_number).
-func (u *TestConnectionUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}, clientFactory func(string, log.ILogger) ports.IWhatsApp) error {
+func (u *testConnectionUseCase) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}, clientFactory func(string, log.ILogger) ports.IWhatsApp) error {
 	// 1. Extraer y validar parámetros básicos
 	accessToken, ok := credentials["access_token"].(string)
 	if !ok || accessToken == "" {

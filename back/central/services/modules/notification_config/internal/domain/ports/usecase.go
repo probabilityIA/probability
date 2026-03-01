@@ -71,4 +71,11 @@ type IUseCase interface {
 
 	// DeleteNotificationEventType elimina un tipo de evento de notificación por su ID
 	DeleteNotificationEventType(ctx context.Context, id uint) error
+
+	// ========== Message Audit ==========
+	// ListMessageAudit obtiene logs de auditoría de mensajes con filtros y paginación
+	ListMessageAudit(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error)
+
+	// GetMessageAuditStats obtiene estadísticas agregadas de mensajes
+	GetMessageAuditStats(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error)
 }

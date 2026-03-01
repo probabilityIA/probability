@@ -126,6 +126,11 @@ type IOrderScoreUseCase interface {
 	CalculateAndUpdateOrderScore(ctx context.Context, orderID string) error
 }
 
+// IRequestConfirmationUseCase define la interfaz del caso de uso de solicitud de confirmación
+type IRequestConfirmationUseCase interface {
+	RequestConfirmation(ctx context.Context, orderID string) error
+}
+
 // IOrderUseCase define la interfaz para los casos de uso CRUD de órdenes
 type IOrderUseCase interface {
 	CreateOrder(ctx context.Context, req *dtos.CreateOrderRequest) (*dtos.OrderResponse, error)
@@ -141,6 +146,13 @@ type IOrderUseCase interface {
 //	RABBITMQ PUBLISHER INTERFACE
 //
 // ───────────────────────────────────────────
+
+// IIntegrationEventPublisher publica eventos de sincronización de integraciones al exchange de eventos
+type IIntegrationEventPublisher interface {
+	PublishSyncOrderRejected(ctx context.Context, integrationID uint, businessID *uint, orderNumber, externalID, platform, reason, errMsg string)
+	PublishSyncOrderCreated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
+	PublishSyncOrderUpdated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
+}
 
 // IOrderRabbitPublisher publica eventos de órdenes a RabbitMQ
 type IOrderRabbitPublisher interface {

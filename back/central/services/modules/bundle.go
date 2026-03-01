@@ -5,7 +5,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
-	"github.com/secamc93/probability/back/central/services/modules/events"
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
@@ -58,13 +57,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de notification configs
 	notification_config.New(router, database, redisClient, logger)
 
-	// Inicializar módulo de events (notificaciones en tiempo real)
-	if redisClient != nil {
-		events.New(router, database, logger, redisClient)
-	} else {
-		logger.Warn().
-			Msg("Redis no disponible, módulo de eventos no se inicializará")
-	}
+	// Módulo de events se inicializa en init.go (unificado, sin database)
+
 	// Inicializar módulo de AI
 	ai.New(router, logger)
 

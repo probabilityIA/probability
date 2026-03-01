@@ -60,3 +60,8 @@ func (m *ProviderMock) CreateWebhook(ctx context.Context, integrationID string, 
 	args := m.Called(ctx, integrationID, baseURL)
 	return args.Get(0), args.Error(1)
 }
+
+func (m *ProviderMock) UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error {
+	args := m.Called(ctx, integrationID, productExternalID, quantity)
+	return args.Error(0)
+}

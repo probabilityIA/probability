@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/datatypes"
-
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
@@ -172,7 +170,7 @@ func MapMeliOrderToProbability(order *domain.MeliOrder, shippingDetail *domain.M
 	if rawJSON != nil {
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "mercadolibre",
-			RawData:       datatypes.JSON(rawJSON),
+			RawData:       rawJSON,
 			Version:       "v2",
 			ReceivedAt:    now,
 			IsLatest:      true,

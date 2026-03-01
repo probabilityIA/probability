@@ -13,8 +13,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const defaultQueueName = "probability.orders.canonical"
-
 type rabbitMQPublisher struct {
 	queue     rabbitmq.IQueue
 	logger    log.ILogger
@@ -25,7 +23,7 @@ type rabbitMQPublisher struct {
 func New(queue rabbitmq.IQueue, logger log.ILogger, config env.IConfig) domain.OrderPublisher {
 	queueName := config.Get("RABBITMQ_ORDERS_CANONICAL_QUEUE")
 	if queueName == "" {
-		queueName = defaultQueueName
+		queueName = rabbitmq.QueueOrdersCanonical
 		logger.Warn(context.Background()).
 			Str("queue_name", queueName).
 			Msg("RABBITMQ_ORDERS_CANONICAL_QUEUE not set, using default")

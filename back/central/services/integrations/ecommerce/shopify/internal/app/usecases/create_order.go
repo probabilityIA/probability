@@ -7,7 +7,6 @@ import (
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/mapper"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
-	"gorm.io/datatypes"
 )
 
 func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte) error {
@@ -34,7 +33,7 @@ func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string,
 		now := time.Now()
 		probabilityOrder.ChannelMetadata = &domain.ProbabilityChannelMetadataDTO{
 			ChannelSource: "shopify",
-			RawData:       datatypes.JSON(rawPayload), // Convertir []byte a datatypes.JSON
+			RawData:       rawPayload,
 			Version:       "1.0",
 			ReceivedAt:    now,
 			ProcessedAt:   &now,

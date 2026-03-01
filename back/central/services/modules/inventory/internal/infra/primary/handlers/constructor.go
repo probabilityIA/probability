@@ -21,18 +21,18 @@ type IHandlers interface {
 	RegisterRoutes(router *gin.RouterGroup)
 }
 
-// Handlers contiene el use case
-type Handlers struct {
+// handlers contiene el use case
+type handlers struct {
 	uc app.IUseCase
 }
 
 // New crea una nueva instancia de los handlers
 func New(uc app.IUseCase) IHandlers {
-	return &Handlers{uc: uc}
+	return &handlers{uc: uc}
 }
 
 // resolveBusinessID obtiene el business_id efectivo.
-func (h *Handlers) resolveBusinessID(c *gin.Context) (uint, bool) {
+func (h *handlers) resolveBusinessID(c *gin.Context) (uint, bool) {
 	businessID := c.GetUint("business_id")
 	if businessID > 0 {
 		return businessID, true

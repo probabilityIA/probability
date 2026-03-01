@@ -5,6 +5,8 @@ import (
 	"fmt"
 
 	"gorm.io/gorm"
+
+	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
 // GetIntegrationTypeByIntegrationID obtiene el type_id de una integración
@@ -17,7 +19,7 @@ func (r *Repository) GetIntegrationTypeByIntegrationID(ctx context.Context, inte
 	var typeID int
 
 	err := r.db.Conn(ctx).
-		Table("integrations").
+		Model(&models.Integration{}).
 		Select("integration_type_id").
 		Where("id = ?", integrationID).
 		Where("deleted_at IS NULL").

@@ -11,7 +11,7 @@ import (
 )
 
 // HandleIncomingMessage procesa mensajes entrantes del usuario
-func (u *Usecases) HandleIncomingMessage(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
+func (u *usecases) HandleIncomingMessage(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
 	u.log.Info(ctx).Msg("[WhatsApp Webhook] - procesando mensaje entrante")
 
 	// Extraer mensajes del webhook
@@ -38,7 +38,7 @@ func (u *Usecases) HandleIncomingMessage(ctx context.Context, whPayload dtos.Web
 }
 
 // processIncomingMessage procesa un mensaje individual
-func (u *Usecases) processIncomingMessage(ctx context.Context, message dtos.WebhookMessageDTO, metadata dtos.WebhookMetadataDTO) error {
+func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.WebhookMessageDTO, metadata dtos.WebhookMetadataDTO) error {
 	phoneNumber := message.From
 	messageText := message.GetMessageText()
 
@@ -98,7 +98,7 @@ func (u *Usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 }
 
 // processConversationFlow maneja el flujo de la conversación según el estado actual
-func (u *Usecases) processConversationFlow(ctx context.Context, conversation *entities.Conversation, userResponse string) error {
+func (u *usecases) processConversationFlow(ctx context.Context, conversation *entities.Conversation, userResponse string) error {
 	u.log.Info(ctx).
 		Str("conversation_id", conversation.ID).
 		Str("current_state", string(conversation.CurrentState)).
@@ -172,7 +172,7 @@ func (u *Usecases) processConversationFlow(ctx context.Context, conversation *en
 }
 
 // publishBusinessEvent publica eventos de negocio según el tipo
-func (u *Usecases) publishBusinessEvent(ctx context.Context, eventType string, conversation *entities.Conversation) error {
+func (u *usecases) publishBusinessEvent(ctx context.Context, eventType string, conversation *entities.Conversation) error {
 	switch eventType {
 	case "confirmed":
 		return u.publisher.PublishOrderConfirmed(
@@ -218,7 +218,7 @@ func (u *Usecases) publishBusinessEvent(ctx context.Context, eventType string, c
 }
 
 // HandleMessageStatus procesa cambios de estado de mensajes (delivered, read)
-func (u *Usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
+func (u *usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
 	u.log.Info(ctx).Msg("[WhatsApp Webhook] - procesando cambios de estado de mensajes")
 
 	for _, entry := range whPayload.Entry {
@@ -244,7 +244,7 @@ func (u *Usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.Webho
 }
 
 // processMessageStatus procesa un cambio de estado individual
-func (u *Usecases) processMessageStatus(ctx context.Context, status dtos.WebhookStatusDTO) error {
+func (u *usecases) processMessageStatus(ctx context.Context, status dtos.WebhookStatusDTO) error {
 	u.log.Info(ctx).
 		Str("message_id", status.ID).
 		Str("status", status.Status).

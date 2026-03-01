@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueuePayResponses = "pay.responses"
+const QueuePayResponses = rabbitmq.QueuePayResponses
 
 // ResponsePublisher publica respuestas de pago Stripe
 type ResponsePublisher struct {

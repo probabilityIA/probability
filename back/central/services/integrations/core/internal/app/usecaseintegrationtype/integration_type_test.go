@@ -18,7 +18,9 @@ func newTestIntegrationTypeUseCase(
 	logger *mocks.LoggerMock,
 	cfg *mocks.ConfigMock,
 ) IIntegrationTypeUseCase {
-	return New(repo, s3, logger, cfg)
+	cache := new(mocks.CacheMock)
+	enc := new(mocks.EncryptionMock)
+	return New(repo, s3, cache, logger, cfg, enc)
 }
 
 // configurarLoggerPermisivoType permite cualquier llamada al logger sin fallo de test
@@ -521,6 +523,8 @@ func TestUpdateIntegrationType_ActualizaNombreYDescripcion(t *testing.T) {
 	// Verificar que el nuevo nombre no esté en uso
 	repo.On("GetIntegrationTypeByName", mock.Anything, nuevoNombre).Return(nil, errors.New("no encontrado"))
 	repo.On("UpdateIntegrationType", mock.Anything, uint(7), mock.AnythingOfType("*domain.IntegrationType")).Return(nil)
+	// El use case invalida el caché de las integraciones que usan este tipo
+	repo.On("ListIntegrationsByIntegrationTypeID", mock.Anything, uint(7)).Return([]*domain.Integration{}, nil).Maybe()
 
 	// Act
 	resultado, err := uc.UpdateIntegrationType(ctx, 7, dto)
@@ -551,6 +555,8 @@ func TestUpdateIntegrationType_NombreYaEnUsoPorOtro(t *testing.T) {
 
 	repo.On("GetIntegrationTypeByID", mock.Anything, uint(7)).Return(tipoExistente, nil)
 	repo.On("GetIntegrationTypeByName", mock.Anything, nuevoNombre).Return(otroTipo, nil)
+	// El use case puede intentar listar integraciones incluso en error si llega tan lejos
+	repo.On("ListIntegrationsByIntegrationTypeID", mock.Anything, mock.Anything).Return([]*domain.Integration{}, nil).Maybe()
 
 	// Act
 	resultado, err := uc.UpdateIntegrationType(ctx, 7, dto)
@@ -572,6 +578,7 @@ func TestUpdateIntegrationType_NoEncontrado(t *testing.T) {
 	ctx := context.Background()
 
 	repo.On("GetIntegrationTypeByID", mock.Anything, uint(999)).Return(nil, errors.New("not found"))
+	repo.On("ListIntegrationsByIntegrationTypeID", mock.Anything, mock.Anything).Return([]*domain.Integration{}, nil).Maybe()
 
 	// Act
 	resultado, err := uc.UpdateIntegrationType(ctx, 999, domain.UpdateIntegrationTypeDTO{})

@@ -22,7 +22,7 @@ func New(queue rabbitmq.IQueue, logger log.ILogger, config env.IConfig) domain.O
 	queueName := config.Get("RABBITMQ_ORDERS_CANONICAL_QUEUE")
 	if queueName == "" {
 		// Fallback al valor por defecto si no está configurado
-		queueName = "probability.orders.canonical"
+		queueName = rabbitmq.QueueOrdersCanonical
 		logger.Warn(context.Background()).
 			Str("queue_name", queueName).
 			Msg("RABBITMQ_ORDERS_CANONICAL_QUEUE not set, using default queue name")

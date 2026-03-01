@@ -77,12 +77,12 @@ func (r *Repository) ListMovements(ctx context.Context, params dtos.ListMovement
 			Name string
 			SKU  string
 		}
-		r.db.Conn(ctx).Table("products").Select("name, sku").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
+		r.db.Conn(ctx).Model(&models.Product{}).Select("name, sku").Where("id = ? AND deleted_at IS NULL", m.ProductID).Scan(&prod)
 		e.ProductName = prod.Name
 		e.ProductSKU = prod.SKU
 
 		var whName string
-		r.db.Conn(ctx).Table("warehouses").Select("name").Where("id = ? AND deleted_at IS NULL", m.WarehouseID).Scan(&whName)
+		r.db.Conn(ctx).Model(&models.Warehouse{}).Select("name").Where("id = ? AND deleted_at IS NULL", m.WarehouseID).Scan(&whName)
 		e.WarehouseName = whName
 
 		// Enriquecer con datos del tipo de movimiento
@@ -90,7 +90,7 @@ func (r *Repository) ListMovements(ctx context.Context, params dtos.ListMovement
 			Code string
 			Name string
 		}
-		r.db.Conn(ctx).Table("stock_movement_types").Select("code, name").Where("id = ?", m.MovementTypeID).Scan(&mt)
+		r.db.Conn(ctx).Model(&models.StockMovementType{}).Select("code, name").Where("id = ?", m.MovementTypeID).Scan(&mt)
 		e.MovementTypeCode = mt.Code
 		e.MovementTypeName = mt.Name
 

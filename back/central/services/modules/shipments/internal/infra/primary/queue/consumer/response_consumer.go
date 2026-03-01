@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	QueueTransportResponses = "transport.responses"
+	QueueTransportResponses = rabbitmq.QueueTransportResponses
 )
 
 // TransportResponseMessage is the response message from a transport provider

@@ -43,6 +43,16 @@ type IOrderStatusQuerier interface {
 	GetOrderStatusCodesByIDs(ctx context.Context, ids []uint) (map[uint]string, error)
 }
 
+// IMessageAuditQuerier define el contrato para consultar logs de auditoría de mensajes
+// Consulta las tablas whatsapp_message_logs y whatsapp_conversations (replicado localmente)
+type IMessageAuditQuerier interface {
+	// ListMessageLogs obtiene logs de mensajes con filtros y paginación
+	ListMessageLogs(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error)
+
+	// GetMessageStats obtiene estadísticas agregadas de mensajes outbound
+	GetMessageStats(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*entities.MessageAuditStats, error)
+}
+
 // INotificationTypeRepository define el contrato del repositorio de tipos de notificaciones
 type INotificationTypeRepository interface {
 	// GetAll obtiene todos los tipos de notificaciones

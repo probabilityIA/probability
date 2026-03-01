@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	QueueInvoiceEvents   = "invoicing.events"
-	QueueBulkInvoiceJobs = "invoicing.bulk.create"
+	QueueInvoiceEvents   = rabbitmq.QueueInvoicingEvents
+	QueueBulkInvoiceJobs = rabbitmq.QueueInvoicingBulkCreate
 )
 
 // EventPublisher implementa IEventPublisher

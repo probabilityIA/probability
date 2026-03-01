@@ -27,7 +27,7 @@ import (
 // @Success 200 {string} string "Challenge token"
 // @Failure 403 {string} string "Forbidden"
 // @Router /integrations/whatsapp/webhook [get]
-func (h *Handler) VerifyWebhook(c *gin.Context) {
+func (h *handler) VerifyWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	mode := c.Query("hub.mode")
@@ -87,7 +87,7 @@ func (h *Handler) VerifyWebhook(c *gin.Context) {
 // @Failure 401 {object} map[string]interface{}
 // @Failure 500 {object} map[string]interface{}
 // @Router /integrations/whatsapp/webhook [post]
-func (h *Handler) ReceiveWebhook(c *gin.Context) {
+func (h *handler) ReceiveWebhook(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	h.log.Info(ctx).Msg("[Webhook Handler] - recibiendo webhook de WhatsApp")
@@ -152,7 +152,7 @@ func (h *Handler) ReceiveWebhook(c *gin.Context) {
 }
 
 // processWebhookAsync procesa el webhook de forma asíncrona
-func (h *Handler) processWebhookAsync(webhook request.WebhookPayload) {
+func (h *handler) processWebhookAsync(webhook request.WebhookPayload) {
 	// Crear nuevo contexto para operación asíncrona
 	ctx := context.Background()
 
@@ -195,7 +195,7 @@ func (h *Handler) processWebhookAsync(webhook request.WebhookPayload) {
 }
 
 // verifySignature verifica la firma HMAC-SHA256 del webhook
-func (h *Handler) verifySignature(payload []byte, signatureHeader string) bool {
+func (h *handler) verifySignature(payload []byte, signatureHeader string) bool {
 	// Obtener secret de configuración
 	secret := h.config.Get("WHATSAPP_WEBHOOK_SECRET")
 	if secret == "" {

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
+	"github.com/secamc93/probability/back/migration/shared/models"
 )
 
 // ═══════════════════════════════════════════════════════════════
@@ -18,7 +19,7 @@ func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, sta
 	// Query 1: Totals (métricas totales)
 	var totals entities.TotalStats
 	err := r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			COUNT(*) as total_invoices,
 			COALESCE(SUM(total_amount), 0) as total_amount,
@@ -38,12 +39,12 @@ func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, sta
 
 	// Query 2: By Status (desglose por estado)
 	var byStatus []entities.StatusBreakdown
-	subQuery := r.db.Conn(ctx).Table("invoices").
+	subQuery := r.db.Conn(ctx).Model(&models.Invoice{}).
 		Select("COUNT(*)").
 		Where("business_id = ? AND created_at BETWEEN ? AND ?", businessID, start, end)
 
 	err = r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			status,
 			COUNT(*) as count,
@@ -64,6 +65,9 @@ func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, sta
 	summary.ByStatus = byStatus
 
 	// Query 3: By Provider (desglose por proveedor de facturación)
+	// Nota: se usa Table() con alias porque la query requiere alias explícito en SELECT y WHERE
+	// para distinguir columnas entre las tres tablas unidas (invoices i, integrations ig, integration_types it).
+	// Model() no soporta alias de tabla, por lo que esta es una excepción documentada.
 	var byProvider []entities.ProviderBreakdown
 	err = r.db.Conn(ctx).
 		Table("invoices i").
@@ -88,7 +92,7 @@ func (r *Repository) GetInvoiceSummary(ctx context.Context, businessID uint, sta
 	// Query 4: Recent Failures (últimos errores)
 	var recentFailures []entities.FailureDetail
 	err = r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			id as invoice_id,
 			order_id,
@@ -138,7 +142,7 @@ func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uin
 	// Query 1: Summary (resumen general)
 	var summary entities.StatsSummary
 	err := r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			COUNT(*) as total_invoices,
 			COALESCE(SUM(total_amount), 0) as total_amount,
@@ -160,7 +164,7 @@ func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uin
 	// Query 2: Top Customers (mejores clientes)
 	var topCustomers []entities.CustomerStats
 	err = r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			customer_name,
 			COUNT(*) as invoice_count,
@@ -181,7 +185,7 @@ func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uin
 	// Query 3: Monthly Breakdown (desglose mensual)
 	var monthlyBreakdown []entities.MonthlyStats
 	err = r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			TO_CHAR(created_at, 'YYYY-MM') as month,
 			COUNT(*) as count,
@@ -205,7 +209,7 @@ func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uin
 	// Query 4: Failure Analysis (análisis de fallas)
 	var totalFailures int64
 	err = r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Where("business_id = ? AND status = 'failed' AND created_at BETWEEN ? AND ?", businessID, startDate, endDate).
 		Count(&totalFailures).Error
 
@@ -217,7 +221,7 @@ func (r *Repository) GetInvoiceDetailedStats(ctx context.Context, businessID uin
 	// Nota: El campo 'error_message' no existe en la tabla, usar 'notes' como aproximación
 	var byReason []entities.FailureReason
 	err = r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			COALESCE(SUBSTRING(notes FROM 1 FOR 50), 'Error desconocido') as reason,
 			COUNT(*) as count,
@@ -294,7 +298,7 @@ func (r *Repository) GetInvoiceTrends(ctx context.Context, businessID uint, star
 	// Query: Data Points
 	var dataPoints []entities.TrendPoint
 	query := r.db.Conn(ctx).
-		Table("invoices").
+		Model(&models.Invoice{}).
 		Select(`
 			TO_CHAR(created_at, '`+dateFormat+`') as date,
 			`+selectClause+`,

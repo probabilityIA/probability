@@ -8,7 +8,7 @@ import (
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 )
 
-func (uc *UseCase) ListWarehouseInventory(ctx context.Context, params dtos.ListWarehouseInventoryParams) ([]entities.InventoryLevel, int64, error) {
+func (uc *useCase) ListWarehouseInventory(ctx context.Context, params dtos.ListWarehouseInventoryParams) ([]entities.InventoryLevel, int64, error) {
 	if params.Page < 1 {
 		params.Page = 1
 	}

@@ -6,10 +6,45 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/infra/secondary/client/response"
 )
+
+// buildOrdersQueryString construye los query params para la API de MeLi.
+// El sellerID es obligatorio para buscar órdenes.
+// Esta lógica vive en infra porque usa net/url, que es un detalle de transporte HTTP.
+func buildOrdersQueryString(sellerID int64, p *domain.GetOrdersParams) string {
+	params := url.Values{}
+	params.Set("seller", fmt.Sprintf("%d", sellerID))
+
+	if p.Status != "" {
+		params.Set("order.status", p.Status)
+	}
+	if p.DateFrom != nil {
+		params.Set("order.date_created.from", p.DateFrom.Format(time.RFC3339))
+	}
+	if p.DateTo != nil {
+		params.Set("order.date_created.to", p.DateTo.Format(time.RFC3339))
+	}
+	if p.Offset > 0 {
+		params.Set("offset", fmt.Sprintf("%d", p.Offset))
+	}
+	if p.Limit > 0 {
+		limit := p.Limit
+		if limit > 50 {
+			limit = 50
+		}
+		params.Set("limit", fmt.Sprintf("%d", limit))
+	}
+	if p.Sort != "" {
+		params.Set("sort", p.Sort)
+	}
+
+	return params.Encode()
+}
 
 // GetOrders obtiene órdenes paginadas del vendedor.
 // GET https://api.mercadolibre.com/orders/search?seller={seller_id}&...
@@ -18,7 +53,7 @@ import (
 func (c *MeliClient) GetOrders(ctx context.Context, accessToken string, sellerID int64, params *domain.GetOrdersParams) (*domain.GetOrdersResult, [][]byte, error) {
 	queryStr := ""
 	if params != nil {
-		queryStr = params.ToQueryString(sellerID)
+		queryStr = buildOrdersQueryString(sellerID, params)
 	} else {
 		queryStr = fmt.Sprintf("seller=%d", sellerID)
 	}

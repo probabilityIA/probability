@@ -11,11 +11,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasetestconnection"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/consumer/consumerevent"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumeralert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
@@ -120,36 +118,8 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 		}()
 	}
 
-	// 5. Inicializar consumidor de eventos Redis → RabbitMQ (si Redis y RabbitMQ están disponibles)
-	if redisClient != nil && rabbit != nil {
-		// Crear repositorios de consultas
-		orderQueries := repository.NewOrderQueries(database, logger)
-		integrationQueries := repository.NewIntegrationQueries(database, logger)
-
-		// Canal de órdenes — constante centralizada en shared/redis
-		const redisChannel = redisclient.ChannelOrdersEvents
-
-		// ✅ CAMBIO: Crear cache adapter de notification_config (solo lectura desde Redis)
-		notificationConfigCache := cache.New(redisClient, logger)
-
-		// Crear consumer de eventos
-		orderEventConsumer := consumerevent.New(
-			redisClient,
-			rabbit,
-			notificationConfigCache, // ✅ CAMBIO: Cache en lugar de repositorio
-			integrationQueries,
-			orderQueries,
-			logger,
-			redisChannel,
-		)
-
-		// Arrancar consumer en goroutine
-		go func() {
-			if err := orderEventConsumer.Start(context.Background()); err != nil {
-				logger.Error().Err(err).Msg("Error starting WhatsApp order event consumer")
-			}
-		}()
-	}
+	// El routing de eventos a WhatsApp ahora lo maneja el módulo unificado services/events
+	// (consume de RabbitMQ, consulta config en Redis cache, encola a orders.confirmation.requested)
 
 	return &bundle{
 		wa:          wa,

@@ -73,9 +73,9 @@ func NewWhatsAppConsumer(
 func (c *WhatsAppConsumer) Start(ctx context.Context) error {
 	// Declarar colas
 	queues := []string{
-		"orders.whatsapp.confirmed",
-		"orders.whatsapp.cancelled",
-		"orders.whatsapp.novelty",
+		rabbitmq.QueueWhatsAppOrderConfirmed,
+		rabbitmq.QueueWhatsAppOrderCancelled,
+		rabbitmq.QueueWhatsAppOrderNovelty,
 	}
 
 	for _, queueName := range queues {
@@ -90,19 +90,19 @@ func (c *WhatsAppConsumer) Start(ctx context.Context) error {
 
 	// Consumir de múltiples colas
 	go func() {
-		if err := c.queue.Consume(ctx, "orders.whatsapp.confirmed", c.handleConfirmed); err != nil {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderConfirmed, c.handleConfirmed); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming confirmed queue")
 		}
 	}()
 
 	go func() {
-		if err := c.queue.Consume(ctx, "orders.whatsapp.cancelled", c.handleCancelled); err != nil {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderCancelled, c.handleCancelled); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming cancelled queue")
 		}
 	}()
 
 	go func() {
-		if err := c.queue.Consume(ctx, "orders.whatsapp.novelty", c.handleNovelty); err != nil {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderNovelty, c.handleNovelty); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming novelty queue")
 		}
 	}()

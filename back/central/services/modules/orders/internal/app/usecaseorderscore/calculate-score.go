@@ -2,7 +2,6 @@ package usecaseorderscore
 
 import (
 	"encoding/json"
-	"fmt"
 	"regexp"
 	"strings"
 	"unicode"
@@ -19,8 +18,6 @@ func (uc *UseCaseOrderScore) CalculateOrderScore(order *entities.ProbabilityOrde
 
 	// Get Static Negative Factors
 	staticFactors := uc.GetStaticNegativeFactors(order)
-	fmt.Printf("[CalculateOrderScore] Order %s - Email: '%s', Name: '%s', Phone: '%s', Street: '%s', Street2: '%s', Count: %d, Platform: '%s', Factors: %v\n",
-		order.OrderNumber, order.CustomerEmail, order.CustomerName, order.CustomerPhone, order.ShippingStreet, order.Address2, order.CustomerOrderCount, order.Platform, staticFactors)
 
 	// Apply penalties for static factors
 	// Each factor reduces score by 10 (example weight)
@@ -60,7 +57,6 @@ func (uc *UseCaseOrderScore) CalculateOrderScore(order *entities.ProbabilityOrde
 
 	// Redondear a 2 decimales
 	finalScore := float64(int(score*100)) / 100
-	fmt.Printf("[CalculateOrderScore] Order %s - Final Score: %.2f\n", order.OrderNumber, finalScore)
 	return finalScore, staticFactors
 }
 
@@ -120,7 +116,6 @@ func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *entities.Probabilit
 				// We need to unmarshal because RawData is []byte
 				if err := json.Unmarshal(meta.RawData, &rawData); err == nil {
 					if rawData.ShippingAddress.Address2 != "" {
-						fmt.Printf("[CalculateOrderScore] Found Address2 in ChannelMetadata: '%s'\n", rawData.ShippingAddress.Address2)
 						address2 = rawData.ShippingAddress.Address2
 						break
 					}

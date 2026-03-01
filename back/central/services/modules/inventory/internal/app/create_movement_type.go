@@ -7,7 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 )
 
-func (uc *UseCase) CreateMovementType(ctx context.Context, dto dtos.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
+func (uc *useCase) CreateMovementType(ctx context.Context, dto dtos.CreateStockMovementTypeDTO) (*entities.StockMovementType, error) {
 	movType := &entities.StockMovementType{
 		Code:        dto.Code,
 		Name:        dto.Name,

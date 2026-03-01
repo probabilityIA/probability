@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/app"
+	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/message_audit"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_event_type"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/handlers/notification_type"
@@ -24,6 +25,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	notificationTypeRepo := repository.NewNotificationTypeRepository(database, logger)
 	notificationEventTypeRepo := repository.NewNotificationEventTypeRepository(database, logger)
 	orderStatusQuerier := repository.NewOrderStatusQuerier(database, logger)
+	messageAuditQuerier := repository.NewMessageAuditQuerier(database, logger)
 
 	// Cache Manager
 	cacheManager := cache.New(redisClient, repo, orderStatusQuerier, logger)
@@ -37,15 +39,17 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	}
 
 	// 2. Capa de aplicación (casos de uso) - inyectar cache manager
-	useCase := app.New(repo, notificationTypeRepo, notificationEventTypeRepo, cacheManager, logger)
+	useCase := app.New(repo, notificationTypeRepo, notificationEventTypeRepo, cacheManager, messageAuditQuerier, logger)
 
 	// 3. Infraestructura primaria (adaptadores de entrada)
 	configHandler := notification_config.New(useCase, logger)
 	typeHandler := notification_type.New(useCase, logger)
 	eventTypeHandler := notification_event_type.New(useCase, logger)
+	auditHandler := message_audit.New(useCase, logger)
 
 	// 4. Registrar rutas HTTP
 	configHandler.RegisterRoutes(router)
 	typeHandler.RegisterRoutes(router)
 	eventTypeHandler.RegisterRoutes(router)
+	auditHandler.RegisterRoutes(router)
 }

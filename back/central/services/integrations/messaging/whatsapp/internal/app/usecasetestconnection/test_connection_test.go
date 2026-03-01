@@ -81,7 +81,7 @@ func waFactory(wa ports.IWhatsApp) func(string, log.ILogger) ports.IWhatsApp {
 }
 
 // newUseCase es un helper que crea el use case con config y logger de test
-func newUseCase() *TestConnectionUseCase {
+func newUseCase() ITestConnectionUseCase {
 	cfg := &testConfig{values: map[string]string{"WHATSAPP_URL": "https://graph.facebook.com"}}
 	return New(cfg, &testLogger{})
 }

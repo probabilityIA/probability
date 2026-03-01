@@ -7,7 +7,7 @@ import (
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 )
 
-func (uc *UseCase) TransferStock(ctx context.Context, dto dtos.TransferStockDTO) error {
+func (uc *useCase) TransferStock(ctx context.Context, dto dtos.TransferStockDTO) error {
 	if dto.Quantity <= 0 {
 		return domainerrors.ErrTransferQtyNeg
 	}

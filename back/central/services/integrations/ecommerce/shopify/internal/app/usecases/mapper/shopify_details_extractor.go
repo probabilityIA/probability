@@ -2,12 +2,10 @@ package mapper
 
 import (
 	"encoding/json"
-
-	"gorm.io/datatypes"
 )
 
 // ExtractFinancialDetails extrae los detalles financieros del JSON original de Shopify
-func ExtractFinancialDetails(rawPayload []byte) (datatypes.JSON, error) {
+func ExtractFinancialDetails(rawPayload []byte) ([]byte, error) {
 	var order map[string]interface{}
 	if err := json.Unmarshal(rawPayload, &order); err != nil {
 		return nil, err
@@ -85,11 +83,11 @@ func ExtractFinancialDetails(rawPayload []byte) (datatypes.JSON, error) {
 		return nil, err
 	}
 
-	return datatypes.JSON(financialJSON), nil
+	return financialJSON, nil
 }
 
 // ExtractShippingDetails extrae los detalles de envío del JSON original de Shopify
-func ExtractShippingDetails(rawPayload []byte) (datatypes.JSON, error) {
+func ExtractShippingDetails(rawPayload []byte) ([]byte, error) {
 	var order map[string]interface{}
 	if err := json.Unmarshal(rawPayload, &order); err != nil {
 		return nil, err
@@ -119,11 +117,11 @@ func ExtractShippingDetails(rawPayload []byte) (datatypes.JSON, error) {
 		return nil, err
 	}
 
-	return datatypes.JSON(shippingJSON), nil
+	return shippingJSON, nil
 }
 
 // ExtractPaymentDetails extrae los detalles de pago del JSON original de Shopify
-func ExtractPaymentDetails(rawPayload []byte) (datatypes.JSON, error) {
+func ExtractPaymentDetails(rawPayload []byte) ([]byte, error) {
 	var order map[string]interface{}
 	if err := json.Unmarshal(rawPayload, &order); err != nil {
 		return nil, err
@@ -159,11 +157,11 @@ func ExtractPaymentDetails(rawPayload []byte) (datatypes.JSON, error) {
 		return nil, err
 	}
 
-	return datatypes.JSON(paymentJSON), nil
+	return paymentJSON, nil
 }
 
 // ExtractFulfillmentDetails extrae los detalles de fulfillment del JSON original de Shopify
-func ExtractFulfillmentDetails(rawPayload []byte) (datatypes.JSON, error) {
+func ExtractFulfillmentDetails(rawPayload []byte) ([]byte, error) {
 	var order map[string]interface{}
 	if err := json.Unmarshal(rawPayload, &order); err != nil {
 		return nil, err
@@ -212,5 +210,5 @@ func ExtractFulfillmentDetails(rawPayload []byte) (datatypes.JSON, error) {
 		return nil, err
 	}
 
-	return datatypes.JSON(fulfillmentJSON), nil
+	return fulfillmentJSON, nil
 }

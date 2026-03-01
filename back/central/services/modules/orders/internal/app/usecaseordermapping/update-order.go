@@ -6,11 +6,9 @@ import (
 	"fmt"
 	"time"
 
-	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
-	"gorm.io/datatypes"
 )
 
 // UpdateOrder actualiza una orden existente con los datos del DTO
@@ -36,23 +34,18 @@ func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *e
 
 	// 5. Publicar evento de sincronización si la orden viene de una integración
 	if existingOrder.IntegrationID > 0 {
-		integrationevents.PublishSyncOrderUpdated(
-			ctx,
-			existingOrder.IntegrationID,
-			existingOrder.BusinessID,
-			integrationevents.SyncOrderUpdatedEvent{
-				OrderID:       existingOrder.ID,
-				OrderNumber:   existingOrder.OrderNumber,
-				ExternalID:    existingOrder.ExternalID,
-				Platform:      existingOrder.Platform,
-				CustomerEmail: existingOrder.CustomerEmail,
-				Currency:      existingOrder.Currency,
-				Status:        existingOrder.Status,
-				CreatedAt:     existingOrder.CreatedAt,
-				TotalAmount:   &existingOrder.TotalAmount,
-				UpdatedAt:     time.Now(),
-			},
-		)
+		uc.publishSyncOrderUpdated(ctx, existingOrder.IntegrationID, existingOrder.BusinessID, map[string]interface{}{
+			"order_id":       existingOrder.ID,
+			"order_number":   existingOrder.OrderNumber,
+			"external_id":    existingOrder.ExternalID,
+			"platform":       existingOrder.Platform,
+			"customer_email": existingOrder.CustomerEmail,
+			"currency":       existingOrder.Currency,
+			"status":         existingOrder.Status,
+			"created_at":     existingOrder.CreatedAt,
+			"total_amount":   existingOrder.TotalAmount,
+			"updated_at":     time.Now(),
+		})
 	}
 
 	// 6. Retornar la respuesta actualizada
@@ -583,48 +576,48 @@ func (uc *UseCaseOrderMapping) updateStructuredData(order *entities.ProbabilityO
 
 	// Actualizar Items si están presentes
 	if len(dto.Items) > 0 {
-		if len(order.Items) == 0 || !equalJSON(order.Items, datatypes.JSON(dto.Items)) {
-			order.Items = datatypes.JSON(dto.Items)
+		if len(order.Items) == 0 || !equalJSON(order.Items, dto.Items) {
+			order.Items = dto.Items
 			changed = true
 		}
 	}
 
 	// Actualizar Metadata si está presente
 	if len(dto.Metadata) > 0 {
-		if len(order.Metadata) == 0 || !equalJSON(order.Metadata, datatypes.JSON(dto.Metadata)) {
-			order.Metadata = datatypes.JSON(dto.Metadata)
+		if len(order.Metadata) == 0 || !equalJSON(order.Metadata, dto.Metadata) {
+			order.Metadata = dto.Metadata
 			changed = true
 		}
 	}
 
 	// Actualizar FinancialDetails si está presente
 	if len(dto.FinancialDetails) > 0 {
-		if len(order.FinancialDetails) == 0 || !equalJSON(order.FinancialDetails, datatypes.JSON(dto.FinancialDetails)) {
-			order.FinancialDetails = datatypes.JSON(dto.FinancialDetails)
+		if len(order.FinancialDetails) == 0 || !equalJSON(order.FinancialDetails, dto.FinancialDetails) {
+			order.FinancialDetails = dto.FinancialDetails
 			changed = true
 		}
 	}
 
 	// Actualizar ShippingDetails si está presente
 	if len(dto.ShippingDetails) > 0 {
-		if len(order.ShippingDetails) == 0 || !equalJSON(order.ShippingDetails, datatypes.JSON(dto.ShippingDetails)) {
-			order.ShippingDetails = datatypes.JSON(dto.ShippingDetails)
+		if len(order.ShippingDetails) == 0 || !equalJSON(order.ShippingDetails, dto.ShippingDetails) {
+			order.ShippingDetails = dto.ShippingDetails
 			changed = true
 		}
 	}
 
 	// Actualizar PaymentDetails si está presente
 	if len(dto.PaymentDetails) > 0 {
-		if len(order.PaymentDetails) == 0 || !equalJSON(order.PaymentDetails, datatypes.JSON(dto.PaymentDetails)) {
-			order.PaymentDetails = datatypes.JSON(dto.PaymentDetails)
+		if len(order.PaymentDetails) == 0 || !equalJSON(order.PaymentDetails, dto.PaymentDetails) {
+			order.PaymentDetails = dto.PaymentDetails
 			changed = true
 		}
 	}
 
 	// Actualizar FulfillmentDetails si está presente
 	if len(dto.FulfillmentDetails) > 0 {
-		if len(order.FulfillmentDetails) == 0 || !equalJSON(order.FulfillmentDetails, datatypes.JSON(dto.FulfillmentDetails)) {
-			order.FulfillmentDetails = datatypes.JSON(dto.FulfillmentDetails)
+		if len(order.FulfillmentDetails) == 0 || !equalJSON(order.FulfillmentDetails, dto.FulfillmentDetails) {
+			order.FulfillmentDetails = dto.FulfillmentDetails
 			changed = true
 		}
 	}
@@ -633,7 +626,7 @@ func (uc *UseCaseOrderMapping) updateStructuredData(order *entities.ProbabilityO
 }
 
 // equalJSON compara dos valores JSONB
-func equalJSON(a, b datatypes.JSON) bool {
+func equalJSON(a, b []byte) bool {
 	var aMap, bMap map[string]interface{}
 	if err := json.Unmarshal(a, &aMap); err != nil {
 		return false
@@ -726,7 +719,6 @@ func (uc *UseCaseOrderMapping) publishOrderStatusChangedEvent(_ context.Context,
 // recalculateOrderScore recalcula el score de la orden
 func (uc *UseCaseOrderMapping) recalculateOrderScore(ctx context.Context, order *entities.ProbabilityOrder) {
 	go func() {
-		fmt.Printf("[UpdateOrder] Recalculando score directamente para orden %s (actualizada)\n", order.ID)
 		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
 			uc.logger.Error(ctx).
 				Err(err).

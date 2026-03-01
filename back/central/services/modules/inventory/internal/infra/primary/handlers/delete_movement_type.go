@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func (h *Handlers) DeleteMovementType(c *gin.Context) {
+func (h *handlers) DeleteMovementType(c *gin.Context) {
 	_, ok := h.resolveBusinessID(c)
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required"})

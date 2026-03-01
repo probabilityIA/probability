@@ -39,7 +39,7 @@ func TestCreate_Success(t *testing.T) {
 	}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		BusinessID:              &businessID,
@@ -113,7 +113,7 @@ func TestCreate_DuplicateConfig(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:           100,
@@ -156,7 +156,7 @@ func TestCreate_RepositoryListError(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:           100,
@@ -200,7 +200,7 @@ func TestCreate_RepositoryCreateError(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:           100,
@@ -249,7 +249,7 @@ func TestCreate_CacheErrorShouldNotFail(t *testing.T) {
 	}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:           100,
@@ -305,7 +305,7 @@ func TestCreate_DifferentIntegration_ShouldSucceed(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.CreateNotificationConfigDTO{
 		IntegrationID:           200, // Diferente integración

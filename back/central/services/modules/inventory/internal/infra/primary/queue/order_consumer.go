@@ -12,9 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const (
-	queueName = "orders.events.inventory"
-)
+const queueName = rabbitmq.QueueOrdersToInventory
 
 // ============================================
 // STRUCTS LOCALES REPLICADOS

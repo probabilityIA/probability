@@ -10,7 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const queueName = "monitoring.alerts"
+const queueName = rabbitmq.QueueMonitoringAlerts
 
 type publisher struct {
 	queue rabbitmq.IQueue

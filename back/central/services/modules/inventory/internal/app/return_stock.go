@@ -8,7 +8,7 @@ import (
 
 // ReturnStockForOrder devuelve stock cuando una orden es reembolsada.
 // Quantity += qty, AvailableQty = Quantity - ReservedQty.
-func (uc *UseCase) ReturnStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
+func (uc *useCase) ReturnStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {
 	// Resolver warehouse
 	whID, err := uc.resolveWarehouse(ctx, warehouseID, businessID)
 	if err != nil {

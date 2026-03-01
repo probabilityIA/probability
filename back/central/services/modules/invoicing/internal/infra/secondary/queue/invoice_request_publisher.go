@@ -15,7 +15,7 @@ import (
 // El router en services/integrations/invoicing/core consume esta cola y enruta
 // al proveedor correspondiente (invoicing.softpymes.requests / invoicing.factus.requests).
 const (
-	QueueInvoicingRequests = "invoicing.requests"
+	QueueInvoicingRequests = rabbitmq.QueueInvoicingRequests
 )
 
 // InvoiceRequestPublisher implementa IInvoiceRequestPublisher

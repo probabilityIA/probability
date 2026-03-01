@@ -7,7 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 )
 
-func (uc *UseCase) ListMovements(ctx context.Context, params dtos.ListMovementsParams) ([]entities.StockMovement, int64, error) {
+func (uc *useCase) ListMovements(ctx context.Context, params dtos.ListMovementsParams) ([]entities.StockMovement, int64, error) {
 	if params.Page < 1 {
 		params.Page = 1
 	}

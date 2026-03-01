@@ -10,17 +10,17 @@ import (
 )
 
 // GetInitialState retorna el estado inicial de una conversación
-func (u *Usecases) GetInitialState() entities.ConversationState {
+func (u *usecases) GetInitialState() entities.ConversationState {
 	return entities.StateAwaitingConfirmation
 }
 
 // IsTerminalState verifica si un estado es terminal (conversación finalizada)
-func (u *Usecases) IsTerminalState(state entities.ConversationState) bool {
+func (u *usecases) IsTerminalState(state entities.ConversationState) bool {
 	return state == entities.StateCompleted || state == entities.StateHandoffToHuman
 }
 
 // TransitionState evalúa la respuesta del usuario y determina la siguiente transición
-func (u *Usecases) TransitionState(
+func (u *usecases) TransitionState(
 	ctx context.Context,
 	conversation *entities.Conversation,
 	userResponse string,
@@ -80,7 +80,7 @@ func (u *Usecases) TransitionState(
 }
 
 // handleStartState maneja el estado inicial (envío de primera plantilla)
-func (u *Usecases) handleStartState(ctx context.Context, conversation *entities.Conversation) *dtos.StateTransitionDTO {
+func (u *usecases) handleStartState(ctx context.Context, conversation *entities.Conversation) *dtos.StateTransitionDTO {
 	// Este estado se usa cuando se crea una conversación nueva
 	// Normalmente se envía la plantilla inicial desde SendTemplate directamente
 	return &dtos.StateTransitionDTO{
@@ -99,7 +99,7 @@ func (u *Usecases) handleStartState(ctx context.Context, conversation *entities.
 }
 
 // handleAwaitingConfirmationState maneja respuestas en estado AWAITING_CONFIRMATION
-func (u *Usecases) handleAwaitingConfirmationState(
+func (u *usecases) handleAwaitingConfirmationState(
 	ctx context.Context,
 	conversation *entities.Conversation,
 	userResponse string,
@@ -132,7 +132,7 @@ func (u *Usecases) handleAwaitingConfirmationState(
 }
 
 // handleAwaitingMenuSelectionState maneja respuestas en estado AWAITING_MENU_SELECTION
-func (u *Usecases) handleAwaitingMenuSelectionState(
+func (u *usecases) handleAwaitingMenuSelectionState(
 	ctx context.Context,
 	conversation *entities.Conversation,
 	userResponse string,
@@ -171,7 +171,7 @@ func (u *Usecases) handleAwaitingMenuSelectionState(
 }
 
 // handleAwaitingNoveltyTypeState maneja respuestas en estado AWAITING_NOVELTY_TYPE
-func (u *Usecases) handleAwaitingNoveltyTypeState(
+func (u *usecases) handleAwaitingNoveltyTypeState(
 	ctx context.Context,
 	conversation *entities.Conversation,
 	userResponse string,
@@ -206,7 +206,7 @@ func (u *Usecases) handleAwaitingNoveltyTypeState(
 }
 
 // handleAwaitingCancelConfirmState maneja respuestas en estado AWAITING_CANCEL_CONFIRM
-func (u *Usecases) handleAwaitingCancelConfirmState(
+func (u *usecases) handleAwaitingCancelConfirmState(
 	ctx context.Context,
 	conversation *entities.Conversation,
 	userResponse string,
@@ -236,7 +236,7 @@ func (u *Usecases) handleAwaitingCancelConfirmState(
 }
 
 // handleAwaitingCancelReasonState maneja respuestas en estado AWAITING_CANCEL_REASON
-func (u *Usecases) handleAwaitingCancelReasonState(
+func (u *usecases) handleAwaitingCancelReasonState(
 	ctx context.Context,
 	conversation *entities.Conversation,
 	userResponse string,
@@ -258,7 +258,7 @@ func (u *Usecases) handleAwaitingCancelReasonState(
 }
 
 // GetAvailableResponses retorna las respuestas válidas para un estado dado
-func (u *Usecases) GetAvailableResponses(state entities.ConversationState) []string {
+func (u *usecases) GetAvailableResponses(state entities.ConversationState) []string {
 	responses := map[entities.ConversationState][]string{
 		entities.StateAwaitingConfirmation: {
 			"Confirmar pedido",
@@ -287,7 +287,7 @@ func (u *Usecases) GetAvailableResponses(state entities.ConversationState) []str
 }
 
 // ValidateTransition verifica si una transición es válida antes de ejecutarla
-func (u *Usecases) ValidateTransition(
+func (u *usecases) ValidateTransition(
 	ctx context.Context,
 	currentState entities.ConversationState,
 	nextState entities.ConversationState,

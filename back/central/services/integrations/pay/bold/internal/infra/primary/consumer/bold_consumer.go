@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueueBoldRequests = "pay.bold.requests"
+const QueueBoldRequests = rabbitmq.QueuePayBoldRequests
 
 // BoldConsumer consume solicitudes de pago Bold
 type BoldConsumer struct {

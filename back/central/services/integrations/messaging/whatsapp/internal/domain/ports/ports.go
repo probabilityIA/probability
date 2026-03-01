@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/entities"
 )
 
@@ -58,4 +59,16 @@ type WhatsAppConfig struct {
 	AccessToken   string
 	IntegrationID uint
 	WhatsAppURL   string
+}
+
+// INotificationConfigRepository define la interfaz para consultar configuraciones de notificación
+type INotificationConfigRepository interface {
+	GetActiveConfigsByIntegrationAndTrigger(ctx context.Context, integrationID uint, trigger string) ([]dtos.NotificationConfigData, error)
+	ValidateConditions(config *dtos.NotificationConfigData, orderStatus string, paymentMethodID uint, sourceIntegrationID uint) bool
+}
+
+// INotificationConfigCache define la interfaz para consultar configuraciones de notificación desde Redis (read-only)
+type INotificationConfigCache interface {
+	GetActiveConfigsByIntegrationAndTrigger(ctx context.Context, integrationID uint, trigger string) ([]dtos.NotificationConfigData, error)
+	ValidateConditions(config *dtos.NotificationConfigData, orderStatus string, paymentMethodID uint, sourceIntegrationID uint) bool
 }

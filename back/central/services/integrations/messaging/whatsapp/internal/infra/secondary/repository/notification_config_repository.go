@@ -4,32 +4,12 @@ import (
 	"context"
 	"encoding/json"
 
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/migration/shared/models"
 )
-
-// NotificationConfigData contiene los datos de una configuración de notificación
-type NotificationConfigData struct {
-	ID                  uint
-	IntegrationID       uint
-	NotificationType    string
-	IsActive            bool
-	TemplateName        string
-	Language            string
-	RecipientType       string
-	Trigger             string
-	Statuses            []string
-	PaymentMethods      []uint
-	SourceIntegrationID *uint // Nueva: filtro por integración origen
-	Priority            int
-	Description         string
-}
-
-// INotificationConfigRepository define la interfaz para consultar configuraciones de notificación
-type INotificationConfigRepository interface {
-	GetActiveConfigsByIntegrationAndTrigger(ctx context.Context, integrationID uint, trigger string) ([]NotificationConfigData, error)
-	ValidateConditions(config *NotificationConfigData, orderStatus string, paymentMethodID uint, sourceIntegrationID uint) bool
-}
 
 type notificationConfigRepository struct {
 	db     db.IDatabase
@@ -37,7 +17,7 @@ type notificationConfigRepository struct {
 }
 
 // NewNotificationConfigRepository crea una nueva instancia del repositorio
-func NewNotificationConfigRepository(database db.IDatabase, logger log.ILogger) INotificationConfigRepository {
+func NewNotificationConfigRepository(database db.IDatabase, logger log.ILogger) ports.INotificationConfigRepository {
 	return &notificationConfigRepository{
 		db:     database,
 		logger: logger.WithModule("notification_config_repository"),
@@ -49,7 +29,7 @@ func (a *notificationConfigRepository) GetActiveConfigsByIntegrationAndTrigger(
 	ctx context.Context,
 	integrationID uint,
 	trigger string,
-) ([]NotificationConfigData, error) {
+) ([]dtos.NotificationConfigData, error) {
 	var results []struct {
 		ID               uint
 		IntegrationID    uint
@@ -62,7 +42,7 @@ func (a *notificationConfigRepository) GetActiveConfigsByIntegrationAndTrigger(
 	}
 
 	err := a.db.Conn(ctx).
-		Table("integration_notification_configs").
+		Model(&models.IntegrationNotificationConfig{}).
 		Where("integration_id = ? AND is_active = ? AND conditions->>'trigger' = ?", integrationID, true, trigger).
 		Order("priority DESC").
 		Find(&results).Error
@@ -73,7 +53,7 @@ func (a *notificationConfigRepository) GetActiveConfigsByIntegrationAndTrigger(
 	}
 
 	// Convertir a DTOs parseando JSON
-	configs := make([]NotificationConfigData, 0, len(results))
+	configs := make([]dtos.NotificationConfigData, 0, len(results))
 	for _, r := range results {
 		// Parse conditions JSON
 		var conditions struct {
@@ -98,7 +78,7 @@ func (a *notificationConfigRepository) GetActiveConfigsByIntegrationAndTrigger(
 			continue
 		}
 
-		configs = append(configs, NotificationConfigData{
+		configs = append(configs, dtos.NotificationConfigData{
 			ID:                  r.ID,
 			IntegrationID:       r.IntegrationID,
 			NotificationType:    r.NotificationType,
@@ -120,7 +100,7 @@ func (a *notificationConfigRepository) GetActiveConfigsByIntegrationAndTrigger(
 
 // ValidateConditions valida si una orden cumple las condiciones
 func (a *notificationConfigRepository) ValidateConditions(
-	config *NotificationConfigData,
+	config *dtos.NotificationConfigData,
 	orderStatus string,
 	paymentMethodID uint,
 	sourceIntegrationID uint,

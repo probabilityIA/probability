@@ -194,6 +194,17 @@ type IInvoiceRequestPublisher interface {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// CACHE DE CONFIGURACIONES (Secondary Port - Driven Adapter)
+// ═══════════════════════════════════════════════════════════════
+
+// IConfigCache define la interfaz para el servicio de caché de configuraciones
+type IConfigCache interface {
+	Get(ctx context.Context, integrationID uint) (*entities.InvoicingConfig, error)
+	Set(ctx context.Context, config *entities.InvoicingConfig) error
+	Invalidate(ctx context.Context, integrationID uint) error
+}
+
+// ═══════════════════════════════════════════════════════════════
 // REPOSITORIO DE ÓRDENES (Secondary Port - Dependencia externa)
 // ═══════════════════════════════════════════════════════════════
 

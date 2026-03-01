@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueueMeliPagoRequests = "pay.melipago.requests"
+const QueueMeliPagoRequests = rabbitmq.QueuePayMeliPagoRequests
 
 // MeliPagoConsumer consume solicitudes de pago MercadoPago
 type MeliPagoConsumer struct {

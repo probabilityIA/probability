@@ -50,7 +50,7 @@ func TestList_Success_NoFilters(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.List(ctx, dtos.FilterNotificationConfigDTO{})
@@ -108,7 +108,7 @@ func TestList_Success_WithFilters(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	filters := dtos.FilterNotificationConfigDTO{
 		IntegrationID: &integrationID,
@@ -145,7 +145,7 @@ func TestList_Success_EmptyResult(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.List(ctx, dtos.FilterNotificationConfigDTO{})
@@ -175,7 +175,7 @@ func TestList_RepositoryError(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.List(ctx, dtos.FilterNotificationConfigDTO{})
@@ -229,7 +229,7 @@ func TestList_FilterByNotificationTypeID(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	filters := dtos.FilterNotificationConfigDTO{
 		NotificationTypeID: &notificationTypeID,
@@ -283,7 +283,7 @@ func TestList_FilterByEnabled(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	filters := dtos.FilterNotificationConfigDTO{
 		Enabled: &enabledFilter,

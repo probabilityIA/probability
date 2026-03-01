@@ -15,6 +15,7 @@ type RepositoryMock struct {
 	ListFn                                     func(ctx context.Context, filters dtos.FilterNotificationConfigDTO) ([]entities.IntegrationNotificationConfig, error)
 	DeleteFn                                   func(ctx context.Context, id uint) error
 	GetActiveConfigsByIntegrationAndTriggerFn  func(ctx context.Context, integrationID uint, trigger string) ([]entities.IntegrationNotificationConfig, error)
+	SyncConfigsFn                              func(ctx context.Context, businessID uint, integrationID uint, toCreate []*entities.IntegrationNotificationConfig, toUpdate []*entities.IntegrationNotificationConfig, toDeleteIDs []uint) error
 }
 
 func (m *RepositoryMock) Create(ctx context.Context, config *entities.IntegrationNotificationConfig) error {
@@ -59,4 +60,11 @@ func (m *RepositoryMock) GetActiveConfigsByIntegrationAndTrigger(ctx context.Con
 		return m.GetActiveConfigsByIntegrationAndTriggerFn(ctx, integrationID, trigger)
 	}
 	return []entities.IntegrationNotificationConfig{}, nil
+}
+
+func (m *RepositoryMock) SyncConfigs(ctx context.Context, businessID uint, integrationID uint, toCreate []*entities.IntegrationNotificationConfig, toUpdate []*entities.IntegrationNotificationConfig, toDeleteIDs []uint) error {
+	if m.SyncConfigsFn != nil {
+		return m.SyncConfigsFn(ctx, businessID, integrationID, toCreate, toUpdate, toDeleteIDs)
+	}
+	return nil
 }

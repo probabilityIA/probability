@@ -30,8 +30,8 @@ type IUseCase interface {
 	ReturnStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error)
 }
 
-// UseCase implementa IUseCase
-type UseCase struct {
+// useCase implementa IUseCase
+type useCase struct {
 	repo           ports.IRepository
 	publisher      ports.ISyncPublisher
 	eventPublisher ports.IInventoryEventPublisher
@@ -40,7 +40,7 @@ type UseCase struct {
 
 // New crea una nueva instancia del use case
 func New(repo ports.IRepository, publisher ports.ISyncPublisher, eventPublisher ports.IInventoryEventPublisher, logger log.ILogger) IUseCase {
-	return &UseCase{
+	return &useCase{
 		repo:           repo,
 		publisher:      publisher,
 		eventPublisher: eventPublisher,

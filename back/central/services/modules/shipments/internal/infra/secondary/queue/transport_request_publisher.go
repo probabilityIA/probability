@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	QueueTransportRequests = "transport.requests"
+	QueueTransportRequests = rabbitmq.QueueTransportRequests
 )
 
 // TransportRequestPublisher publishes transport requests to RabbitMQ

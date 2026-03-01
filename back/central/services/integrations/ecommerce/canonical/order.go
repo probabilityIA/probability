@@ -9,8 +9,6 @@ package canonical
 
 import (
 	"time"
-
-	"gorm.io/datatypes"
 )
 
 // ProbabilityOrderDTO es el formato canónico de orden que todos los módulos
@@ -62,12 +60,12 @@ type ProbabilityOrderDTO struct {
 	OrderStatusURL     string
 	OccurredAt         time.Time
 	ImportedAt         time.Time
-	Items              datatypes.JSON
-	Metadata           datatypes.JSON
-	FinancialDetails   datatypes.JSON
-	ShippingDetails    datatypes.JSON
-	PaymentDetails     datatypes.JSON
-	FulfillmentDetails datatypes.JSON
+	Items              []byte
+	Metadata           []byte
+	FinancialDetails   []byte
+	ShippingDetails    []byte
+	PaymentDetails     []byte
+	FulfillmentDetails []byte
 	OrderItems         []ProbabilityOrderItemDTO
 	Addresses          []ProbabilityAddressDTO
 	Payments           []ProbabilityPaymentDTO
@@ -132,7 +130,7 @@ type ProbabilityPaymentDTO struct {
 	RefundAmount     *float64
 	RefundedAt       *time.Time
 	FailureReason    *string
-	Metadata         datatypes.JSON
+	Metadata         []byte
 }
 
 type ProbabilityShipmentDTO struct {
@@ -160,12 +158,12 @@ type ProbabilityShipmentDTO struct {
 	IsLastMile        bool
 	EstimatedDelivery *time.Time
 	DeliveryNotes     *string
-	Metadata          datatypes.JSON
+	Metadata          []byte
 }
 
 type ProbabilityChannelMetadataDTO struct {
 	ChannelSource string
-	RawData       datatypes.JSON
+	RawData       []byte
 	Version       string
 	ReceivedAt    time.Time
 	ProcessedAt   *time.Time

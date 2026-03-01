@@ -3,7 +3,7 @@ package handlers
 import "github.com/gin-gonic/gin"
 
 // RegisterRoutes registra todas las rutas del módulo inventory
-func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
+func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 	inventory := router.Group("/inventory")
 	{
 		inventory.GET("/product/:productId", h.GetProductInventory)

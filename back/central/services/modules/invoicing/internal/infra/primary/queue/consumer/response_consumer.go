@@ -50,7 +50,7 @@ func NewResponseConsumer(
 }
 
 const (
-	QueueInvoiceResponses = "invoicing.responses"
+	QueueInvoiceResponses = rabbitmq.QueueInvoicingResponses
 )
 
 // ─── Compare response types (local, no compartidos entre módulos) ───

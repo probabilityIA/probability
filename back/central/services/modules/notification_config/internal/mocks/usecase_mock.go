@@ -25,6 +25,9 @@ type UseCaseMock struct {
 	UpdateNotificationTypeFn    func(ctx context.Context, notificationType *entities.NotificationType) error
 	DeleteNotificationTypeFn    func(ctx context.Context, id uint) error
 
+	// Sync
+	SyncByIntegrationFn func(ctx context.Context, dto dtos.SyncNotificationConfigsDTO) (*dtos.SyncNotificationConfigsResponseDTO, error)
+
 	// Notification Event Types
 	GetEventTypesByNotificationTypeFn func(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error)
 	ListAllEventTypesFn               func(ctx context.Context) ([]entities.NotificationEventType, error)
@@ -32,6 +35,10 @@ type UseCaseMock struct {
 	CreateNotificationEventTypeFn     func(ctx context.Context, eventType *entities.NotificationEventType) error
 	UpdateNotificationEventTypeFn     func(ctx context.Context, eventType *entities.NotificationEventType) error
 	DeleteNotificationEventTypeFn     func(ctx context.Context, id uint) error
+
+	// Message Audit
+	ListMessageAuditFn      func(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error)
+	GetMessageAuditStatsFn  func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error)
 }
 
 // Notification Configs
@@ -161,4 +168,27 @@ func (m *UseCaseMock) DeleteNotificationEventType(ctx context.Context, id uint) 
 		return m.DeleteNotificationEventTypeFn(ctx, id)
 	}
 	return nil
+}
+
+// Sync
+func (m *UseCaseMock) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificationConfigsDTO) (*dtos.SyncNotificationConfigsResponseDTO, error) {
+	if m.SyncByIntegrationFn != nil {
+		return m.SyncByIntegrationFn(ctx, dto)
+	}
+	return nil, nil
+}
+
+// Message Audit
+func (m *UseCaseMock) ListMessageAudit(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error) {
+	if m.ListMessageAuditFn != nil {
+		return m.ListMessageAuditFn(ctx, filter)
+	}
+	return nil, nil
+}
+
+func (m *UseCaseMock) GetMessageAuditStats(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error) {
+	if m.GetMessageAuditStatsFn != nil {
+		return m.GetMessageAuditStatsFn(ctx, businessID, dateFrom, dateTo)
+	}
+	return nil, nil
 }

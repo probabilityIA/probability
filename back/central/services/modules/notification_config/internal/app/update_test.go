@@ -60,7 +60,7 @@ func TestUpdate_Success(t *testing.T) {
 	}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.UpdateNotificationConfigDTO{
 		Description: &newDescription,
@@ -112,7 +112,7 @@ func TestUpdate_OnlyDescription(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.UpdateNotificationConfigDTO{
 		Description: &newDescription,
@@ -160,7 +160,7 @@ func TestUpdate_OnlyEnabled(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.UpdateNotificationConfigDTO{
 		Description: nil, // No actualizar descripción
@@ -196,7 +196,7 @@ func TestUpdate_NotFound(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	newDescription := "Nueva descripción"
 	dto := dtos.UpdateNotificationConfigDTO{
@@ -248,7 +248,7 @@ func TestUpdate_RepositoryUpdateError(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	newDescription := "Nueva descripción"
 	dto := dtos.UpdateNotificationConfigDTO{
@@ -304,7 +304,7 @@ func TestUpdate_CacheErrorShouldNotFail(t *testing.T) {
 	}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	newDescription := "Nueva descripción"
 	dto := dtos.UpdateNotificationConfigDTO{
@@ -351,7 +351,7 @@ func TestUpdate_EmptyDTO(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	dto := dtos.UpdateNotificationConfigDTO{
 		Description: nil, // No actualizar nada

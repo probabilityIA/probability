@@ -42,7 +42,7 @@ func TestDeleteNotificationEventType_Success(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	err := useCase.DeleteNotificationEventType(ctx, eventTypeID)
@@ -68,7 +68,7 @@ func TestDeleteNotificationEventType_NotFound(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	err := useCase.DeleteNotificationEventType(ctx, eventTypeID)
@@ -139,7 +139,7 @@ func TestDeleteNotificationEventType_HasActiveConfigs(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	err := useCase.DeleteNotificationEventType(ctx, eventTypeID)
@@ -216,7 +216,7 @@ func TestDeleteNotificationEventType_HasInactiveConfigs_ShouldSucceed(t *testing
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	err := useCase.DeleteNotificationEventType(ctx, eventTypeID)
@@ -279,7 +279,7 @@ func TestDeleteNotificationEventType_MixedActiveInactive_ShouldFail(t *testing.T
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	err := useCase.DeleteNotificationEventType(ctx, eventTypeID)
@@ -324,7 +324,7 @@ func TestDeleteNotificationEventType_RepositoryListError(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act - Si hay error en List, aún así debe permitir eliminar
 	err := useCase.DeleteNotificationEventType(ctx, eventTypeID)
@@ -364,7 +364,7 @@ func TestDeleteNotificationEventType_DeleteError(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	err := useCase.DeleteNotificationEventType(ctx, eventTypeID)

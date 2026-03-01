@@ -8,7 +8,7 @@ import (
 	domainerrors "github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/errors"
 )
 
-func (uc *UseCase) UpdateMovementType(ctx context.Context, dto dtos.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error) {
+func (uc *useCase) UpdateMovementType(ctx context.Context, dto dtos.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error) {
 	existing, err := uc.repo.GetMovementTypeByID(ctx, dto.ID)
 	if err != nil {
 		return nil, domainerrors.ErrMovementTypeNotFound

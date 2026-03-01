@@ -1,7 +1,7 @@
 package mappers
 
 import (
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 )
 
 // CachedNotificationConfig mirrors the cache struct from notification_config module
@@ -19,9 +19,9 @@ type CachedNotificationConfig struct {
 	OrderStatusCodes        []string `json:"order_status_codes,omitempty"`
 }
 
-// FromCachedConfig convierte una configuración cacheada a NotificationConfigData
-func FromCachedConfig(cached *CachedNotificationConfig) repository.NotificationConfigData {
-	return repository.NotificationConfigData{
+// FromCachedConfig convierte una configuración cacheada a NotificationConfigData de dominio
+func FromCachedConfig(cached *CachedNotificationConfig) dtos.NotificationConfigData {
+	return dtos.NotificationConfigData{
 		ID:            cached.ID,
 		IntegrationID: cached.IntegrationID,
 		IsActive:      cached.Enabled,

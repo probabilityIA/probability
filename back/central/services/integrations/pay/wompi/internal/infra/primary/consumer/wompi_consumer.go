@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueueWompiRequests = "pay.wompi.requests"
+const QueueWompiRequests = rabbitmq.QueuePayWompiRequests
 
 // WompiConsumer consume solicitudes de pago Wompi
 type WompiConsumer struct {

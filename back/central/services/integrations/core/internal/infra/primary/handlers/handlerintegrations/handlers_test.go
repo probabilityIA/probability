@@ -222,6 +222,11 @@ func (m *mockIntegrationUseCase) OnIntegrationCreated(integrationType int, obser
 	m.Called(integrationType, observer)
 }
 
+func (m *mockIntegrationUseCase) GetPlatformCredentialByIntegrationID(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	args := m.Called(ctx, integrationID, fieldName)
+	return args.String(0), args.Error(1)
+}
+
 // ============================================
 // Mock de IConfig y ILogger para handlers
 // ============================================

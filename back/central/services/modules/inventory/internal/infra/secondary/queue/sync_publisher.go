@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	exchangeName = "probability.inventory"
+	exchangeName = rabbitmq.ExchangeInventory
 	exchangeType = "topic"
 )
 

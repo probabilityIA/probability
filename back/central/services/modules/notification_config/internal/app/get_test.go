@@ -37,7 +37,7 @@ func TestGetByID_Success(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, configID)
@@ -92,7 +92,7 @@ func TestGetByID_NotFound(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, configID)
@@ -127,7 +127,7 @@ func TestGetByID_RepositoryError(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, configID)
@@ -161,7 +161,7 @@ func TestGetByID_ZeroID(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, configID)
@@ -221,7 +221,7 @@ func TestGetByID_WithRelations(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
 
 	// Act
 	result, err := useCase.GetByID(ctx, configID)

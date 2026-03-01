@@ -10,7 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/ports"
 )
 
-func (uc *UseCase) AdjustStock(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
+func (uc *useCase) AdjustStock(ctx context.Context, dto dtos.AdjustStockDTO) (*entities.StockMovement, error) {
 	if dto.Quantity == 0 {
 		return nil, domainerrors.ErrInvalidQuantity
 	}
@@ -73,7 +73,7 @@ func (uc *UseCase) AdjustStock(ctx context.Context, dto dtos.AdjustStockDTO) (*e
 }
 
 // updateProductTotalStock recalcula y actualiza el StockQuantity del producto
-func (uc *UseCase) updateProductTotalStock(ctx context.Context, productID string, businessID uint) {
+func (uc *useCase) updateProductTotalStock(ctx context.Context, productID string, businessID uint) {
 	levels, err := uc.repo.GetProductInventory(ctx, dtos.GetProductInventoryParams{
 		ProductID:  productID,
 		BusinessID: businessID,
@@ -91,7 +91,7 @@ func (uc *UseCase) updateProductTotalStock(ctx context.Context, productID string
 }
 
 // publishSync publica sync a canales de venta vinculados
-func (uc *UseCase) publishSync(ctx context.Context, productID string, businessID uint, newQuantity int, warehouseID uint, source string) {
+func (uc *useCase) publishSync(ctx context.Context, productID string, businessID uint, newQuantity int, warehouseID uint, source string) {
 	if uc.publisher == nil {
 		return
 	}
