@@ -5,11 +5,14 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
+import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 
 export const InventorySubNavbar = memo(function InventorySubNavbar() {
     const pathname = usePathname();
     const { hasPermission, isSuperAdmin, isLoading, permissions } = usePermissions();
     const { actionButtons } = useNavbarActions();
+    const { selectedBusinessId, setSelectedBusinessId } = useInventoryBusiness();
 
     const permissionsNotLoaded = isLoading || !permissions || !permissions.resources || permissions.resources.length === 0;
 
@@ -73,11 +76,15 @@ export const InventorySubNavbar = memo(function InventorySubNavbar() {
                             </Link>
                         ))}
                     </div>
-                    {actionButtons && (
-                        <div className="flex gap-2 ml-4">
-                            {actionButtons}
-                        </div>
-                    )}
+                    <div className="flex items-center gap-2 ml-4">
+                        <SuperAdminBusinessSelector
+                            value={selectedBusinessId}
+                            onChange={setSelectedBusinessId}
+                            variant="navbar"
+                            placeholder="— Selecciona un negocio —"
+                        />
+                        {actionButtons}
+                    </div>
                 </div>
             </div>
         </div>

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
 import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
 import { Order } from '@/services/modules/orders/domain/types';
-import { Button, Modal } from '@/shared/ui';
+import { Modal, SuperAdminBusinessSelector } from '@/shared/ui';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import MassOrderUploadModal from '@/shared/ui/modals/mass-order-upload-modal';
 import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-modal';
@@ -13,6 +13,7 @@ import { useNavbarActions } from '@/shared/contexts/navbar-context';
 
 export default function OrdersPage() {
     const { setActionButtons } = useNavbarActions();
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -24,10 +25,15 @@ export default function OrdersPage() {
     const [showMassGuideModal, setShowMassGuideModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // Set action buttons in navbar
+    // Set action buttons in navbar (with business selector for super admin)
     useEffect(() => {
         const actionButtons = (
             <>
+                <SuperAdminBusinessSelector
+                    value={selectedBusinessId}
+                    onChange={setSelectedBusinessId}
+                    variant="navbar"
+                />
                 <button
                     onClick={() => setShowCreateModal(true)}
                     style={{ background: '#7c3aed' }}
@@ -54,7 +60,7 @@ export default function OrdersPage() {
         setActionButtons(actionButtons);
 
         return () => setActionButtons(null);
-    }, [setActionButtons]);
+    }, [setActionButtons, selectedBusinessId]);
 
     const handleView = (order: Order) => {
         setSelectedOrder(order);
@@ -116,6 +122,7 @@ export default function OrdersPage() {
                 onEdit={handleEdit}
                 onCreate={() => setShowCreateModal(true)}
                 onTestGuide={() => setShowTestGuideModal(true)}
+                selectedBusinessId={selectedBusinessId}
             />
 
             {/* Test Guide Modal */}

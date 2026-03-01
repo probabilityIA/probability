@@ -6,13 +6,11 @@ import ProductList from '@/services/modules/products/ui/components/ProductList';
 import ProductForm from '@/services/modules/products/ui/components/ProductForm';
 import { Product } from '@/services/modules/products/domain/types';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
+import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 
 export default function ProductsPage() {
     const { isSuperAdmin } = usePermissions();
-    const { businesses, loading: loadingBusinesses } = useBusinessesSimple();
-
-    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+    const { selectedBusinessId } = useInventoryBusiness();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState<Product | undefined>(undefined);
     const [viewMode, setViewMode] = useState<'create' | 'edit' | 'view'>('create');
@@ -129,35 +127,6 @@ export default function ProductsPage() {
                     </div>
                 )}
             </div>
-
-            {/* Selector de negocio para super admin */}
-            {isSuperAdmin && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Negocio <span className="text-red-500">*</span>
-                        <span className="ml-1 text-xs text-gray-500 font-normal">(requerido para gestionar productos)</span>
-                    </label>
-                    {loadingBusinesses ? (
-                        <p className="text-sm text-gray-500">Cargando negocios...</p>
-                    ) : (
-                        <select
-                            value={selectedBusinessId?.toString() ?? ''}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setSelectedBusinessId(val ? Number(val) : null);
-                            }}
-                            className="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                        >
-                            <option value="">— Selecciona un negocio —</option>
-                            {businesses.map((b) => (
-                                <option key={b.id} value={b.id}>
-                                    {b.name} (ID: {b.id})
-                                </option>
-                            ))}
-                        </select>
-                    )}
-                </div>
-            )}
 
             {/* Gate: super admin debe seleccionar negocio */}
             {requiresBusinessSelection ? (

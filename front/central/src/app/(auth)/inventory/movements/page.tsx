@@ -5,7 +5,8 @@ import { ArrowsRightLeftIcon, AdjustmentsHorizontalIcon } from '@heroicons/react
 import { StockMovementList, AdjustStockModal, TransferStockModal } from '@/services/modules/inventory/ui';
 import { Button, Spinner } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
+import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 
@@ -13,9 +14,8 @@ type ModalType = 'adjust' | 'transfer' | null;
 
 export default function InventoryMovementsPage() {
     const { isSuperAdmin } = usePermissions();
-    const { businesses, loading: loadingBusinesses } = useBusinessesSimple();
-
-    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+    const { setActionButtons } = useNavbarActions();
+    const { selectedBusinessId } = useInventoryBusiness();
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(null);
     const [loadingWarehouses, setLoadingWarehouses] = useState(false);
@@ -68,58 +68,39 @@ export default function InventoryMovementsPage() {
     };
 
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
+    const showActionButtons = selectedWarehouseId && !requiresBusinessSelection;
+
+    // Set action buttons in navbar (business selector is in InventorySubNavbar)
+    useEffect(() => {
+        if (!showActionButtons) {
+            setActionButtons(null);
+            return;
+        }
+        const actionButtons = (
+            <>
+                <Button variant="outline" onClick={() => setModalType('adjust')}>
+                    <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
+                    Ajustar stock
+                </Button>
+                <Button variant="primary" onClick={() => setModalType('transfer')}>
+                    <ArrowsRightLeftIcon className="w-4 h-4 mr-2" />
+                    Transferir
+                </Button>
+            </>
+        );
+        setActionButtons(actionButtons);
+        return () => setActionButtons(null);
+    }, [setActionButtons, showActionButtons]);
 
     return (
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h1 className="text-xl font-semibold text-gray-900">Movimientos</h1>
-                        <p className="text-sm text-gray-500 mt-0.5">
-                            Historial de movimientos de inventario
-                        </p>
-                    </div>
-                    {selectedWarehouseId && !requiresBusinessSelection && (
-                        <div className="flex gap-2">
-                            <Button variant="outline" onClick={() => setModalType('adjust')}>
-                                <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
-                                Ajustar stock
-                            </Button>
-                            <Button variant="primary" onClick={() => setModalType('transfer')}>
-                                <ArrowsRightLeftIcon className="w-4 h-4 mr-2" />
-                                Transferir
-                            </Button>
-                        </div>
-                    )}
+                <div>
+                    <h1 className="text-xl font-semibold text-gray-900">Movimientos</h1>
+                    <p className="text-sm text-gray-500 mt-0.5">
+                        Historial de movimientos de inventario
+                    </p>
                 </div>
-
-                {isSuperAdmin && (
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Negocio <span className="text-red-500">*</span>
-                            <span className="ml-1 text-xs text-gray-500 font-normal">(requerido para gestionar inventario)</span>
-                        </label>
-                        {loadingBusinesses ? (
-                            <p className="text-sm text-gray-500">Cargando negocios...</p>
-                        ) : (
-                            <select
-                                value={selectedBusinessId?.toString() ?? ''}
-                                onChange={(e) => {
-                                    const val = e.target.value;
-                                    setSelectedBusinessId(val ? Number(val) : null);
-                                }}
-                                className="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            >
-                                <option value="">— Selecciona un negocio —</option>
-                                {businesses.map((b) => (
-                                    <option key={b.id} value={b.id}>
-                                        {b.name} (ID: {b.id})
-                                    </option>
-                                ))}
-                            </select>
-                        )}
-                    </div>
-                )}
 
                 {requiresBusinessSelection ? (
                     <div className="flex flex-col items-center justify-center py-16 text-center">

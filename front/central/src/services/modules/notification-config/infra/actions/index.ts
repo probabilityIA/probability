@@ -34,3 +34,9 @@ export {
   getConfigAction,
   syncConfigsAction,
 } from "./notification-configs";
+
+// Re-export message audit actions
+export {
+  getMessageAuditLogsAction,
+  getMessageAuditStatsAction,
+} from "./message-audit";

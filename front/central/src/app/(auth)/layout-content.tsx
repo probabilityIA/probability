@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
+import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
+import { NotificationBusinessProvider } from '@/shared/contexts/notification-business-context';
 
 interface LayoutContentProps {
   user: {
@@ -63,11 +65,16 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         onMouseEnter={handleMainMouseEnter}
       >
         <OrdersSubNavbar />
-        <InventorySubNavbar />
-        <IntegrationsSubNavbar />
-        <div className="w-full min-w-0 flex-1">
-          {children}
-        </div>
+        <InventoryBusinessProvider>
+        <NotificationBusinessProvider>
+          <InventorySubNavbar />
+          <IntegrationsSubNavbar />
+          <NotificationsSubNavbar />
+          <div className="w-full min-w-0 flex-1">
+            {children}
+          </div>
+        </NotificationBusinessProvider>
+        </InventoryBusinessProvider>
         <style jsx>{`
           .main-content {
             margin-left: 0;

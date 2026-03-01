@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/providers/toast-provider";
 import { useOrderStatuses } from "@/services/modules/orderstatus/ui";
 import { RuleCard, LocalRule } from "./RuleCard";
@@ -188,39 +187,55 @@ export function IntegrationRulesForm({
         <div className="text-center py-8 text-gray-500">Cargando reglas...</div>
       ) : (
         <>
-          {/* Rules list */}
-          <div className="space-y-3">
+          {/* Rules table */}
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
             {rules.filter((r) => !r._deleted).length === 0 ? (
-              <div className="text-center py-8 text-gray-400 border border-dashed border-gray-300 rounded-lg">
+              <div className="text-center py-8 text-gray-400">
                 No hay reglas configuradas. Agrega una para empezar.
               </div>
             ) : (
-              rules.map((rule, index) =>
-                !rule._deleted ? (
-                  <RuleCard
-                    key={rule._tempId}
-                    rule={rule}
-                    index={rules.filter((r, i) => i <= index && !r._deleted).length - 1}
-                    orderStatuses={orderStatuses}
-                    onChange={(updated) => handleRuleChange(index, updated)}
-                    onDelete={() => handleRuleDelete(index)}
-                  />
-                ) : null
-              )
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-center w-10">#</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-left w-[120px]">Canal</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-left w-[160px]">Evento</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-left">Estados</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-center w-[70px]">Activo</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-center w-[50px]"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rules.map((rule, index) =>
+                    !rule._deleted ? (
+                      <RuleCard
+                        key={rule._tempId}
+                        rule={rule}
+                        index={rules.filter((r, i) => i <= index && !r._deleted).length - 1}
+                        orderStatuses={orderStatuses}
+                        onChange={(updated) => handleRuleChange(index, updated)}
+                        onDelete={() => handleRuleDelete(index)}
+                      />
+                    ) : null
+                  )}
+                </tbody>
+              </table>
             )}
           </div>
 
           {/* Add rule button */}
-          <button
-            type="button"
-            onClick={handleAddRule}
-            className="w-full py-2.5 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-blue-400 hover:text-blue-500 transition-colors flex items-center justify-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Agregar regla
-          </button>
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={handleAddRule}
+              className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              title="Agregar regla"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
+          </div>
         </>
       )}
 
@@ -230,12 +245,28 @@ export function IntegrationRulesForm({
           {activeRulesCount} regla(s) activa(s)
         </span>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onCancel} disabled={loading}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={loading || loadingExisting}>
-            {loading ? "Guardando..." : "Guardar reglas"}
-          </Button>
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={loading}
+            className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40"
+            title="Cancelar"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={loading || loadingExisting}
+            className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-40"
+            title={loading ? "Guardando..." : "Guardar reglas"}
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </button>
         </div>
       </div>
     </div>

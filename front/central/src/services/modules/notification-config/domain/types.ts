@@ -186,3 +186,50 @@ export interface SyncConfigsResponse {
     deleted: number;
     configs: NotificationConfig[];
 }
+
+// ===================================================
+// MESSAGE AUDIT - Auditoría de mensajes
+// ===================================================
+
+export interface MessageAuditLog {
+    id: string;
+    conversation_id: string;
+    message_id: string;
+    direction: 'outbound' | 'inbound';
+    template_name: string;
+    content: string;
+    status: 'sent' | 'delivered' | 'read' | 'failed';
+    delivered_at?: string;
+    read_at?: string;
+    created_at: string;
+    phone_number: string;
+    order_number: string;
+    business_id: number;
+}
+
+export interface MessageAuditStats {
+    total_sent: number;
+    total_delivered: number;
+    total_read: number;
+    total_failed: number;
+    success_rate: number;
+}
+
+export interface MessageAuditFilter {
+    business_id: number;
+    status?: string;
+    direction?: string;
+    template_name?: string;
+    date_from?: string;
+    date_to?: string;
+    page?: number;
+    page_size?: number;
+}
+
+export interface PaginatedMessageAuditResponse {
+    data: MessageAuditLog[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}

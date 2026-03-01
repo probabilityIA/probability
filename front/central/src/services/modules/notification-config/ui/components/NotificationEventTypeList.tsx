@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { NotificationEventType, NotificationType } from "../../domain/types";
-import { Button } from "@/shared/ui/button";
 import { useToast } from "@/shared/providers/toast-provider";
 import {
   getNotificationTypesAction,
@@ -131,7 +130,16 @@ export function NotificationEventTypeList({
                 </option>
               ))}
             </select>
-            <Button onClick={onCreate}>+ Nuevo Evento</Button>
+            <button
+              type="button"
+              onClick={onCreate}
+              className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              title="Nuevo Evento"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -193,31 +201,46 @@ export function NotificationEventTypeList({
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <Button
-                      variant={eventType.is_active ? "danger" : "outline"}
-                      size="sm"
-                      onClick={() => handleToggleActive(eventType)}
-                      className="mr-2"
-                    >
-                      {eventType.is_active ? "Desactivar" : "Activar"}
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onEdit(eventType)}
-                      className="mr-2"
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      onClick={() =>
-                        setDeleteModal({ isOpen: true, eventType })
-                      }
-                    >
-                      Eliminar
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleActive(eventType)}
+                        className={`p-1.5 rounded-md transition-colors ${
+                          eventType.is_active
+                            ? "bg-green-50 text-green-600 hover:bg-green-100"
+                            : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                        }`}
+                        title={eventType.is_active ? "Desactivar" : "Activar"}
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {eventType.is_active ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          )}
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onEdit(eventType)}
+                        className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
+                        title="Editar"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                        </svg>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteModal({ isOpen: true, eventType })}
+                        className="p-1.5 rounded-md bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        title="Eliminar"
+                      >
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))

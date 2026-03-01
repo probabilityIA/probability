@@ -1,22 +1,18 @@
+// Dashboard principal
+export { NotificationDashboard } from './components/NotificationDashboard';
+export { SummaryStatsRow } from './components/SummaryStatsRow';
+export { AdminToolsSection } from './components/AdminToolsSection';
+export { MessageAudit } from './components/MessageAudit';
+export { MessageAuditStatsRow } from './components/MessageAuditStatsRow';
+
+// Componentes activos de configuración
 export { ConfigListTable } from './components/ConfigListTable';
-export { NotificationConfigForm } from './components/NotificationConfigForm';
-export { NotificationConfigList } from './components/NotificationConfigList';
 export { IntegrationRulesForm } from './components/IntegrationRulesForm';
 export { IntegrationPicker } from './components/IntegrationPicker';
 export { RuleCard } from './components/RuleCard';
 
-// Componentes para configuraciones de notificación por integración
-export { IntegrationConfigList } from './components/IntegrationConfigList';
-export { IntegrationConfigForm } from './components/IntegrationConfigForm';
-export { PaymentMethodSelector } from './components/PaymentMethodSelector';
-export { StatusSelector } from './components/StatusSelector';
-export { IntegrationSourceSelector } from './components/IntegrationSourceSelector';
-
-// Hooks para configuraciones de notificación por integración
-export {
-  useIntegrationNotificationConfigs,
-  useIntegrationNotificationConfig,
-  usePaymentMethods,
-  useIntegrationOrderStatuses,
-  useWhatsAppTemplates,
-} from './hooks/useIntegrationNotificationConfigs';
+// Formularios de sub-recursos
+export { NotificationTypeForm } from './components/NotificationTypeForm';
+export { NotificationTypeList } from './components/NotificationTypeList';
+export { NotificationEventTypeForm } from './components/NotificationEventTypeForm';
+export { NotificationEventTypeList } from './components/NotificationEventTypeList';

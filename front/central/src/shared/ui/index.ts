@@ -21,6 +21,7 @@ export * from './sidebar';
 export * from './orders-subnavbar';
 export * from './inventory-subnavbar';
 export * from './integrations-subnavbar';
+export * from './notifications-subnavbar';
 export * from './spinner';
 export * from './stepper';
 export * from './table';
@@ -28,6 +29,7 @@ export * from './table';
 export * from './user-profile-modal';
 export * from './footer';
 export * from './shopify-iframe-detector';
+export * from './super-admin-business-selector';
 
 
 // Re-exportar tipos útiles
