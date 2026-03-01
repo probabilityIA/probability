@@ -17,7 +17,7 @@ import (
 // Este es el punto de entrada principal para todas las integraciones después de mapear sus datos
 func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error) {
 	// 0. Validar datos obligatorios de integración
-	if dto.IntegrationID == 0 {
+	if dto.IntegrationID == 0 && !dto.IsManualOrder {
 		return nil, errors.New("integration_id is required")
 	}
 	if dto.BusinessID == nil || *dto.BusinessID == 0 {
@@ -40,12 +40,19 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *dtos.Pr
 	// 1.5. Validar/Crear Cliente
 	client, err := uc.GetOrCreateCustomer(ctx, *dto.BusinessID, dto)
 	if err != nil {
-		uc.publishSyncOrderRejected(ctx, dto.IntegrationID, dto.BusinessID, dto.OrderNumber, dto.ExternalID, dto.Platform, "Error al procesar cliente", err.Error())
+		if !dto.IsManualOrder {
+			uc.publishSyncOrderRejected(ctx, dto.IntegrationID, dto.BusinessID, dto.OrderNumber, dto.ExternalID, dto.Platform, "Error al procesar cliente", err.Error())
+		}
 		return nil, fmt.Errorf("error processing customer: %w", err)
 	}
 	var clientID *uint
 	if client != nil {
 		clientID = &client.ID
+	}
+
+	// Para órdenes manuales, si el customer name está vacío pero tiene first/last name, componer
+	if dto.CustomerName == "" && (dto.CustomerFirstName != "" || dto.CustomerLastName != "") {
+		dto.CustomerName = fmt.Sprintf("%s %s", dto.CustomerFirstName, dto.CustomerLastName)
 	}
 
 	// 1.6. Mapear estados de la orden
@@ -65,24 +72,27 @@ func (uc *UseCaseOrderMapping) MapAndSaveOrder(ctx context.Context, dto *dtos.Pr
 
 	// 3. Guardar la orden principal (sin score por ahora, se calculará mediante evento)
 	if err := uc.repo.CreateOrder(ctx, order); err != nil {
-		uc.publishSyncOrderRejected(ctx, dto.IntegrationID, dto.BusinessID, dto.OrderNumber, dto.ExternalID, dto.Platform, "Error al guardar en base de datos", err.Error())
-
+		if !dto.IsManualOrder {
+			uc.publishSyncOrderRejected(ctx, dto.IntegrationID, dto.BusinessID, dto.OrderNumber, dto.ExternalID, dto.Platform, "Error al guardar en base de datos", err.Error())
+		}
 		return nil, fmt.Errorf("error creating order: %w", err)
 	}
 
-	// Publicar evento de orden creada exitosamente
-	uc.publishSyncOrderCreated(ctx, dto.IntegrationID, dto.BusinessID, map[string]interface{}{
-		"order_id":       order.ID,
-		"order_number":   dto.OrderNumber,
-		"external_id":    dto.ExternalID,
-		"platform":       dto.Platform,
-		"customer_email": dto.CustomerEmail,
-		"currency":       dto.Currency,
-		"status":         order.Status,
-		"created_at":     order.CreatedAt,
-		"total_amount":   order.TotalAmount,
-		"synced_at":      time.Now(),
-	})
+	// Publicar evento de orden creada exitosamente (solo para integraciones)
+	if !dto.IsManualOrder {
+		uc.publishSyncOrderCreated(ctx, dto.IntegrationID, dto.BusinessID, map[string]interface{}{
+			"order_id":       order.ID,
+			"order_number":   dto.OrderNumber,
+			"external_id":    dto.ExternalID,
+			"platform":       dto.Platform,
+			"customer_email": dto.CustomerEmail,
+			"currency":       dto.Currency,
+			"status":         order.Status,
+			"created_at":     order.CreatedAt,
+			"total_amount":   order.TotalAmount,
+			"synced_at":      time.Now(),
+		})
+	}
 
 	// 4-8. Guardar entidades relacionadas
 	if err := uc.saveRelatedEntities(ctx, order, dto); err != nil {
@@ -286,11 +296,13 @@ func (uc *UseCaseOrderMapping) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, c
 		CurrencyPresentment:     dto.CurrencyPresentment,
 
 		// Información del cliente
-		CustomerID:    clientID,
-		CustomerName:  dto.CustomerName,
-		CustomerEmail: dto.CustomerEmail,
-		CustomerPhone: dto.CustomerPhone,
-		CustomerDNI:   dto.CustomerDNI,
+		CustomerID:        clientID,
+		CustomerName:      dto.CustomerName,
+		CustomerFirstName: dto.CustomerFirstName,
+		CustomerLastName:  dto.CustomerLastName,
+		CustomerEmail:     dto.CustomerEmail,
+		CustomerPhone:     dto.CustomerPhone,
+		CustomerDNI:       dto.CustomerDNI,
 		CustomerOrderCount: func() int {
 			if dto.CustomerOrderCount != nil {
 				return *dto.CustomerOrderCount
@@ -648,20 +660,49 @@ func (uc *UseCaseOrderMapping) publishOrderCreatedEvent(_ context.Context, order
 	helpers.PublishEventDual(context.Background(), event, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 }
 
-// calculateOrderScore calcula el score de la orden directamente
+// calculateOrderScore calcula el score de la orden en background (goroutine).
+// Al terminar, publica un evento SSE para que el frontend actualice la fila.
 func (uc *UseCaseOrderMapping) calculateOrderScore(ctx context.Context, order *entities.ProbabilityOrder) {
+	// Capturar datos necesarios antes del goroutine
+	orderID := order.ID
+	orderNumber := order.OrderNumber
+	businessID := order.BusinessID
+	integrationID := order.IntegrationID
+
 	go func() {
-		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
-			uc.logger.Error(ctx).
+		bgCtx := context.Background()
+
+		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(bgCtx, orderID); err != nil {
+			uc.logger.Error(bgCtx).
 				Err(err).
-				Str("order_id", order.ID).
+				Str("order_id", orderID).
 				Msg("Error al calcular score de la orden")
-		} else {
-			uc.logger.Info(ctx).
-				Str("order_id", order.ID).
-				Str("order_number", order.OrderNumber).
-				Msg("✅ Score calculado exitosamente para la orden")
+			return
 		}
+
+		uc.logger.Info(bgCtx).
+			Str("order_id", orderID).
+			Str("order_number", orderNumber).
+			Msg("✅ Score calculado exitosamente para la orden")
+
+		// Recargar la orden con el score actualizado para el evento SSE
+		refreshed, err := uc.repo.GetOrderByID(bgCtx, orderID)
+		if err != nil {
+			uc.logger.Warn(bgCtx).Err(err).Str("order_id", orderID).Msg("No se pudo recargar orden para evento SSE de score")
+			return
+		}
+
+		// Publicar evento SSE con el score calculado
+		scoreEvent := entities.NewOrderEvent(entities.OrderEventTypeScoreCalculated, orderID, entities.OrderEventData{
+			OrderNumber: orderNumber,
+		})
+		scoreEvent.BusinessID = businessID
+		if integrationID > 0 {
+			intID := integrationID
+			scoreEvent.IntegrationID = &intID
+		}
+
+		helpers.PublishEventDual(bgCtx, scoreEvent, refreshed, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
 	}()
 }
 

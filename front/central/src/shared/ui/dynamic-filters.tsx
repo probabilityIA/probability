@@ -164,7 +164,7 @@ export function DynamicFilters({
     };
 
     return (
-        <div className={`bg-purple-50 p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-purple-200 border-b-0 ${className}`}>
+        <div className={`bg-purple-50 dark:bg-gray-800 p-4 sm:p-6 rounded-t-lg rounded-b-none shadow-sm border border-purple-200 dark:border-gray-700 border-b-0 ${className}`}>
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 {/* Botón Añadir Filtro y Chips */}
                 <div className="flex-1 flex flex-wrap items-center gap-2">
@@ -221,7 +221,7 @@ export function DynamicFilters({
                         {isDropdownOpen && (
                             <div
                                 ref={dropdownRef}
-                                className="absolute top-full left-0 mt-2 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3"
+                                className="absolute top-full left-0 mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50 p-3"
                             >
                                 {selectedFilterKey ? (
                                     // Mostrar input para el filtro seleccionado
@@ -234,7 +234,7 @@ export function DynamicFilters({
                                         if (filter.type === 'text') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <input
@@ -242,7 +242,7 @@ export function DynamicFilters({
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
                                                         placeholder={filter.placeholder}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
                                                         autoFocus
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
@@ -279,13 +279,13 @@ export function DynamicFilters({
                                         if (filter.type === 'select') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <select
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
                                                         autoFocus
                                                     >
                                                         <option value="">Seleccionar...</option>
@@ -324,7 +324,7 @@ export function DynamicFilters({
                                         if (filter.type === 'date-range') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <DateRangePicker
@@ -367,7 +367,7 @@ export function DynamicFilters({
                                     // Mostrar lista de filtros disponibles
                                     <div className="space-y-1">
                                         {availableFilterOptions.length === 0 ? (
-                                            <p className="text-sm text-gray-500 p-2">
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 p-2">
                                                 Todos los filtros están aplicados
                                             </p>
                                         ) : (
@@ -375,7 +375,7 @@ export function DynamicFilters({
                                                 <button
                                                     key={filter.key}
                                                     onClick={() => handleFilterSelect(filter.key)}
-                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                                 >
                                                     {filter.label}
                                                 </button>
@@ -391,14 +391,14 @@ export function DynamicFilters({
                     {activeFilters.map((filter) => (
                         <div
                             key={filter.key}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-800 rounded-full text-sm font-medium"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-800 dark:text-purple-200 rounded-full text-sm font-medium"
                         >
                             <span>
                                 {getFilterLabel(filter.key)}: {getFilterDisplayValue(filter)}
                             </span>
                             <button
                                 onClick={() => onRemoveFilter(filter.key)}
-                                className="hover:bg-purple-100 rounded-full p-0.5 transition-colors"
+                                className="hover:bg-purple-100 dark:hover:bg-purple-800/50 rounded-full p-0.5 transition-colors"
                                 aria-label={`Eliminar filtro ${filter.label}`}
                             >
                                 <XMarkIcon className="w-4 h-4" />
@@ -413,7 +413,7 @@ export function DynamicFilters({
                         <select
                             value={sortBy}
                             onChange={(e) => onSortChange(e.target.value, sortOrder)}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
                         >
                             {sortOptions.map((opt) => (
                                 <option key={opt.value} value={opt.value}>
@@ -424,7 +424,7 @@ export function DynamicFilters({
                         <select
                             value={sortOrder}
                             onChange={(e) => onSortChange(sortBy, e.target.value as 'asc' | 'desc')}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
                         >
                             <option value="desc">Descendente</option>
                             <option value="asc">Ascendente</option>

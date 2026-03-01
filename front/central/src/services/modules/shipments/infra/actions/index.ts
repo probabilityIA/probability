@@ -85,9 +85,9 @@ export const generateGuideAction = async (req: any) => {
 };
 
 // Origin Addresses Actions
-export const getOriginAddressesAction = async () => {
+export const getOriginAddressesAction = async (businessId?: number) => {
     try {
-        const data = await (await getUseCases()).getOriginAddresses();
+        const data = await (await getUseCases()).getOriginAddresses(businessId);
         return { success: true, data };
     } catch (error: any) {
         console.error('Get Origin Addresses Action Error:', error.message);
@@ -95,9 +95,9 @@ export const getOriginAddressesAction = async () => {
     }
 };
 
-export const createOriginAddressAction = async (req: any) => {
+export const createOriginAddressAction = async (req: any, businessId?: number) => {
     try {
-        const data = await (await getUseCases()).createOriginAddress(req);
+        const data = await (await getUseCases()).createOriginAddress(req, businessId);
         return { success: true, data };
     } catch (error: any) {
         console.error('Create Origin Address Action Error:', error.message);
@@ -105,9 +105,9 @@ export const createOriginAddressAction = async (req: any) => {
     }
 };
 
-export const updateOriginAddressAction = async (id: number, req: any) => {
+export const updateOriginAddressAction = async (id: number, req: any, businessId?: number) => {
     try {
-        const data = await (await getUseCases()).updateOriginAddress(id, req);
+        const data = await (await getUseCases()).updateOriginAddress(id, req, businessId);
         return { success: true, data };
     } catch (error: any) {
         console.error('Update Origin Address Action Error:', error.message);
@@ -115,9 +115,9 @@ export const updateOriginAddressAction = async (id: number, req: any) => {
     }
 };
 
-export const deleteOriginAddressAction = async (id: number) => {
+export const deleteOriginAddressAction = async (id: number, businessId?: number) => {
     try {
-        const data = await (await getUseCases()).deleteOriginAddress(id);
+        const data = await (await getUseCases()).deleteOriginAddress(id, businessId);
         return { success: true, message: data.message };
     } catch (error: any) {
         console.error('Delete Origin Address Action Error:', error.message);

@@ -569,7 +569,7 @@ func TestMapAndSaveOrder_OrdenNueva_ExitoSinEntidadesRelacionadas(t *testing.T) 
 			return false, nil // Orden no existe aun
 		},
 		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
-			return &entities.Client{ID: 99, Email: email}, nil // Cliente ya existe
+			return &entities.Client{ID: 99, Email: &email}, nil // Cliente ya existe
 		},
 		CreateOrderFn: func(ctx context.Context, order *entities.ProbabilityOrder) error {
 			createOrderCalled = true
@@ -1123,12 +1123,13 @@ func TestEqualJSON_JSONInvalido_RetornaFalse(t *testing.T) {
 
 // ─── Tests: GetOrCreateCustomer ──────────────────────────────────────────────
 
-func TestGetOrCreateCustomer_SinEmail_RetornaNilSinError(t *testing.T) {
+func TestGetOrCreateCustomer_SinEmailNiNombre_RetornaNilSinError(t *testing.T) {
 	// Arrange
 	repo := &mockRepository{}
 	uc := newTestUseCase(repo, nil, nil, nil, &mockScoreUseCase{})
 	dto := &dtos.ProbabilityOrderDTO{
 		CustomerEmail: "", // Sin email
+		CustomerName:  "", // Sin nombre
 	}
 
 	// Act
@@ -1139,15 +1140,16 @@ func TestGetOrCreateCustomer_SinEmail_RetornaNilSinError(t *testing.T) {
 		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
 	}
 	if client != nil {
-		t.Errorf("se esperaba cliente nil cuando no hay email, pero se obtuvo: %v", client)
+		t.Errorf("se esperaba cliente nil cuando no hay email ni nombre, pero se obtuvo: %v", client)
 	}
 }
 
 func TestGetOrCreateCustomer_ClienteExistentePorEmail_RetornaClienteExistente(t *testing.T) {
 	// Arrange
+	existingEmail := "existente@example.com"
 	existingClient := &entities.Client{
 		ID:    55,
-		Email: "existente@example.com",
+		Email: &existingEmail,
 	}
 	repo := &mockRepository{
 		GetClientByEmailFn: func(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
@@ -1210,8 +1212,9 @@ func TestGetOrCreateCustomer_ClienteNuevo_CreaYRetorna(t *testing.T) {
 	if !createClientCalled {
 		t.Error("se esperaba que CreateClient fuera llamado para el nuevo cliente")
 	}
-	if client.Email != "nuevo@example.com" {
-		t.Errorf("Email esperado: %q, obtenido: %q", "nuevo@example.com", client.Email)
+	expectedEmail := "nuevo@example.com"
+	if client.Email == nil || *client.Email != expectedEmail {
+		t.Errorf("Email esperado: %q, obtenido: %v", expectedEmail, client.Email)
 	}
 }
 

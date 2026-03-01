@@ -13,7 +13,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
-// CreateOrder crea una nueva orden
+// Deprecated: Use UseCaseOrderMapping.CreateManualOrder instead.
+// CreateOrder crea una nueva orden sin pasar por el pipeline completo de MapAndSaveOrder.
 func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRequest) (*dtos.OrderResponse, error) {
 	// Validar que no exista una orden con el mismo external_id para la misma integración
 	exists, err := uc.repo.OrderExists(ctx, req.ExternalID, req.IntegrationID)
@@ -59,6 +60,16 @@ func (uc *UseCaseOrder) CreateOrder(ctx context.Context, req *dtos.CreateOrderRe
 	// Asignar PaymentMethodID por defecto si no lo trae
 	if req.PaymentMethodID == 0 {
 		req.PaymentMethodID = 1 // Valor por defecto para órdenes importadas sin pasarela
+	}
+
+	// Buscar o crear cliente en la tabla clients si hay datos suficientes
+	if req.BusinessID != nil && req.CustomerEmail != "" && req.CustomerID == nil {
+		client, err := uc.getOrCreateClient(ctx, *req.BusinessID, req)
+		if err != nil {
+			uc.logger.Warn().Err(err).Msg("Error in getOrCreateClient, continuing without client_id")
+		} else if client != nil {
+			req.CustomerID = &client.ID
+		}
 	}
 
 	// Crear el modelo de orden

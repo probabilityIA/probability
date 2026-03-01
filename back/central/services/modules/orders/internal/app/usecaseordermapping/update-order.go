@@ -32,8 +32,8 @@ func (uc *UseCaseOrderMapping) UpdateOrder(ctx context.Context, existingOrder *e
 	// 4. Publicar eventos relacionados con la actualización
 	uc.publishUpdateEvents(ctx, existingOrder, previousStatus)
 
-	// 5. Publicar evento de sincronización si la orden viene de una integración
-	if existingOrder.IntegrationID > 0 {
+	// 5. Publicar evento de sincronización si la orden viene de una integración (no para manuales)
+	if existingOrder.IntegrationID > 0 && !dto.IsManualOrder {
 		uc.publishSyncOrderUpdated(ctx, existingOrder.IntegrationID, existingOrder.BusinessID, map[string]interface{}{
 			"order_id":       existingOrder.ID,
 			"order_number":   existingOrder.OrderNumber,

@@ -4,6 +4,9 @@ package dtos
 type ListClientsParams struct {
 	BusinessID uint
 	Search     string
+	Email      string // filtro exacto por email
+	Dni        string // filtro exacto por DNI
+	Name       string // filtro ILIKE por nombre
 	Page       int
 	PageSize   int
 }
@@ -20,7 +23,7 @@ func (p ListClientsParams) Offset() int {
 type CreateClientDTO struct {
 	BusinessID uint
 	Name       string
-	Email      string
+	Email      *string
 	Phone      string
 	Dni        *string
 }
@@ -30,7 +33,7 @@ type UpdateClientDTO struct {
 	ID         uint
 	BusinessID uint
 	Name       string
-	Email      string
+	Email      *string
 	Phone      string
 	Dni        *string
 }

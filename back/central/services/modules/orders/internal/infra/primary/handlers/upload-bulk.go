@@ -150,7 +150,7 @@ func (h *Handlers) UploadBulkOrders(c *gin.Context) {
 			orderReq.Platform = "manual"
 		}
 
-		_, err := h.orderCRUD.CreateOrder(c.Request.Context(), &orderReq)
+		_, err := h.orderMapping.CreateManualOrder(c.Request.Context(), &orderReq)
 		if err != nil {
 			result.FailedCount++
 			result.Errors = append(result.Errors, fmt.Sprintf("Fila %d (Pedido %s): %s", i+2, orderReq.OrderNumber, err.Error()))

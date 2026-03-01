@@ -5,13 +5,13 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/shared/ui/button';
 import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
-import { InvoicingHeader } from '@/services/modules/invoicing/ui/components/InvoicingHeader';
+import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import {
   deleteConfigAction,
   enableConfigAction,
@@ -33,10 +33,24 @@ interface ConfigsClientProps {
 export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, selectedBusinessId }: ConfigsClientProps) {
   const { showToast } = useToast();
   const router = useRouter();
+  const { setActionButtons } = useNavbarActions();
   const [configs, setConfigs] = useState<InvoicingConfig[]>(initialConfigs);
   const [selectedConfig, setSelectedConfig] = useState<InvoicingConfig | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
+
+  useEffect(() => {
+    setActionButtons(
+      <button
+        onClick={() => router.push('/invoicing/configs/new')}
+        style={{ background: '#7c3aed' }}
+        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+      >
+        + Nueva Configuración
+      </button>
+    );
+    return () => setActionButtons(null);
+  }, [setActionButtons, router]);
 
   const handleToggleEnabled = async (config: InvoicingConfig) => {
     try {
@@ -128,13 +142,6 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
     }
   };
 
-  const handleBusinessChange = (businessId: string) => {
-    const params = new URLSearchParams();
-    if (businessId) {
-      params.set('business_id', businessId);
-    }
-    router.push(`/invoicing/configs?${params.toString()}`);
-  };
 
   const columns = [
     // Columna de Negocio
@@ -272,42 +279,6 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
 
   return (
     <div className="p-8">
-      <InvoicingHeader
-        title="Configuración de Facturación"
-        description="Define qué integraciones deben generar facturas automáticamente"
-      >
-        <button
-          onClick={() => router.push('/invoicing/configs/new')}
-          className="px-6 py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nueva Configuración
-        </button>
-      </InvoicingHeader>
-
-      {/* Dropdown de Business para Super Admins */}
-      {isSuperAdmin && businesses && businesses.length > 0 && (
-        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Seleccionar Negocio (Super Admin)
-          </label>
-          <select
-            defaultValue={selectedBusinessId?.toString() || ''}
-            onChange={(e) => handleBusinessChange(e.target.value)}
-            className="w-full max-w-md px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-          >
-            <option value="">Todos los negocios</option>
-            {businesses.map((business) => (
-              <option key={business.id} value={business.id}>
-                {business.name} (ID: {business.id})
-              </option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {!configs || configs.length === 0 ? (
         <div className="bg-white rounded-lg shadow p-12 text-center">
           <svg

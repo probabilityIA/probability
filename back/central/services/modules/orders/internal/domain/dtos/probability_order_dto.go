@@ -88,6 +88,9 @@ type ProbabilityOrderDTO struct {
 	PaymentDetails     json.RawMessage `json:"payment_details,omitempty"`
 	FulfillmentDetails json.RawMessage `json:"fulfillment_details,omitempty"`
 
+	// Control de flujo (no se persiste)
+	IsManualOrder bool `json:"-"`
+
 	// Tablas relacionadas
 	OrderItems      []ProbabilityOrderItemDTO      `json:"order_items,omitempty"`
 	Addresses       []ProbabilityAddressDTO        `json:"addresses,omitempty"`

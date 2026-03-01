@@ -10,8 +10,8 @@ import (
 
 func (uc *UseCase) CreateClient(ctx context.Context, dto dtos.CreateClientDTO) (*entities.Client, error) {
 	// Verificar email duplicado
-	if dto.Email != "" {
-		exists, err := uc.repo.ExistsByEmail(ctx, dto.BusinessID, dto.Email, nil)
+	if dto.Email != nil && *dto.Email != "" {
+		exists, err := uc.repo.ExistsByEmail(ctx, dto.BusinessID, *dto.Email, nil)
 		if err != nil {
 			return nil, err
 		}
@@ -31,10 +31,16 @@ func (uc *UseCase) CreateClient(ctx context.Context, dto dtos.CreateClientDTO) (
 		}
 	}
 
+	// Normalizar: si email es puntero a string vacío, guardar como nil
+	email := dto.Email
+	if email != nil && *email == "" {
+		email = nil
+	}
+
 	client := &entities.Client{
 		BusinessID: dto.BusinessID,
 		Name:       dto.Name,
-		Email:      dto.Email,
+		Email:      email,
 		Phone:      dto.Phone,
 		Dni:        dto.Dni,
 	}

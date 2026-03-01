@@ -88,7 +88,7 @@ export function Table<T = Record<string, unknown>>({
     if (totalPages <= 1 && totalItems === 0) return null;
 
     return (
-      <div className="pagination-alt border-t border-gray-200 rounded-t-none mt-0">
+      <div className="pagination-alt border-t border-gray-200 dark:border-gray-700 rounded-t-none mt-0">
         <div className="flex items-center justify-between w-full flex-wrap gap-4">
           {/* Información y navegación - Centrado */}
           <div className="flex items-center gap-3 flex-1 justify-center">
@@ -113,7 +113,7 @@ export function Table<T = Record<string, unknown>>({
           {/* Selector de elementos por página */}
           {showItemsPerPageSelector && onItemsPerPageChange && (
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700">Mostrar:</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mostrar:</label>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -129,7 +129,7 @@ export function Table<T = Record<string, unknown>>({
                   </option>
                 ))}
               </select>
-              <span className="text-sm text-gray-700">por página</span>
+              <span className="text-sm text-gray-700 dark:text-gray-300">por página</span>
             </div>
           )}
         </div>
@@ -163,7 +163,7 @@ export function Table<T = Record<string, unknown>>({
       )}
 
       {/* Tabla */}
-      <div className={`overflow-hidden w-full rounded-lg border border-gray-200 bg-white m-0 p-0 ${filters ? 'rounded-t-none border-t-0' : ''}`}>
+      <div className={`overflow-hidden w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 m-0 p-0 ${filters ? 'rounded-t-none border-t-0' : ''}`}>
         <div className="overflow-x-auto w-full m-0 p-0">
           <table className="table w-full m-0 p-0">
             {/* Header */}

@@ -53,6 +53,11 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem('probability-dark-mode')==='true'){document.documentElement.classList.add('dark')}}catch(e){}})();`,
+          }}
+        />
         {apiKey && (
           <Script
             src="https://cdn.shopify.com/shopify-cloud/app-bridge.js"

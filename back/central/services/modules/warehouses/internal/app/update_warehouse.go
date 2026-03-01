@@ -47,6 +47,16 @@ func (uc *UseCase) UpdateWarehouse(ctx context.Context, dto dtos.UpdateWarehouse
 		IsActive:      dto.IsActive,
 		IsDefault:     dto.IsDefault,
 		IsFulfillment: dto.IsFulfillment,
+		Company:       dto.Company,
+		FirstName:     dto.FirstName,
+		LastName:      dto.LastName,
+		Email:         dto.Email,
+		Suburb:        dto.Suburb,
+		CityDaneCode:  dto.CityDaneCode,
+		PostalCode:    dto.PostalCode,
+		Street:        dto.Street,
+		Latitude:      dto.Latitude,
+		Longitude:     dto.Longitude,
 	}
 
 	return uc.repo.Update(ctx, warehouse)

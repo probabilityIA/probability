@@ -168,7 +168,7 @@ export function Sidebar({ user }: SidebarProps) {
             requestExpand();
           }
         }}
-        className="fixed top-4 right-4 z-40 md:hidden p-3 bg-white rounded-xl shadow-lg border border-gray-100 text-gray-700 hover:bg-gray-50 transition-all active:scale-95"
+        className="fixed top-4 right-4 z-40 md:hidden p-3 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-100 dark:border-gray-700 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
         aria-label="Toggle Menu"
       >
         {isMobileOpen ? (
@@ -193,7 +193,7 @@ export function Sidebar({ user }: SidebarProps) {
       {/* Sidebar - Menú lateral expandible */}
       <aside
         className={`
-          fixed left-0 top-0 h-full transition-all duration-300 z-30 border-r border-gray-200 bg-white rounded-tr-lg rounded-br-lg
+          fixed left-0 top-0 h-full transition-all duration-300 z-30 border-r border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 rounded-tr-lg rounded-br-lg
           ${isMobileOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
         style={{
@@ -234,13 +234,14 @@ export function Sidebar({ user }: SidebarProps) {
               )}
             </div>
           </div>
-          <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 to-transparent" />
+          <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent" />
 
           {/* Tarjeta de usuario arriba */}
-          <Link
-            href="/profile"
-            className={`cursor-pointer hover:bg-gray-50 transition-colors rounded-xl mx-2 my-1 ${primaryExpanded ? 'p-4' : 'p-2 flex justify-center'} block`}
-            title="Ver perfil completo"
+          <button
+            type="button"
+            onClick={() => setShowUserModal(true)}
+            className={`cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors rounded-xl mx-2 my-1 ${primaryExpanded ? 'p-4' : 'p-2 flex justify-center'} block w-[calc(100%-1rem)] text-left`}
+            title="Abrir perfil"
           >
             <div className={`flex items-center ${primaryExpanded ? 'gap-3' : 'justify-center'}`}>
               {/* Avatar clickeable */}
@@ -270,13 +271,13 @@ export function Sidebar({ user }: SidebarProps) {
 
               {/* Nombre (solo visible cuando está expandido) */}
               {primaryExpanded && (
-                <div className="text-gray-800 overflow-hidden">
+                <div className="text-gray-800 dark:text-gray-200 overflow-hidden">
                   <p className="font-semibold text-sm truncate">{user.name}</p>
-                  <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{user.email}</p>
                 </div>
               )}
             </div>
-          </Link>
+          </button>
 
           {/* Menú de navegación */}
           <nav className="flex-1 py-6 px-3">
@@ -288,8 +289,8 @@ export function Sidebar({ user }: SidebarProps) {
                   className={`
                     flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                     ${isActive('/home')
-                      ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                     }
                   `}
                 >
@@ -499,8 +500,8 @@ export function Sidebar({ user }: SidebarProps) {
                   className={`
                     flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                     ${isActive('/wallet')
-                      ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                      : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                     }
                   `}
                 >
@@ -567,7 +568,7 @@ export function Sidebar({ user }: SidebarProps) {
                         {primaryExpanded && (
                           <Link
                             href={getIAMEntryRoute()}
-                            className="p-2 rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-700 transition-colors"
+                            className="p-2 rounded-md text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
                             title="Ir a IAM"
                           >
 
@@ -582,12 +583,12 @@ export function Sidebar({ user }: SidebarProps) {
                         {/* ORGANIZACIÓN */}
                         {canViewBusinesses && (
                           <div className="mb-3">
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">ORGANIZACIÓN</h4>
+                            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">ORGANIZACIÓN</h4>
                             <ul className="space-y-1">
                               <li>
                                 <Link
                                   href="/businesses"
-                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/businesses') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/businesses') ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                                 >
                                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
@@ -602,13 +603,13 @@ export function Sidebar({ user }: SidebarProps) {
                         {/* CONTROL DE ACCESO */}
                         {(canViewUsers || canViewRoles || canViewPermissions) && (
                           <div className="mb-3">
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">CONTROL DE ACCESO</h4>
+                            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">CONTROL DE ACCESO</h4>
                             <ul className="space-y-1">
                               {canViewUsers && (
                                 <li>
                                   <Link
                                     href="/users"
-                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/users') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/users') ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                                   >
                                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
@@ -621,7 +622,7 @@ export function Sidebar({ user }: SidebarProps) {
                                 <li>
                                   <Link
                                     href="/roles"
-                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/roles') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/roles') ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                                   >
                                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -634,7 +635,7 @@ export function Sidebar({ user }: SidebarProps) {
                                 <li>
                                   <Link
                                     href="/permissions"
-                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/permissions') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                    className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/permissions') ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                                   >
                                     <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
@@ -650,12 +651,12 @@ export function Sidebar({ user }: SidebarProps) {
                         {/* SISTEMA - Solo super admin */}
                         {canViewResources && (
                           <div>
-                            <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">SISTEMA</h4>
+                            <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">SISTEMA</h4>
                             <ul className="space-y-0.5">
                               <li>
                                 <Link
                                   href="/resources"
-                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/resources') ? 'bg-gray-100 text-gray-900' : 'text-gray-700 hover:bg-gray-50'}`}
+                                  className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${isActive('/resources') ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'}`}
                                 >
                                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
@@ -675,11 +676,11 @@ export function Sidebar({ user }: SidebarProps) {
           </nav>
 
           {/* Botón logout abajo */}
-          <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 to-transparent mb-2" />
+          <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent mb-2" />
           <div className="p-4 pt-2">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 text-gray-700 hover:bg-gray-50 p-3 rounded-lg transition-colors"
+              className="w-full flex items-center gap-3 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 p-3 rounded-lg transition-colors"
             >
               <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

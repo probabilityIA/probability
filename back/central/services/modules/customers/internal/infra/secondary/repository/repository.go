@@ -65,7 +65,18 @@ func (r *Repository) List(ctx context.Context, params dtos.ListClientsParams) ([
 
 	if params.Search != "" {
 		like := "%" + params.Search + "%"
-		query = query.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ?", like, like, like)
+		query = query.Where("name ILIKE ? OR email ILIKE ? OR phone ILIKE ? OR dni ILIKE ?", like, like, like, like)
+	}
+
+	// Filtros por campo específico
+	if params.Email != "" {
+		query = query.Where("email = ?", params.Email)
+	}
+	if params.Dni != "" {
+		query = query.Where("dni = ?", params.Dni)
+	}
+	if params.Name != "" {
+		query = query.Where("name ILIKE ?", "%"+params.Name+"%")
 	}
 
 	if err := query.Count(&total).Error; err != nil {
@@ -116,6 +127,9 @@ func (r *Repository) Delete(ctx context.Context, businessID, clientID uint) erro
 }
 
 func (r *Repository) ExistsByEmail(ctx context.Context, businessID uint, email string, excludeID *uint) (bool, error) {
+	if email == "" {
+		return false, nil
+	}
 	var count int64
 	query := r.db.Conn(ctx).Model(&models.Client{}).
 		Where("business_id = ? AND email = ?", businessID, email)

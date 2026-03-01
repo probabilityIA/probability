@@ -41,14 +41,14 @@ export function SuperAdminBusinessSelector({
 
     if (variant === 'navbar') {
         return (
-            <div className="flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-lg px-3 py-1.5">
+            <div className="flex items-center gap-2 bg-purple-100 dark:bg-purple-900/30 border border-purple-300 dark:border-purple-700 rounded-lg px-3 py-1.5">
                 <span className="px-2 py-0.5 text-xs font-bold text-white bg-purple-700 rounded select-none whitespace-nowrap">
                     SUPER ADMIN
                 </span>
                 <select
                     value={value?.toString() ?? ''}
                     onChange={handleChange}
-                    className="px-2 py-1.5 border border-purple-400 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white text-purple-900 cursor-pointer"
+                    className="px-2 py-1.5 border border-purple-400 dark:border-purple-600 rounded-md text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white dark:bg-gray-800 text-purple-900 dark:text-purple-200 cursor-pointer"
                 >
                     {options}
                 </select>
@@ -57,14 +57,14 @@ export function SuperAdminBusinessSelector({
     }
 
     return (
-        <div className="flex items-center gap-3 bg-purple-50 border-2 border-purple-300 rounded-lg px-4 py-3">
+        <div className="flex items-center gap-3 bg-purple-50 dark:bg-purple-900/20 border-2 border-purple-300 dark:border-purple-700 rounded-lg px-4 py-3">
             <span className="px-2.5 py-1 text-xs font-bold text-white bg-purple-700 rounded-md select-none whitespace-nowrap">
                 SUPER ADMIN
             </span>
             <select
                 value={value?.toString() ?? ''}
                 onChange={handleChange}
-                className="flex-1 max-w-xs px-3 py-2 border-2 border-purple-400 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white text-purple-900 cursor-pointer"
+                className="flex-1 max-w-xs px-3 py-2 border-2 border-purple-400 dark:border-purple-600 rounded-lg text-sm font-medium focus:outline-none focus:ring-2 focus:ring-purple-600 bg-white dark:bg-gray-800 text-purple-900 dark:text-purple-200 cursor-pointer"
             >
                 {options}
             </select>

@@ -753,6 +753,31 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
     });
 
+    // SSE Integration - Actualizar score/probabilidad cuando se calcula en background
+    useSSE({
+        eventTypes: ['order.score_calculated'],
+        businessId: isSuperAdmin ? 0 : permissions?.business_id,
+        onMessage: async (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type !== 'order.score_calculated') return;
+
+                const orderId = data.data?.order_id || data.metadata?.order_id;
+                if (!orderId) return;
+
+                // Recargar la orden completa para obtener score y negative_factors
+                const response = await getOrderByIdAction(orderId);
+                if (response.success && response.data) {
+                    setOrders(prev => prev.map(o =>
+                        o.id === orderId ? { ...o, delivery_probability: response.data!.delivery_probability, negative_factors: response.data!.negative_factors } : o
+                    ));
+                }
+            } catch {
+                // Ignore parse errors
+            }
+        },
+    });
+
     // Función para actualizar solo la tabla (sin mostrar loading inicial)
     const refreshTableOnly = useCallback(async () => {
         setTableLoading(true);

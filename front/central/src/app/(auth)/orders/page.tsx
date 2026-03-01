@@ -4,16 +4,17 @@ import { useState, useEffect } from 'react';
 import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
 import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
 import { Order } from '@/services/modules/orders/domain/types';
-import { Modal, SuperAdminBusinessSelector } from '@/shared/ui';
+import { Modal } from '@/shared/ui';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import MassOrderUploadModal from '@/shared/ui/modals/mass-order-upload-modal';
 import MassGuideGenerationModal from '@/shared/ui/modals/mass-guide-generation-modal';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
+import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
 
 
 export default function OrdersPage() {
     const { setActionButtons } = useNavbarActions();
-    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
+    const { selectedBusinessId } = useOrdersBusiness();
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showViewModal, setShowViewModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
@@ -25,42 +26,37 @@ export default function OrdersPage() {
     const [showMassGuideModal, setShowMassGuideModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
-    // Set action buttons in navbar (with business selector for super admin)
+    // Set action buttons in navbar
     useEffect(() => {
         const actionButtons = (
             <>
-                <SuperAdminBusinessSelector
-                    value={selectedBusinessId}
-                    onChange={setSelectedBusinessId}
-                    variant="navbar"
-                />
                 <button
                     onClick={() => setShowCreateModal(true)}
                     style={{ background: '#7c3aed' }}
                     className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                 >
-                    ➕ Nueva Orden
+                    + Nueva Orden
                 </button>
                 <button
                     onClick={() => setShowMassUploadModal(true)}
                     style={{ background: '#7c3aed' }}
                     className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                 >
-                    📤 Carga Masiva
+                    Carga Masiva
                 </button>
                 <button
                     onClick={() => setShowMassGuideModal(true)}
                     style={{ background: '#7c3aed' }}
                     className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                 >
-                    📦 Guías Masivas
+                    Guías Masivas
                 </button>
             </>
         );
         setActionButtons(actionButtons);
 
         return () => setActionButtons(null);
-    }, [setActionButtons, selectedBusinessId]);
+    }, [setActionButtons]);
 
     const handleView = (order: Order) => {
         setSelectedOrder(order);
@@ -152,6 +148,7 @@ export default function OrdersPage() {
                 <OrderForm
                     onSuccess={handleSuccess}
                     onCancel={handleCancel}
+                    selectedBusinessId={selectedBusinessId}
                 />
             </Modal>
 
@@ -184,6 +181,7 @@ export default function OrdersPage() {
                         order={selectedOrder}
                         onSuccess={handleSuccess}
                         onCancel={handleCancel}
+                        selectedBusinessId={selectedBusinessId}
                     />
                 )}
             </Modal>

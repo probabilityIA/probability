@@ -15,6 +15,16 @@ type CreateWarehouseRequest struct {
 	IsActive      *bool  `json:"is_active"`
 	IsDefault     bool   `json:"is_default"`
 	IsFulfillment bool   `json:"is_fulfillment"`
+	Company       string `json:"company" binding:"omitempty,max=100"`
+	FirstName     string `json:"first_name" binding:"omitempty,max=100"`
+	LastName      string `json:"last_name" binding:"omitempty,max=100"`
+	Email         string `json:"email" binding:"omitempty,max=100"`
+	Suburb        string `json:"suburb" binding:"omitempty,max=100"`
+	CityDaneCode  string `json:"city_dane_code" binding:"omitempty,max=10"`
+	PostalCode    string `json:"postal_code" binding:"omitempty,max=20"`
+	Street        string   `json:"street" binding:"omitempty,max=255"`
+	Latitude      *float64 `json:"latitude"`
+	Longitude     *float64 `json:"longitude"`
 }
 
 // UpdateWarehouseRequest payload de actualización de bodega
@@ -32,6 +42,16 @@ type UpdateWarehouseRequest struct {
 	IsActive      *bool  `json:"is_active"`
 	IsDefault     bool   `json:"is_default"`
 	IsFulfillment bool   `json:"is_fulfillment"`
+	Company       string `json:"company" binding:"omitempty,max=100"`
+	FirstName     string `json:"first_name" binding:"omitempty,max=100"`
+	LastName      string `json:"last_name" binding:"omitempty,max=100"`
+	Email         string `json:"email" binding:"omitempty,max=100"`
+	Suburb        string `json:"suburb" binding:"omitempty,max=100"`
+	CityDaneCode  string `json:"city_dane_code" binding:"omitempty,max=10"`
+	PostalCode    string `json:"postal_code" binding:"omitempty,max=20"`
+	Street        string   `json:"street" binding:"omitempty,max=255"`
+	Latitude      *float64 `json:"latitude"`
+	Longitude     *float64 `json:"longitude"`
 }
 
 // CreateLocationRequest payload de creación de ubicación

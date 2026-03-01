@@ -52,6 +52,16 @@ func (h *Handlers) UpdateWarehouse(c *gin.Context) {
 		IsActive:      isActive,
 		IsDefault:     req.IsDefault,
 		IsFulfillment: req.IsFulfillment,
+		Company:       req.Company,
+		FirstName:     req.FirstName,
+		LastName:      req.LastName,
+		Email:         req.Email,
+		Suburb:        req.Suburb,
+		CityDaneCode:  req.CityDaneCode,
+		PostalCode:    req.PostalCode,
+		Street:        req.Street,
+		Latitude:      req.Latitude,
+		Longitude:     req.Longitude,
 	}
 
 	warehouse, err := h.uc.UpdateWarehouse(c.Request.Context(), dto)

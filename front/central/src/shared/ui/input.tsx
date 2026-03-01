@@ -36,7 +36,7 @@ export function Input({
       {label && (
         <label
           htmlFor={inputId}
-          className={compact ? "block text-xs font-medium text-gray-700" : "block text-sm font-medium text-gray-700"}
+          className={compact ? "block text-xs font-medium text-gray-700 dark:text-gray-300" : "block text-sm font-medium text-gray-700 dark:text-gray-300"}
         >
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}

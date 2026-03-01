@@ -105,6 +105,7 @@ type IOrderConsumer interface {
 type IOrderMappingUseCase interface {
 	MapAndSaveOrder(ctx context.Context, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error)
 	UpdateOrder(ctx context.Context, existingOrder *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error)
+	CreateManualOrder(ctx context.Context, req *dtos.CreateOrderRequest) (*dtos.OrderResponse, error)
 }
 
 // ───────────────────────────────────────────

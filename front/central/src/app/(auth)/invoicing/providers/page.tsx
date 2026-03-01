@@ -1,43 +1,52 @@
-/**
- * Página de Proveedores de Facturación
- * Gestión de proveedores de facturación electrónica (Softpymes, Siigo, etc.)
- * Ahora usa integrations/core en lugar del módulo deprecado
- */
-
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Button } from '@/shared/ui/button';
 import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
 import { Spinner } from '@/shared/ui/spinner';
 import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { InvoicingHeader } from '@/services/modules/invoicing/ui/components/InvoicingHeader';
+import { useInvoicingBusiness } from '@/shared/contexts/invoicing-business-context';
+import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import type { Integration } from '@/services/integrations/core/domain/types';
 
 export default function InvoicingProvidersPage() {
   const { showToast } = useToast();
   const { permissions } = usePermissions();
+  const { selectedBusinessId } = useInvoicingBusiness();
+  const { setActionButtons } = useNavbarActions();
   const [providers, setProviders] = useState<Integration[]>([]);
   const [loading, setLoading] = useState(true);
 
   const businessId = permissions?.business_id || 0;
   const isSuperAdmin = permissions?.is_super || false;
 
+  useEffect(() => {
+    setActionButtons(
+      <button
+        onClick={() => window.location.href = '/integrations'}
+        style={{ background: '#7c3aed' }}
+        className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+      >
+        + Nuevo Proveedor
+      </button>
+    );
+    return () => setActionButtons(null);
+  }, [setActionButtons]);
+
   const loadProviders = async () => {
     try {
       setLoading(true);
-      // Filtrar por categoría "invoicing" (facturación electrónica)
       const filters: any = {
         category: 'invoicing',
         page: 1,
         page_size: 100
       };
 
-      // Si no es super admin, filtrar también por business_id
-      if (!isSuperAdmin && businessId) {
+      if (isSuperAdmin && selectedBusinessId) {
+        filters.business_id = selectedBusinessId;
+      } else if (!isSuperAdmin && businessId) {
         filters.business_id = businessId;
       }
 
@@ -53,7 +62,7 @@ export default function InvoicingProvidersPage() {
 
   useEffect(() => {
     loadProviders();
-  }, [businessId]);
+  }, [businessId, selectedBusinessId]);
 
   const columns = [
     {
@@ -117,20 +126,6 @@ export default function InvoicingProvidersPage() {
 
   return (
     <div className="p-8">
-      <InvoicingHeader
-        title="Proveedores de Facturación"
-        description="Configura los proveedores de facturación electrónica para tu negocio"
-      >
-        <button
-          onClick={() => window.location.href = '/integrations'}
-          className="px-6 py-2.5 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] text-white font-bold rounded-full shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-300 flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          Nuevo Proveedor
-        </button>
-      </InvoicingHeader>
 
       <div className="providersTable">
         <Table

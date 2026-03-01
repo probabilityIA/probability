@@ -40,6 +40,16 @@ func (uc *UseCase) CreateWarehouse(ctx context.Context, dto dtos.CreateWarehouse
 		IsActive:      dto.IsActive,
 		IsDefault:     dto.IsDefault,
 		IsFulfillment: dto.IsFulfillment,
+		Company:       dto.Company,
+		FirstName:     dto.FirstName,
+		LastName:      dto.LastName,
+		Email:         dto.Email,
+		Suburb:        dto.Suburb,
+		CityDaneCode:  dto.CityDaneCode,
+		PostalCode:    dto.PostalCode,
+		Street:        dto.Street,
+		Latitude:      dto.Latitude,
+		Longitude:     dto.Longitude,
 	}
 
 	return uc.repo.Create(ctx, warehouse)

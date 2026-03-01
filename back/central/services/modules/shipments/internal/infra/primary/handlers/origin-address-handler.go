@@ -9,9 +9,29 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 )
 
+// resolveBusinessID obtiene el business_id efectivo.
+// Para usuarios normales usa el del JWT.
+// Para super admins (business_id=0 en JWT) lee el query param ?business_id=X.
+func (h *Handlers) resolveBusinessID(c *gin.Context) (uint, bool) {
+	businessID, exists := middleware.GetBusinessID(c)
+	if !exists {
+		return 0, false
+	}
+	if businessID > 0 {
+		return businessID, true
+	}
+	// Super admin: leer de query param
+	if param := c.Query("business_id"); param != "" {
+		if id, err := strconv.ParseUint(param, 10, 64); err == nil && id > 0 {
+			return uint(id), true
+		}
+	}
+	return 0, false
+}
+
 // ListOriginAddresses lista las direcciones de origen del comercio
 func (h *Handlers) ListOriginAddresses(c *gin.Context) {
-	businessID, exists := middleware.GetBusinessID(c)
+	businessID, exists := h.resolveBusinessID(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No se pudo identificar la empresa"})
 		return
@@ -28,7 +48,7 @@ func (h *Handlers) ListOriginAddresses(c *gin.Context) {
 
 // CreateOriginAddress crea una nueva dirección de origen
 func (h *Handlers) CreateOriginAddress(c *gin.Context) {
-	businessID, exists := middleware.GetBusinessID(c)
+	businessID, exists := h.resolveBusinessID(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No se pudo identificar la empresa"})
 		return
@@ -51,7 +71,7 @@ func (h *Handlers) CreateOriginAddress(c *gin.Context) {
 
 // UpdateOriginAddress actualiza una dirección de origen
 func (h *Handlers) UpdateOriginAddress(c *gin.Context) {
-	businessID, exists := middleware.GetBusinessID(c)
+	businessID, exists := h.resolveBusinessID(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No se pudo identificar la empresa"})
 		return
@@ -81,7 +101,7 @@ func (h *Handlers) UpdateOriginAddress(c *gin.Context) {
 
 // DeleteOriginAddress elimina una dirección de origen
 func (h *Handlers) DeleteOriginAddress(c *gin.Context) {
-	businessID, exists := middleware.GetBusinessID(c)
+	businessID, exists := h.resolveBusinessID(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "No se pudo identificar la empresa"})
 		return

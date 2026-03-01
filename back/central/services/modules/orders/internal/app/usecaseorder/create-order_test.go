@@ -59,6 +59,11 @@ func TestCreateOrder_Success(t *testing.T) {
 	mockRepo.On("OrderExists", ctx, req.ExternalID, req.IntegrationID).
 		Return(false, nil)
 
+	// 1b. GetClientByEmail para buscar/crear cliente (retorna cliente existente)
+	testEmail := "john@example.com"
+	mockRepo.On("GetClientByEmail", ctx, businessID, req.CustomerEmail).
+		Return(&entities.Client{ID: 42, BusinessID: businessID, Name: "John Doe", Email: &testEmail}, nil)
+
 	// 2. CreateOrder debe ser llamado y retorna nil (éxito)
 	mockRepo.On("CreateOrder", ctx, mock.AnythingOfType("*entities.ProbabilityOrder")).
 		Run(func(args mock.Arguments) {

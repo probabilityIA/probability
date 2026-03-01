@@ -18,6 +18,16 @@ export interface Warehouse {
     is_active: boolean;
     is_default: boolean;
     is_fulfillment: boolean;
+    company: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    suburb: string;
+    city_dane_code: string;
+    postal_code: string;
+    street: string;
+    latitude: number | null;
+    longitude: number | null;
     created_at: string;
     updated_at: string;
 }
@@ -56,6 +66,16 @@ export interface CreateWarehouseDTO {
     contact_email?: string;
     is_default?: boolean;
     is_fulfillment?: boolean;
+    company?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    suburb?: string;
+    city_dane_code?: string;
+    postal_code?: string;
+    street?: string;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 export interface UpdateWarehouseDTO {
@@ -72,6 +92,16 @@ export interface UpdateWarehouseDTO {
     is_active?: boolean;
     is_default?: boolean;
     is_fulfillment?: boolean;
+    company?: string;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    suburb?: string;
+    city_dane_code?: string;
+    postal_code?: string;
+    street?: string;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 export interface GetWarehousesParams {

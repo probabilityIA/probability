@@ -34,6 +34,16 @@ type CreateWarehouseDTO struct {
 	IsActive      bool
 	IsDefault     bool
 	IsFulfillment bool
+	Company       string
+	FirstName     string
+	LastName      string
+	Email         string
+	Suburb        string
+	CityDaneCode  string
+	PostalCode    string
+	Street        string
+	Latitude      *float64
+	Longitude     *float64
 }
 
 // UpdateWarehouseDTO datos para actualizar una bodega
@@ -53,4 +63,14 @@ type UpdateWarehouseDTO struct {
 	IsActive      bool
 	IsDefault     bool
 	IsFulfillment bool
+	Company       string
+	FirstName     string
+	LastName      string
+	Email         string
+	Suburb        string
+	CityDaneCode  string
+	PostalCode    string
+	Street        string
+	Latitude      *float64
+	Longitude     *float64
 }

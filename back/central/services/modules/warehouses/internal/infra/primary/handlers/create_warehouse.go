@@ -44,6 +44,16 @@ func (h *Handlers) CreateWarehouse(c *gin.Context) {
 		IsActive:      isActive,
 		IsDefault:     req.IsDefault,
 		IsFulfillment: req.IsFulfillment,
+		Company:       req.Company,
+		FirstName:     req.FirstName,
+		LastName:      req.LastName,
+		Email:         req.Email,
+		Suburb:        req.Suburb,
+		CityDaneCode:  req.CityDaneCode,
+		PostalCode:    req.PostalCode,
+		Street:        req.Street,
+		Latitude:      req.Latitude,
+		Longitude:     req.Longitude,
 	}
 
 	warehouse, err := h.uc.CreateWarehouse(c.Request.Context(), dto)

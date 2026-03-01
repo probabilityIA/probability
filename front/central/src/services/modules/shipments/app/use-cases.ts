@@ -33,19 +33,19 @@ export class ShipmentUseCases {
     }
 
     // Origin Addresses
-    async getOriginAddresses() {
-        return this.repository.getOriginAddresses();
+    async getOriginAddresses(businessId?: number) {
+        return this.repository.getOriginAddresses(businessId);
     }
 
-    async createOriginAddress(req: any) {
-        return this.repository.createOriginAddress(req);
+    async createOriginAddress(req: any, businessId?: number) {
+        return this.repository.createOriginAddress(req, businessId);
     }
 
-    async updateOriginAddress(id: number, req: any) {
-        return this.repository.updateOriginAddress(id, req);
+    async updateOriginAddress(id: number, req: any, businessId?: number) {
+        return this.repository.updateOriginAddress(id, req, businessId);
     }
 
-    async deleteOriginAddress(id: number) {
-        return this.repository.deleteOriginAddress(id);
+    async deleteOriginAddress(id: number, businessId?: number) {
+        return this.repository.deleteOriginAddress(id, businessId);
     }
 }

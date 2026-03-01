@@ -9,8 +9,9 @@ import { ShipmentApiRepository } from "@/services/modules/shipments/infra/reposi
 import { EnvioClickQuoteRequest, EnvioClickRate } from "@/services/modules/shipments/domain/types";
 import { Order } from "@/services/modules/orders/domain/types";
 import { getWalletBalanceAction, debitForGuideAction } from "@/services/modules/wallet/infra/actions";
-import { getOriginAddressesAction, quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
-import { OriginAddress } from "@/services/modules/shipments/domain/types";
+import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
+import { getWarehousesAction } from "@/services/modules/warehouses/infra/actions";
+import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
 import { usePermissions } from "@/shared/contexts/permissions-context";
@@ -184,7 +185,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     // Step 4 data
     const [walletBalance, setWalletBalance] = useState<number | null>(null);
-    const [originAddresses, setOriginAddresses] = useState<OriginAddress[]>([]);
+    const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
 
@@ -262,21 +263,21 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     });
 
     // Fetch initial data on open
-    const handleOriginAddressSelect = (addr: OriginAddress) => {
+    const handleWarehouseSelect = (wh: Warehouse) => {
         // Step 1
-        step1Form.setValue("originDaneCode", addr.city_dane_code);
-        step1Form.setValue("originAddress", addr.street);
-        setOriginSearch(`${addr.city} (${addr.state})`);
+        step1Form.setValue("originDaneCode", wh.city_dane_code || "");
+        step1Form.setValue("originAddress", wh.street || wh.address);
+        setOriginSearch(`${wh.city} (${wh.state})`);
 
         // Step 3
-        step3Form.setValue("originCompany", addr.company);
-        step3Form.setValue("originFirstName", addr.first_name);
-        step3Form.setValue("originLastName", addr.last_name);
-        step3Form.setValue("originEmail", addr.email);
-        step3Form.setValue("originPhone", addr.phone);
-        step3Form.setValue("originSuburb", addr.suburb || "");
-        step3Form.setValue("originCrossStreet", addr.street);
-        step3Form.setValue("originReference", ""); // Opcional
+        step3Form.setValue("originCompany", wh.company || wh.name);
+        step3Form.setValue("originFirstName", wh.first_name || wh.contact_name?.split(' ')[0] || "");
+        step3Form.setValue("originLastName", wh.last_name || wh.contact_name?.split(' ').slice(1).join(' ') || "");
+        step3Form.setValue("originEmail", wh.email || wh.contact_email || "");
+        step3Form.setValue("originPhone", wh.phone || "");
+        step3Form.setValue("originSuburb", wh.suburb || "");
+        step3Form.setValue("originCrossStreet", wh.street || wh.address || "");
+        step3Form.setValue("originReference", "");
     };
 
     useEffect(() => {
@@ -285,16 +286,23 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             getWalletBalanceAction(balanceBusinessId).then(res => {
                 if (res.success && res.data) setWalletBalance(res.data.Balance);
             });
-            getOriginAddressesAction().then(res => {
-                if (res.success && res.data) {
-                    setOriginAddresses(res.data);
-                    // Si hay una predeterminada, seleccionarla automáticamente
-                    const defaultAddr = res.data.find(a => a.is_default);
-                    if (defaultAddr) {
-                        handleOriginAddressSelect(defaultAddr);
+            getWarehousesAction({
+                business_id: effectiveBusinessId || undefined,
+                is_active: true,
+                page: 1,
+                page_size: 100,
+            }).then(res => {
+                if (res.data) {
+                    setOriginWarehouses(res.data);
+                    // Si la orden ya tiene warehouse_id, pre-seleccionar esa bodega
+                    const preselect = order?.warehouse_id
+                        ? res.data.find(w => w.id === order.warehouse_id)
+                        : res.data.find(w => w.is_default);
+                    if (preselect) {
+                        handleWarehouseSelect(preselect);
                     }
                 }
-            });
+            }).catch(() => {});
         }
     }, [isOpen]);
 
@@ -811,18 +819,18 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                         <h3 className="font-semibold text-lg text-purple-700">Origen</h3>
-                                        {originAddresses.length > 0 && (
+                                        {originWarehouses.length > 0 && (
                                             <select
                                                 className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
                                                 onChange={(e) => {
-                                                    const addr = originAddresses.find(a => a.id === parseInt(e.target.value));
-                                                    if (addr) handleOriginAddressSelect(addr);
+                                                    const wh = originWarehouses.find(w => w.id === parseInt(e.target.value));
+                                                    if (wh) handleWarehouseSelect(wh);
                                                 }}
                                                 defaultValue=""
                                             >
-                                                <option value="" disabled>Mis direcciones...</option>
-                                                {originAddresses.map(a => (
-                                                    <option key={a.id} value={a.id}>{a.alias}</option>
+                                                <option value="" disabled>Mis bodegas...</option>
+                                                {originWarehouses.map(w => (
+                                                    <option key={w.id} value={w.id}>{w.name} ({w.code})</option>
                                                 ))}
                                             </select>
                                         )}

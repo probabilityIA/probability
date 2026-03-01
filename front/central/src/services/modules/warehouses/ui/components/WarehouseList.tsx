@@ -85,7 +85,8 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
     const columns = [
         { key: 'name', label: 'Nombre' },
         { key: 'code', label: 'Código' },
-        { key: 'city', label: 'Ciudad' },
+        { key: 'location', label: 'Ubicación' },
+        { key: 'contact', label: 'Contacto' },
         { key: 'badges', label: 'Tipo', align: 'center' as const },
         { key: 'status', label: 'Estado', align: 'center' as const },
         { key: 'actions', label: 'Acciones', align: 'right' as const },
@@ -98,8 +99,32 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
         code: (
             <span className="text-sm text-gray-600 font-mono">{warehouse.code}</span>
         ),
-        city: (
-            <span className="text-sm text-gray-600">{warehouse.city || <span className="text-gray-300">&mdash;</span>}</span>
+        location: (
+            <div className="text-sm">
+                {warehouse.address ? (
+                    <p className="text-gray-900 truncate max-w-[200px]" title={warehouse.address}>{warehouse.address}</p>
+                ) : (
+                    <p className="text-gray-300">&mdash;</p>
+                )}
+                {(warehouse.city || warehouse.state) && (
+                    <p className="text-xs text-gray-500">
+                        {[warehouse.city, warehouse.state].filter(Boolean).join(', ')}
+                    </p>
+                )}
+            </div>
+        ),
+        contact: (
+            <div className="text-sm">
+                {warehouse.contact_name ? (
+                    <p className="text-gray-900 truncate max-w-[180px]">{warehouse.contact_name}</p>
+                ) : null}
+                {warehouse.phone ? (
+                    <p className="text-xs text-gray-500">{warehouse.phone}</p>
+                ) : null}
+                {!warehouse.contact_name && !warehouse.phone && (
+                    <span className="text-gray-300">&mdash;</span>
+                )}
+            </div>
         ),
         badges: (
             <div className="flex justify-center gap-1">

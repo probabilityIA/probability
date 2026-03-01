@@ -26,6 +26,16 @@ func (r *Repository) Create(ctx context.Context, warehouse *entities.Warehouse) 
 		IsActive:      warehouse.IsActive,
 		IsDefault:     warehouse.IsDefault,
 		IsFulfillment: warehouse.IsFulfillment,
+		Company:       warehouse.Company,
+		FirstName:     warehouse.FirstName,
+		LastName:      warehouse.LastName,
+		Email:         warehouse.Email,
+		Suburb:        warehouse.Suburb,
+		CityDaneCode:  warehouse.CityDaneCode,
+		PostalCode:    warehouse.PostalCode,
+		Street:        warehouse.Street,
+		Latitude:      warehouse.Latitude,
+		Longitude:     warehouse.Longitude,
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -103,6 +113,16 @@ func (r *Repository) Update(ctx context.Context, warehouse *entities.Warehouse) 
 		IsActive:      warehouse.IsActive,
 		IsDefault:     warehouse.IsDefault,
 		IsFulfillment: warehouse.IsFulfillment,
+		Company:       warehouse.Company,
+		FirstName:     warehouse.FirstName,
+		LastName:      warehouse.LastName,
+		Email:         warehouse.Email,
+		Suburb:        warehouse.Suburb,
+		CityDaneCode:  warehouse.CityDaneCode,
+		PostalCode:    warehouse.PostalCode,
+		Street:        warehouse.Street,
+		Latitude:      warehouse.Latitude,
+		Longitude:     warehouse.Longitude,
 	}
 
 	if err := r.db.Conn(ctx).Save(model).Error; err != nil {

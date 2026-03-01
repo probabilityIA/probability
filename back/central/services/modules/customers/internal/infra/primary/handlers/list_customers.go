@@ -22,6 +22,9 @@ func (h *Handlers) ListClients(c *gin.Context) {
 	params := dtos.ListClientsParams{
 		BusinessID: businessID,
 		Search:     c.Query("search"),
+		Email:      c.Query("email"),
+		Dni:        c.Query("dni"),
+		Name:       c.Query("name"),
 		Page:       page,
 		PageSize:   pageSize,
 	}

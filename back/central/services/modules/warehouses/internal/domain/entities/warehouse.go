@@ -19,6 +19,16 @@ type Warehouse struct {
 	IsActive      bool
 	IsDefault     bool
 	IsFulfillment bool
+	Company       string
+	FirstName     string
+	LastName      string
+	Email         string
+	Suburb        string
+	CityDaneCode  string
+	PostalCode    string
+	Street        string
+	Latitude      *float64
+	Longitude     *float64
 	Locations     []WarehouseLocation
 	CreatedAt     time.Time
 	UpdatedAt     time.Time

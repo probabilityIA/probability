@@ -5,11 +5,12 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 import { Warehouse } from '../../domain/types';
 import WarehouseList from './WarehouseList';
 import WarehouseForm from './WarehouseForm';
+import WarehouseDetail from './WarehouseDetail';
 import { Button } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 
-type ModalMode = 'create' | 'edit' | null;
+type ModalMode = 'create' | 'edit' | 'detail' | null;
 
 export default function WarehouseManager() {
     const { isSuperAdmin } = usePermissions();
@@ -28,6 +29,11 @@ export default function WarehouseManager() {
         setModalMode('edit');
     };
 
+    const openDetail = (warehouse: Warehouse) => {
+        setSelectedWarehouse(warehouse);
+        setModalMode('detail');
+    };
+
     const closeModal = () => {
         setModalMode(null);
         setSelectedWarehouse(null);
@@ -38,11 +44,18 @@ export default function WarehouseManager() {
         refreshList?.();
     };
 
+    const handleEditFromDetail = () => {
+        setModalMode('edit');
+    };
+
     const handleRefreshRef = useCallback((ref: () => void) => {
         setRefreshList(() => ref);
     }, []);
 
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
+
+    const isFormModal = modalMode === 'create' || modalMode === 'edit';
+    const isDetailModal = modalMode === 'detail';
 
     return (
         <div className="space-y-4">
@@ -72,6 +85,7 @@ export default function WarehouseManager() {
                 </div>
             ) : (
                 <WarehouseList
+                    onView={openDetail}
                     onEdit={openEdit}
                     onRefreshRef={handleRefreshRef}
                     selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
@@ -79,7 +93,7 @@ export default function WarehouseManager() {
             )}
 
             {/* Modal crear / editar */}
-            {(modalMode === 'create' || modalMode === 'edit') && (
+            {isFormModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
@@ -99,6 +113,32 @@ export default function WarehouseManager() {
                                 onSuccess={handleFormSuccess}
                                 onCancel={closeModal}
                                 businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
+                            />
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal detalle */}
+            {isDetailModal && selectedWarehouse && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                    <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+                        <div className="flex items-center justify-between px-6 py-4 border-b">
+                            <h2 className="text-lg font-semibold text-gray-900">
+                                Detalle de bodega
+                            </h2>
+                            <button
+                                onClick={closeModal}
+                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                            >
+                                &times;
+                            </button>
+                        </div>
+                        <div className="p-6">
+                            <WarehouseDetail
+                                warehouse={selectedWarehouse}
+                                onEdit={handleEditFromDetail}
+                                onBack={closeModal}
                             />
                         </div>
                     </div>

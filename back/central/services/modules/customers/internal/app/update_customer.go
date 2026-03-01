@@ -16,13 +16,20 @@ func (uc *UseCase) UpdateClient(ctx context.Context, dto dtos.UpdateClientDTO) (
 	}
 
 	// Verificar email duplicado (excluyendo el propio cliente)
-	if dto.Email != "" && dto.Email != existing.Email {
-		exists, err := uc.repo.ExistsByEmail(ctx, dto.BusinessID, dto.Email, &dto.ID)
-		if err != nil {
-			return nil, err
+	if dto.Email != nil && *dto.Email != "" {
+		// Solo verificar si el email cambió
+		existingEmail := ""
+		if existing.Email != nil {
+			existingEmail = *existing.Email
 		}
-		if exists {
-			return nil, domainerrors.ErrDuplicateEmail
+		if *dto.Email != existingEmail {
+			exists, err := uc.repo.ExistsByEmail(ctx, dto.BusinessID, *dto.Email, &dto.ID)
+			if err != nil {
+				return nil, err
+			}
+			if exists {
+				return nil, domainerrors.ErrDuplicateEmail
+			}
 		}
 	}
 
@@ -40,8 +47,14 @@ func (uc *UseCase) UpdateClient(ctx context.Context, dto dtos.UpdateClientDTO) (
 		}
 	}
 
+	// Normalizar: si email es puntero a string vacío, guardar como nil
+	email := dto.Email
+	if email != nil && *email == "" {
+		email = nil
+	}
+
 	existing.Name = dto.Name
-	existing.Email = dto.Email
+	existing.Email = email
 	existing.Phone = dto.Phone
 	existing.Dni = dto.Dni
 

@@ -20,6 +20,8 @@ interface MapComponentProps {
     address: string;
     city: string;
     height?: string;
+    latitude?: number | null;
+    longitude?: number | null;
 }
 
 const RecenterAutomatically = ({ lat, lng }: { lat: number; lng: number }) => {
@@ -30,12 +32,20 @@ const RecenterAutomatically = ({ lat, lng }: { lat: number; lng: number }) => {
     return null;
 };
 
-const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '400px' }) => {
+const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '400px', latitude, longitude }) => {
     const [position, setPosition] = useState<[number, number] | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
+        // If direct coordinates are provided, use them without geocoding
+        if (latitude != null && longitude != null) {
+            setPosition([latitude, longitude]);
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
         const geocodeAddress = async () => {
             if (!address || !city) return;
 
@@ -79,7 +89,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ address, city, height = '40
         };
 
         geocodeAddress();
-    }, [address, city]);
+    }, [address, city, latitude, longitude]);
 
     if (loading) {
         return (

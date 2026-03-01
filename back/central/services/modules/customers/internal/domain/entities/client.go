@@ -7,7 +7,7 @@ type Client struct {
 	ID         uint
 	BusinessID uint
 	Name       string
-	Email      string
+	Email      *string
 	Phone      string
 	Dni        *string
 	CreatedAt  time.Time

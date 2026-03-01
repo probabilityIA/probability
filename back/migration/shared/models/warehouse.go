@@ -24,6 +24,18 @@ type Warehouse struct {
 	IsFulfillment bool           `gorm:"default:false;index"`                                               // Indica si la bodega maneja fulfillment (envíos directos)
 	Metadata      datatypes.JSON `gorm:"type:jsonb"`                                                        // Metadatos adicionales en formato JSON (configuración personalizada)
 
+	// Campos de contacto para carrier (requeridos por APIs de transportadoras)
+	Company      string `gorm:"size:100"`  // Nombre de la empresa remitente
+	FirstName    string `gorm:"size:100"`  // Nombre del contacto
+	LastName     string `gorm:"size:100"`  // Apellido del contacto
+	Email        string `gorm:"size:100"`  // Email del contacto (carrier)
+	Suburb       string `gorm:"size:100"`  // Barrio / Colonia
+	CityDaneCode string `gorm:"size:10"`   // Código DANE de la ciudad
+	PostalCode   string `gorm:"size:20"`   // Código postal
+	Street       string `gorm:"size:255"`  // Dirección exacta de la calle (carrier format)
+	Latitude     *float64                  // Latitud GPS de la bodega
+	Longitude    *float64                  // Longitud GPS de la bodega
+
 	// Relaciones
 	Business  Business            `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Negocio al que pertenece
 	Locations []WarehouseLocation `gorm:"foreignKey:WarehouseID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Ubicaciones dentro de la bodega

@@ -23,6 +23,16 @@ type WarehouseResponse struct {
 	IsActive      bool      `json:"is_active"`
 	IsDefault     bool      `json:"is_default"`
 	IsFulfillment bool      `json:"is_fulfillment"`
+	Company       string    `json:"company"`
+	FirstName     string    `json:"first_name"`
+	LastName      string    `json:"last_name"`
+	Email         string    `json:"email"`
+	Suburb        string    `json:"suburb"`
+	CityDaneCode  string    `json:"city_dane_code"`
+	PostalCode    string    `json:"postal_code"`
+	Street        string    `json:"street"`
+	Latitude      *float64  `json:"latitude"`
+	Longitude     *float64  `json:"longitude"`
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
@@ -74,6 +84,16 @@ func FromEntity(w *entities.Warehouse) WarehouseResponse {
 		IsActive:      w.IsActive,
 		IsDefault:     w.IsDefault,
 		IsFulfillment: w.IsFulfillment,
+		Company:       w.Company,
+		FirstName:     w.FirstName,
+		LastName:      w.LastName,
+		Email:         w.Email,
+		Suburb:        w.Suburb,
+		CityDaneCode:  w.CityDaneCode,
+		PostalCode:    w.PostalCode,
+		Street:        w.Street,
+		Latitude:      w.Latitude,
+		Longitude:     w.Longitude,
 		CreatedAt:     w.CreatedAt,
 		UpdatedAt:     w.UpdatedAt,
 	}
