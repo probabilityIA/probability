@@ -7,6 +7,7 @@ import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-
 import { NotificationBusinessProvider } from '@/shared/contexts/notification-business-context';
 import { InvoicingBusinessProvider } from '@/shared/contexts/invoicing-business-context';
 import { OrdersBusinessProvider } from '@/shared/contexts/orders-business-context';
+import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 
 interface LayoutContentProps {
   user: {
@@ -93,6 +94,12 @@ function LayoutContent({ user, children }: LayoutContentProps) {
           }
         `}</style>
       </main>
+
+      {/* Lina — Asistente Virtual (solo para roles business / super admin) */}
+      <LinaChatbot
+        userScope={user?.scope}
+        isSuperAdmin={user?.is_super_admin}
+      />
     </div>
   );
 }

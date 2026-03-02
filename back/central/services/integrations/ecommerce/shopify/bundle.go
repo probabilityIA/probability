@@ -14,13 +14,13 @@ import (
 	shopifycore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/eventpublisher"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/queue"
+	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-
-func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue) {
+func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIntegration core.IIntegrationCore, rabbitMQ rabbitmq.IQueue, database db.IDatabase) {
 	shopifyClient := client.New()
 
 	// Habilitar debug del cliente HTTP si está configurado
@@ -77,6 +77,6 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 			Msg("Ni WEBHOOK_BASE_URL ni URL_BASE_SWAGGER están configuradas, no se crearán webhooks automáticamente para Shopify")
 	}
 
-	shopifyHandler := handlers.New(useCase, logger, config)
+	shopifyHandler := handlers.New(useCase, logger, config, coreIntegration)
 	shopifyHandler.RegisterRoutes(router, logger)
 }

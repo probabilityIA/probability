@@ -140,16 +140,52 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 	})
 }
 
+// serviceFeeAmount es el cargo fijo de servicio (en pesos) que se suma a cada cotización.
+// Este valor se añade de forma transparente antes de mostrar el precio al cliente.
+const serviceFeeAmount = 2290.0
+
+// priceFields son los campos de precio que se ajustan en cada cotización de EnvioClick.
+// "flete" es el costo de guía según la documentación oficial de EnvioClick Pro.
+var priceFields = []string{"flete"}
+
 // extractRatesFromData extracts the rates array from the transport provider response data.
 // EnvioClick response format: { "status": "success", "data": { "rates": [...] } }
+// Applies a fixed service fee (serviceFeeAmount) to each rate's price fields.
 func extractRatesFromData(data map[string]interface{}) interface{} {
 	if data == nil {
 		return nil
 	}
-	if innerData, ok := data["data"].(map[string]interface{}); ok {
-		if rates, ok := innerData["rates"]; ok {
-			return rates
+	innerData, ok := data["data"].(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	rawRates, ok := innerData["rates"]
+	if !ok {
+		return rawRates
+	}
+
+	// Apply the service fee to every rate
+	rates, ok := rawRates.([]interface{})
+	if !ok {
+		return rawRates
+	}
+
+	for _, r := range rates {
+		rate, ok := r.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for _, field := range priceFields {
+			if val, exists := rate[field]; exists {
+				switch v := val.(type) {
+				case float64:
+					rate[field] = v + serviceFeeAmount
+				case int:
+					rate[field] = float64(v) + serviceFeeAmount
+				}
+			}
 		}
 	}
-	return nil
+
+	return rates
 }

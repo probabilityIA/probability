@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -81,9 +80,10 @@ func (h *ShopifyHandler) GetOAuthTokenHandler(c *gin.Context) {
 			Str("state", state).
 			Msg("Cookie de token no encontrada o expirada")
 
-		c.JSON(http.StatusNotFound, GetOAuthTokenResponse{
+		// Usamos 410 Gone (no 404) para distinguir "token expirado" de "ruta no encontrada"
+		c.JSON(http.StatusGone, GetOAuthTokenResponse{
 			Success: false,
-			Error:   fmt.Sprintf("Token no encontrado. Cookies count: %d", len(c.Request.Cookies())),
+			Error:   "El token de autorización expiró o ya fue consumido. Por favor inicia el proceso de conexión con Shopify nuevamente.",
 		})
 		return
 	}

@@ -54,7 +54,17 @@ export default function ShopifyOAuthCallback() {
                     );
 
                     if (!tokenResponse.ok) {
-                        throw new Error('Error al obtener credenciales de Shopify');
+                        // Leer el cuerpo del error para mostrar el mensaje real del backend
+                        let errorMessage = 'Error al obtener credenciales de Shopify';
+                        try {
+                            const errorBody = await tokenResponse.json();
+                            if (errorBody?.error) errorMessage = errorBody.error;
+                        } catch { /* si el body no es JSON, usar mensaje genérico */ }
+
+                        if (tokenResponse.status === 410) {
+                            errorMessage = 'El token de autorización expiró. Por favor inicia el proceso de conexión con Shopify nuevamente.';
+                        }
+                        throw new Error(errorMessage);
                     }
 
                     const tokenData = await tokenResponse.json();
