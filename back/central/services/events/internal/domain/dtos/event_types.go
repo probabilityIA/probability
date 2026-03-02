@@ -88,6 +88,11 @@ const (
 	ConnectionEstablished  = "connection_established"
 	BatchStarted           = "batch_started"
 	BatchCompleted         = "batch_completed"
+
+	// Stock & movement events (published via RabbitMQ central dispatcher)
+	InventoryStockAdjusted   = "inventory.stock_adjusted"
+	InventoryMovementCreated = "inventory.movement_created"
+	InventoryLowStock        = "inventory.low_stock"
 )
 
 // NotificationTypeSSE es el ID del tipo de notificación SSE

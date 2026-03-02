@@ -31,8 +31,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 3. Init Sync Publisher
 	publisher := syncqueue.New(rabbitMQ, logger)
 
-	// 4. Init Event Publisher (Redis SSE)
-	eventPublisher := inventorycache.NewEventPublisher(redisClient, logger)
+	// 4. Init Event Publisher (Redis SSE + RabbitMQ central dispatcher)
+	eventPublisher := inventorycache.NewEventPublisher(redisClient, logger, rabbitMQ)
 
 	// 5. Init Use Cases
 	uc := app.New(repo, publisher, eventPublisher, logger)

@@ -21,10 +21,10 @@ const (
 	// Consumers : modules/events (SSE)
 	ChannelIntegrationsSyncOrders = "probability:integrations:orders:sync:events"
 
-	// ChannelShipmentsEvents publica resultados de operaciones de envíos
-	// (cotizaciones, generación de guías, tracking, cancelaciones).
-	// Publisher : modules/shipments (response consumer)
-	// Consumers : modules/events (SSE)
+	// DEPRECATED: Shipments ahora publica al dispatcher central via RabbitMQ (ExchangeEvents).
+	// Mantener temporalmente por backward compatibility.
+	// Publisher : (ninguno — reemplazado por queue/sse_publisher.go)
+	// Consumers : (ninguno — frontend ya usa SSE del events module)
 	ChannelShipmentsEvents = "probability:shipments:state:events"
 
 	// ChannelPayEvents publica resultados de transacciones de pago (completada, fallida, cancelada).
