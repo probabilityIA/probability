@@ -70,13 +70,13 @@ func Init(ctx context.Context) error {
 	auth.New(v1Group, database, logger, environment, s3Service)
 
 	// Initialize unified events module (SSE + RabbitMQ consumer + publisher)
-	events.New(v1Group, logger, rabbitMQ, redisClient, emailService)
+	events.New(v1Group, logger, rabbitMQ, redisClient)
 
 	// Initialize Order Module (and others)
-	moduleBundles := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
+	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, Softpymes, etc.)
-	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, moduleBundles)
+	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

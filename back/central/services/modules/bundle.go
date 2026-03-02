@@ -43,7 +43,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	orderstatus.New(router, database, logger, environment)
 
 	// Inicializar módulo de orders
-	orders.New(router, database, logger, environment, rabbitMQ, redisClient)
+	orders.New(router, database, logger, environment, rabbitMQ)
 
 	// Inicializar módulo de products
 	products.New(router, database, logger, environment)
@@ -54,8 +54,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de shipments
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
 
-	// Inicializar módulo de notification configs
-	notification_config.New(router, database, redisClient, logger)
+	// Inicializar módulo de notification configs (con RabbitMQ para consumer de delivery results)
+	notification_config.New(router, database, redisClient, logger, rabbitMQ)
 
 	// Módulo de events se inicializa en init.go (unificado, sin database)
 

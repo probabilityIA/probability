@@ -58,10 +58,10 @@ En una plataforma multi-tenant como Probability, cada negocio:
                             ↓
 ┌────────────────────────────────────────────────────────────────┐
 │  5. EVENTOS Y PROCESAMIENTO ASÍNCRONO                          │
-│  → Publicar evento "order.created" a Redis                     │
-│  → Publicar evento "order.score_calculation_requested"         │
-│  → Consumer calcula probabilidad de entrega                    │
-│  → Actualiza orden con score y factores de riesgo             │
+│  → Publicar evento al fanout RabbitMQ (orders.events)          │
+│  → 5 consumers: invoicing, whatsapp, score, inventory, events  │
+│  → Events consumer → SSE, email, WhatsApp via EventDispatcher  │
+│  → Score consumer calcula probabilidad de entrega              │
 └────────────────────────────────────────────────────────────────┘
                             ↓
 ┌────────────────────────────────────────────────────────────────┐
@@ -260,53 +260,62 @@ Min: 0, Max: 100
 
 **¿Cuándo se calcula?**
 - Asíncronamente después de crear/actualizar la orden
-- Se publica evento `order.score_calculation_requested` a Redis
-- Consumer procesa el evento y actualiza la orden
+- Se publica evento al fanout RabbitMQ (`orders.events`)
+- Score consumer (`orders.events.score`) procesa el evento y actualiza la orden
 
 ---
 
-### 6. Sistema de Eventos (Redis)
+### 6. Sistema de Eventos (RabbitMQ Fanout)
 
-**Eventos publicados:**
+El módulo Orders publica eventos a un **único exchange fanout** (`orders.events`). Cada consumer tiene su propia cola bindeada al fanout, recibiendo una copia de cada evento.
 
-#### `order.created`
+**Exchange:** `orders.events` (tipo fanout)
+
+**Colas bindeadas (5):**
+
+| Cola | Consumer | Propósito |
+|------|----------|-----------|
+| `orders.events.invoicing` | Invoicing | Facturación automática |
+| `orders.events.whatsapp` | WhatsApp | Notificaciones WhatsApp |
+| `orders.events.score` | Score | Cálculo de probabilidad de entrega |
+| `orders.events.inventory` | Inventory | Actualización de inventario |
+| `orders.events.events` | EventDispatcher | SSE, email, WhatsApp via eventos unificados |
+
+**Formato del mensaje:** `OrderEventMessage`
 ```json
 {
-  "type": "order.created",
+  "event_id": "uuid",
+  "event_type": "order.created",
   "order_id": "uuid",
   "business_id": 1,
   "integration_id": 5,
-  "external_id": "shopify_12345",
-  "total_amount": 150000,
-  "currency": "COP",
-  "created_at": "2026-01-31T10:30:00Z"
+  "timestamp": "2026-03-02T10:30:00Z",
+  "order": {
+    "id": "uuid",
+    "order_number": "#1234",
+    "internal_number": "ORD-2026-0001",
+    "external_id": "shopify_12345",
+    "total_amount": 150000,
+    "currency": "COP",
+    "customer_name": "Juan Pérez",
+    "customer_email": "juan@example.com",
+    "customer_phone": "+573001234567",
+    "platform": "shopify",
+    "integration_id": 5
+  },
+  "changes": {
+    "current_status": "processing",
+    "previous_status": "pending"
+  },
+  "metadata": {}
 }
 ```
 
-**Suscriptores**: Módulos de analytics, notificaciones, facturación
-
-#### `order.updated`
-```json
-{
-  "type": "order.updated",
-  "order_id": "uuid",
-  "fields_changed": ["status", "delivery_probability"],
-  "old_status": "pending",
-  "new_status": "processing",
-  "updated_at": "2026-01-31T11:00:00Z"
-}
-```
-
-#### `order.score_calculation_requested`
-```json
-{
-  "type": "order.score_calculation_requested",
-  "order_id": "uuid",
-  "requested_at": "2026-01-31T10:30:05Z"
-}
-```
-
-**Procesado por**: `UseCaseOrderScore` (consumer interno)
+**Tipos de eventos:**
+- `order.created` — Orden creada
+- `order.updated` — Orden actualizada
+- `order.cancelled` — Orden cancelada
+- `order.status_changed` — Cambio de estado
 
 ---
 
@@ -891,8 +900,8 @@ Response: 200 OK
    - `payments` → 1 pago
    - `order_channel_metadata` → Webhook original
 9. **Publica Eventos**:
-   - `order.created` → Redis
-   - `order.score_calculation_requested` → Redis
+   - `order.created` → RabbitMQ fanout (`orders.events`)
+   - Todos los consumers reciben copia: invoicing, whatsapp, score, inventory, events
 10. **Consumer calcula score** (asíncrono):
     - Cliente nuevo → -10 pts
     - Pago anticipado → +10 pts
@@ -903,8 +912,8 @@ Response: 200 OK
 
 ### Caso 2: Calcular Score de Entrega
 
-**Actor**: Redis Consumer
-**Trigger**: Evento `order.score_calculation_requested`
+**Actor**: RabbitMQ Score Consumer (`orders.events.score`)
+**Trigger**: Evento `order.created` o `order.updated` en fanout
 
 **Flujo**:
 
@@ -1012,61 +1021,46 @@ orders/
 ├── bundle.go                    # Ensamblador del módulo
 └── internal/
     ├── domain/                  # 🔵 CAPA DE DOMINIO
-    │   ├── entities.go          # Entidades principales
-    │   ├── dtos.go              # DTOs de dominio
-    │   ├── ports.go             # Interfaces (contratos)
-    │   └── errors.go            # Errores de dominio
+    │   ├── entities/            # Entidades principales
+    │   ├── dtos/                # DTOs de dominio
+    │   ├── ports/               # Interfaces (contratos)
+    │   └── errors/              # Errores de dominio
     │
     ├── app/                     # 🟢 CAPA DE APLICACIÓN
-    │   ├── usecaseorder/        # Casos de uso CRUD
-    │   │   ├── constructor.go
-    │   │   ├── create.go
-    │   │   ├── update.go
-    │   │   ├── delete.go
-    │   │   ├── get.go
-    │   │   ├── list.go
-    │   │   └── request_confirmation.go
-    │   ├── usecaseordermapping/  # Mapeo de órdenes
-    │   │   ├── constructor.go
-    │   │   ├── map_and_save.go
-    │   │   ├── validate_client.go
-    │   │   ├── validate_products.go
-    │   │   └── map_statuses.go
-    │   └── usecaseorderscore/    # Cálculo de score
-    │       ├── constructor.go
-    │       ├── calculate_score.go
-    │       └── identify_factors.go
+    │   ├── helpers/             # Helpers compartidos
+    │   │   └── statusmapper/    # Mapeo de estados por plataforma
+    │   ├── usecaseorder/        # Casos de uso CRUD (get, list, delete)
+    │   ├── usecasecreateorder/  # Crear orden + publicar eventos
+    │   ├── usecaseupdateorder/  # Actualizar orden + publicar eventos
+    │   └── usecaseorderscore/   # Cálculo de score de entrega
+    │
+    ├── mocks/                   # Mocks para testing
     │
     └── infra/                   # 🔴 CAPA DE INFRAESTRUCTURA
         ├── primary/             # Adaptadores de entrada
         │   ├── handlers/        # HTTP handlers (Gin)
         │   │   ├── constructor.go
         │   │   ├── router.go
-        │   │   ├── create-order.go
-        │   │   ├── update-order.go
-        │   │   ├── delete-order.go
-        │   │   ├── get-order.go
-        │   │   ├── list-orders.go
-        │   │   ├── map-order.go
-        │   │   ├── get-order-raw.go
-        │   │   └── request-confirmation.go
+        │   │   ├── request/     # DTOs HTTP de entrada (CON tags)
+        │   │   ├── response/    # DTOs HTTP de salida (CON tags)
+        │   │   ├── mappers/     # Conversión Domain ↔ HTTP
+        │   │   └── *.go         # Un handler por archivo
         │   └── queue/           # RabbitMQ consumers
-        │       └── events/
-        │           └── order_events_consumer.go
+        │       ├── consumer.go          # Score consumer
+        │       └── whatsapp_consumer.go # WhatsApp response consumer
         │
         └── secondary/           # Adaptadores de salida
             ├── repository/      # PostgreSQL (GORM)
             │   ├── constructor.go
             │   ├── repository.go
-            │   ├── client_repository.go
-            │   ├── product_repository.go
+            │   ├── status_queries.go  # Consultas réplica de estados
             │   └── mappers/
-            │       ├── to_domain.go
-            │       └── to_db.go
-            ├── redis/           # Redis pub/sub
-            │   └── event_publisher.go
-            └── queue/           # RabbitMQ publisher
-                └── whatsapp_publisher.go
+            ├── eventpublisher/  # Publisher de integración (Shopify events)
+            │   └── constructor.go
+            └── queue/           # RabbitMQ fanout publisher
+                ├── order_publisher.go   # Publica al fanout orders.events
+                ├── response/            # Structs de mensaje
+                └── mappers/             # Mapeo Order → OrderEventMessage
 ```
 
 ---
@@ -1199,25 +1193,37 @@ go build ./services/modules/orders/...
 ## 🧪 Testing
 
 ### Estado Actual
-- ❌ Tests no implementados aún
-- 🔄 Pendiente crear suite de tests unitarios
+- ✅ Tests unitarios implementados para casos de uso principales
 
-### Tests Pendientes
+### Tests Implementados
 
-#### Casos de Uso (app/)
-- `CreateOrder`: 5 tests (éxito, duplicado, error repo, cliente inválido, producto inválido)
-- `MapAndSaveOrder`: 6 tests (nueva orden, actualizar, cliente nuevo, mapeo estados)
-- `CalculateScore`: 5 tests (cliente nuevo, historial exitoso, COD, dirección incompleta)
-- `ListOrders`: 4 tests (sin filtros, con filtros, paginación, orden vacío)
+#### `usecasecreateorder` (app/usecasecreateorder/)
+- Creación exitosa de orden
+- Creación con cliente existente
+- Manejo de errores de repositorio
+- Publicación de eventos al fanout
 
-#### Handlers (infra/primary/handlers/)
-- `CreateOrder`: 4 tests (201, 400, 409, 500)
-- `MapOrder`: 4 tests (201, 200 actualización, 400, 500)
-- `ListOrders`: 4 tests (200, filtros, paginación, 500)
-- `RequestConfirmation`: 4 tests (200, 404, 400 sin teléfono, 500)
+#### `usecaseupdateorder` (app/usecaseupdateorder/)
+- Actualización exitosa de campos
+- Cambio de estado con publicación de eventos
+- Manejo de orden no encontrada
+- Publicación de eventos al fanout
 
-#### Repository (infra/secondary/repository/)
-- Tests de integración con base de datos de prueba
+#### `usecaseorder` (app/usecaseorder/)
+- Get orden por ID
+- List órdenes con filtros y paginación
+
+#### `usecaseorderscore` (app/usecaseorderscore/)
+- Cálculo de score de entrega
+
+#### `statusmapper` (app/helpers/statusmapper/)
+- Mapeo de estados por tipo de integración
+
+### Ejecutar Tests
+
+```bash
+go test ./services/modules/orders/...
+```
 
 ---
 
@@ -1266,8 +1272,7 @@ grep -r '\.Table(' services/modules/orders/internal/infra/secondary/repository/
 
 - **GORM**: ORM para PostgreSQL
 - **Gin**: Framework HTTP
-- **Redis**: Pub/Sub de eventos
-- **RabbitMQ**: Cola de mensajes para WhatsApp
+- **RabbitMQ**: Fanout de eventos + colas de integración
 - **Zerolog**: Logging estructurado
 - **UUID**: Generación de IDs únicos
 
@@ -1275,44 +1280,33 @@ grep -r '\.Table(' services/modules/orders/internal/infra/secondary/repository/
 
 ## 📡 Sistema de Publicaciones
 
-El módulo Orders publica eventos en **2 canales simultáneos**:
+El módulo Orders publica eventos a un **único exchange fanout** de RabbitMQ. Cada consumer recibe una copia de cada evento.
 
-### Redis Pub/Sub
-- **Canal:** `probability:orders:events` (configurable vía env `REDIS_ORDER_EVENTS_CHANNEL`)
-- **Uso:** Eventos en tiempo real para scoring, dashboard SSE
-- **Garantía:** Best-effort (si falla, no bloquea la operación)
-- **Consumidores:**
-  - Score calculation (consumer interno)
-  - Dashboard real-time updates
-
-### RabbitMQ
-- **Queues:** `orders.events.*`
-- **Uso:** Procesamiento garantizado (facturación, notificaciones críticas)
+### RabbitMQ Fanout
+- **Exchange:** `orders.events` (tipo fanout)
 - **Garantía:** At-least-once delivery
-- **Consumidores esperados:**
-  - Invoicing (facturas automáticas, notas de crédito)
-  - Notifications (emails, WhatsApp)
-  - Events (webhooks externos)
-  - Dashboard (actualizaciones persistentes)
+- **Publisher:** `IOrderRabbitPublisher` (infra/secondary/queue/)
+
+### Colas Bindeadas (5)
+
+| Cola | Consumer | Módulo | Propósito |
+|------|----------|--------|-----------|
+| `orders.events.invoicing` | Invoicing | invoicing | Facturación automática |
+| `orders.events.whatsapp` | WhatsApp | whatsapp | Notificaciones WhatsApp |
+| `orders.events.score` | Score | orders (interno) | Cálculo de probabilidad |
+| `orders.events.inventory` | Inventory | inventory | Actualización de inventario |
+| `orders.events.events` | EventDispatcher | events | SSE, email, WhatsApp unificado |
 
 ### Tipos de Eventos Publicados
 
-| Evento | Queue RabbitMQ | Descripción |
-|--------|----------------|-------------|
-| `order.created` | `orders.events.created` | Orden creada |
-| `order.updated` | `orders.events.updated` | Orden actualizada |
-| `order.cancelled` | `orders.events.cancelled` | Orden cancelada |
-| `order.status_changed` | `orders.events.status_changed` | Cambio de estado |
-| `order.confirmation_requested` | `orders.confirmation.requested` | Confirmación WhatsApp |
-| `order.score_calculation_requested` | (Solo Redis) | Solicitud de cálculo de score |
+| Evento | Descripción |
+|--------|-------------|
+| `order.created` | Orden creada |
+| `order.updated` | Orden actualizada |
+| `order.cancelled` | Orden cancelada |
+| `order.status_changed` | Cambio de estado |
 
-### Documentación Completa
-
-Ver [docs/RABBITMQ_EVENTS.md](./docs/RABBITMQ_EVENTS.md) para:
-- Estructura detallada de payloads
-- Ejemplos de consumidores
-- Casos de uso por evento
-- Troubleshooting
+Todos los eventos se publican al fanout con formato `OrderEventMessage` que incluye un `OrderSnapshot` completo y un mapa de `Changes`.
 
 ---
 
@@ -1337,24 +1331,29 @@ Ver [docs/RABBITMQ_EVENTS.md](./docs/RABBITMQ_EVENTS.md) para:
 
 ## 📜 Changelog
 
+### v2.0.0 (2026-03-02) - Consolidación de Eventos: Fanout Único
+
+**Eliminado:**
+- `IEventsExchangePublisher` — ya no se publica al topic exchange `events.exchange`
+- Publicación dual (Redis + topic exchange) eliminada completamente
+- `events_exchange_publisher.go` eliminado
+
+**Nuevo:**
+- Cola `orders.events.events` bindeada al fanout existente
+- Módulo `events` consume del fanout y transforma `OrderEventMessage` → `entities.Event`
+- EventDispatcher (SSE, email, WhatsApp) ahora recibe eventos via fanout, no via topic exchange
+
+**Refactorizado:**
+- Use cases `usecasecreateorder` y `usecaseupdateorder` solo publican al fanout
+- WhatsApp consumer usa `IOrderRabbitPublisher` en vez de `IEventsExchangePublisher`
+- Tests unitarios actualizados (mock de events publisher eliminado)
+
 ### v1.1.0 (2026-01-31) - Sistema Unificado de Publicaciones
 
-**✅ Nuevas Features:**
-- Sistema dual de publicaciones (Redis + RabbitMQ simultáneos)
-- Eventos RabbitMQ para todos los tipos: created, updated, cancelled, status_changed
-- Helper `PublishEventDual` para publicación centralizada
-- Documentación completa de eventos en `docs/RABBITMQ_EVENTS.md`
+**Features:**
+- Sistema de publicaciones RabbitMQ con fanout exchange
+- Eventos para todos los tipos: created, updated, cancelled, status_changed
 - Estructura organizada con response/mappers en queue publisher
-
-**🏗️ Arquitectura:**
-- Reorganización de queue publisher con carpetas response/ y mappers/
-- Inyección de ambos publishers (Redis + RabbitMQ) en use cases
-- Logger agregado a use cases para trazabilidad de publicaciones
-
-**📋 Documentación:**
-- Guía completa de eventos RabbitMQ
-- Ejemplos de consumidores
-- Troubleshooting y monitoreo
 
 ### v1.0.0
 
@@ -1364,20 +1363,10 @@ Ver [docs/RABBITMQ_EVENTS.md](./docs/RABBITMQ_EVENTS.md) para:
 - Validación automática de clientes y productos
 - Mapeo de estados específicos de plataformas
 - Cálculo de score de entrega
-- Sistema de eventos (Redis)
 - Confirmación por WhatsApp (RabbitMQ)
 - Preservación de datos crudos
-
-**Arquitectura:**
 - Arquitectura hexagonal (Domain, App, Infra)
-- Repository pattern con GORM
-- Event-driven con Redis
-- Message queue con RabbitMQ
-
-**Pendiente:**
-- ⚠️ Agregar tests unitarios
-- ⚠️ Crear carpetas request/response/mappers en handlers
 
 ---
 
-**Última actualización:** 2026-01-31
+**Última actualización:** 2026-03-02

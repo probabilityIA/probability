@@ -3,15 +3,17 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getWarehouseInventoryAction } from '../../infra/actions';
 import { InventoryLevel, GetInventoryParams } from '../../domain/types';
+import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { Alert, Table, Spinner } from '@/shared/ui';
 
 interface InventoryLevelListProps {
     warehouseId: number;
     selectedBusinessId?: number;
     onRefreshRef?: (ref: () => void) => void;
+    onAdjust?: (productId: string) => void;
 }
 
-export default function InventoryLevelList({ warehouseId, selectedBusinessId, onRefreshRef }: InventoryLevelListProps) {
+export default function InventoryLevelList({ warehouseId, selectedBusinessId, onRefreshRef, onAdjust }: InventoryLevelListProps) {
     const [levels, setLevels] = useState<InventoryLevel[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -85,6 +87,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
         { key: 'available', label: 'Disponible', align: 'center' as const },
         { key: 'limits', label: 'Min / Max', align: 'center' as const },
         { key: 'status', label: 'Estado', align: 'center' as const },
+        ...(onAdjust ? [{ key: 'acciones', label: 'Acciones', align: 'center' as const }] : []),
     ];
 
     const renderRow = (level: InventoryLevel) => ({
@@ -125,6 +128,19 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                 )}
             </div>
         ),
+        ...(onAdjust ? {
+            acciones: (
+                <div className="flex justify-center">
+                    <button
+                        onClick={() => onAdjust(level.product_id)}
+                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        title="Ajustar stock"
+                    >
+                        <AdjustmentsHorizontalIcon className="w-4 h-4" />
+                    </button>
+                </div>
+            ),
+        } : {}),
     });
 
     if (loading && levels.length === 0) {

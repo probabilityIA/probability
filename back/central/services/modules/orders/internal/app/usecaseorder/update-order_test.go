@@ -15,12 +15,11 @@ import (
 func TestUpdateOrder_Success(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -72,8 +71,6 @@ func TestUpdateOrder_Success(t *testing.T) {
 	// Publicadores de eventos
 	mockLogger.On("Info", mock.Anything).Maybe()
 	mockLogger.On("Error", mock.Anything).Maybe()
-	mockRedisPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().Return(nil)
 	mockRabbitPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
 		Maybe().Return(nil)
 
@@ -94,12 +91,11 @@ func TestUpdateOrder_Success(t *testing.T) {
 func TestUpdateOrder_EmptyID(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	req := &dtos.UpdateOrderRequest{}
@@ -119,12 +115,11 @@ func TestUpdateOrder_EmptyID(t *testing.T) {
 func TestUpdateOrder_OrderNotFound(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "non-existent"
@@ -148,12 +143,11 @@ func TestUpdateOrder_OrderNotFound(t *testing.T) {
 func TestUpdateOrder_StatusChange_PublishesStatusEvent(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -191,8 +185,6 @@ func TestUpdateOrder_StatusChange_PublishesStatusEvent(t *testing.T) {
 	// Verificar que se publican 2 eventos (update + status_changed)
 	mockLogger.On("Info", mock.Anything).Maybe()
 	mockLogger.On("Error", mock.Anything).Maybe()
-	mockRedisPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().Return(nil)
 	mockRabbitPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
 		Maybe().Return(nil)
 
@@ -210,12 +202,11 @@ func TestUpdateOrder_StatusChange_PublishesStatusEvent(t *testing.T) {
 func TestUpdateOrder_PartialUpdate(t *testing.T) {
 	// Arrange - Actualizar solo algunos campos
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -258,8 +249,6 @@ func TestUpdateOrder_PartialUpdate(t *testing.T) {
 
 	mockLogger.On("Info", mock.Anything).Maybe()
 	mockLogger.On("Error", mock.Anything).Maybe()
-	mockRedisPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
-		Maybe().Return(nil)
 	mockRabbitPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
 		Maybe().Return(nil)
 
@@ -285,12 +274,11 @@ func TestUpdateOrder_PartialUpdate(t *testing.T) {
 func TestUpdateOrder_RepositoryError(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -359,12 +347,11 @@ func TestUpdateOrder_ConfirmationStatus(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			mockRepo := new(mocks.RepositoryMock)
-			mockRedisPublisher := new(mocks.EventPublisherMock)
 			mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 			mockLogger := new(mocks.LoggerMock)
 			mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-			useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+			useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 			ctx := context.Background()
 			orderID := "order-uuid-123"
@@ -396,8 +383,6 @@ func TestUpdateOrder_ConfirmationStatus(t *testing.T) {
 
 			mockLogger.On("Info", mock.Anything).Maybe()
 			mockLogger.On("Error", mock.Anything).Maybe()
-			mockRedisPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
-				Maybe().Return(nil)
 			mockRabbitPublisher.On("PublishOrderEvent", mock.Anything, mock.Anything, mock.Anything).
 				Maybe().Return(nil)
 

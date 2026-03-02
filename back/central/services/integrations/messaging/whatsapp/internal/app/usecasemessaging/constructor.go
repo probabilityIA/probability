@@ -32,9 +32,9 @@ type IUseCase interface {
 // usecases contiene todas las dependencias compartidas
 type usecases struct {
 	whatsApp         ports.IWhatsApp
-	conversationRepo ports.IConversationRepository
-	messageLogRepo   ports.IMessageLogRepository
-	integrationRepo  ports.IIntegrationRepository
+	conversationCache ports.IConversationCache
+	credentialsCache  ports.ICredentialsCache
+	persistPublisher  ports.IPersistencePublisher
 	publisher        ports.IEventPublisher
 	log              log.ILogger
 	config           env.IConfig
@@ -43,20 +43,20 @@ type usecases struct {
 // New crea la instancia única de use case con todas las dependencias
 func New(
 	whatsApp ports.IWhatsApp,
-	conversationRepo ports.IConversationRepository,
-	messageLogRepo ports.IMessageLogRepository,
-	integrationRepo ports.IIntegrationRepository,
+	conversationCache ports.IConversationCache,
+	credentialsCache ports.ICredentialsCache,
+	persistPublisher ports.IPersistencePublisher,
 	publisher ports.IEventPublisher,
 	logger log.ILogger,
 	config env.IConfig,
 ) IUseCase {
 	return &usecases{
-		whatsApp:         whatsApp,
-		conversationRepo: conversationRepo,
-		messageLogRepo:   messageLogRepo,
-		integrationRepo:  integrationRepo,
-		publisher:        publisher,
-		log:              logger,
-		config:           config,
+		whatsApp:          whatsApp,
+		conversationCache: conversationCache,
+		credentialsCache:  credentialsCache,
+		persistPublisher:  persistPublisher,
+		publisher:         publisher,
+		log:               logger,
+		config:            config,
 	}
 }

@@ -1,20 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { InventoryLevelList } from '@/services/modules/inventory/ui';
-import { Spinner } from '@/shared/ui';
+import { useState, useEffect, useCallback } from 'react';
+import { ArrowsRightLeftIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
+import { InventoryLevelList, AdjustStockModal, TransferStockModal } from '@/services/modules/inventory/ui';
+import { Button, Spinner } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useInventoryBusiness } from '@/shared/contexts/inventory-business-context';
 import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 
+type ModalType = 'adjust' | 'transfer' | null;
+
 export default function InventoryStockPage() {
     const { isSuperAdmin } = usePermissions();
+    const { setActionButtons } = useNavbarActions();
     const { selectedBusinessId } = useInventoryBusiness();
 
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [selectedWarehouseId, setSelectedWarehouseId] = useState<number | null>(null);
     const [loadingWarehouses, setLoadingWarehouses] = useState(false);
+
+    const [modalType, setModalType] = useState<ModalType>(null);
+    const [selectedProductId, setSelectedProductId] = useState<string | undefined>(undefined);
+    const [refreshLevels, setRefreshLevels] = useState<(() => void) | null>(null);
 
     const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
 
@@ -51,7 +60,44 @@ export default function InventoryStockPage() {
         loadWarehouses();
     }, [isSuperAdmin, selectedBusinessId, effectiveBusinessId]);
 
+    const handleLevelsRefreshRef = useCallback((ref: () => void) => {
+        setRefreshLevels(() => ref);
+    }, []);
+
+    const handleAdjust = useCallback((productId: string) => {
+        setSelectedProductId(productId);
+        setModalType('adjust');
+    }, []);
+
+    const handleModalSuccess = () => {
+        setModalType(null);
+        setSelectedProductId(undefined);
+        refreshLevels?.();
+    };
+
     const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
+    const showActionButtons = selectedWarehouseId && !requiresBusinessSelection;
+
+    useEffect(() => {
+        if (!showActionButtons) {
+            setActionButtons(null);
+            return;
+        }
+        const actionButtons = (
+            <>
+                <Button variant="outline" onClick={() => { setSelectedProductId(undefined); setModalType('adjust'); }}>
+                    <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
+                    Ajustar stock
+                </Button>
+                <Button variant="primary" onClick={() => { setSelectedProductId(undefined); setModalType('transfer'); }}>
+                    <ArrowsRightLeftIcon className="w-4 h-4 mr-2" />
+                    Transferir
+                </Button>
+            </>
+        );
+        setActionButtons(actionButtons);
+        return () => setActionButtons(null);
+    }, [setActionButtons, showActionButtons]);
 
     return (
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
@@ -100,9 +146,31 @@ export default function InventoryStockPage() {
                             <InventoryLevelList
                                 warehouseId={selectedWarehouseId}
                                 selectedBusinessId={effectiveBusinessId}
+                                onRefreshRef={handleLevelsRefreshRef}
+                                onAdjust={handleAdjust}
                             />
                         )}
                     </>
+                )}
+
+                {modalType === 'adjust' && selectedWarehouseId && (
+                    <AdjustStockModal
+                        warehouseId={selectedWarehouseId}
+                        businessId={effectiveBusinessId}
+                        productId={selectedProductId}
+                        onSuccess={handleModalSuccess}
+                        onClose={() => { setModalType(null); setSelectedProductId(undefined); }}
+                    />
+                )}
+
+                {modalType === 'transfer' && selectedWarehouseId && (
+                    <TransferStockModal
+                        fromWarehouseId={selectedWarehouseId}
+                        businessId={effectiveBusinessId}
+                        productId={selectedProductId}
+                        onSuccess={handleModalSuccess}
+                        onClose={() => { setModalType(null); setSelectedProductId(undefined); }}
+                    />
                 )}
             </div>
         </div>

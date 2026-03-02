@@ -21,27 +21,24 @@ const OrdersCanonicalQueueName = rabbitmq.QueueOrdersCanonical
 // OrderConsumer consume órdenes canónicas de RabbitMQ y las procesa
 // Implementa ports.IOrderConsumer
 type OrderConsumer struct {
-	queue                    rabbitmq.IQueue
-	logger                   log.ILogger
-	orderMappingUC           ports.IOrderMappingUseCase
-	repo                     ports.IRepository
-	integrationEventPublisher ports.IIntegrationEventPublisher
+	queue    rabbitmq.IQueue
+	logger   log.ILogger
+	createUC ports.IOrderCreateUseCase
+	repo     ports.IRepository
 }
 
 // New crea una nueva instancia del consumidor de órdenes
 func New(
 	queue rabbitmq.IQueue,
 	logger log.ILogger,
-	orderMappingUC ports.IOrderMappingUseCase,
+	createUC ports.IOrderCreateUseCase,
 	repo ports.IRepository,
-	integrationEventPub ports.IIntegrationEventPublisher,
 ) ports.IOrderConsumer {
 	return &OrderConsumer{
-		queue:                     queue,
-		logger:                    logger,
-		orderMappingUC:            orderMappingUC,
-		repo:                      repo,
-		integrationEventPublisher: integrationEventPub,
+		queue:    queue,
+		logger:   logger,
+		createUC: createUC,
+		repo:     repo,
 	}
 }
 
@@ -112,7 +109,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 	}
 
 	// Llamar al caso de uso para mapear y guardar la orden
-	orderResponse, err := c.orderMappingUC.MapAndSaveOrder(ctx, &orderDTO)
+	orderResponse, err := c.createUC.MapAndSaveOrder(ctx, &orderDTO)
 	if err != nil {
 		errStr := err.Error()
 		// Check for specific errors to discard message
@@ -131,8 +128,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Discarding invalid message: missing required fields (drain queue)")
-			// Publicar evento de orden rechazada
-			c.integrationEventPublisher.PublishSyncOrderRejected(ctx, orderDTO.IntegrationID, orderDTO.BusinessID, orderDTO.OrderNumber, orderDTO.ExternalID, orderDTO.Platform, "Campos requeridos faltantes", errStr)
 			return nil
 		}
 
@@ -143,8 +138,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Order failed with data integrity error (FK violation), discarding message")
-			// Publicar evento de orden rechazada
-			c.integrationEventPublisher.PublishSyncOrderRejected(ctx, orderDTO.IntegrationID, orderDTO.BusinessID, orderDTO.OrderNumber, orderDTO.ExternalID, orderDTO.Platform, "Error de integridad de datos (FK violation)", errStr)
 			return nil
 		}
 
@@ -166,9 +159,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Uint("integration_id", orderDTO.IntegrationID).
 			Str("platform", orderDTO.Platform).
 			Msg("Failed to map and save order")
-
-		// Publicar evento de orden rechazada
-		c.integrationEventPublisher.PublishSyncOrderRejected(ctx, orderDTO.IntegrationID, orderDTO.BusinessID, orderDTO.OrderNumber, orderDTO.ExternalID, orderDTO.Platform, "Error al procesar orden", errStr)
 
 		// Guardar error con JSON original
 		c.saveOrderError(ctx, &orderDTO, err, "processing_error", messageBody)

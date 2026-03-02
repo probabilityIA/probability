@@ -63,7 +63,7 @@ func (h *Handlers) MapAndSaveOrder(c *gin.Context) {
 	domainReq := mappers.MapOrderRequestToDomain(&req)
 
 	// Llamar al caso de uso de mapeo con DTO de dominio (SIN tags)
-	domainResp, err := h.orderMapping.MapAndSaveOrder(c.Request.Context(), domainReq)
+	domainResp, err := h.createUC.MapAndSaveOrder(c.Request.Context(), domainReq)
 	if err != nil {
 		// Verificar si es un error de duplicado
 		if errors.Is(err, domainerrors.ErrOrderAlreadyExists) {

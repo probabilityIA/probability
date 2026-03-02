@@ -5,26 +5,23 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseordermapping"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecasecreateorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorderscore"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdateorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/queue"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/eventpublisher"
 	rabbitqueue "github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/queue"
-	redisevents "github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
-	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 )
 
-const defaultRedisChannel = redisclient.ChannelOrdersEvents
-
-// New inicializa el módulo de orders y retorna el caso de uso de mapping para integraciones
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redisclient.IRedis) ports.IOrderMappingUseCase {
+// New inicializa el módulo de orders y retorna el caso de uso de create para integraciones
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue) ports.IOrderCreateUseCase {
 	// 1. Inicializar Repository
 	// Nota: El repositorio de orders incluye métodos de consulta a tablas de estados
 	// (order_statuses, payment_statuses, fulfillment_statuses) replicados localmente.
@@ -32,41 +29,29 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	repo := repository.New(database, environment)
 
 	// 2. Inicializar Publishers
-	eventPublisher := initRedisPublisher(redisClient, logger)
 	rabbitPublisher := initRabbitPublisher(rabbitMQ, logger)
+	integrationEventPub := eventpublisher.New(rabbitMQ)
 
 	// 3. Inicializar Use Cases
 	scoreUseCase := usecaseorderscore.New(repo)
-	integrationEventPub := eventpublisher.New(rabbitMQ)
-	orderCRUD := usecaseorder.New(repo, eventPublisher, rabbitPublisher, logger, scoreUseCase)
-	orderMapping := usecaseordermapping.New(repo, logger, eventPublisher, rabbitPublisher, integrationEventPub)
+	orderCRUD := usecaseorder.New(repo, rabbitPublisher, logger, scoreUseCase)
+
+	// Update use case se crea primero (no depende de create)
+	updateUC := usecaseupdateorder.New(repo, logger, rabbitPublisher, integrationEventPub)
+	// Create use case recibe update como dependencia
+	createUC := usecasecreateorder.New(repo, logger, rabbitPublisher, integrationEventPub, updateUC)
+
 	requestConfirmationUC := initRequestConfirmationUseCase(repo, rabbitPublisher, logger)
 
 	// 4. Inicializar Handlers y Registrar Rutas
-	h := handlers.New(orderCRUD, orderMapping, requestConfirmationUC)
+	h := handlers.New(orderCRUD, createUC, requestConfirmationUC)
 	h.RegisterRoutes(router)
 
 	// 5. Inicializar Consumers (background goroutines)
-	startRedisEventConsumer(redisClient, logger, scoreUseCase)
-	startRabbitMQConsumer(rabbitMQ, logger, orderMapping, repo, integrationEventPub)
-	startWhatsAppConsumer(rabbitMQ, logger, orderCRUD, repo, eventPublisher)
+	startRabbitMQConsumer(rabbitMQ, logger, createUC, repo)
+	startWhatsAppConsumer(rabbitMQ, logger, repo, rabbitPublisher)
 
-	return orderMapping
-}
-
-// initRedisPublisher inicializa el publicador de eventos de Redis
-func initRedisPublisher(redisClient redisclient.IRedis, logger log.ILogger) ports.IOrderEventPublisher {
-	if redisClient == nil {
-		logger.Warn(context.Background()).Msg("Redis client not available, event publisher disabled")
-		return nil
-	}
-
-	publisher := redisevents.NewOrderEventPublisher(redisClient, logger, defaultRedisChannel)
-
-	// Registrar canal para mostrar en startup logs
-	redisClient.RegisterChannel(defaultRedisChannel)
-
-	return publisher
+	return createUC
 }
 
 // initRabbitPublisher inicializa el publicador de RabbitMQ
@@ -93,12 +78,13 @@ func setupOrdersExchange(rabbitMQ rabbitmq.IQueue, logger log.ILogger) {
 		return
 	}
 
-	// 2. Declarar y bindear las 4 colas destino
+	// 2. Declarar y bindear las 5 colas destino
 	queues := []string{
 		rabbitmq.QueueOrdersToInvoicing,
 		rabbitmq.QueueOrdersToWhatsApp,
 		rabbitmq.QueueOrdersToScore,
 		rabbitmq.QueueOrdersToInventory,
+		rabbitmq.QueueOrdersToEvents,
 	}
 
 	for _, queueName := range queues {
@@ -112,8 +98,6 @@ func setupOrdersExchange(rabbitMQ rabbitmq.IQueue, logger log.ILogger) {
 			continue
 		}
 	}
-
-	// Exchange configurado - las colas se muestran en LogStartupInfo()
 }
 
 // initRequestConfirmationUseCase inicializa el caso de uso de confirmación por WhatsApp
@@ -128,50 +112,32 @@ func initRequestConfirmationUseCase(repo ports.IRepository, rabbitPublisher port
 	return useCase
 }
 
-// startRedisEventConsumer inicia el consumer de eventos de Redis para cálculo de score
-func startRedisEventConsumer(redisClient redisclient.IRedis, logger log.ILogger, scoreUseCase ports.IOrderScoreUseCase) {
-	if redisClient == nil {
-		logger.Warn(context.Background()).Msg("Redis client not available, event consumer disabled")
-		return
-	}
-
-	consumer := redisevents.NewOrderEventConsumer(redisClient, logger, defaultRedisChannel, scoreUseCase)
-
-	go func() {
-		if err := consumer.Start(context.Background()); err != nil {
-			logger.Error().
-				Err(err).
-				Msg("Order event consumer stopped with error")
-		}
-	}()
-}
-
 // startRabbitMQConsumer inicia el consumer de RabbitMQ para órdenes
-func startRabbitMQConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, orderMapping ports.IOrderMappingUseCase, repo ports.IRepository, integrationEventPub ports.IIntegrationEventPublisher) {
+func startRabbitMQConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, createUC ports.IOrderCreateUseCase, repo ports.IRepository) {
 	if rabbitMQ == nil {
-		logger.Warn(context.Background()).Msg("❌ RabbitMQ no disponible, consumer de órdenes deshabilitado")
+		logger.Warn(context.Background()).Msg("RabbitMQ no disponible, consumer de órdenes deshabilitado")
 		return
 	}
 
-	consumer := queue.New(rabbitMQ, logger, orderMapping, repo, integrationEventPub)
+	consumer := queue.New(rabbitMQ, logger, createUC, repo)
 
 	go func() {
 		if err := consumer.Start(context.Background()); err != nil {
 			logger.Error().
 				Err(err).
-				Msg("❌ Consumer de órdenes detenido con error")
+				Msg("Consumer de órdenes detenido con error")
 		}
 	}()
 }
 
 // startWhatsAppConsumer inicia el consumer de WhatsApp para confirmaciones
-func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, orderCRUD ports.IOrderUseCase, repo ports.IRepository, eventPublisher ports.IOrderEventPublisher) {
-	if rabbitMQ == nil || eventPublisher == nil {
-		logger.Warn(context.Background()).Msg("RabbitMQ or event publisher not available, WhatsApp consumer disabled")
+func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, repo ports.IRepository, rabbitPublisher ports.IOrderRabbitPublisher) {
+	if rabbitMQ == nil {
+		logger.Warn(context.Background()).Msg("RabbitMQ not available, WhatsApp consumer disabled")
 		return
 	}
 
-	consumer := queue.NewWhatsAppConsumer(rabbitMQ, orderCRUD, repo, eventPublisher, logger)
+	consumer := queue.NewWhatsAppConsumer(rabbitMQ, repo, rabbitPublisher, logger)
 
 	go func() {
 		if err := consumer.Start(context.Background()); err != nil {
@@ -181,4 +147,3 @@ func startWhatsAppConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, orderCR
 		}
 	}()
 }
-

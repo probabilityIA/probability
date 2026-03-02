@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"slices"
 
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/dtos"
@@ -75,7 +74,16 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 			}
 
 		case dtos.NotificationTypeEmail:
-			d.handleEmailNotification(ctx, event, config)
+			if err := d.channelPublisher.PublishToEmail(ctx, event, config); err != nil {
+				d.logger.Error(ctx).
+					Err(err).
+					Uint("config_id", config.ID).
+					Msg("Error publicando a Email")
+			} else {
+				d.logger.Info(ctx).
+					Uint("config_id", config.ID).
+					Msg("Evento ruteado a Email")
+			}
 
 		default:
 			d.logger.Warn(ctx).
@@ -90,47 +98,6 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 	}
 
 	return nil
-}
-
-// handleEmailNotification envía un email de notificación
-func (d *EventDispatcher) handleEmailNotification(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) {
-	if d.emailService == nil {
-		d.logger.Warn(ctx).
-			Uint("config_id", config.ID).
-			Msg("Email service no disponible, saltando notificación email")
-		return
-	}
-
-	// Extraer email del destinatario desde los datos del evento
-	customerEmail := ""
-	if email, ok := event.Data["customer_email"]; ok {
-		if emailStr, ok := email.(string); ok {
-			customerEmail = emailStr
-		}
-	}
-
-	if customerEmail == "" {
-		d.logger.Warn(ctx).
-			Str("event_id", event.ID).
-			Msg("No se encontró email del cliente en el evento, saltando notificación email")
-		return
-	}
-
-	subject := fmt.Sprintf("Notificación: %s", event.Type)
-	html := fmt.Sprintf("<h2>Evento: %s</h2><p>Se ha producido un evento en tu cuenta.</p>", event.Type)
-
-	if err := d.emailService.SendHTML(ctx, customerEmail, subject, html); err != nil {
-		d.logger.Error(ctx).
-			Err(err).
-			Str("to", customerEmail).
-			Uint("config_id", config.ID).
-			Msg("Error enviando email de notificación")
-	} else {
-		d.logger.Info(ctx).
-			Str("to", customerEmail).
-			Uint("config_id", config.ID).
-			Msg("Email de notificación enviado")
-	}
 }
 
 // validateConditions valida si un evento cumple las condiciones de una config

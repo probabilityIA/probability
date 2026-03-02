@@ -25,6 +25,7 @@ const (
 	IntegrationTypeAmazon       = 19 // Amazon - Marketplace
 	IntegrationTypeFalabella    = 20 // Falabella - Marketplace
 	IntegrationTypeExito        = 21 // Exito - Marketplace
+	IntegrationTypeEmail        = 29 // Email - Mensajería (notificaciones por correo)
 )
 
 // IntegrationCategory representa la categoría de integración
@@ -80,6 +81,8 @@ func IntegrationTypeCodeAsInt(code string) int {
 		return IntegrationTypeFalabella // 20
 	case "exito":
 		return IntegrationTypeExito // 21
+	case "email":
+		return IntegrationTypeEmail // 29
 	default:
 		return 0
 	}

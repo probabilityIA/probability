@@ -11,7 +11,6 @@ import (
 	"github.com/secamc93/probability/back/central/services/events/internal/infra/secondary/channel"
 	rmqInfra "github.com/secamc93/probability/back/central/services/events/internal/infra/secondary/rabbitmq"
 	"github.com/secamc93/probability/back/central/services/events/internal/infra/secondary/sse"
-	"github.com/secamc93/probability/back/central/shared/email"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
@@ -24,7 +23,6 @@ func New(
 	logger log.ILogger,
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redisclient.IRedis,
-	emailService email.IEmailService,
 ) {
 	// 1. Declarar infraestructura RabbitMQ (exchange + queue + binding)
 	rmqInfra.SetupInfrastructure(rabbitMQ, logger)
@@ -39,9 +37,11 @@ func New(
 	channelPub := channel.New(rabbitMQ, logger)
 
 	// 4. Event Dispatcher (capa de aplicación)
-	dispatcher := app.New(eventManager, configCache, channelPub, emailService, logger)
+	dispatcher := app.New(eventManager, configCache, channelPub, logger)
 
-	// 5. RabbitMQ consumer → background
+	// 5. RabbitMQ consumers → background
+
+	// Consumer del exchange topic unificado (events.exchange)
 	eventConsumer := consumer.New(rabbitMQ, dispatcher, logger)
 	go func() {
 		ctx := context.Background()
@@ -49,6 +49,17 @@ func New(
 			logger.Error(ctx).
 				Err(err).
 				Msg("Error al iniciar consumer de eventos unificado")
+		}
+	}()
+
+	// Consumer del fanout de órdenes (orders.events → orders.events.events)
+	orderEventConsumer := consumer.NewOrderEventConsumer(rabbitMQ, dispatcher, logger)
+	go func() {
+		ctx := context.Background()
+		if err := orderEventConsumer.Start(ctx); err != nil {
+			logger.Error(ctx).
+				Err(err).
+				Msg("Error al iniciar consumer de eventos de órdenes")
 		}
 	}()
 

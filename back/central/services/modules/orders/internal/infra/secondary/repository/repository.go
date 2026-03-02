@@ -97,6 +97,7 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.Pro
 		return nil, err
 	}
 
+	r.resolveOrderStatusByCodeSingle(ctx, &order)
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
@@ -122,6 +123,7 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		return nil, err
 	}
 
+	r.resolveOrderStatusByCodeSingle(ctx, &order)
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
@@ -147,6 +149,7 @@ func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber stri
 		return nil, err
 	}
 
+	r.resolveOrderStatusByCodeSingle(ctx, &order)
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
@@ -288,6 +291,10 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		return nil, 0, err
 	}
 
+	// Resolver OrderStatus por código para órdenes sin status_id
+	// Esto cubre órdenes existentes creadas antes del fallback directo
+	r.resolveOrderStatusByCode(ctx, dbOrders)
+
 	// Mapear a dominio
 	orders := make([]entities.ProbabilityOrder, len(dbOrders))
 	for i, dbOrder := range dbOrders {
@@ -356,6 +363,7 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 		return nil, err
 	}
 
+	r.resolveOrderStatusByCodeSingle(ctx, &order)
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 

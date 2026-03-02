@@ -10,14 +10,15 @@ import { Button, Alert, Input } from '@/shared/ui';
 interface TransferStockModalProps {
     fromWarehouseId: number;
     businessId?: number;
+    productId?: string;
     onSuccess: () => void;
     onClose: () => void;
 }
 
-export default function TransferStockModal({ fromWarehouseId, businessId, onSuccess, onClose }: TransferStockModalProps) {
+export default function TransferStockModal({ fromWarehouseId, businessId, productId, onSuccess, onClose }: TransferStockModalProps) {
     const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
     const [formData, setFormData] = useState({
-        product_id: '',
+        product_id: productId ?? '',
         to_warehouse_id: 0,
         quantity: 1,
         reason: '',
@@ -104,6 +105,8 @@ export default function TransferStockModal({ fromWarehouseId, businessId, onSucc
                             onChange={(e) => setFormData(prev => ({ ...prev, product_id: e.target.value }))}
                             placeholder="UUID del producto"
                             required
+                            readOnly={!!productId}
+                            className={productId ? 'bg-gray-100 cursor-not-allowed' : ''}
                         />
                     </div>
 

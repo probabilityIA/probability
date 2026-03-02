@@ -122,6 +122,87 @@ func (q *messageAuditQuerier) ListMessageLogs(ctx context.Context, filter dtos.M
 	return logs, total, nil
 }
 
+// ─── Email Logs ────────────────────────────────────────────────
+
+// emailLogRow representa una fila del resultado de la query de email_logs
+type emailLogRow struct {
+	BusinessID    uint
+	IntegrationID uint
+	ConfigID      uint
+	To            string
+	Subject       string
+	EventType     string
+	Status        string
+	ErrorMessage  *string
+	CreatedAt     time.Time
+}
+
+// ListEmailLogs obtiene logs de entregas de email con filtros y paginación
+// Consulta: email_logs (gestionada por notification_config)
+func (q *messageAuditQuerier) ListEmailLogs(ctx context.Context, businessID uint, status *string, dateFrom, dateTo *string, page, pageSize int) ([]entities.EmailDeliveryLog, int64, error) {
+	baseQuery := q.db.Conn(ctx).
+		Table("email_logs").
+		Where("business_id = ?", businessID)
+
+	if status != nil && *status != "" {
+		baseQuery = baseQuery.Where("status = ?", *status)
+	}
+	if dateFrom != nil && *dateFrom != "" {
+		baseQuery = baseQuery.Where("created_at >= ?", *dateFrom)
+	}
+	if dateTo != nil && *dateTo != "" {
+		baseQuery = baseQuery.Where("created_at < ?::date + interval '1 day'", *dateTo)
+	}
+
+	// Count total
+	var total int64
+	if err := baseQuery.Count(&total).Error; err != nil {
+		q.logger.Error().Err(err).Msg("Error counting email logs")
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []entities.EmailDeliveryLog{}, 0, nil
+	}
+
+	// Paginated query
+	offset := (page - 1) * pageSize
+	var rows []emailLogRow
+
+	err := baseQuery.
+		Select("business_id, integration_id, config_id, \"to\", subject, event_type, status, error_message, created_at").
+		Order("created_at DESC").
+		Offset(offset).
+		Limit(pageSize).
+		Find(&rows).Error
+
+	if err != nil {
+		q.logger.Error().Err(err).Msg("Error listing email logs")
+		return nil, 0, err
+	}
+
+	logs := make([]entities.EmailDeliveryLog, len(rows))
+	for i, row := range rows {
+		logs[i] = entities.EmailDeliveryLog{
+			BusinessID:    row.BusinessID,
+			IntegrationID: row.IntegrationID,
+			ConfigID:      row.ConfigID,
+			To:            row.To,
+			Subject:       row.Subject,
+			EventType:     row.EventType,
+			Status:        row.Status,
+			SentAt:        row.CreatedAt,
+		}
+		if row.ErrorMessage != nil {
+			logs[i].ErrorMessage = *row.ErrorMessage
+		}
+	}
+
+	return logs, total, nil
+}
+
+// ─── WhatsApp Stats ────────────────────────────────────────────
+
 // statsResult representa el resultado de la query de estadísticas
 type statsResult struct {
 	TotalSent      int64

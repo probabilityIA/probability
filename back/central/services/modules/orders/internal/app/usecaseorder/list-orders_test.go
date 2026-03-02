@@ -14,12 +14,11 @@ import (
 func TestListOrders_Success(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	page := 1
@@ -89,12 +88,11 @@ func TestListOrders_Success(t *testing.T) {
 func TestListOrders_EmptyResult(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	page := 1
@@ -179,12 +177,11 @@ func TestListOrders_PaginationValidation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			mockRepo := new(mocks.RepositoryMock)
-			mockRedisPublisher := new(mocks.EventPublisherMock)
 			mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 			mockLogger := new(mocks.LoggerMock)
 			mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-			useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+			useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 			ctx := context.Background()
 			filters := map[string]interface{}{}
@@ -209,12 +206,11 @@ func TestListOrders_PaginationValidation(t *testing.T) {
 func TestListOrders_RepositoryError(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	page := 1
@@ -280,12 +276,11 @@ func TestListOrders_TotalPagesCalculation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
 			mockRepo := new(mocks.RepositoryMock)
-			mockRedisPublisher := new(mocks.EventPublisherMock)
 			mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 			mockLogger := new(mocks.LoggerMock)
 			mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-			useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+			useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 			ctx := context.Background()
 			page := 1
@@ -307,12 +302,11 @@ func TestListOrders_TotalPagesCalculation(t *testing.T) {
 func TestListOrders_WithFilters(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	page := 1

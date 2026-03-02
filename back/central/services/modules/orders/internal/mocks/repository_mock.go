@@ -192,6 +192,14 @@ func (m *RepositoryMock) GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx 
 	return args.Get(0).(*uint), args.Error(1)
 }
 
+func (m *RepositoryMock) GetOrderStatusIDByCode(ctx context.Context, code string) (*uint, error) {
+	args := m.Called(ctx, code)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*uint), args.Error(1)
+}
+
 func (m *RepositoryMock) GetPaymentStatusIDByCode(ctx context.Context, code string) (*uint, error) {
 	args := m.Called(ctx, code)
 	if args.Get(0) == nil {

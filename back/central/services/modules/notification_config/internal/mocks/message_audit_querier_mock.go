@@ -9,8 +9,9 @@ import (
 
 // MessageAuditQuerierMock - Mock de la interfaz IMessageAuditQuerier
 type MessageAuditQuerierMock struct {
-	ListMessageLogsFn  func(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error)
-	GetMessageStatsFn  func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*entities.MessageAuditStats, error)
+	ListMessageLogsFn func(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error)
+	GetMessageStatsFn func(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*entities.MessageAuditStats, error)
+	ListEmailLogsFn   func(ctx context.Context, businessID uint, status *string, dateFrom, dateTo *string, page, pageSize int) ([]entities.EmailDeliveryLog, int64, error)
 }
 
 func (m *MessageAuditQuerierMock) ListMessageLogs(ctx context.Context, filter dtos.MessageAuditFilterDTO) ([]entities.MessageAuditLog, int64, error) {
@@ -25,4 +26,11 @@ func (m *MessageAuditQuerierMock) GetMessageStats(ctx context.Context, businessI
 		return m.GetMessageStatsFn(ctx, businessID, dateFrom, dateTo)
 	}
 	return nil, nil
+}
+
+func (m *MessageAuditQuerierMock) ListEmailLogs(ctx context.Context, businessID uint, status *string, dateFrom, dateTo *string, page, pageSize int) ([]entities.EmailDeliveryLog, int64, error) {
+	if m.ListEmailLogsFn != nil {
+		return m.ListEmailLogsFn(ctx, businessID, status, dateFrom, dateTo, page, pageSize)
+	}
+	return []entities.EmailDeliveryLog{}, 0, nil
 }

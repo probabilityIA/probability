@@ -68,12 +68,12 @@ func (c *consumerAlert) handleMessage(body []byte) error {
 		return nil
 	}
 
-	// Obtener credenciales desde el tipo de integración WhatsApp (platform_credentials_encrypted)
-	config, err := c.integrationRepo.GetWhatsAppDefaultConfig(context.Background())
+	// Obtener credenciales desde cache Redis (calentadas por integrations/core al startup)
+	config, err := c.credentialsCache.GetWhatsAppDefaultConfig(context.Background())
 	if err != nil {
 		c.log.Error().
 			Err(err).
-			Msg("[AlertConsumer] Error obteniendo credenciales de WhatsApp desde tipo de integración - verifica platform_credentials en el admin")
+			Msg("[AlertConsumer] Error obteniendo credenciales de WhatsApp desde cache - verifica warmup de integrations/core")
 		// Retornar nil para hacer ack del mensaje y evitar loop infinito de reintentos.
 		// Este error es de configuración, no del mensaje — reintentar no lo resuelve.
 		return nil

@@ -71,6 +71,16 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to seed allowed order statuses by event type: %w", err)
 	}
 
+	// Migrate email_logs table
+	if err := r.db.Conn(ctx).AutoMigrate(&models.EmailLog{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate email_logs: %w", err)
+	}
+
+	// Seed Email integration type (id=29)
+	if err := r.seedEmailIntegrationType(ctx); err != nil {
+		return fmt.Errorf("failed to seed email integration type: %w", err)
+	}
+
 	return nil
 }
 
@@ -211,6 +221,42 @@ func (r *Repository) seedNotificationTypesAndEvents(ctx context.Context) error {
 		{
 			Model:              gorm.Model{ID: 7},
 			NotificationTypeID: 2,
+			EventCode:          "invoice.created",
+			EventName:          "Factura Generada",
+			IsActive:           true,
+		},
+		// Eventos para Email
+		{
+			Model:              gorm.Model{ID: 8},
+			NotificationTypeID: 3,
+			EventCode:          "order.created",
+			EventName:          "Confirmación de Pedido",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 9},
+			NotificationTypeID: 3,
+			EventCode:          "order.shipped",
+			EventName:          "Pedido Enviado",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 10},
+			NotificationTypeID: 3,
+			EventCode:          "order.delivered",
+			EventName:          "Pedido Entregado",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 11},
+			NotificationTypeID: 3,
+			EventCode:          "order.canceled",
+			EventName:          "Pedido Cancelado",
+			IsActive:           true,
+		},
+		{
+			Model:              gorm.Model{ID: 12},
+			NotificationTypeID: 3,
 			EventCode:          "invoice.created",
 			EventName:          "Factura Generada",
 			IsActive:           true,
@@ -1038,6 +1084,32 @@ func (r *Repository) seedAllowedOrderStatusesByEventType(ctx context.Context) er
 			`, eventTypeID, statusID).Error; err != nil {
 				return fmt.Errorf("failed to seed allowed status %d for event type %d: %w", statusID, eventTypeID, err)
 			}
+		}
+	}
+
+	return nil
+}
+
+// seedEmailIntegrationType crea el tipo de integración para Email (notificaciones por correo)
+func (r *Repository) seedEmailIntegrationType(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	integrationType := models.IntegrationType{
+		Model:         gorm.Model{ID: 29},
+		Name:          "Email",
+		Code:          "email",
+		CategoryID:    ptrUint(3), // messaging category
+		IsActive:      true,
+		InDevelopment: false,
+		Description:   "Notificaciones por correo electrónico via Amazon SES",
+		Icon:          "mail",
+	}
+
+	var existing models.IntegrationType
+	err := db.Where("id = ?", 29).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		if err := db.Create(&integrationType).Error; err != nil {
+			return fmt.Errorf("failed to create email integration type: %w", err)
 		}
 	}
 

@@ -14,12 +14,11 @@ import (
 func TestGetOrderByID_Success(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -71,12 +70,11 @@ func TestGetOrderByID_Success(t *testing.T) {
 func TestGetOrderByID_EmptyID(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 
@@ -95,12 +93,11 @@ func TestGetOrderByID_EmptyID(t *testing.T) {
 func TestGetOrderByID_NotFound(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "non-existent-uuid"
@@ -124,12 +121,11 @@ func TestGetOrderByID_NotFound(t *testing.T) {
 func TestGetOrderByID_DatabaseError(t *testing.T) {
 	// Arrange
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -153,12 +149,11 @@ func TestGetOrderByID_DatabaseError(t *testing.T) {
 func TestGetOrderByID_WithCompleteData(t *testing.T) {
 	// Arrange - Test con una orden completa con todos los campos
 	mockRepo := new(mocks.RepositoryMock)
-	mockRedisPublisher := new(mocks.EventPublisherMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
 	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
 
-	useCase := New(mockRepo, mockRedisPublisher, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
 
 	ctx := context.Background()
 	orderID := "order-uuid-complete"

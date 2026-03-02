@@ -75,6 +75,7 @@ type IRepository interface {
 
 	// OrderStatuses - Consultas a la tabla order_statuses
 	GetOrderStatusIDByIntegrationTypeAndOriginalStatus(ctx context.Context, integrationTypeID uint, originalStatus string) (*uint, error)
+	GetOrderStatusIDByCode(ctx context.Context, code string) (*uint, error)
 
 	// PaymentStatuses - Consultas a la tabla payment_statuses
 	GetPaymentStatusIDByCode(ctx context.Context, code string) (*uint, error)
@@ -101,25 +102,22 @@ type IOrderConsumer interface {
 //
 // ───────────────────────────────────────────
 
-// IOrderMappingUseCase define el caso de uso para mapear y guardar órdenes desde integraciones
-type IOrderMappingUseCase interface {
+// IOrderCreateUseCase define el caso de uso para crear y mapear órdenes desde integraciones
+type IOrderCreateUseCase interface {
 	MapAndSaveOrder(ctx context.Context, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error)
-	UpdateOrder(ctx context.Context, existingOrder *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error)
 	CreateManualOrder(ctx context.Context, req *dtos.CreateOrderRequest) (*dtos.OrderResponse, error)
 }
 
-// ───────────────────────────────────────────
-//
-//	EVENT PUBLISHER INTERFACE
-//
-// ───────────────────────────────────────────
-
-// IOrderEventPublisher define la interfaz para publicar eventos de órdenes
-type IOrderEventPublisher interface {
-	// PublishOrderEvent publica un evento de orden a Redis con snapshot completo
-	// El parámetro order permite construir el OrderSnapshot completo sin queries adicionales
-	PublishOrderEvent(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
+// IOrderUpdateUseCase define el caso de uso para actualizar órdenes existentes
+type IOrderUpdateUseCase interface {
+	UpdateOrder(ctx context.Context, existingOrder *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error)
 }
+
+// ───────────────────────────────────────────
+//
+//	SCORE & CONFIRMATION USE CASES
+//
+// ───────────────────────────────────────────
 
 // IOrderScoreUseCase define la interfaz para el caso de uso de cálculo de score
 type IOrderScoreUseCase interface {
@@ -134,7 +132,6 @@ type IRequestConfirmationUseCase interface {
 
 // IOrderUseCase define la interfaz para los casos de uso CRUD de órdenes
 type IOrderUseCase interface {
-	CreateOrder(ctx context.Context, req *dtos.CreateOrderRequest) (*dtos.OrderResponse, error)
 	GetOrderByID(ctx context.Context, id string) (*dtos.OrderResponse, error)
 	GetOrderRaw(ctx context.Context, id string) (*dtos.OrderRawResponse, error)
 	ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*dtos.OrdersListResponse, error)
@@ -150,7 +147,6 @@ type IOrderUseCase interface {
 
 // IIntegrationEventPublisher publica eventos de sincronización de integraciones al exchange de eventos
 type IIntegrationEventPublisher interface {
-	PublishSyncOrderRejected(ctx context.Context, integrationID uint, businessID *uint, orderNumber, externalID, platform, reason, errMsg string)
 	PublishSyncOrderCreated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 	PublishSyncOrderUpdated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 }

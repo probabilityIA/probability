@@ -70,6 +70,11 @@ const (
 	// Publisher: (via exchange) | Consumer: modules/inventory/order_consumer
 	QueueOrdersToInventory = "orders.events.inventory"
 
+	// QueueOrdersToEvents recibe eventos de órdenes para el EventDispatcher.
+	// Bindeada a ExchangeOrderEvents (fanout).
+	// Publisher: (via exchange) | Consumer: events/order_event_consumer → SSE, email, WhatsApp
+	QueueOrdersToEvents = "orders.events.events"
+
 	// QueueOrdersConfirmationRequested solicitudes de confirmación vía WhatsApp.
 	// Publisher: modules/orders, events/channel_publisher
 	// Consumer: integrations/messaging/whatsapp/consumerorder
@@ -232,4 +237,33 @@ const (
 	// Publisher: integrations/messaging/whatsapp/webhook_publisher
 	// Consumer: (futuro customer service module)
 	QueueWhatsAppCustomerHandoff = "customer.whatsapp.handoff"
+
+	// QueueWhatsAppConversationEvents eventos de conversación para persistencia.
+	// Publisher: integrations/messaging/whatsapp/persistence_publisher
+	// Consumer: modules/notification_config/whatsapp_conversation_consumer
+	QueueWhatsAppConversationEvents = "whatsapp.conversation.events"
+
+	// QueueWhatsAppMessageLogEvents eventos de message logs para persistencia.
+	// Publisher: integrations/messaging/whatsapp/persistence_publisher
+	// Consumer: modules/notification_config/whatsapp_message_log_consumer
+	QueueWhatsAppMessageLogEvents = "whatsapp.messagelog.events"
+)
+
+// ─── Queues: Email ─────────────────────────────────────────────
+
+const (
+	// QueueMessagingEmailRequests solicitudes de envío de email de notificación.
+	// Publisher: events/channel_publisher (PublishToEmail)
+	// Consumer: integrations/messaging/email/consumer
+	QueueMessagingEmailRequests = "messaging.email.requests"
+)
+
+// ─── Queues: Notification Delivery ─────────────────────────────
+
+const (
+	// QueueNotificationDeliveryResults resultados de entrega de notificaciones (email, SMS, etc.)
+	// Los módulos de messaging publican aquí después de enviar (o fallar).
+	// Publisher: integrations/messaging/email (result publisher)
+	// Consumer: modules/notification_config (delivery result consumer)
+	QueueNotificationDeliveryResults = "notification.delivery.results"
 )

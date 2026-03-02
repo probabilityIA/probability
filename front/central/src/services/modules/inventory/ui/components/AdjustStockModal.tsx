@@ -8,13 +8,14 @@ import { Button, Alert, Input } from '@/shared/ui';
 interface AdjustStockModalProps {
     warehouseId: number;
     businessId?: number;
+    productId?: string;
     onSuccess: () => void;
     onClose: () => void;
 }
 
-export default function AdjustStockModal({ warehouseId, businessId, onSuccess, onClose }: AdjustStockModalProps) {
+export default function AdjustStockModal({ warehouseId, businessId, productId, onSuccess, onClose }: AdjustStockModalProps) {
     const [formData, setFormData] = useState({
-        product_id: '',
+        product_id: productId ?? '',
         quantity: 0,
         reason: '',
         notes: '',
@@ -79,6 +80,8 @@ export default function AdjustStockModal({ warehouseId, businessId, onSuccess, o
                             onChange={(e) => setFormData(prev => ({ ...prev, product_id: e.target.value }))}
                             placeholder="UUID del producto"
                             required
+                            readOnly={!!productId}
+                            className={productId ? 'bg-gray-100 cursor-not-allowed' : ''}
                         />
                     </div>
 

@@ -7,19 +7,19 @@ import (
 // Handlers contiene todos los handlers del módulo orders
 type Handlers struct {
 	orderCRUD             ports.IOrderUseCase
-	orderMapping          ports.IOrderMappingUseCase
+	createUC              ports.IOrderCreateUseCase
 	requestConfirmationUC ports.IRequestConfirmationUseCase
 }
 
 // New crea una nueva instancia de Handlers
 func New(
 	orderCRUD ports.IOrderUseCase,
-	orderMapping ports.IOrderMappingUseCase,
+	createUC ports.IOrderCreateUseCase,
 	requestConfirmationUC ports.IRequestConfirmationUseCase,
 ) *Handlers {
 	return &Handlers{
 		orderCRUD:             orderCRUD,
-		orderMapping:          orderMapping,
+		createUC:              createUC,
 		requestConfirmationUC: requestConfirmationUC,
 	}
 }
