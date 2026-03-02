@@ -21,7 +21,7 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 
 	entries, err := c.redis.HGetAll(ctx, key)
 	if err != nil {
-		c.logger.Error().
+		c.logger.Error(ctx).
 			Err(err).
 			Str("key", key).
 			Msg("Error obteniendo configs desde Redis cache")
@@ -29,7 +29,7 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 	}
 
 	if len(entries) == 0 {
-		c.logger.Debug().
+		c.logger.Debug(ctx).
 			Str("key", key).
 			Uint("integration_id", integrationID).
 			Str("trigger", trigger).
@@ -41,7 +41,7 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 	for configIDStr, jsonData := range entries {
 		var cached mappers.CachedNotificationConfigJSON
 		if err := json.Unmarshal([]byte(jsonData), &cached); err != nil {
-			c.logger.Warn().
+			c.logger.Warn(ctx).
 				Err(err).
 				Str("config_id", configIDStr).
 				Msg("Error parseando config desde cache")
@@ -59,7 +59,7 @@ func (c *notificationConfigCache) GetActiveConfigsByIntegrationAndTrigger(
 		return configs[i].ID < configs[j].ID
 	})
 
-	c.logger.Info().
+	c.logger.Info(ctx).
 		Uint("integration_id", integrationID).
 		Str("trigger", trigger).
 		Int("count", len(configs)).

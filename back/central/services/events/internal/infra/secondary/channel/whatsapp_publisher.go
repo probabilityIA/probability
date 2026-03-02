@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/events/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -54,7 +55,7 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 			Err(err).
 			Str("event_id", event.ID).
 			Msg("Error serializando payload para WhatsApp queue")
-		return fmt.Errorf("error serializando payload WhatsApp: %w", err)
+		return fmt.Errorf("%w: WhatsApp payload: %v", domainerrors.ErrSerializeFailed, err)
 	}
 
 	if err := p.rabbitMQ.Publish(ctx, whatsAppConfirmationQueue, jsonBytes); err != nil {
@@ -63,7 +64,7 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 			Str("event_id", event.ID).
 			Str("queue", whatsAppConfirmationQueue).
 			Msg("Error publicando a WhatsApp queue")
-		return fmt.Errorf("error publicando a WhatsApp queue: %w", err)
+		return fmt.Errorf("%w: WhatsApp queue: %v", domainerrors.ErrPublishFailed, err)
 	}
 
 	p.logger.Info(ctx).

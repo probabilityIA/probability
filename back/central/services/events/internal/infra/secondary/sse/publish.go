@@ -17,15 +17,7 @@ func (m *EventManager) PublishEvent(event entities.Event) {
 			Msg("Publicando evento SSE")
 	}
 
-	businessID := event.BusinessID
-
-	m.mutex.Lock()
-	if _, ok := m.eventTypeCount[businessID]; !ok {
-		m.eventTypeCount[businessID] = make(map[string]int)
-	}
-	m.eventCount[businessID]++
-	m.eventTypeCount[businessID][event.Type]++
-	m.mutex.Unlock()
+	m.updateCounters(event.BusinessID, event.Type)
 
 	select {
 	case m.eventChan <- event:
@@ -42,4 +34,16 @@ func (m *EventManager) PublishEvent(event entities.Event) {
 				Msg("Canal de eventos lleno, descartando evento")
 		}
 	}
+}
+
+// updateCounters actualiza los contadores de eventos por business_id de forma segura
+func (m *EventManager) updateCounters(businessID uint, eventType string) {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	if _, ok := m.eventTypeCount[businessID]; !ok {
+		m.eventTypeCount[businessID] = make(map[string]int)
+	}
+	m.eventCount[businessID]++
+	m.eventTypeCount[businessID][eventType]++
 }

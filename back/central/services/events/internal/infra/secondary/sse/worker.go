@@ -1,6 +1,8 @@
 package sse
 
 import (
+	"context"
+
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/entities"
 )
 
@@ -26,6 +28,10 @@ func (m *EventManager) startEventWorker() {
 			m.appendRecentEvent(businessID, event)
 
 		case <-m.stopChan:
+			if m.logger != nil {
+				m.logger.Info(context.Background()).
+					Msg("Event worker SSE detenido")
+			}
 			return
 		}
 	}

@@ -33,10 +33,13 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 		if id, parseErr := strconv.ParseUint(businessIDStr, 10, 32); parseErr == nil {
 			businessID = uint(id)
 		} else {
+			h.logger.Warn(c.Request.Context()).
+				Err(parseErr).
+				Str("business_id_raw", businessIDStr).
+				Msg("ID de negocio invalido en path param")
 			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": "ID de negocio inválido",
-				"error":   parseErr.Error(),
+				"error":   "INVALID_BUSINESS_ID",
+				"message": "El ID de negocio proporcionado no es valido",
 			})
 			return
 		}
@@ -44,10 +47,13 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 		if id, parseErr := strconv.ParseUint(businessIDStr, 10, 32); parseErr == nil {
 			businessID = uint(id)
 		} else {
+			h.logger.Warn(c.Request.Context()).
+				Err(parseErr).
+				Str("business_id_raw", businessIDStr).
+				Msg("ID de negocio invalido en query param")
 			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": "ID de negocio inválido",
-				"error":   parseErr.Error(),
+				"error":   "INVALID_BUSINESS_ID",
+				"message": "El ID de negocio proporcionado no es valido",
 			})
 			return
 		}
@@ -61,7 +67,7 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 
 	// Precargar caché
 	if businessID > 0 {
-		h.preloadCacheEvents(c.Writer, businessID)
+		h.preloadCacheEvents(c.Writer, businessID, c.Request.Context())
 	}
 
 	// Enviar mensaje de conexión
@@ -154,7 +160,13 @@ func (h *SSEHandler) keepConnectionAlive(w http.ResponseWriter, connectionID str
 	for {
 		select {
 		case <-ticker.C:
-			h.sendSSEMessage(w, "keep-alive", "ping")
+			if err := h.sendSSEMessage(w, "keep-alive", "ping"); err != nil {
+				h.eventManager.RemoveConnection(connectionID)
+				h.logger.Info(ctx).
+					Str("connection_id", connectionID).
+					Msg("Cliente SSE desconectado (error en keep-alive)")
+				return
+			}
 			if hasFlusher {
 				flusher.Flush()
 			}
@@ -169,11 +181,11 @@ func (h *SSEHandler) keepConnectionAlive(w http.ResponseWriter, connectionID str
 }
 
 // preloadCacheEvents precarga eventos del caché para nueva conexión
-func (h *SSEHandler) preloadCacheEvents(w http.ResponseWriter, businessID uint) {
+func (h *SSEHandler) preloadCacheEvents(w http.ResponseWriter, businessID uint, ctx context.Context) {
 	events := h.eventManager.GetRecentEventsByBusiness(businessID, 0)
 
 	if len(events) > 0 {
-		h.logger.Info(context.Background()).
+		h.logger.Info(ctx).
 			Uint("business_id", businessID).
 			Int("cache_events_count", len(events)).
 			Msg("Precargando eventos del caché")
@@ -181,7 +193,13 @@ func (h *SSEHandler) preloadCacheEvents(w http.ResponseWriter, businessID uint) 
 		for _, event := range events {
 			eventJSON := h.eventToSSEJSON(event)
 			message := fmt.Sprintf("event: %s\ndata: %s\n\n", event.Type, eventJSON)
-			w.Write([]byte(message))
+			if _, err := w.Write([]byte(message)); err != nil {
+				h.logger.Warn(ctx).
+					Err(err).
+					Uint("business_id", businessID).
+					Msg("Error escribiendo eventos de cache, cliente desconectado")
+				return
+			}
 		}
 
 		if flusher, ok := w.(http.Flusher); ok {
@@ -206,6 +224,11 @@ func (h *SSEHandler) eventToSSEJSON(event entities.Event) string {
 
 	jsonBytes, err := json.Marshal(eventData)
 	if err != nil {
+		h.logger.Error(context.Background()).
+			Err(err).
+			Str("event_id", event.ID).
+			Str("event_type", event.Type).
+			Msg("Error serializando evento SSE a JSON")
 		return "{}"
 	}
 
@@ -213,11 +236,14 @@ func (h *SSEHandler) eventToSSEJSON(event entities.Event) string {
 }
 
 // sendSSEMessage envía un mensaje SSE formateado
-func (h *SSEHandler) sendSSEMessage(w http.ResponseWriter, eventType, data string) {
+func (h *SSEHandler) sendSSEMessage(w http.ResponseWriter, eventType, data string) error {
 	message := fmt.Sprintf("event: %s\ndata: %s\n\n", eventType, data)
-	w.Write([]byte(message))
+	if _, err := w.Write([]byte(message)); err != nil {
+		return err
+	}
 
 	if flusher, ok := w.(http.Flusher); ok {
 		flusher.Flush()
 	}
+	return nil
 }

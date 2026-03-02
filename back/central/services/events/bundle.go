@@ -25,7 +25,12 @@ func New(
 	redisClient redisclient.IRedis,
 ) {
 	// 1. Declarar infraestructura RabbitMQ (exchange + queue + binding)
-	rmqInfra.SetupInfrastructure(rabbitMQ, logger)
+	if err := rmqInfra.SetupInfrastructure(rabbitMQ, logger); err != nil {
+		logger.Error(context.Background()).
+			Err(err).
+			Msg("Error critico al configurar infraestructura RabbitMQ de eventos")
+		return
+	}
 
 	// 2. SSE EventManager
 	eventManager := sse.New(logger)

@@ -3,9 +3,11 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/events/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/ports"
 	rmqPublisher "github.com/secamc93/probability/back/central/services/events/internal/infra/secondary/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -47,11 +49,12 @@ func (c *RabbitMQConsumer) Start(ctx context.Context) error {
 func (c *RabbitMQConsumer) handleMessage(ctx context.Context, body []byte) error {
 	var envelope dtos.EventEnvelope
 	if err := json.Unmarshal(body, &envelope); err != nil {
+		wrappedErr := fmt.Errorf("%w: %v", domainerrors.ErrDeserializeFailed, err)
 		c.logger.Error(ctx).
-			Err(err).
+			Err(wrappedErr).
 			Str("body", string(body)).
 			Msg("Error deserializando evento de RabbitMQ")
-		// No requeue mensajes malformados
+		// Retornar nil para ACK — no requeue mensajes malformados
 		return nil
 	}
 

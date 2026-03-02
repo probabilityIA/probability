@@ -1,6 +1,7 @@
 package sse
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -94,6 +95,13 @@ func (m *EventManager) eventToJSON(event entities.Event) string {
 
 	jsonBytes, err := json.Marshal(eventMap)
 	if err != nil {
+		if m.logger != nil {
+			m.logger.Error(context.Background()).
+				Err(err).
+				Str("event_id", event.ID).
+				Str("event_type", event.Type).
+				Msg("Error serializando evento a JSON para SSE broadcast")
+		}
 		return "{}"
 	}
 	return string(jsonBytes)

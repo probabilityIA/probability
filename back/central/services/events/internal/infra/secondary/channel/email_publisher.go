@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/events/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
@@ -42,7 +43,7 @@ func (p *channelPublisher) PublishToEmail(ctx context.Context, event entities.Ev
 			Err(err).
 			Str("event_id", event.ID).
 			Msg("Error serializando payload para Email queue")
-		return fmt.Errorf("error serializando payload Email: %w", err)
+		return fmt.Errorf("%w: Email payload: %v", domainerrors.ErrSerializeFailed, err)
 	}
 
 	if err := p.rabbitMQ.Publish(ctx, rabbitmq.QueueMessagingEmailRequests, jsonBytes); err != nil {
@@ -51,7 +52,7 @@ func (p *channelPublisher) PublishToEmail(ctx context.Context, event entities.Ev
 			Str("event_id", event.ID).
 			Str("queue", rabbitmq.QueueMessagingEmailRequests).
 			Msg("Error publicando a Email queue")
-		return fmt.Errorf("error publicando a Email queue: %w", err)
+		return fmt.Errorf("%w: Email queue: %v", domainerrors.ErrPublishFailed, err)
 	}
 
 	p.logger.Info(ctx).

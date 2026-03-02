@@ -3,9 +3,11 @@ package consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/entities"
+	domainerrors "github.com/secamc93/probability/back/central/services/events/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/events/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -75,8 +77,9 @@ func (c *OrderEventConsumer) Start(ctx context.Context) error {
 func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) error {
 	var msg orderEventMessage
 	if err := json.Unmarshal(body, &msg); err != nil {
+		wrappedErr := fmt.Errorf("%w: %v", domainerrors.ErrDeserializeFailed, err)
 		c.logger.Error(ctx).
-			Err(err).
+			Err(wrappedErr).
 			Str("body", string(body)).
 			Msg("Error deserializando evento de orden desde fanout")
 		return nil // No requeue mensajes malformados
