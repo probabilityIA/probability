@@ -92,6 +92,9 @@ services:
       SMTP_USER:           "${SMTP_USER}"
       SMTP_PASS:           "${SMTP_PASS}"
       FROM_EMAIL:          "${FROM_EMAIL:-}"
+      SES_REGION:          "${SES_REGION}"
+      SES_ACCESS_KEY:      "${SES_ACCESS_KEY}"
+      SES_SECRET_KEY:      "${SES_SECRET_KEY}"
       SMTP_USE_STARTTLS:   "${SMTP_USE_STARTTLS}"
       SMTP_USE_TLS:        "${SMTP_USE_TLS}"
       # S3 y media
