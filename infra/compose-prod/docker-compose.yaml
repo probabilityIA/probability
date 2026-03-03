@@ -210,9 +210,10 @@ services:
       - "8082:3051"
     environment:
       TESTING_BACKEND_URL: "http://back-testing:9092"
+      CENTRAL_API_URL: "http://back-central:3050"
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3051/"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3051/testing"]
       interval: 30s
       timeout: 10s
       retries: 3
