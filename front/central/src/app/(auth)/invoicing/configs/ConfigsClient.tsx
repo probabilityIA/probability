@@ -20,12 +20,12 @@ import {
   disableAutoInvoiceAction,
 } from '@/services/modules/invoicing/infra/actions';
 import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
-import type { Business } from '@/services/auth/business/domain/types';
+import type { BusinessSimple } from '@/services/auth/business/domain/types';
 import { useRouter } from 'next/navigation';
 
 interface ConfigsClientProps {
   initialConfigs: InvoicingConfig[];
-  businesses?: Business[];
+  businesses?: BusinessSimple[];
   isSuperAdmin: boolean;
   selectedBusinessId?: number | null;
 }

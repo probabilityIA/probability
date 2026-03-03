@@ -1,52 +1,67 @@
-/**
- * Server Component - Página de Configuración de Facturación
- * Fetch inicial en servidor (logs visibles en terminal backend)
- */
+'use client';
 
+import { useState, useEffect } from 'react';
 import { ConfigsClient } from './ConfigsClient';
 import { getConfigsAction } from '@/services/modules/invoicing/infra/actions';
-import { getBusinessesAction } from '@/services/auth/business/infra/actions';
-import { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
-import { Business } from '@/services/auth/business/domain/types';
+import { useInvoicingBusiness } from '@/shared/contexts/invoicing-business-context';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
+import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
 
-interface PageProps {
-  searchParams: Promise<{ business_id?: string }>;
-}
+export default function InvoicingConfigsPage() {
+  const { selectedBusinessId } = useInvoicingBusiness();
+  const { isSuperAdmin } = usePermissions();
+  const { businesses } = useBusinessesSimple();
+  const [configs, setConfigs] = useState<InvoicingConfig[]>([]);
+  const [loading, setLoading] = useState(false);
 
-export default async function InvoicingConfigsPage({ searchParams }: PageProps) {
-  const params = await searchParams;
+  const requiresBusinessSelection = isSuperAdmin && selectedBusinessId === null;
 
-  // Determinar filtros desde query params
-  const selectedBusinessId = params.business_id ? parseInt(params.business_id) : null;
-  const filters = selectedBusinessId ? { business_id: selectedBusinessId } : {};
+  useEffect(() => {
+    if (requiresBusinessSelection) {
+      setConfigs([]);
+      return;
+    }
 
-  // Fetch de configuraciones (SE EJECUTA EN EL SERVIDOR)
-  // El backend filtra según los permisos del token
-  console.log('🔍 [SERVER] Fetching invoicing configs with filters:', filters);
-  let configs: InvoicingConfig[] = [];
-  try {
-    const response = await getConfigsAction(filters);
-    configs = response.data || [];
-    console.log('✅ [SERVER] Invoicing configs loaded:', configs.length, 'items');
-  } catch (error: any) {
-    console.error('❌ [SERVER] Error loading invoicing configs:', error.message);
+    const fetchConfigs = async () => {
+      setLoading(true);
+      try {
+        const filters = selectedBusinessId ? { business_id: selectedBusinessId } : {};
+        const response = await getConfigsAction(filters);
+        setConfigs(response.data || []);
+      } catch (error) {
+        console.error('Error loading invoicing configs:', error);
+        setConfigs([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchConfigs();
+  }, [selectedBusinessId, requiresBusinessSelection]);
+
+  if (requiresBusinessSelection) {
+    return (
+      <div className="p-8">
+        <div className="bg-white rounded-lg shadow p-16 text-center text-gray-500">
+          Selecciona un negocio para ver las configuraciones de facturación
+        </div>
+      </div>
+    );
   }
 
-  // Cargar businesses para el dropdown (el backend retorna según permisos)
-  let businesses: Business[] = [];
-  try {
-    const businessesResponse = await getBusinessesAction({});
-    businesses = businessesResponse.data || [];
-  } catch (error) {
-    console.error('Error loading businesses:', error);
+  if (loading) {
+    return (
+      <div className="p-8">
+        <div className="bg-white rounded-lg shadow p-16 text-center text-gray-500">
+          Cargando configuraciones...
+        </div>
+      </div>
+    );
   }
-
-  // Si hay más de 1 business disponible, es super admin
-  const isSuperAdmin = businesses.length > 1;
 
   return (
     <ConfigsClient
-      key={selectedBusinessId || 'all'}
       initialConfigs={configs}
       businesses={businesses}
       isSuperAdmin={isSuperAdmin}

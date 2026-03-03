@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -76,6 +78,23 @@ func New(useCase ports.IUseCase, repo ports.IRepository, logger log.ILogger, con
 		config:  config,
 		log:     logger.WithModule("invoicing.handler"),
 	}
+}
+
+// resolveBusinessID obtiene el business_id efectivo.
+// Para usuarios normales usa el del JWT.
+// Para super admins (business_id=0 en JWT) lee el query param ?business_id=X.
+func (h *handler) resolveBusinessID(c *gin.Context) (uint, bool) {
+	businessID := c.GetUint("business_id")
+	if businessID > 0 {
+		return businessID, true
+	}
+	// Super admin: leer de query param
+	if param := c.Query("business_id"); param != "" {
+		if id, err := strconv.ParseUint(param, 10, 64); err == nil && id > 0 {
+			return uint(id), true
+		}
+	}
+	return 0, false
 }
 
 // getS3Config retorna la URL base y bucket de S3 desde la configuración

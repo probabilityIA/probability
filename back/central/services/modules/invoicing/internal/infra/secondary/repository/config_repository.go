@@ -91,17 +91,22 @@ func (r *Repository) GetConfigByIntegration(ctx context.Context, integrationID u
 	return config, nil
 }
 
-// ListInvoicingConfigs lista todas las configuraciones de facturación de un negocio desde la base de datos
+// ListInvoicingConfigs lista todas las configuraciones de facturación de un negocio desde la base de datos.
+// Si businessID == 0 (super admin sin filtro), retorna todas las configs de todos los negocios.
 func (r *Repository) ListInvoicingConfigs(ctx context.Context, businessID uint) ([]*entities.InvoicingConfig, error) {
 	var configModels []*models.InvoicingConfig
 
-	if err := r.db.Conn(ctx).
+	query := r.db.Conn(ctx).
 		Preload("Integration").                          // Cargar integración de e-commerce
 		Preload("InvoicingIntegration").                 // Cargar integración de facturación (Softpymes)
 		Preload("InvoicingIntegration.IntegrationType"). // Cargar tipo para obtener el logo
-		Where("business_id = ?", businessID).
-		Order("created_at DESC").
-		Find(&configModels).Error; err != nil {
+		Order("created_at DESC")
+
+	if businessID > 0 {
+		query = query.Where("business_id = ?", businessID)
+	}
+
+	if err := query.Find(&configModels).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("business_id", businessID).Msg("Failed to list configs")
 		return nil, fmt.Errorf("failed to list configs: %w", err)
 	}
@@ -202,6 +207,25 @@ func (r *Repository) GetEnabledConfigByBusiness(ctx context.Context, businessID 
 
 	if err != nil {
 		// No existe config activa — no es un error de negocio
+		return nil, nil
+	}
+
+	return mappers.ConfigToDomain(&model), nil
+}
+
+// GetAnyConfigByBusiness retorna la primera configuración de un negocio sin filtrar por enabled.
+// Usado para operaciones de auditoría (comparación de facturas) donde solo se necesitan credenciales.
+func (r *Repository) GetAnyConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error) {
+	var model models.InvoicingConfig
+
+	err := r.db.Conn(ctx).
+		Where("business_id = ?", businessID).
+		Where("deleted_at IS NULL").
+		Order("enabled DESC, created_at DESC"). // preferir la habilitada si existe
+		Limit(1).
+		First(&model).Error
+
+	if err != nil {
 		return nil, nil
 	}
 

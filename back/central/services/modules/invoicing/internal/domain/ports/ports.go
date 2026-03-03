@@ -68,6 +68,9 @@ type IRepository interface {
 	// GetEnabledConfigByBusiness retorna la configuración activa (enabled=true) de un negocio,
 	// o nil si no existe ninguna activa. Usado para garantizar que solo un config esté activo a la vez.
 	GetEnabledConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error)
+	// GetAnyConfigByBusiness retorna la primera configuración de un negocio sin importar si está habilitada.
+	// Usado para operaciones de auditoría como comparación de facturas.
+	GetAnyConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error)
 
 	// ═══════════════════════════════════════════
 	// INVOICE SYNC LOGS

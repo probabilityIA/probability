@@ -29,14 +29,14 @@ func (uc *useCase) RequestComparison(ctx context.Context, dto *dtos.CompareReque
 		return "", errors.ErrCompareDateRangeTooLarge
 	}
 
-	// 2. Obtener configuración activa del negocio para determinar la integración de facturación
-	config, err := uc.repo.GetEnabledConfigByBusiness(ctx, dto.BusinessID)
+	// 2. Obtener configuración del negocio (habilitada o no — la comparación es auditoría)
+	config, err := uc.repo.GetAnyConfigByBusiness(ctx, dto.BusinessID)
 	if err != nil {
-		uc.log.Error(ctx).Err(err).Uint("business_id", dto.BusinessID).Msg("Failed to get enabled invoicing config")
+		uc.log.Error(ctx).Err(err).Uint("business_id", dto.BusinessID).Msg("Failed to get invoicing config")
 		return "", errors.ErrProviderNotConfigured
 	}
 	if config == nil {
-		uc.log.Warn(ctx).Uint("business_id", dto.BusinessID).Msg("No enabled invoicing config found for business")
+		uc.log.Warn(ctx).Uint("business_id", dto.BusinessID).Msg("No invoicing config found for business")
 		return "", errors.ErrProviderNotConfigured
 	}
 

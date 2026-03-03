@@ -31,18 +31,29 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		return nil, errors.ErrOrderNotInvoiceable
 	}
 
-	// 3. Obtener configuración de facturación para la integración
+	// 3. Obtener configuración de facturación para la integración.
+	// Primero busca por integration_id específico; si no hay, usa la config activa del negocio
+	// (ej: órdenes de Plataforma/WooCommerce/Meli usan la misma config Softpymes del negocio)
 	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Error al obtener configuración de facturación")
 		return nil, errors.ErrProviderNotConfigured
 	}
 	if config == nil {
+		// Fallback: buscar config activa por business_id
+		config, err = uc.repo.GetEnabledConfigByBusiness(ctx, order.BusinessID)
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Uint("business_id", order.BusinessID).Msg("Error al obtener configuración de facturación por negocio")
+			return nil, errors.ErrProviderNotConfigured
+		}
+	}
+	if config == nil {
 		uc.log.Info(ctx).
 			Str("order_id", order.ID).
 			Str("order_number", order.OrderNumber).
 			Uint("integration_id", order.IntegrationID).
-			Msg("Integración sin configuración de facturación — se omite")
+			Uint("business_id", order.BusinessID).
+			Msg("Negocio sin configuración de facturación activa — se omite")
 		return nil, errors.ErrProviderNotConfigured
 	}
 
@@ -52,15 +63,6 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			Str("order_number", order.OrderNumber).
 			Msg("Configuración de facturación deshabilitada")
 		return nil, errors.ErrConfigNotEnabled
-	}
-
-	// Validar auto_invoice solo para facturas automáticas
-	if !dto.IsManual && !config.AutoInvoice {
-		uc.log.Warn(ctx).
-			Str("order_id", order.ID).
-			Str("order_number", order.OrderNumber).
-			Msg("Facturación automática deshabilitada")
-		return nil, errors.ErrAutoInvoiceNotEnabled
 	}
 
 	// 4. Determinar integración de facturación

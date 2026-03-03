@@ -69,31 +69,13 @@ func (h *handler) CreateConfig(c *gin.Context) {
 func (h *handler) ListConfigs(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	filters := make(map[string]interface{})
-
-	var businessID uint
-	if businessIDStr := c.Query("business_id"); businessIDStr != "" {
-		id, _ := strconv.ParseUint(businessIDStr, 10, 32)
-		businessID = uint(id)
-		filters["business_id"] = businessID
-	}
-
-	if integrationID := c.Query("integration_id"); integrationID != "" {
-		id, _ := strconv.ParseUint(integrationID, 10, 32)
-		filters["integration_id"] = uint(id)
-	}
-
-	if providerID := c.Query("provider_id"); providerID != "" {
-		id, _ := strconv.ParseUint(providerID, 10, 32)
-		filters["invoicing_provider_id"] = uint(id)
-	}
-
-	if enabled := c.Query("enabled"); enabled != "" {
-		filters["enabled"] = enabled == "true"
-	}
-
-	if autoInvoice := c.Query("auto_invoice"); autoInvoice != "" {
-		filters["auto_invoice"] = autoInvoice == "true"
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "business_id_required",
+			Message: "business_id is required",
+		})
+		return
 	}
 
 	page := 1
