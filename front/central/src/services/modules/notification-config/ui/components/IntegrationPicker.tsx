@@ -9,15 +9,54 @@ interface IntegrationPickerProps {
   onCancel: () => void;
 }
 
+function IntegrationButton({ integration, onSelect }: { integration: IntegrationSimple; onSelect: (i: IntegrationSimple) => void }) {
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(integration)}
+      className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-all text-left group"
+    >
+      {integration.image_url ? (
+        <img
+          src={integration.image_url}
+          alt={integration.name}
+          className="w-9 h-9 object-contain rounded shrink-0"
+        />
+      ) : (
+        <div className="w-9 h-9 rounded bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-blue-100">
+          <span className="text-sm font-bold text-gray-400 group-hover:text-blue-500">
+            {integration.name?.charAt(0).toUpperCase() || "?"}
+          </span>
+        </div>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700">
+          {integration.name}
+        </p>
+        <p className="text-xs text-gray-500">
+          {integration.category_name || integration.type}
+        </p>
+      </div>
+      <svg className="w-5 h-5 text-gray-300 group-hover:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </button>
+  );
+}
+
 export function IntegrationPicker({ businessId, onSelect, onCancel }: IntegrationPickerProps) {
   const { integrations, loading } = useIntegrationsSimple(
     businessId ? { businessId } : undefined
   );
 
-  // Filter to ecommerce integrations that are active
+  const platformIntegrations = integrations.filter(
+    (i) => i.is_active && i.category === "platform"
+  );
   const ecommerceIntegrations = integrations.filter(
     (i) => i.is_active && i.category === "ecommerce"
   );
+
+  const hasAny = platformIntegrations.length > 0 || ecommerceIntegrations.length > 0;
 
   return (
     <div className="space-y-4">
@@ -27,46 +66,33 @@ export function IntegrationPicker({ businessId, onSelect, onCancel }: Integratio
 
       {loading ? (
         <div className="text-center py-8 text-gray-500">Cargando integraciones...</div>
-      ) : ecommerceIntegrations.length === 0 ? (
+      ) : !hasAny ? (
         <div className="text-center py-8">
-          <p className="text-gray-500 text-sm">No hay integraciones ecommerce disponibles</p>
+          <p className="text-gray-500 text-sm">No hay integraciones disponibles</p>
           <p className="text-gray-400 text-xs mt-1">Crea una integración primero desde el módulo de Integraciones</p>
         </div>
       ) : (
-        <div className="grid gap-2">
-          {ecommerceIntegrations.map((integration) => (
-            <button
-              key={integration.id}
-              type="button"
-              onClick={() => onSelect(integration)}
-              className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-all text-left group"
-            >
-              {integration.image_url ? (
-                <img
-                  src={integration.image_url}
-                  alt={integration.name}
-                  className="w-9 h-9 object-contain rounded shrink-0"
-                />
-              ) : (
-                <div className="w-9 h-9 rounded bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-blue-100">
-                  <span className="text-sm font-bold text-gray-400 group-hover:text-blue-500">
-                    {integration.type?.charAt(0).toUpperCase() || "?"}
-                  </span>
-                </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700">
-                  {integration.name}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {integration.category_name || integration.type}
-                </p>
+        <div className="space-y-3">
+          {platformIntegrations.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Plataforma</p>
+              <div className="grid gap-2">
+                {platformIntegrations.map((integration) => (
+                  <IntegrationButton key={integration.id} integration={integration} onSelect={onSelect} />
+                ))}
               </div>
-              <svg className="w-5 h-5 text-gray-300 group-hover:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          ))}
+            </div>
+          )}
+          {ecommerceIntegrations.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">E-commerce</p>
+              <div className="grid gap-2">
+                {ecommerceIntegrations.map((integration) => (
+                  <IntegrationButton key={integration.id} integration={integration} onSelect={onSelect} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
