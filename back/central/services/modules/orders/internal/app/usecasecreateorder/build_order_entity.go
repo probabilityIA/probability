@@ -3,6 +3,7 @@ package usecasecreateorder
 import (
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
@@ -106,9 +107,14 @@ func (uc *UseCaseCreateOrder) assignPaymentMethodID(order *entities.ProbabilityO
 	payment := dto.Payments[0]
 	if payment.PaymentMethodID > 0 {
 		order.PaymentMethodID = payment.PaymentMethodID
-		if payment.Status == "completed" && payment.PaidAt != nil {
-			order.IsPaid = true
+	}
+	if payment.Status == "completed" {
+		order.IsPaid = true
+		if payment.PaidAt != nil {
 			order.PaidAt = payment.PaidAt
+		} else {
+			now := time.Now()
+			order.PaidAt = &now
 		}
 	}
 }

@@ -87,6 +87,17 @@ func (uc *UseCaseCreateOrder) mapPaymentStatusID(ctx context.Context, dto *dtos.
 		return dto.PaymentStatusID
 	}
 
+	// Derivar desde los pagos: si hay un pago "completed", mapear a payment_status "paid"
+	for _, p := range dto.Payments {
+		if p.Status == "completed" {
+			paidID, err := uc.repo.GetPaymentStatusIDByCode(ctx, "paid")
+			if err == nil && paidID != nil {
+				return paidID
+			}
+			break
+		}
+	}
+
 	// Para Shopify, extraer desde PaymentDetails
 	if dto.IntegrationType == "shopify" && len(dto.PaymentDetails) > 0 {
 		var paymentDetails map[string]interface{}

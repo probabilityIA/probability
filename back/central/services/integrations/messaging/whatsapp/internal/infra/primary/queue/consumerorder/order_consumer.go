@@ -3,8 +3,11 @@ package consumerorder
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"strings"
 
+	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder/request"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
@@ -35,10 +38,11 @@ func (c *consumer) Start(ctx context.Context) error {
 func (c *consumer) handleMessage(messageBody []byte) error {
 	var event request.OrderConfirmationEvent
 	if err := json.Unmarshal(messageBody, &event); err != nil {
-		c.log.Error().
+		// Mensaje malformado: no tiene sentido reencolar, ACK y descartar
+		c.log.Warn().
 			Err(err).
-			Msg("Error unmarshaling order confirmation event")
-		return err
+			Msg("Malformed order confirmation message - discarding (ACK)")
+		return nil
 	}
 
 	c.log.Info().
@@ -95,12 +99,23 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	)
 
 	if err != nil {
+		if isNonRetryableError(err) {
+			// Error de configuración/datos: no tiene sentido reencolar.
+			// ACK el mensaje para que RabbitMQ no lo reprocese indefinidamente.
+			c.log.Warn().
+				Err(err).
+				Str("order_id", event.OrderID).
+				Str("order_number", event.OrderNumber).
+				Str("customer_phone", event.CustomerPhone).
+				Msg("WhatsApp confirmation skipped - non-retryable error (ACK)")
+			return nil
+		}
 		c.log.Error().
 			Err(err).
 			Str("order_id", event.OrderID).
 			Str("order_number", event.OrderNumber).
 			Str("customer_phone", event.CustomerPhone).
-			Msg("Error sending confirmation template")
+			Msg("Error sending confirmation template - will be retried")
 		return err
 	}
 
@@ -123,4 +138,37 @@ func getBusinessName(businessID *uint) string {
 	// Por ahora retornamos un placeholder
 	// En implementación completa, consultar repositorio de Business
 	return fmt.Sprintf("Negocio #%d", *businessID)
+}
+
+// isNonRetryableError determina si un error no debe provocar reencolar el mensaje.
+// Los errores de configuración o datos inválidos nunca se resolverán reintentando:
+// reencolarlos causa bucles infinitos en RabbitMQ.
+func isNonRetryableError(err error) bool {
+	// Errores tipados del dominio: siempre no-retriables
+	var templateNotFound *whaErrors.ErrTemplateNotFound
+	if errors.As(err, &templateNotFound) {
+		return true
+	}
+	var missingVar *whaErrors.ErrMissingVariable
+	if errors.As(err, &missingVar) {
+		return true
+	}
+
+	// Errores de cache (Redis key not found): la integración no está configurada
+	errMsg := err.Error()
+	nonRetryablePhrases := []string{
+		"key not found",             // Redis cache miss
+		"no se encontró integración", // business sin integración WA
+		"credenciales no encontradas", // integration sin credenciales en cache
+		"número de teléfono inválido", // teléfono inválido
+		"phone_number_id no encontrado", // credenciales incompletas
+		"access_token no encontrado",    // credenciales incompletas
+	}
+	for _, phrase := range nonRetryablePhrases {
+		if strings.Contains(errMsg, phrase) {
+			return true
+		}
+	}
+
+	return false
 }
