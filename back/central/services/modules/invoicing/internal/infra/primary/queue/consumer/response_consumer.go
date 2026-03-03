@@ -451,6 +451,7 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 			},
 			Summary: dtos.CompareSummary{},
 		}
+		go c.publishCompareEvent(ctx, data)
 		return c.ssePublisher.PublishCompareReady(ctx, data)
 	}
 
@@ -575,7 +576,81 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		Int("provider_only", providerOnly).
 		Msg("📊 Comparison complete, publishing SSE")
 
+	go c.publishCompareEvent(ctx, responseData)
 	return c.ssePublisher.PublishCompareReady(ctx, responseData)
+}
+
+// publishCompareEvent publica el evento invoice.compare_ready al exchange de eventos (RabbitMQ)
+// para que llegue al frontend vía SSE. Es necesario porque ssePublisher solo usa Redis Pub/Sub
+// y nadie suscribe a ese canal — el módulo de eventos solo consume de RabbitMQ.
+func (c *ResponseConsumer) publishCompareEvent(ctx context.Context, data *dtos.CompareResponseData) {
+	results := make([]map[string]interface{}, 0, len(data.Results))
+	for _, r := range data.Results {
+		row := map[string]interface{}{
+			"status":          r.Status,
+			"invoice_number":  r.InvoiceNumber,
+			"prefix":          r.Prefix,
+			"document_date":   r.DocumentDate,
+			"provider_total":  r.ProviderTotal,
+			"customer_nit":    r.CustomerNit,
+			"customer_name":   r.CustomerName,
+			"comment":         r.Comment,
+			"order_created_at": r.OrderCreatedAt,
+		}
+		if r.SystemInvoiceID != nil {
+			row["system_invoice_id"] = *r.SystemInvoiceID
+		}
+		if r.SystemOrderID != nil {
+			row["system_order_id"] = *r.SystemOrderID
+		}
+		if r.SystemTotal != nil {
+			row["system_total"] = *r.SystemTotal
+		}
+		if len(r.ProviderDetails) > 0 {
+			details := make([]map[string]interface{}, 0, len(r.ProviderDetails))
+			for _, d := range r.ProviderDetails {
+				details = append(details, map[string]interface{}{
+					"item_code":  d.ItemCode,
+					"item_name":  d.ItemName,
+					"quantity":   d.Quantity,
+					"unit_value": d.UnitValue,
+					"iva":        d.IVA,
+				})
+			}
+			row["provider_details"] = details
+		}
+		if len(r.SystemItems) > 0 {
+			items := make([]map[string]interface{}, 0, len(r.SystemItems))
+			for _, d := range r.SystemItems {
+				items = append(items, map[string]interface{}{
+					"item_code":  d.ItemCode,
+					"item_name":  d.ItemName,
+					"quantity":   d.Quantity,
+					"unit_value": d.UnitValue,
+					"iva":        d.IVA,
+				})
+			}
+			row["system_items"] = items
+		}
+		results = append(results, row)
+	}
+
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.compare_ready",
+		Category:   "invoice",
+		BusinessID: data.BusinessID,
+		Data: map[string]interface{}{
+			"correlation_id": data.CorrelationID,
+			"date_from":      data.DateFrom,
+			"date_to":        data.DateTo,
+			"results":        results,
+			"summary": map[string]interface{}{
+				"matched":       data.Summary.Matched,
+				"system_only":   data.Summary.SystemOnly,
+				"provider_only": data.Summary.ProviderOnly,
+			},
+		},
+	})
 }
 
 // mapInvoiceItemsToCompareDetails convierte items de factura del sistema a CompareItemDetail
