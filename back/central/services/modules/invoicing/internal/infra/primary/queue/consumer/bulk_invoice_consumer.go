@@ -92,7 +92,7 @@ func (c *BulkInvoiceConsumer) handleMessage(message []byte) error {
 	// 6. Actualizar según resultado
 	if err != nil {
 		// Factura falló
-		c.handleInvoiceError(ctx, msg.JobID, msg.OrderID, err)
+		c.handleInvoiceError(ctx, msg.JobID, msg.OrderID, msg.BusinessID, err)
 		// NO retornar error - no hacer requeue (RetryConsumer maneja reintentos de provider)
 		return nil
 	}
@@ -107,22 +107,33 @@ func (c *BulkInvoiceConsumer) handleMessage(message []byte) error {
 }
 
 // handleInvoiceError maneja cuando la creación de factura falla
-func (c *BulkInvoiceConsumer) handleInvoiceError(ctx context.Context, jobID, orderID string, err error) {
+func (c *BulkInvoiceConsumer) handleInvoiceError(ctx context.Context, jobID, orderID string, businessID uint, err error) {
 	errMsg := err.Error()
 
 	// Buscar invoice fallida en BD (puede existir con status "failed")
 	invoice, getErr := c.repo.GetInvoiceByOrderID(ctx, orderID)
+
+	// Publicar evento individual via RabbitMQ → events module → frontend SSE
+	invoiceID := uint(0)
 	if getErr == nil && invoice != nil {
-		// Publicar evento individual de factura fallida
-		if pubErr := c.ssePublisher.PublishInvoiceFailed(ctx, invoice, errMsg); pubErr != nil {
-			c.log.Error(ctx).Err(pubErr).Msg("Failed to publish invoice.failed SSE")
-		}
+		invoiceID = invoice.ID
 	} else {
 		c.log.Warn(ctx).
 			Err(getErr).
 			Str("order_id", orderID).
-			Msg("Invoice not found in DB after failure - skipping individual SSE event")
+			Msg("Invoice not found in DB after failure - publishing error event without invoice_id")
 	}
+
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.failed",
+		Category:   "invoice",
+		BusinessID: businessID,
+		Data: map[string]interface{}{
+			"invoice_id":    invoiceID,
+			"order_id":      orderID,
+			"error_message": errMsg,
+		},
+	})
 
 	// Actualizar item como failed
 	if updateErr := c.updateItemStatus(ctx, jobID, orderID, entities.JobItemStatusFailed, &errMsg); updateErr != nil {
@@ -247,10 +258,21 @@ func (c *BulkInvoiceConsumer) checkJobCompletion(ctx context.Context, jobID stri
 			return
 		}
 
-		// Publicar evento SSE de job completado
-		if pubErr := c.ssePublisher.PublishBulkJobCompleted(ctx, job); pubErr != nil {
-			c.log.Error(ctx).Err(pubErr).Str("job_id", jobID).Msg("Failed to publish bulk job completed SSE event")
-		}
+		// Publicar evento de job completado via RabbitMQ → events module → frontend SSE
+		_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+			Type:       "bulk_job.completed",
+			Category:   "invoice",
+			BusinessID: job.BusinessID,
+			Data: map[string]interface{}{
+				"job_id":       job.ID,
+				"total_orders": job.TotalOrders,
+				"processed":    job.Processed,
+				"successful":   job.Successful,
+				"failed":       job.Failed,
+				"progress":     100,
+				"status":       job.Status,
+			},
+		})
 
 		c.log.Info(ctx).
 			Str("job_id", jobID).
@@ -261,13 +283,24 @@ func (c *BulkInvoiceConsumer) checkJobCompletion(ctx context.Context, jobID stri
 	}
 }
 
-// publishJobProgress obtiene el estado actual del job y publica progreso SSE
+// publishJobProgress obtiene el estado actual del job y publica progreso via RabbitMQ → events module
 func (c *BulkInvoiceConsumer) publishJobProgress(ctx context.Context, jobID string) {
 	job, err := c.repo.GetJobByID(ctx, jobID)
 	if err != nil || job == nil {
 		return
 	}
-	if pubErr := c.ssePublisher.PublishBulkJobProgress(ctx, job); pubErr != nil {
-		c.log.Error(ctx).Err(pubErr).Str("job_id", jobID).Msg("Failed to publish bulk job progress SSE event")
-	}
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "bulk_job.progress",
+		Category:   "invoice",
+		BusinessID: job.BusinessID,
+		Data: map[string]interface{}{
+			"job_id":       job.ID,
+			"total_orders": job.TotalOrders,
+			"processed":    job.Processed,
+			"successful":   job.Successful,
+			"failed":       job.Failed,
+			"progress":     job.GetProgress(),
+			"status":       job.Status,
+		},
+	})
 }

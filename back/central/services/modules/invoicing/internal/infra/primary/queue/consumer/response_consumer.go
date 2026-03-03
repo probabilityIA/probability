@@ -363,15 +363,26 @@ func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID 
 		return
 	}
 
-	// Publicar progreso SSE del job
+	// Publicar progreso del job via RabbitMQ → events module → frontend SSE
 	job, err := c.repo.GetJobByID(ctx, jobItem.JobID)
 	if err != nil || job == nil {
 		return
 	}
 
-	if pubErr := c.ssePublisher.PublishBulkJobProgress(ctx, job); pubErr != nil {
-		c.log.Error(ctx).Err(pubErr).Str("job_id", jobItem.JobID).Msg("Failed to publish bulk job progress SSE")
-	}
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "bulk_job.progress",
+		Category:   "invoice",
+		BusinessID: job.BusinessID,
+		Data: map[string]interface{}{
+			"job_id":       job.ID,
+			"total_orders": job.TotalOrders,
+			"processed":    job.Processed,
+			"successful":   job.Successful,
+			"failed":       job.Failed,
+			"progress":     job.GetProgress(),
+			"status":       job.Status,
+		},
+	})
 
 	// Verificar si el job completó (successful + failed = total)
 	if job.Successful+job.Failed >= job.TotalOrders {
@@ -390,9 +401,21 @@ func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.Bu
 		return
 	}
 
-	if pubErr := c.ssePublisher.PublishBulkJobCompleted(ctx, job); pubErr != nil {
-		c.log.Error(ctx).Err(pubErr).Str("job_id", job.ID).Msg("Failed to publish bulk job completed SSE")
-	}
+	// Publicar job completado via RabbitMQ → events module → frontend SSE
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "bulk_job.completed",
+		Category:   "invoice",
+		BusinessID: job.BusinessID,
+		Data: map[string]interface{}{
+			"job_id":       job.ID,
+			"total_orders": job.TotalOrders,
+			"processed":    job.Processed,
+			"successful":   job.Successful,
+			"failed":       job.Failed,
+			"progress":     100,
+			"status":       job.Status,
+		},
+	})
 
 	c.log.Info(ctx).
 		Str("job_id", job.ID).
