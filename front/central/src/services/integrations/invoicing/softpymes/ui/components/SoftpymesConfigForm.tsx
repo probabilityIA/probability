@@ -50,6 +50,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
         branch_code: '001', // Código de sucursal
         customer_branch_code: '000', // Código de sucursal del cliente (Softpymes default)
         seller_nit: '', // NIT del vendedor
+        send_cash_receipt: false, // Enviar recibo de caja después de crear la factura
+        payment_type: 'EF', // Tipo de pago por defecto: Efectivo
+        payment_account_number: '', // Número de cuenta bancaria (para transferencias)
         api_key: '',
         api_secret: '',
     });
@@ -150,6 +153,11 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                 branch_code: formData.branch_code || undefined,
                 customer_branch_code: formData.customer_branch_code || undefined,
                 seller_nit: formData.seller_nit || undefined,
+                send_cash_receipt: formData.send_cash_receipt || undefined,
+                payment_type: formData.send_cash_receipt ? (formData.payment_type || 'EF') : undefined,
+                payment_account_number: (formData.send_cash_receipt && formData.payment_type === 'TR')
+                    ? (formData.payment_account_number || undefined)
+                    : undefined,
             };
 
             const credentials: SoftpymesCredentials = {
@@ -451,6 +459,83 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         </p>
                     </div>
                 </div>
+            </div>
+
+            {/* Recibo de Caja */}
+            <div className="bg-green-50 rounded-xl p-6 space-y-4 border border-green-200">
+                <div className="flex items-center gap-2 mb-2">
+                    <Cog6ToothIcon className="w-5 h-5 text-green-700" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Registro de Pago (Recibo de Caja)
+                    </h3>
+                </div>
+                <p className="text-sm text-green-900 -mt-2 mb-2">
+                    Registra automáticamente el pago de cada factura en Softpymes para mover la cuenta contable de <strong>cuentas por cobrar</strong> a la cuenta del medio de pago.
+                </p>
+
+                {/* Toggle send_cash_receipt */}
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
+                    <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">Enviar recibo de caja al facturar</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                            Si está activo, después de crear la factura se registra el pago en Softpymes.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setFormData({ ...formData, send_cash_receipt: !formData.send_cash_receipt })}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ml-4 flex-shrink-0 ${formData.send_cash_receipt ? 'bg-green-500' : 'bg-gray-200'}`}
+                    >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${formData.send_cash_receipt ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                </div>
+
+                {/* Campos adicionales solo si send_cash_receipt está activo */}
+                {formData.send_cash_receipt && (
+                    <div className="space-y-4 pt-2">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Medio de Pago
+                            </label>
+                            <Select
+                                value={formData.payment_type}
+                                onChange={(e) => setFormData({ ...formData, payment_type: e.target.value })}
+                                options={[
+                                    { value: 'EF', label: 'EF — Efectivo' },
+                                    { value: 'TR', label: 'TR — Transferencia bancaria' },
+                                    { value: 'TC', label: 'TC — Tarjeta de crédito' },
+                                    { value: 'TD', label: 'TD — Tarjeta de débito' },
+                                    { value: 'CH', label: 'CH — Cheque' },
+                                ]}
+                                className="bg-white"
+                            />
+                            <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                                <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                <span>Selecciona el tipo de pago que usan tus clientes. Para pasarelas de pago usa <strong>TR (Transferencia)</strong>.</span>
+                            </p>
+                        </div>
+
+                        {/* Número de cuenta solo para transferencias */}
+                        {formData.payment_type === 'TR' && (
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Número de Cuenta Bancaria <span className="text-red-500">*</span>
+                                </label>
+                                <Input
+                                    type="text"
+                                    value={formData.payment_account_number}
+                                    onChange={(e) => setFormData({ ...formData, payment_account_number: e.target.value })}
+                                    placeholder="Número de cuenta de la pasarela o banco"
+                                    className="bg-white"
+                                />
+                                <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                                    <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                                    <span>Número de cuenta registrado en Softpymes. Consúltalo en <strong>Utilidades → Buscar cuentas bancarias</strong> en la API de Softpymes.</span>
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
 
             {/* Credenciales de API */}
