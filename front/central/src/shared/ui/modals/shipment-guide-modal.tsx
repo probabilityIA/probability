@@ -265,8 +265,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     // Fetch initial data on open
     const handleWarehouseSelect = (wh: Warehouse) => {
         // Step 1
-        step1Form.setValue("originDaneCode", wh.city_dane_code || "");
-        step1Form.setValue("originAddress", wh.street || wh.address);
+        step1Form.setValue("originDaneCode", wh.city_dane_code || "11001000", { shouldValidate: true });
+        step1Form.setValue("originAddress", wh.street || wh.address, { shouldValidate: true });
         setOriginSearch(`${wh.city} (${wh.state})`);
 
         // Step 3
@@ -313,20 +313,20 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             step1Form.setValue("contentValue", order.total_amount);
             step1Form.setValue("codValue", order.total_amount);
             step1Form.setValue("description", `Order ${order.order_number}`);
-            step1Form.setValue("destAddress", order.shipping_street);
+            step1Form.setValue("destAddress", order.shipping_street, { shouldValidate: true });
 
             if (order.weight && order.weight > 0) {
-                step1Form.setValue("weight", order.weight);
-                step1Form.setValue("height", order.height || 10);
-                step1Form.setValue("width", order.width || 10);
-                step1Form.setValue("length", order.length || 10);
+                step1Form.setValue("weight", order.weight, { shouldValidate: true });
+                step1Form.setValue("height", order.height || 10, { shouldValidate: true });
+                step1Form.setValue("width", order.width || 10, { shouldValidate: true });
+                step1Form.setValue("length", order.length || 10, { shouldValidate: true });
             }
 
             // Try to find DANE code by city
             const mappedDane = findDaneCode(order.shipping_city || "", order.shipping_state || "");
             const finalDane = mappedDane || "11001000"; // Fallback to Bogota
 
-            step1Form.setValue("destDaneCode", finalDane);
+            step1Form.setValue("destDaneCode", finalDane, { shouldValidate: true });
             const cityData = danes[finalDane as keyof typeof danes];
             if (cityData) {
                 setDestSearch(`${(cityData as any).ciudad} (${(cityData as any).departamento})`);
@@ -846,18 +846,22 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     onChange={(e) => {
                                                         setOriginSearch(e.target.value);
                                                         setShowOriginResults(true);
+                                                        if (!e.target.value) step1Form.setValue("originDaneCode", "", { shouldValidate: true });
                                                     }}
                                                     onFocus={() => setShowOriginResults(true)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${step1Form.formState.errors.originDaneCode ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                                                     placeholder="Buscar ciudad..."
                                                 />
+                                                {step1Form.formState.errors.originDaneCode && (
+                                                    <p className="mt-1 text-xs text-red-600">Selecciona una ciudad de origen de la lista</p>
+                                                )}
                                                 {showOriginResults && filteredOriginOptions.length > 0 && (
                                                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                         {filteredOriginOptions.slice(0, 50).map((opt) => (
                                                             <div
                                                                 key={opt.value}
                                                                 onClick={() => {
-                                                                    step1Form.setValue("originDaneCode", opt.value);
+                                                                    step1Form.setValue("originDaneCode", opt.value, { shouldValidate: true });
                                                                     setOriginSearch(opt.label);
                                                                     setShowOriginResults(false);
                                                                 }}
@@ -893,18 +897,22 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     onChange={(e) => {
                                                         setDestSearch(e.target.value);
                                                         setShowDestResults(true);
+                                                        if (!e.target.value) step1Form.setValue("destDaneCode", "", { shouldValidate: true });
                                                     }}
                                                     onFocus={() => setShowDestResults(true)}
-                                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${step1Form.formState.errors.destDaneCode ? "border-red-500 bg-red-50" : "border-gray-300"}`}
                                                     placeholder="Buscar ciudad..."
                                                 />
+                                                {step1Form.formState.errors.destDaneCode && (
+                                                    <p className="mt-1 text-xs text-red-600">Selecciona una ciudad de destino de la lista</p>
+                                                )}
                                                 {showDestResults && filteredDestOptions.length > 0 && (
                                                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                         {filteredDestOptions.slice(0, 50).map((opt) => (
                                                             <div
                                                                 key={opt.value}
                                                                 onClick={() => {
-                                                                    step1Form.setValue("destDaneCode", opt.value);
+                                                                    step1Form.setValue("destDaneCode", opt.value, { shouldValidate: true });
                                                                     setDestSearch(opt.label);
                                                                     setShowDestResults(false);
                                                                 }}
@@ -1407,8 +1415,25 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         <Button
                             variant="primary"
                             onClick={() => {
-                                const form = document.querySelector('[data-testid="step1-form"]') as HTMLFormElement;
-                                form?.requestSubmit();
+                                const fieldLabels: { [key: string]: string } = {
+                                    originDaneCode: "Ciudad de Origen",
+                                    originAddress: "Dirección de Origen",
+                                    destDaneCode: "Ciudad de Destino",
+                                    destAddress: "Dirección de Destino",
+                                    weight: "Peso del paquete",
+                                    height: "Alto del paquete",
+                                    width: "Ancho del paquete",
+                                    length: "Largo del paquete",
+                                    description: "Descripción del contenido",
+                                    contentValue: "Valor de la mercancía",
+                                    codPaymentMethod: "Método de pago COD",
+                                };
+                                step1Form.handleSubmit(handleStep1Submit, (errors) => {
+                                    const errorFields = Object.entries(errors).map(
+                                        ([field, err]) => `  • ${fieldLabels[field] || field}: ${(err as any)?.message || "inválido"}`
+                                    );
+                                    setError(`⚠️ Por favor completa los siguientes campos:\n${errorFields.join('\n')}`);
+                                })();
                             }}
                             disabled={loading}
                             style={{ background: '#7c3aed' }}
