@@ -97,7 +97,17 @@ func setupOrdersExchange(rabbitMQ rabbitmq.IQueue, logger log.ILogger) {
 			logger.Error(ctx).Err(err).Str("queue", queueName).Msg("Error al bindear cola")
 			continue
 		}
+
+		logger.Info(ctx).
+			Str("queue", queueName).
+			Str("exchange", rabbitmq.ExchangeOrderEvents).
+			Msg("✅ Cola bindeada al fanout de órdenes")
 	}
+
+	logger.Info(ctx).
+		Int("queues", len(queues)).
+		Str("exchange", rabbitmq.ExchangeOrderEvents).
+		Msg("Exchange de órdenes configurado")
 }
 
 // initRequestConfirmationUseCase inicializa el caso de uso de confirmación por WhatsApp

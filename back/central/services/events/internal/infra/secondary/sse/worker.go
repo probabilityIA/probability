@@ -13,6 +13,15 @@ func (m *EventManager) startEventWorker() {
 		case event := <-m.eventChan:
 			businessID := event.BusinessID
 
+			if m.logger != nil {
+				m.logger.Debug(context.Background()).
+					Str("event_id", event.ID).
+					Str("event_type", event.Type).
+					Uint("business_id", businessID).
+					Int("active_connections", len(m.connections)).
+					Msg("Worker SSE procesando evento del canal")
+			}
+
 			if event.Metadata == nil {
 				event.Metadata = make(map[string]interface{})
 			}

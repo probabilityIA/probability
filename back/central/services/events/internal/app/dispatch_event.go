@@ -31,13 +31,21 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 
 	// Si no hay configs → broadcast SSE por defecto (backward compatible)
 	if len(configs) == 0 {
-		d.logger.Debug(ctx).
+		d.logger.Info(ctx).
 			Str("event_id", event.ID).
 			Str("event_type", event.Type).
-			Msg("Sin configs para este evento, broadcast SSE por defecto")
+			Uint("integration_id", event.IntegrationID).
+			Msg("Sin configs de notificación para este evento, broadcast SSE por defecto")
 		d.ssePublisher.PublishEvent(event)
 		return nil
 	}
+
+	d.logger.Info(ctx).
+		Str("event_id", event.ID).
+		Str("event_type", event.Type).
+		Uint("integration_id", event.IntegrationID).
+		Int("configs_count", len(configs)).
+		Msg("Configs de notificación encontradas, ruteando por canal")
 
 	// Para cada config habilitada → validar condiciones → rutear por canal
 	ssePublished := false
