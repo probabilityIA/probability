@@ -167,6 +167,7 @@ services:
       PGSSLMODE:           "${DB_SSLMODE}"
       JWT_SECRET:          "${JWT_SECRET}"
       CENTRAL_API_URL:     "https://www.probabilityia.com.co"
+      SHOPIFY_CLIENT_SECRET: "${SHOPIFY_CLIENT_SECRET}"
       TESTING_API_PORT:    "9092"
       SOFTPYMES_MOCK_PORT: "9090"
       ENVIOCLICK_MOCK_PORT: "9091"
