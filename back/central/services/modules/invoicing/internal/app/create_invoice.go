@@ -37,6 +37,14 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		uc.log.Error(ctx).Err(err).Msg("Error al obtener configuración de facturación")
 		return nil, errors.ErrProviderNotConfigured
 	}
+	if config == nil {
+		uc.log.Info(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Uint("integration_id", order.IntegrationID).
+			Msg("Integración sin configuración de facturación — se omite")
+		return nil, errors.ErrProviderNotConfigured
+	}
 
 	if !config.Enabled {
 		uc.log.Warn(ctx).

@@ -3,10 +3,12 @@ package repository
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strings"
 
 	"gorm.io/datatypes"
+	"gorm.io/gorm"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/secondary/repository/mappers"
@@ -75,7 +77,10 @@ func (r *Repository) GetConfigByIntegration(ctx context.Context, integrationID u
 		Preload("InvoicingIntegration.IntegrationType").
 		Where("integration_id = ?", integrationID).
 		First(&model).Error; err != nil {
-		return nil, fmt.Errorf("config not found for integration: %w", err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("error querying invoicing config: %w", err)
 	}
 
 	config := mappers.ConfigToDomain(&model)
