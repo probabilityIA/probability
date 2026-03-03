@@ -33,6 +33,19 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 		return
 	}
 
+	h.logger.Info(c.Request.Context()).
+		Str("platform", req.Platform).
+		Str("external_id", req.ExternalID).
+		Uint("integration_id", req.IntegrationID).
+		Str("customer_name", req.CustomerName).
+		Str("customer_email", req.CustomerEmail).
+		Str("customer_phone", req.CustomerPhone).
+		Float64("total_amount", req.TotalAmount).
+		Str("currency", req.Currency).
+		Int("items_count", len(req.Items)).
+		Interface("order_request", req).
+		Msg("📥 CreateOrder request recibido")
+
 	// Validaciones adicionales para prevenir órdenes mal formadas
 	// Para órdenes manuales, el backend puede generar el external_id y usar una integración por defecto
 	if req.Platform != "manual" {

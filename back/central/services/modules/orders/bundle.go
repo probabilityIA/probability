@@ -44,7 +44,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	requestConfirmationUC := initRequestConfirmationUseCase(repo, rabbitPublisher, logger)
 
 	// 4. Inicializar Handlers y Registrar Rutas
-	h := handlers.New(orderCRUD, createUC, requestConfirmationUC)
+	h := handlers.New(orderCRUD, createUC, requestConfirmationUC, logger)
 	h.RegisterRoutes(router)
 
 	// 5. Inicializar Consumers (background goroutines)
