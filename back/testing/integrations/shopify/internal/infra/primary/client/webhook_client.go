@@ -115,12 +115,15 @@ func (c *WebhookClient) BuildWebhook(topic string, shopDomain string, payload in
 		return nil, fmt.Errorf("error al parsear payload: %w", err)
 	}
 
+	secret := c.config.GetWithDefault("SHOPIFY_CLIENT_SECRET", "test-secret-for-development")
+
 	return &sharedtypes.WebhookPayload{
-		URL:     url,
-		Method:  "POST",
-		Headers: headers,
-		Body:    bodyMap,
-		RawBody: string(payloadBytes), // exact bytes used for HMAC — frontend must send this, not re-serialize Body
+		URL:        url,
+		Method:     "POST",
+		Headers:    headers,
+		Body:       bodyMap,
+		RawBody:    string(payloadBytes), // exact bytes used for HMAC — frontend must send this, not re-serialize Body
+		HMACSecret: secret,
 	}, nil
 }
 

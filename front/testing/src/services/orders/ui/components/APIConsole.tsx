@@ -97,7 +97,20 @@ function LogEntry({ log }: { log: APICallLog }) {
               <span className="text-xs font-bold text-blue-400 uppercase tracking-wider">Request</span>
               <span className="text-xs text-gray-500 font-mono">{log.request.url}</span>
             </div>
+            {log.request.hmac_secret && (
+              <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-2 mb-2">
+                <span className="text-xs font-bold text-yellow-400">HMAC Secret: </span>
+                <span className="text-xs text-yellow-300 font-mono">{log.request.hmac_secret}</span>
+              </div>
+            )}
+            {log.request.headers && (
+              <div className="bg-black/30 rounded-lg p-3 overflow-x-auto mb-2">
+                <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Headers</span>
+                <JsonSyntaxHighlight json={formatJson(log.request.headers)} />
+              </div>
+            )}
             <div className="bg-black/30 rounded-lg p-3 overflow-x-auto">
+              <span className="text-xs font-bold text-gray-500 uppercase tracking-wider block mb-1">Body</span>
               <JsonSyntaxHighlight json={formatJson(log.request.body)} />
             </div>
           </div>

@@ -4,9 +4,10 @@ package types
 // The backend builds these and the frontend sends them,
 // so the frontend can display request/response details.
 type WebhookPayload struct {
-	URL     string            `json:"url"`
-	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Body    interface{}       `json:"body"`               // parsed body for display
-	RawBody string            `json:"raw_body,omitempty"` // exact JSON bytes to send (preserves HMAC signature)
+	URL        string            `json:"url"`
+	Method     string            `json:"method"`
+	Headers    map[string]string `json:"headers"`
+	Body       interface{}       `json:"body"`                      // parsed body for display
+	RawBody    string            `json:"raw_body,omitempty"`        // exact JSON bytes to send (preserves HMAC signature)
+	HMACSecret string            `json:"hmac_secret,omitempty"`     // debug: secret used to compute HMAC
 }

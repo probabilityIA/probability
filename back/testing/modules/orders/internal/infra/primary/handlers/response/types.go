@@ -39,11 +39,12 @@ type ReferenceData struct {
 }
 
 type WebhookPayload struct {
-	URL     string            `json:"url"`
-	Method  string            `json:"method"`
-	Headers map[string]string `json:"headers"`
-	Body    interface{}       `json:"body"`
-	RawBody string            `json:"raw_body,omitempty"`
+	URL        string            `json:"url"`
+	Method     string            `json:"method"`
+	Headers    map[string]string `json:"headers"`
+	Body       interface{}       `json:"body"`
+	RawBody    string            `json:"raw_body,omitempty"`
+	HMACSecret string            `json:"hmac_secret,omitempty"`
 }
 
 type OrderError struct {

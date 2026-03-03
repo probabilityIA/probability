@@ -120,7 +120,9 @@ export default function OrderGenerator({ businessId, onApiLogs }: Props) {
           request: {
             method: payload.method,
             url: payload.url,
+            headers: payload.headers,
             body: payload.body,
+            hmac_secret: payload.hmac_secret,
           },
           response: {
             status_code: response.status_code,

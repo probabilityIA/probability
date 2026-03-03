@@ -42,6 +42,7 @@ export interface WebhookPayload {
   headers: Record<string, string>;
   body: Record<string, unknown>;
   raw_body?: string; // exact bytes for HMAC webhooks — send this instead of re-serializing body
+  hmac_secret?: string; // debug: secret used to compute HMAC
 }
 
 export interface GenerateOrdersDTO {
@@ -71,7 +72,9 @@ export interface APICallLog {
   request: {
     method: string;
     url: string;
+    headers?: Record<string, string>;
     body: Record<string, unknown>;
+    hmac_secret?: string;
   };
   response: {
     status_code: number;

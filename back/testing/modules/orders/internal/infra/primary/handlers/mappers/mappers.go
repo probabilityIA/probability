@@ -64,11 +64,12 @@ func GenerateResultToResponse(result *entities.GenerateResult) *response.Generat
 		resp.Payloads = make([]response.WebhookPayload, len(result.Payloads))
 		for i, p := range result.Payloads {
 			resp.Payloads[i] = response.WebhookPayload{
-				URL:     p.URL,
-				Method:  p.Method,
-				Headers: p.Headers,
-				Body:    p.Body,
-				RawBody: p.RawBody,
+				URL:        p.URL,
+				Method:     p.Method,
+				Headers:    p.Headers,
+				Body:       p.Body,
+				RawBody:    p.RawBody,
+				HMACSecret: p.HMACSecret,
 			}
 		}
 	}
