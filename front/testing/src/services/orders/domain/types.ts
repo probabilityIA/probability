@@ -11,7 +11,9 @@ export interface Integration {
   name: string;
   code: string;
   category: string;
+  category_id: number;
   integration_type_id: number;
+  integration_type_code: string;
 }
 
 export interface PaymentMethod {
@@ -31,6 +33,15 @@ export interface ReferenceData {
   integrations: Integration[];
   payment_methods: PaymentMethod[];
   order_statuses: OrderStatus[];
+  webhook_topics: Record<string, string[]>;
+}
+
+export interface WebhookPayload {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: Record<string, unknown>;
+  raw_body?: string; // exact bytes for HMAC webhooks — send this instead of re-serializing body
 }
 
 export interface GenerateOrdersDTO {
@@ -38,18 +49,18 @@ export interface GenerateOrdersDTO {
   integration_id?: number;
   random_products: boolean;
   max_items_per_order: number;
-}
-
-export interface CreatedOrder {
-  id: string;
-  order_number: string;
-  total: number;
-  customer_name: string;
+  topic: string;
 }
 
 export interface OrderError {
   index: number;
   message: string;
+}
+
+export interface GenerateResult {
+  total: number;
+  payloads: WebhookPayload[] | null;
+  errors: OrderError[] | null;
 }
 
 export interface APICallLog {
@@ -66,13 +77,4 @@ export interface APICallLog {
     status_code: number;
     body: string;
   };
-}
-
-export interface GenerateResult {
-  total: number;
-  created: number;
-  failed: number;
-  orders: CreatedOrder[] | null;
-  errors: OrderError[] | null;
-  api_logs: APICallLog[] | null;
 }

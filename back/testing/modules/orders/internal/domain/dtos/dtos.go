@@ -1,10 +1,11 @@
 package dtos
 
 type GenerateOrdersDTO struct {
-	Count           int  `json:"count" binding:"required,min=1,max=20"`
-	IntegrationID   uint `json:"integration_id"`
-	RandomProducts  bool `json:"random_products"`
-	MaxItemsPerOrder int `json:"max_items_per_order"`
+	Count            int    `json:"count" binding:"required,min=1,max=20"`
+	IntegrationID    uint   `json:"integration_id"`
+	RandomProducts   bool   `json:"random_products"`
+	MaxItemsPerOrder int    `json:"max_items_per_order"`
+	Topic            string `json:"topic"`
 }
 
 func (d *GenerateOrdersDTO) ApplyDefaults() {

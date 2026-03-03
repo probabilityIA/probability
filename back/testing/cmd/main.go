@@ -16,9 +16,9 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/whatsapp"
 	"github.com/secamc93/probability/back/testing/modules/orders"
 	"github.com/secamc93/probability/back/testing/shared/db"
-	"github.com/secamc93/probability/back/testing/shared/middleware"
 	"github.com/secamc93/probability/back/testing/shared/env"
 	"github.com/secamc93/probability/back/testing/shared/log"
+	"github.com/secamc93/probability/back/testing/shared/middleware"
 	"github.com/secamc93/probability/back/testing/shared/storage"
 )
 
@@ -59,7 +59,10 @@ func main() {
 		}
 	}()
 
-	// 4. Start Testing Platform API (background)
+	// 4. Initialize Shopify integration (shared between API and CLI)
+	shopifyIntegration := shopify.New(config, logger)
+
+	// 5. Start Testing Platform API (background)
 	apiPort := config.GetWithDefault("TESTING_API_PORT", "9092")
 	jwtSecret := config.Get("JWT_SECRET")
 	if jwtSecret == "" {
@@ -67,7 +70,7 @@ func main() {
 	}
 
 	go func() {
-		if err := startAPIServer(logger, config, database, jwtSecret, apiPort); err != nil {
+		if err := startAPIServer(logger, config, database, jwtSecret, apiPort, shopifyIntegration); err != nil {
 			logger.Error().Msgf("Error starting Testing API: %s", err.Error())
 			os.Exit(1)
 		}
@@ -80,17 +83,17 @@ func main() {
 	fmt.Printf("Testing API:    http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")
 
-	// 5. In server mode (Docker), block forever without interactive CLI
+	// 6. In server mode (Docker), block forever without interactive CLI
 	if os.Getenv("RUN_MODE") == "server" {
 		logger.Info().Msg("Running in server mode (no CLI)")
 		select {}
 	}
 
-	// 6. Start interactive CLI (local development only)
-	runCLIMode(logger, config, softpymesServer, envioclickServer)
+	// 7. Start interactive CLI (local development only)
+	runCLIMode(logger, config, shopifyIntegration, softpymesServer, envioclickServer)
 }
 
-func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabase, jwtSecret, port string) error {
+func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabase, jwtSecret, port string, shopifyIntegration *shopify.ShopifyIntegration) error {
 	gin.SetMode(gin.ReleaseMode)
 	router := gin.New()
 	router.Use(gin.Recovery())
@@ -159,32 +162,19 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 	ordersGroup := api.Group("/orders")
 	ordersGroup.Use(middleware.BusinessWhitelist())
 
-	orders.New(ordersGroup, database, centralAPIURL, logger)
+	// Register webhook simulators by integration type code
+	webhookSimulators := map[string]orders.IWebhookSimulator{
+		"Shopify": shopifyIntegration,
+	}
+
+	orders.New(ordersGroup, database, centralAPIURL, logger, webhookSimulators)
 
 	logger.Info().Str("port", port).Msg("Testing Platform API started")
 	return router.Run(":" + port)
 }
 
 // runCLIMode starts the interactive CLI for webhook simulation
-func runCLIMode(logger log.ILogger, config env.IConfig, softpymesIntegration *softpymes.SoftPymesIntegration, envioclickIntegration *envioclick.EnvioClickIntegration) {
-	webhookBaseURL := config.Get("WEBHOOK_BASE_URL")
-	if webhookBaseURL == "" {
-		logger.Fatal().Msg("WEBHOOK_BASE_URL not configured")
-		os.Exit(1)
-	}
-
-	shopDomain := config.Get("SHOPIFY_SHOP_DOMAIN")
-	if shopDomain == "" {
-		logger.Fatal().Msg("SHOPIFY_SHOP_DOMAIN not configured")
-		os.Exit(1)
-	}
-
-	logger.Info().
-		Str("webhook_base_url", webhookBaseURL).
-		Str("shop_domain", shopDomain).
-		Msg("Initializing webhook simulators (CLI)")
-
-	shopifyIntegration := shopify.New(config, logger)
+func runCLIMode(logger log.ILogger, config env.IConfig, shopifyIntegration *shopify.ShopifyIntegration, softpymesIntegration *softpymes.SoftPymesIntegration, envioclickIntegration *envioclick.EnvioClickIntegration) {
 	whatsappIntegration := whatsapp.New(config, logger)
 
 	reader := bufio.NewReader(os.Stdin)

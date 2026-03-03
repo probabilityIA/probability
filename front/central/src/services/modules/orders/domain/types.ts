@@ -306,6 +306,13 @@ export interface CreateOrderDTO {
     imported_at?: string;
 }
 
+export interface SimulateShopifyResult {
+    total: number;
+    sent: number;
+    failed: number;
+    errors: string[];
+}
+
 export interface UpdateOrderDTO {
     // Información financiera
     subtotal?: number;

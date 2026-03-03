@@ -28,10 +28,17 @@ func (uc *useCase) GetReferenceData(ctx context.Context, businessID uint) (*enti
 		return nil, fmt.Errorf("failed to get order statuses: %w", err)
 	}
 
+	// Build webhook topics map from registered simulators
+	webhookTopics := make(map[string][]string)
+	for typeCode, simulator := range uc.webhookSimulators {
+		webhookTopics[typeCode] = simulator.GetWebhookTopics()
+	}
+
 	return &entities.ReferenceData{
 		Products:       products,
 		Integrations:   integrations,
 		PaymentMethods: paymentMethods,
 		OrderStatuses:  orderStatuses,
+		WebhookTopics:  webhookTopics,
 	}, nil
 }

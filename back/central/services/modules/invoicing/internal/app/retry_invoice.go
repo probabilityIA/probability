@@ -81,9 +81,28 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	}
 
 	// 8. Obtener configuración de facturación
+	// Primero busca por integration_id específico; si no hay, usa la config activa del negocio
 	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
 	if err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to get invoicing config for retry")
+		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotConfigured)
+		return errors.ErrProviderNotConfigured
+	}
+	if config == nil {
+		// Fallback: buscar config activa por business_id
+		config, err = uc.repo.GetEnabledConfigByBusiness(ctx, order.BusinessID)
+		if err != nil {
+			uc.log.Error(ctx).Err(err).Uint("business_id", order.BusinessID).Msg("Failed to get invoicing config by business for retry")
+			uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotConfigured)
+			return errors.ErrProviderNotConfigured
+		}
+	}
+	if config == nil {
+		uc.log.Info(ctx).
+			Uint("invoice_id", invoiceID).
+			Uint("integration_id", order.IntegrationID).
+			Uint("business_id", order.BusinessID).
+			Msg("Negocio sin configuración de facturación activa — retry cancelado")
 		uc.handleInvoiceCreationError(ctx, invoice, syncLog, errors.ErrProviderNotConfigured)
 		return errors.ErrProviderNotConfigured
 	}

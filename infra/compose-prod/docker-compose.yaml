@@ -166,7 +166,7 @@ services:
       DB_PASS:             "${DB_PASSWORD}"
       PGSSLMODE:           "${DB_SSLMODE}"
       JWT_SECRET:          "${JWT_SECRET}"
-      CENTRAL_API_URL:     "http://back-central:3050"
+      CENTRAL_API_URL:     "https://www.probabilityia.com.co"
       TESTING_API_PORT:    "9092"
       SOFTPYMES_MOCK_PORT: "9090"
       ENVIOCLICK_MOCK_PORT: "9091"

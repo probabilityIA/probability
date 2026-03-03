@@ -8,6 +8,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/shopify/internal/domain"
 	"github.com/secamc93/probability/back/testing/shared/env"
 	"github.com/secamc93/probability/back/testing/shared/log"
+	sharedtypes "github.com/secamc93/probability/back/testing/shared/types"
 )
 
 // OrderSimulator simula órdenes de Shopify
@@ -76,6 +77,69 @@ func (s *OrderSimulator) SimulateOrder(topic string) error {
 	s.orderRepository.Save(order)
 
 	return s.webhookClient.SendWebhook(topic, shopDomain, *order)
+}
+
+// BuildWebhookPayload builds the webhook payload without sending it.
+// baseURL is the central API URL to target.
+func (s *OrderSimulator) BuildWebhookPayload(topic string, baseURL string) (*sharedtypes.WebhookPayload, error) {
+	shopDomain := s.businessConfig.ShopDomain
+	if shopDomain == "" {
+		return nil, fmt.Errorf("Shop domain no configurado en business config")
+	}
+
+	var order *domain.Order
+	var err error
+
+	switch topic {
+	case "orders/create":
+		order, err = s.CreateRandomOrder()
+	case "orders/paid":
+		order, err = s.GetOrCreateRandomOrder()
+		if err == nil {
+			order = s.markAsPaid(order)
+		}
+	case "orders/updated":
+		order, err = s.GetOrCreateRandomOrder()
+		if err == nil {
+			order = s.updateOrder(order)
+		}
+	case "orders/cancelled":
+		order, err = s.GetOrCreateRandomOrder()
+		if err == nil {
+			order = s.cancelOrder(order)
+		}
+	case "orders/fulfilled":
+		order, err = s.GetOrCreateRandomOrder()
+		if err == nil {
+			order = s.fulfillOrder(order)
+		}
+	case "orders/partially_fulfilled":
+		order, err = s.GetOrCreateRandomOrder()
+		if err == nil {
+			order = s.partiallyFulfillOrder(order)
+		}
+	default:
+		return nil, fmt.Errorf("topic no soportado: %s", topic)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	s.orderRepository.Save(order)
+
+	return s.webhookClient.BuildWebhook(topic, shopDomain, *order, baseURL)
+}
+
+// GetWebhookTopics returns the list of supported webhook topics
+func (s *OrderSimulator) GetWebhookTopics() []string {
+	return []string{
+		"orders/create",
+		"orders/paid",
+		"orders/updated",
+		"orders/cancelled",
+		"orders/fulfilled",
+		"orders/partially_fulfilled",
+	}
 }
 
 // CreateRandomOrder crea una nueva orden aleatoria

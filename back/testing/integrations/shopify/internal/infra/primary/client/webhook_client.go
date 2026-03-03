@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/shopify/internal/domain"
 	"github.com/secamc93/probability/back/testing/shared/env"
 	"github.com/secamc93/probability/back/testing/shared/log"
+	sharedtypes "github.com/secamc93/probability/back/testing/shared/types"
 )
 
 // Verificar que WebhookClient implementa domain.IWebhookClient
@@ -85,6 +86,42 @@ func (c *WebhookClient) SendWebhook(topic string, shopDomain string, payload int
 		Msg("Webhook enviado exitosamente")
 
 	return nil
+}
+
+// BuildWebhook builds the webhook payload without sending it.
+// baseURL is the central API URL (e.g. http://localhost:3050) — NOT the WEBHOOK_BASE_URL env var.
+func (c *WebhookClient) BuildWebhook(topic string, shopDomain string, payload interface{}, baseURL string) (*sharedtypes.WebhookPayload, error) {
+	url := fmt.Sprintf("%s/api/v1/integrations/shopify/webhook", baseURL)
+
+	payloadBytes, err := json.Marshal(payload)
+	if err != nil {
+		return nil, fmt.Errorf("error al serializar payload: %w", err)
+	}
+
+	hmacValue := c.generateHMAC(payloadBytes)
+
+	headers := map[string]string{
+		"Content-Type":            "application/json",
+		"X-Shopify-Topic":         topic,
+		"X-Shopify-Shop-Domain":   shopDomain,
+		"X-Shopify-Hmac-Sha256":   hmacValue,
+		"X-Shopify-API-Version":   c.config.GetWithDefault("SHOPIFY_API_VERSION", "2024-01"),
+		"X-Shopify-Webhook-Id":    fmt.Sprintf("test-%d", time.Now().Unix()),
+	}
+
+	// Unmarshal back to map so the body is a JSON object in the response
+	var bodyMap map[string]interface{}
+	if err := json.Unmarshal(payloadBytes, &bodyMap); err != nil {
+		return nil, fmt.Errorf("error al parsear payload: %w", err)
+	}
+
+	return &sharedtypes.WebhookPayload{
+		URL:     url,
+		Method:  "POST",
+		Headers: headers,
+		Body:    bodyMap,
+		RawBody: string(payloadBytes), // exact bytes used for HMAC — frontend must send this, not re-serialize Body
+	}, nil
 }
 
 // generateHMAC genera un HMAC usando el client_secret real de Shopify

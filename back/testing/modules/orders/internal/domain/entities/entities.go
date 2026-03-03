@@ -1,5 +1,7 @@
 package entities
 
+import sharedtypes "github.com/secamc93/probability/back/testing/shared/types"
+
 type Product struct {
 	ID       string
 	Name     string
@@ -9,11 +11,13 @@ type Product struct {
 }
 
 type Integration struct {
-	ID             uint
-	Name           string
-	Code           string
-	Category       string
-	IntegrationTypeID uint
+	ID                  uint
+	Name                string
+	Code                string
+	Category            string
+	CategoryID          uint
+	IntegrationTypeID   uint
+	IntegrationTypeCode string
 }
 
 type PaymentMethod struct {
@@ -33,6 +37,7 @@ type ReferenceData struct {
 	Integrations   []Integration
 	PaymentMethods []PaymentMethod
 	OrderStatuses  []OrderStatus
+	WebhookTopics  map[string][]string // keyed by integration_type_code
 }
 
 type APIRequest struct {
@@ -56,18 +61,15 @@ type APICallLog struct {
 }
 
 type GenerateResult struct {
-	Total     int
-	Created   int
-	Failed    int
-	Orders    []CreatedOrder
-	Errors    []OrderError
-	APILogs   []APICallLog
+	Total    int
+	Payloads []sharedtypes.WebhookPayload
+	Errors   []OrderError
 }
 
 type CreatedOrder struct {
-	ID          string
-	OrderNumber string
-	Total       float64
+	ID           string
+	OrderNumber  string
+	Total        float64
 	CustomerName string
 }
 

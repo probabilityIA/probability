@@ -88,7 +88,7 @@ export async function fetchReferenceDataAction(
   return data.data;
 }
 
-export async function generateOrdersAction(
+export async function buildPayloadsAction(
   token: string,
   businessId: number,
   dto: {
@@ -96,6 +96,7 @@ export async function generateOrdersAction(
     integration_id?: number;
     random_products: boolean;
     max_items_per_order: number;
+    topic: string;
   }
 ) {
   const data = await fetchServer(
@@ -107,4 +108,47 @@ export async function generateOrdersAction(
     }
   );
   return data.data;
+}
+
+// Send a single pre-built payload to its target URL
+export async function sendPayloadAction(payload: {
+  url: string;
+  method: string;
+  headers: Record<string, string>;
+  body: Record<string, unknown>;
+  raw_body?: string;
+}): Promise<{
+  status_code: number;
+  body: string;
+  duration_ms: number;
+}> {
+  const start = Date.now();
+
+  try {
+    // Use raw_body when available (preserves exact bytes for HMAC validation)
+    const requestBody = payload.raw_body || JSON.stringify(payload.body);
+
+    const res = await fetch(payload.url, {
+      method: payload.method,
+      cache: "no-store",
+      headers: payload.headers,
+      body: requestBody,
+    });
+
+    const text = await res.text();
+    const durationMs = Date.now() - start;
+
+    return {
+      status_code: res.status,
+      body: text,
+      duration_ms: durationMs,
+    };
+  } catch (err: unknown) {
+    const durationMs = Date.now() - start;
+    return {
+      status_code: 0,
+      body: err instanceof Error ? err.message : "Network error",
+      duration_ms: durationMs,
+    };
+  }
 }

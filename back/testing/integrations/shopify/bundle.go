@@ -5,6 +5,7 @@ import (
 	"github.com/secamc93/probability/back/testing/integrations/shopify/internal/domain"
 	"github.com/secamc93/probability/back/testing/shared/env"
 	"github.com/secamc93/probability/back/testing/shared/log"
+	sharedtypes "github.com/secamc93/probability/back/testing/shared/types"
 )
 
 // New inicializa el módulo de Shopify para pruebas de integración
@@ -29,6 +30,16 @@ func (s *ShopifyIntegration) SimulateOrder(topic string) error {
 	return s.orderSimulator.SimulateOrder(topic)
 }
 
+// BuildWebhookPayload builds the webhook payload without sending it
+func (s *ShopifyIntegration) BuildWebhookPayload(topic string, baseURL string) (*sharedtypes.WebhookPayload, error) {
+	return s.orderSimulator.BuildWebhookPayload(topic, baseURL)
+}
+
+// GetWebhookTopics returns the list of supported webhook topics
+func (s *ShopifyIntegration) GetWebhookTopics() []string {
+	return s.orderSimulator.GetWebhookTopics()
+}
+
 // GetAllOrders retorna todas las órdenes almacenadas
 func (s *ShopifyIntegration) GetAllOrders() []*domain.Order {
 	return s.orderSimulator.GetAllOrders()
@@ -38,16 +49,3 @@ func (s *ShopifyIntegration) GetAllOrders() []*domain.Order {
 func (s *ShopifyIntegration) GetOrderByNumber(orderNumber string) (*domain.Order, bool) {
 	return s.orderSimulator.GetOrderByNumber(orderNumber)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

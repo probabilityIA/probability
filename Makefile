@@ -5,6 +5,7 @@ BACKEND_DIR = back/central
 FRONTEND_DIR = front/central
 MIGRATION_DIR = back/migration
 TESTING_DIR = back/testing
+FRONTEND_TESTING_DIR = front/testing
 DOCKER_LOCAL = infra/compose-local
 DOCKER_PROD = infra/compose-prod
 
@@ -89,12 +90,30 @@ lint-frontend: ## Ejecutar linter del frontend
 	cd $(FRONTEND_DIR) && pnpm lint
 
 # ======================
-# Testing (Simuladores)
+# Frontend Testing
 # ======================
 
-run-testing: ## Iniciar Testing Server (HTTP + CLI interactivo)
+run-frontend-testing: ## Iniciar frontend de testing (dev, puerto 3051)
+	@echo "🚀 Iniciando frontend testing..."
+	cd $(FRONTEND_TESTING_DIR) && pnpm dev
+
+build-frontend-testing: ## Compilar frontend de testing (producción)
+	@echo "🔨 Compilando frontend testing..."
+	cd $(FRONTEND_TESTING_DIR) && pnpm build
+
+install-frontend-testing: ## Instalar dependencias del frontend testing
+	@echo "📦 Instalando dependencias del frontend testing..."
+	cd $(FRONTEND_TESTING_DIR) && pnpm install
+
+# ======================
+# Testing (Simuladores + API)
+# ======================
+
+run-testing: ## Iniciar Testing Server (mocks + API en puerto 9092)
 	@echo "🎭 Iniciando Testing Server..."
 	@echo "  📡 Softpymes HTTP en puerto 9090"
+	@echo "  📡 EnvioClick HTTP en puerto 9091"
+	@echo "  📡 Testing API en puerto 9092"
 	@echo "  🎮 CLI interactivo para Shopify/WhatsApp"
 	cd $(TESTING_DIR) && go run cmd/main.go
 
@@ -136,9 +155,10 @@ dev: docker-up ## Iniciar entorno completo de desarrollo
 	@echo "  RabbitMQ:    localhost:5672 (UI: http://localhost:15672)"
 	@echo "  MinIO:       localhost:9000 (UI: http://localhost:9001)"
 	@echo ""
-	@echo "Para iniciar backend:  make run-backend"
-	@echo "Para iniciar frontend: make run-frontend"
-	@echo "Para iniciar testing:  make run-testing"
+	@echo "Para iniciar backend:          make run-backend"
+	@echo "Para iniciar frontend:         make run-frontend"
+	@echo "Para iniciar testing backend:  make run-testing"
+	@echo "Para iniciar testing frontend: make run-frontend-testing"
 
 run-all: ## Iniciar backend, frontend y testing server (requiere tmux)
 	@echo "🚀 Iniciando todos los servicios..."
@@ -172,6 +192,7 @@ clean: ## Limpiar archivos compilados
 	find . -name "*.exe" -type f -delete
 	find . -name "softpymes-server" -type f -delete
 	cd $(FRONTEND_DIR) && rm -rf .next out
+	cd $(FRONTEND_TESTING_DIR) && rm -rf .next out
 
 clean-docker: ## Limpiar volúmenes de Docker (⚠️ BORRA DATOS)
 	@echo "⚠️  ¿Estás seguro? Esto borrará todos los datos de Docker (PostgreSQL, Redis, etc.)"
@@ -220,10 +241,15 @@ info: ## Mostrar información del proyecto
 	@echo "  Framework:  Next.js 16.1 + React 19"
 	@echo "  Puerto:     3000 (default)"
 	@echo ""
-	@echo "Testing Server (Simuladores):"
+	@echo "Frontend Testing:"
+	@echo "  Directorio: $(FRONTEND_TESTING_DIR)"
+	@echo "  Framework:  Next.js 16.1 + React 19"
+	@echo "  Puerto:     3051"
+	@echo ""
+	@echo "Testing Server (Simuladores + API):"
 	@echo "  Directorio: $(TESTING_DIR)"
-	@echo "  Simuladores: Softpymes, Shopify, WhatsApp"
-	@echo "  Puerto:     9090 (Softpymes)"
+	@echo "  Simuladores: Softpymes, EnvioClick, Shopify, WhatsApp"
+	@echo "  Puertos:    9090 (Softpymes), 9091 (EnvioClick), 9092 (Testing API)"
 	@echo ""
 	@echo "Base de Datos:"
 	@echo "  Producción: database-1.capmmoe4cw2e.us-east-1.rds.amazonaws.com:5432"

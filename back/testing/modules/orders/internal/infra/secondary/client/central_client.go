@@ -27,6 +27,10 @@ func New(centralAPIURL string) ports.ICentralClient {
 	}
 }
 
+func (c *CentralClient) GetBaseURL() string {
+	return c.baseURL
+}
+
 func (c *CentralClient) CreateOrder(ctx context.Context, token string, orderPayload map[string]interface{}) (*entities.CreatedOrder, *entities.APICallLog, error) {
 	url := c.baseURL + "/api/v1/orders"
 

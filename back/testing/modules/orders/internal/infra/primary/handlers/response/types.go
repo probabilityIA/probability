@@ -9,11 +9,13 @@ type Product struct {
 }
 
 type Integration struct {
-	ID                uint   `json:"id"`
-	Name              string `json:"name"`
-	Code              string `json:"code"`
-	Category          string `json:"category"`
-	IntegrationTypeID uint   `json:"integration_type_id"`
+	ID                  uint   `json:"id"`
+	Name                string `json:"name"`
+	Code                string `json:"code"`
+	Category            string `json:"category"`
+	CategoryID          uint   `json:"category_id"`
+	IntegrationTypeID   uint   `json:"integration_type_id"`
+	IntegrationTypeCode string `json:"integration_type_code"`
 }
 
 type PaymentMethod struct {
@@ -29,17 +31,19 @@ type OrderStatus struct {
 }
 
 type ReferenceData struct {
-	Products       []Product       `json:"products"`
-	Integrations   []Integration   `json:"integrations"`
-	PaymentMethods []PaymentMethod `json:"payment_methods"`
-	OrderStatuses  []OrderStatus   `json:"order_statuses"`
+	Products       []Product           `json:"products"`
+	Integrations   []Integration       `json:"integrations"`
+	PaymentMethods []PaymentMethod     `json:"payment_methods"`
+	OrderStatuses  []OrderStatus       `json:"order_statuses"`
+	WebhookTopics  map[string][]string `json:"webhook_topics"`
 }
 
-type CreatedOrder struct {
-	ID           string  `json:"id"`
-	OrderNumber  string  `json:"order_number"`
-	Total        float64 `json:"total"`
-	CustomerName string  `json:"customer_name"`
+type WebhookPayload struct {
+	URL     string            `json:"url"`
+	Method  string            `json:"method"`
+	Headers map[string]string `json:"headers"`
+	Body    interface{}       `json:"body"`
+	RawBody string            `json:"raw_body,omitempty"`
 }
 
 type OrderError struct {
@@ -47,31 +51,8 @@ type OrderError struct {
 	Message string `json:"message"`
 }
 
-type APIRequest struct {
-	Method string                 `json:"method"`
-	URL    string                 `json:"url"`
-	Body   map[string]interface{} `json:"body"`
-}
-
-type APIResponse struct {
-	StatusCode int    `json:"status_code"`
-	Body       string `json:"body"`
-}
-
-type APICallLog struct {
-	Index      int         `json:"index"`
-	Success    bool        `json:"success"`
-	Timestamp  string      `json:"timestamp"`
-	DurationMs int64       `json:"duration_ms"`
-	Request    APIRequest  `json:"request"`
-	Response   APIResponse `json:"response"`
-}
-
 type GenerateResult struct {
-	Total   int            `json:"total"`
-	Created int            `json:"created"`
-	Failed  int            `json:"failed"`
-	Orders  []CreatedOrder `json:"orders"`
-	Errors  []OrderError   `json:"errors"`
-	APILogs []APICallLog   `json:"api_logs"`
+	Total    int              `json:"total"`
+	Payloads []WebhookPayload `json:"payloads"`
+	Errors   []OrderError     `json:"errors"`
 }

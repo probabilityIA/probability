@@ -12,6 +12,7 @@ var allowedBusinessIDs = map[uint]bool{
 	7:  true,
 	26: true,
 	33: true,
+	37: true,
 }
 
 func BusinessWhitelist() gin.HandlerFunc {
@@ -33,7 +34,7 @@ func BusinessWhitelist() gin.HandlerFunc {
 		if !allowedBusinessIDs[uint(id)] {
 			c.JSON(http.StatusForbidden, gin.H{
 				"error":       "Business not authorized for testing",
-				"allowed_ids": []uint{4, 7, 26, 33},
+				"allowed_ids": []uint{4, 7, 26, 33, 37},
 			})
 			c.Abort()
 			return
@@ -45,5 +46,5 @@ func BusinessWhitelist() gin.HandlerFunc {
 }
 
 func GetAllowedBusinessIDs() []uint {
-	return []uint{4, 7, 26, 33}
+	return []uint{4, 7, 26, 33, 37}
 }

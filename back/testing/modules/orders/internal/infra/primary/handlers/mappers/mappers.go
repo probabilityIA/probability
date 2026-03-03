@@ -11,6 +11,7 @@ func ReferenceDataToResponse(data *entities.ReferenceData) *response.ReferenceDa
 		Integrations:   make([]response.Integration, len(data.Integrations)),
 		PaymentMethods: make([]response.PaymentMethod, len(data.PaymentMethods)),
 		OrderStatuses:  make([]response.OrderStatus, len(data.OrderStatuses)),
+		WebhookTopics:  data.WebhookTopics,
 	}
 
 	for i, p := range data.Products {
@@ -25,11 +26,13 @@ func ReferenceDataToResponse(data *entities.ReferenceData) *response.ReferenceDa
 
 	for i, ig := range data.Integrations {
 		resp.Integrations[i] = response.Integration{
-			ID:                ig.ID,
-			Name:              ig.Name,
-			Code:              ig.Code,
-			Category:          ig.Category,
-			IntegrationTypeID: ig.IntegrationTypeID,
+			ID:                  ig.ID,
+			Name:                ig.Name,
+			Code:                ig.Code,
+			Category:            ig.Category,
+			CategoryID:          ig.CategoryID,
+			IntegrationTypeID:   ig.IntegrationTypeID,
+			IntegrationTypeCode: ig.IntegrationTypeCode,
 		}
 	}
 
@@ -54,19 +57,18 @@ func ReferenceDataToResponse(data *entities.ReferenceData) *response.ReferenceDa
 
 func GenerateResultToResponse(result *entities.GenerateResult) *response.GenerateResult {
 	resp := &response.GenerateResult{
-		Total:   result.Total,
-		Created: result.Created,
-		Failed:  result.Failed,
+		Total: result.Total,
 	}
 
-	if len(result.Orders) > 0 {
-		resp.Orders = make([]response.CreatedOrder, len(result.Orders))
-		for i, o := range result.Orders {
-			resp.Orders[i] = response.CreatedOrder{
-				ID:           o.ID,
-				OrderNumber:  o.OrderNumber,
-				Total:        o.Total,
-				CustomerName: o.CustomerName,
+	if len(result.Payloads) > 0 {
+		resp.Payloads = make([]response.WebhookPayload, len(result.Payloads))
+		for i, p := range result.Payloads {
+			resp.Payloads[i] = response.WebhookPayload{
+				URL:     p.URL,
+				Method:  p.Method,
+				Headers: p.Headers,
+				Body:    p.Body,
+				RawBody: p.RawBody,
 			}
 		}
 	}
@@ -77,27 +79,6 @@ func GenerateResultToResponse(result *entities.GenerateResult) *response.Generat
 			resp.Errors[i] = response.OrderError{
 				Index:   e.Index,
 				Message: e.Message,
-			}
-		}
-	}
-
-	if len(result.APILogs) > 0 {
-		resp.APILogs = make([]response.APICallLog, len(result.APILogs))
-		for i, l := range result.APILogs {
-			resp.APILogs[i] = response.APICallLog{
-				Index:      l.Index,
-				Success:    l.Success,
-				Timestamp:  l.Timestamp,
-				DurationMs: l.DurationMs,
-				Request: response.APIRequest{
-					Method: l.Request.Method,
-					URL:    l.Request.URL,
-					Body:   l.Request.Body,
-				},
-				Response: response.APIResponse{
-					StatusCode: l.Response.StatusCode,
-					Body:       l.Response.Body,
-				},
 			}
 		}
 	}

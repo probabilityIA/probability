@@ -35,6 +35,11 @@ export const env = {
            process.env.NEXT_PUBLIC_API_BASE_URL ||
            'http://localhost:3050/api/v1';
   },
+
+  // Testing Platform API (private - server only)
+  get TESTING_API_URL(): string {
+    return process.env.TESTING_API_URL || 'http://localhost:9092/api/v1';
+  },
 } as const;
 
 /**

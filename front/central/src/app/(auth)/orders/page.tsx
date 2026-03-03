@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getOrderByIdAction } from '@/services/modules/orders/infra/actions';
-import { OrderList, OrderDetails, OrderForm } from '@/services/modules/orders/ui';
+import { OrderList, OrderDetails, OrderForm, ShopifySimulatorModal } from '@/services/modules/orders/ui';
 import { Order } from '@/services/modules/orders/domain/types';
 import { Modal } from '@/shared/ui';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
@@ -24,6 +24,7 @@ export default function OrdersPage() {
     const [showGuideModal, setShowGuideModal] = useState(false);
     const [showMassUploadModal, setShowMassUploadModal] = useState(false);
     const [showMassGuideModal, setShowMassGuideModal] = useState(false);
+    const [showShopifyModal, setShowShopifyModal] = useState(false);
     const [refreshKey, setRefreshKey] = useState(0);
 
     // Set action buttons in navbar
@@ -50,6 +51,13 @@ export default function OrdersPage() {
                     className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
                 >
                     Guías Masivas
+                </button>
+                <button
+                    onClick={() => setShowShopifyModal(true)}
+                    style={{ background: '#059669' }}
+                    className="px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                >
+                    Simular Shopify
                 </button>
             </>
         );
@@ -204,6 +212,13 @@ export default function OrdersPage() {
                     setRefreshKey(prev => prev + 1);
                     setShowMassGuideModal(false);
                 }}
+            />
+
+            {/* Shopify Simulator Modal */}
+            <ShopifySimulatorModal
+                isOpen={showShopifyModal}
+                onClose={() => setShowShopifyModal(false)}
+                onSuccess={() => setRefreshKey(prev => prev + 1)}
             />
         </div>
     );
