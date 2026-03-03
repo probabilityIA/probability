@@ -5,8 +5,9 @@ import "time"
 // InvoiceResponseMessage es el mensaje que los proveedores publican de vuelta a Invoicing Module
 type InvoiceResponseMessage struct {
 	InvoiceID      uint                   `json:"invoice_id"`
-	Provider       string                 `json:"provider"` // "softpymes", "siigo", "factus"
-	Status         string                 `json:"status"`   // "success", "error"
+	Provider       string                 `json:"provider"`   // "softpymes", "siigo", "factus"
+	Status         string                 `json:"status"`     // "success", "error"
+	Operation      string                 `json:"operation"`  // "create", "retry", "cancel"
 	InvoiceNumber  string                 `json:"invoice_number,omitempty"`
 	ExternalID     string                 `json:"external_id,omitempty"`
 	InvoiceURL     string                 `json:"invoice_url,omitempty"`

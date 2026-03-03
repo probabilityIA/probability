@@ -9,7 +9,11 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/infra/primary/handlers/response"
 )
 
-// CancelInvoice cancela una factura
+type cancelInvoiceRequest struct {
+	Reason string `json:"reason"`
+}
+
+// CancelInvoice anula una factura emitida en el proveedor
 func (h *handler) CancelInvoice(c *gin.Context) {
 	ctx := c.Request.Context()
 
@@ -24,20 +28,32 @@ func (h *handler) CancelInvoice(c *gin.Context) {
 		return
 	}
 
-	h.log.Info(ctx).Uint("invoice_id", uint(id)).Msg("Cancelling invoice")
+	// Obtener reason del body (opcional)
+	var req cancelInvoiceRequest
+	_ = c.ShouldBindJSON(&req)
+	if req.Reason == "" {
+		req.Reason = "Anulación de factura"
+	}
 
-	// Llamar caso de uso
-	err = h.useCase.CancelInvoice(ctx, &dtos.CancelInvoiceDTO{InvoiceID: uint(id)})
+	userID := c.GetUint("user_id")
+
+	h.log.Info(ctx).Uint("invoice_id", uint(id)).Str("reason", req.Reason).Msg("Cancelling invoice")
+
+	err = h.useCase.CancelInvoice(ctx, &dtos.CancelInvoiceDTO{
+		InvoiceID:         uint(id),
+		Reason:            req.Reason,
+		CancelledByUserID: userID,
+	})
 	if err != nil {
 		h.log.Error(ctx).Err(err).Uint("invoice_id", uint(id)).Msg("Failed to cancel invoice")
 		handleDomainError(c, err, "cancel_invoice_failed")
 		return
 	}
 
-	h.log.Info(ctx).Uint("invoice_id", uint(id)).Msg("Invoice cancelled successfully")
+	h.log.Info(ctx).Uint("invoice_id", uint(id)).Msg("Invoice cancel request sent to provider")
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Invoice cancelled successfully",
+		"message":    "Solicitud de anulación enviada al proveedor",
 		"invoice_id": uint(id),
 	})
 }

@@ -331,6 +331,64 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	return result, nil
 }
 
+// CancelInvoice anula una factura emitida en Softpymes
+// documentNumber: número de documento (ej: "FEV0000001")
+// baseURL: URL base efectiva (producción o testing)
+func (c *Client) CancelInvoice(ctx context.Context, apiKey, apiSecret, referer, documentNumber, reason, baseURL string) error {
+	// Autenticar
+	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, baseURL)
+	if err != nil {
+		return fmt.Errorf("authentication failed: %w", err)
+	}
+
+	cancelReq := map[string]interface{}{
+		"documentNumber": documentNumber,
+		"reason":         reason,
+	}
+
+	var cancelResp struct {
+		Message string `json:"message"`
+		Error   string `json:"error"`
+	}
+
+	requestURL := c.resolveURL(baseURL, "/app/integration/sales_invoice/cancel/")
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetAuthToken(token).
+		SetHeader("Referer", referer).
+		SetBody(cancelReq).
+		SetResult(&cancelResp).
+		Post(requestURL)
+
+	if err != nil {
+		c.log.Error(ctx).Err(err).Str("document_number", documentNumber).Msg("Failed to cancel invoice")
+		return fmt.Errorf("invoice cancellation request failed: %w", err)
+	}
+
+	if resp.IsError() {
+		if resp.StatusCode() == 401 {
+			c.tokenCache.Clear()
+			return fmt.Errorf("authentication token expired")
+		}
+		c.log.Error(ctx).
+			Int("status", resp.StatusCode()).
+			Str("response", string(resp.Body())).
+			Msg("Invoice cancellation failed")
+		return fmt.Errorf("invoice cancellation failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
+	}
+
+	if cancelResp.Error != "" {
+		return fmt.Errorf("invoice cancellation error: %s", cancelResp.Error)
+	}
+
+	c.log.Info(ctx).
+		Str("document_number", documentNumber).
+		Str("message", cancelResp.Message).
+		Msg("Invoice cancelled successfully in Softpymes")
+
+	return nil
+}
+
 // mapCurrencyToSoftpymes convierte códigos ISO de moneda al formato de Softpymes
 // Softpymes usa: "P" = Peso Colombiano, "D" = Dólar Americano
 func mapCurrencyToSoftpymes(isoCurrency string) string {

@@ -12,6 +12,7 @@ import (
 type SoftpymesClientMock struct {
 	TestAuthenticationFn  func(ctx context.Context, apiKey, apiSecret, referer, baseURL string) error
 	CreateInvoiceFn       func(ctx context.Context, req *dtos.CreateInvoiceRequest, baseURL string) (*dtos.CreateInvoiceResult, error)
+	CancelInvoiceFn       func(ctx context.Context, apiKey, apiSecret, referer, documentNumber, reason, baseURL string) error
 	CreateCreditNoteFn    func(ctx context.Context, creditNoteData map[string]interface{}) error
 	GetDocumentByNumberFn func(ctx context.Context, apiKey, apiSecret, referer, documentNumber, baseURL string) (map[string]interface{}, error)
 	ListDocumentsFn       func(ctx context.Context, apiKey, apiSecret, referer string, params ports.ListDocumentsParams, baseURL string) ([]ports.ListedDocument, error)
@@ -29,6 +30,13 @@ func (m *SoftpymesClientMock) CreateInvoice(ctx context.Context, req *dtos.Creat
 		return m.CreateInvoiceFn(ctx, req, baseURL)
 	}
 	return &dtos.CreateInvoiceResult{}, nil
+}
+
+func (m *SoftpymesClientMock) CancelInvoice(ctx context.Context, apiKey, apiSecret, referer, documentNumber, reason, baseURL string) error {
+	if m.CancelInvoiceFn != nil {
+		return m.CancelInvoiceFn(ctx, apiKey, apiSecret, referer, documentNumber, reason, baseURL)
+	}
+	return nil
 }
 
 func (m *SoftpymesClientMock) CreateCreditNote(ctx context.Context, creditNoteData map[string]interface{}) error {

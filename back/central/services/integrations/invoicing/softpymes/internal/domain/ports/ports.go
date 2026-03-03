@@ -23,6 +23,12 @@ type ISoftpymesClient interface {
 	// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
 	CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest, baseURL string) (*dtos.CreateInvoiceResult, error)
 
+	// CancelInvoice anula una factura emitida en Softpymes
+	// documentNumber: número de documento devuelto por Softpymes al crear (ej: "FEV0000001")
+	// reason: motivo de la anulación
+	// baseURL: URL base efectiva (producción o testing)
+	CancelInvoice(ctx context.Context, apiKey, apiSecret, referer, documentNumber, reason, baseURL string) error
+
 	// CreateCreditNote crea una nota crédito en Softpymes
 	CreateCreditNote(ctx context.Context, creditNoteData map[string]interface{}) error
 

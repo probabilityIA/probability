@@ -161,11 +161,19 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		syncLog = syncLogs[0]
 	}
 
-	// Procesar según status
-	if response.Status == dtos.ResponseStatusSuccess {
-		c.handleSuccess(ctx, invoice, syncLog, &response)
+	// Procesar según operación y status
+	if response.Operation == dtos.OperationCancel {
+		if response.Status == dtos.ResponseStatusSuccess {
+			c.handleCancelSuccess(ctx, invoice, syncLog, &response)
+		} else {
+			c.handleCancelError(ctx, invoice, syncLog, &response)
+		}
 	} else {
-		c.handleError(ctx, invoice, syncLog, &response)
+		if response.Status == dtos.ResponseStatusSuccess {
+			c.handleSuccess(ctx, invoice, syncLog, &response)
+		} else {
+			c.handleError(ctx, invoice, syncLog, &response)
+		}
 	}
 
 	return nil
@@ -327,6 +335,87 @@ func (c *ResponseConsumer) handleError(
 
 	// Actualizar contadores de bulk job si la factura pertenece a uno
 	c.updateBulkJobOnResult(ctx, invoice.ID, false)
+}
+
+// handleCancelSuccess procesa una respuesta exitosa de cancelación
+func (c *ResponseConsumer) handleCancelSuccess(
+	ctx context.Context,
+	invoice *entities.Invoice,
+	syncLog *entities.InvoiceSyncLog,
+	response *dtos.InvoiceResponseMessage,
+) {
+	c.log.Info(ctx).Uint("invoice_id", invoice.ID).Msg("✅ Invoice cancelled successfully by provider")
+
+	now := time.Now()
+	invoice.Status = constants.InvoiceStatusCancelled
+	invoice.CancelledAt = &now
+
+	if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to update invoice status to cancelled")
+		return
+	}
+
+	if syncLog != nil {
+		completedAt := time.Now()
+		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
+		syncLog.Status = constants.SyncStatusSuccess
+		syncLog.CompletedAt = &completedAt
+		syncLog.Duration = &duration
+		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+			c.log.Error(ctx).Err(err).Msg("Failed to update cancel sync log")
+		}
+	}
+
+	// Publicar evento SSE via RabbitMQ → events module → frontend
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.cancelled",
+		Category:   "invoice",
+		BusinessID: invoice.BusinessID,
+		Data: map[string]interface{}{
+			"invoice_id": invoice.ID,
+			"order_id":   invoice.OrderID,
+		},
+	})
+
+	c.log.Info(ctx).Uint("invoice_id", invoice.ID).Msg("✅ Invoice cancellation processed successfully")
+}
+
+// handleCancelError procesa un error de cancelación
+func (c *ResponseConsumer) handleCancelError(
+	ctx context.Context,
+	invoice *entities.Invoice,
+	syncLog *entities.InvoiceSyncLog,
+	response *dtos.InvoiceResponseMessage,
+) {
+	c.log.Error(ctx).
+		Uint("invoice_id", invoice.ID).
+		Str("error", response.Error).
+		Msg("❌ Provider returned error on cancellation")
+
+	if syncLog != nil {
+		completedAt := time.Now()
+		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
+		syncLog.Status = constants.SyncStatusFailed
+		syncLog.CompletedAt = &completedAt
+		syncLog.Duration = &duration
+		syncLog.ErrorMessage = &response.Error
+		syncLog.ErrorCode = &response.ErrorCode
+		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+			c.log.Error(ctx).Err(err).Msg("Failed to update cancel sync log")
+		}
+	}
+
+	// Publicar evento SSE de error via RabbitMQ
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.cancel_failed",
+		Category:   "invoice",
+		BusinessID: invoice.BusinessID,
+		Data: map[string]interface{}{
+			"invoice_id":    invoice.ID,
+			"order_id":      invoice.OrderID,
+			"error_message": response.Error,
+		},
+	})
 }
 
 // updateBulkJobOnResult actualiza los contadores del bulk job cuando se recibe el resultado del proveedor
