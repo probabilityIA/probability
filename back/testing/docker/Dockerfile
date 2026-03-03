@@ -1,3 +1,4 @@
+# Multi-stage Dockerfile for Testing Backend
 # Etapa 1: Build con Go
 FROM --platform=linux/arm64 golang:1.24-alpine AS builder
 
