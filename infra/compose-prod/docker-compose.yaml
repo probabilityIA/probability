@@ -152,6 +152,88 @@ services:
           memory: 256M
 
 
+  back-testing:
+    platform: linux/arm64
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-testing-backend:latest
+    container_name: testing_backend_prod
+    ports:
+      - "127.0.0.1:9092:9092"
+    environment:
+      DB_HOST:             "${DB_HOST:-postgres}"
+      DB_PORT:             "5432"
+      DB_NAME:             "${DB_NAME}"
+      DB_USER:             "${DB_USER}"
+      DB_PASS:             "${DB_PASSWORD}"
+      PGSSLMODE:           "${DB_SSLMODE}"
+      JWT_SECRET:          "${JWT_SECRET}"
+      CENTRAL_API_URL:     "http://back-central:3050"
+      TESTING_API_PORT:    "9092"
+      SOFTPYMES_MOCK_PORT: "9090"
+      ENVIOCLICK_MOCK_PORT: "9091"
+      RUN_MODE:            "server"
+      S3_KEY:              "${S3_KEY}"
+      S3_SECRET:           "${S3_SECRET}"
+      S3_BUCKET:           "${S3_BUCKET}"
+      S3_REGION:           "${S3_REGION}"
+      URL_BASE_DOMAIN_S3:  "${URL_BASE_DOMAIN_S3}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9092/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - app-network
+    depends_on:
+      back-central:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
+  front-testing:
+    platform: linux/arm64
+    image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-testing-frontend:latest
+    container_name: testing_frontend_prod
+    ports:
+      - "8082:3051"
+    environment:
+      TESTING_BACKEND_URL: "http://back-testing:9092"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3051/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+    depends_on:
+      - back-testing
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 256M
+        reservations:
+          cpus: "0.25"
+          memory: 128M
+
   redis:
     image: redis:7-alpine
     container_name: redis_prod
