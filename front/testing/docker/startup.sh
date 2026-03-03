@@ -38,5 +38,6 @@ while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
     sleep $RETRY_INTERVAL
 done
 
+echo "CENTRAL_API_URL=${CENTRAL_API_URL:-not set}"
 echo "Starting Next.js server on port 3051..."
 exec node server.js
