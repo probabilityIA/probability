@@ -32,22 +32,26 @@ func New(rabbitMQ rabbitmq.IQueue, logger log.ILogger) ports.IChannelPublisher {
 func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities.Event, config entities.CachedNotificationConfig) error {
 	// Construir payload compatible con el consumer de WhatsApp OrderConfirmation
 	payload := map[string]interface{}{
-		"event_type":       "order.confirmation_requested",
-		"business_id":      event.BusinessID,
-		"integration_id":   event.IntegrationID,
-		"config_id":        config.ID,
+		"event_type":        "order.confirmation_requested",
+		"business_id":       event.BusinessID,
+		"integration_id":    event.IntegrationID,
+		"config_id":         config.ID,
 		"notification_type": "whatsapp",
 	}
 
-	// Copiar datos relevantes del evento
-	if orderID, ok := event.Data["order_id"]; ok {
-		payload["order_id"] = orderID
+	// Copiar todos los campos del snapshot de la orden disponibles en event.Data
+	dataFields := []string{
+		"order_id", "order_number", "internal_number", "external_id",
+		"customer_name", "customer_phone", "customer_email",
+		"total_amount", "currency", "platform",
+		"items_summary", "shipping_address",
 	}
-	if event.Metadata != nil {
-		if orderID, ok := event.Metadata["order_id"]; ok {
-			payload["order_id"] = orderID
+	for _, field := range dataFields {
+		if val, ok := event.Data[field]; ok && val != nil && val != "" {
+			payload[field] = val
 		}
 	}
+
 
 	jsonBytes, err := json.Marshal(payload)
 	if err != nil {
