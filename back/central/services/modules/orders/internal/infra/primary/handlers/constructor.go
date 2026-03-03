@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"strconv"
+
+	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
@@ -11,6 +14,24 @@ type Handlers struct {
 	createUC              ports.IOrderCreateUseCase
 	requestConfirmationUC ports.IRequestConfirmationUseCase
 	logger                log.ILogger
+}
+
+// resolveBusinessID obtiene el business_id efectivo.
+// Para usuarios normales usa el del JWT.
+// Para super admins (business_id=0 en JWT) lee el query param ?business_id=X.
+func (h *Handlers) resolveBusinessID(c *gin.Context) (uint, bool) {
+	if id, ok := c.Get("business_id"); ok {
+		if bID, ok := id.(uint); ok && bID > 0 {
+			return bID, true
+		}
+	}
+	// Super admin: leer de query param
+	if param := c.Query("business_id"); param != "" {
+		if id, err := strconv.ParseUint(param, 10, 64); err == nil && id > 0 {
+			return uint(id), true
+		}
+	}
+	return 0, false
 }
 
 // New crea una nueva instancia de Handlers

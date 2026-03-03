@@ -202,6 +202,7 @@ export default function OrdersPage() {
                     setRefreshKey(prev => prev + 1);
                     setShowMassUploadModal(false);
                 }}
+                selectedBusinessId={selectedBusinessId}
             />
 
             {/* Mass Guide Generation Modal */}

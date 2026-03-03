@@ -11,7 +11,6 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/central/services/auth/middleware"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/xuri/excelize/v2"
 )
@@ -84,12 +83,13 @@ func parseRobustFloat(val string) (float64, error) {
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /orders/upload-bulk [post]
 func (h *Handlers) UploadBulkOrders(c *gin.Context) {
-	// Obtener BusinessID del contexto de autenticación
-	businessID, exists := middleware.GetBusinessID(c)
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{
+	// Para usuarios normales: business_id del JWT.
+	// Para super admin: business_id del query param ?business_id=X.
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "No se pudo identificar la empresa (Sesión expirada o inválida)",
+			"message": "Se requiere seleccionar un negocio (business_id)",
 		})
 		return
 	}

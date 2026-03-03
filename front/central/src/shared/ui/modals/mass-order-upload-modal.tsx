@@ -2,14 +2,17 @@
 
 import { useState } from 'react';
 import { Button, Input } from '@/shared/ui';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 
 interface MassOrderUploadModalProps {
     isOpen: boolean;
     onClose: () => void;
     onUploadComplete?: (count: number) => void;
+    selectedBusinessId?: number | null;
 }
 
-export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete }: MassOrderUploadModalProps) {
+export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete, selectedBusinessId }: MassOrderUploadModalProps) {
+    const { isSuperAdmin } = usePermissions();
     const [file, setFile] = useState<File | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -36,6 +39,11 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
             return;
         }
 
+        if (isSuperAdmin && !selectedBusinessId) {
+            setError('Debes seleccionar un negocio antes de cargar órdenes');
+            return;
+        }
+
         setLoading(true);
         setError(null);
         setSuccess(null);
@@ -45,7 +53,11 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
             const formData = new FormData();
             formData.append('file', file);
 
-            const response = await fetch('/api/v1/orders/upload-bulk', {
+            const url = isSuperAdmin && selectedBusinessId
+                ? `/api/v1/orders/upload-bulk?business_id=${selectedBusinessId}`
+                : '/api/v1/orders/upload-bulk';
+
+            const response = await fetch(url, {
                 method: 'POST',
                 body: formData,
             });
