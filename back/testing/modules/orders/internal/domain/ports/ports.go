@@ -3,8 +3,8 @@ package ports
 import (
 	"context"
 
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/dtos"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/entities"
 )
 
 type IRepository interface {

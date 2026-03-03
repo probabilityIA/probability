@@ -1,8 +1,8 @@
 package repository
 
 import (
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/ports"
-	"github.com/secamc93/probability/back/testing/internal/shared/db"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/ports"
+	"github.com/secamc93/probability/back/testing/shared/db"
 )
 
 type Repository struct {

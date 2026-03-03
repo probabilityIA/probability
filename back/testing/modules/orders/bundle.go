@@ -2,11 +2,11 @@ package orders
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/app"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/infra/primary/handlers"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/infra/secondary/client"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/infra/secondary/repository"
-	"github.com/secamc93/probability/back/testing/internal/shared/db"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/app"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/infra/secondary/client"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/infra/secondary/repository"
+	"github.com/secamc93/probability/back/testing/shared/db"
 	"github.com/secamc93/probability/back/testing/shared/log"
 )
 

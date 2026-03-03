@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/secamc93/probability/back/migration/shared/models"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/entities"
 )
 
 func (r *Repository) GetProducts(ctx context.Context, businessID uint) ([]entities.Product, error) {

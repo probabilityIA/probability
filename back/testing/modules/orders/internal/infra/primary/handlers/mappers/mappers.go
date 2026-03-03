@@ -1,8 +1,8 @@
 package mappers
 
 import (
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/entities"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/infra/primary/handlers/response"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/infra/primary/handlers/response"
 )
 
 func ReferenceDataToResponse(data *entities.ReferenceData) *response.ReferenceData {

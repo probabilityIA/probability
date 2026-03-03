@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/infra/primary/handlers/mappers"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/infra/primary/handlers/mappers"
 )
 
 func (h *Handlers) GetReferenceData(c *gin.Context) {

@@ -5,8 +5,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/dtos"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/infra/primary/handlers/mappers"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/dtos"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/infra/primary/handlers/mappers"
 )
 
 func (h *Handlers) GenerateOrders(c *gin.Context) {

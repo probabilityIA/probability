@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/entities"
 )
 
 func (uc *useCase) GetReferenceData(ctx context.Context, businessID uint) (*entities.ReferenceData, error) {

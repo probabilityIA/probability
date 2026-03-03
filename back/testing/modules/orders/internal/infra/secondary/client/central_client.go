@@ -9,8 +9,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/entities"
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/ports"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/ports"
 )
 
 type CentralClient struct {

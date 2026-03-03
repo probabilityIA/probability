@@ -1,7 +1,7 @@
 package app
 
 import (
-	"github.com/secamc93/probability/back/testing/internal/modules/orders/internal/domain/ports"
+	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/testing/shared/log"
 )
 
