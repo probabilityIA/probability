@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { loginAction } from "@/shared/lib/login-action";
+import { loginAction } from "@/shared/lib/server-actions";
 import { setToken, setUser } from "@/shared/lib/auth";
 
 export default function LoginPage() {

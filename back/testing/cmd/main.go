@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"strings"
 
@@ -102,6 +104,32 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 		})
 	})
 
+	// Auth proxy - forward login to central backend (no auth required)
+	centralAPIURL := config.GetWithDefault("CENTRAL_API_URL", "http://localhost:3050")
+	router.POST("/api/v1/auth/login", func(c *gin.Context) {
+		body, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
+			return
+		}
+
+		resp, err := http.Post(centralAPIURL+"/api/v1/auth/login", "application/json", strings.NewReader(string(body)))
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "central backend not reachable"})
+			return
+		}
+		defer resp.Body.Close()
+
+		respBody, _ := io.ReadAll(resp.Body)
+
+		// Forward Set-Cookie headers
+		for _, cookie := range resp.Cookies() {
+			c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
+		}
+
+		c.Data(resp.StatusCode, "application/json", respBody)
+	})
+
 	// Protected routes
 	api := router.Group("/api/v1")
 	api.Use(middleware.JWTAuth(jwtSecret))
@@ -131,7 +159,6 @@ func startAPIServer(logger log.ILogger, config env.IConfig, database db.IDatabas
 	ordersGroup := api.Group("/orders")
 	ordersGroup.Use(middleware.BusinessWhitelist())
 
-	centralAPIURL := config.GetWithDefault("CENTRAL_API_URL", "http://localhost:3050")
 	orders.New(ordersGroup, database, centralAPIURL, logger)
 
 	logger.Info().Str("port", port).Msg("Testing Platform API started")
