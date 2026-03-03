@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { OrdersApiRepository } from "../../infra/repository/api-repository";
+import { getToken } from "@/shared/lib/auth";
+import { fetchReferenceDataAction, generateOrdersAction } from "@/shared/lib/server-actions";
 import type { Integration, GenerateResult, APICallLog } from "../../domain/types";
 
 interface Props {
@@ -20,12 +21,13 @@ export default function OrderGenerator({ businessId, onApiLogs }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const loadIntegrations = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
     try {
-      const repo = new OrdersApiRepository();
-      const data = await repo.getReferenceData(businessId);
+      const data = await fetchReferenceDataAction(token, businessId);
       setIntegrations(data.integrations || []);
-      // Auto-select platform integration
-      const platform = data.integrations?.find((i) => i.category === "platform");
+      const platform = data.integrations?.find((i: Integration) => i.category === "platform");
       if (platform) setIntegrationId(platform.id);
     } catch {
       // ignore — reference data panel handles errors
@@ -39,14 +41,16 @@ export default function OrderGenerator({ businessId, onApiLogs }: Props) {
   }, [loadIntegrations]);
 
   const handleGenerate = async () => {
+    const token = getToken();
+    if (!token) return;
+
     setLoading(true);
     setError(null);
     setResult(null);
     onApiLogs?.([]);
 
     try {
-      const repo = new OrdersApiRepository();
-      const res = await repo.generateOrders(businessId, {
+      const res = await generateOrdersAction(token, businessId, {
         count,
         integration_id: integrationId ? Number(integrationId) : undefined,
         random_products: randomProducts,

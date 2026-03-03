@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { testingAPI } from "@/shared/lib/api";
+import { getToken } from "@/shared/lib/auth";
+import { fetchBusinessesAction } from "@/shared/lib/server-actions";
 
 interface Business {
   id: number;
@@ -18,8 +19,14 @@ export default function BusinessSelector({ value, onChange }: BusinessSelectorPr
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    testingAPI<{ data: Business[] }>("/businesses")
-      .then((res) => setBusinesses(res.data || []))
+    const token = getToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    fetchBusinessesAction(token)
+      .then((data) => setBusinesses(data || []))
       .catch(() => setBusinesses([]))
       .finally(() => setLoading(false));
   }, []);

@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { OrdersApiRepository } from "../../infra/repository/api-repository";
+import { getToken } from "@/shared/lib/auth";
+import { fetchReferenceDataAction } from "@/shared/lib/server-actions";
 import type { ReferenceData } from "../../domain/types";
 
 interface Props {
@@ -15,11 +16,13 @@ export default function ReferenceDataPanel({ businessId }: Props) {
   const [activeTab, setActiveTab] = useState<"products" | "integrations" | "payments" | "statuses">("products");
 
   const fetchData = useCallback(async () => {
+    const token = getToken();
+    if (!token) return;
+
     setLoading(true);
     setError(null);
     try {
-      const repo = new OrdersApiRepository();
-      const result = await repo.getReferenceData(businessId);
+      const result = await fetchReferenceDataAction(token, businessId);
       setData(result);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load reference data");
