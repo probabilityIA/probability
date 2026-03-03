@@ -328,6 +328,49 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		result.ProviderInfo["dian_message"] = invoiceResp.Info.DocsFe.Message
 	}
 
+	// Enviar recibo de caja si está configurado.
+	// Esto registra el pago en Softpymes y mueve la cuenta contable de
+	// "cuentas por cobrar" (130505xx) a la cuenta del medio de pago configurado.
+	// Config keys:
+	//   send_cash_receipt      bool   - true para habilitar
+	//   payment_type           string - "EF"=Efectivo(default), "TR"=Transferencia, "TC"=Tarjeta crédito, "TD"=Tarjeta débito
+	//   payment_account_number string - número de cuenta bancaria (OBLIGATORIO para tipo TR)
+	if sendCashReceipt, _ := req.Config["send_cash_receipt"].(bool); sendCashReceipt {
+		docPrefix, docNumber := splitDocumentNumber(invoiceResp.Info.DocumentNumber)
+
+		paymentType, _ := req.Config["payment_type"].(string)
+		if paymentType == "" {
+			paymentType = "EF"
+		}
+
+		cashReq := &cashReceiptRequest{
+			DocumentNumber:     docNumber,
+			Prefix:             docPrefix,
+			BranchCode:         branchCode,
+			CustomerNit:        customerNit,
+			CustomerBranchCode: customerBranch,
+			PaymentType:        paymentType,
+			Amount:             req.Total,
+			DocumentDate:       documentDate,
+		}
+
+		if accountNum, ok := req.Config["payment_account_number"].(string); ok && accountNum != "" {
+			cashReq.AccountNumber = accountNum
+		}
+
+		if err := c.sendCashReceipt(ctx, token, referer, baseURL, cashReq); err != nil {
+			// No fallamos la operación — la factura fue creada exitosamente.
+			// El recibo de caja se puede reenviar manualmente desde Softpymes.
+			c.log.Error(ctx).Err(err).
+				Str("document_number", invoiceResp.Info.DocumentNumber).
+				Msg("Cash receipt failed - invoice created but payment not registered in Softpymes")
+			result.ProviderInfo["cash_receipt_error"] = err.Error()
+		} else {
+			result.ProviderInfo["cash_receipt_sent"] = true
+			result.ProviderInfo["cash_receipt_payment_type"] = paymentType
+		}
+	}
+
 	return result, nil
 }
 
