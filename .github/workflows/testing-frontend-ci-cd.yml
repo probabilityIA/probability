@@ -189,20 +189,44 @@ jobs:
             docker compose -f docker-compose.yaml up -d --no-deps front-testing
             sleep 3
 
-            echo "Waiting for container to start (15 seconds)..."
-            sleep 15
-
-            CONTAINER_STATUS=$(docker inspect testing_frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-            if [ "$CONTAINER_STATUS" != "running" ]; then
-              echo "Container not running, attempting restart..."
-              docker logs --tail 30 testing_frontend_prod 2>/dev/null || true
-              docker restart testing_frontend_prod 2>/dev/null || true
-              sleep 10
+            echo "Waiting for container to start (60 seconds max)..."
+            WAIT_COUNT=0
+            MAX_WAIT=12
+            while [ $WAIT_COUNT -lt $MAX_WAIT ]; do
               CONTAINER_STATUS=$(docker inspect testing_frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
-              if [ "$CONTAINER_STATUS" != "running" ]; then
-                echo "Error: Could not start container"
-                exit 1
+              if [ "$CONTAINER_STATUS" = "running" ]; then
+                echo "Container is running after $((WAIT_COUNT * 5 + 3)) seconds"
+                break
               fi
+              if [ "$CONTAINER_STATUS" = "exited" ] || [ "$CONTAINER_STATUS" = "dead" ]; then
+                echo "Container exited prematurely (status: $CONTAINER_STATUS)"
+                echo "=== Container logs (stdout + stderr) ==="
+                docker logs --tail 50 testing_frontend_prod 2>&1 || true
+                echo "=== Container inspect ==="
+                docker inspect testing_frontend_prod --format '{{.State.ExitCode}} {{.State.Error}}' 2>&1 || true
+                echo "=== OOMKilled check ==="
+                docker inspect testing_frontend_prod --format '{{.State.OOMKilled}}' 2>&1 || true
+                echo "Attempting restart..."
+                docker restart testing_frontend_prod 2>/dev/null || true
+                sleep 15
+                CONTAINER_STATUS=$(docker inspect testing_frontend_prod --format '{{.State.Status}}' 2>/dev/null || echo "not_found")
+                if [ "$CONTAINER_STATUS" != "running" ]; then
+                  echo "=== Logs after restart ==="
+                  docker logs --tail 30 testing_frontend_prod 2>&1 || true
+                  echo "Error: Could not start container"
+                  exit 1
+                fi
+                break
+              fi
+              WAIT_COUNT=$((WAIT_COUNT + 1))
+              sleep 5
+            done
+
+            if [ "$CONTAINER_STATUS" != "running" ]; then
+              echo "Container did not start within 60 seconds (status: $CONTAINER_STATUS)"
+              echo "=== Container logs ==="
+              docker logs --tail 50 testing_frontend_prod 2>&1 || true
+              exit 1
             fi
 
             echo "Container running correctly"
