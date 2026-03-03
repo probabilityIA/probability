@@ -7,12 +7,14 @@ import (
 )
 
 // IntegrationCoreMock es el mock de core.IIntegrationService.
-// Implementa los cuatro métodos de la interfaz de servicio del core.
+// Implementa todos los métodos de la interfaz de servicio del core.
 type IntegrationCoreMock struct {
 	GetIntegrationByIDFn         func(ctx context.Context, integrationID string) (*core.PublicIntegration, error)
 	GetIntegrationByExternalIDFn func(ctx context.Context, externalID string, integrationType int) (*core.PublicIntegration, error)
 	DecryptCredentialFn          func(ctx context.Context, integrationID string, fieldName string) (string, error)
 	UpdateIntegrationConfigFn    func(ctx context.Context, integrationID string, newConfig map[string]interface{}) error
+	GetIntegrationConfigFn       func(ctx context.Context, integrationID string) (map[string]interface{}, error)
+	GetPlatformCredentialFn      func(ctx context.Context, integrationID string, fieldName string) (string, error)
 }
 
 // GetIntegrationByID implementa core.IIntegrationService.
@@ -45,4 +47,20 @@ func (m *IntegrationCoreMock) UpdateIntegrationConfig(ctx context.Context, integ
 		return m.UpdateIntegrationConfigFn(ctx, integrationID, newConfig)
 	}
 	return nil
+}
+
+// GetIntegrationConfig implementa core.IIntegrationService.
+func (m *IntegrationCoreMock) GetIntegrationConfig(ctx context.Context, integrationID string) (map[string]interface{}, error) {
+	if m.GetIntegrationConfigFn != nil {
+		return m.GetIntegrationConfigFn(ctx, integrationID)
+	}
+	return nil, nil
+}
+
+// GetPlatformCredential implementa core.IIntegrationService.
+func (m *IntegrationCoreMock) GetPlatformCredential(ctx context.Context, integrationID string, fieldName string) (string, error) {
+	if m.GetPlatformCredentialFn != nil {
+		return m.GetPlatformCredentialFn(ctx, integrationID, fieldName)
+	}
+	return "", nil
 }

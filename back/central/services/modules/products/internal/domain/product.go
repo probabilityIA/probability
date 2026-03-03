@@ -8,74 +8,74 @@ import (
 
 // Product representa un producto en el dominio
 type Product struct {
-	ID        string     `json:"id"`
-	CreatedAt time.Time  `json:"created_at"`
-	UpdatedAt time.Time  `json:"updated_at"`
-	DeletedAt *time.Time `json:"deleted_at,omitempty"`
+	ID        string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt *time.Time
 
 	// Identificadores
-	BusinessID uint   `json:"business_id"`
-	SKU        string `json:"sku"`
-	ExternalID string `json:"external_id"`
+	BusinessID uint
+	SKU        string
+	ExternalID string
 
 	// Información Básica
-	Name             string `json:"name"`
-	Title            string `json:"title"`
-	Description      string `json:"description"`
-	ShortDescription string `json:"short_description"`
-	Slug             string `json:"slug"`
+	Name             string
+	Title            string
+	Description      string
+	ShortDescription string
+	Slug             string
 
 	// Pricing
-	Price          float64  `json:"price"`
-	CompareAtPrice *float64 `json:"compare_at_price,omitempty"`
-	CostPrice      *float64 `json:"cost_price,omitempty"`
-	Currency       string   `json:"currency"`
+	Price          float64
+	CompareAtPrice *float64
+	CostPrice      *float64
+	Currency       string
 
 	// Inventory
-	StockQuantity     int  `json:"stock_quantity"`
-	TrackInventory    bool `json:"track_inventory"`
-	AllowBackorder    bool `json:"allow_backorder"`
-	LowStockThreshold *int `json:"low_stock_threshold,omitempty"`
+	StockQuantity     int
+	TrackInventory    bool
+	AllowBackorder    bool
+	LowStockThreshold *int
 
 	// Media
-	ImageURL string         `json:"image_url"`
-	Images   datatypes.JSON `json:"images,omitempty"`
-	VideoURL *string        `json:"video_url,omitempty"`
+	ImageURL string
+	Images   datatypes.JSON
+	VideoURL *string
 
 	// Dimensiones y Peso
-	Weight        *float64 `json:"weight,omitempty"`
-	WeightUnit    string   `json:"weight_unit"`
-	Length        *float64 `json:"length,omitempty"`
-	Width         *float64 `json:"width,omitempty"`
-	Height        *float64 `json:"height,omitempty"`
-	DimensionUnit string   `json:"dimension_unit"`
+	Weight        *float64
+	WeightUnit    string
+	Length        *float64
+	Width         *float64
+	Height        *float64
+	DimensionUnit string
 
 	// Categorización
-	Category string         `json:"category"`
-	Tags     datatypes.JSON `json:"tags,omitempty"`
-	Brand    string         `json:"brand"`
+	Category string
+	Tags     datatypes.JSON
+	Brand    string
 
 	// Estado
-	Status     string `json:"status"`
-	IsActive   bool   `json:"is_active"`
-	IsFeatured bool   `json:"is_featured"`
+	Status     string
+	IsActive   bool
+	IsFeatured bool
 
 	// Metadata
-	Metadata datatypes.JSON `json:"metadata,omitempty"`
+	Metadata datatypes.JSON
 }
 
 // ProductBusinessIntegration representa la asociación de un producto con una integración
 type ProductBusinessIntegration struct {
-	ID                uint       `json:"id"`
-	CreatedAt         time.Time  `json:"created_at"`
-	UpdatedAt         time.Time  `json:"updated_at"`
-	DeletedAt         *time.Time `json:"deleted_at,omitempty"`
-	ProductID         string     `json:"product_id"`
-	BusinessID        uint       `json:"business_id"`
-	IntegrationID     uint       `json:"integration_id"`
-	ExternalProductID string     `json:"external_product_id"`
+	ID                uint
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
+	DeletedAt         *time.Time
+	ProductID         string
+	BusinessID        uint
+	IntegrationID     uint
+	ExternalProductID string
 
 	// Información de la integración (opcional, se incluye cuando se hace Preload)
-	IntegrationName string `json:"integration_name,omitempty"`
-	IntegrationType string `json:"integration_type,omitempty"`
+	IntegrationName string
+	IntegrationType string
 }

@@ -138,8 +138,8 @@ func (m *RepositoryMock) DeleteIntegrationType(ctx context.Context, id uint) err
 	return args.Error(0)
 }
 
-func (m *RepositoryMock) ListIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error) {
-	args := m.Called(ctx)
+func (m *RepositoryMock) ListIntegrationTypes(ctx context.Context, categoryID *uint) ([]*domain.IntegrationType, error) {
+	args := m.Called(ctx, categoryID)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
 	}

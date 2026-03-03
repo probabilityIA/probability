@@ -9,24 +9,24 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/mocks"
 )
 
-// newUsecasesForTest construye la instancia de Usecases con todos los mocks.
+// newUsecasesForTest construye la instancia de usecases con todos los mocks.
 // Centraliza el setup para que cada test solo sobreescriba lo que necesita.
 func newUsecasesForTest(
 	waClient *mocks.WhatsAppMock,
-	convRepo *mocks.ConversationRepositoryMock,
-	msgRepo *mocks.MessageLogRepositoryMock,
-	integRepo *mocks.IntegrationRepositoryMock,
+	convCache *mocks.ConversationCacheMock,
+	persistPub *mocks.PersistencePublisherMock,
+	credsCache *mocks.CredentialsCacheMock,
 	publisher *mocks.EventPublisherMock,
 	cfg *mocks.ConfigMock,
-) *Usecases {
-	return &Usecases{
-		whatsApp:         waClient,
-		conversationRepo: convRepo,
-		messageLogRepo:   msgRepo,
-		integrationRepo:  integRepo,
-		publisher:        publisher,
-		log:              &mocks.LoggerMock{},
-		config:           cfg,
+) *usecases {
+	return &usecases{
+		whatsApp:          waClient,
+		conversationCache: convCache,
+		persistPublisher:  persistPub,
+		credentialsCache:  credsCache,
+		publisher:         publisher,
+		log:               &mocks.LoggerMock{},
+		config:            cfg,
 	}
 }
 
@@ -52,9 +52,9 @@ func newActiveConversation(state entities.ConversationState) *entities.Conversat
 func TestGetInitialState(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -74,9 +74,9 @@ func TestGetInitialState(t *testing.T) {
 func TestIsTerminalState(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -145,9 +145,9 @@ func TestIsTerminalState(t *testing.T) {
 func TestTransitionState_AwaitingConfirmation_ConfirmarPedido(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -176,9 +176,9 @@ func TestTransitionState_AwaitingConfirmation_ConfirmarPedido(t *testing.T) {
 func TestTransitionState_AwaitingConfirmation_NoConfirmar(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -204,9 +204,9 @@ func TestTransitionState_AwaitingConfirmation_NoConfirmar(t *testing.T) {
 func TestTransitionState_AwaitingConfirmation_RespuestaInvalida(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -227,9 +227,9 @@ func TestTransitionState_AwaitingConfirmation_RespuestaInvalida(t *testing.T) {
 func TestTransitionState_AwaitingMenuSelection_PresentarNovedad(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -252,9 +252,9 @@ func TestTransitionState_AwaitingMenuSelection_PresentarNovedad(t *testing.T) {
 func TestTransitionState_AwaitingMenuSelection_CancelarPedido(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -277,9 +277,9 @@ func TestTransitionState_AwaitingMenuSelection_CancelarPedido(t *testing.T) {
 func TestTransitionState_AwaitingMenuSelection_Asesor(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -319,9 +319,9 @@ func TestTransitionState_AwaitingNoveltyType(t *testing.T) {
 		t.Run("novedad_"+tt.wantNoveltyType, func(t *testing.T) {
 			uc := newUsecasesForTest(
 				&mocks.WhatsAppMock{},
-				&mocks.ConversationRepositoryMock{},
-				&mocks.MessageLogRepositoryMock{},
-				&mocks.IntegrationRepositoryMock{},
+				&mocks.ConversationCacheMock{},
+				&mocks.PersistencePublisherMock{},
+				&mocks.CredentialsCacheMock{},
 				&mocks.EventPublisherMock{},
 				&mocks.ConfigMock{},
 			)
@@ -352,9 +352,9 @@ func TestTransitionState_AwaitingNoveltyType(t *testing.T) {
 func TestTransitionState_AwaitingNoveltyType_RespuestaInvalida(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -374,9 +374,9 @@ func TestTransitionState_AwaitingNoveltyType_RespuestaInvalida(t *testing.T) {
 func TestTransitionState_AwaitingCancelConfirm_SiCancelar(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -398,9 +398,9 @@ func TestTransitionState_AwaitingCancelConfirm_SiCancelar(t *testing.T) {
 func TestTransitionState_AwaitingCancelConfirm_NoVolver(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -423,9 +423,9 @@ func TestTransitionState_AwaitingCancelConfirm_NoVolver(t *testing.T) {
 func TestTransitionState_AwaitingCancelReason_CualquierTexto(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -460,9 +460,9 @@ func TestTransitionState_AwaitingCancelReason_CualquierTexto(t *testing.T) {
 func TestTransitionState_EstadoNoReconocido(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -483,9 +483,9 @@ func TestTransitionState_EstadoNoReconocido(t *testing.T) {
 func TestValidateTransition_TransicionesValidas(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -519,9 +519,9 @@ func TestValidateTransition_TransicionesValidas(t *testing.T) {
 func TestValidateTransition_TransicionesInvalidas(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)

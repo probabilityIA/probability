@@ -30,12 +30,12 @@ func New(
 	logger.Info(context.Background()).Msg("✅ Softpymes HTTP client initialized (URL dinámica desde integration_types)")
 
 	// 2. Response Publisher (RabbitMQ)
-	responsePublisher := queue.NewResponsePublisher(rabbit, logger)
+	responsePublisher := queue.New(rabbit, logger)
 	logger.Info(context.Background()).Msg("✅ Softpymes response publisher initialized")
 
 	// 3. Invoice Request Consumer (escucha "invoicing.softpymes.requests")
 	if rabbit != nil {
-		invoiceRequestConsumer := consumer.NewInvoiceRequestConsumer(
+		invoiceRequestConsumer := consumer.New(
 			rabbit,
 			coreIntegration,
 			httpClient,

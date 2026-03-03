@@ -24,11 +24,6 @@ export class ProductApiRepository implements IProductRepository {
     private async fetch<T>(path: string, options: RequestInit = {}): Promise<T> {
         const url = `${this.baseUrl}${path}`;
 
-        console.log(`[API Request] ${options.method || 'GET'} ${url}`, {
-            headers: options.headers,
-            body: options.body
-        });
-
         const headers: Record<string, string> = {
             'Accept': 'application/json',
             'Content-Type': 'application/json',
@@ -36,29 +31,24 @@ export class ProductApiRepository implements IProductRepository {
         };
 
         if (this.token) {
-            (headers as any)['Authorization'] = `Bearer ${this.token}`;
+            headers['Authorization'] = `Bearer ${this.token}`;
         }
 
-        try {
-            const res = await fetch(url, {
-                ...options,
-                headers,
-            });
+        const res = await fetch(url, { ...options, headers });
+        const data = await res.json();
 
-            const data = await res.json();
-
-            console.log(`[API Response] ${res.status} ${url}`, data);
-
-            if (!res.ok) {
-                console.error(`[API Error] ${res.status} ${url}`, data);
-                throw new Error(data.message || data.error || 'An error occurred');
-            }
-
-            return data;
-        } catch (error) {
-            console.error(`[API Network Error] ${url}`, error);
-            throw error;
+        if (!res.ok) {
+            throw new Error(data.message || data.error || 'An error occurred');
         }
+
+        return data;
+    }
+
+    /** Agrega ?business_id=X a la url si se provee (para super admin) */
+    private withBusinessId(path: string, businessId?: number): string {
+        if (!businessId) return path;
+        const sep = path.includes('?') ? '&' : '?';
+        return `${path}${sep}business_id=${businessId}`;
     }
 
     async getProducts(params?: GetProductsParams): Promise<PaginatedResponse<Product>> {
@@ -68,29 +58,30 @@ export class ProductApiRepository implements IProductRepository {
                 if (value !== undefined && value !== null) searchParams.append(key, String(value));
             });
         }
-        return this.fetch<PaginatedResponse<Product>>(`/products?${searchParams.toString()}`);
+        const query = searchParams.toString();
+        return this.fetch<PaginatedResponse<Product>>(`/products${query ? `?${query}` : ''}`);
     }
 
-    async getProductById(id: string): Promise<SingleResponse<Product>> {
-        return this.fetch<SingleResponse<Product>>(`/products/${id}`);
+    async getProductById(id: string, businessId?: number): Promise<SingleResponse<Product>> {
+        return this.fetch<SingleResponse<Product>>(this.withBusinessId(`/products/${id}`, businessId));
     }
 
-    async createProduct(data: CreateProductDTO): Promise<SingleResponse<Product>> {
-        return this.fetch<SingleResponse<Product>>('/products', {
+    async createProduct(data: CreateProductDTO, businessId?: number): Promise<SingleResponse<Product>> {
+        return this.fetch<SingleResponse<Product>>(this.withBusinessId('/products', businessId), {
             method: 'POST',
             body: JSON.stringify(data),
         });
     }
 
-    async updateProduct(id: string, data: UpdateProductDTO): Promise<SingleResponse<Product>> {
-        return this.fetch<SingleResponse<Product>>(`/products/${id}`, {
+    async updateProduct(id: string, data: UpdateProductDTO, businessId?: number): Promise<SingleResponse<Product>> {
+        return this.fetch<SingleResponse<Product>>(this.withBusinessId(`/products/${id}`, businessId), {
             method: 'PUT',
             body: JSON.stringify(data),
         });
     }
 
-    async deleteProduct(id: string): Promise<ActionResponse> {
-        return this.fetch<ActionResponse>(`/products/${id}`, {
+    async deleteProduct(id: string, businessId?: number): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(this.withBusinessId(`/products/${id}`, businessId), {
             method: 'DELETE',
         });
     }
@@ -101,9 +92,10 @@ export class ProductApiRepository implements IProductRepository {
 
     async addProductIntegration(
         productId: string,
-        data: AddProductIntegrationDTO
+        data: AddProductIntegrationDTO,
+        businessId?: number
     ): Promise<SingleResponse<any>> {
-        return this.fetch<SingleResponse<any>>(`/products/${productId}/integrations`, {
+        return this.fetch<SingleResponse<any>>(this.withBusinessId(`/products/${productId}/integrations`, businessId), {
             method: 'POST',
             body: JSON.stringify(data),
         });
@@ -111,14 +103,15 @@ export class ProductApiRepository implements IProductRepository {
 
     async removeProductIntegration(
         productId: string,
-        integrationId: number
+        integrationId: number,
+        businessId?: number
     ): Promise<ActionResponse> {
-        return this.fetch<ActionResponse>(`/products/${productId}/integrations/${integrationId}`, {
+        return this.fetch<ActionResponse>(this.withBusinessId(`/products/${productId}/integrations/${integrationId}`, businessId), {
             method: 'DELETE',
         });
     }
 
-    async getProductIntegrations(productId: string): Promise<ProductIntegrationsResponse> {
-        return this.fetch<ProductIntegrationsResponse>(`/products/${productId}/integrations`);
+    async getProductIntegrations(productId: string, businessId?: number): Promise<ProductIntegrationsResponse> {
+        return this.fetch<ProductIntegrationsResponse>(this.withBusinessId(`/products/${productId}/integrations`, businessId));
     }
 }

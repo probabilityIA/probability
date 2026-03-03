@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/cmd/internal/routes"
 	"github.com/secamc93/probability/back/central/services/auth"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
+	"github.com/secamc93/probability/back/central/services/events"
 	"github.com/secamc93/probability/back/central/services/integrations"
 	"github.com/secamc93/probability/back/central/services/modules"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -23,7 +24,7 @@ func Init(ctx context.Context) error {
 	environment := env.New(logger)
 
 	database := db.New(logger, environment)
-	_ = email.New(environment, logger)
+	emailService := email.New(environment, logger)
 
 	// Initialize S3
 	s3Service := storage.New(environment, logger)
@@ -68,11 +69,14 @@ func Init(ctx context.Context) error {
 	// Initialize Auth Modules
 	auth.New(v1Group, database, logger, environment, s3Service)
 
+	// Initialize unified events module (SSE + RabbitMQ consumer + publisher)
+	events.New(v1Group, logger, rabbitMQ, redisClient)
+
 	// Initialize Order Module (and others)
-	moduleBundles := modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
+	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, Softpymes, etc.)
-	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, moduleBundles)
+	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)
 
 	LogStartupInfo(ctx, logger, environment, queueRegistry, redisRegistry)
 

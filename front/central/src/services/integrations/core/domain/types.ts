@@ -233,6 +233,7 @@ export interface IntegrationSimple {
     category: string; // Código de la categoría (ej: 'ecommerce', 'messaging')
     category_name: string; // Nombre de la categoría (ej: 'E-commerce', 'Mensajería')
     category_color?: string; // Color hexadecimal de la categoría (ej: '#3B82F6')
+    image_url?: string; // URL del logo del tipo de integración
     business_id: number | null;
     is_active: boolean;
 }

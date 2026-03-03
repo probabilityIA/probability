@@ -53,6 +53,7 @@ func TestCreateHandler_Success(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Set("business_id", uint(10)) // Simular middleware de autenticación
 
 	// Act
 	handler.Create(c)
@@ -136,6 +137,7 @@ func TestCreateHandler_DuplicateConfig(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Set("business_id", uint(10)) // Simular middleware de autenticación
 
 	// Act
 	handler.Create(c)
@@ -181,6 +183,7 @@ func TestCreateHandler_UseCaseError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Set("business_id", uint(10)) // Simular middleware de autenticación
 
 	// Act
 	handler.Create(c)

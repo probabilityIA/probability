@@ -6,6 +6,11 @@ import { useIntegrationTypes } from '../hooks/useIntegrationTypes';
 import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO, IntegrationCategory } from '../../domain/types';
 import { Input, Select, Button, Alert, FileInput } from '@/shared/ui';
 import { getIntegrationCategoriesAction, getIntegrationTypePlatformCredentialsAction } from '../../infra/actions';
+import { WhatsAppTypeCredentialsForm } from '@/services/integrations/messages/whatsapp/ui/components';
+import type { WhatsAppPlatformCredentials } from '@/services/integrations/messages/whatsapp/ui/components';
+
+// IDs de tipos de integración con formularios de credenciales dedicados
+const WHATSAPP_TYPE_ID = 2;
 
 interface IntegrationTypeFormProps {
     integrationType?: IntegrationType;
@@ -38,12 +43,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [showPlatformCredentials, setShowPlatformCredentials] = useState(false);
     // Campos estructurados para WhatsApp
-    const [whatsappCredentials, setWhatsappCredentials] = useState({
+    const [whatsappCredentials, setWhatsappCredentials] = useState<WhatsAppPlatformCredentials>({
+        whatsapp_url: '',
+        webhook_callback_url: '',
         phone_number_id: '',
         access_token: '',
         verify_token: '',
+        test_phone_number: '',
     });
-    const [showWhatsappSecrets, setShowWhatsappSecrets] = useState(false);
 
     useEffect(() => {
         getIntegrationCategoriesAction()
@@ -83,12 +90,15 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 getIntegrationTypePlatformCredentialsAction(integrationType.id)
                     .then((res) => {
                         if (res.success && res.data && Object.keys(res.data).length > 0) {
-                            if (integrationType.code === 'whatsapp') {
+                            if (integrationType.id === WHATSAPP_TYPE_ID) {
                                 // Poblar campos estructurados de WhatsApp
                                 setWhatsappCredentials({
+                                    whatsapp_url: res.data.whatsapp_url || '',
+                                    webhook_callback_url: res.data.webhook_callback_url || '',
                                     phone_number_id: res.data.phone_number_id || '',
                                     access_token: res.data.access_token || '',
                                     verify_token: res.data.verify_token || '',
+                                    test_phone_number: res.data.test_phone_number || '',
                                 });
                             } else {
                                 setFormData((prev) => ({
@@ -128,12 +138,15 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             let success = false;
             // Parse platform_credentials — only send if non-empty
             let platformCredentials: Record<string, string> | undefined;
-            if (formData.code === 'whatsapp') {
+            if (integrationType?.id === WHATSAPP_TYPE_ID) {
                 // Para WhatsApp, construir desde campos estructurados
                 const wa: Record<string, string> = {};
+                if (whatsappCredentials.whatsapp_url.trim()) wa.whatsapp_url = whatsappCredentials.whatsapp_url.trim();
+                if (whatsappCredentials.webhook_callback_url.trim()) wa.webhook_callback_url = whatsappCredentials.webhook_callback_url.trim();
                 if (whatsappCredentials.phone_number_id.trim()) wa.phone_number_id = whatsappCredentials.phone_number_id.trim();
                 if (whatsappCredentials.access_token.trim()) wa.access_token = whatsappCredentials.access_token.trim();
                 if (whatsappCredentials.verify_token.trim()) wa.verify_token = whatsappCredentials.verify_token.trim();
+                if (whatsappCredentials.test_phone_number.trim()) wa.test_phone_number = whatsappCredentials.test_phone_number.trim();
                 if (Object.keys(wa).length > 0) platformCredentials = wa;
             } else {
                 try {
@@ -395,77 +408,13 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </p>
             </div>
 
-            {/* Platform Credentials (encrypted) */}
-            {formData.code === 'whatsapp' ? (
-                /* Campos estructurados para WhatsApp */
-                <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-medium text-gray-700">
-                            Credenciales de WhatsApp (se encriptarán)
-                        </h3>
-                        <button
-                            type="button"
-                            onClick={() => setShowWhatsappSecrets((v) => !v)}
-                            className="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
-                        >
-                            {showWhatsappSecrets ? (
-                                <><EyeSlashIcon className="w-4 h-4" /> Ocultar</>
-                            ) : (
-                                <><EyeIcon className="w-4 h-4" /> Mostrar</>
-                            )}
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-1 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Phone Number ID
-                            </label>
-                            <Input
-                                type="text"
-                                value={whatsappCredentials.phone_number_id}
-                                onChange={(e) => setWhatsappCredentials({ ...whatsappCredentials, phone_number_id: e.target.value })}
-                                placeholder="123456789012345"
-                                className="font-mono"
-                            />
-                            <p className="mt-1 text-xs text-gray-500">
-                                ID del número de teléfono en Meta Business Manager
-                            </p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Access Token
-                            </label>
-                            <Input
-                                type={showWhatsappSecrets ? 'text' : 'password'}
-                                value={whatsappCredentials.access_token}
-                                onChange={(e) => setWhatsappCredentials({ ...whatsappCredentials, access_token: e.target.value })}
-                                placeholder="EAAxxxxxxxxx..."
-                                className="font-mono"
-                            />
-                            <p className="mt-1 text-xs text-gray-500">
-                                Token de acceso permanente de la app en Meta
-                            </p>
-                        </div>
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Verify Token (Webhook)
-                            </label>
-                            <Input
-                                type={showWhatsappSecrets ? 'text' : 'password'}
-                                value={whatsappCredentials.verify_token}
-                                onChange={(e) => setWhatsappCredentials({ ...whatsappCredentials, verify_token: e.target.value })}
-                                placeholder="mi_token_secreto"
-                                className="font-mono"
-                            />
-                            <p className="mt-1 text-xs text-gray-500">
-                                Token de verificación para el webhook (Meta → WhatsApp → Configuration)
-                            </p>
-                        </div>
-                    </div>
-                    <p className="text-xs text-gray-500">
-                        Deja los campos vacíos para no modificar los valores actuales.
-                    </p>
-                </div>
+            {/* Platform Credentials (encrypted) - Each integration type has its own form */}
+            {integrationType?.id === WHATSAPP_TYPE_ID ? (
+                <WhatsAppTypeCredentialsForm
+                    credentials={whatsappCredentials}
+                    onChange={setWhatsappCredentials}
+                    isEditing={!!integrationType}
+                />
             ) : (
                 /* Editor JSON genérico para otros tipos */
                 <div>

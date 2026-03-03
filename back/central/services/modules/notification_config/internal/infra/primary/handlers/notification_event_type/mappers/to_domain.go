@@ -8,12 +8,13 @@ import (
 // CreateRequestToDomain convierte un CreateNotificationEventType HTTP a entidad de dominio
 func CreateRequestToDomain(req *request.CreateNotificationEventType) *entities.NotificationEventType {
 	return &entities.NotificationEventType{
-		NotificationTypeID: req.NotificationTypeID,
-		EventCode:          req.EventCode,
-		EventName:          req.EventName,
-		Description:        req.Description,
-		TemplateConfig:     req.TemplateConfig,
-		IsActive:           req.IsActive,
+		NotificationTypeID:    req.NotificationTypeID,
+		EventCode:             req.EventCode,
+		EventName:             req.EventName,
+		Description:           req.Description,
+		TemplateConfig:        req.TemplateConfig,
+		IsActive:              req.IsActive,
+		AllowedOrderStatusIDs: req.AllowedOrderStatusIDs,
 	}
 }
 
@@ -33,6 +34,9 @@ func UpdateRequestToDomain(req *request.UpdateNotificationEventType, existing *e
 	}
 	if req.IsActive != nil {
 		result.IsActive = *req.IsActive
+	}
+	if req.AllowedOrderStatusIDs != nil {
+		result.AllowedOrderStatusIDs = *req.AllowedOrderStatusIDs
 	}
 
 	return &result

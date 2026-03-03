@@ -97,7 +97,7 @@ func buildWebhookWithStatus(messageID, status, timestamp string) dtos.WebhookPay
 
 func TestHandleIncomingMessage_SinConversacionActiva_IgnoraMensaje(t *testing.T) {
 	// Si no hay conversación activa, el mensaje se ignora (no es error)
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetActiveByPhoneFn: func(_ context.Context, _ string) (*entities.Conversation, error) {
 			return nil, errors.New("sin conversación activa")
 		},
@@ -106,8 +106,8 @@ func TestHandleIncomingMessage_SinConversacionActiva_IgnoraMensaje(t *testing.T)
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -127,7 +127,7 @@ func TestHandleIncomingMessage_ConversacionExpirada_RetornaError(t *testing.T) {
 		ExpiresAt:   time.Now().Add(-2 * time.Hour), // expirada
 	}
 
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetActiveByPhoneFn: func(_ context.Context, _ string) (*entities.Conversation, error) {
 			return expiradaConv, nil
 		},
@@ -136,8 +136,8 @@ func TestHandleIncomingMessage_ConversacionExpirada_RetornaError(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -168,9 +168,9 @@ func TestHandleIncomingMessage_CambioNoMessages_Ignorado(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -184,9 +184,9 @@ func TestHandleIncomingMessage_CambioNoMessages_Ignorado(t *testing.T) {
 func TestHandleIncomingMessage_PayloadVacio_NoError(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -214,7 +214,7 @@ func TestHandleIncomingMessage_FlujoBotonesConfirmarPedido(t *testing.T) {
 	}
 
 	var updateCalled bool
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetActiveByPhoneFn: func(_ context.Context, _ string) (*entities.Conversation, error) {
 			return conv, nil
 		},
@@ -222,13 +222,13 @@ func TestHandleIncomingMessage_FlujoBotonesConfirmarPedido(t *testing.T) {
 			// Requerido internamente por SendTemplateWithConversation
 			return conv, nil
 		},
-		UpdateFn: func(_ context.Context, _ *entities.Conversation) error {
+		SaveFn: func(_ context.Context, _ *entities.Conversation) error {
 			updateCalled = true
 			return nil
 		},
 	}
 
-	integRepo := &mocks.IntegrationRepositoryMock{
+	integRepo := &mocks.CredentialsCacheMock{
 		GetWhatsAppConfigFn: func(_ context.Context, _ uint) (*ports.WhatsAppConfig, error) {
 			return &ports.WhatsAppConfig{PhoneNumberID: 111, AccessToken: "tok"}, nil
 		},
@@ -247,7 +247,7 @@ func TestHandleIncomingMessage_FlujoBotonesConfirmarPedido(t *testing.T) {
 	uc := newUsecasesForTest(
 		waClient,
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
 		integRepo,
 		publisherMock,
 		&mocks.ConfigMock{},
@@ -272,8 +272,8 @@ func TestHandleIncomingMessage_FlujoBotonesConfirmarPedido(t *testing.T) {
 func TestHandleMessageStatus_Entregado(t *testing.T) {
 	var capturedStatus entities.MessageStatus
 
-	msgLogMock := &mocks.MessageLogRepositoryMock{
-		UpdateStatusFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
+	msgLogMock := &mocks.PersistencePublisherMock{
+		PublishMessageStatusUpdatedFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
 			capturedStatus = status
 			return nil
 		},
@@ -281,9 +281,9 @@ func TestHandleMessageStatus_Entregado(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
 		msgLogMock,
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -302,8 +302,8 @@ func TestHandleMessageStatus_Entregado(t *testing.T) {
 func TestHandleMessageStatus_Leido(t *testing.T) {
 	var capturedStatus entities.MessageStatus
 
-	msgLogMock := &mocks.MessageLogRepositoryMock{
-		UpdateStatusFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
+	msgLogMock := &mocks.PersistencePublisherMock{
+		PublishMessageStatusUpdatedFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
 			capturedStatus = status
 			return nil
 		},
@@ -311,9 +311,9 @@ func TestHandleMessageStatus_Leido(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
 		msgLogMock,
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -332,8 +332,8 @@ func TestHandleMessageStatus_Leido(t *testing.T) {
 func TestHandleMessageStatus_Enviado(t *testing.T) {
 	var capturedStatus entities.MessageStatus
 
-	msgLogMock := &mocks.MessageLogRepositoryMock{
-		UpdateStatusFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
+	msgLogMock := &mocks.PersistencePublisherMock{
+		PublishMessageStatusUpdatedFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
 			capturedStatus = status
 			return nil
 		},
@@ -341,9 +341,9 @@ func TestHandleMessageStatus_Enviado(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
 		msgLogMock,
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -362,8 +362,8 @@ func TestHandleMessageStatus_Enviado(t *testing.T) {
 func TestHandleMessageStatus_Fallido(t *testing.T) {
 	var capturedStatus entities.MessageStatus
 
-	msgLogMock := &mocks.MessageLogRepositoryMock{
-		UpdateStatusFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
+	msgLogMock := &mocks.PersistencePublisherMock{
+		PublishMessageStatusUpdatedFn: func(_ context.Context, _ string, status entities.MessageStatus, _ map[string]time.Time) error {
 			capturedStatus = status
 			return nil
 		},
@@ -371,9 +371,9 @@ func TestHandleMessageStatus_Fallido(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
 		msgLogMock,
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -392,8 +392,8 @@ func TestHandleMessageStatus_Fallido(t *testing.T) {
 func TestHandleMessageStatus_EstadoDesconocido_NoError(t *testing.T) {
 	var updateCalled bool
 
-	msgLogMock := &mocks.MessageLogRepositoryMock{
-		UpdateStatusFn: func(_ context.Context, _ string, _ entities.MessageStatus, _ map[string]time.Time) error {
+	msgLogMock := &mocks.PersistencePublisherMock{
+		PublishMessageStatusUpdatedFn: func(_ context.Context, _ string, _ entities.MessageStatus, _ map[string]time.Time) error {
 			updateCalled = true
 			return nil
 		},
@@ -401,9 +401,9 @@ func TestHandleMessageStatus_EstadoDesconocido_NoError(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
 		msgLogMock,
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -424,8 +424,8 @@ func TestHandleMessageStatus_ErrorRepositorio_ContinuaConOtros(t *testing.T) {
 	// Si UpdateStatus falla para un mensaje, el loop continúa con los demás
 	var callCount int
 
-	msgLogMock := &mocks.MessageLogRepositoryMock{
-		UpdateStatusFn: func(_ context.Context, messageID string, _ entities.MessageStatus, _ map[string]time.Time) error {
+	msgLogMock := &mocks.PersistencePublisherMock{
+		PublishMessageStatusUpdatedFn: func(_ context.Context, messageID string, _ entities.MessageStatus, _ map[string]time.Time) error {
 			callCount++
 			if messageID == "wamid.falla" {
 				return errors.New("error de base de datos")
@@ -436,9 +436,9 @@ func TestHandleMessageStatus_ErrorRepositorio_ContinuaConOtros(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
 		msgLogMock,
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -477,9 +477,9 @@ func TestHandleMessageStatus_ErrorRepositorio_ContinuaConOtros(t *testing.T) {
 func TestHandleMessageStatus_PayloadVacio_NoError(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -509,9 +509,9 @@ func TestPublishBusinessEvent_Confirmado(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		publisherMock,
 		&mocks.ConfigMock{},
 	)
@@ -544,9 +544,9 @@ func TestPublishBusinessEvent_Cancelado_ConRazon(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		publisherMock,
 		&mocks.ConfigMock{},
 	)
@@ -581,9 +581,9 @@ func TestPublishBusinessEvent_Novedad(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		publisherMock,
 		&mocks.ConfigMock{},
 	)
@@ -621,9 +621,9 @@ func TestPublishBusinessEvent_Handoff(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		publisherMock,
 		&mocks.ConfigMock{},
 	)
@@ -648,9 +648,9 @@ func TestPublishBusinessEvent_Handoff(t *testing.T) {
 func TestPublishBusinessEvent_TipoDesconocido_NoError(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)

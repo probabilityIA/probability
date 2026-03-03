@@ -4,7 +4,6 @@ import (
 	"time"
 
 	core "github.com/secamc93/probability/back/central/services/integrations/core"
-	"gorm.io/datatypes"
 )
 
 // Integration es un alias directo de core.PublicIntegration
@@ -155,12 +154,12 @@ type ProbabilityOrderDTO struct {
 	OrderStatusURL     string
 	OccurredAt         time.Time
 	ImportedAt         time.Time
-	Items              datatypes.JSON
-	Metadata           datatypes.JSON
-	FinancialDetails   datatypes.JSON
-	ShippingDetails    datatypes.JSON
-	PaymentDetails     datatypes.JSON
-	FulfillmentDetails datatypes.JSON
+	Items              []byte
+	Metadata           []byte
+	FinancialDetails   []byte
+	ShippingDetails    []byte
+	PaymentDetails     []byte
+	FulfillmentDetails []byte
 	OrderItems         []ProbabilityOrderItemDTO
 	Addresses          []ProbabilityAddressDTO
 	Payments           []ProbabilityPaymentDTO
@@ -225,7 +224,7 @@ type ProbabilityPaymentDTO struct {
 	RefundAmount     *float64
 	RefundedAt       *time.Time
 	FailureReason    *string
-	Metadata         datatypes.JSON
+	Metadata         []byte
 }
 
 type ProbabilityShipmentDTO struct {
@@ -253,12 +252,12 @@ type ProbabilityShipmentDTO struct {
 	IsLastMile        bool
 	EstimatedDelivery *time.Time
 	DeliveryNotes     *string
-	Metadata          datatypes.JSON
+	Metadata          []byte
 }
 
 type ProbabilityChannelMetadataDTO struct {
 	ChannelSource string
-	RawData       datatypes.JSON // Cambiado de []byte a datatypes.JSON para consistencia
+	RawData       []byte
 	Version       string
 	ReceivedAt    time.Time
 	ProcessedAt   *time.Time

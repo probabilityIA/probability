@@ -8,6 +8,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		configs.POST("", h.Create)
 		configs.GET("", h.List)
+		configs.PUT("/sync", h.SyncByIntegration)
 		configs.GET("/:id", h.GetByID)
 		configs.PUT("/:id", h.Update)
 		configs.DELETE("/:id", h.Delete)

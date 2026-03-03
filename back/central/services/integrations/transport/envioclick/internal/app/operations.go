@@ -8,25 +8,25 @@ import (
 )
 
 // Quote gets shipping rates from EnvioClick
-func (uc *UseCase) Quote(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.QuoteResponse, error) {
+func (uc *useCase) Quote(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.QuoteResponse, error) {
 	uc.log.Info(ctx).Msg("Quoting shipment with EnvioClick")
 	return uc.client.Quote(baseURL, apiKey, req)
 }
 
 // Generate creates a shipment and generates a guide with EnvioClick
-func (uc *UseCase) Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.GenerateResponse, error) {
+func (uc *useCase) Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.GenerateResponse, error) {
 	uc.log.Info(ctx).Msg("Generating guide with EnvioClick")
 	return uc.client.Generate(baseURL, apiKey, req)
 }
 
 // Track gets tracking data from EnvioClick
-func (uc *UseCase) Track(ctx context.Context, baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error) {
+func (uc *useCase) Track(ctx context.Context, baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error) {
 	uc.log.Info(ctx).Str("tracking_number", trackingNumber).Msg("Tracking shipment with EnvioClick")
 	return uc.client.Track(baseURL, apiKey, trackingNumber)
 }
 
 // Cancel cancels a shipment in EnvioClick
-func (uc *UseCase) Cancel(ctx context.Context, baseURL, apiKey string, idShipment string) (*domain.CancelResponse, error) {
+func (uc *useCase) Cancel(ctx context.Context, baseURL, apiKey string, idShipment string) (*domain.CancelResponse, error) {
 	uc.log.Info(ctx).Str("id_shipment", idShipment).Msg("Canceling shipment with EnvioClick")
 	return uc.client.Cancel(baseURL, apiKey, idShipment)
 }

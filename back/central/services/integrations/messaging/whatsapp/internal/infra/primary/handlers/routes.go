@@ -3,7 +3,7 @@ package handlers
 import "github.com/gin-gonic/gin"
 
 // RegisterRoutes registra todas las rutas HTTP del módulo WhatsApp
-func (h *Handler) RegisterRoutes(router *gin.RouterGroup) {
+func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	whatsapp := router.Group("/whatsapp")
 	{
 		// Endpoint para envío de plantillas

@@ -6,7 +6,6 @@ import {
   CreateNotificationTypeDTO,
   UpdateNotificationTypeDTO,
 } from "../../domain/types";
-import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { Checkbox } from "@/shared/ui/checkbox";
@@ -184,17 +183,27 @@ export function NotificationTypeForm({
       </div>
 
       <div className="flex justify-end gap-2 pt-4 border-t">
-        <Button
+        <button
           type="button"
-          variant="outline"
           onClick={onCancel}
           disabled={loading}
+          className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40"
+          title="Cancelar"
         >
-          Cancelar
-        </Button>
-        <Button type="submit" disabled={loading}>
-          {loading ? "Guardando..." : type ? "Actualizar" : "Crear"}
-        </Button>
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        <button
+          type="submit"
+          disabled={loading}
+          className="p-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors disabled:opacity-40"
+          title={loading ? "Guardando..." : type ? "Actualizar" : "Crear"}
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+          </svg>
+        </button>
       </div>
     </form>
   );

@@ -6,9 +6,10 @@ import (
 	"github.com/secamc93/probability/back/central/shared/redis"
 )
 
-// cacheManager implementa la interfaz ICacheManager
+// cacheManager implementa la interfaz ports.ICacheManager
 type cacheManager struct {
-	redis  redis.IRedis
-	repo   ports.IRepository
-	logger log.ILogger
+	redis              redis.IRedis
+	repo               ports.IRepository
+	orderStatusQuerier ports.IOrderStatusQuerier
+	logger             log.ILogger
 }

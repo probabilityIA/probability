@@ -163,9 +163,9 @@ export const testConnectionRawAction = async (typeCode: string, config: any, cre
 };
 
 // Integration Types
-export const getIntegrationTypesAction = async (token?: string | null) => {
+export const getIntegrationTypesAction = async (categoryId?: number, token?: string | null) => {
     try {
-        return await (await getUseCases(token)).getIntegrationTypes();
+        return await (await getUseCases(token)).getIntegrationTypes(categoryId);
     } catch (error: any) {
         console.error('Get Integration Types Action Error:', error.message);
         throw new Error(error.message);

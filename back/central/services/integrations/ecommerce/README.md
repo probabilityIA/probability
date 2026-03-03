@@ -1,349 +1,327 @@
-# Integrations — E-Commerce
+# Modulo E-commerce - Integraciones
 
-Módulo que agrupa todos los proveedores de comercio electrónico soportados por Probability. Cada proveedor implementa el contrato `IIntegrationContract` del core y publica sus órdenes al canal canónico de RabbitMQ.
+## Descripcion
 
----
+El modulo `ecommerce` agrupa todas las integraciones con plataformas de comercio electronico y marketplaces. Su responsabilidad principal es **recibir ordenes desde plataformas externas** (via webhooks, notificaciones IPN o sincronizacion manual), **transformarlas a un formato canonico unificado** (`ProbabilityOrderDTO`) y **publicarlas a la cola de RabbitMQ** `probability.orders.canonical` para que el modulo `orders` las persista en base de datos.
 
-## Proveedores
-
-| Proveedor | type_id | Estado | Paquete |
-|-----------|---------|--------|---------|
-| Shopify | 1 | Completo | `ecommerce/shopify` |
-| MercadoLibre | 3 | Esqueleto | `ecommerce/meli` |
-| WooCommerce | 4 | Funcional | `ecommerce/woocommerce` |
-| VTEX | 16 | Esqueleto | `ecommerce/vtex` |
-| Tiendanube | 17 | Esqueleto | `ecommerce/tiendanube` |
-| Magento | 18 | Esqueleto | `ecommerce/magento` |
-| Amazon | 19 | Esqueleto | `ecommerce/amazon` |
-| Falabella | 20 | Esqueleto | `ecommerce/falabella` |
-| Éxito | 21 | Esqueleto | `ecommerce/exito` |
+Cada plataforma se implementa como un sub-modulo independiente con arquitectura hexagonal propia.
 
 ---
 
-## Estructura
+## Proveedores Soportados
+
+| Proveedor     | type_id | Paquete               | Estado       | Mecanismo de ingesta                      |
+|---------------|---------|----------------------|--------------|-------------------------------------------|
+| Shopify       | 1       | `ecommerce/shopify`       | Completo     | Webhooks + OAuth + Sync + Compliance GDPR |
+| MercadoLibre  | 3       | `ecommerce/meli`          | Completo     | Notificaciones IPN + Sync + RefreshToken  |
+| WooCommerce   | 4       | `ecommerce/woocommerce`   | Completo     | Webhook + Sync                            |
+| VTEX          | 16      | `ecommerce/vtex`          | Completo     | Webhook Hook v1 + Sync                    |
+| Tiendanube    | 17      | `ecommerce/tiendanube`    | Esqueleto    | Webhook (solo TestConnection)             |
+| Magento       | 18      | `ecommerce/magento`       | Esqueleto    | Webhook (solo TestConnection)             |
+| Amazon        | 19      | `ecommerce/amazon`        | Esqueleto    | Notificacion SQS/SNS (solo TestConnection)|
+| Falabella     | 20      | `ecommerce/falabella`     | Esqueleto    | Webhook (solo TestConnection)             |
+| Exito         | 21      | `ecommerce/exito`         | Esqueleto    | Webhook (solo TestConnection)             |
+
+Los proveedores marcados como "Esqueleto" tienen la estructura hexagonal completa, publisher de RabbitMQ y endpoint de webhook, pero solo implementan `TestConnection`. La logica de sincronizacion y procesamiento real de ordenes queda pendiente.
+
+---
+
+## Flujo General de Datos
 
 ```
-ecommerce/
-├── bundle.go               # Orquestador — inicializa y registra todos los proveedores
-├── canonical/
-│   └── order.go            # ProbabilityOrderDTO — formato canónico compartido
-├── shopify/
-│   ├── bundle.go
-│   └── internal/
-│       ├── domain/         # Entidades, ports, DTOs (sin tags JSON)
-│       ├── app/usecases/   # Lógica de negocio
-│       └── infra/
-│           ├── primary/handlers/   # Endpoints HTTP (webhooks, OAuth)
-│           └── secondary/
-│               ├── client/         # Cliente HTTP Shopify API
-│               ├── core/           # Adaptador → IIntegrationContract
-│               └── queue/          # Publicador RabbitMQ
-├── meli/
-│   └── internal/  (misma estructura)
-├── woocommerce/
-│   └── internal/  (misma estructura)
-├── vtex/
-│   └── internal/  (misma estructura)
-├── tiendanube/
-│   └── internal/  (misma estructura)
-├── magento/
-│   └── internal/  (misma estructura)
-├── amazon/
-│   └── internal/  (misma estructura)
-├── falabella/
-│   └── internal/  (misma estructura)
-└── exito/
-    └── internal/  (misma estructura)
+Plataforma externa (Shopify, MeLi, VTEX, WooCommerce, etc.)
+        |
+        | Webhook / IPN / Sync API
+        v
+  Handler HTTP (infra/primary/handlers)
+        |
+        | Parsea el payload, responde 200 inmediatamente
+        | Procesa en goroutine aparte (async)
+        v
+  Use Case (app/usecases)
+        |
+        | Obtiene credenciales via IntegrationService (core)
+        | Consulta orden completa a la API del proveedor
+        | Mapea a formato canonico (ProbabilityOrderDTO)
+        v
+  OrderPublisher (infra/secondary/queue)
+        |
+        | Mapea dominio -> DTO serializable (con tags JSON)
+        | Serializa a JSON y publica a RabbitMQ
+        v
+  Cola: probability.orders.canonical
+        |
+        | Consumer en modulo orders
+        v
+  Modulo orders -> Base de datos
 ```
 
 ---
 
-## Patrón de inicialización
+## Formato Canonico (`canonical/order.go`)
 
-El `ecommerce/bundle.go` es el único punto de entrada. Cada proveedor expone su `New()` que retorna un `IIntegrationContract`; el bundle padre hace el `RegisterIntegration`:
+Todos los proveedores mapean sus ordenes a `ProbabilityOrderDTO` antes de publicar. Este DTO es dominio puro (sin etiquetas JSON). La serializacion con tags ocurre en `infra/secondary/queue/request/` de cada proveedor.
+
+### Entidades principales
+
+| Entidad                        | Descripcion                                                        |
+|--------------------------------|--------------------------------------------------------------------|
+| `ProbabilityOrderDTO`          | Orden completa: financieros, cliente, estado, metadata, presentment|
+| `ProbabilityOrderItemDTO`      | Linea de producto: SKU, precios, descuentos, impuestos, peso      |
+| `ProbabilityAddressDTO`        | Direccion (shipping/billing) con coordenadas opcionales            |
+| `ProbabilityPaymentDTO`        | Pago: metodo, gateway, estado, transaccion, reembolso              |
+| `ProbabilityShipmentDTO`       | Envio: tracking, transportadora, guia, dimensiones, warehouse      |
+| `ProbabilityChannelMetadataDTO`| Metadata del canal: datos crudos, estado de sincronizacion         |
+
+Soporta precios en moneda presentment (moneda local del cliente) para plataformas multi-moneda como Shopify.
+
+---
+
+## Endpoints HTTP
+
+Todas las rutas se registran bajo el prefijo del router (tipicamente `/api/v1`).
+
+### Shopify (`/integrations/shopify`)
+
+| Metodo | Ruta                                              | Auth         | Descripcion                        |
+|--------|---------------------------------------------------|--------------|-------------------------------------|
+| GET    | `/integrations/shopify/config`                    | Publica      | Configuracion de la app Shopify     |
+| POST   | `/integrations/shopify/auth/login`                | Publica      | Login con session token de Shopify  |
+| POST   | `/integrations/shopify/connect`                   | JWT          | Iniciar flujo OAuth                 |
+| POST   | `/integrations/shopify/connect/custom`            | JWT          | Iniciar OAuth con app custom        |
+| GET    | `/integrations/shopify/oauth/token`               | Token/Cookie | Obtener token OAuth                 |
+| GET    | `/shopify/callback`                               | State+HMAC   | Callback OAuth de Shopify           |
+| POST   | `/integrations/shopify/webhook`                   | HMAC         | Webhook de ordenes                  |
+| POST   | `/integrations/shopify/webhook/:integration_id`   | HMAC         | Webhook con integration_id en path  |
+| POST   | `/integrations/shopify/webhooks/compliance`       | HMAC         | Webhooks GDPR/CCPA unificado        |
+| POST   | `/integrations/shopify/webhooks/customers/data_request` | HMAC   | Solicitud de datos del cliente      |
+| POST   | `/integrations/shopify/webhooks/customers/redact`  | HMAC        | Borrado de datos del cliente        |
+| POST   | `/integrations/shopify/webhooks/shop/redact`       | HMAC        | Borrado de datos de la tienda       |
+
+### MercadoLibre (`/meli`)
+
+| Metodo | Ruta                  | Auth    | Descripcion                          |
+|--------|-----------------------|---------|--------------------------------------|
+| POST   | `/meli/notifications` | Publica | Notificaciones IPN (orders_v2, payments) |
+
+### WooCommerce (`/woocommerce`)
+
+| Metodo | Ruta                    | Auth    | Descripcion                          |
+|--------|-------------------------|---------|--------------------------------------|
+| POST   | `/woocommerce/webhook`  | Publica | Webhook de ordenes (HMAC opcional)   |
+
+### VTEX (`/vtex`)
+
+| Metodo | Ruta             | Auth    | Descripcion                          |
+|--------|------------------|---------|--------------------------------------|
+| POST   | `/vtex/webhook`  | Publica | Webhook Hook v1 (cambios de estado)  |
+
+### Tiendanube (`/tiendanube`)
+
+| Metodo | Ruta                   | Auth    | Descripcion                         |
+|--------|------------------------|---------|-------------------------------------|
+| POST   | `/tiendanube/webhook`  | Publica | Webhook (esqueleto)                 |
+
+### Magento (`/magento`)
+
+| Metodo | Ruta               | Auth    | Descripcion                         |
+|--------|--------------------|---------|-------------------------------------|
+| POST   | `/magento/webhook`  | Publica | Webhook (esqueleto)                |
+
+### Amazon (`/amazon`)
+
+| Metodo | Ruta                    | Auth    | Descripcion                         |
+|--------|-------------------------|---------|-------------------------------------|
+| POST   | `/amazon/notification`  | Publica | Notificacion SQS/SNS (esqueleto)   |
+
+### Falabella (`/falabella`)
+
+| Metodo | Ruta                  | Auth    | Descripcion                         |
+|--------|-----------------------|---------|-------------------------------------|
+| POST   | `/falabella/webhook`  | Publica | Webhook (esqueleto)                |
+
+### Exito (`/exito`)
+
+| Metodo | Ruta              | Auth    | Descripcion                         |
+|--------|-------------------|---------|-------------------------------------|
+| POST   | `/exito/webhook`  | Publica | Webhook (esqueleto)                |
+
+---
+
+## Cola de RabbitMQ
+
+Todos los proveedores publican a una unica cola canonica:
+
+| Aspecto   | Valor                              |
+|-----------|------------------------------------|
+| Cola      | `probability.orders.canonical`     |
+| Publisher | Cada sub-modulo de ecommerce       |
+| Consumer  | Modulo `orders` (`services/modules/orders/internal/infra/primary/queue/consumer.go`) |
+
+Adicionalmente, Shopify publica eventos de sincronizacion al exchange de eventos de RabbitMQ usando `EventEnvelope` con categoria `"integration"`.
+
+---
+
+## Integracion con Otros Modulos
+
+### Core de Integraciones (`integrations/core`)
+
+Cada proveedor se registra en el core mediante `integrationCore.RegisterIntegration(typeID, provider)`. El core proporciona:
+
+- **IIntegrationCore**: Registro de proveedores, gestion de integraciones, observadores de eventos.
+- **IIntegrationContract**: Interfaz que cada proveedor implementa (`TestConnection`, `SyncOrdersByIntegrationID`, `GetWebhookURL`).
+- **BaseIntegration**: Implementacion base con metodos opcionales (retornan `ErrNotSupported`).
+- Lectura y descifrado de credenciales (`DecryptCredential`).
+- Actualizacion de configuracion (`UpdateIntegrationConfig`).
+
+Shopify ademas usa `OnIntegrationCreated` para crear webhooks automaticamente al crear una integracion.
+
+### Modulo Orders (`modules/orders`)
+
+Consume la cola `probability.orders.canonical` y persiste las ordenes. No hay dependencia directa de codigo; la comunicacion es exclusivamente via RabbitMQ.
+
+### Modulo Invoicing (`integrations/invoicing`)
+
+Las ordenes procesadas por `orders` pueden disparar facturacion automatica a traves de la cola `probability.orders.to_invoicing`. Este flujo es downstream y no tiene relacion directa con el modulo ecommerce.
+
+---
+
+## Contrato de Proveedor
+
+Todo proveedor implementa `IIntegrationContract` (definido en `integrations/core`). Los metodos no soportados se heredan via `BaseIntegration`.
+
+### Estado de implementacion por proveedor
+
+| Metodo                           | Shopify | MeLi | WooCommerce | VTEX | Tiendanube | Magento | Amazon | Falabella | Exito |
+|----------------------------------|---------|------|-------------|------|------------|---------|--------|-----------|-------|
+| `TestConnection`                 | SI      | SI   | SI          | SI   | SI         | SI      | TODO   | SI        | SI    |
+| `SyncOrdersByIntegrationID`      | SI      | SI   | SI          | SI   | TODO       | TODO    | TODO   | TODO      | TODO  |
+| `SyncOrdersByIntegrationIDWithParams` | -  | SI   | SI          | SI   | TODO       | TODO    | TODO   | TODO      | TODO  |
+| `GetWebhookURL`                  | SI      | SI   | base        | base | base       | base    | base   | base      | base  |
+| `HandleWebhook / HandleNotification` | SI | SI   | SI          | SI   | TODO       | TODO    | TODO   | TODO      | TODO  |
+| `ListWebhooks`                   | SI      | N/A  | TODO        | TODO | TODO       | TODO    | TODO   | TODO      | TODO  |
+| `CreateWebhook`                  | SI      | N/A  | TODO        | TODO | TODO       | TODO    | TODO   | TODO      | TODO  |
+| `DeleteWebhook`                  | SI      | N/A  | TODO        | TODO | TODO       | TODO    | TODO   | TODO      | TODO  |
+
+---
+
+## Arquitectura Hexagonal por Sub-modulo
+
+Cada proveedor sigue la misma estructura:
+
+```
+proveedor/
+  bundle.go                                  # Punto de entrada, wiring de dependencias
+  internal/
+    domain/
+      entities.go                            # Entidades de dominio (sin tags)
+      ports.go                               # Interfaces: Client, IntegrationService, OrderPublisher
+      errors.go                              # Errores de dominio
+      constants.go                           # Constantes de estados (solo algunos)
+      dtos.go                                # DTOs de API externa (solo algunos)
+      query_params.go                        # Parametros de consulta (solo algunos)
+    app/
+      usecases/
+        constructor.go                       # Interfaz IXxxUseCase y constructor New()
+        test_connection.go                   # Verificacion de credenciales
+        sync_orders.go                       # Sincronizacion masiva (proveedores completos)
+        process_webhook.go                   # Procesamiento de webhook en tiempo real
+        mapper/
+          order_mapper.go                    # Entidad proveedor -> ProbabilityOrderDTO
+    infra/
+      primary/
+        handlers/
+          constructor.go                     # Interfaz IHandler y constructor
+          handle_webhook.go                  # Handler HTTP del webhook/notificacion
+          router.go                          # Registro de rutas (Shopify tiene rutas mas extensas)
+      secondary/
+        client/
+          constructor.go                     # Cliente HTTP hacia la API del proveedor
+          get_order.go / get_orders.go       # Llamadas a la API externa
+          response/                          # DTOs de respuesta con tags JSON
+        core/
+          core.go                            # Adaptador IIntegrationContract
+          integration_service.go             # Adaptador IIntegrationService -> core
+        queue/
+          rabbitmq_publisher.go              # Publisher a probability.orders.canonical
+          noop_publisher.go                  # Publisher no-op (fallback sin RabbitMQ)
+          mapper/
+            canonical_order_mapper.go        # Dominio -> serializable (con tags JSON)
+          request/
+            canonical_order_dto.go           # DTO serializable con etiquetas JSON
+```
+
+### Capas
+
+- **Domain**: Entidades puras sin tags, interfaces (ports), errores. Sin dependencias externas (solo `context`, `time`, `uuid`).
+- **Application (app/usecases)**: Logica de negocio. Depende solo de domain. Contiene los mappers de orden proveedor a DTO canonico.
+- **Infrastructure (infra)**: Implementaciones concretas. Handlers HTTP (primary), clientes HTTP, adaptadores de core, publishers de RabbitMQ (secondary).
+
+---
+
+## Credenciales por Proveedor
+
+Las credenciales se almacenan cifradas en la tabla `integrations` y se acceden via `DecryptCredential` del core.
+
+| Proveedor    | Campos config            | Campos credential                                   |
+|-------------|--------------------------|------------------------------------------------------|
+| Shopify (1) | -                        | `shop_domain`, `access_token`, `client_secret`       |
+| MeLi (3)    | -                        | `access_token`, `refresh_token`, `app_id`, `client_secret` |
+| WooCommerce (4) | `store_url`           | `consumer_key`, `consumer_secret`                    |
+| VTEX (16)   | `store_url`              | `api_key`, `api_token`                               |
+| Tiendanube (17) | `store_url`           | `access_token`                                       |
+| Magento (18) | `store_url`             | `access_token`                                       |
+| Amazon (19) | `seller_id`              | `refresh_token`, `client_id`, `client_secret`        |
+| Falabella (20) | `user_id`              | `api_key`                                            |
+| Exito (21)  | `seller_id`              | `api_key`                                            |
+
+MercadoLibre implementa renovacion automatica de tokens (`EnsureValidToken` / `RefreshToken`) ya que el access_token tiene expiracion.
+
+---
+
+## Patron de Inicializacion
+
+El `ecommerce/bundle.go` es el unico punto de entrada. Cada proveedor expone su `New()` que retorna un `IIntegrationContract`; el bundle padre hace el `RegisterIntegration`:
 
 ```go
-// ecommerce/bundle.go
 func New(router, logger, config, rabbitMQ, database, integrationCore) {
-    // Shopify (type_id=1) — se auto-registra (incluye OnIntegrationCreated para webhooks automáticos)
-    shopify.New(router, logger, config, integrationCore, rabbitMQ, database)
+    // Shopify (type_id=1) -- se auto-registra (incluye OnIntegrationCreated)
+    shopify.New(router, logger, config, integrationCore, rabbitMQ)
 
     // MercadoLibre (type_id=3)
     meliProvider := meli.New(router, logger, config, rabbitMQ, integrationCore)
     integrationCore.RegisterIntegration(core.IntegrationTypeMercadoLibre, meliProvider)
 
     // WooCommerce (type_id=4)
-    wooProvider := woocommerce.New(router, logger, config, rabbitMQ, integrationCore)
+    wooProvider := woocommerce.New(...)
     integrationCore.RegisterIntegration(core.IntegrationTypeWoocommerce, wooProvider)
 
-    // VTEX (type_id=16)
-    vtexProvider := vtex.New(router, logger, config, rabbitMQ, integrationCore)
-    integrationCore.RegisterIntegration(core.IntegrationTypeVTEX, vtexProvider)
-
-    // Tiendanube (type_id=17)
-    tiendanubeProvider := tiendanube.New(router, logger, config, rabbitMQ, integrationCore)
-    integrationCore.RegisterIntegration(core.IntegrationTypeTiendanube, tiendanubeProvider)
-
-    // Magento (type_id=18)
-    magentoProvider := magento.New(router, logger, config, rabbitMQ, integrationCore)
-    integrationCore.RegisterIntegration(core.IntegrationTypeMagento, magentoProvider)
-
-    // Amazon (type_id=19)
-    amazonProvider := amazon.New(router, logger, config, rabbitMQ, integrationCore)
-    integrationCore.RegisterIntegration(core.IntegrationTypeAmazon, amazonProvider)
-
-    // Falabella (type_id=20)
-    falabellaProvider := falabella.New(router, logger, config, rabbitMQ, integrationCore)
-    integrationCore.RegisterIntegration(core.IntegrationTypeFalabella, falabellaProvider)
-
-    // Éxito (type_id=21)
-    exitoProvider := exito.New(router, logger, config, rabbitMQ, integrationCore)
-    integrationCore.RegisterIntegration(core.IntegrationTypeExito, exitoProvider)
+    // ... mismo patron para VTEX, Tiendanube, Magento, Amazon, Falabella, Exito
 }
 ```
 
-> Shopify maneja su propio registro internamente porque también configura un observer `OnIntegrationCreated` que crea webhooks automáticamente al activar una integración.
+Shopify maneja su propio registro internamente porque tambien configura un observer `OnIntegrationCreated` que crea webhooks automaticamente al activar una integracion.
 
 ---
 
-## Contrato de proveedor
+## Notas Tecnicas
 
-Todo proveedor debe implementar `IIntegrationContract` (definido en `integrations/core/internal/domain/provider_contract.go`). Los métodos no soportados se heredan via `BaseIntegration` que retorna `ErrNotSupported`.
-
-```go
-type IIntegrationContract interface {
-    TestConnection(ctx, config, credentials) error
-
-    // Sincronización de órdenes
-    SyncOrdersByIntegrationID(ctx, integrationID) error
-    SyncOrdersByIntegrationIDWithParams(ctx, integrationID, params) error
-
-    // Webhooks
-    GetWebhookURL(ctx, baseURL, integrationID) (*WebhookInfo, error)
-    ListWebhooks(ctx, integrationID) ([]interface{}, error)
-    DeleteWebhook(ctx, integrationID, webhookID) error
-    VerifyWebhooksByURL(ctx, integrationID, baseURL) ([]interface{}, error)
-    CreateWebhook(ctx, integrationID, baseURL) (interface{}, error)
-}
-```
-
-### Estado de implementación por proveedor
-
-| Método | Shopify | MercadoLibre | WooCommerce | VTEX | Tiendanube | Magento | Amazon | Falabella | Éxito |
-|--------|---------|--------------|-------------|------|------------|---------|--------|-----------|-------|
-| `TestConnection` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏳ TODO | ✅ | ✅ |
-| `SyncOrdersByIntegrationID` | ✅ | ⏳ TODO | ✅ | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO |
-| `GetWebhookURL` | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `HandleWebhook` | ✅ | ⏳ TODO | ✅ | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO |
-| `ListWebhooks` | ✅ | ⬜ N/A | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO |
-| `DeleteWebhook` | ✅ | ⬜ N/A | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO |
-| `VerifyWebhooksByURL` | ✅ | ⬜ N/A | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO |
-| `CreateWebhook` | ✅ | ⬜ N/A | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO | ⏳ TODO |
+- Los webhooks responden `200 OK` inmediatamente y procesan la orden en una goroutine aparte. Esto es necesario porque las plataformas externas tienen timeouts cortos y reenvian la notificacion si no reciben respuesta rapida.
+- Cada publisher tiene un fallback `NoOpPublisher` que se usa cuando RabbitMQ no esta disponible, evitando panics.
+- Las entidades de dominio no tienen etiquetas JSON/GORM. La serializacion se hace en la capa de infraestructura con DTOs dedicados y mappers explicitos.
+- Shopify es el proveedor mas maduro: OAuth completo, gestion automatica de webhooks, compliance GDPR/CCPA, y procesamiento diferenciado por tipo de evento (`orders/create`, `orders/paid`, `orders/updated`, `orders/cancelled`, `orders/fulfilled`, `orders/partially_fulfilled`).
+- MercadoLibre usa IPN (Instant Payment Notification) en lugar de webhooks clasicos, y requiere renovacion automatica de tokens OAuth.
 
 ---
 
-## WooCommerce — Detalle de implementación
+## Agregar un Nuevo Proveedor
 
-### API REST v3
-
-- **Autenticación:** HTTP Basic Auth (`consumer_key:consumer_secret`)
-- **Base URL:** `{store_url}/wp-json/wc/v3`
-- **Test endpoint:** `GET /system_status`
-- **Órdenes:** `GET /orders` — paginación via headers `X-WP-Total`, `X-WP-TotalPages`
-
-### Webhook
-
-El handler en `POST /integrations/woocommerce/webhook` procesa los headers de WooCommerce:
-
-| Header | Descripción |
-|--------|-------------|
-| `X-WC-Webhook-Topic` | Evento (`order.created`, `order.updated`, `order.deleted`, `order.restored`) |
-| `X-WC-Webhook-Source` | URL de la tienda origen |
-| `X-WC-Webhook-Signature` | HMAC-SHA256 del body codificado en base64 |
-
-La validación HMAC es opcional — solo se activa si la variable de entorno `WOOCOMMERCE_WEBHOOK_SECRET` está configurada. El handler responde `200 OK` inmediatamente y procesa la orden de forma asíncrona.
-
-### SyncOrders
-
-- Por defecto sincroniza los últimos 30 días
-- Soporta parámetros: `created_at_min`, `created_at_max`, `status`
-- Paginación automática (hasta 100 órdenes por página)
-- Rate limiting: 500ms entre páginas
-- Ejecución asíncrona (retorna inmediatamente)
-
-### Mapeo de estados
-
-| WooCommerce | Probability |
-|-------------|-------------|
-| `pending` | `pending` |
-| `processing` | `paid` |
-| `on-hold` | `on_hold` |
-| `completed` | `fulfilled` |
-| `cancelled` | `cancelled` |
-| `refunded` | `refunded` |
-| `failed` | `failed` |
-
-### Estructura de archivos
-
-```
-woocommerce/
-├── bundle.go
-└── internal/
-    ├── domain/
-    │   ├── entities.go        # Integration + WooCommerceOrder y sub-entidades
-    │   ├── errors.go          # Errores específicos + HMAC/sync errors
-    │   ├── ports.go           # IWooCommerceClient (TestConnection, GetOrders, GetOrder)
-    │   └── query_params.go    # GetOrdersParams con ToQueryString()
-    ├── app/usecases/
-    │   ├── constructor.go     # IWooCommerceUseCase (4 métodos)
-    │   ├── test_connection.go
-    │   ├── sync_orders.go     # Sync con paginación async
-    │   ├── process_webhook.go # Deserializar → mapear → publicar
-    │   └── mapper/
-    │       └── order_mapper.go  # WooCommerce → ProbabilityOrderDTO
-    └── infra/
-        ├── primary/handlers/
-        │   ├── constructor.go
-        │   └── handle_webhook.go  # HMAC + async processing
-        └── secondary/
-            ├── client/
-            │   ├── constructor.go       # TestConnection (Basic Auth)
-            │   ├── get_orders.go        # GetOrders, GetOrder
-            │   └── response/
-            │       └── woo_order_response.go  # JSON structs + ToDomain()
-            ├── core/
-            │   ├── core.go              # IIntegrationContract (Test, Sync, Webhook)
-            │   └── integration_service.go
-            └── queue/
-                ├── mapper/              # Domain → Serializable
-                ├── rabbitmq_publisher.go
-                ├── noop_publisher.go
-                └── request/             # Serializable DTOs con JSON tags
-```
-
-### Frontend
-
-El formulario de configuración está en `front/central/src/services/integrations/ecommerce/woocommerce/ui/`. Campos:
-
-- **Nombre de la Integración** (texto)
-- **URL de la Tienda** (URL, requerida)
-- **Consumer Key** (password, requerido)
-- **Consumer Secret** (password, requerido)
-- **Probar Conexión** → `testConnectionRawAction('woocommerce', config, credentials)`
-- **Crear Integración** → `createIntegrationAction({ integration_type_id: 4, ... })`
-
----
-
-## Formato canónico de órdenes (`canonical/`)
-
-Todos los proveedores mapean sus órdenes a `ProbabilityOrderDTO` antes de publicar a RabbitMQ. Este DTO es la única fuente de verdad del formato de orden entre el módulo de integraciones y el módulo de órdenes.
-
-```
-Shopify Order      ──┐
-Meli Order         ──┤
-WooCommerce Order  ──┤
-VTEX Order         ──┤
-Tiendanube Order   ──┼──► ProbabilityOrderDTO ──► probability.orders.canonical (RabbitMQ)
-Magento Order      ──┤
-Amazon Order       ──┤
-Falabella Order    ──┤
-Éxito Order        ──┘
-```
-
-**Regla:** `canonical/order.go` **no tiene tags JSON**. Es dominio puro. La serialización con tags ocurre en `infra/secondary/queue/request/` de cada proveedor.
-
-### Campos principales
-
-| Campo | Descripción |
-|-------|-------------|
-| `IntegrationID` | ID de la integración origen |
-| `IntegrationType` | Código del proveedor (`shopify`, `meli`, `woocommerce`, etc.) |
-| `ExternalID` | ID de la orden en la plataforma externa |
-| `OrderNumber` | Número de orden legible |
-| `TotalAmount` | Total en moneda de la tienda |
-| `TotalAmountPresentment` | Total en moneda local del cliente |
-| `OrderItems` | Líneas de producto |
-| `Payments` | Pagos asociados |
-| `Shipments` | Envíos asociados |
-| `Addresses` | Direcciones (billing, shipping) |
-| `ChannelMetadata` | Datos crudos del canal y estado de sincronización |
-
----
-
-## Credenciales por proveedor
-
-Las credenciales se almacenan cifradas en la tabla `integrations` y se acceden vía `DecryptCredential` del core.
-
-### Shopify (type_id=1)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `shop_domain` | credential | Dominio de la tienda (`mitienda.myshopify.com`) |
-| `access_token` | credential | Token de acceso OAuth |
-| `client_secret` | credential | Secret para validar webhooks HMAC |
-
-### MercadoLibre (type_id=3)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `access_token` | credential | Token OAuth de la cuenta del vendedor |
-
-### WooCommerce (type_id=4)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `store_url` | config | URL base de la tienda (`https://mitienda.com`) |
-| `consumer_key` | credential | Consumer Key de la REST API |
-| `consumer_secret` | credential | Consumer Secret de la REST API |
-
-### VTEX (type_id=16)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `store_url` | config | URL de la tienda VTEX (`https://cuenta.vtexcommercestable.com.br`) |
-| `api_key` | credential | App Key (`X-VTEX-API-AppKey`) |
-| `api_token` | credential | App Token (`X-VTEX-API-AppToken`) |
-
-### Tiendanube (type_id=17)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `store_url` | config | URL de la tienda |
-| `access_token` | credential | Token OAuth de la aplicación |
-
-### Magento (type_id=18)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `store_url` | config | URL base de Magento/Adobe Commerce |
-| `access_token` | credential | Integration Access Token (Bearer) |
-
-### Amazon (type_id=19)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `seller_id` | config | ID del vendedor en el marketplace |
-| `refresh_token` | credential | Refresh token para SP-API OAuth |
-| `client_id` | credential | Client ID de la aplicación SP-API |
-| `client_secret` | credential | Client Secret de la aplicación SP-API |
-
-> **Nota:** Amazon requiere un flujo OAuth completo (SP-API). `TestConnection` aún no está implementado.
-
-### Falabella (type_id=20)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `user_id` | config | ID del vendedor en Falabella Seller Center |
-| `api_key` | credential | API Key del vendedor |
-
-### Éxito (type_id=21)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `seller_id` | config | ID del vendedor en el marketplace Éxito |
-| `api_key` | credential | API Key del vendedor |
-
----
-
-## Agregar un nuevo proveedor
-
-1. Crear carpeta `ecommerce/<proveedor>/` con la estructura hexagonal estándar
-2. Implementar `IIntegrationContract` (embeber `BaseIntegration` y sobrescribir los métodos soportados)
-3. Implementar el mapper `canonical.ProbabilityOrderDTO` en `infra/secondary/queue/mapper/`
-4. Definir el `type_id` en `integrations/core/internal/domain/type_codes.go`
+1. Crear carpeta `ecommerce/<proveedor>/` con la estructura hexagonal estandar (copiar de un esqueleto existente como `tiendanube/`).
+2. Implementar `IIntegrationContract` (embeber `BaseIntegration` y sobrescribir los metodos soportados).
+3. Implementar el mapper a `canonical.ProbabilityOrderDTO` en `infra/secondary/queue/mapper/`.
+4. Definir el `type_id` en `integrations/core/internal/domain/type_codes.go`.
 5. Registrar en `ecommerce/bundle.go`:
    ```go
-   miProvider := mi_proveedor.New(router, logger, config, rabbitMQ, integrationCore)
+   miProvider := miproveedor.New(router, logger, config, rabbitMQ, integrationCore)
    integrationCore.RegisterIntegration(core.IntegrationTypeMiProveedor, miProvider)
    ```

@@ -45,7 +45,7 @@ func (p *OrderRabbitPublisher) PublishOrderCreated(ctx context.Context, order *e
 		Timestamp:     time.Now(),
 		Order:         mappers.OrderToSnapshot(order),
 	}
-	return p.publishToQueue(ctx, "orders.events.created", message)
+	return p.publishToQueue(ctx, rabbitmq.RoutingKeyOrderCreated, message)
 }
 
 // PublishOrderUpdated publica un evento de orden actualizada
@@ -59,7 +59,7 @@ func (p *OrderRabbitPublisher) PublishOrderUpdated(ctx context.Context, order *e
 		Timestamp:     time.Now(),
 		Order:         mappers.OrderToSnapshot(order),
 	}
-	return p.publishToQueue(ctx, "orders.events.updated", message)
+	return p.publishToQueue(ctx, rabbitmq.RoutingKeyOrderUpdated, message)
 }
 
 // PublishOrderCancelled publica un evento de orden cancelada
@@ -73,7 +73,7 @@ func (p *OrderRabbitPublisher) PublishOrderCancelled(ctx context.Context, order 
 		Timestamp:     time.Now(),
 		Order:         mappers.OrderToSnapshot(order),
 	}
-	return p.publishToQueue(ctx, "orders.events.cancelled", message)
+	return p.publishToQueue(ctx, rabbitmq.RoutingKeyOrderCancelled, message)
 }
 
 // PublishOrderStatusChanged publica un evento de cambio de estado
@@ -91,7 +91,7 @@ func (p *OrderRabbitPublisher) PublishOrderStatusChanged(ctx context.Context, or
 		},
 		Order: mappers.OrderToSnapshot(order),
 	}
-	return p.publishToQueue(ctx, "orders.events.status_changed", message)
+	return p.publishToQueue(ctx, rabbitmq.RoutingKeyOrderStatusChanged, message)
 }
 
 // PublishOrderEvent publica un evento genérico de orden con snapshot completo
@@ -156,11 +156,11 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 	}
 
 	// Publicar a RabbitMQ
-	if err := p.rabbit.Publish(ctx, "orders.confirmation.requested", payload); err != nil {
+	if err := p.rabbit.Publish(ctx, rabbitmq.QueueOrdersConfirmationRequested, payload); err != nil {
 		p.log.Error().
 			Err(err).
 			Str("order_id", order.ID).
-			Str("queue", "orders.confirmation.requested").
+			Str("queue", rabbitmq.QueueOrdersConfirmationRequested).
 			Msg("Error publishing confirmation event to RabbitMQ")
 		return fmt.Errorf("error publishing to RabbitMQ: %w", err)
 	}
@@ -168,7 +168,7 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 	p.log.Info().
 		Str("order_id", order.ID).
 		Str("order_number", order.OrderNumber).
-		Str("queue", "orders.confirmation.requested").
+		Str("queue", rabbitmq.QueueOrdersConfirmationRequested).
 		Msg("Confirmation event published successfully")
 
 	return nil
@@ -233,26 +233,22 @@ func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, queue string,
 		return fmt.Errorf("error marshaling event: %w", err)
 	}
 
-	// Publicar al exchange "orders.events" que distribuye a las 3 colas:
-	// - orders.events.invoicing
-	// - orders.events.whatsapp
-	// - orders.events.score
-	exchangeName := "orders.events"
+	// Publicar al exchange fanout que distribuye a las 4 colas bindeadas
 	routingKey := "" // Vacío porque es fanout (envía a todas las colas bindeadas)
 
 	p.log.Debug().
 		Str("order_id", message.OrderID).
 		Str("event_type", message.EventType).
-		Str("exchange", exchangeName).
+		Str("exchange", rabbitmq.ExchangeOrderEvents).
 		Int("payload_size", len(payload)).
 		Msg("📤 Publishing order event to exchange (fanout distribution)")
 
-	if err := p.rabbit.PublishToExchange(ctx, exchangeName, routingKey, payload); err != nil {
+	if err := p.rabbit.PublishToExchange(ctx, rabbitmq.ExchangeOrderEvents, routingKey, payload); err != nil {
 		p.log.Error().
 			Err(err).
 			Str("order_id", message.OrderID).
 			Str("event_type", message.EventType).
-			Str("exchange", exchangeName).
+			Str("exchange", rabbitmq.ExchangeOrderEvents).
 			Msg("Error publishing order event to exchange")
 		return fmt.Errorf("error publishing to exchange: %w", err)
 	}
@@ -260,14 +256,8 @@ func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, queue string,
 	p.log.Info().
 		Str("order_id", message.OrderID).
 		Str("event_type", message.EventType).
-		Str("exchange", exchangeName).
-		Msg("✅ Order event published to exchange (will be distributed to invoicing, whatsapp, score)")
-
-	p.log.Debug().
-		Str("order_id", message.OrderID).
-		Str("event_type", message.EventType).
-		Str("exchange", exchangeName).
-		Msg("✅ Event sent to exchange - RabbitMQ will distribute to 3 bound queues")
+		Str("exchange", rabbitmq.ExchangeOrderEvents).
+		Msg("✅ Order event published to exchange (will be distributed to invoicing, whatsapp, score, inventory)")
 
 	return nil
 }
@@ -276,16 +266,16 @@ func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, queue string,
 func (p *OrderRabbitPublisher) getQueueForEventType(eventType entities.OrderEventType) string {
 	switch eventType {
 	case entities.OrderEventTypeCreated:
-		return "orders.events.created"
+		return rabbitmq.RoutingKeyOrderCreated
 	case entities.OrderEventTypeUpdated:
-		return "orders.events.updated"
+		return rabbitmq.RoutingKeyOrderUpdated
 	case entities.OrderEventTypeCancelled:
-		return "orders.events.cancelled"
+		return rabbitmq.RoutingKeyOrderCancelled
 	case entities.OrderEventTypeStatusChanged:
-		return "orders.events.status_changed"
+		return rabbitmq.RoutingKeyOrderStatusChanged
 	case entities.OrderEventTypeConfirmationRequested:
-		return "orders.confirmation.requested"
+		return rabbitmq.QueueOrdersConfirmationRequested
 	default:
-		return "orders.events.generic"
+		return rabbitmq.RoutingKeyOrderGeneric
 	}
 }

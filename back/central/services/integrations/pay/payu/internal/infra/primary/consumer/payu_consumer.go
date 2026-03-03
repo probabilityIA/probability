@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueuePayURequests = "pay.payu.requests"
+const QueuePayURequests = rabbitmq.QueuePayPayURequests
 
 // PayUConsumer consume solicitudes de pago PayU
 type PayUConsumer struct {

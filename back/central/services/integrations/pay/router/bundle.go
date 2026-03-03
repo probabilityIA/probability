@@ -11,14 +11,14 @@ import (
 )
 
 const (
-	QueuePayRequests      = "pay.requests"
-	QueueNequiRequests    = "pay.nequi.requests"
-	QueueBoldRequests     = "pay.bold.requests"
-	QueueWompiRequests    = "pay.wompi.requests"
-	QueueStripeRequests   = "pay.stripe.requests"
-	QueuePayURequests     = "pay.payu.requests"
-	QueueEPaycoRequests   = "pay.epayco.requests"
-	QueueMeliPagoRequests = "pay.melipago.requests"
+	QueuePayRequests      = rabbitmq.QueuePayRequests
+	QueueNequiRequests    = rabbitmq.QueuePayNequiRequests
+	QueueBoldRequests     = rabbitmq.QueuePayBoldRequests
+	QueueWompiRequests    = rabbitmq.QueuePayWompiRequests
+	QueueStripeRequests   = rabbitmq.QueuePayStripeRequests
+	QueuePayURequests     = rabbitmq.QueuePayPayURequests
+	QueueEPaycoRequests   = rabbitmq.QueuePayEPaycoRequests
+	QueueMeliPagoRequests = rabbitmq.QueuePayMeliPagoRequests
 )
 
 // payRequestHeader contiene solo los campos para enrutar

@@ -11,7 +11,7 @@ type Client struct {
 	DeletedAt  *time.Time
 	BusinessID uint
 	Name       string
-	Email      string
+	Email      *string
 	Phone      string
 	Dni        *string
 }

@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	QueueTransportResponses = "transport.responses"
+	QueueTransportResponses = rabbitmq.QueueTransportResponses
 )
 
 // TransportResponseMessage is the message published back to modules/shipments

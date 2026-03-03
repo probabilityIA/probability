@@ -94,13 +94,13 @@ func (uc *UseCaseProduct) CreateProduct(ctx context.Context, req *domain.CreateP
 //
 // ───────────────────────────────────────────
 
-// GetProductByID obtiene un producto por su ID
-func (uc *UseCaseProduct) GetProductByID(ctx context.Context, id string) (*domain.ProductResponse, error) {
+// GetProductByID obtiene un producto por su ID, validando que pertenezca al negocio
+func (uc *UseCaseProduct) GetProductByID(ctx context.Context, businessID uint, id string) (*domain.ProductResponse, error) {
 	if id == "" {
 		return nil, errors.New("product ID is required")
 	}
 
-	product, err := uc.repo.GetProductByID(ctx, id)
+	product, err := uc.repo.GetProductByID(ctx, businessID, id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting product: %w", err)
 	}
@@ -118,8 +118,8 @@ func (uc *UseCaseProduct) GetProductByID(ctx context.Context, id string) (*domai
 //
 // ───────────────────────────────────────────
 
-// ListProducts obtiene una lista paginada de productos con filtros
-func (uc *UseCaseProduct) ListProducts(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*domain.ProductsListResponse, error) {
+// ListProducts obtiene una lista paginada de productos para un negocio específico
+func (uc *UseCaseProduct) ListProducts(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) (*domain.ProductsListResponse, error) {
 	// Validar paginación
 	if page < 1 {
 		page = 1
@@ -128,8 +128,8 @@ func (uc *UseCaseProduct) ListProducts(ctx context.Context, page, pageSize int, 
 		pageSize = 10
 	}
 
-	// Obtener productos del repositorio
-	products, total, err := uc.repo.ListProducts(ctx, page, pageSize, filters)
+	// Obtener productos del repositorio (siempre filtrado por businessID)
+	products, total, err := uc.repo.ListProducts(ctx, businessID, page, pageSize, filters)
 	if err != nil {
 		return nil, fmt.Errorf("error listing products: %w", err)
 	}
@@ -158,14 +158,14 @@ func (uc *UseCaseProduct) ListProducts(ctx context.Context, page, pageSize int, 
 //
 // ───────────────────────────────────────────
 
-// UpdateProduct actualiza un producto existente
-func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, id string, req *domain.UpdateProductRequest) (*domain.ProductResponse, error) {
+// UpdateProduct actualiza un producto existente, validando que pertenezca al negocio
+func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, businessID uint, id string, req *domain.UpdateProductRequest) (*domain.ProductResponse, error) {
 	if id == "" {
 		return nil, errors.New("product ID is required")
 	}
 
-	// Obtener el producto existente
-	product, err := uc.repo.GetProductByID(ctx, id)
+	// Obtener el producto existente (valida que pertenezca al negocio)
+	product, err := uc.repo.GetProductByID(ctx, businessID, id)
 	if err != nil {
 		return nil, fmt.Errorf("error getting product: %w", err)
 	}
@@ -310,20 +310,20 @@ func (uc *UseCaseProduct) UpdateProduct(ctx context.Context, id string, req *dom
 //
 // ───────────────────────────────────────────
 
-// DeleteProduct elimina un producto por su ID
-func (uc *UseCaseProduct) DeleteProduct(ctx context.Context, id string) error {
+// DeleteProduct elimina un producto por su ID, validando que pertenezca al negocio
+func (uc *UseCaseProduct) DeleteProduct(ctx context.Context, businessID uint, id string) error {
 	if id == "" {
 		return errors.New("product ID is required")
 	}
 
-	// Validar que el producto existe
-	_, err := uc.repo.GetProductByID(ctx, id)
+	// Validar que el producto existe y pertenece al negocio
+	_, err := uc.repo.GetProductByID(ctx, businessID, id)
 	if err != nil {
 		return err
 	}
 
 	// Eliminar el producto
-	if err := uc.repo.DeleteProduct(ctx, id); err != nil {
+	if err := uc.repo.DeleteProduct(ctx, businessID, id); err != nil {
 		return fmt.Errorf("error deleting product: %w", err)
 	}
 

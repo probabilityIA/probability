@@ -8,11 +8,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// IRequestConfirmationUseCase define la interfaz del caso de uso
-type IRequestConfirmationUseCase interface {
-	RequestConfirmation(ctx context.Context, orderID string) error
-}
-
 // RequestConfirmationUseCase implementa el caso de uso de solicitud de confirmación
 type RequestConfirmationUseCase struct {
 	repository      ports.IRepository
@@ -25,7 +20,7 @@ func NewRequestConfirmationUseCase(
 	repo ports.IRepository,
 	rabbitPublisher ports.IOrderRabbitPublisher,
 	logger log.ILogger,
-) IRequestConfirmationUseCase {
+) ports.IRequestConfirmationUseCase {
 	return &RequestConfirmationUseCase{
 		repository:      repo,
 		rabbitPublisher: rabbitPublisher,

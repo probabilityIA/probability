@@ -3,6 +3,7 @@ package handlerintegrations
 import (
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
@@ -66,6 +67,7 @@ func (h *IntegrationHandler) GetIntegrationsSimpleHandler(c *gin.Context) {
 	}
 
 	// Mapear a formato simple
+	imageURLBase := h.getImageURLBase()
 	simpleIntegrations := make([]response.IntegrationSimpleResponse, 0, len(integrations))
 	for _, integration := range integrations {
 		// Obtener el código del tipo de integración
@@ -73,9 +75,17 @@ func (h *IntegrationHandler) GetIntegrationsSimpleHandler(c *gin.Context) {
 		categoryCode := ""
 		categoryName := ""
 		categoryColor := ""
+		imageURL := ""
 
 		if integration.IntegrationType != nil {
 			typeCode = integration.IntegrationType.Code
+			if integration.IntegrationType.ImageURL != "" {
+				if imageURLBase != "" && !strings.HasPrefix(integration.IntegrationType.ImageURL, "http") {
+					imageURL = strings.TrimRight(imageURLBase, "/") + "/" + strings.TrimLeft(integration.IntegrationType.ImageURL, "/")
+				} else {
+					imageURL = integration.IntegrationType.ImageURL
+				}
+			}
 
 			// Extraer categoría desde IntegrationType.Category
 			if integration.IntegrationType.Category != nil {
@@ -92,6 +102,7 @@ func (h *IntegrationHandler) GetIntegrationsSimpleHandler(c *gin.Context) {
 			Category:      categoryCode,
 			CategoryName:  categoryName,
 			CategoryColor: categoryColor,
+			ImageURL:      imageURL,
 			BusinessID:    integration.BusinessID,
 			IsActive:      integration.IsActive,
 		})

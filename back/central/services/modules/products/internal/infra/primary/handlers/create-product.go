@@ -13,7 +13,8 @@ import (
 // @Tags         Products
 // @Accept       json
 // @Produce      json
-// @Param        product  body      domain.CreateProductRequest  true  "Datos del producto"
+// @Param        business_id  query     int                         false  "ID del negocio (requerido para super admin)"
+// @Param        product      body      domain.CreateProductRequest true   "Datos del producto"
 // @Security     BearerAuth
 // @Success      201  {object}  domain.ProductResponse
 // @Failure      400  {object}  map[string]interface{}
@@ -21,6 +22,12 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /products [post]
 func (h *Handlers) CreateProduct(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		h.respondBusinessIDRequired(c)
+		return
+	}
+
 	var req domain.CreateProductRequest
 
 	// Validar el request body
@@ -32,6 +39,9 @@ func (h *Handlers) CreateProduct(c *gin.Context) {
 		})
 		return
 	}
+
+	// El business_id siempre viene del JWT (o query param para super admin), nunca del body
+	req.BusinessID = businessID
 
 	// Llamar al caso de uso
 	product, err := h.uc.CreateProduct(c.Request.Context(), &req)
@@ -60,4 +70,3 @@ func (h *Handlers) CreateProduct(c *gin.Context) {
 		"data":    product,
 	})
 }
-

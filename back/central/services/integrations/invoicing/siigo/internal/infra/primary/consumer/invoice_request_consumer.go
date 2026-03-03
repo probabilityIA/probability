@@ -73,8 +73,8 @@ type InvoiceRequestConsumer struct {
 	log               log.ILogger
 }
 
-// NewInvoiceRequestConsumer crea una nueva instancia del consumer
-func NewInvoiceRequestConsumer(
+// New crea una nueva instancia del consumer
+func New(
 	rabbit rabbitmq.IQueue,
 	integrationCore integrationCore.IIntegrationService,
 	siigoClient ports.ISiigoClient,
@@ -91,7 +91,7 @@ func NewInvoiceRequestConsumer(
 }
 
 const (
-	QueueSiigoRequests = "invoicing.siigo.requests"
+	QueueSiigoRequests = rabbitmq.QueueInvoicingSiigoRequests
 )
 
 // Start inicia el consumer

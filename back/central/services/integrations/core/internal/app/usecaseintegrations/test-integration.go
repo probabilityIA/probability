@@ -19,9 +19,39 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 		return fmt.Errorf("%w: %w", domain.ErrIntegrationNotFound, err)
 	}
 
+	// Convertir Config a map
+	var configMap map[string]interface{}
+	if len(integration.Config) > 0 {
+		if err := json.Unmarshal(integration.Config, &configMap); err != nil {
+			return fmt.Errorf("%w: %w", domain.ErrIntegrationConfigDeserialize, err)
+		}
+	}
+
 	// Desencriptar credenciales
 	var credentials domain.DecryptedCredentials
-	if len(integration.Credentials) > 0 {
+	usePlatformToken, _ := configMap["use_platform_token"].(bool)
+
+	if usePlatformToken {
+		// Obtener credenciales del tipo de integración desde cache
+		platformCreds, err := uc.cache.GetPlatformCredentials(ctx, integration.IntegrationTypeID)
+		if err != nil || len(platformCreds) == 0 {
+			// Fallback: obtener desde DB y desencriptar
+			intType, err := uc.repo.GetIntegrationTypeByID(ctx, integration.IntegrationTypeID)
+			if err != nil {
+				return fmt.Errorf("error al obtener tipo de integración: %w", err)
+			}
+			if len(intType.PlatformCredentialsEncrypted) > 0 {
+				platformCreds, err = uc.encryption.DecryptCredentials(ctx, intType.PlatformCredentialsEncrypted)
+				if err != nil {
+					return fmt.Errorf("error al desencriptar credenciales de plataforma: %w", err)
+				}
+			}
+		}
+		credentials = platformCreds
+		uc.log.Info(ctx).
+			Uint("integration_type_id", integration.IntegrationTypeID).
+			Msg("use_platform_token=true, usando credenciales del tipo de integración")
+	} else if len(integration.Credentials) > 0 {
 		encryptedBytes, err := decodeEncryptedCredentials([]byte(integration.Credentials))
 		if err != nil {
 			return fmt.Errorf("%w: %w", domain.ErrIntegrationCredentialsDecrypt, err)
@@ -33,24 +63,37 @@ func (uc *IntegrationUseCase) TestIntegration(ctx context.Context, id uint) erro
 		credentials = decrypted
 	}
 
-	// Convertir Config a map
-	var configMap map[string]interface{}
-	if len(integration.Config) > 0 {
-		if err := json.Unmarshal(integration.Config, &configMap); err != nil {
-			return fmt.Errorf("%w: %w", domain.ErrIntegrationConfigDeserialize, err)
-		}
+	// Obtener el tipo de integración completo (para código y URLs)
+	integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, integration.IntegrationTypeID)
+	if err != nil {
+		return fmt.Errorf("error al obtener tipo de integración: %w", err)
 	}
+	integrationTypeCode := integrationType.Code
 
-	// Obtener el código del tipo de integración
-	integrationTypeCode := ""
-	if integration.IntegrationType != nil {
-		integrationTypeCode = integration.IntegrationType.Code
-	} else {
-		integrationType, err := uc.repo.GetIntegrationTypeByID(ctx, integration.IntegrationTypeID)
-		if err != nil {
-			return fmt.Errorf("error al obtener tipo de integración: %w", err)
+	// Inyectar base_url del tipo si no viene en el config
+	if configMap == nil {
+		configMap = make(map[string]interface{})
+	}
+	if _, has := configMap["base_url"]; !has && integrationType.BaseURL != "" {
+		configMap["base_url"] = integrationType.BaseURL
+	}
+	if _, has := configMap["base_url_test"]; !has && integrationType.BaseURLTest != "" {
+		configMap["base_url_test"] = integrationType.BaseURLTest
+	}
+	// Inyectar phone_number_id y whatsapp_url desde config del tipo si use_platform_token
+	if usePlatformToken {
+		if _, has := configMap["phone_number_id"]; !has {
+			var typeConfig map[string]interface{}
+			if len(integrationType.ConfigSchema) > 0 {
+				json.Unmarshal(integrationType.ConfigSchema, &typeConfig)
+			}
+			if phoneID, ok := credentials["phone_number_id"]; ok {
+				configMap["phone_number_id"] = phoneID
+			}
+			if waURL, ok := credentials["whatsapp_url"]; ok {
+				configMap["whatsapp_url"] = waURL
+			}
 		}
-		integrationTypeCode = integrationType.Code
 	}
 
 	// Convertir código string a int

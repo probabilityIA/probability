@@ -14,7 +14,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueueBulkInvoiceJobs = "invoicing.bulk.create"
+const QueueBulkInvoiceJobs = rabbitmq.QueueInvoicingBulkCreate
 
 // BulkInvoiceConsumer procesa mensajes de facturación masiva
 type BulkInvoiceConsumer struct {

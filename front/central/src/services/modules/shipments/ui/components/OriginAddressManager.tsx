@@ -16,11 +16,16 @@ import { useHasPermission } from '@/shared/contexts/permissions-context';
 import { Plus, Edit2, Trash2, CheckCircle, MapPin, Phone, Mail, Building, X } from 'lucide-react';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
 
-export function OriginAddressManager() {
+interface OriginAddressManagerProps {
+    selectedBusinessId?: number | null;
+}
+
+export function OriginAddressManager({ selectedBusinessId }: OriginAddressManagerProps = {}) {
     const { showToast } = useToast();
     const canCreate = useHasPermission('Envios', 'Create');
     const canUpdate = useHasPermission('Envios', 'Update');
     const canDelete = useHasPermission('Envios', 'Delete');
+    const businessId = selectedBusinessId ?? undefined;
     const [addresses, setAddresses] = useState<OriginAddress[]>([]);
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingAddress, setEditingAddress] = useState<OriginAddress | null>(null);
@@ -47,7 +52,7 @@ export function OriginAddressManager() {
     const [citySuggestions, setCitySuggestions] = useState<any[]>([]);
 
     const loadAddresses = async () => {
-        const result = await getOriginAddressesAction();
+        const result = await getOriginAddressesAction(businessId);
         if (result.success && result.data) {
             setAddresses(result.data);
         } else {
@@ -57,7 +62,7 @@ export function OriginAddressManager() {
 
     useEffect(() => {
         loadAddresses();
-    }, []);
+    }, [businessId]);
 
     const handleCitySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         const value = e.target.value;
@@ -94,9 +99,9 @@ export function OriginAddressManager() {
         startTransition(async () => {
             let result;
             if (editingAddress) {
-                result = await updateOriginAddressAction(editingAddress.id, formData);
+                result = await updateOriginAddressAction(editingAddress.id, formData, businessId);
             } else {
-                result = await createOriginAddressAction(formData);
+                result = await createOriginAddressAction(formData, businessId);
             }
 
             if (result.success) {
@@ -138,7 +143,7 @@ export function OriginAddressManager() {
 
     const handleDelete = async (id: number) => {
         if (window.confirm('¿Estás seguro de eliminar esta dirección?')) {
-            const result = await deleteOriginAddressAction(id);
+            const result = await deleteOriginAddressAction(id, businessId);
             if (result.success) {
                 showToast(result.message, 'success');
                 loadAddresses();
@@ -149,7 +154,7 @@ export function OriginAddressManager() {
     };
 
     const handleSetDefault = async (id: number) => {
-        const result = await updateOriginAddressAction(id, { is_default: true });
+        const result = await updateOriginAddressAction(id, { is_default: true }, businessId);
         if (result.success) {
             showToast('Dirección predeterminada actualizada', 'success');
             loadAddresses();

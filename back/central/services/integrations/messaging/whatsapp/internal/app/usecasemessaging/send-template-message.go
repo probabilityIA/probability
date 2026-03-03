@@ -10,7 +10,7 @@ import (
 )
 
 // SendTemplate envía una plantilla de WhatsApp y crea/actualiza la conversación
-func (u *Usecases) SendTemplate(
+func (u *usecases) SendTemplate(
 	ctx context.Context,
 	templateName string,
 	phoneNumber string,
@@ -49,8 +49,8 @@ func (u *Usecases) SendTemplate(
 		return "", fmt.Errorf("número de teléfono inválido: %w", err)
 	}
 
-	// 4. Obtener configuración de WhatsApp (phone_number_id + access_token) desde el repositorio
-	whatsappConfig, err := u.integrationRepo.GetWhatsAppConfig(ctx, businessID)
+	// 4. Obtener configuración de WhatsApp desde cache de credenciales
+	whatsappConfig, err := u.credentialsCache.GetWhatsAppConfig(ctx, businessID)
 	if err != nil {
 		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error obteniendo configuración de WhatsApp")
 		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
@@ -85,7 +85,7 @@ func (u *Usecases) SendTemplate(
 		return "", fmt.Errorf("error al enviar mensaje de WhatsApp: %w", err)
 	}
 
-	// 8. Registrar en message_log
+	// 8. Publicar message log para persistencia async
 	messageLog := &entities.MessageLog{
 		ConversationID: conversation.ID,
 		Direction:      entities.MessageDirectionOutbound,
@@ -96,23 +96,28 @@ func (u *Usecases) SendTemplate(
 		CreatedAt:      time.Now(),
 	}
 
-	if err := u.messageLogRepo.Create(ctx, messageLog); err != nil {
+	if err := u.persistPublisher.PublishMessageLogCreated(ctx, messageLog); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("message_id", messageID).
-			Msg("[WhatsApp UseCase] - error registrando mensaje en log")
+			Msg("[WhatsApp UseCase] - error publicando mensaje en log")
 		// No retornamos error porque el mensaje ya fue enviado
 	}
 
-	// 9. Actualizar conversación
+	// 9. Actualizar conversación en cache + publicar para persistencia
 	conversation.LastMessageID = messageID
 	conversation.LastTemplateID = templateName
 	conversation.UpdatedAt = time.Now()
 
-	if err := u.conversationRepo.Update(ctx, conversation); err != nil {
+	if err := u.conversationCache.Save(ctx, conversation); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversation.ID).
-			Msg("[WhatsApp UseCase] - error actualizando conversación")
-		// No retornamos error porque el mensaje ya fue enviado
+			Msg("[WhatsApp UseCase] - error actualizando conversación en cache")
+	}
+
+	if err := u.persistPublisher.PublishConversationUpdated(ctx, conversation); err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp UseCase] - error publicando actualización de conversación")
 	}
 
 	u.log.Info(ctx).
@@ -125,7 +130,7 @@ func (u *Usecases) SendTemplate(
 }
 
 // SendTemplateWithConversation envía una plantilla usando una conversación existente
-func (u *Usecases) SendTemplateWithConversation(
+func (u *usecases) SendTemplateWithConversation(
 	ctx context.Context,
 	templateName string,
 	phoneNumber string,
@@ -147,8 +152,8 @@ func (u *Usecases) SendTemplateWithConversation(
 		return "", err
 	}
 
-	// 2. Obtener conversación existente
-	conversation, err := u.conversationRepo.GetByID(ctx, conversationID)
+	// 2. Obtener conversación existente desde cache
+	conversation, err := u.conversationCache.GetByID(ctx, conversationID)
 	if err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversationID).
@@ -164,8 +169,8 @@ func (u *Usecases) SendTemplateWithConversation(
 		return "", &errors.ErrConversationExpired{ConversationID: conversationID}
 	}
 
-	// 4. Obtener configuración de WhatsApp desde el repositorio
-	whatsappConfig, err := u.integrationRepo.GetWhatsAppConfig(ctx, conversation.BusinessID)
+	// 4. Obtener configuración de WhatsApp desde cache
+	whatsappConfig, err := u.credentialsCache.GetWhatsAppConfig(ctx, conversation.BusinessID)
 	if err != nil {
 		u.log.Error(ctx).Err(err).Msg("[WhatsApp UseCase] - error obteniendo configuración de WhatsApp")
 		return "", fmt.Errorf("error obteniendo configuración de WhatsApp: %w", err)
@@ -178,7 +183,7 @@ func (u *Usecases) SendTemplateWithConversation(
 		return "", err
 	}
 
-	// 6. Registrar en log
+	// 6. Publicar message log para persistencia async
 	messageLog := &entities.MessageLog{
 		ConversationID: conversation.ID,
 		Direction:      entities.MessageDirectionOutbound,
@@ -188,19 +193,20 @@ func (u *Usecases) SendTemplateWithConversation(
 		Status:         entities.MessageStatusSent,
 		CreatedAt:      time.Now(),
 	}
-	u.messageLogRepo.Create(ctx, messageLog)
+	u.persistPublisher.PublishMessageLogCreated(ctx, messageLog)
 
-	// 7. Actualizar conversación
+	// 7. Actualizar conversación en cache + publicar
 	conversation.LastMessageID = messageID
 	conversation.LastTemplateID = templateName
 	conversation.UpdatedAt = time.Now()
-	u.conversationRepo.Update(ctx, conversation)
+	u.conversationCache.Save(ctx, conversation)
+	u.persistPublisher.PublishConversationUpdated(ctx, conversation)
 
 	return messageID, nil
 }
 
 // buildTemplateMessage construye el mensaje de plantilla con todos sus componentes
-func (u *Usecases) buildTemplateMessage(
+func (u *usecases) buildTemplateMessage(
 	templateName string,
 	phoneNumber string,
 	variables map[string]string,
@@ -243,14 +249,14 @@ func (u *Usecases) buildTemplateMessage(
 }
 
 // getOrCreateConversation obtiene una conversación existente o crea una nueva
-func (u *Usecases) getOrCreateConversation(
+func (u *usecases) getOrCreateConversation(
 	ctx context.Context,
 	phoneNumber string,
 	orderNumber string,
 	businessID uint,
 ) (*entities.Conversation, error) {
 	// Intentar obtener conversación existente
-	conversation, err := u.conversationRepo.GetByPhoneAndOrder(ctx, phoneNumber, orderNumber)
+	conversation, err := u.conversationCache.GetByPhoneAndOrder(ctx, phoneNumber, orderNumber)
 	if err == nil {
 		// Conversación encontrada
 		if conversation.IsActive() {
@@ -274,8 +280,17 @@ func (u *Usecases) getOrCreateConversation(
 		ExpiresAt:    time.Now().Add(24 * time.Hour), // Ventana de 24h
 	}
 
-	if err := u.conversationRepo.Create(ctx, newConversation); err != nil {
+	// Guardar en cache (genera UUID automáticamente)
+	if err := u.conversationCache.Save(ctx, newConversation); err != nil {
 		return nil, err
+	}
+
+	// Publicar para persistencia async
+	if err := u.persistPublisher.PublishConversationCreated(ctx, newConversation); err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("conversation_id", newConversation.ID).
+			Msg("[WhatsApp UseCase] - error publicando creación de conversación")
+		// No retornamos error, la conversación ya está en cache
 	}
 
 	u.log.Info(ctx).

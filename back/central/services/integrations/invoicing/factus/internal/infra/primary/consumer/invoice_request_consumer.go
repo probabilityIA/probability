@@ -72,9 +72,9 @@ type InvoiceRequestConsumer struct {
 	log               log.ILogger
 }
 
-// NewInvoiceRequestConsumer crea una nueva instancia del consumer.
+// New crea una nueva instancia del consumer.
 // Solo recibe el use case — no adapters secundarios directamente.
-func NewInvoiceRequestConsumer(
+func New(
 	rabbit rabbitmq.IQueue,
 	useCase ports.IInvoiceUseCase,
 	responsePublisher *queue.ResponsePublisher,
@@ -89,7 +89,7 @@ func NewInvoiceRequestConsumer(
 }
 
 const (
-	QueueFactusRequests = "invoicing.factus.requests"
+	QueueFactusRequests = rabbitmq.QueueInvoicingFactusRequests
 )
 
 // Start inicia el consumer

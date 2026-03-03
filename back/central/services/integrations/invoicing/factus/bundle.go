@@ -30,12 +30,12 @@ func New(
 	logger.Info(context.Background()).Msg("✅ Factus use case initialized")
 
 	// 3. Response Publisher (RabbitMQ)
-	responsePublisher := queue.NewResponsePublisher(rabbit, logger)
+	responsePublisher := queue.New(rabbit, logger)
 	logger.Info(context.Background()).Msg("✅ Factus response publisher initialized")
 
 	// 4. Invoice Request Consumer (escucha "invoicing.factus.requests")
 	if rabbit != nil {
-		invoiceRequestConsumer := consumer.NewInvoiceRequestConsumer(
+		invoiceRequestConsumer := consumer.New(
 			rabbit,
 			useCase,
 			responsePublisher,

@@ -32,14 +32,16 @@ func TestTestConnectionRaw_ConProvider_Exitoso(t *testing.T) {
 	config := map[string]interface{}{"shop_domain": "mi-tienda.myshopify.com"}
 	credentials := map[string]interface{}{"api_key": "key_123"}
 
-	provider.On("TestConnection", mock.Anything, config, credentials).Return(nil)
+	provider.On("TestConnection", mock.Anything, mock.Anything, credentials).Return(nil)
+	// El use case consulta el tipo de integración por código para inyectar base_url
+	repo.On("GetIntegrationTypeByCode", mock.Anything, "shopify").Return(nil, errors.New("not found")).Maybe()
 
 	// Act
 	err := uc.TestConnectionRaw(ctx, "shopify", config, credentials)
 
 	// Assert
 	assert.NoError(t, err)
-	provider.AssertCalled(t, "TestConnection", mock.Anything, config, credentials)
+	provider.AssertCalled(t, "TestConnection", mock.Anything, mock.Anything, credentials)
 }
 
 func TestTestConnectionRaw_SinProvider_ValidaAccessToken(t *testing.T) {
@@ -55,6 +57,8 @@ func TestTestConnectionRaw_SinProvider_ValidaAccessToken(t *testing.T) {
 	ctx := context.Background()
 
 	credentials := map[string]interface{}{"access_token": "tok_valido"}
+	// El use case siempre consulta el tipo de integración por código para inyectar base_url
+	repo.On("GetIntegrationTypeByCode", mock.Anything, "shopify").Return(nil, errors.New("not found")).Maybe()
 
 	// Act
 	err := uc.TestConnectionRaw(ctx, "shopify", nil, credentials)
@@ -76,6 +80,8 @@ func TestTestConnectionRaw_SinProvider_SinAccessToken(t *testing.T) {
 	ctx := context.Background()
 
 	credentials := map[string]interface{}{} // Sin access_token
+	// El use case siempre consulta el tipo de integración por código para inyectar base_url
+	repo.On("GetIntegrationTypeByCode", mock.Anything, "shopify").Return(nil, errors.New("not found")).Maybe()
 
 	// Act
 	err := uc.TestConnectionRaw(ctx, "shopify", nil, credentials)
@@ -101,7 +107,8 @@ func TestTestConnectionRaw_ConProvider_TestFalla(t *testing.T) {
 	config := map[string]interface{}{}
 	credentials := map[string]interface{}{"api_key": "invalida"}
 
-	provider.On("TestConnection", mock.Anything, config, credentials).Return(errors.New("credenciales inválidas"))
+	provider.On("TestConnection", mock.Anything, mock.Anything, credentials).Return(errors.New("credenciales inválidas"))
+	repo.On("GetIntegrationTypeByCode", mock.Anything, "shopify").Return(nil, errors.New("not found")).Maybe()
 
 	// Act
 	err := uc.TestConnectionRaw(ctx, "shopify", config, credentials)
@@ -131,7 +138,8 @@ func TestTestConnectionFromConfig_TipoComoString(t *testing.T) {
 	config := map[string]interface{}{"integration_type": "shopify"}
 	credentials := map[string]interface{}{"api_key": "key"}
 
-	provider.On("TestConnection", mock.Anything, config, credentials).Return(nil)
+	provider.On("TestConnection", mock.Anything, mock.Anything, credentials).Return(nil)
+	repo.On("GetIntegrationTypeByCode", mock.Anything, mock.Anything).Return(nil, errors.New("not found")).Maybe()
 
 	// Act
 	err := uc.TestConnectionFromConfig(ctx, config, credentials)
@@ -157,7 +165,8 @@ func TestTestConnectionFromConfig_TipoComoInt(t *testing.T) {
 	config := map[string]interface{}{"integration_type": 1} // int
 	credentials := map[string]interface{}{}
 
-	provider.On("TestConnection", mock.Anything, config, credentials).Return(nil)
+	provider.On("TestConnection", mock.Anything, mock.Anything, credentials).Return(nil)
+	repo.On("GetIntegrationTypeByCode", mock.Anything, mock.Anything).Return(nil, errors.New("not found")).Maybe()
 
 	// Act
 	err := uc.TestConnectionFromConfig(ctx, config, credentials)

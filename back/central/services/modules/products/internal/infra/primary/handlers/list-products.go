@@ -14,10 +14,10 @@ import (
 // @Tags         Products
 // @Accept       json
 // @Produce      json
+// @Param        business_id     query    int     false  "ID del negocio (requerido para super admin)"
 // @Param        page            query    int     false  "Número de página (default: 1, min: 1)"
 // @Param        page_size       query    int     false  "Tamaño de página (default: 10, min: 1, max: 100)"
-// @Param        business_id     query    int     false  "Filtrar por ID de negocio"
-// @Param        integration_id  query    int     false  "Filtrar por ID de integración (productos de negocios con esta integración)"
+// @Param        integration_id  query    int     false  "Filtrar por ID de integración"
 // @Param        integration_type query    string  false  "Filtrar por tipo de integración (ej: shopify, whatsapp)"
 // @Param        sku             query    string  false  "Filtrar por SKU (búsqueda parcial, case-insensitive)"
 // @Param        skus            query    string  false  "Filtrar por múltiples SKUs separados por coma (búsqueda exacta)"
@@ -38,6 +38,12 @@ import (
 // @Failure      500  {object}  map[string]interface{}
 // @Router       /products [get]
 func (h *Handlers) ListProducts(c *gin.Context) {
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		h.respondBusinessIDRequired(c)
+		return
+	}
+
 	// Obtener y validar parámetros de paginación
 	pageStr := c.DefaultQuery("page", "1")
 	page, err := strconv.Atoi(pageStr)
@@ -66,15 +72,8 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		pageSize = 100
 	}
 
-	// Construir filtros
+	// Construir filtros adicionales (business_id viene por separado como parámetro explícito)
 	filters := make(map[string]interface{})
-
-	// Filtro por business_id
-	if businessID := c.Query("business_id"); businessID != "" {
-		if id, err := strconv.ParseUint(businessID, 10, 32); err == nil && id > 0 {
-			filters["business_id"] = uint(id)
-		}
-	}
 
 	// Filtro por integration_id (a través de JOIN con Business -> Integrations)
 	if integrationID := c.Query("integration_id"); integrationID != "" {
@@ -163,12 +162,11 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 	if sortBy := c.Query("sort_by"); sortBy != "" {
 		// Validar campos permitidos para ordenar
 		allowedSortFields := map[string]bool{
-			"id":          true,
-			"sku":         true,
-			"name":        true,
-			"created_at":  true,
-			"updated_at":  true,
-			"business_id": true,
+			"id":         true,
+			"sku":        true,
+			"name":       true,
+			"created_at": true,
+			"updated_at": true,
 		}
 		if allowedSortFields[strings.ToLower(sortBy)] {
 			filters["sort_by"] = strings.ToLower(sortBy)
@@ -182,8 +180,8 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		}
 	}
 
-	// Llamar al caso de uso
-	response, err := h.uc.ListProducts(c.Request.Context(), page, pageSize, filters)
+	// Llamar al caso de uso con el businessID del JWT
+	response, err := h.uc.ListProducts(c.Request.Context(), businessID, page, pageSize, filters)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
@@ -203,4 +201,3 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		"total_pages": response.TotalPages,
 	})
 }
-

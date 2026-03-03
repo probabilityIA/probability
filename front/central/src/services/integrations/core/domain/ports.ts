@@ -27,8 +27,8 @@ export interface IIntegrationRepository {
     updateIntegration(id: number, data: UpdateIntegrationDTO): Promise<SingleResponse<Integration>>;
     deleteIntegration(id: number): Promise<ActionResponse>;
     testConnection(id: number): Promise<ActionResponse>;
-    activateIntegration(id: number): Promise<SingleResponse<Integration>>;
-    deactivateIntegration(id: number): Promise<SingleResponse<Integration>>;
+    activateIntegration(id: number): Promise<ActionResponse>;
+    deactivateIntegration(id: number): Promise<ActionResponse>;
     setAsDefault(id: number): Promise<SingleResponse<Integration>>;
     syncOrders(id: number, params?: SyncOrdersParams): Promise<ActionResponse>;
     getSyncStatus(id: number, businessId?: number): Promise<{ success: boolean; in_progress: boolean; sync_state?: any }>;
@@ -41,7 +41,7 @@ export interface IIntegrationRepository {
     createWebhook(id: number): Promise<CreateWebhookResponse>;
 
     // Integration Types
-    getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>>;
+    getIntegrationTypes(categoryId?: number): Promise<SingleResponse<IntegrationType[]>>;
     getActiveIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>>;
     getIntegrationTypeById(id: number): Promise<SingleResponse<IntegrationType>>;
     getIntegrationTypeByCode(code: string): Promise<SingleResponse<IntegrationType>>;

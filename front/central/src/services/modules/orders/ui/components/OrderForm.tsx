@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Order, CreateOrderDTO, UpdateOrderDTO } from '../../domain/types';
 import { Product } from '../../../products/domain/types';
 import { Button, Input, Alert, Modal } from '@/shared/ui';
@@ -10,17 +10,23 @@ import ProductSelector from '../../../products/ui/components/ProductSelector';
 import ProductForm from '../../../products/ui/components/ProductForm';
 import { createOrderAction, updateOrderAction } from '../../infra/actions';
 import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json';
+import { useClientSearch } from '../hooks/useClientSearch';
+import { useWarehouses } from '../hooks/useWarehouses';
+import ClientAutocomplete from './ClientAutocomplete';
+import { CustomerInfo } from '../../../customers/domain/types';
 
 interface OrderFormProps {
     order?: Order;
     onSuccess?: () => void;
     onCancel?: () => void;
+    /** For super admin: the business selected in the page-level selector */
+    selectedBusinessId?: number | null;
 }
 
-export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps) {
+export default function OrderForm({ order, onSuccess, onCancel, selectedBusinessId }: OrderFormProps) {
     const isEdit = !!order;
     const { permissions } = usePermissions();
-    const defaultBusinessId = permissions?.business_id || 0;
+    const defaultBusinessId = selectedBusinessId || permissions?.business_id || 0;
     const { showToast } = useToast();
 
     const [formData, setFormData] = useState({
@@ -63,6 +69,7 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
         tracking_number: order?.tracking_number || '',
         tracking_link: order?.tracking_link || '',
         guide_id: order?.guide_id || '',
+        warehouse_id: order?.warehouse_id || 0,
         warehouse_name: order?.warehouse_name || '',
         driver_name: order?.driver_name || '',
         is_last_mile: order?.is_last_mile || false,
@@ -109,6 +116,61 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
     const [house, setHouse] = useState('');
     const [barrio, setBarrio] = useState('');
 
+    // Client autocomplete (triggered from DNI, name, or email fields)
+    const { results: clientResults, loading: clientLoading, searched: clientSearched, search: searchClients, clear: clearClients } = useClientSearch({
+        businessId: formData.business_id,
+        minChars: 3,
+    });
+    const { warehouses, loading: warehousesLoading } = useWarehouses({ businessId: formData.business_id });
+    const [showClientDropdown, setShowClientDropdown] = useState(false);
+    const [activeSearchField, setActiveSearchField] = useState<'dni' | 'name' | 'lastname' | 'email' | null>(null);
+
+    const handleClientFieldChange = useCallback((field: 'dni' | 'name' | 'lastname' | 'email', value: string) => {
+        if (field === 'dni') {
+            setFormData(prev => ({ ...prev, customer_dni: value }));
+        } else if (field === 'name') {
+            setFormData(prev => ({ ...prev, customer_first_name: value }));
+        } else if (field === 'lastname') {
+            setFormData(prev => ({ ...prev, customer_last_name: value }));
+        } else {
+            setFormData(prev => ({ ...prev, customer_email: value }));
+        }
+
+        if (value.length >= 3) {
+            searchClients(value);
+            setShowClientDropdown(true);
+            setActiveSearchField(field);
+        } else {
+            clearClients();
+            setShowClientDropdown(false);
+            setActiveSearchField(null);
+        }
+    }, [searchClients, clearClients]);
+
+    const handleClientSelect = useCallback((client: CustomerInfo) => {
+        const nameParts = client.name.split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+
+        // Strip +57 prefix from phone since the form already shows it
+        let phone = client.phone || '';
+        if (phone.startsWith('+57')) phone = phone.slice(3);
+        if (phone.startsWith('57') && phone.length > 10) phone = phone.slice(2);
+
+        setFormData(prev => ({
+            ...prev,
+            customer_first_name: firstName,
+            customer_last_name: lastName,
+            customer_name: client.name,
+            customer_email: client.email || '',
+            customer_phone: phone,
+            customer_dni: client.dni || prev.customer_dni,
+        }));
+        setShowClientDropdown(false);
+        setActiveSearchField(null);
+        clearClients();
+    }, [clearClients]);
+
     // DANE options
     const daneOptions = Object.entries(danes).map(([code, data]: [string, any]) => ({
         value: code,
@@ -120,6 +182,15 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
     const filteredCityOptions = daneOptions.filter(opt =>
         opt.label.toLowerCase().includes(citySearch.toLowerCase())
     );
+
+    // Auto-select warehouse: if editing use existing, else pick default or single warehouse
+    useEffect(() => {
+        if (warehouses.length === 0 || formData.warehouse_id) return;
+        const defaultW = warehouses.find(w => w.is_default) || (warehouses.length === 1 ? warehouses[0] : null);
+        if (defaultW) {
+            setFormData(prev => ({ ...prev, warehouse_id: defaultW.id, warehouse_name: defaultW.name }));
+        }
+    }, [warehouses]); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Initialize citySearch when order is loaded
     useEffect(() => {
@@ -243,42 +314,174 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                     {/* Customer Info */}
                     <div className="bg-white border border-gray-200 shadow-sm p-5 rounded-lg">
                         <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Información del Cliente</h3>
+
+                        {/* Warning banner */}
+                        {!formData.customer_email && (formData.customer_first_name || formData.customer_name) && (
+                            <div className="mb-4 px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg">
+                                <p className="text-xs text-amber-700">
+                                    Completar el email del cliente mejora la analítica, seguimiento y facturación de tus órdenes.
+                                </p>
+                            </div>
+                        )}
+
                         <div className="space-y-4">
-                            <div>
+                            {/* DNI — with autocomplete */}
+                            <div className="relative">
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                    DNI / Cédula
+                                </label>
+                                <div className="relative">
+                                    <Input
+                                        type="text"
+                                        value={formData.customer_dni}
+                                        onChange={(e) => handleClientFieldChange('dni', e.target.value)}
+                                        onFocus={() => {
+                                            if (formData.customer_dni.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
+                                                setShowClientDropdown(true);
+                                                setActiveSearchField('dni');
+                                            }
+                                        }}
+                                        placeholder="Buscar cliente por cédula..."
+                                        autoComplete="off"
+                                        className={clientLoading && activeSearchField === 'dni' ? 'pr-10' : ''}
+                                    />
+                                    {clientLoading && activeSearchField === 'dni' && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                                {activeSearchField === 'dni' && (
+                                    <ClientAutocomplete
+                                        results={clientResults}
+                                        loading={clientLoading}
+                                        searched={clientSearched}
+                                        visible={showClientDropdown}
+                                        searchTerm={formData.customer_dni}
+                                        onSelect={handleClientSelect}
+                                        onClose={() => setShowClientDropdown(false)}
+                                    />
+                                )}
+                            </div>
+                            {/* Nombre — with autocomplete */}
+                            <div className="relative">
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Nombre *
                                 </label>
-                                <Input
-                                    type="text"
-                                    required
-                                    value={formData.customer_first_name}
-                                    onChange={(e) => setFormData({ ...formData, customer_first_name: e.target.value })}
-                                />
+                                <div className="relative">
+                                    <Input
+                                        type="text"
+                                        required
+                                        value={formData.customer_first_name}
+                                        onChange={(e) => handleClientFieldChange('name', e.target.value)}
+                                        onFocus={() => {
+                                            if (formData.customer_first_name.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
+                                                setShowClientDropdown(true);
+                                                setActiveSearchField('name');
+                                            }
+                                        }}
+                                        placeholder="Buscar por nombre..."
+                                        autoComplete="off"
+                                        className={clientLoading && activeSearchField === 'name' ? 'pr-10' : ''}
+                                    />
+                                    {clientLoading && activeSearchField === 'name' && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                                {activeSearchField === 'name' && (
+                                    <ClientAutocomplete
+                                        results={clientResults}
+                                        loading={clientLoading}
+                                        searched={clientSearched}
+                                        visible={showClientDropdown}
+                                        searchTerm={formData.customer_first_name}
+                                        onSelect={handleClientSelect}
+                                        onClose={() => setShowClientDropdown(false)}
+                                    />
+                                )}
                             </div>
-                            <div>
+                            {/* Apellido — with autocomplete */}
+                            <div className="relative">
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Apellido *
                                 </label>
-                                <Input
-                                    type="text"
-                                    required
-                                    value={formData.customer_last_name}
-                                    onChange={(e) => setFormData({ ...formData, customer_last_name: e.target.value })}
-                                />
+                                <div className="relative">
+                                    <Input
+                                        type="text"
+                                        required
+                                        value={formData.customer_last_name}
+                                        onChange={(e) => handleClientFieldChange('lastname', e.target.value)}
+                                        onFocus={() => {
+                                            if (formData.customer_last_name.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
+                                                setShowClientDropdown(true);
+                                                setActiveSearchField('lastname');
+                                            }
+                                        }}
+                                        placeholder="Buscar por apellido..."
+                                        autoComplete="off"
+                                        className={clientLoading && activeSearchField === 'lastname' ? 'pr-10' : ''}
+                                    />
+                                    {clientLoading && activeSearchField === 'lastname' && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                                {activeSearchField === 'lastname' && (
+                                    <ClientAutocomplete
+                                        results={clientResults}
+                                        loading={clientLoading}
+                                        searched={clientSearched}
+                                        visible={showClientDropdown}
+                                        searchTerm={formData.customer_last_name}
+                                        onSelect={handleClientSelect}
+                                        onClose={() => setShowClientDropdown(false)}
+                                    />
+                                )}
                             </div>
-                            <div>
+                            {/* Email — with autocomplete */}
+                            <div className="relative">
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    📧 Email
+                                    Email
                                 </label>
-                                <Input
-                                    type="email"
-                                    value={formData.customer_email}
-                                    onChange={(e) => setFormData({ ...formData, customer_email: e.target.value })}
-                                />
+                                <div className="relative">
+                                    <Input
+                                        type="email"
+                                        value={formData.customer_email}
+                                        onChange={(e) => handleClientFieldChange('email', e.target.value)}
+                                        onFocus={() => {
+                                            if (formData.customer_email.length >= 3 && (clientResults.length > 0 || clientLoading || clientSearched)) {
+                                                setShowClientDropdown(true);
+                                                setActiveSearchField('email');
+                                            }
+                                        }}
+                                        placeholder="Buscar por email..."
+                                        autoComplete="off"
+                                        className={clientLoading && activeSearchField === 'email' ? 'pr-10' : ''}
+                                    />
+                                    {clientLoading && activeSearchField === 'email' && (
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                                        </div>
+                                    )}
+                                </div>
+                                {activeSearchField === 'email' && (
+                                    <ClientAutocomplete
+                                        results={clientResults}
+                                        loading={clientLoading}
+                                        searched={clientSearched}
+                                        visible={showClientDropdown}
+                                        searchTerm={formData.customer_email}
+                                        onSelect={handleClientSelect}
+                                        onClose={() => setShowClientDropdown(false)}
+                                    />
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    📱 Teléfono *
+                                    Teléfono *
                                 </label>
                                 <div className="flex items-center w-full">
                                     <span className="px-3 py-2.5 bg-purple-700 text-white font-semibold rounded-l-lg border border-r-0 border-purple-700">
@@ -552,11 +755,31 @@ export default function OrderForm({ order, onSuccess, onCancel }: OrderFormProps
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Bodega
                                 </label>
-                                <Input
-                                    type="text"
-                                    value={formData.warehouse_name}
-                                    onChange={(e) => setFormData({ ...formData, warehouse_name: e.target.value })}
-                                />
+                                {warehouses.length > 0 ? (
+                                    <select
+                                        value={formData.warehouse_id || ''}
+                                        onChange={(e) => {
+                                            const id = parseInt(e.target.value);
+                                            const w = warehouses.find(w => w.id === id);
+                                            setFormData({ ...formData, warehouse_id: id || 0, warehouse_name: w?.name || '' });
+                                        }}
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white text-gray-800"
+                                    >
+                                        <option value="">Seleccionar bodega...</option>
+                                        {warehouses.map(w => (
+                                            <option key={w.id} value={w.id}>
+                                                {w.name} ({w.code}){w.is_default ? ' - Default' : ''}
+                                            </option>
+                                        ))}
+                                    </select>
+                                ) : (
+                                    <Input
+                                        type="text"
+                                        value={formData.warehouse_name}
+                                        onChange={(e) => setFormData({ ...formData, warehouse_name: e.target.value })}
+                                        placeholder={warehousesLoading ? 'Cargando bodegas...' : 'Nombre de bodega'}
+                                    />
+                                )}
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">

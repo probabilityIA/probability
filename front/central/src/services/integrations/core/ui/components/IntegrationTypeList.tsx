@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useIntegrationTypes } from '../hooks/useIntegrationTypes';
+import { useCategories } from '../hooks/useCategories';
 import { IntegrationType } from '../../domain/types';
 import { Button, Badge, Spinner, Table, Alert, ConfirmModal } from '@/shared/ui';
 
@@ -10,6 +11,9 @@ interface IntegrationTypeListProps {
 }
 
 export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps) {
+    const [selectedCategoryId, setSelectedCategoryId] = useState<number | undefined>(undefined);
+    const { categories } = useCategories();
+
     const {
         integrationTypes,
         loading,
@@ -17,8 +21,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         setError,
         updateIntegrationType,
         deleteIntegrationType,
-        refresh
-    } = useIntegrationTypes();
+    } = useIntegrationTypes(selectedCategoryId);
 
     const [deleteModal, setDeleteModal] = useState<{ show: boolean; id: number | null }>({
         show: false,
@@ -45,19 +48,13 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         }
     };
 
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center p-8">
-                <Spinner size="lg" />
-            </div>
-        );
-    }
+    const visibleCategories = categories.filter(c => c.is_active && c.is_visible);
 
     const columns = [
         { key: 'id', label: 'ID' },
         { key: 'logo', label: 'Logo' },
         { key: 'name', label: 'Nombre' },
-        { key: 'category', label: 'Categoría' },
+        { key: 'category', label: 'Categoria' },
         { key: 'status', label: 'Estado' },
         { key: 'development', label: 'Desarrollo' },
         { key: 'actions', label: 'Acciones' }
@@ -73,7 +70,6 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                         alt={type.name}
                         className="w-12 h-12 object-contain border border-gray-200 rounded-lg p-1 bg-white"
                         onError={(e) => {
-                            // Si la imagen falla al cargar, mostrar un placeholder
                             (e.target as HTMLImageElement).style.display = 'none';
                             const parent = (e.target as HTMLImageElement).parentElement;
                             if (parent) {
@@ -104,7 +100,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                 {type.category.name}
             </span>
         ) : (
-            <span className="text-gray-400 text-sm">Sin categoría</span>
+            <span className="text-gray-400 text-sm">Sin categoria</span>
         ),
         status: (
             <Badge type={type.is_active ? 'success' : 'error'}>
@@ -162,18 +158,59 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                 </Alert>
             )}
 
-            <Table
-                columns={columns}
-                data={integrationTypes.map(renderRow)}
-                emptyMessage="No hay tipos de integración disponibles"
-            />
+            {/* Category filter tabs */}
+            <div className="flex items-center gap-2 flex-wrap">
+                <button
+                    onClick={() => setSelectedCategoryId(undefined)}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                        selectedCategoryId === undefined
+                            ? 'bg-gray-900 text-white'
+                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                >
+                    Todas
+                </button>
+                {visibleCategories.map(cat => (
+                    <button
+                        key={cat.id}
+                        onClick={() => setSelectedCategoryId(cat.id)}
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                            selectedCategoryId === cat.id
+                                ? 'text-white'
+                                : 'text-gray-600 hover:opacity-80'
+                        }`}
+                        style={{
+                            backgroundColor: selectedCategoryId === cat.id
+                                ? (cat.color || '#6B7280')
+                                : `${cat.color || '#6B7280'}20`,
+                            color: selectedCategoryId === cat.id
+                                ? '#fff'
+                                : (cat.color || '#6B7280'),
+                        }}
+                    >
+                        {cat.name}
+                    </button>
+                ))}
+            </div>
+
+            {loading ? (
+                <div className="flex justify-center items-center p-8">
+                    <Spinner size="lg" />
+                </div>
+            ) : (
+                <Table
+                    columns={columns}
+                    data={integrationTypes.map(renderRow)}
+                    emptyMessage="No hay tipos de integracion para esta categoria"
+                />
+            )}
 
             <ConfirmModal
                 isOpen={deleteModal.show}
                 onClose={() => setDeleteModal({ show: false, id: null })}
                 onConfirm={handleDeleteConfirm}
-                title="Eliminar Tipo de Integración"
-                message="¿Estás seguro de que deseas eliminar este tipo de integración? Esta acción no se puede deshacer y podría afectar a las integraciones existentes."
+                title="Eliminar Tipo de Integracion"
+                message="Estas seguro de que deseas eliminar este tipo de integracion? Esta accion no se puede deshacer y podria afectar a las integraciones existentes."
             />
         </div>
     );

@@ -82,26 +82,30 @@ export class ShipmentApiRepository implements IShipmentRepository {
     }
 
     // Origin Addresses
-    async getOriginAddresses(): Promise<OriginAddress[]> {
-        return this.fetch<OriginAddress[]>('/shipments/origin-addresses');
+    private businessQuery(businessId?: number): string {
+        return businessId ? `?business_id=${businessId}` : '';
     }
 
-    async createOriginAddress(req: CreateOriginAddressRequest): Promise<OriginAddress> {
-        return this.fetch<OriginAddress>('/shipments/origin-addresses', {
+    async getOriginAddresses(businessId?: number): Promise<OriginAddress[]> {
+        return this.fetch<OriginAddress[]>(`/shipments/origin-addresses${this.businessQuery(businessId)}`);
+    }
+
+    async createOriginAddress(req: CreateOriginAddressRequest, businessId?: number): Promise<OriginAddress> {
+        return this.fetch<OriginAddress>(`/shipments/origin-addresses${this.businessQuery(businessId)}`, {
             method: 'POST',
             body: JSON.stringify(req),
         });
     }
 
-    async updateOriginAddress(id: number, req: UpdateOriginAddressRequest): Promise<OriginAddress> {
-        return this.fetch<OriginAddress>(`/shipments/origin-addresses/${id}`, {
+    async updateOriginAddress(id: number, req: UpdateOriginAddressRequest, businessId?: number): Promise<OriginAddress> {
+        return this.fetch<OriginAddress>(`/shipments/origin-addresses/${id}${this.businessQuery(businessId)}`, {
             method: 'PUT',
             body: JSON.stringify(req),
         });
     }
 
-    async deleteOriginAddress(id: number): Promise<{ message: string }> {
-        return this.fetch<{ message: string }>(`/shipments/origin-addresses/${id}`, {
+    async deleteOriginAddress(id: number, businessId?: number): Promise<{ message: string }> {
+        return this.fetch<{ message: string }>(`/shipments/origin-addresses/${id}${this.businessQuery(businessId)}`, {
             method: 'DELETE',
         });
     }

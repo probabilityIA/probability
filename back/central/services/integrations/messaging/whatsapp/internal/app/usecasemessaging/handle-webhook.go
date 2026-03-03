@@ -11,7 +11,7 @@ import (
 )
 
 // HandleIncomingMessage procesa mensajes entrantes del usuario
-func (u *Usecases) HandleIncomingMessage(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
+func (u *usecases) HandleIncomingMessage(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
 	u.log.Info(ctx).Msg("[WhatsApp Webhook] - procesando mensaje entrante")
 
 	// Extraer mensajes del webhook
@@ -38,7 +38,7 @@ func (u *Usecases) HandleIncomingMessage(ctx context.Context, whPayload dtos.Web
 }
 
 // processIncomingMessage procesa un mensaje individual
-func (u *Usecases) processIncomingMessage(ctx context.Context, message dtos.WebhookMessageDTO, metadata dtos.WebhookMetadataDTO) error {
+func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.WebhookMessageDTO, metadata dtos.WebhookMetadataDTO) error {
 	phoneNumber := message.From
 	messageText := message.GetMessageText()
 
@@ -49,8 +49,8 @@ func (u *Usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		Str("type", message.Type).
 		Msg("[WhatsApp Webhook] - procesando mensaje del usuario")
 
-	// 1. Buscar conversación activa del usuario
-	conversation, err := u.conversationRepo.GetActiveByPhone(ctx, phoneNumber)
+	// 1. Buscar conversación activa del usuario en cache
+	conversation, err := u.conversationCache.GetActiveByPhone(ctx, phoneNumber)
 	if err != nil {
 		u.log.Debug(ctx).
 			Str("phone_number", phoneNumber).
@@ -68,7 +68,7 @@ func (u *Usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		return &errors.ErrConversationExpired{ConversationID: conversation.ID}
 	}
 
-	// 3. Registrar mensaje entrante en log
+	// 3. Publicar mensaje entrante en log para persistencia async
 	messageLog := &entities.MessageLog{
 		ConversationID: conversation.ID,
 		Direction:      entities.MessageDirectionInbound,
@@ -78,10 +78,10 @@ func (u *Usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		CreatedAt:      time.Now(),
 	}
 
-	if err := u.messageLogRepo.Create(ctx, messageLog); err != nil {
+	if err := u.persistPublisher.PublishMessageLogCreated(ctx, messageLog); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("message_id", message.ID).
-			Msg("[WhatsApp Webhook] - error registrando mensaje entrante")
+			Msg("[WhatsApp Webhook] - error publicando mensaje entrante en log")
 		// Continuamos aunque falle el log
 	}
 
@@ -98,7 +98,7 @@ func (u *Usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 }
 
 // processConversationFlow maneja el flujo de la conversación según el estado actual
-func (u *Usecases) processConversationFlow(ctx context.Context, conversation *entities.Conversation, userResponse string) error {
+func (u *usecases) processConversationFlow(ctx context.Context, conversation *entities.Conversation, userResponse string) error {
 	u.log.Info(ctx).
 		Str("conversation_id", conversation.ID).
 		Str("current_state", string(conversation.CurrentState)).
@@ -140,15 +140,23 @@ func (u *Usecases) processConversationFlow(ctx context.Context, conversation *en
 		return err
 	}
 
-	// 4. Actualizar estado de la conversación
+	// 4. Actualizar estado de la conversación en cache
 	conversation.CurrentState = transition.NextState
 	conversation.UpdatedAt = time.Now()
 
-	if err := u.conversationRepo.Update(ctx, conversation); err != nil {
+	if err := u.conversationCache.Save(ctx, conversation); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversation.ID).
-			Msg("[WhatsApp Webhook] - error actualizando conversación")
+			Msg("[WhatsApp Webhook] - error actualizando conversación en cache")
 		return err
+	}
+
+	// Publicar actualización para persistencia async
+	if err := u.persistPublisher.PublishConversationUpdated(ctx, conversation); err != nil {
+		u.log.Error(ctx).Err(err).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - error publicando actualización de conversación")
+		// No retornamos error
 	}
 
 	// 5. Publicar evento de negocio si aplica
@@ -172,7 +180,7 @@ func (u *Usecases) processConversationFlow(ctx context.Context, conversation *en
 }
 
 // publishBusinessEvent publica eventos de negocio según el tipo
-func (u *Usecases) publishBusinessEvent(ctx context.Context, eventType string, conversation *entities.Conversation) error {
+func (u *usecases) publishBusinessEvent(ctx context.Context, eventType string, conversation *entities.Conversation) error {
 	switch eventType {
 	case "confirmed":
 		return u.publisher.PublishOrderConfirmed(
@@ -218,7 +226,7 @@ func (u *Usecases) publishBusinessEvent(ctx context.Context, eventType string, c
 }
 
 // HandleMessageStatus procesa cambios de estado de mensajes (delivered, read)
-func (u *Usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
+func (u *usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error {
 	u.log.Info(ctx).Msg("[WhatsApp Webhook] - procesando cambios de estado de mensajes")
 
 	for _, entry := range whPayload.Entry {
@@ -244,7 +252,7 @@ func (u *Usecases) HandleMessageStatus(ctx context.Context, whPayload dtos.Webho
 }
 
 // processMessageStatus procesa un cambio de estado individual
-func (u *Usecases) processMessageStatus(ctx context.Context, status dtos.WebhookStatusDTO) error {
+func (u *usecases) processMessageStatus(ctx context.Context, status dtos.WebhookStatusDTO) error {
 	u.log.Info(ctx).
 		Str("message_id", status.ID).
 		Str("status", status.Status).
@@ -279,18 +287,18 @@ func (u *Usecases) processMessageStatus(ctx context.Context, status dtos.Webhook
 		timestamps["read_at"] = timestamp
 	}
 
-	// Actualizar en el repositorio
-	if err := u.messageLogRepo.UpdateStatus(ctx, status.ID, messageStatus, timestamps); err != nil {
+	// Publicar actualización de estado para persistencia async
+	if err := u.persistPublisher.PublishMessageStatusUpdated(ctx, status.ID, messageStatus, timestamps); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("message_id", status.ID).
-			Msg("[WhatsApp Webhook] - error actualizando estado en BD")
+			Msg("[WhatsApp Webhook] - error publicando actualización de estado")
 		return err
 	}
 
 	u.log.Info(ctx).
 		Str("message_id", status.ID).
 		Str("status", string(messageStatus)).
-		Msg("[WhatsApp Webhook] - estado de mensaje actualizado exitosamente")
+		Msg("[WhatsApp Webhook] - estado de mensaje publicado para persistencia")
 
 	return nil
 }

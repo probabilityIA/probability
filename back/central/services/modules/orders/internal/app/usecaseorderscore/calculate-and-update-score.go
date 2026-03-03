@@ -11,19 +11,13 @@ import (
 // CalculateAndUpdateOrderScore calcula el score de una orden y lo actualiza en la base de datos
 // Este es el método principal que se activa mediante eventos
 func (uc *UseCaseOrderScore) CalculateAndUpdateOrderScore(ctx context.Context, orderID string) error {
-	fmt.Printf("[CalculateAndUpdateOrderScore] ACTIVADO - Calculando score para orden ID: %s\n", orderID)
-
 	// 1. Obtener la orden de la base de datos
 	order, err := uc.repo.GetOrderByID(ctx, orderID)
 	if err != nil {
 		return fmt.Errorf("failed to get order: %w", err)
 	}
 
-	fmt.Printf("[CalculateAndUpdateOrderScore] Orden %s obtenida - OrderNumber: %s, CustomerEmail: %s\n",
-		orderID, order.OrderNumber, order.CustomerEmail)
-
 	// 2. Obtener datos necesarios para el cálculo del score
-	// 2.1. Obtener historial de compra del cliente
 	// 2.1. Obtener historial de compra del cliente
 	// ESTRATEGIA HÍBRIDA DE RECUPERACIÓN:
 	// Si es orden local (IntegrationID==0), confiamos en la DB.
@@ -42,22 +36,15 @@ func (uc *UseCaseOrderScore) CalculateAndUpdateOrderScore(ctx context.Context, o
 				if order.IntegrationID == 0 {
 					// Para locales, DB es la verdad absoluta
 					order.CustomerOrderCount = dbCount
-					fmt.Printf("[CalculateAndUpdateOrderScore] Orden local %s - CustomerOrderCount calculado de DB: %d\n", orderID, order.CustomerOrderCount)
 				} else {
 					// Para integraciones con count 0
 					if dbCount > 1 {
 						// Recuperamos historial perdido
 						order.CustomerOrderCount = dbCount
-						fmt.Printf("[CalculateAndUpdateOrderScore] Orden integración %s - Recuperado historial de DB (Bug Fix): %d\n", orderID, order.CustomerOrderCount)
-					} else {
-						// Es realmente nuevo (o solo esta orden)
-						// Mantenemos 0 para que penalice
-						fmt.Printf("[CalculateAndUpdateOrderScore] Orden integración %s - Confirmado cliente nuevo (DB count %d)\n", orderID, dbCount)
 					}
+					// Si dbCount <= 1: es realmente nuevo, mantenemos 0 para que penalice
 				}
 			}
-		} else {
-			fmt.Printf("[CalculateAndUpdateOrderScore] Orden integración %s - Usando CustomerOrderCount mapeado: %d\n", orderID, order.CustomerOrderCount)
 		}
 	}
 
@@ -66,7 +53,6 @@ func (uc *UseCaseOrderScore) CalculateAndUpdateOrderScore(ctx context.Context, o
 		for _, addr := range order.Addresses {
 			if addr.Type == "shipping" && addr.Street2 != "" {
 				order.Address2 = addr.Street2
-				fmt.Printf("[CalculateAndUpdateOrderScore] Orden %s - Address2 obtenido de Addresses: %s\n", orderID, order.Address2)
 				break
 			}
 		}
@@ -74,7 +60,6 @@ func (uc *UseCaseOrderScore) CalculateAndUpdateOrderScore(ctx context.Context, o
 
 	// 3. Calcular el score
 	score, factors := uc.CalculateOrderScore(order)
-	fmt.Printf("[CalculateAndUpdateOrderScore] Orden %s - Score calculado: %.2f, Factors: %v\n", orderID, score, factors)
 
 	// 4. Actualizar la orden con el score y los factores negativos
 	order.DeliveryProbability = &score
@@ -94,6 +79,5 @@ func (uc *UseCaseOrderScore) CalculateAndUpdateOrderScore(ctx context.Context, o
 		return fmt.Errorf("failed to update order with score: %w", err)
 	}
 
-	fmt.Printf("[CalculateAndUpdateOrderScore] COMPLETADO - Orden %s actualizada con Score: %.2f\n", orderID, score)
 	return nil
 }

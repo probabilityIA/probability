@@ -4,13 +4,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce"
-	"github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
 	pay "github.com/secamc93/probability/back/central/services/integrations/pay"
 	"github.com/secamc93/probability/back/central/services/integrations/transport"
-	"github.com/secamc93/probability/back/central/services/modules"
 	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/email"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -20,10 +19,8 @@ import (
 
 // New inicializa todos los servicios de integraciones.
 // Retorna core.IIntegrationCore para que otros módulos puedan usarlo.
-func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, moduleBundles *modules.ModuleBundles) core.IIntegrationCore {
-	// Inicializar publisher de eventos de integraciones (publica a Redis)
-	// La entrega SSE al frontend la maneja modules/events (centralizada)
-	events.Init(logger, redisClient)
+func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config env.IConfig, rabbitMQ rabbitmq.IQueue, s3 storage.IS3Service, redisClient redisclient.IRedis, emailService email.IEmailService) core.IIntegrationCore {
+	// Events publisher se inicializa en init.go (módulo unificado services/events)
 
 	// Inicializar Integration Core (hub central de integraciones)
 	integrationCore := core.New(router, db, redisClient, logger, config, s3)
@@ -32,8 +29,8 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// REGISTRO DE INTEGRACIONES
 	// ═══════════════════════════════════════════════════════════════
 
-	// Messaging: todos los proveedores de mensajería
-	messaging.New(config, logger, db, rabbitMQ, redisClient, moduleBundles, integrationCore)
+	// Messaging: todos los proveedores de mensajería (sin DB — cache-first, DB-async)
+	messaging.New(config, logger, rabbitMQ, redisClient, integrationCore, emailService)
 
 	// E-commerce: todos los proveedores de e-commerce
 	ecommerce.New(router, logger, config, rabbitMQ, db, integrationCore)

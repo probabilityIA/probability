@@ -51,6 +51,9 @@ type OrderSnapshot struct {
 	OrderStatusID       *uint `json:"order_status_id,omitempty"`
 	FulfillmentStatusID *uint `json:"fulfillment_status_id,omitempty"`
 
+	// Bodega asignada
+	WarehouseID *uint `json:"warehouse_id,omitempty"`
+
 	// Items detallados (para facturación e inventario)
 	Items []OrderItemSnapshot `json:"items,omitempty"`
 

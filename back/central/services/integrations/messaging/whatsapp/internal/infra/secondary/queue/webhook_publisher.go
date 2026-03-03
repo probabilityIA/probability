@@ -42,7 +42,7 @@ func (p *WebhookPublisher) PublishOrderConfirmed(ctx context.Context, orderNumbe
 		"timestamp":    time.Now().Unix(),
 	}
 
-	return p.publish(ctx, "orders.whatsapp.confirmed", event)
+	return p.publish(ctx, rabbitmq.QueueWhatsAppOrderConfirmed, event)
 }
 
 // PublishOrderCancelled publica un evento cuando un pedido es cancelado
@@ -64,7 +64,7 @@ func (p *WebhookPublisher) PublishOrderCancelled(ctx context.Context, orderNumbe
 		"timestamp":           time.Now().Unix(),
 	}
 
-	return p.publish(ctx, "orders.whatsapp.cancelled", event)
+	return p.publish(ctx, rabbitmq.QueueWhatsAppOrderCancelled, event)
 }
 
 // PublishNoveltyRequested publica un evento cuando se solicita una novedad
@@ -86,7 +86,7 @@ func (p *WebhookPublisher) PublishNoveltyRequested(ctx context.Context, orderNum
 		"timestamp":    time.Now().Unix(),
 	}
 
-	return p.publish(ctx, "orders.whatsapp.novelty", event)
+	return p.publish(ctx, rabbitmq.QueueWhatsAppOrderNovelty, event)
 }
 
 // PublishHandoffRequested publica un evento cuando se solicita atención humana
@@ -109,7 +109,7 @@ func (p *WebhookPublisher) PublishHandoffRequested(ctx context.Context, orderNum
 		"status":          "pending_human_agent",
 	}
 
-	return p.publish(ctx, "customer.whatsapp.handoff", event)
+	return p.publish(ctx, rabbitmq.QueueWhatsAppCustomerHandoff, event)
 }
 
 // publish es el método interno que serializa y publica el evento

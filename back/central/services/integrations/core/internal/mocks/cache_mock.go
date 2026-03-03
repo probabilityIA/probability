@@ -63,3 +63,16 @@ func (m *CacheMock) GetByBusinessAndType(ctx context.Context, businessID, integr
 	}
 	return args.Get(0).(*domain.CachedIntegration), args.Error(1)
 }
+
+func (m *CacheMock) SetPlatformCredentials(ctx context.Context, integrationTypeID uint, creds map[string]interface{}) error {
+	args := m.Called(ctx, integrationTypeID, creds)
+	return args.Error(0)
+}
+
+func (m *CacheMock) GetPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]interface{}, error) {
+	args := m.Called(ctx, integrationTypeID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(map[string]interface{}), args.Error(1)
+}

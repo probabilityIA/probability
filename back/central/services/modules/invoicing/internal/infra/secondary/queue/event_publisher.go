@@ -14,8 +14,8 @@ import (
 )
 
 const (
-	QueueInvoiceEvents   = "invoicing.events"
-	QueueBulkInvoiceJobs = "invoicing.bulk.create"
+	QueueInvoiceEvents   = rabbitmq.QueueInvoicingEvents
+	QueueBulkInvoiceJobs = rabbitmq.QueueInvoicingBulkCreate
 )
 
 // EventPublisher implementa IEventPublisher
@@ -35,25 +35,94 @@ func NewEventPublisher(queue rabbitmq.IQueue, logger log.ILogger) ports.IEventPu
 // PublishInvoiceCreated publica un evento de factura creada
 func (p *EventPublisher) PublishInvoiceCreated(ctx context.Context, invoice *entities.Invoice) error {
 	event := mappers.InvoiceToCreatedEvent(invoice)
-	return p.publishEvent(ctx, QueueInvoiceEvents, event)
+	if err := p.publishEvent(ctx, QueueInvoiceEvents, event); err != nil {
+		return err
+	}
+	// Notificar al dispatcher central (SSE/WhatsApp/Email)
+	go func() {
+		_ = rabbitmq.PublishEvent(context.Background(), p.queue, rabbitmq.EventEnvelope{
+			Type:       "invoice.created",
+			Category:   "invoice",
+			BusinessID: invoice.BusinessID,
+			Data: map[string]interface{}{
+				"invoice_id":     invoice.ID,
+				"order_id":       invoice.OrderID,
+				"invoice_number": invoice.InvoiceNumber,
+				"total_amount":   invoice.TotalAmount,
+				"status":         invoice.Status,
+			},
+		})
+	}()
+	return nil
 }
 
 // PublishInvoiceCancelled publica un evento de factura cancelada
 func (p *EventPublisher) PublishInvoiceCancelled(ctx context.Context, invoice *entities.Invoice) error {
 	event := mappers.InvoiceToCancelledEvent(invoice)
-	return p.publishEvent(ctx, QueueInvoiceEvents, event)
+	if err := p.publishEvent(ctx, QueueInvoiceEvents, event); err != nil {
+		return err
+	}
+	go func() {
+		_ = rabbitmq.PublishEvent(context.Background(), p.queue, rabbitmq.EventEnvelope{
+			Type:       "invoice.cancelled",
+			Category:   "invoice",
+			BusinessID: invoice.BusinessID,
+			Data: map[string]interface{}{
+				"invoice_id":     invoice.ID,
+				"order_id":       invoice.OrderID,
+				"invoice_number": invoice.InvoiceNumber,
+				"status":         invoice.Status,
+			},
+		})
+	}()
+	return nil
 }
 
 // PublishInvoiceFailed publica un evento de factura fallida
 func (p *EventPublisher) PublishInvoiceFailed(ctx context.Context, invoice *entities.Invoice, errorMsg string) error {
 	event := mappers.InvoiceToFailedEvent(invoice, errorMsg)
-	return p.publishEvent(ctx, QueueInvoiceEvents, event)
+	if err := p.publishEvent(ctx, QueueInvoiceEvents, event); err != nil {
+		return err
+	}
+	go func() {
+		_ = rabbitmq.PublishEvent(context.Background(), p.queue, rabbitmq.EventEnvelope{
+			Type:       "invoice.failed",
+			Category:   "invoice",
+			BusinessID: invoice.BusinessID,
+			Data: map[string]interface{}{
+				"invoice_id":     invoice.ID,
+				"order_id":       invoice.OrderID,
+				"invoice_number": invoice.InvoiceNumber,
+				"total_amount":   invoice.TotalAmount,
+				"status":         invoice.Status,
+				"error_message":  errorMsg,
+			},
+		})
+	}()
+	return nil
 }
 
 // PublishCreditNoteCreated publica un evento de nota de crédito creada
 func (p *EventPublisher) PublishCreditNoteCreated(ctx context.Context, creditNote *entities.CreditNote) error {
 	event := mappers.CreditNoteToEvent(creditNote)
-	return p.publishEvent(ctx, QueueInvoiceEvents, event)
+	if err := p.publishEvent(ctx, QueueInvoiceEvents, event); err != nil {
+		return err
+	}
+	go func() {
+		_ = rabbitmq.PublishEvent(context.Background(), p.queue, rabbitmq.EventEnvelope{
+			Type:       "credit_note.created",
+			Category:   "invoice",
+			BusinessID: creditNote.BusinessID,
+			Data: map[string]interface{}{
+				"credit_note_id":     creditNote.ID,
+				"invoice_id":         creditNote.InvoiceID,
+				"credit_note_number": creditNote.CreditNoteNumber,
+				"amount":             creditNote.Amount,
+				"note_type":          creditNote.NoteType,
+			},
+		})
+	}()
+	return nil
 }
 
 // PublishBulkInvoiceJob publica un mensaje para procesar una factura en un job masivo

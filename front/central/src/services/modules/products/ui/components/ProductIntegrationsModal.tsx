@@ -53,7 +53,7 @@ export default function ProductIntegrationsModal({
         setLoading(true);
         setError(null);
         try {
-            const response = await getProductIntegrationsAction(product.id);
+            const response = await getProductIntegrationsAction(product.id, product.business_id);
             if (response.success && response.data) {
                 setIntegrations(response.data);
             } else {
@@ -110,14 +110,14 @@ export default function ProductIntegrationsModal({
             const response = await addProductIntegrationAction(product.id, {
                 integration_id: parseInt(selectedIntegrationId),
                 external_product_id: externalProductId.trim()
-            });
+            }, product.business_id);
 
             if (response.success) {
                 setSuccess('Integración agregada exitosamente');
                 setSelectedIntegrationId('');
                 setExternalProductId('');
                 // Recargar integraciones del producto
-                const updatedResponse = await getProductIntegrationsAction(product.id);
+                const updatedResponse = await getProductIntegrationsAction(product.id, product.business_id);
                 if (updatedResponse.success && updatedResponse.data) {
                     setIntegrations(updatedResponse.data);
                     // Actualizar integraciones disponibles con la nueva lista
@@ -142,11 +142,11 @@ export default function ProductIntegrationsModal({
         setSuccess(null);
 
         try {
-            const response = await removeProductIntegrationAction(product.id, integrationId);
+            const response = await removeProductIntegrationAction(product.id, integrationId, product.business_id);
             if (response.success) {
                 setSuccess('Integración removida exitosamente');
                 // Recargar integraciones del producto
-                const updatedResponse = await getProductIntegrationsAction(product.id);
+                const updatedResponse = await getProductIntegrationsAction(product.id, product.business_id);
                 if (updatedResponse.success && updatedResponse.data) {
                     setIntegrations(updatedResponse.data);
                     // Actualizar integraciones disponibles con la nueva lista

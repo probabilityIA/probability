@@ -37,8 +37,7 @@ async function getAuthHeader() {
 export async function getWalletsAction() {
     try {
         const headers = await getAuthHeader();
-        // env.API_BASE_URL already includes /api/v1
-        const res = await fetch(`${env.API_BASE_URL}/wallet/all`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/all`, {
             headers,
             cache: 'no-store'
         });
@@ -61,7 +60,7 @@ export async function getWalletsAction() {
 export async function getPendingRequestsAction() {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/pending-requests`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/pending-requests`, {
             headers,
             cache: 'no-store'
         });
@@ -85,7 +84,7 @@ export async function getPendingRequestsAction() {
 export async function getProcessedRequestsAction() {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/processed-requests`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/processed-requests`, {
             headers,
             cache: 'no-store'
         });
@@ -105,12 +104,12 @@ export async function getProcessedRequestsAction() {
 
 /**
  * Process a recharge request (Admin only)
- * 
+ *
  */
 export async function processRequestAction(id: string, action: 'approve' | 'reject') {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/requests/${id}/${action}`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/requests/${id}/${action}`, {
             method: 'POST',
             headers,
         });
@@ -134,8 +133,8 @@ export async function getWalletBalanceAction(businessId?: number) {
     try {
         const headers = await getAuthHeader();
         const url = businessId
-            ? `${env.API_BASE_URL}/wallet/balance?business_id=${businessId}`
-            : `${env.API_BASE_URL}/wallet/balance`;
+            ? `${env.API_BASE_URL}/pay/wallet/balance?business_id=${businessId}`
+            : `${env.API_BASE_URL}/pay/wallet/balance`;
         const res = await fetch(url, {
             headers,
             cache: 'no-store'
@@ -160,7 +159,7 @@ export async function getWalletBalanceAction(businessId?: number) {
 export async function rechargeWalletAction(amount: number, businessId?: number) {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/recharge`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/recharge`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ amount, ...(businessId ? { business_id: businessId } : {}) })
@@ -180,34 +179,12 @@ export async function rechargeWalletAction(amount: number, businessId?: number) 
 }
 
 /**
- * Report that a payment has been made (Business only)
- */
-export async function reportPaymentAction(requestId: string) {
-    try {
-        const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/report-payment/${requestId}`, {
-            method: 'POST',
-            headers,
-        });
-
-        if (!res.ok) {
-            throw new Error(`Failed to report payment: ${res.status}`);
-        }
-
-        return { success: true };
-    } catch (error: any) {
-        console.error('reportPaymentAction error:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-/**
  * Manual debit from a business wallet (Admin only)
  */
 export async function manualDebitAction(businessId: number, amount: number, reference: string) {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/manual-debit`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/manual-debit`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ business_id: businessId, amount, reference })
@@ -233,8 +210,8 @@ export async function getWalletHistoryAction(businessId?: number) {
     try {
         const headers = await getAuthHeader();
         const url = businessId
-            ? `${env.API_BASE_URL}/wallet/history?business_id=${businessId}`
-            : `${env.API_BASE_URL}/wallet/history`;
+            ? `${env.API_BASE_URL}/pay/wallet/history?business_id=${businessId}`
+            : `${env.API_BASE_URL}/pay/wallet/history`;
         const res = await fetch(url, {
             headers,
             cache: 'no-store'
@@ -259,7 +236,7 @@ export async function getWalletHistoryAction(businessId?: number) {
 export async function clearRechargeHistoryAction(businessId: number) {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/admin/history/${businessId}`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/history/${businessId}`, {
             method: 'DELETE',
             headers,
         });
@@ -282,7 +259,7 @@ export async function clearRechargeHistoryAction(businessId: number) {
 export async function debitForGuideAction(amount: number, trackingNumber: string) {
     try {
         const headers = await getAuthHeader();
-        const res = await fetch(`${env.API_BASE_URL}/wallet/debit-guide`, {
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/debit-guide`, {
             method: 'POST',
             headers,
             body: JSON.stringify({ amount, tracking_number: trackingNumber })

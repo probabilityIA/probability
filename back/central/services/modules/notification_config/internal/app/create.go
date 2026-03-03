@@ -13,8 +13,9 @@ import (
 // NUEVA ESTRUCTURA: Usa IDs de tablas normalizadas
 func (uc *useCase) Create(ctx context.Context, dto dtos.CreateNotificationConfigDTO) (*dtos.NotificationConfigResponseDTO, error) {
 	// Validar que la configuración no esté duplicada
-	// Duplicado = misma integración + mismo tipo de notificación + mismo evento
+	// Duplicado = mismo business + misma integración + mismo tipo de notificación + mismo evento
 	filters := dtos.FilterNotificationConfigDTO{
+		BusinessID:              dto.BusinessID,
 		IntegrationID:           &dto.IntegrationID,
 		NotificationTypeID:      &dto.NotificationTypeID,
 		NotificationEventTypeID: &dto.NotificationEventTypeID,

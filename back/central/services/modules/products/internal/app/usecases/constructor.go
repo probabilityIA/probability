@@ -33,23 +33,23 @@ func (uc *UseCases) CreateProduct(ctx context.Context, req *domain.CreateProduct
 }
 
 // GetProductByID delega al caso de uso CRUD
-func (uc *UseCases) GetProductByID(ctx context.Context, id string) (*domain.ProductResponse, error) {
-	return uc.ProductCRUD.GetProductByID(ctx, id)
+func (uc *UseCases) GetProductByID(ctx context.Context, businessID uint, id string) (*domain.ProductResponse, error) {
+	return uc.ProductCRUD.GetProductByID(ctx, businessID, id)
 }
 
 // ListProducts delega al caso de uso CRUD
-func (uc *UseCases) ListProducts(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*domain.ProductsListResponse, error) {
-	return uc.ProductCRUD.ListProducts(ctx, page, pageSize, filters)
+func (uc *UseCases) ListProducts(ctx context.Context, businessID uint, page, pageSize int, filters map[string]interface{}) (*domain.ProductsListResponse, error) {
+	return uc.ProductCRUD.ListProducts(ctx, businessID, page, pageSize, filters)
 }
 
 // UpdateProduct delega al caso de uso CRUD
-func (uc *UseCases) UpdateProduct(ctx context.Context, id string, req *domain.UpdateProductRequest) (*domain.ProductResponse, error) {
-	return uc.ProductCRUD.UpdateProduct(ctx, id, req)
+func (uc *UseCases) UpdateProduct(ctx context.Context, businessID uint, id string, req *domain.UpdateProductRequest) (*domain.ProductResponse, error) {
+	return uc.ProductCRUD.UpdateProduct(ctx, businessID, id, req)
 }
 
 // DeleteProduct delega al caso de uso CRUD
-func (uc *UseCases) DeleteProduct(ctx context.Context, id string) error {
-	return uc.ProductCRUD.DeleteProduct(ctx, id)
+func (uc *UseCases) DeleteProduct(ctx context.Context, businessID uint, id string) error {
+	return uc.ProductCRUD.DeleteProduct(ctx, businessID, id)
 }
 
 // ───────────────────────────────────────────
@@ -57,18 +57,18 @@ func (uc *UseCases) DeleteProduct(ctx context.Context, id string) error {
 // ───────────────────────────────────────────
 
 // AddProductIntegration delega al caso de uso CRUD
-func (uc *UseCases) AddProductIntegration(ctx context.Context, productID string, req *domain.AddProductIntegrationRequest) (*domain.ProductBusinessIntegration, error) {
-	return uc.ProductCRUD.AddProductIntegration(ctx, productID, req)
+func (uc *UseCases) AddProductIntegration(ctx context.Context, businessID uint, productID string, req *domain.AddProductIntegrationRequest) (*domain.ProductBusinessIntegration, error) {
+	return uc.ProductCRUD.AddProductIntegration(ctx, businessID, productID, req)
 }
 
 // RemoveProductIntegration delega al caso de uso CRUD
-func (uc *UseCases) RemoveProductIntegration(ctx context.Context, productID string, integrationID uint) error {
-	return uc.ProductCRUD.RemoveProductIntegration(ctx, productID, integrationID)
+func (uc *UseCases) RemoveProductIntegration(ctx context.Context, businessID uint, productID string, integrationID uint) error {
+	return uc.ProductCRUD.RemoveProductIntegration(ctx, businessID, productID, integrationID)
 }
 
 // GetProductIntegrations delega al caso de uso CRUD
-func (uc *UseCases) GetProductIntegrations(ctx context.Context, productID string) ([]domain.ProductBusinessIntegration, error) {
-	return uc.ProductCRUD.GetProductIntegrations(ctx, productID)
+func (uc *UseCases) GetProductIntegrations(ctx context.Context, businessID uint, productID string) ([]domain.ProductBusinessIntegration, error) {
+	return uc.ProductCRUD.GetProductIntegrations(ctx, businessID, productID)
 }
 
 // GetProductsByIntegration delega al caso de uso CRUD

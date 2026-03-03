@@ -9,7 +9,6 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
-	"gorm.io/gorm"
 )
 
 // ─── Mock: IIntegrationService ──────────────────────────────────────────────
@@ -124,16 +123,6 @@ func (m *mockOrderPublisher) Publish(ctx context.Context, order *domain.Probabil
 	return nil
 }
 
-// ─── Mock: IDatabase ────────────────────────────────────────────────────────
-
-type mockDatabase struct{}
-
-func (m *mockDatabase) Connect(ctx context.Context) error        { return nil }
-func (m *mockDatabase) Close() error                             { return nil }
-func (m *mockDatabase) Conn(ctx context.Context) *gorm.DB        { return nil }
-func (m *mockDatabase) WithContext(ctx context.Context) *gorm.DB { return nil }
-func (m *mockDatabase) DebugConn(ctx context.Context) *gorm.DB   { return nil }
-
 // ─── Mock: log.ILogger ──────────────────────────────────────────────────────
 
 // mockLoggerILogger implementa log.ILogger usando zerolog.Nop() para que los
@@ -192,7 +181,6 @@ func newTestUseCase(
 		integrationService: integrationSvc,
 		shopifyClient:      shopifyClient,
 		orderPublisher:     publisher,
-		db:                 &mockDatabase{},
 		log:                &mockLoggerILogger{},
 	}
 }

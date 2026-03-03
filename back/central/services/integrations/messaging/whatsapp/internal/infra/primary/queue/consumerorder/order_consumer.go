@@ -6,12 +6,13 @@ import (
 	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder/request"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // Start inicia el consumidor de órdenes
 func (c *consumer) Start(ctx context.Context) error {
 	// Declarar cola durable
-	queueName := "orders.confirmation.requested"
+	queueName := rabbitmq.QueueOrdersConfirmationRequested
 	if err := c.queue.DeclareQueue(queueName, true); err != nil {
 		c.log.Error().
 			Err(err).

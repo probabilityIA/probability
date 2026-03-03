@@ -27,6 +27,9 @@ type IIntegrationContract interface {
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
 	VerifyWebhooksByURL(ctx context.Context, integrationID string, baseURL string) ([]interface{}, error)
 	CreateWebhook(ctx context.Context, integrationID string, baseURL string) (interface{}, error)
+
+	// Inventario — sincronizar stock hacia el canal de venta
+	UpdateInventory(ctx context.Context, integrationID string, productExternalID string, quantity int) error
 }
 
 // BaseIntegration provee implementaciones por defecto que retornan ErrNotSupported.
@@ -56,4 +59,7 @@ func (BaseIntegration) VerifyWebhooksByURL(_ context.Context, _ string, _ string
 }
 func (BaseIntegration) CreateWebhook(_ context.Context, _ string, _ string) (interface{}, error) {
 	return nil, ErrNotSupported
+}
+func (BaseIntegration) UpdateInventory(_ context.Context, _ string, _ string, _ int) error {
+	return ErrNotSupported
 }

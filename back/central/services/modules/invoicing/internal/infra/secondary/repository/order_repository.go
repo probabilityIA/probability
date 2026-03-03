@@ -200,6 +200,7 @@ func (r *Repository) GetInvoiceableOrders(ctx context.Context, businessID uint, 
 	// Construir query de resultados
 	offset := (page - 1) * pageSize
 	resultsQuery := r.db.Conn(ctx).
+		Model(&models.Order{}).
 		Where("invoiceable = ?", true).
 		Where("invoice_id IS NULL").
 		Order("created_at DESC").

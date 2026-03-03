@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueueNequiRequests = "pay.nequi.requests"
+const QueueNequiRequests = rabbitmq.QueuePayNequiRequests
 
 // NequiConsumer consume solicitudes de pago Nequi
 type NequiConsumer struct {

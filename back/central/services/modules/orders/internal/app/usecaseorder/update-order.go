@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/helpers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder/mapper"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
@@ -264,45 +263,61 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 		}
 	}
 
-	// Publicar evento de actualización (Redis + RabbitMQ)
-	eventData := entities.OrderEventData{
-		OrderNumber:    order.OrderNumber,
-		InternalNumber: order.InternalNumber,
-		ExternalID:     order.ExternalID,
-		CurrentStatus:  order.Status,
-		CustomerEmail:  order.CustomerEmail,
-		TotalAmount:    &order.TotalAmount,
-		Currency:       order.Currency,
-		Platform:       order.Platform,
-	}
-	event := entities.NewOrderEvent(entities.OrderEventTypeUpdated, order.ID, eventData)
-	event.BusinessID = order.BusinessID
-	if order.IntegrationID > 0 {
-		integrationID := order.IntegrationID
-		event.IntegrationID = &integrationID
-	}
-	helpers.PublishEventDual(ctx, event, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
-
-	// Si cambió el estado, publicar evento de cambio de estado
-	if previousStatus != order.Status {
-		statusEventData := entities.OrderEventData{
+	// Publicar evento de actualización a RabbitMQ
+	if uc.rabbitEventPublisher != nil {
+		eventData := entities.OrderEventData{
 			OrderNumber:    order.OrderNumber,
 			InternalNumber: order.InternalNumber,
 			ExternalID:     order.ExternalID,
-			PreviousStatus: previousStatus,
 			CurrentStatus:  order.Status,
 			CustomerEmail:  order.CustomerEmail,
 			TotalAmount:    &order.TotalAmount,
 			Currency:       order.Currency,
 			Platform:       order.Platform,
 		}
-		statusEvent := entities.NewOrderEvent(entities.OrderEventTypeStatusChanged, order.ID, statusEventData)
-		statusEvent.BusinessID = order.BusinessID
+		event := entities.NewOrderEvent(entities.OrderEventTypeUpdated, order.ID, eventData)
+		event.BusinessID = order.BusinessID
 		if order.IntegrationID > 0 {
 			integrationID := order.IntegrationID
-			statusEvent.IntegrationID = &integrationID
+			event.IntegrationID = &integrationID
 		}
-		helpers.PublishEventDual(ctx, statusEvent, order, uc.redisEventPublisher, uc.rabbitEventPublisher, uc.logger)
+		go func() {
+			if err := uc.rabbitEventPublisher.PublishOrderEvent(context.Background(), event, order); err != nil {
+				uc.logger.Error(context.Background()).
+					Err(err).
+					Str("order_id", order.ID).
+					Msg("Error al publicar evento de actualización a RabbitMQ")
+			}
+		}()
+
+		// Si cambió el estado, publicar evento de cambio de estado
+		if previousStatus != order.Status {
+			statusEventData := entities.OrderEventData{
+				OrderNumber:    order.OrderNumber,
+				InternalNumber: order.InternalNumber,
+				ExternalID:     order.ExternalID,
+				PreviousStatus: previousStatus,
+				CurrentStatus:  order.Status,
+				CustomerEmail:  order.CustomerEmail,
+				TotalAmount:    &order.TotalAmount,
+				Currency:       order.Currency,
+				Platform:       order.Platform,
+			}
+			statusEvent := entities.NewOrderEvent(entities.OrderEventTypeStatusChanged, order.ID, statusEventData)
+			statusEvent.BusinessID = order.BusinessID
+			if order.IntegrationID > 0 {
+				integrationID := order.IntegrationID
+				statusEvent.IntegrationID = &integrationID
+			}
+			go func() {
+				if err := uc.rabbitEventPublisher.PublishOrderEvent(context.Background(), statusEvent, order); err != nil {
+					uc.logger.Error(context.Background()).
+						Err(err).
+						Str("order_id", order.ID).
+						Msg("Error al publicar evento de cambio de estado a RabbitMQ")
+				}
+			}()
+		}
 	}
 
 	return mapper.ToOrderResponse(order), nil

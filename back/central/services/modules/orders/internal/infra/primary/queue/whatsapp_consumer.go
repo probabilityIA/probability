@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -45,27 +44,24 @@ type WhatsAppNoveltyEvent struct {
 
 // WhatsAppConsumer consume eventos de WhatsApp y actualiza órdenes
 type WhatsAppConsumer struct {
-	queue          rabbitmq.IQueue
-	repository     ports.IRepository
-	updateOrderUC  ports.IOrderUseCase // Interfaz en lugar de tipo concreto
-	eventPublisher ports.IOrderEventPublisher
-	log            log.ILogger
+	queue           rabbitmq.IQueue
+	repository      ports.IRepository
+	rabbitPublisher ports.IOrderRabbitPublisher
+	log             log.ILogger
 }
 
 // NewWhatsAppConsumer crea un nuevo consumidor de eventos de WhatsApp
 func NewWhatsAppConsumer(
 	queue rabbitmq.IQueue,
-	updateOrderUC ports.IOrderUseCase, // Interfaz en lugar de tipo concreto
 	repository ports.IRepository,
-	eventPublisher ports.IOrderEventPublisher,
+	rabbitPublisher ports.IOrderRabbitPublisher,
 	logger log.ILogger,
 ) *WhatsAppConsumer {
 	return &WhatsAppConsumer{
-		queue:          queue,
-		updateOrderUC:  updateOrderUC,
-		repository:     repository,
-		eventPublisher: eventPublisher,
-		log:            logger,
+		queue:           queue,
+		repository:      repository,
+		rabbitPublisher: rabbitPublisher,
+		log:             logger,
 	}
 }
 
@@ -73,9 +69,9 @@ func NewWhatsAppConsumer(
 func (c *WhatsAppConsumer) Start(ctx context.Context) error {
 	// Declarar colas
 	queues := []string{
-		"orders.whatsapp.confirmed",
-		"orders.whatsapp.cancelled",
-		"orders.whatsapp.novelty",
+		rabbitmq.QueueWhatsAppOrderConfirmed,
+		rabbitmq.QueueWhatsAppOrderCancelled,
+		rabbitmq.QueueWhatsAppOrderNovelty,
 	}
 
 	for _, queueName := range queues {
@@ -90,19 +86,19 @@ func (c *WhatsAppConsumer) Start(ctx context.Context) error {
 
 	// Consumir de múltiples colas
 	go func() {
-		if err := c.queue.Consume(ctx, "orders.whatsapp.confirmed", c.handleConfirmed); err != nil {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderConfirmed, c.handleConfirmed); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming confirmed queue")
 		}
 	}()
 
 	go func() {
-		if err := c.queue.Consume(ctx, "orders.whatsapp.cancelled", c.handleCancelled); err != nil {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderCancelled, c.handleCancelled); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming cancelled queue")
 		}
 	}()
 
 	go func() {
-		if err := c.queue.Consume(ctx, "orders.whatsapp.novelty", c.handleNovelty); err != nil {
+		if err := c.queue.Consume(ctx, rabbitmq.QueueWhatsAppOrderNovelty, c.handleNovelty); err != nil {
 			c.log.Error().Err(err).Msg("Error consuming novelty queue")
 		}
 	}()
@@ -200,23 +196,11 @@ func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 		return err
 	}
 
-	// Publicar evento para notificar al equipo
-	if c.eventPublisher != nil {
+	// Publicar evento al fanout (llega a todos los consumers incluyendo events)
+	if c.rabbitPublisher != nil {
 		go func() {
-			orderEvent := entities.NewOrderEvent(
-				entities.OrderEventTypeCancelled,
-				order.ID,
-				entities.OrderEventData{
-					OrderNumber: event.OrderNumber,
-					Extra: map[string]interface{}{
-						"cancellation_source":    "whatsapp",
-						"cancellation_reason":    event.CancellationReason,
-						"requires_manual_review": true,
-					},
-				},
-			)
-			if err := c.eventPublisher.PublishOrderEvent(context.Background(), orderEvent, order); err != nil {
-				c.log.Error().Err(err).Msg("Error publishing cancellation event")
+			if err := c.rabbitPublisher.PublishOrderCancelled(context.Background(), order); err != nil {
+				c.log.Error().Err(err).Msg("Error publishing cancellation event to fanout")
 			}
 		}()
 	}
@@ -282,23 +266,11 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 		return err
 	}
 
-	// Publicar evento para notificar al equipo
-	if c.eventPublisher != nil {
+	// Publicar evento al fanout (llega a todos los consumers incluyendo events)
+	if c.rabbitPublisher != nil {
 		go func() {
-			orderEvent := entities.NewOrderEvent(
-				entities.OrderEventTypeUpdated,
-				order.ID,
-				entities.OrderEventData{
-					OrderNumber: event.OrderNumber,
-					Extra: map[string]interface{}{
-						"novelty_source":         "whatsapp",
-						"novelty_type":           event.NoveltyType,
-						"requires_manual_action": true,
-					},
-				},
-			)
-			if err := c.eventPublisher.PublishOrderEvent(context.Background(), orderEvent, order); err != nil {
-				c.log.Error().Err(err).Msg("Error publishing novelty event")
+			if err := c.rabbitPublisher.PublishOrderUpdated(context.Background(), order); err != nil {
+				c.log.Error().Err(err).Msg("Error publishing novelty event to fanout")
 			}
 		}()
 	}

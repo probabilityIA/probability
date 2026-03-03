@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/datatypes"
-
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/vtex/internal/domain"
 )
@@ -243,7 +241,7 @@ func MapVTEXOrderToProbability(order *domain.VTEXOrder, rawJSON []byte) *canonic
 	if rawJSON != nil {
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "vtex",
-			RawData:       datatypes.JSON(rawJSON),
+			RawData:       rawJSON,
 			Version:       "v1",
 			ReceivedAt:    now,
 			IsLatest:      true,

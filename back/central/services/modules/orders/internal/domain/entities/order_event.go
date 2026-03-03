@@ -24,6 +24,7 @@ const (
 
 	// Eventos de cálculo de score
 	OrderEventTypeScoreCalculationRequested OrderEventType = "order.score_calculation_requested"
+	OrderEventTypeScoreCalculated          OrderEventType = "order.score_calculated"
 
 	// Eventos de confirmación
 	OrderEventTypeConfirmationRequested OrderEventType = "order.confirmation_requested"

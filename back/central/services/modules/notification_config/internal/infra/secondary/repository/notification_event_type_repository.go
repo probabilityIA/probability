@@ -22,7 +22,7 @@ type notificationEventTypeRepository struct {
 func (r *notificationEventTypeRepository) GetByNotificationType(ctx context.Context, notificationTypeID uint) ([]entities.NotificationEventType, error) {
 	var models []models.NotificationEventType
 
-	query := r.db.Conn(ctx).Preload("NotificationType")
+	query := r.db.Conn(ctx).Preload("NotificationType").Preload("AllowedOrderStatuses")
 	if notificationTypeID > 0 {
 		query = query.Where("notification_type_id = ?", notificationTypeID)
 	}
@@ -45,7 +45,7 @@ func (r *notificationEventTypeRepository) GetByNotificationType(ctx context.Cont
 func (r *notificationEventTypeRepository) GetByID(ctx context.Context, id uint) (*entities.NotificationEventType, error) {
 	var model models.NotificationEventType
 
-	if err := r.db.Conn(ctx).Preload("NotificationType").First(&model, id).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("NotificationType").Preload("AllowedOrderStatuses").First(&model, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainerrors.ErrNotificationEventTypeNotFound
 		}
@@ -68,6 +68,15 @@ func (r *notificationEventTypeRepository) Create(ctx context.Context, eventType 
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Error converting entity to model")
 		return err
+	}
+
+	// Asignar AllowedOrderStatuses M2M si se proporcionan
+	if len(eventType.AllowedOrderStatusIDs) > 0 {
+		orderStatuses := make([]models.OrderStatus, len(eventType.AllowedOrderStatusIDs))
+		for i, sid := range eventType.AllowedOrderStatusIDs {
+			orderStatuses[i].ID = sid
+		}
+		model.AllowedOrderStatuses = orderStatuses
 	}
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
@@ -100,6 +109,21 @@ func (r *notificationEventTypeRepository) Update(ctx context.Context, eventType 
 		return domainerrors.ErrNotificationEventTypeNotFound
 	}
 
+	// Reemplazar AllowedOrderStatuses M2M
+	// AllowedOrderStatusIDs nil = no tocar, vacío = limpiar, con IDs = reemplazar
+	if eventType.AllowedOrderStatusIDs != nil {
+		targetModel := &models.NotificationEventType{}
+		targetModel.ID = eventType.ID
+		orderStatuses := make([]models.OrderStatus, len(eventType.AllowedOrderStatusIDs))
+		for i, sid := range eventType.AllowedOrderStatusIDs {
+			orderStatuses[i].ID = sid
+		}
+		if err := r.db.Conn(ctx).Model(targetModel).Association("AllowedOrderStatuses").Replace(orderStatuses); err != nil {
+			r.logger.Error().Err(err).Uint("id", eventType.ID).Msg("Error replacing allowed order statuses")
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -126,7 +150,7 @@ func (r *notificationEventTypeRepository) GetAll(ctx context.Context) ([]entitie
 
 	var models []models.NotificationEventType
 
-	if err := r.db.Conn(ctx).Preload("NotificationType").Find(&models).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("NotificationType").Preload("AllowedOrderStatuses").Find(&models).Error; err != nil {
 		r.logger.Error().Err(err).Msg("❌ [Repository] Error getting all notification event types from DB")
 		return nil, err
 	}

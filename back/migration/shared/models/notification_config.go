@@ -46,7 +46,7 @@ type BusinessNotificationConfig struct {
 
 	// DEPRECATED: EventType - Ahora se usa NotificationEventType relationship
 	// Mantener temporalmente para migración de datos existentes
-	EventType string `gorm:"size:64;index"`
+	EventType string `gorm:"size:64"`
 
 	// DEPRECATED: Channels - Ahora se usa NotificationType relationship
 	// Esta columna será eliminada después de la migración

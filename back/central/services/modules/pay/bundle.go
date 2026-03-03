@@ -47,6 +47,7 @@ func New(
 	// ═══════════════════════════════════════════════════════════════
 
 	useCase := app.New(repo, requestPublisher, ssePublisher, moduleLogger)
+	walletUC := app.NewWalletUseCase(repo, useCase, moduleLogger)
 
 	// ═══════════════════════════════════════════════════════════════
 	// 3. INFRAESTRUCTURA PRIMARIA
@@ -54,6 +55,9 @@ func New(
 
 	handler := handlers.New(useCase, moduleLogger)
 	handler.RegisterRoutes(router)
+
+	walletHandler := handlers.NewWalletHandler(walletUC, moduleLogger)
+	walletHandler.RegisterWalletRoutes(router)
 
 	if rabbitMQ != nil {
 		consumers := consumer.NewConsumers(rabbitMQ, useCase, repo, ssePublisher, moduleLogger)

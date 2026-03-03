@@ -5,7 +5,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
-	"github.com/secamc93/probability/back/central/services/modules/events"
+	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
@@ -15,7 +15,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/payments"
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
-	"github.com/secamc93/probability/back/central/services/modules/wallet"
+	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -43,7 +43,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	orderstatus.New(router, database, logger, environment)
 
 	// Inicializar módulo de orders
-	orders.New(router, database, logger, environment, rabbitMQ, redisClient)
+	orders.New(router, database, logger, environment, rabbitMQ)
 
 	// Inicializar módulo de products
 	products.New(router, database, logger, environment)
@@ -54,30 +54,28 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Inicializar módulo de shipments
 	shipments.New(router, database, logger, environment, rabbitMQ, redisClient)
 
-	// Inicializar módulo de notification configs
-	notification_config.New(router, database, redisClient, logger)
+	// Inicializar módulo de notification configs (con RabbitMQ para consumer de delivery results)
+	notification_config.New(router, database, redisClient, logger, rabbitMQ)
 
-	// Inicializar módulo de events (notificaciones en tiempo real)
-	if redisClient != nil {
-		events.New(router, database, logger, redisClient)
-	} else {
-		logger.Warn().
-			Msg("Redis no disponible, módulo de eventos no se inicializará")
-	}
+	// Módulo de events se inicializa en init.go (unificado, sin database)
+
 	// Inicializar módulo de AI
 	ai.New(router, logger)
 
 	// Inicializar módulo de dashboard
 	dashboard.New(router, database, logger)
 
-	// Inicializar módulo de wallet
-	wallet.New(router, database, logger, environment)
-
-	// Inicializar módulo de pagos (pasarelas externas)
+	// Inicializar módulo de pagos (pasarelas externas + wallet)
 	pay.New(router, database, logger, rabbitMQ, redisClient)
 
 	// Inicializar módulo de invoicing
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)
+
+	// Inicializar módulo de warehouses (bodegas)
+	warehouses.New(router, database)
+
+	// Inicializar módulo de inventory (stock + movimientos + cache Redis)
+	inventory.New(router, database, logger, environment, rabbitMQ, redisClient)
 
 	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
 	if rabbitMQ != nil {

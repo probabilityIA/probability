@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction, getWebhookUrlAction } from '../../infra/actions';
+import { createIntegrationAction, updateIntegrationAction, getActiveIntegrationTypesAction, testIntegrationAction, testConnectionRawAction, getWebhookUrlAction, activateIntegrationAction, deactivateIntegrationAction } from '../../infra/actions';
 import { Integration, IntegrationType, WebhookInfo } from '../../domain/types';
-import { Alert } from '@/shared/ui';
+import { Alert, Button } from '@/shared/ui';
 import { ShopifyIntegrationForm } from '@/services/integrations/ecommerce/shopify/ui';
 import { WhatsAppIntegrationView } from '@/services/integrations/messages/whatsapp/ui';
 import { SoftpymesConfigForm, SoftpymesEditForm } from '@/services/integrations/invoicing/softpymes/ui/components';
@@ -153,13 +153,46 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         }
     };
 
-    const handleWhatsAppTest = async () => {
-        if (!integration) return false;
+    const [whatsappName, setWhatsappName] = useState('');
+    const [creatingWhatsapp, setCreatingWhatsapp] = useState(false);
 
+    const handleWhatsAppCreate = async () => {
+        if (!selectedType || !whatsappName.trim()) return;
+        setCreatingWhatsapp(true);
+        setError(null);
         try {
-            const result = await testIntegrationAction(integration.id);
-            return result.success;
-        } catch (error) {
+            const code = whatsappName.trim().toLowerCase().replace(/\s+/g, '_');
+            const result = await createIntegrationAction({
+                name: whatsappName.trim(),
+                code,
+                integration_type_id: selectedType.id,
+                category: selectedType.category?.code || selectedType.integration_category?.code || 'messaging',
+                business_id: null,
+                is_active: true,
+                is_default: false,
+            });
+            if (result.success) {
+                onSuccess?.();
+            } else {
+                setError(result.message || 'Error al crear la integración de WhatsApp');
+            }
+        } catch (err: any) {
+            setError(err.message || 'Error al crear la integración de WhatsApp');
+        } finally {
+            setCreatingWhatsapp(false);
+        }
+    };
+
+    const handleWhatsAppToggleActive = async (id: number, currentlyActive: boolean) => {
+        try {
+            if (currentlyActive) {
+                const result = await deactivateIntegrationAction(id);
+                return result.success;
+            } else {
+                const result = await activateIntegrationAction(id);
+                return result.success;
+            }
+        } catch {
             return false;
         }
     };
@@ -276,7 +309,6 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         });
 
         if (selectedType && selectedType.id === INTEGRATION_TYPE_IDS.WHATSAPP) {
-            console.log('✅ Usando WhatsAppIntegrationView');
             return (
                 <WhatsAppIntegrationView
                     integration={{
@@ -289,7 +321,16 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         created_at: integration.created_at,
                         updated_at: integration.updated_at,
                     }}
-                    onTestConnection={handleWhatsAppTest}
+                    imageUrl={selectedType.image_url}
+                    onToggleActive={handleWhatsAppToggleActive}
+                    onUpdateConfig={async (id, config) => {
+                        const result = await updateIntegrationAction(id, { config });
+                        return { success: result.success, message: result.message };
+                    }}
+                    onTestConnection={async (id) => {
+                        const result = await testIntegrationAction(id);
+                        return { success: result.success, message: result.message };
+                    }}
                     onRefresh={onSuccess}
                 />
             );
@@ -684,6 +725,51 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         />
                     )}
 
+                    {selectedType.id === INTEGRATION_TYPE_IDS.WHATSAPP && (
+                        <div className="space-y-4 max-w-md mx-auto py-4">
+                            <div className="flex flex-col items-center text-center mb-4">
+                                {selectedType.image_url ? (
+                                    <img src={selectedType.image_url} alt="WhatsApp" className="w-14 h-14 object-contain rounded-lg shadow-md mb-3" />
+                                ) : (
+                                    <img src="/integrations/whatsapp.png" alt="WhatsApp" className="w-14 h-14 object-contain rounded-lg shadow-md mb-3" />
+                                )}
+                                <p className="text-sm text-gray-500">
+                                    Crea una integración de WhatsApp para este negocio. Las notificaciones se configuran desde el módulo de Notificaciones.
+                                </p>
+                            </div>
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                    Nombre de la integración *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={whatsappName}
+                                    onChange={(e) => setWhatsappName(e.target.value)}
+                                    placeholder="Ej: WhatsApp - Mi Negocio"
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    disabled={creatingWhatsapp}
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                {onCancel && (
+                                    <Button type="button" variant="outline" onClick={onCancel} className="flex-1" disabled={creatingWhatsapp}>
+                                        Cancelar
+                                    </Button>
+                                )}
+                                <Button
+                                    type="button"
+                                    variant="primary"
+                                    onClick={handleWhatsAppCreate}
+                                    disabled={creatingWhatsapp || !whatsappName.trim()}
+                                    loading={creatingWhatsapp}
+                                    className="flex-1"
+                                >
+                                    Crear integración
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                     {selectedType.id === INTEGRATION_TYPE_IDS.SOFTPYMES && (
                         <SoftpymesConfigForm
                             onSuccess={onSuccess}
@@ -800,6 +886,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                     )}
 
                     {selectedType.id !== INTEGRATION_TYPE_IDS.SHOPIFY &&
+                     selectedType.id !== INTEGRATION_TYPE_IDS.WHATSAPP &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.SOFTPYMES &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.FACTUS &&
                      selectedType.id !== INTEGRATION_TYPE_IDS.SIIGO &&

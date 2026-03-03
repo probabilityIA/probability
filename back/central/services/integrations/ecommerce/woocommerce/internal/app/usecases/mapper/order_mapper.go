@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"gorm.io/datatypes"
-
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/canonical"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
@@ -171,7 +169,7 @@ func MapWooOrderToProbability(order *domain.WooCommerceOrder, rawJSON []byte) *c
 	if rawJSON != nil {
 		dto.ChannelMetadata = &canonical.ProbabilityChannelMetadataDTO{
 			ChannelSource: "woocommerce",
-			RawData:       datatypes.JSON(rawJSON),
+			RawData:       rawJSON,
 			Version:       "v3",
 			ReceivedAt:    now,
 			IsLatest:      true,

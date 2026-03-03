@@ -33,4 +33,8 @@ type NotificationEventType struct {
 
 	// Relación (opcional, puede ser nil)
 	NotificationType *NotificationType
+
+	// Estados de orden permitidos para este tipo de evento
+	// Si está vacío → todos los estados están permitidos
+	AllowedOrderStatusIDs []uint
 }

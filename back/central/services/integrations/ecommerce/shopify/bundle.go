@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/client"
 	shopifycore "github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/core"
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/eventpublisher"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/queue"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -40,7 +41,8 @@ func New(router *gin.RouterGroup, logger log.ILogger, config env.IConfig, coreIn
 		orderPublisher = queue.NewNoOpPublisher(logger)
 	}
 
-	useCase := usecases.New(coreIntegration, shopifyClient, orderPublisher, database, logger)
+	syncEventPub := eventpublisher.New(rabbitMQ)
+	useCase := usecases.New(coreIntegration, shopifyClient, orderPublisher, logger, syncEventPub)
 
 	shopifyCore := shopifycore.New(useCase)
 	coreIntegration.RegisterIntegration(core.IntegrationTypeShopify, shopifyCore)

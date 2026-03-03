@@ -1,8 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Sidebar, OrdersSubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
+import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
+import { NotificationBusinessProvider } from '@/shared/contexts/notification-business-context';
+import { InvoicingBusinessProvider } from '@/shared/contexts/invoicing-business-context';
+import { OrdersBusinessProvider } from '@/shared/contexts/orders-business-context';
 import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 
 interface LayoutContentProps {
@@ -50,7 +54,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Sidebar Principal */}
       <Sidebar user={user} />
 
@@ -63,10 +67,22 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         className="flex-1 transition-all duration-300 w-full overflow-x-hidden main-content flex flex-col"
         onMouseEnter={handleMainMouseEnter}
       >
-        <OrdersSubNavbar />
-        <div className="w-full min-w-0 flex-1">
-          {children}
-        </div>
+        <OrdersBusinessProvider>
+        <InventoryBusinessProvider>
+        <NotificationBusinessProvider>
+        <InvoicingBusinessProvider>
+          <OrdersSubNavbar />
+          <InventorySubNavbar />
+          <IntegrationsSubNavbar />
+          <NotificationsSubNavbar />
+          <InvoicingSubNavbar />
+          <div className="w-full min-w-0 flex-1">
+            {children}
+          </div>
+        </InvoicingBusinessProvider>
+        </NotificationBusinessProvider>
+        </InventoryBusinessProvider>
+        </OrdersBusinessProvider>
         <style jsx>{`
           .main-content {
             margin-left: 0;

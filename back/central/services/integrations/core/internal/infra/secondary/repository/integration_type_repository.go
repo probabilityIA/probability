@@ -83,10 +83,14 @@ func (r *Repository) DeleteIntegrationType(ctx context.Context, id uint) error {
 	return nil
 }
 
-// ListIntegrationTypes obtiene todos los tipos de integración
-func (r *Repository) ListIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error) {
+// ListIntegrationTypes obtiene todos los tipos de integración, opcionalmente filtrados por categoría
+func (r *Repository) ListIntegrationTypes(ctx context.Context, categoryID *uint) ([]*domain.IntegrationType, error) {
 	var models []models.IntegrationType
-	if err := r.db.Conn(ctx).Preload("Category").Order("name ASC").Find(&models).Error; err != nil {
+	query := r.db.Conn(ctx).Preload("Category")
+	if categoryID != nil {
+		query = query.Where("category_id = ?", *categoryID)
+	}
+	if err := query.Order("name ASC").Find(&models).Error; err != nil {
 		r.log.Error(ctx).Err(err).Msg("Error al listar tipos de integración")
 		return nil, fmt.Errorf("error al listar tipos de integración: %w", err)
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueueStripeRequests = "pay.stripe.requests"
+const QueueStripeRequests = rabbitmq.QueuePayStripeRequests
 
 // StripeConsumer consume solicitudes de pago Stripe
 type StripeConsumer struct {

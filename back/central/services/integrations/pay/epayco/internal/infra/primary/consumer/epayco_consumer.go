@@ -11,7 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-const QueueEPaycoRequests = "pay.epayco.requests"
+const QueueEPaycoRequests = rabbitmq.QueuePayEPaycoRequests
 
 // EPaycoConsumer consume solicitudes de pago ePayco
 type EPaycoConsumer struct {

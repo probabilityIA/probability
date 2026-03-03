@@ -9,8 +9,8 @@ export interface IShipmentRepository {
     createShipment(req: CreateShipmentRequest): Promise<{ success: boolean; message: string; data?: Shipment }>;
 
     // Direcciones de Origen
-    getOriginAddresses(): Promise<OriginAddress[]>;
-    createOriginAddress(req: CreateOriginAddressRequest): Promise<OriginAddress>;
-    updateOriginAddress(id: number, req: UpdateOriginAddressRequest): Promise<OriginAddress>;
-    deleteOriginAddress(id: number): Promise<{ message: string }>;
+    getOriginAddresses(businessId?: number): Promise<OriginAddress[]>;
+    createOriginAddress(req: CreateOriginAddressRequest, businessId?: number): Promise<OriginAddress>;
+    updateOriginAddress(id: number, req: UpdateOriginAddressRequest, businessId?: number): Promise<OriginAddress>;
+    deleteOriginAddress(id: number, businessId?: number): Promise<{ message: string }>;
 }

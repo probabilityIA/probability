@@ -32,13 +32,13 @@ type TransportRequestMessage struct {
 }
 
 const (
-	QueueEnviameRequests = "transport.enviame.requests"
+	QueueEnviameRequests = rabbitmq.QueueTransportEnviameRequests
 )
 
 // TransportRequestConsumer consumes transport requests for Enviame
 type TransportRequestConsumer struct {
 	rabbit             rabbitmq.IQueue
-	useCase            *app.UseCase
+	useCase            app.IUseCase
 	responsePublisher  *queue.ResponsePublisher
 	credentialResolver ICredentialResolver
 	log                log.ILogger
@@ -47,7 +47,7 @@ type TransportRequestConsumer struct {
 // NewTransportRequestConsumer creates a new consumer
 func NewTransportRequestConsumer(
 	rabbit rabbitmq.IQueue,
-	useCase *app.UseCase,
+	useCase app.IUseCase,
 	responsePublisher *queue.ResponsePublisher,
 	credentialResolver ICredentialResolver,
 	logger log.ILogger,

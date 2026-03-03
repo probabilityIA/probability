@@ -72,7 +72,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
       <div className="fixed inset-0 flex items-center justify-center" style={{ zIndex: modalZIndex }}>
         {size === 'full' ? (
           <div
-            className={`${transparent ? 'bg-transparent shadow-none border-none' : (glass ? 'bg-white/80 backdrop-blur-xl border border-white/20' : 'bg-white shadow-2xl rounded-3xl')} flex flex-col overflow-hidden`}
+            className={`${transparent ? 'bg-transparent shadow-none border-none' : (glass ? 'bg-white/80 dark:bg-gray-800/80 backdrop-blur-xl border border-white/20 dark:border-gray-700/20' : 'bg-white dark:bg-gray-800 shadow-2xl rounded-3xl')} flex flex-col overflow-hidden`}
             style={{
               width: '90vw',
               height: '90vh',
@@ -82,12 +82,12 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           >
             {/* Header for full screen */}
             {title && (
-              <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 bg-white">
-                <h2 className="text-2xl font-bold text-purple-700">{title}</h2>
+              <div className="flex items-center justify-between px-8 py-6 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-400">{title}</h2>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg"
+                    className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -104,7 +104,7 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
           </div>
         ) : (
           <div
-            className={`${transparent ? 'bg-transparent shadow-none border-none' : (size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white rounded-2xl shadow-2xl p-6 sm:p-8')} max-h-[90vh] overflow-hidden flex flex-col`}
+            className={`${transparent ? 'bg-transparent shadow-none border-none' : (size === 'sm' || size === 'md' ? (glass ? 'modal-glass' : 'modal-content') : 'bg-white dark:bg-gray-800 rounded-2xl shadow-2xl p-6 sm:p-8')} max-h-[90vh] overflow-hidden flex flex-col`}
             style={
               size === 'sm' || size === 'md'
                 ? {
@@ -123,11 +123,11 @@ export function Modal({ isOpen, onClose, showCloseButton = true, title, children
             {/* Header */}
             {title && (
               <div className="relative mb-4 flex-shrink-0">
-                <h3 className="text-xl font-bold text-purple-700 text-center">{title}</h3>
+                <h3 className="text-xl font-bold text-purple-700 dark:text-purple-400 text-center">{title}</h3>
                 {showCloseButton && (
                   <button
                     onClick={onClose}
-                    className="absolute right-0 top-0 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-0 top-0 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
                   >
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />

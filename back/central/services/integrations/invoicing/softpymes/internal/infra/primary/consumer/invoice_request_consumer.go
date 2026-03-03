@@ -77,8 +77,8 @@ type InvoiceRequestConsumer struct {
 	log               log.ILogger
 }
 
-// NewInvoiceRequestConsumer crea una nueva instancia del consumer
-func NewInvoiceRequestConsumer(
+// New crea una nueva instancia del consumer
+func New(
 	rabbit rabbitmq.IQueue,
 	integrationCore integrationCore.IIntegrationService,
 	softpymesClient ports.ISoftpymesClient,
@@ -95,7 +95,7 @@ func NewInvoiceRequestConsumer(
 }
 
 const (
-	QueueSoftpymesRequests = "invoicing.softpymes.requests"
+	QueueSoftpymesRequests = rabbitmq.QueueInvoicingSoftpymesRequests
 )
 
 // Start inicia el consumer

@@ -11,7 +11,7 @@ type ClientResponse struct {
 	ID         uint      `json:"id"`
 	BusinessID uint      `json:"business_id"`
 	Name       string    `json:"name"`
-	Email      string    `json:"email"`
+	Email      *string   `json:"email"`
 	Phone      string    `json:"phone"`
 	Dni        *string   `json:"dni"`
 	CreatedAt  time.Time `json:"created_at"`
@@ -23,7 +23,7 @@ type ClientDetailResponse struct {
 	ID          uint       `json:"id"`
 	BusinessID  uint       `json:"business_id"`
 	Name        string     `json:"name"`
-	Email       string     `json:"email"`
+	Email       *string    `json:"email"`
 	Phone       string     `json:"phone"`
 	Dni         *string    `json:"dni"`
 	CreatedAt   time.Time  `json:"created_at"`

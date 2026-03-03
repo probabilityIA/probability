@@ -5,10 +5,10 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/app/usecases"
+	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/handlers"
 	queueconsumer "github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/primary/queue/consumer"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/queue"
-	shipmentsredis "github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -28,11 +28,12 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 3. Transport Request Publisher (async via queue)
 	transportPub := queue.NewTransportRequestPublisher(rabbitMQ, logger)
 
-	// 4. Init SSE Publisher (Redis Pub/Sub for real-time notifications)
-	ssePublisher := shipmentsredis.NewNoopSSEPublisher()
-	if redisClient != nil {
-		redisClient.RegisterChannel(redis.ChannelShipmentsEvents)
-		ssePublisher = shipmentsredis.NewSSEPublisher(redisClient, logger, redis.ChannelShipmentsEvents)
+	// 4. Init SSE Publisher (RabbitMQ → central events dispatcher)
+	var ssePublisher domain.IShipmentSSEPublisher
+	if rabbitMQ != nil {
+		ssePublisher = queue.NewSSEPublisher(rabbitMQ, logger)
+	} else {
+		ssePublisher = queue.NewNoopSSEPublisher()
 	}
 
 	// 5. Transport Response Consumer

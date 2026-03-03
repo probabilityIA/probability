@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/redis"
@@ -17,13 +18,6 @@ import (
 // CONFIG CACHE SERVICE - Servicio de caché para configuraciones
 // ═══════════════════════════════════════════════════════════════
 
-// IConfigCache define la interfaz para el servicio de caché de configuraciones
-type IConfigCache interface {
-	Get(ctx context.Context, integrationID uint) (*entities.InvoicingConfig, error)
-	Set(ctx context.Context, config *entities.InvoicingConfig) error
-	Invalidate(ctx context.Context, integrationID uint) error
-}
-
 // ConfigCache implementa el servicio de caché de configuraciones usando Redis
 type ConfigCache struct {
 	redis  redis.IRedis
@@ -32,7 +26,7 @@ type ConfigCache struct {
 }
 
 // NewConfigCache crea una nueva instancia del servicio de caché
-func NewConfigCache(redisClient redis.IRedis, config env.IConfig, logger log.ILogger) IConfigCache {
+func NewConfigCache(redisClient redis.IRedis, config env.IConfig, logger log.ILogger) ports.IConfigCache {
 	return &ConfigCache{
 		redis:  redisClient,
 		config: config,

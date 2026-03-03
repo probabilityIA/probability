@@ -14,7 +14,7 @@ type IIntegrationTypeUseCase interface {
 	GetIntegrationTypeByID(ctx context.Context, id uint) (*domain.IntegrationType, error)
 	GetIntegrationTypeByCode(ctx context.Context, code string) (*domain.IntegrationType, error)
 	DeleteIntegrationType(ctx context.Context, id uint) error
-	ListIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error)
+	ListIntegrationTypes(ctx context.Context, categoryID *uint) ([]*domain.IntegrationType, error)
 	ListActiveIntegrationTypes(ctx context.Context) ([]*domain.IntegrationType, error)
 
 	// Platform credentials (admin only — returns decrypted map)

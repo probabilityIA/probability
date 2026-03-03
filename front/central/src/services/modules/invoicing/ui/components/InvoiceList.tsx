@@ -21,24 +21,22 @@ import {
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import type { Invoice, InvoiceFilters, CompareResponseData } from '../../domain/types';
 
 interface InvoiceListProps {
   businessId: number;
+  selectedBusinessId?: number | null;
   onOpenBulkModal?: () => void;
 }
 
 const PAGE_SIZE_DEFAULT = 20;
 
 export const InvoiceList = forwardRef(function InvoiceList(
-  { businessId }: InvoiceListProps,
+  { businessId, selectedBusinessId = null }: InvoiceListProps,
   ref
 ) {
   const { showToast } = useToast();
   const { isSuperAdmin } = usePermissions();
-  const { businesses } = useBusinessesSimple();
-  const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
   const [filters, setFilters] = useState<InvoiceFilters>({});
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -421,29 +419,6 @@ export const InvoiceList = forwardRef(function InvoiceList(
 
   return (
     <>
-      {/* Business Selector — solo Super Admin */}
-      {isSuperAdmin && businesses.length > 0 && (
-        <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Seleccionar Negocio (Super Admin)
-          </label>
-          <select
-            value={selectedBusinessId?.toString() ?? ''}
-            onChange={(e) => {
-              const val = e.target.value;
-              setSelectedBusinessId(val ? Number(val) : null);
-              setCurrentPage(1);
-            }}
-            className="w-full max-w-xs px-3 py-2 border border-gray-300 rounded-md text-sm"
-          >
-            <option value="">Todos los negocios</option>
-            {businesses.map((b) => (
-              <option key={b.id} value={b.id}>{b.name} (ID: {b.id})</option>
-            ))}
-          </select>
-        </div>
-      )}
-
       {/* Filtros + botón crear */}
       <div className="invoiceFilters flex items-center mb-4">
         <div className="flex-1 min-w-0">

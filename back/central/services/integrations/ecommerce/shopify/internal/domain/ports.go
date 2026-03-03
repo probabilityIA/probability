@@ -18,6 +18,11 @@ type ShopifyClient interface {
 	SetDebug(enabled bool)                                                                               // Habilita logging de peticiones HTTP
 }
 
+// ISyncEventPublisher publica eventos de sincronización al exchange de eventos
+type ISyncEventPublisher interface {
+	PublishSyncEvent(ctx context.Context, integrationID uint, businessID *uint, eventType string, data map[string]interface{})
+}
+
 type IIntegrationService interface {
 	GetIntegrationByID(ctx context.Context, integrationID string) (*Integration, error)
 	GetIntegrationByExternalID(ctx context.Context, externalID string, integrationType int) (*Integration, error)

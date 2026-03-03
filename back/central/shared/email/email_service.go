@@ -2,228 +2,109 @@ package email
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
-	"net/smtp"
-	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
+	"github.com/aws/aws-sdk-go-v2/service/sesv2"
+	sestypes "github.com/aws/aws-sdk-go-v2/service/sesv2/types"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// Interfaz genérica de envío de correo
+// IEmailService interfaz genérica de envío de correo
 type IEmailService interface {
 	SendHTML(ctx context.Context, to, subject, html string) error
 }
 
 type EmailService struct {
-	config env.IConfig
-	logger log.ILogger
+	client    *sesv2.Client
+	fromEmail string
+	logger    log.ILogger
 }
 
-func New(config env.IConfig, logger log.ILogger) IEmailService {
-	return &EmailService{
-		config: config,
-		logger: logger,
-	}
-}
+// New crea una nueva instancia del servicio de email usando Amazon SES.
+// Lee las variables SES_REGION, SES_ACCESS_KEY, SES_SECRET_KEY y FROM_EMAIL.
+func New(cfg env.IConfig, logger log.ILogger) IEmailService {
+	region := cfg.Get("SES_REGION")
+	accessKey := cfg.Get("SES_ACCESS_KEY")
+	secretKey := cfg.Get("SES_SECRET_KEY")
+	fromEmail := cfg.Get("FROM_EMAIL")
 
-func (e *EmailService) SendHTML(ctx context.Context, to, subject, html string) error {
-	return e.sendEmail(ctx, to, subject, html)
-}
-
-func (e *EmailService) sendEmail(ctx context.Context, to, subject, body string) error {
-	// Configuración SMTP
-	smtpHost := e.config.Get("SMTP_HOST")
-	smtpPort := e.config.Get("SMTP_PORT")
-	smtpUser := e.config.Get("SMTP_USER")
-	smtpPass := e.config.Get("SMTP_PASS")
-	fromEmail := e.config.Get("FROM_EMAIL")
-	useTLS := e.config.Get("SMTP_USE_TLS") == "true"
-	useSTARTTLS := e.config.Get("SMTP_USE_STARTTLS") == "true"
-
-	if smtpHost == "" || smtpPort == "" || smtpUser == "" || smtpPass == "" || fromEmail == "" {
-		e.logger.Error().Msg("Configuración SMTP incompleta")
-		return fmt.Errorf("configuración SMTP incompleta")
+	if region == "" || accessKey == "" || secretKey == "" || fromEmail == "" {
+		logger.Fatal(context.Background()).
+			Bool("has_region", region != "").
+			Bool("has_access_key", accessKey != "").
+			Bool("has_secret_key", secretKey != "").
+			Bool("has_from_email", fromEmail != "").
+			Msg("❌ Configuración de Amazon SES incompleta — verifica SES_REGION, SES_ACCESS_KEY, SES_SECRET_KEY y FROM_EMAIL")
+		panic("configuración de Amazon SES incompleta")
 	}
 
-	// Crear la dirección completa del servidor SMTP
-	addr := smtpHost + ":" + smtpPort
-
-	// Crear el mensaje
-	message := e.buildMessage(fromEmail, to, subject, body)
-
-	// Configurar autenticación
-	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
-
-	// Enviar según el método de seguridad
-	var err error
-	if useTLS {
-		err = e.sendWithTLS(addr, auth, fromEmail, []string{to}, message)
-	} else if useSTARTTLS {
-		err = e.sendWithSTARTTLS(addr, auth, fromEmail, []string{to}, message)
-	} else {
-		err = smtp.SendMail(addr, auth, fromEmail, []string{to}, message)
-	}
-
+	awsCfg, err := config.LoadDefaultConfig(context.Background(),
+		config.WithRegion(region),
+		config.WithCredentialsProvider(
+			credentials.NewStaticCredentialsProvider(accessKey, secretKey, ""),
+		),
+	)
 	if err != nil {
-		e.logger.Error().
+		logger.Fatal(context.Background()).
+			Err(err).
+			Msg("❌ Error cargando configuración AWS para SES")
+		panic("error cargando configuración AWS para SES: " + err.Error())
+	}
+
+	logger.Info(context.Background()).
+		Str("region", region).
+		Str("from_email", fromEmail).
+		Msg("✅ Amazon SES inicializado correctamente")
+
+	return &EmailService{
+		client:    sesv2.NewFromConfig(awsCfg),
+		fromEmail: fromEmail,
+		logger:    logger,
+	}
+}
+
+// SendHTML envía un correo electrónico con contenido HTML a través de Amazon SES.
+func (e *EmailService) SendHTML(ctx context.Context, to, subject, html string) error {
+	input := &sesv2.SendEmailInput{
+		FromEmailAddress: aws.String(e.fromEmail),
+		Destination: &sestypes.Destination{
+			ToAddresses: []string{to},
+		},
+		Content: &sestypes.EmailContent{
+			Simple: &sestypes.Message{
+				Subject: &sestypes.Content{
+					Data:    aws.String(subject),
+					Charset: aws.String("UTF-8"),
+				},
+				Body: &sestypes.Body{
+					Html: &sestypes.Content{
+						Data:    aws.String(html),
+						Charset: aws.String("UTF-8"),
+					},
+				},
+			},
+		},
+	}
+
+	_, err := e.client.SendEmail(ctx, input)
+	if err != nil {
+		e.logger.Error(ctx).
 			Err(err).
 			Str("to", to).
 			Str("subject", subject).
-			Str("smtp_host", smtpHost).
-			Str("smtp_port", smtpPort).
-			Str("security", e.getSecurityMethod(useTLS, useSTARTTLS)).
-			Msg("Error enviando email")
-		return fmt.Errorf("error enviando email: %v", err)
+			Str("from", e.fromEmail).
+			Msg("Error enviando email via Amazon SES")
+		return fmt.Errorf("error enviando email via SES: %w", err)
 	}
 
-	e.logger.Info().
+	e.logger.Info(ctx).
 		Str("to", to).
 		Str("subject", subject).
-		Str("smtp_host", smtpHost).
-		Str("smtp_port", smtpPort).
-		Str("security", e.getSecurityMethod(useTLS, useSTARTTLS)).
-		Msg("Email enviado exitosamente")
+		Msg("Email enviado exitosamente via Amazon SES")
 
 	return nil
-}
-
-func (e *EmailService) buildMessage(from, to, subject, body string) []byte {
-	headers := make(map[string]string)
-	headers["From"] = from
-	headers["To"] = to
-	headers["Subject"] = subject
-	headers["MIME-Version"] = "1.0"
-	headers["Content-Type"] = "text/html; charset=UTF-8"
-	headers["Content-Transfer-Encoding"] = "quoted-printable"
-
-	message := ""
-	for k, v := range headers {
-		message += fmt.Sprintf("%s: %s\r\n", k, v)
-	}
-	message += "\r\n" + body
-
-	return []byte(message)
-}
-
-func (e *EmailService) sendWithTLS(addr string, auth smtp.Auth, from string, to []string, msg []byte) error {
-	// Crear configuración TLS
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: false,
-		ServerName:         strings.Split(addr, ":")[0],
-	}
-
-	// Establecer conexión TLS
-	conn, err := tls.Dial("tcp", addr, tlsConfig)
-	if err != nil {
-		return fmt.Errorf("error estableciendo conexión TLS: %v", err)
-	}
-	defer conn.Close()
-
-	// Crear cliente SMTP sobre la conexión TLS
-	client, err := smtp.NewClient(conn, strings.Split(addr, ":")[0])
-	if err != nil {
-		return fmt.Errorf("error creando cliente SMTP TLS: %v", err)
-	}
-	defer client.Quit()
-
-	// Autenticar
-	if err = client.Auth(auth); err != nil {
-		return fmt.Errorf("error en autenticación TLS: %v", err)
-	}
-
-	// Establecer remitente
-	if err = client.Mail(from); err != nil {
-		return fmt.Errorf("error estableciendo remitente TLS: %v", err)
-	}
-
-	// Establecer destinatarios
-	for _, recipient := range to {
-		if err = client.Rcpt(recipient); err != nil {
-			return fmt.Errorf("error estableciendo destinatario TLS %s: %v", recipient, err)
-		}
-	}
-
-	// Enviar datos
-	writer, err := client.Data()
-	if err != nil {
-		return fmt.Errorf("error iniciando datos TLS: %v", err)
-	}
-
-	_, err = writer.Write(msg)
-	if err != nil {
-		return fmt.Errorf("error escribiendo mensaje TLS: %v", err)
-	}
-
-	err = writer.Close()
-	if err != nil {
-		return fmt.Errorf("error cerrando datos TLS: %v", err)
-	}
-
-	return nil
-}
-
-func (e *EmailService) sendWithSTARTTLS(addr string, auth smtp.Auth, from string, to []string, msg []byte) error {
-	// Establecer conexión normal
-	client, err := smtp.Dial(addr)
-	if err != nil {
-		return fmt.Errorf("error estableciendo conexión STARTTLS: %v", err)
-	}
-	defer client.Quit()
-
-	// Configurar TLS
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: false,
-		ServerName:         strings.Split(addr, ":")[0],
-	}
-
-	// Iniciar STARTTLS
-	if err = client.StartTLS(tlsConfig); err != nil {
-		return fmt.Errorf("error iniciando STARTTLS: %v", err)
-	}
-
-	// Autenticar
-	if err = client.Auth(auth); err != nil {
-		return fmt.Errorf("error en autenticación STARTTLS: %v", err)
-	}
-
-	// Establecer remitente
-	if err = client.Mail(from); err != nil {
-		return fmt.Errorf("error estableciendo remitente STARTTLS: %v", err)
-	}
-
-	// Establecer destinatarios
-	for _, recipient := range to {
-		if err = client.Rcpt(recipient); err != nil {
-			return fmt.Errorf("error estableciendo destinatario STARTTLS %s: %v", recipient, err)
-		}
-	}
-
-	// Enviar datos
-	writer, err := client.Data()
-	if err != nil {
-		return fmt.Errorf("error iniciando datos STARTTLS: %v", err)
-	}
-
-	_, err = writer.Write(msg)
-	if err != nil {
-		return fmt.Errorf("error escribiendo mensaje STARTTLS: %v", err)
-	}
-
-	err = writer.Close()
-	if err != nil {
-		return fmt.Errorf("error cerrando datos STARTTLS: %v", err)
-	}
-
-	return nil
-}
-
-func (e *EmailService) getSecurityMethod(useTLS, useSTARTTLS bool) string {
-	if useTLS {
-		return "TLS"
-	} else if useSTARTTLS {
-		return "STARTTLS"
-	}
-	return "PLAIN"
 }

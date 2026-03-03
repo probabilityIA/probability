@@ -15,23 +15,23 @@ type IConsumerAlert interface {
 
 // consumerAlert contiene las dependencias del consumer
 type consumerAlert struct {
-	queue           rabbitmq.IQueue
-	wa              ports.IWhatsApp
-	integrationRepo ports.IIntegrationRepository
-	log             log.ILogger
+	queue            rabbitmq.IQueue
+	wa               ports.IWhatsApp
+	credentialsCache ports.ICredentialsCache
+	log              log.ILogger
 }
 
 // New crea una nueva instancia del consumer de alertas de monitoreo
 func New(
 	queue rabbitmq.IQueue,
 	wa ports.IWhatsApp,
-	integrationRepo ports.IIntegrationRepository,
+	credentialsCache ports.ICredentialsCache,
 	logger log.ILogger,
 ) IConsumerAlert {
 	return &consumerAlert{
-		queue:           queue,
-		wa:              wa,
-		integrationRepo: integrationRepo,
-		log:             logger,
+		queue:            queue,
+		wa:               wa,
+		credentialsCache: credentialsCache,
+		log:              logger,
 	}
 }

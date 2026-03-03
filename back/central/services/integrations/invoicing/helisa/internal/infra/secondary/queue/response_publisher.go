@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	QueueInvoiceResponses = "invoicing.responses"
+	QueueInvoiceResponses = rabbitmq.QueueInvoicingResponses
 )
 
 // InvoiceResponseMessage es el mensaje que se publica de vuelta a Invoicing Module
@@ -47,8 +47,8 @@ type ResponsePublisher struct {
 	log   log.ILogger
 }
 
-// NewResponsePublisher crea un nuevo publisher de responses
-func NewResponsePublisher(queue rabbitmq.IQueue, logger log.ILogger) *ResponsePublisher {
+// New crea un nuevo publisher de responses
+func New(queue rabbitmq.IQueue, logger log.ILogger) *ResponsePublisher {
 	return &ResponsePublisher{
 		queue: queue,
 		log:   logger.WithModule("helisa.response_publisher"),

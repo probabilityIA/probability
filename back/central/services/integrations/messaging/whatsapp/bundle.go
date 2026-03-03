@@ -2,7 +2,6 @@ package whatsApp
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 
 	"github.com/gin-gonic/gin"
@@ -11,16 +10,12 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/app/usecasetestconnection"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/consumer/consumerevent"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumeralert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/queue"
-	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/repository"
-	"github.com/secamc93/probability/back/central/services/modules"
-	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
@@ -43,37 +38,35 @@ type bundle struct {
 	handler     handlers.IHandler
 }
 
-// New crea una nueva instancia del bundle de WhatsApp con todas sus dependencias
-func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit rabbitmq.IQueue, redisClient redisclient.IRedis, moduleBundles *modules.ModuleBundles) core.IIntegrationContract {
+// New crea una nueva instancia del bundle de WhatsApp con todas sus dependencias.
+// WhatsApp es stateless (sin DB directa): lee credenciales de Redis cache
+// y persiste conversaciones/logs asincrónicamente via RabbitMQ.
+func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisClient redisclient.IRedis) core.IIntegrationContract {
 	logger = logger.WithModule("whatsapp")
 
 	// 1. Capa de infraestructura secundaria (adaptadores de salida)
+	// Cache de conversaciones + credenciales (Redis)
+	convCache, credsCache := cache.New(redisClient, logger)
+
+	// Publisher de persistencia (async DB via RabbitMQ)
+	persistPub := queue.NewPersistencePublisher(rabbit, logger)
+
+	// WhatsApp URL desde .env
+	whatsappURL := config.Get("WHATSAPP_URL")
+	logger.Info().Str("whatsapp_url", whatsappURL).Msg("WhatsApp URL loaded from .env")
+
 	// Cliente HTTP de WhatsApp
-	wa := client.New(config, logger)
+	wa := client.New(whatsappURL, logger)
 
-	// Preparar encryption key para IntegrationRepository
-	encryptionKeyStr := config.Get("ENCRYPTION_KEY")
-	var encryptionKey []byte
-	decoded, err := base64.StdEncoding.DecodeString(encryptionKeyStr)
-	if err == nil && len(decoded) == 32 {
-		encryptionKey = decoded
-	} else {
-		encryptionKey = []byte(encryptionKeyStr)
-	}
-
-	// Repositorios (constructor consolidado)
-	conversationRepo, messageLogRepo, integrationRepo := repository.New(database, logger, encryptionKey)
-
-	// Publisher de eventos RabbitMQ
+	// Publisher de eventos de negocio (RabbitMQ)
 	publisher := queue.NewWebhookPublisher(rabbit, logger)
 
 	// 2. Capa de aplicación (casos de uso)
-	// Casos de uso (constructor consolidado)
 	useCase := usecasemessaging.New(
 		wa,
-		conversationRepo,
-		messageLogRepo,
-		integrationRepo,
+		convCache,
+		credsCache,
+		persistPub,
 		publisher,
 		logger,
 		config,
@@ -85,7 +78,7 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 	// 3. Capa de infraestructura primaria (adaptadores de entrada)
 	handler := handlers.New(useCase, logger, config)
 
-	// 4. Inicializar consumidor de órdenes (si RabbitMQ está disponible)
+	// 4. Inicializar consumidores (si RabbitMQ está disponible)
 	if rabbit != nil {
 		orderConsumer := consumerorder.New(
 			rabbit,
@@ -101,8 +94,8 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 		}()
 
 		// Inicializar consumidor de alertas de monitoreo
-		// Usa integrationRepo para leer credenciales desde platform_credentials_encrypted
-		alertConsumer := consumeralert.New(rabbit, wa, integrationRepo, logger)
+		// Usa credentialsCache para leer credenciales desde Redis
+		alertConsumer := consumeralert.New(rabbit, wa, credsCache, logger)
 		go func() {
 			if err := alertConsumer.Start(context.Background()); err != nil {
 				logger.Error().Err(err).Msg("Error starting monitoring alert consumer")
@@ -110,36 +103,8 @@ func New(config env.IConfig, logger log.ILogger, database db.IDatabase, rabbit r
 		}()
 	}
 
-	// 5. Inicializar consumidor de eventos Redis → RabbitMQ (si Redis y RabbitMQ están disponibles)
-	if redisClient != nil && rabbit != nil {
-		// Crear repositorios de consultas
-		orderQueries := repository.NewOrderQueries(database, logger)
-		integrationQueries := repository.NewIntegrationQueries(database, logger)
-
-		// Canal de órdenes — constante centralizada en shared/redis
-		const redisChannel = redisclient.ChannelOrdersEvents
-
-		// ✅ CAMBIO: Crear cache adapter de notification_config (solo lectura desde Redis)
-		notificationConfigCache := cache.New(redisClient, logger)
-
-		// Crear consumer de eventos
-		orderEventConsumer := consumerevent.New(
-			redisClient,
-			rabbit,
-			notificationConfigCache, // ✅ CAMBIO: Cache en lugar de repositorio
-			integrationQueries,
-			orderQueries,
-			logger,
-			redisChannel,
-		)
-
-		// Arrancar consumer en goroutine
-		go func() {
-			if err := orderEventConsumer.Start(context.Background()); err != nil {
-				logger.Error().Err(err).Msg("Error starting WhatsApp order event consumer")
-			}
-		}()
-	}
+	// El routing de eventos a WhatsApp ahora lo maneja el módulo unificado services/events
+	// (consume de RabbitMQ, consulta config en Redis cache, encola a orders.confirmation.requested)
 
 	return &bundle{
 		wa:          wa,
@@ -166,9 +131,9 @@ func (b *bundle) SendMessage(ctx context.Context, orderNumber, phoneNumber strin
 
 // TestConnection prueba la conexión enviando un mensaje de prueba
 func (b *bundle) TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error {
-	// Factory para crear clientes de WhatsApp con configuración dinámica
-	clientFactory := func(cfg env.IConfig, logger log.ILogger) ports.IWhatsApp {
-		return client.New(cfg, logger)
+	// Factory para crear clientes de WhatsApp con URL dinámica
+	clientFactory := func(baseURL string, logger log.ILogger) ports.IWhatsApp {
+		return client.New(baseURL, logger)
 	}
 
 	// Delegar al caso de uso pasando los mapas directamente

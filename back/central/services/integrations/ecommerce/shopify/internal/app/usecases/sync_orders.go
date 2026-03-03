@@ -2,13 +2,10 @@ package usecases
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
-	"os"
 	"strconv"
 	"time"
 
-	integrationevents "github.com/secamc93/probability/back/central/services/integrations/events"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/utils"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
@@ -80,49 +77,21 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 	fmt.Printf("[SyncOrders] Starting sync for integration %s. Params: CreatedAtMin=%v, CreatedAtMax=%v, Status=%s, FinancialStatus=%s, FulfillmentStatus=%s\n",
 		integrationID, params.CreatedAtMin, params.CreatedAtMax, params.Status, params.FinancialStatus, params.FulfillmentStatus)
 
-	// #region agent log
-	if f, err := os.OpenFile("/home/cam/Desktop/probability/.cursor/debug.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644); err == nil {
-		logData, _ := json.Marshal(map[string]interface{}{
-			"sessionId":    "debug-session",
-			"runId":        "run1",
-			"hypothesisId": "A",
-			"location":     "sync_orders.go:76",
-			"message":      "SyncOrdersWithParams - Date params being sent to Shopify API",
-			"data": map[string]interface{}{
-				"integration_id":     integrationID,
-				"created_at_min":     params.CreatedAtMin,
-				"created_at_max":     params.CreatedAtMax,
-				"status":             params.Status,
-				"financial_status":   params.FinancialStatus,
-				"fulfillment_status": params.FulfillmentStatus,
-				"store_domain":       storeDomain,
-			},
-			"timestamp": time.Now().UnixMilli(),
-		})
-		f.WriteString(string(logData) + "\n")
-		f.Close()
-	}
-	// #endregion
-
 	// Publicar evento de inicio de sincronización
 	integrationIDUint, _ := strconv.ParseUint(integrationID, 10, 32)
-	integrationevents.PublishSyncStarted(
-		ctx,
-		uint(integrationIDUint),
-		integration.BusinessID,
-		integrationevents.SyncStartedEvent{
-			IntegrationID:   uint(integrationIDUint),
-			IntegrationType: "shopify",
-			Params: integrationevents.SyncParams{
-				CreatedAtMin:      syncParams.CreatedAtMin,
-				CreatedAtMax:      syncParams.CreatedAtMax,
-				Status:            syncParams.Status,
-				FinancialStatus:   syncParams.FinancialStatus,
-				FulfillmentStatus: syncParams.FulfillmentStatus,
-			},
-			StartedAt: time.Now(),
+	intIDUint := uint(integrationIDUint)
+	uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.started", map[string]interface{}{
+		"integration_id":   intIDUint,
+		"integration_type": "shopify",
+		"params": map[string]interface{}{
+			"created_at_min":     syncParams.CreatedAtMin,
+			"created_at_max":     syncParams.CreatedAtMax,
+			"status":             syncParams.Status,
+			"financial_status":   syncParams.FinancialStatus,
+			"fulfillment_status": syncParams.FulfillmentStatus,
 		},
-	)
+		"started_at": time.Now(),
+	})
 
 	go func() {
 		ctx := context.Background()
@@ -132,38 +101,26 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 		if err := uc.GetOrders(ctx, integration, storeDomain, accessToken, params); err != nil {
 			fmt.Printf("[SyncOrders] Error in GetOrders: %v\n", err)
 			// Publicar evento de sincronización fallida
-			integrationevents.PublishSyncFailed(
-				ctx,
-				uint(integrationIDUint),
-				integration.BusinessID,
-				integrationevents.SyncFailedEvent{
-					IntegrationID:   uint(integrationIDUint),
-					IntegrationType: "shopify",
-					Error:           err.Error(),
-					FailedAt:        time.Now(),
-				},
-			)
+			uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.failed", map[string]interface{}{
+				"integration_id":   intIDUint,
+				"integration_type": "shopify",
+				"error":            err.Error(),
+				"failed_at":        time.Now(),
+			})
 			return
 		}
 
 		// Publicar evento de sincronización completada
-		// Nota: Los contadores (totalOrders, createdOrders, etc.) se actualizarán cuando se procesen las órdenes
-		// Por ahora, publicamos con valores iniciales. Se puede mejorar para rastrear estos valores.
-		integrationevents.PublishSyncCompleted(
-			ctx,
-			uint(integrationIDUint),
-			integration.BusinessID,
-			integrationevents.SyncCompletedEvent{
-				IntegrationID:   uint(integrationIDUint),
-				IntegrationType: "shopify",
-				TotalOrders:     totalOrders,
-				CreatedOrders:   createdOrders,
-				UpdatedOrders:   updatedOrders,
-				RejectedOrders:  rejectedOrders,
-				Duration:        time.Since(startTime),
-				CompletedAt:     time.Now(),
-			},
-		)
+		uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.completed", map[string]interface{}{
+			"integration_id":   intIDUint,
+			"integration_type": "shopify",
+			"total_orders":     totalOrders,
+			"created_orders":   createdOrders,
+			"updated_orders":   updatedOrders,
+			"rejected_orders":  rejectedOrders,
+			"duration":         time.Since(startTime).String(),
+			"completed_at":     time.Now(),
+		})
 	}()
 
 	return nil

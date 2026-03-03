@@ -47,6 +47,7 @@ func TestListHandler_Success_NoFilters(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Set("business_id", uint(10)) // Simular middleware de autenticación
 
 	// Act
 	handler.List(c)
@@ -98,6 +99,7 @@ func TestListHandler_Success_WithFilters(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Set("business_id", uint(10)) // Simular middleware de autenticación
 
 	// Act
 	handler.List(c)
@@ -132,6 +134,7 @@ func TestListHandler_EmptyResult(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Set("business_id", uint(10)) // Simular middleware de autenticación
 
 	// Act
 	handler.List(c)
@@ -166,6 +169,7 @@ func TestListHandler_UseCaseError(t *testing.T) {
 	w := httptest.NewRecorder()
 	c, _ := gin.CreateTestContext(w)
 	c.Request = req
+	c.Set("business_id", uint(10)) // Simular middleware de autenticación
 
 	// Act
 	handler.List(c)

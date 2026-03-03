@@ -42,9 +42,9 @@ func TestSendMessage_ExitoConVariablesDeEntorno(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		waMock,
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		cfg,
 	)
@@ -67,9 +67,9 @@ func TestSendMessage_ExitoConVariablesDeEntorno(t *testing.T) {
 func TestSendMessage_ErrorNumeroTelefonoInvalido(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -94,9 +94,9 @@ func TestSendMessage_ErrorPhoneNumberIDNoConfigurado(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		cfg,
 	)
@@ -121,9 +121,9 @@ func TestSendMessage_ErrorTokenNoConfigurado(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		cfg,
 	)
@@ -148,9 +148,9 @@ func TestSendMessage_ErrorPhoneNumberIDInvalido(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		cfg,
 	)
@@ -183,9 +183,9 @@ func TestSendMessage_ErrorDelClienteWhatsApp(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		waMock,
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		cfg,
 	)
@@ -219,21 +219,20 @@ func TestSendTemplate_Exito(t *testing.T) {
 		},
 	}
 
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetByPhoneAndOrderFn: func(_ context.Context, _, _ string) (*entities.Conversation, error) {
 			// Sin conversación previa
 			return nil, errors.New("not found")
 		},
-		CreateFn: func(_ context.Context, conv *entities.Conversation) error {
-			conv.ID = "conv-new-001"
-			return nil
-		},
-		UpdateFn: func(_ context.Context, _ *entities.Conversation) error {
+		SaveFn: func(_ context.Context, conv *entities.Conversation) error {
+			if conv.ID == "" {
+				conv.ID = "conv-new-001"
+			}
 			return nil
 		},
 	}
 
-	integRepoMock := &mocks.IntegrationRepositoryMock{
+	integRepoMock := &mocks.CredentialsCacheMock{
 		GetWhatsAppConfigFn: func(_ context.Context, _ uint) (*ports.WhatsAppConfig, error) {
 			return &ports.WhatsAppConfig{
 				PhoneNumberID: 123456,
@@ -245,7 +244,7 @@ func TestSendTemplate_Exito(t *testing.T) {
 	uc := newUsecasesForTest(
 		waMock,
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
 		integRepoMock,
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
@@ -271,9 +270,9 @@ func TestSendTemplate_Exito(t *testing.T) {
 func TestSendTemplate_ErrorPlantillaNoExiste(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -300,9 +299,9 @@ func TestSendTemplate_ErrorPlantillaNoExiste(t *testing.T) {
 func TestSendTemplate_ErrorVariableFaltante(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -330,9 +329,9 @@ func TestSendTemplate_ErrorVariableFaltante(t *testing.T) {
 func TestSendTemplate_ErrorNumeroTelefonoInvalido(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -354,7 +353,7 @@ func TestSendTemplate_ErrorNumeroTelefonoInvalido(t *testing.T) {
 func TestSendTemplate_ErrorObtenendoConfigWhatsApp(t *testing.T) {
 	expectedErr := errors.New("integración no encontrada")
 
-	integRepoMock := &mocks.IntegrationRepositoryMock{
+	integRepoMock := &mocks.CredentialsCacheMock{
 		GetWhatsAppConfigFn: func(_ context.Context, _ uint) (*ports.WhatsAppConfig, error) {
 			return nil, expectedErr
 		},
@@ -362,8 +361,8 @@ func TestSendTemplate_ErrorObtenendoConfigWhatsApp(t *testing.T) {
 
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
 		integRepoMock,
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
@@ -392,17 +391,17 @@ func TestSendTemplate_ErrorEnvioClienteWhatsApp(t *testing.T) {
 		},
 	}
 
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetByPhoneAndOrderFn: func(_ context.Context, _, _ string) (*entities.Conversation, error) {
 			return nil, errors.New("not found")
 		},
-		CreateFn: func(_ context.Context, conv *entities.Conversation) error {
+		SaveFn: func(_ context.Context, conv *entities.Conversation) error {
 			conv.ID = "conv-001"
 			return nil
 		},
 	}
 
-	integRepoMock := &mocks.IntegrationRepositoryMock{
+	integRepoMock := &mocks.CredentialsCacheMock{
 		GetWhatsAppConfigFn: func(_ context.Context, _ uint) (*ports.WhatsAppConfig, error) {
 			return &ports.WhatsAppConfig{PhoneNumberID: 123456, AccessToken: "tok"}, nil
 		},
@@ -411,7 +410,7 @@ func TestSendTemplate_ErrorEnvioClienteWhatsApp(t *testing.T) {
 	uc := newUsecasesForTest(
 		waMock,
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
 		integRepoMock,
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
@@ -442,21 +441,24 @@ func TestSendTemplate_ConversacionActivaExistenteEsReutilizada(t *testing.T) {
 		ExpiresAt:    time.Now().Add(12 * time.Hour), // activa
 	}
 
-	var createCalled bool
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	var publishCreatedCalled bool
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetByPhoneAndOrderFn: func(_ context.Context, _, _ string) (*entities.Conversation, error) {
 			return existingConv, nil
 		},
-		CreateFn: func(_ context.Context, _ *entities.Conversation) error {
-			createCalled = true
-			return nil
-		},
-		UpdateFn: func(_ context.Context, _ *entities.Conversation) error {
+		SaveFn: func(_ context.Context, _ *entities.Conversation) error {
 			return nil
 		},
 	}
 
-	integRepoMock := &mocks.IntegrationRepositoryMock{
+	persistPubMock := &mocks.PersistencePublisherMock{
+		PublishConversationCreatedFn: func(_ context.Context, _ *entities.Conversation) error {
+			publishCreatedCalled = true
+			return nil
+		},
+	}
+
+	integRepoMock := &mocks.CredentialsCacheMock{
 		GetWhatsAppConfigFn: func(_ context.Context, _ uint) (*ports.WhatsAppConfig, error) {
 			return &ports.WhatsAppConfig{PhoneNumberID: 111, AccessToken: "tok"}, nil
 		},
@@ -465,7 +467,7 @@ func TestSendTemplate_ConversacionActivaExistenteEsReutilizada(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
+		persistPubMock,
 		integRepoMock,
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
@@ -480,7 +482,7 @@ func TestSendTemplate_ConversacionActivaExistenteEsReutilizada(t *testing.T) {
 		1,
 	)
 
-	if createCalled {
+	if publishCreatedCalled {
 		t.Error("no se debería crear una nueva conversación cuando ya existe una activa")
 	}
 }
@@ -499,19 +501,19 @@ func TestSendTemplateWithConversation_Exito(t *testing.T) {
 		ExpiresAt:   time.Now().Add(12 * time.Hour),
 	}
 
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetByIDFn: func(_ context.Context, id string) (*entities.Conversation, error) {
 			if id != "conv-abc" {
 				return nil, errors.New("not found")
 			}
 			return existingConv, nil
 		},
-		UpdateFn: func(_ context.Context, _ *entities.Conversation) error {
+		SaveFn: func(_ context.Context, _ *entities.Conversation) error {
 			return nil
 		},
 	}
 
-	integRepoMock := &mocks.IntegrationRepositoryMock{
+	integRepoMock := &mocks.CredentialsCacheMock{
 		GetWhatsAppConfigFn: func(_ context.Context, _ uint) (*ports.WhatsAppConfig, error) {
 			return &ports.WhatsAppConfig{PhoneNumberID: 999, AccessToken: "tok"}, nil
 		},
@@ -526,7 +528,7 @@ func TestSendTemplateWithConversation_Exito(t *testing.T) {
 	uc := newUsecasesForTest(
 		waMock,
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
 		integRepoMock,
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
@@ -555,7 +557,7 @@ func TestSendTemplateWithConversation_ErrorConversacionExpirada(t *testing.T) {
 		ExpiresAt: time.Now().Add(-1 * time.Hour), // ya expiró
 	}
 
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetByIDFn: func(_ context.Context, _ string) (*entities.Conversation, error) {
 			return expiradaConv, nil
 		},
@@ -564,8 +566,8 @@ func TestSendTemplateWithConversation_ErrorConversacionExpirada(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -591,9 +593,9 @@ func TestSendTemplateWithConversation_ErrorConversacionExpirada(t *testing.T) {
 func TestSendTemplateWithConversation_ErrorPlantillaNoExiste(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -617,7 +619,7 @@ func TestSendTemplateWithConversation_ErrorPlantillaNoExiste(t *testing.T) {
 }
 
 func TestSendTemplateWithConversation_ErrorConversacionNoEncontrada(t *testing.T) {
-	convRepoMock := &mocks.ConversationRepositoryMock{
+	convRepoMock := &mocks.ConversationCacheMock{
 		GetByIDFn: func(_ context.Context, _ string) (*entities.Conversation, error) {
 			return nil, errors.New("conversación no encontrada en BD")
 		},
@@ -626,8 +628,8 @@ func TestSendTemplateWithConversation_ErrorConversacionNoEncontrada(t *testing.T
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
 		convRepoMock,
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -652,9 +654,9 @@ func TestSendTemplateWithConversation_ErrorConversacionNoEncontrada(t *testing.T
 func TestBuildTemplateMessage_ConVariables(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)
@@ -698,9 +700,9 @@ func TestBuildTemplateMessage_ConVariables(t *testing.T) {
 func TestBuildTemplateMessage_SinVariables(t *testing.T) {
 	uc := newUsecasesForTest(
 		&mocks.WhatsAppMock{},
-		&mocks.ConversationRepositoryMock{},
-		&mocks.MessageLogRepositoryMock{},
-		&mocks.IntegrationRepositoryMock{},
+		&mocks.ConversationCacheMock{},
+		&mocks.PersistencePublisherMock{},
+		&mocks.CredentialsCacheMock{},
 		&mocks.EventPublisherMock{},
 		&mocks.ConfigMock{},
 	)

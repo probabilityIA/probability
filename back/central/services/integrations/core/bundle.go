@@ -56,6 +56,7 @@ const (
 	IntegrationTypeAmazon       = domain.IntegrationTypeAmazon
 	IntegrationTypeFalabella    = domain.IntegrationTypeFalabella
 	IntegrationTypeExito        = domain.IntegrationTypeExito
+	IntegrationTypeEmail        = domain.IntegrationTypeEmail
 )
 
 // ============================================

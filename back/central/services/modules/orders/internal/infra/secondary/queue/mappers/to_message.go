@@ -46,6 +46,9 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		OrderStatusID:       order.StatusID,
 		FulfillmentStatusID: order.FulfillmentStatusID,
 
+		// Bodega
+		WarehouseID: order.WarehouseID,
+
 		// Items detallados (para facturación e inventario)
 		Items: OrderItemsToSnapshot(order.OrderItems),
 

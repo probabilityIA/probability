@@ -79,8 +79,8 @@ export class IntegrationUseCases {
     }
 
     // Integration Types
-    async getIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {
-        return this.repository.getIntegrationTypes();
+    async getIntegrationTypes(categoryId?: number): Promise<SingleResponse<IntegrationType[]>> {
+        return this.repository.getIntegrationTypes(categoryId);
     }
 
     async getActiveIntegrationTypes(): Promise<SingleResponse<IntegrationType[]>> {

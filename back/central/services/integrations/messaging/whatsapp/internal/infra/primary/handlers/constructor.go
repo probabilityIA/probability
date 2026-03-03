@@ -21,7 +21,7 @@ type IHandler interface {
 }
 
 // handler contiene las dependencias compartidas
-type Handler struct {
+type handler struct {
 	useCase usecasemessaging.IUseCase
 	log     log.ILogger
 	config  env.IConfig
@@ -33,7 +33,7 @@ func New(
 	logger log.ILogger,
 	config env.IConfig,
 ) IHandler {
-	return &Handler{
+	return &handler{
 		useCase: useCase,
 		log:     logger,
 		config:  config,

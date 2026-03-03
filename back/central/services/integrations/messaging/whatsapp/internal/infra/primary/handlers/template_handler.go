@@ -20,7 +20,7 @@ import (
 // @Failure 400 {object} map[string]interface{} "Error de validación"
 // @Failure 500 {object} map[string]interface{} "Error interno del servidor"
 // @Router /integrations/whatsapp/send-template [post]
-func (h *Handler) SendTemplate(c *gin.Context) {
+func (h *handler) SendTemplate(c *gin.Context) {
 	ctx := c.Request.Context()
 
 	var req request.SendTemplateRequest

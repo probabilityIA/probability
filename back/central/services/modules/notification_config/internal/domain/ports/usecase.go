@@ -29,6 +29,11 @@ type IUseCase interface {
 	// NUEVA ESTRUCTURA: Usa orderStatusID (uint) en lugar de orderStatus (string)
 	ValidateConditions(config *entities.IntegrationNotificationConfig, orderStatusID uint, paymentMethodID uint) bool
 
+	// ========== Sync ==========
+	// SyncByIntegration sincroniza las reglas de notificación para una integración
+	// Crea, actualiza y elimina configs en una sola operación transaccional
+	SyncByIntegration(ctx context.Context, dto dtos.SyncNotificationConfigsDTO) (*dtos.SyncNotificationConfigsResponseDTO, error)
+
 	// ========== Notification Types ==========
 	// GetNotificationTypes obtiene todos los tipos de notificaciones
 	GetNotificationTypes(ctx context.Context) ([]entities.NotificationType, error)
@@ -66,4 +71,11 @@ type IUseCase interface {
 
 	// DeleteNotificationEventType elimina un tipo de evento de notificación por su ID
 	DeleteNotificationEventType(ctx context.Context, id uint) error
+
+	// ========== Message Audit ==========
+	// ListMessageAudit obtiene logs de auditoría de mensajes con filtros y paginación
+	ListMessageAudit(ctx context.Context, filter dtos.MessageAuditFilterDTO) (*dtos.PaginatedMessageAuditResponseDTO, error)
+
+	// GetMessageAuditStats obtiene estadísticas agregadas de mensajes
+	GetMessageAuditStats(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error)
 }

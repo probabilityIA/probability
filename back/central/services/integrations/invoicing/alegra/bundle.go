@@ -26,12 +26,12 @@ func New(
 	logger.Info(context.Background()).Msg("✅ Alegra HTTP client initialized")
 
 	// 2. Response Publisher (RabbitMQ)
-	responsePublisher := queue.NewResponsePublisher(rabbit, logger)
+	responsePublisher := queue.New(rabbit, logger)
 	logger.Info(context.Background()).Msg("✅ Alegra response publisher initialized")
 
 	// 3. Invoice Request Consumer (escucha "invoicing.alegra.requests")
 	if rabbit != nil {
-		invoiceRequestConsumer := consumer.NewInvoiceRequestConsumer(
+		invoiceRequestConsumer := consumer.New(
 			rabbit,
 			coreIntegration,
 			httpClient,

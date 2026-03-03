@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/infra/secondary/client/response"
@@ -20,7 +22,7 @@ func (c *WooCommerceClient) GetOrders(ctx context.Context, storeURL, consumerKey
 
 	queryStr := ""
 	if params != nil {
-		queryStr = params.ToQueryString()
+		queryStr = buildGetOrdersQueryString(params)
 	}
 
 	endpoint := fmt.Sprintf("%s/wp-json/wc/v3/orders", storeURL)
@@ -127,6 +129,36 @@ func (c *WooCommerceClient) GetOrder(ctx context.Context, storeURL, consumerKey,
 
 	order := orderResp.ToDomain()
 	return &order, body, nil
+}
+
+// buildGetOrdersQueryString construye los query params HTTP para la API REST de WooCommerce
+// a partir de los parámetros de dominio. Esta lógica vive en infra porque usa net/url.
+func buildGetOrdersQueryString(p *domain.GetOrdersParams) string {
+	params := url.Values{}
+
+	if p.Status != "" {
+		params.Set("status", p.Status)
+	}
+	if p.After != nil {
+		params.Set("after", p.After.Format(time.RFC3339))
+	}
+	if p.Before != nil {
+		params.Set("before", p.Before.Format(time.RFC3339))
+	}
+	if p.Page > 0 {
+		params.Set("page", fmt.Sprintf("%d", p.Page))
+	}
+	if p.PerPage > 0 {
+		params.Set("per_page", fmt.Sprintf("%d", p.PerPage))
+	}
+	if p.OrderBy != "" {
+		params.Set("orderby", p.OrderBy)
+	}
+	if p.Order != "" {
+		params.Set("order", p.Order)
+	}
+
+	return params.Encode()
 }
 
 func parseHeaderInt(s string) int {

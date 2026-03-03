@@ -72,8 +72,8 @@ type InvoiceRequestConsumer struct {
 	log               log.ILogger
 }
 
-// NewInvoiceRequestConsumer crea una nueva instancia del consumer
-func NewInvoiceRequestConsumer(
+// New crea una nueva instancia del consumer
+func New(
 	rabbit rabbitmq.IQueue,
 	integrationCore integrationCore.IIntegrationService,
 	helisaClient ports.IHelisaClient,
@@ -90,7 +90,7 @@ func NewInvoiceRequestConsumer(
 }
 
 const (
-	QueueHelisaRequests = "invoicing.helisa.requests"
+	QueueHelisaRequests = rabbitmq.QueueInvoicingHelisaRequests
 )
 
 // Start inicia el consumer

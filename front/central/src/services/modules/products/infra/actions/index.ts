@@ -21,7 +21,6 @@ export const getProductsAction = async (params?: GetProductsParams) => {
     try {
         return await (await getUseCases()).getProducts(params);
     } catch (error: any) {
-        console.error('Get Products Action Error:', error.message);
         return {
             success: false,
             message: error.message || 'Error al obtener productos',
@@ -34,38 +33,34 @@ export const getProductsAction = async (params?: GetProductsParams) => {
     }
 };
 
-export const getProductByIdAction = async (id: string) => {
+export const getProductByIdAction = async (id: string, businessId?: number) => {
     try {
-        return await (await getUseCases()).getProductById(id);
+        return await (await getUseCases()).getProductById(id, businessId);
     } catch (error: any) {
-        console.error('Get Product By Id Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const createProductAction = async (data: CreateProductDTO) => {
+export const createProductAction = async (data: CreateProductDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).createProduct(data);
+        return await (await getUseCases()).createProduct(data, businessId);
     } catch (error: any) {
-        console.error('Create Product Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const updateProductAction = async (id: string, data: UpdateProductDTO) => {
+export const updateProductAction = async (id: string, data: UpdateProductDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).updateProduct(id, data);
+        return await (await getUseCases()).updateProduct(id, data, businessId);
     } catch (error: any) {
-        console.error('Update Product Action Error:', error.message);
         throw new Error(error.message);
     }
 };
 
-export const deleteProductAction = async (id: string) => {
+export const deleteProductAction = async (id: string, businessId?: number) => {
     try {
-        return await (await getUseCases()).deleteProduct(id);
+        return await (await getUseCases()).deleteProduct(id, businessId);
     } catch (error: any) {
-        console.error('Delete Product Action Error:', error.message);
         throw new Error(error.message);
     }
 };
@@ -76,12 +71,12 @@ export const deleteProductAction = async (id: string) => {
 
 export const addProductIntegrationAction = async (
     productId: string,
-    data: AddProductIntegrationDTO
+    data: AddProductIntegrationDTO,
+    businessId?: number
 ) => {
     try {
-        return await (await getUseCases()).addProductIntegration(productId, data);
+        return await (await getUseCases()).addProductIntegration(productId, data, businessId);
     } catch (error: any) {
-        console.error('Add Product Integration Action Error:', error.message);
         return {
             success: false,
             message: error.message || 'Error al asociar producto con integración',
@@ -92,12 +87,12 @@ export const addProductIntegrationAction = async (
 
 export const removeProductIntegrationAction = async (
     productId: string,
-    integrationId: number
+    integrationId: number,
+    businessId?: number
 ) => {
     try {
-        return await (await getUseCases()).removeProductIntegration(productId, integrationId);
+        return await (await getUseCases()).removeProductIntegration(productId, integrationId, businessId);
     } catch (error: any) {
-        console.error('Remove Product Integration Action Error:', error.message);
         return {
             success: false,
             message: error.message || 'Error al remover integración',
@@ -106,11 +101,10 @@ export const removeProductIntegrationAction = async (
     }
 };
 
-export const getProductIntegrationsAction = async (productId: string) => {
+export const getProductIntegrationsAction = async (productId: string, businessId?: number) => {
     try {
-        return await (await getUseCases()).getProductIntegrations(productId);
+        return await (await getUseCases()).getProductIntegrations(productId, businessId);
     } catch (error: any) {
-        console.error('Get Product Integrations Action Error:', error.message);
         return {
             success: false,
             message: error.message || 'Error al obtener integraciones',
