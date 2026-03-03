@@ -12,11 +12,6 @@ import (
 // ✅ Conversión: []byte → datatypes.JSON
 func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 	// Convertir []byte a datatypes.JSON
-	var itemsJSON datatypes.JSON
-	if len(dto.Items) > 0 {
-		itemsJSON = datatypes.JSON(dto.Items)
-	}
-
 	var metadataJSON datatypes.JSON
 	if len(dto.Metadata) > 0 {
 		metadataJSON = datatypes.JSON(dto.Metadata)
@@ -141,7 +136,6 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		InvoiceID:               dto.InvoiceID,
 		InvoiceProvider:         dto.InvoiceProvider,
 		OrderStatusURL:          dto.OrderStatusURL,
-		Items:                   itemsJSON,
 		Metadata:                metadataJSON,
 		FinancialDetails:        financialDetailsJSON,
 		ShippingDetails:         shippingDetailsJSON,

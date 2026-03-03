@@ -92,7 +92,6 @@ type UpdateOrder struct {
 	InvoiceProvider *string `json:"invoice_provider"`
 
 	// Datos estructurados (JSONB)
-	Items              datatypes.JSON `json:"items"`
 	Metadata           datatypes.JSON `json:"metadata"`
 	FinancialDetails   datatypes.JSON `json:"financial_details"`
 	ShippingDetails    datatypes.JSON `json:"shipping_details"`

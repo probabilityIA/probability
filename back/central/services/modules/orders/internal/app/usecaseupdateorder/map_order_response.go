@@ -111,7 +111,6 @@ func (uc *UseCaseUpdateOrder) mapOrderToResponse(order *entities.ProbabilityOrde
 		OrderStatusURL:  order.OrderStatusURL,
 
 		// Datos estructurados
-		Items:              order.Items,
 		Metadata:           order.Metadata,
 		FinancialDetails:   order.FinancialDetails,
 		ShippingDetails:    order.ShippingDetails,

@@ -125,7 +125,6 @@ type OrderResponse struct {
 	OrderStatusURL string
 
 	// Datos estructurados (JSONB) - almacenados como []byte
-	Items              []byte
 	Metadata           []byte
 	FinancialDetails   []byte
 	ShippingDetails    []byte

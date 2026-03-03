@@ -81,7 +81,6 @@ type ProbabilityOrderDTO struct {
 
 	// Datos estructurados (JSONB) - Para compatibilidad
 	// json.RawMessage permite deserializar JSON sin conocer la estructura exacta
-	Items              json.RawMessage `json:"items,omitempty"`
 	Metadata           json.RawMessage `json:"metadata,omitempty"`
 	FinancialDetails   json.RawMessage `json:"financial_details,omitempty"`
 	ShippingDetails    json.RawMessage `json:"shipping_details,omitempty"`

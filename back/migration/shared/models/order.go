@@ -161,7 +161,6 @@ type Order struct {
 	// ============================================
 	// DATOS ESTRUCTURADOS (JSONB)
 	// ============================================
-	Items    datatypes.JSON `gorm:"type:jsonb"` // Items de la orden
 	Metadata datatypes.JSON `gorm:"type:jsonb"` // Metadata adicional de la plataforma
 
 	// Factores Negativos (Calculados)

@@ -70,7 +70,6 @@ func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRe
 		InvoiceURL:          req.InvoiceURL,
 		InvoiceID:           req.InvoiceID,
 		InvoiceProvider:     req.InvoiceProvider,
-		Items:               []byte(req.Items),
 		Metadata:            []byte(req.Metadata),
 		FinancialDetails:    []byte(req.FinancialDetails),
 		ShippingDetails:     []byte(req.ShippingDetails),
@@ -83,11 +82,6 @@ func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRe
 // ✅ Conversión: datatypes.JSON → []byte
 func MapOrderRequestToDomain(req *request.MapOrder) *dtos.ProbabilityOrderDTO {
 	// Convertir datatypes.JSON ([]byte) a []byte para domain
-	var itemsBytes []byte
-	if req.Items != nil {
-		itemsBytes = []byte(req.Items)
-	}
-
 	var metadataBytes []byte
 	if req.Metadata != nil {
 		metadataBytes = []byte(req.Metadata)
@@ -166,7 +160,6 @@ func MapOrderRequestToDomain(req *request.MapOrder) *dtos.ProbabilityOrderDTO {
 		OrderStatusURL:          req.OrderStatusURL,
 		OccurredAt:              req.OccurredAt,
 		ImportedAt:              req.ImportedAt,
-		Items:                   itemsBytes,
 		Metadata:                metadataBytes,
 		FinancialDetails:        financialDetailsBytes,
 		ShippingDetails:         shippingDetailsBytes,

@@ -1,7 +1,6 @@
 package usecasecreateorder
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -83,7 +82,6 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		OrderStatusURL:  dto.OrderStatusURL,
 
 		// Datos estructurados (JSONB)
-		Items:              dto.Items,
 		Metadata:           dto.Metadata,
 		FinancialDetails:   dto.FinancialDetails,
 		ShippingDetails:    dto.ShippingDetails,
@@ -119,16 +117,8 @@ func (uc *UseCaseCreateOrder) assignPaymentMethodID(order *entities.ProbabilityO
 	}
 }
 
-// populateOrderFields popula campos JSONB y campos planos de dirección
+// populateOrderFields popula campos planos de dirección desde Addresses
 func (uc *UseCaseCreateOrder) populateOrderFields(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) {
-	// Popular campos JSONB Items si están vacíos (backward compatibility)
-	if len(dto.OrderItems) > 0 && len(dto.Items) <= 4 {
-		itemsJSON, err := json.Marshal(dto.OrderItems)
-		if err == nil {
-			order.Items = itemsJSON
-		}
-	}
-
 	// Popular campos planos de dirección (flat fields)
 	for _, addr := range dto.Addresses {
 		if addr.Type == "shipping" {

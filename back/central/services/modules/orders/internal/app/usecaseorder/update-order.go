@@ -225,9 +225,6 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	}
 
 	// Datos estructurados
-	if req.Items != nil {
-		order.Items = req.Items
-	}
 	if req.Metadata != nil {
 		order.Metadata = req.Metadata
 	}

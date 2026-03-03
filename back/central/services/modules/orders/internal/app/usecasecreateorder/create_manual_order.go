@@ -2,11 +2,26 @@ package usecasecreateorder
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 )
+
+// rawItemJSON es el formato de cada item dentro del campo JSONB items de la orden manual.
+// Ejemplos: {"sku":"PT01015","name":"Colágeno","price":64918,"quantity":1}
+type rawItemJSON struct {
+	SKU        string   `json:"sku"`
+	Name       string   `json:"name"`
+	Price      float64  `json:"price"`
+	Quantity   int      `json:"quantity"`
+	Tax        float64  `json:"tax"`
+	TaxRate    *float64 `json:"tax_rate"`
+	Discount   float64  `json:"discount"`
+	ProductID  *string  `json:"product_id"`
+	VariantID  *string  `json:"variant_id"`
+}
 
 // CreateManualOrder crea una orden manual pasando por el pipeline completo de MapAndSaveOrder.
 // Aplica defaults, convierte CreateOrderRequest -> ProbabilityOrderDTO y delega a MapAndSaveOrder.
@@ -140,7 +155,6 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 		InvoiceProvider: req.InvoiceProvider,
 
 		// Datos estructurados (JSONB)
-		Items:              req.Items,
 		Metadata:           req.Metadata,
 		FinancialDetails:   req.FinancialDetails,
 		ShippingDetails:    req.ShippingDetails,
@@ -214,6 +228,33 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 			IsLastMile:        req.IsLastMile,
 			EstimatedDelivery: req.DeliveryDate,
 		})
+	}
+
+	// Items JSONB -> OrderItems normalizados para crear registros en order_items
+	// El JSONB items se guarda en dto.Items (visualización), pero saveOrderItems()
+	// lee de dto.OrderItems. Parseamos el JSON para poblar ambos correctamente.
+	if len(req.Items) > 0 {
+		var rawItems []rawItemJSON
+		if err := json.Unmarshal(req.Items, &rawItems); err == nil {
+			orderItems := make([]dtos.ProbabilityOrderItemDTO, 0, len(rawItems))
+			for _, raw := range rawItems {
+				totalPrice := raw.Price * float64(raw.Quantity)
+				orderItems = append(orderItems, dtos.ProbabilityOrderItemDTO{
+					ProductID:   raw.ProductID,
+					ProductSKU:  raw.SKU,
+					ProductName: raw.Name,
+					VariantID:   raw.VariantID,
+					Quantity:    raw.Quantity,
+					UnitPrice:   raw.Price,
+					TotalPrice:  totalPrice,
+					Currency:    req.Currency,
+					Discount:    raw.Discount,
+					Tax:         raw.Tax,
+					TaxRate:     raw.TaxRate,
+				})
+			}
+			dto.OrderItems = orderItems
+		}
 	}
 
 	return dto

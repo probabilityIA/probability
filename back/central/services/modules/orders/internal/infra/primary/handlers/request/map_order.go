@@ -78,7 +78,6 @@ type MapOrder struct {
 	ImportedAt time.Time `json:"imported_at"`
 
 	// Datos estructurados (JSONB) - permitido usar datatypes.JSON en infra
-	Items              datatypes.JSON `json:"items,omitempty"`
 	Metadata           datatypes.JSON `json:"metadata,omitempty"`
 	FinancialDetails   datatypes.JSON `json:"financial_details,omitempty"`
 	ShippingDetails    datatypes.JSON `json:"shipping_details,omitempty"`

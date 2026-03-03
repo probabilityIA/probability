@@ -88,7 +88,6 @@ type UpdateOrderRequest struct {
 	InvoiceProvider *string
 
 	// Datos estructurados (JSONB) - almacenados como []byte
-	Items              []byte
 	Metadata           []byte
 	FinancialDetails   []byte
 	ShippingDetails    []byte

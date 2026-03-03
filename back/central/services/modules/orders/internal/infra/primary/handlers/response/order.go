@@ -125,7 +125,6 @@ type Order struct {
 	OrderStatusURL string `json:"order_status_url,omitempty"`
 
 	// Datos estructurados (JSONB) - usando datatypes.JSON
-	Items              datatypes.JSON `json:"items,omitempty"`
 	Metadata           datatypes.JSON `json:"metadata,omitempty"`
 	FinancialDetails   datatypes.JSON `json:"financial_details,omitempty"`
 	ShippingDetails    datatypes.JSON `json:"shipping_details,omitempty"`

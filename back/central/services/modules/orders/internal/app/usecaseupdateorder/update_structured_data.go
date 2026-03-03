@@ -10,14 +10,6 @@ import (
 func (uc *UseCaseUpdateOrder) updateStructuredData(order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
-	// Actualizar Items si están presentes
-	if len(dto.Items) > 0 {
-		if len(order.Items) == 0 || !statusmapper.EqualJSON(order.Items, dto.Items) {
-			order.Items = dto.Items
-			changed = true
-		}
-	}
-
 	// Actualizar Metadata si está presente
 	if len(dto.Metadata) > 0 {
 		if len(order.Metadata) == 0 || !statusmapper.EqualJSON(order.Metadata, dto.Metadata) {

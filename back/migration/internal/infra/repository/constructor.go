@@ -2,12 +2,14 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	"github.com/secamc93/probability/back/migration/shared/db"
 	"github.com/secamc93/probability/back/migration/shared/env"
 	"github.com/secamc93/probability/back/migration/shared/models"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -79,6 +81,16 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	// Seed Email integration type (id=29)
 	if err := r.seedEmailIntegrationType(ctx); err != nil {
 		return fmt.Errorf("failed to seed email integration type: %w", err)
+	}
+
+	// Migrate legacy order items from JSONB to order_items table
+	if err := r.migrateOrderItemsFromJSONB(ctx); err != nil {
+		return fmt.Errorf("failed to migrate order items from JSONB: %w", err)
+	}
+
+	// Drop the legacy items column (data is now in order_items table)
+	if err := r.db.Conn(ctx).Exec("ALTER TABLE orders DROP COLUMN IF EXISTS items").Error; err != nil {
+		return fmt.Errorf("failed to drop orders.items column: %w", err)
 	}
 
 	return nil
@@ -1110,6 +1122,103 @@ func (r *Repository) seedEmailIntegrationType(ctx context.Context) error {
 	if err == gorm.ErrRecordNotFound {
 		if err := db.Create(&integrationType).Error; err != nil {
 			return fmt.Errorf("failed to create email integration type: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// migrateOrderItemsFromJSONB backfills order_items from the legacy orders.items JSONB column.
+// It is idempotent: only processes orders that have no rows in order_items yet.
+// Must run BEFORE the DROP COLUMN for orders.items.
+func (r *Repository) migrateOrderItemsFromJSONB(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	type orderRow struct {
+		ID         string
+		Items      []byte
+		Currency   string
+		BusinessID *uint
+	}
+	type legacyItem struct {
+		ID       string  `json:"id"`
+		SKU      string  `json:"sku"`
+		Name     string  `json:"name"`
+		Price    float64 `json:"price"`
+		Quantity int     `json:"quantity"`
+	}
+
+	var rows []orderRow
+	err := db.Raw(`
+		SELECT id, items, currency, business_id
+		FROM orders
+		WHERE items IS NOT NULL
+		  AND items::text NOT IN ('null', '[]', '')
+		  AND deleted_at IS NULL
+		  AND id NOT IN (
+		      SELECT DISTINCT order_id FROM order_items WHERE deleted_at IS NULL
+		  )
+	`).Scan(&rows).Error
+	if err != nil {
+		return fmt.Errorf("failed to query orders for JSONB migration: %w", err)
+	}
+
+	if len(rows) == 0 {
+		return nil
+	}
+
+	for _, row := range rows {
+		var items []legacyItem
+		if err := json.Unmarshal(row.Items, &items); err != nil {
+			// Skip orders with unparseable items
+			continue
+		}
+
+		for _, item := range items {
+			quantity := item.Quantity
+			if quantity <= 0 {
+				quantity = 1
+			}
+
+			// Try to find product by SKU and business_id
+			var productID *string
+			if item.SKU != "" && row.BusinessID != nil {
+				var product models.Product
+				if err := db.Where("sku = ? AND business_id = ? AND deleted_at IS NULL", item.SKU, *row.BusinessID).First(&product).Error; err == nil {
+					productID = &product.ID
+				}
+			}
+
+			// Build metadata with original item data
+			originalJSON, _ := json.Marshal(item)
+			metadataJSON, _ := json.Marshal(map[string]interface{}{
+				"_source":  "json_migration",
+				"original": json.RawMessage(originalJSON),
+			})
+
+			currency := row.Currency
+			if currency == "" {
+				currency = "COP"
+			}
+
+			unitPrice := item.Price
+			totalPrice := unitPrice * float64(quantity)
+
+			orderItem := models.OrderItem{
+				OrderID:               row.ID,
+				ProductID:             productID,
+				Quantity:              quantity,
+				UnitPrice:             unitPrice,
+				TotalPrice:            totalPrice,
+				Currency:              currency,
+				UnitPricePresentment:  unitPrice,
+				TotalPricePresentment: totalPrice,
+				Metadata:              datatypes.JSON(metadataJSON),
+			}
+
+			if err := db.Create(&orderItem).Error; err != nil {
+				return fmt.Errorf("failed to create order_item for order %s: %w", row.ID, err)
+			}
 		}
 	}
 
