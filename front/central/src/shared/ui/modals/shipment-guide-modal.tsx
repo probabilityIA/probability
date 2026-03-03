@@ -819,18 +819,18 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <h3 className="font-semibold text-lg text-purple-700">Origen</h3>
-                                                {originAddresses.length > 0 && (
+                                                {originWarehouses.length > 0 && (
                                                     <select
                                                         className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
                                                         onChange={(e) => {
-                                                            const addr = originAddresses.find(a => a.id === parseInt(e.target.value));
-                                                            if (addr) handleOriginAddressSelect(addr);
+                                                            const addr = originWarehouses.find(a => a.id === parseInt(e.target.value));
+                                                            if (addr) handleWarehouseSelect(addr);
                                                         }}
                                                         defaultValue=""
                                                     >
                                                         <option value="" disabled>Mis direcciones...</option>
-                                                        {originAddresses.map(a => (
-                                                            <option key={a.id} value={a.id}>{a.alias}</option>
+                                                        {originWarehouses.map(a => (
+                                                            <option key={a.id} value={a.id}>{a.name}</option>
                                                         ))}
                                                     </select>
                                                 )}
