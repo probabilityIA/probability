@@ -49,6 +49,7 @@ interface TableProps<T = Record<string, unknown>> {
   loading?: boolean;
   onRowClick?: (row: T, index: number) => void;
   onRowDoubleClick?: (row: T, index: number) => void;
+  rowClassName?: (row: T, index: number) => string;
   pagination?: PaginationProps;
   filters?: TableFiltersProps;
 }
@@ -61,6 +62,7 @@ export function Table<T = Record<string, unknown>>({
   loading = false,
   onRowClick,
   onRowDoubleClick,
+  rowClassName,
   pagination,
   filters,
 }: TableProps<T>) {
@@ -202,7 +204,7 @@ export function Table<T = Record<string, unknown>>({
                 data.map((row, rowIndex) => (
                   <tr
                     key={keyExtractor(row, rowIndex)}
-                    className={`transition-colors ${onRowClick || onRowDoubleClick ? 'cursor-pointer' : ''}`}
+                    className={`transition-colors ${onRowClick || onRowDoubleClick ? 'cursor-pointer' : ''} ${rowClassName?.(row, rowIndex) || ''}`}
                     onClick={() => onRowClick?.(row, rowIndex)}
                     onDoubleClick={() => onRowDoubleClick?.(row, rowIndex)}
                   >

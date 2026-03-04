@@ -34,11 +34,25 @@ func (r *Repository) CreateInvoice(ctx context.Context, invoice *entities.Invoic
 func (r *Repository) GetInvoiceByID(ctx context.Context, id uint) (*entities.Invoice, error) {
 	var model models.Invoice
 
-	if err := r.db.Conn(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.Conn(ctx).
+		Preload("InvoicingIntegration.IntegrationType").
+		First(&model, id).Error; err != nil {
 		return nil, fmt.Errorf("invoice not found: %w", err)
 	}
 
-	return mappers.InvoiceToDomain(&model), nil
+	entity := mappers.InvoiceToDomain(&model)
+
+	// Fetch order_number
+	var orderNumber string
+	if err := r.db.Conn(ctx).
+		Table("orders").
+		Select("order_number").
+		Where("id = ? AND deleted_at IS NULL", model.OrderID).
+		Scan(&orderNumber).Error; err == nil && orderNumber != "" {
+		entity.OrderNumber = orderNumber
+	}
+
+	return entity, nil
 }
 
 // GetByOrderID obtiene una factura por ID de orden
@@ -135,7 +149,38 @@ func (r *Repository) ListInvoices(ctx context.Context, filters map[string]interf
 		return nil, 0, fmt.Errorf("failed to list invoices: %w", err)
 	}
 
-	return mappers.InvoiceListToDomain(modelsList), total, nil
+	domainList := mappers.InvoiceListToDomain(modelsList)
+
+	// Batch-load order numbers from orders table
+	if len(modelsList) > 0 {
+		orderIDs := make([]string, 0, len(modelsList))
+		for _, m := range modelsList {
+			orderIDs = append(orderIDs, m.OrderID)
+		}
+
+		var orderRows []struct {
+			ID          string
+			OrderNumber string
+		}
+		if err := r.db.Conn(ctx).
+			Table("orders").
+			Select("id, order_number").
+			Where("id IN (?)", orderIDs).
+			Where("deleted_at IS NULL").
+			Scan(&orderRows).Error; err == nil {
+			orderNumberMap := make(map[string]string, len(orderRows))
+			for _, row := range orderRows {
+				orderNumberMap[row.ID] = row.OrderNumber
+			}
+			for _, inv := range domainList {
+				if num, ok := orderNumberMap[inv.OrderID]; ok {
+					inv.OrderNumber = num
+				}
+			}
+		}
+	}
+
+	return domainList, total, nil
 }
 
 // Update actualiza una factura

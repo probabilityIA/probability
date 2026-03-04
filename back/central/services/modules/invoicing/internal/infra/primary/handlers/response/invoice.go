@@ -8,6 +8,7 @@ type Invoice struct {
 	CreatedAt           time.Time              `json:"created_at"`
 	UpdatedAt           time.Time              `json:"updated_at"`
 	OrderID             string                 `json:"order_id"`
+	OrderNumber         string                 `json:"order_number,omitempty"`
 	BusinessID          uint                   `json:"business_id"`
 	InvoicingProviderID uint                   `json:"invoicing_provider_id"`
 	InvoiceNumber       string                 `json:"invoice_number"`

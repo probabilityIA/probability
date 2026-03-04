@@ -265,30 +265,28 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     });
     setOrderStatuses(initialStatuses);
 
-    try {
-      await createBulkInvoicesAction({
-        order_ids: selectedOrderIds,
-        ...(isSuperAdmin && selectedBusinessId ? { business_id: selectedBusinessId } : {}),
-      });
+    const result = await createBulkInvoicesAction({
+      order_ids: selectedOrderIds,
+      ...(isSuperAdmin && selectedBusinessId ? { business_id: selectedBusinessId } : {}),
+    });
 
-      // Async job started - SSE will track progress in real-time
-      // Set a fallback timeout in case SSE events don't arrive (connection issues, etc.)
-      submittingTimeoutRef.current = setTimeout(() => {
-        console.warn('SSE bulk_job.completed event did not arrive within 30 seconds - resetting UI state');
-        setSubmitting(false);
-        setBulkCompleted(true);
-        // Show a message to user that they should check the invoice list
-        alert('El proceso de facturación se ha iniciado. Revisa la lista de facturas para ver el resultado.');
-      }, 30000); // 30 seconds timeout
-
-      // Don't close modal yet, let the progress bar show
-    } catch (err) {
-      console.error('Error creating bulk invoices:', err);
-      alert(err instanceof Error ? err.message : 'Error al crear facturas');
+    if (!result.success) {
+      console.error('Error creating bulk invoices:', result.error);
+      alert(result.error);
       setSubmitting(false);
       setBulkProgress(null);
       setBulkCompleted(false);
+      return;
     }
+
+    // Async job started - SSE will track progress in real-time
+    // Set a fallback timeout in case SSE events don't arrive (connection issues, etc.)
+    submittingTimeoutRef.current = setTimeout(() => {
+      console.warn('SSE bulk_job.completed event did not arrive within 30 seconds - resetting UI state');
+      setSubmitting(false);
+      setBulkCompleted(true);
+      alert('El proceso de facturación se ha iniciado. Revisa la lista de facturas para ver el resultado.');
+    }, 30000);
   };
 
   const handleCloseAfterCompletion = () => {

@@ -313,17 +313,24 @@ export async function getInvoiceableOrdersAction(
 }
 
 /**
- * Crea facturas masivamente
- * NOTA: Esta es una Server Action, solo usar desde Server Components
- * Para Client Components, usar el repository bulk-invoices-repository.ts
+ * Crea facturas masivamente (async job via RabbitMQ)
+ * Retorna resultado o error sin lanzar excepciones,
+ * ya que Next.js en producción enmascara errores de Server Actions.
  */
 export async function createBulkInvoicesAction(
   dto: BulkCreateInvoicesDTO
-): Promise<BulkCreateResult> {
-  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/bulk`, {
-    method: 'POST',
-    body: JSON.stringify(dto),
-  });
+): Promise<{ success: true; data: BulkCreateResult } | { success: false; error: string }> {
+  try {
+    const data = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/bulk`, {
+      method: 'POST',
+      body: JSON.stringify(dto),
+    });
+    return { success: true, data };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido al crear facturas';
+    console.error('[createBulkInvoicesAction] Error:', message);
+    return { success: false, error: message };
+  }
 }
 
 // ============================================

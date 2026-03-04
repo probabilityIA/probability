@@ -54,9 +54,10 @@ type Invoice struct {
 	Metadata         map[string]interface{}
 	ProviderResponse map[string]interface{}
 
-	// Datos del proveedor de facturación (derivados de InvoicingIntegration)
-	ProviderLogoURL *string
-	ProviderName    *string
+	// Datos derivados de relaciones (no almacenados en tabla invoices)
+	OrderNumber     string  // Número visible de la orden (de tabla orders)
+	ProviderLogoURL *string // Logo del proveedor de facturación
+	ProviderName    *string // Nombre del tipo de integración de facturación
 
 	// Items de la factura (relación)
 	Items []InvoiceItem

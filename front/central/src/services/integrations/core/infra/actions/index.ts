@@ -24,6 +24,21 @@ async function getUseCases(tokenOverride?: string | null) {
     return new IntegrationUseCases(repository);
 }
 
+/**
+ * Helper: ejecuta una acción y retorna { success, message, data } sin lanzar throw.
+ * Next.js producción enmascara errores de Server Actions con un mensaje genérico,
+ * así que retornamos el error como dato para que el cliente vea el mensaje real.
+ */
+async function safeAction<T>(fn: () => Promise<T>): Promise<T | { success: false; message: string }> {
+    try {
+        return await fn();
+    } catch (error: any) {
+        const message = error?.message || 'Error desconocido';
+        console.error('[Server Action Error]', message);
+        return { success: false, message } as any;
+    }
+}
+
 export const getIntegrationsAction = async (params?: GetIntegrationsParams, token?: string | null) => {
     try {
         return await (await getUseCases(token)).getIntegrations(params);
@@ -42,21 +57,11 @@ export const getIntegrationsAction = async (params?: GetIntegrationsParams, toke
 };
 
 export const getIntegrationByIdAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getIntegrationById(id);
-    } catch (error: any) {
-        console.error('Get Integration By Id Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getIntegrationById(id)));
 };
 
 export const getIntegrationByTypeAction = async (type: string, businessId?: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getIntegrationByType(type, businessId);
-    } catch (error: any) {
-        console.error('Get Integration By Type Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getIntegrationByType(type, businessId)));
 };
 
 export const createIntegrationAction = async (data: CreateIntegrationDTO, token?: string | null) => {
@@ -73,157 +78,72 @@ export const createIntegrationAction = async (data: CreateIntegrationDTO, token?
 };
 
 export const updateIntegrationAction = async (id: number, data: UpdateIntegrationDTO, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).updateIntegration(id, data);
-    } catch (error: any) {
-        console.error('Update Integration Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.updateIntegration(id, data)));
 };
 
 export const deleteIntegrationAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).deleteIntegration(id);
-    } catch (error: any) {
-        console.error('Delete Integration Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.deleteIntegration(id)));
 };
 
 export const testConnectionAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).testConnection(id);
-    } catch (error: any) {
-        console.error('Test Connection Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.testConnection(id)));
 };
 
 export const activateIntegrationAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).activateIntegration(id);
-    } catch (error: any) {
-        console.error('Activate Integration Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.activateIntegration(id)));
 };
 
 export const deactivateIntegrationAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).deactivateIntegration(id);
-    } catch (error: any) {
-        console.error('Deactivate Integration Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.deactivateIntegration(id)));
 };
 
 export const setAsDefaultAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).setAsDefault(id);
-    } catch (error: any) {
-        console.error('Set As Default Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.setAsDefault(id)));
 };
 
 export const syncOrdersAction = async (id: number, params?: SyncOrdersParams, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).syncOrders(id, params);
-    } catch (error: any) {
-        console.error('Sync Orders Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.syncOrders(id, params)));
 };
 
 export const getSyncStatusAction = async (id: number, businessId?: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getSyncStatus(id, businessId);
-    } catch (error: any) {
-        console.error('Get Sync Status Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getSyncStatus(id, businessId)));
 };
 
 export const testIntegrationAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).testIntegration(id);
-    } catch (error: any) {
-        console.error('Test Integration Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.testIntegration(id)));
 };
 
 export const testConnectionRawAction = async (typeCode: string, config: any, credentials: any, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).testConnectionRaw(typeCode, config, credentials);
-    } catch (error: any) {
-        console.error('Test Connection Raw Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.testConnectionRaw(typeCode, config, credentials)));
 };
 
 // Integration Types
 export const getIntegrationTypesAction = async (categoryId?: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getIntegrationTypes(categoryId);
-    } catch (error: any) {
-        console.error('Get Integration Types Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getIntegrationTypes(categoryId)));
 };
 
 export const getActiveIntegrationTypesAction = async (token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getActiveIntegrationTypes();
-    } catch (error: any) {
-        console.error('Get Active Integration Types Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getActiveIntegrationTypes()));
 };
 
 export const getIntegrationTypeByIdAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getIntegrationTypeById(id);
-    } catch (error: any) {
-        console.error('Get Integration Type By Id Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getIntegrationTypeById(id)));
 };
 
 export const getIntegrationTypeByCodeAction = async (code: string, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getIntegrationTypeByCode(code);
-    } catch (error: any) {
-        console.error('Get Integration Type By Code Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getIntegrationTypeByCode(code)));
 };
 
 export const createIntegrationTypeAction = async (data: CreateIntegrationTypeDTO, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).createIntegrationType(data);
-    } catch (error: any) {
-        console.error('Create Integration Type Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.createIntegrationType(data)));
 };
 
 export const updateIntegrationTypeAction = async (id: number, data: UpdateIntegrationTypeDTO, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).updateIntegrationType(id, data);
-    } catch (error: any) {
-        console.error('Update Integration Type Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.updateIntegrationType(id, data)));
 };
 
 export const deleteIntegrationTypeAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).deleteIntegrationType(id);
-    } catch (error: any) {
-        console.error('Delete Integration Type Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.deleteIntegrationType(id)));
 };
 
 export const getIntegrationTypePlatformCredentialsAction = async (id: number, token?: string | null) => {
@@ -235,49 +155,25 @@ export const getIntegrationTypePlatformCredentialsAction = async (id: number, to
     }
 };
 
+// Webhooks
 export const getWebhookUrlAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getWebhookUrl(id);
-    } catch (error: any) {
-        console.error('Get Webhook URL Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getWebhookUrl(id)));
 };
 
 export const listWebhooksAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).listWebhooks(id);
-    } catch (error: any) {
-        console.error('List Webhooks Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.listWebhooks(id)));
 };
 
 export const deleteWebhookAction = async (id: number, webhookId: string, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).deleteWebhook(id, webhookId);
-    } catch (error: any) {
-        console.error('Delete Webhook Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.deleteWebhook(id, webhookId)));
 };
 
 export const verifyWebhooksAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).verifyWebhooks(id);
-    } catch (error: any) {
-        console.error('Verify Webhooks Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.verifyWebhooks(id)));
 };
 
 export const createWebhookAction = async (id: number, token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).createWebhook(id);
-    } catch (error: any) {
-        console.error('Create Webhook Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.createWebhook(id)));
 };
 
 // ============================================
@@ -325,10 +221,5 @@ export const getIntegrationsSimpleAction = async (businessId?: number): Promise<
 // ============================================
 
 export const getIntegrationCategoriesAction = async (token?: string | null) => {
-    try {
-        return await (await getUseCases(token)).getIntegrationCategories();
-    } catch (error: any) {
-        console.error('Get Integration Categories Action Error:', error.message);
-        throw new Error(error.message);
-    }
+    return safeAction(() => getUseCases(token).then(uc => uc.getIntegrationCategories()));
 };

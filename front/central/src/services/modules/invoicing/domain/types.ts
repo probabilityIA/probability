@@ -9,6 +9,7 @@
 export interface Invoice {
   id: number;
   order_id: string;
+  order_number?: string;
   business_id: number;
   integration_id: number;
   invoicing_provider_id: number;

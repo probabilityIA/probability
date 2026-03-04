@@ -65,9 +65,13 @@ func (h *SSEHandler) HandleSSE(c *gin.Context) {
 
 	connectionID := h.eventManager.AddConnection(businessID, filter, c.Writer)
 
-	// Precargar caché
+	// Precargar caché SOLO en reconexión (cuando el browser envía Last-Event-ID)
+	// En conexión nueva (page load/refresh), NO replay para evitar flood de notificaciones
 	if businessID > 0 {
-		h.preloadCacheEvents(c.Writer, businessID, c.Request.Context())
+		if lastEventID := c.GetHeader("Last-Event-ID"); lastEventID != "" {
+			sinceSeq, _ := strconv.ParseInt(lastEventID, 10, 64)
+			h.preloadCacheEventsSince(c.Writer, businessID, sinceSeq, c.Request.Context())
+		}
 	}
 
 	// Enviar mensaje de conexión
@@ -180,19 +184,25 @@ func (h *SSEHandler) keepConnectionAlive(w http.ResponseWriter, connectionID str
 	}
 }
 
-// preloadCacheEvents precarga eventos del caché para nueva conexión
-func (h *SSEHandler) preloadCacheEvents(w http.ResponseWriter, businessID uint, ctx context.Context) {
-	events := h.eventManager.GetRecentEventsByBusiness(businessID, 0)
+// preloadCacheEventsSince precarga eventos del caché posteriores a sinceSeq (reconexión)
+func (h *SSEHandler) preloadCacheEventsSince(w http.ResponseWriter, businessID uint, sinceSeq int64, ctx context.Context) {
+	events := h.eventManager.GetRecentEventsByBusiness(businessID, sinceSeq)
 
 	if len(events) > 0 {
 		h.logger.Info(ctx).
 			Uint("business_id", businessID).
+			Int64("since_seq", sinceSeq).
 			Int("cache_events_count", len(events)).
-			Msg("Precargando eventos del caché")
+			Msg("Precargando eventos del caché (reconexión)")
 
 		for _, event := range events {
 			eventJSON := h.eventToSSEJSON(event)
-			message := fmt.Sprintf("event: %s\ndata: %s\n\n", event.Type, eventJSON)
+			// Include id: for Last-Event-ID tracking on reconnect
+			idLine := ""
+			if seqVal, ok := event.Metadata["sse_seq"]; ok {
+				idLine = fmt.Sprintf("id: %v\n", seqVal)
+			}
+			message := fmt.Sprintf("%sevent: %s\ndata: %s\n\n", idLine, event.Type, eventJSON)
 			if _, err := w.Write([]byte(message)); err != nil {
 				h.logger.Warn(ctx).
 					Err(err).

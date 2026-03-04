@@ -17,6 +17,7 @@ import { InvoiceComparisonModal } from './InvoiceComparisonModal';
 import { ConfigsModal } from './ConfigsModal';
 import {
   getInvoicesAction,
+  getInvoiceByIdAction,
   cancelInvoiceAction,
   requestInvoiceComparisonAction,
 } from '../../infra/actions';
@@ -54,6 +55,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [compareCorrelationId, setCompareCorrelationId] = useState<string | null>(null);
   const [compareData, setCompareData] = useState<CompareResponseData | null>(null);
   const [showConfigsModal, setShowConfigsModal] = useState(false);
+  const [newInvoiceIds, setNewInvoiceIds] = useState<Set<number>>(new Set());
 
   useImperativeHandle(ref, () => ({
     openBulkModal: () => setShowBulkModal(true),
@@ -77,25 +79,56 @@ export const InvoiceList = forwardRef(function InvoiceList(
     // #endregion
   }, [businessId]);
 
-  // SSE: Escuchar eventos en tiempo real
+  // SSE: Escuchar eventos en tiempo real (inserción reactiva, sin recargar)
   useInvoiceSSE({
     businessId,
-    onInvoiceCreated: (data) => {
+    onInvoiceCreated: async (data) => {
       showToast(
         `Factura ${data.invoice_number || ''} creada exitosamente para ${data.customer_name || 'orden'}`,
         'success'
       );
-      loadInvoices(currentPage, pageSize);
+      // Obtener factura completa y agregarla al inicio sin recargar
+      if (data.invoice_id) {
+        try {
+          const invoice = await getInvoiceByIdAction(data.invoice_id);
+          setInvoices(prev => {
+            if (prev.some(i => i.id === invoice.id)) return prev;
+            return [invoice, ...prev];
+          });
+          setTotalCount(prev => prev + 1);
+          // Animación de resaltado
+          setNewInvoiceIds(prev => new Set(prev).add(invoice.id));
+          setTimeout(() => {
+            setNewInvoiceIds(prev => {
+              const s = new Set(prev);
+              s.delete(invoice.id);
+              return s;
+            });
+          }, 2500);
+        } catch {
+          // Fallback: recargar si falla el fetch individual
+          loadInvoices(currentPage, pageSize);
+        }
+      }
     },
     onInvoiceFailed: (data) => {
       showToast(
         `Error al crear factura: ${data.error_message || 'Error desconocido'}`,
         'error'
       );
-      loadInvoices(currentPage, pageSize);
+      // Actualizar status in-place si la factura está en la lista
+      if (data.invoice_id) {
+        setInvoices(prev => prev.map(inv =>
+          inv.id === data.invoice_id ? { ...inv, status: 'failed' as const, error_message: data.error_message } : inv
+        ));
+      }
     },
-    onInvoiceCancelled: () => {
-      loadInvoices(currentPage, pageSize);
+    onInvoiceCancelled: (data) => {
+      if (data.invoice_id) {
+        setInvoices(prev => prev.map(inv =>
+          inv.id === data.invoice_id ? { ...inv, status: 'cancelled' as const } : inv
+        ));
+      }
     },
     onCompareReady: (data) => {
       if (!compareCorrelationId || data.correlation_id === compareCorrelationId) {
@@ -145,7 +178,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
       const uniqueInvoices = Array.from(grouped.values());
 
       setInvoices(uniqueInvoices);
-      setTotalCount(uniqueInvoices.length); // Actualizar total con facturas únicas
+      setTotalCount(response.total); // Usar total del backend para paginación correcta
     } catch (error: any) {
       showToast('Error al cargar facturas: ' + error.message, 'error');
       setInvoices([]);
@@ -331,11 +364,16 @@ export const InvoiceList = forwardRef(function InvoiceList(
       ),
     },
     {
-      key: 'order_id',
+      key: 'order_number',
       label: 'Orden',
       render: (_: unknown, invoice: Invoice) => (
-        <div className="text-sm text-gray-600 font-mono">
-          {invoice.order_id.substring(0, 8)}...
+        <div>
+          <div className="text-sm font-medium text-gray-700">
+            {invoice.order_number || '—'}
+          </div>
+          <div className="text-xs text-gray-400 font-mono">
+            {invoice.order_id.substring(0, 8)}...
+          </div>
         </div>
       ),
     },
@@ -473,6 +511,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
           emptyMessage="No hay facturas para mostrar"
           keyExtractor={(invoice: Invoice) => invoice.id}
           onRowDoubleClick={handleRowDoubleClick}
+          rowClassName={(invoice: Invoice) => newInvoiceIds.has(invoice.id) ? 'invoice-new-row' : ''}
           pagination={{
             currentPage,
             totalPages,
@@ -590,6 +629,24 @@ export const InvoiceList = forwardRef(function InvoiceList(
           .invoiceTable :global(a),
           .invoiceTable :global(button) {
             outline-color: rgba(124, 58, 237, 0.35);
+          }
+
+          /* Animación para facturas recién creadas vía SSE */
+          .invoiceTable :global(.invoice-new-row) {
+            animation: invoiceSlideIn 0.5s ease-out;
+            background: rgba(124, 58, 237, 0.10) !important;
+            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.25), 0 4px 12px rgba(124, 58, 237, 0.12) !important;
+          }
+
+          @keyframes invoiceSlideIn {
+            from {
+              opacity: 0;
+              transform: translateY(-12px);
+            }
+            to {
+              opacity: 1;
+              transform: translateY(0);
+            }
           }
         `}</style>
       </div>

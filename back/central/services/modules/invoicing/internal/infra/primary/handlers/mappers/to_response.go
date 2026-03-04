@@ -45,6 +45,7 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool, baseURL str
 		CreatedAt:           invoice.CreatedAt,
 		UpdatedAt:           invoice.UpdatedAt,
 		OrderID:             invoice.OrderID,
+		OrderNumber:         invoice.OrderNumber,
 		BusinessID:          invoice.BusinessID,
 		InvoicingProviderID: invoicingProviderID,
 		InvoiceNumber:       invoice.InvoiceNumber,

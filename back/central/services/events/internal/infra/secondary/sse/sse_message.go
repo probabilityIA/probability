@@ -49,9 +49,9 @@ func (m *EventManager) toString(v interface{}) string {
 	case int32:
 		return fmt.Sprintf("%d", val)
 	case float64:
-		return fmt.Sprintf("%.2f", val)
+		return fmt.Sprintf("%d", int64(val))
 	case float32:
-		return fmt.Sprintf("%.2f", val)
+		return fmt.Sprintf("%d", int64(val))
 	case bool:
 		if val {
 			return "true"

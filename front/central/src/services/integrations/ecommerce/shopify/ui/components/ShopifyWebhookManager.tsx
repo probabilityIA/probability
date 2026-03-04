@@ -23,15 +23,14 @@ export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookM
     const [error, setError] = useState<string | null>(null);
 
     const fetchWebhooks = useCallback(async () => {
-        try {
-            setError(null);
-            const result = await listWebhooksAction(integrationId);
+        setError(null);
+        const result: any = await listWebhooksAction(integrationId);
+        if (result.success === false) {
+            setError(result.message);
+        } else {
             setWebhooks(result.data || []);
-        } catch (err: any) {
-            setError(err.message || 'Error al cargar webhooks');
-        } finally {
-            setLoading(false);
         }
+        setLoading(false);
     }, [integrationId]);
 
     useEffect(() => {
@@ -41,17 +40,15 @@ export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookM
     const handleCreate = async () => {
         setCreating(true);
         setError(null);
-        try {
-            const result = await createWebhookAction(integrationId);
+        const result: any = await createWebhookAction(integrationId);
+        if (result.success === false) {
+            setError(result.message);
+            showToast(result.message, 'error');
+        } else {
             showToast(result.message || 'Webhooks creados correctamente', 'success');
             await fetchWebhooks();
-        } catch (err: any) {
-            const msg = err.message || 'Error al crear webhooks';
-            setError(msg);
-            showToast(msg, 'error');
-        } finally {
-            setCreating(false);
         }
+        setCreating(false);
     };
 
     const handleDelete = async (webhookId: string, topic: string) => {
@@ -59,17 +56,15 @@ export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookM
 
         setDeletingId(webhookId);
         setError(null);
-        try {
-            await deleteWebhookAction(integrationId, webhookId);
+        const result: any = await deleteWebhookAction(integrationId, webhookId);
+        if (result.success === false) {
+            setError(result.message);
+            showToast(result.message, 'error');
+        } else {
             showToast('Webhook eliminado', 'success');
             setWebhooks((prev) => prev.filter((w) => w.id !== webhookId));
-        } catch (err: any) {
-            const msg = err.message || 'Error al eliminar webhook';
-            setError(msg);
-            showToast(msg, 'error');
-        } finally {
-            setDeletingId(null);
         }
+        setDeletingId(null);
     };
 
     const formatDate = (dateStr: string) => {
