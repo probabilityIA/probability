@@ -84,6 +84,12 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 	}
 	// Si UpdatedByID es 0, no actualizamos el campo (mantiene el valor existente o NULL)
 
+	// Si no se enviaron credenciales nuevas, limpiar las existentes (ya encriptadas)
+	// para evitar que el repositorio las re-procese y falle con "wrapper encriptado"
+	if dto.Credentials == nil {
+		existing.Credentials = nil
+	}
+
 	// ✅ NUEVO - Invalidar cache antes de actualizar
 	if err := uc.cache.InvalidateIntegration(ctx, id); err != nil {
 		uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate cache")

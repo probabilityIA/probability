@@ -112,9 +112,13 @@ func (r *Repository) UpdateIntegration(ctx context.Context, id uint, integration
 		"is_default":          model.IsDefault,
 		"is_testing":          model.IsTesting,
 		"config":              model.Config,
-		"credentials":         model.Credentials,
 		"description":         model.Description,
 		"updated_at":          model.UpdatedAt,
+	}
+
+	// Solo incluir credentials si se proporcionaron (evita sobrescribir con nil o re-encriptar)
+	if len(model.Credentials) > 0 {
+		updateFields["credentials"] = model.Credentials
 	}
 
 	// Solo incluir updated_by_id si tiene un valor válido (mayor que 0)

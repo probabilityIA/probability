@@ -48,6 +48,13 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 
 	webhookURL := fmt.Sprintf("%s%s", baseURL, apiPath)
 
+	uc.log.Info(ctx).
+		Str("integration_id", integrationID).
+		Str("store_name", storeName).
+		Str("webhook_url", webhookURL).
+		Bool("is_testing", integration.IsTesting).
+		Msg("Creando webhooks en Shopify")
+
 	// Validar si la URL es localhost (entorno de pruebas)
 	parsedURL, err := url.Parse(baseURL)
 	if err != nil {
@@ -80,8 +87,7 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 	// Eliminar solo los webhooks que coinciden con nuestra URL
 	for _, webhook := range existingWebhooks {
 		if err := uc.shopifyClient.DeleteWebhook(ctx, storeName, accessToken, webhook.ID); err != nil {
-			// Log del error pero continuamos con los demás
-			// No fallamos si no podemos eliminar un webhook existente
+			uc.log.Warn(ctx).Err(err).Str("webhook_id", webhook.ID).Str("topic", webhook.Topic).Msg("Error al eliminar webhook existente")
 			continue
 		}
 		result.DeletedWebhooks = append(result.DeletedWebhooks, webhook)
@@ -102,9 +108,8 @@ func (uc *SyncOrdersUseCase) CreateWebhook(ctx context.Context, integrationID st
 	for _, event := range events {
 		webhookID, err := uc.shopifyClient.CreateWebhook(ctx, storeName, accessToken, webhookURL, event)
 		if err != nil {
-			// Si falla la creación, marcamos como no configurado pero continuamos con los demás
 			webhookConfigured = false
-			// Log del error pero continuamos
+			uc.log.Error(ctx).Err(err).Str("event", event).Str("webhook_url", webhookURL).Str("store_name", storeName).Msg("Error al crear webhook en Shopify")
 			continue
 		}
 		result.CreatedWebhooks = append(result.CreatedWebhooks, webhookID)
