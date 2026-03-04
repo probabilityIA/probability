@@ -120,9 +120,10 @@ func (uc *IntegrationUseCase) SyncOrdersByIntegrationIDWithBatches(ctx context.C
 		businessID = *integration.BusinessID
 	}
 	rabbitmq.PublishEvent(ctx, uc.queue, rabbitmq.EventEnvelope{ //nolint:errcheck
-		Type:       "integration.sync.batched.started",
-		Category:   "integration",
-		BusinessID: businessID,
+		Type:          "integration.sync.batched.started",
+		Category:      "integration",
+		BusinessID:    businessID,
+		IntegrationID: integration.ID,
 		Data: map[string]interface{}{
 			"job_id":         jobID,
 			"integration_id": integrationID,

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
@@ -97,11 +98,12 @@ func (c *SyncBatchConsumer) handleMessage(body []byte) error {
 	err := provider.SyncOrdersByIntegrationIDWithParams(ctx, msg.IntegrationID, params)
 	duration := time.Since(startTime)
 
-	// Resolver business_id para el evento SSE
+	// Resolver IDs para los eventos SSE
 	var businessID uint
 	if msg.BusinessID != nil {
 		businessID = *msg.BusinessID
 	}
+	integrationIDUint, _ := strconv.ParseUint(msg.IntegrationID, 10, 64)
 
 	if err != nil {
 		c.log.Error(ctx).
@@ -113,9 +115,10 @@ func (c *SyncBatchConsumer) handleMessage(body []byte) error {
 
 		// Publicar evento SSE de fallo
 		rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{ //nolint:errcheck
-			Type:       "integration.sync.batch.failed",
-			Category:   "integration",
-			BusinessID: businessID,
+			Type:          "integration.sync.batch.failed",
+			Category:      "integration",
+			BusinessID:    businessID,
+			IntegrationID: uint(integrationIDUint),
 			Data: map[string]interface{}{
 				"job_id":         msg.JobID,
 				"batch_index":    msg.BatchIndex,
@@ -140,9 +143,10 @@ func (c *SyncBatchConsumer) handleMessage(body []byte) error {
 
 	// Publicar evento SSE de completado
 	rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{ //nolint:errcheck
-		Type:       "integration.sync.batch.completed",
-		Category:   "integration",
-		BusinessID: businessID,
+		Type:          "integration.sync.batch.completed",
+		Category:      "integration",
+		BusinessID:    businessID,
+		IntegrationID: uint(integrationIDUint),
 		Data: map[string]interface{}{
 			"job_id":         msg.JobID,
 			"batch_index":    msg.BatchIndex,

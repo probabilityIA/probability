@@ -213,9 +213,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
                 const eventData = event.data?.data || event.data || {};
 
-                // DEBUG: Log ALL SSE events received for sync diagnostics
-                console.log('[SSE-SYNC]', eventType, { batchMode: !!batchSyncRef.current, eventData, integrationId: event.integration_id || eventData.integration_id });
-
                 // Extraer integration_id del evento (puede estar a nivel raíz, en data, o en metadata)
                 const eventIntegrationId = Number(event.integration_id || eventData.integration_id || event.metadata?.integration_id || 0);
 
@@ -298,7 +295,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     }
                     case 'integration.sync.started': {
                         // En modo batch, ignorar: el provider emite esto por CADA lote y resetea contadores
-                        console.log('[SSE-SYNC] sync.started → batchSyncRef.current =', !!batchSyncRef.current);
                         if (batchSyncRef.current) break;
 
                         const integrationId = event.integration_id;
@@ -311,7 +307,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     }
                     case 'integration.sync.completed': {
                         // En modo batch, capturar totalFetched en el lote actual (no en el global)
-                        console.log('[SSE-SYNC] sync.completed → batchSyncRef.current =', !!batchSyncRef.current, 'totalFetched =', eventData.total_fetched);
                         if (batchSyncRef.current) {
                             const batchTotalFetched = Number(eventData.total_fetched) || 0;
                             setBatchSync(prev => {
