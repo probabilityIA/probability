@@ -51,6 +51,7 @@ interface BatchSyncState {
     dateTo: string;
     chunkDays: number;
     batches: BatchInfo[];
+    currentOrderBatchIndex: number; // Índice del lote que está recibiendo órdenes
 }
 
 // Helper para formatear fecha corta
@@ -219,6 +220,41 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 // Solo procesar si es de la integración que está sincronizando
                 if (syncModal.id && eventIntegrationId && eventIntegrationId !== syncModal.id) return;
 
+                // Helper: incrementa orderCount en el lote actual y completa+avanza si llegaron todas las órdenes
+                const advanceBatchOrderCount = (increment: number) => {
+                    setBatchSync(prev => {
+                        if (!prev) return prev;
+                        const idx = prev.currentOrderBatchIndex;
+                        const batch = prev.batches[idx];
+                        if (!batch) return prev;
+                        const newOrderCount = batch.orderCount + increment;
+                        const updatedBatch = { ...batch, orderCount: newOrderCount };
+
+                        // Si ya llegaron todas las órdenes de este lote, completar y avanzar
+                        if (updatedBatch.totalFetched !== null && newOrderCount >= updatedBatch.totalFetched) {
+                            updatedBatch.status = 'completed';
+                            updatedBatch.completedAt = new Date();
+                            const newCompleted = prev.completedBatches + 1;
+                            const nextIdx = idx + 1;
+                            const updatedBatches = prev.batches.map((b, i) => {
+                                if (i === idx) return updatedBatch;
+                                if (i === nextIdx && b.status === 'pending') return { ...b, status: 'processing' as const };
+                                return b;
+                            });
+                            const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
+                            if (allDone) setSyncing(false);
+                            const newState = { ...prev, batches: updatedBatches, completedBatches: newCompleted, currentOrderBatchIndex: nextIdx };
+                            batchSyncRef.current = newState;
+                            return newState;
+                        }
+
+                        const updatedBatches = prev.batches.map((b, i) => i === idx ? updatedBatch : b);
+                        const newState = { ...prev, batches: updatedBatches };
+                        batchSyncRef.current = newState;
+                        return newState;
+                    });
+                };
+
                 switch (eventType) {
                     case 'integration.sync.order.created': {
                         const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
@@ -228,18 +264,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         setSyncProgress(prev => {
                             const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
                             const updated = { ...base, created: base.created + 1, total: base.total + 1, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...base.orders] };
-                            // Auto-finish: solo en modo directo (no batch)
                             if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
                                 setSyncing(false);
                             }
                             return updated;
                         });
-                        // Incrementar orderCount del lote en procesamiento
                         if (batchSyncRef.current) {
-                            setBatchSync(prev => {
-                                if (!prev) return prev;
-                                return { ...prev, batches: prev.batches.map(b => b.status === 'processing' ? { ...b, orderCount: b.orderCount + 1 } : b) };
-                            });
+                            advanceBatchOrderCount(1);
                         }
                         playNotificationSound();
                         showToast(`Orden creada: #${orderNumber}`, 'success');
@@ -259,10 +290,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             return updated;
                         });
                         if (batchSyncRef.current) {
-                            setBatchSync(prev => {
-                                if (!prev) return prev;
-                                return { ...prev, batches: prev.batches.map(b => b.status === 'processing' ? { ...b, orderCount: b.orderCount + 1 } : b) };
-                            });
+                            advanceBatchOrderCount(1);
                         }
                         playNotificationSound();
                         showToast(`Orden actualizada: #${orderNumber}`, 'info');
@@ -284,10 +312,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             return updated;
                         });
                         if (batchSyncRef.current) {
-                            setBatchSync(prev => {
-                                if (!prev) return prev;
-                                return { ...prev, batches: prev.batches.map(b => b.status === 'processing' ? { ...b, orderCount: b.orderCount + 1 } : b) };
-                            });
+                            advanceBatchOrderCount(1);
                         }
                         playNotificationSound();
                         showToast(`Orden rechazada: #${orderNumber} - ${reason}${error ? `: ${error}` : ''}`, 'error');
@@ -311,9 +336,33 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             const batchTotalFetched = Number(eventData.total_fetched) || 0;
                             setBatchSync(prev => {
                                 if (!prev) return prev;
-                                return { ...prev, batches: prev.batches.map(b =>
-                                    b.status === 'processing' ? { ...b, totalFetched: batchTotalFetched } : b
-                                )};
+                                const idx = prev.currentOrderBatchIndex;
+                                const batch = prev.batches[idx];
+                                if (!batch) return prev;
+                                const updatedBatch = { ...batch, totalFetched: batchTotalFetched };
+
+                                // Si totalFetched=0 o ya llegaron todas las órdenes, completar y avanzar
+                                if (batchTotalFetched === 0 || updatedBatch.orderCount >= batchTotalFetched) {
+                                    updatedBatch.status = 'completed';
+                                    updatedBatch.completedAt = new Date();
+                                    const newCompleted = prev.completedBatches + 1;
+                                    const nextIdx = idx + 1;
+                                    const updatedBatches = prev.batches.map((b, i) => {
+                                        if (i === idx) return updatedBatch;
+                                        if (i === nextIdx && b.status === 'pending') return { ...b, status: 'processing' as const };
+                                        return b;
+                                    });
+                                    const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
+                                    if (allDone) setSyncing(false);
+                                    const newState = { ...prev, batches: updatedBatches, completedBatches: newCompleted, currentOrderBatchIndex: nextIdx };
+                                    batchSyncRef.current = newState;
+                                    return newState;
+                                }
+
+                                const updatedBatches = prev.batches.map((b, i) => i === idx ? updatedBatch : b);
+                                const newState = { ...prev, batches: updatedBatches };
+                                batchSyncRef.current = newState;
+                                return newState;
                             });
                             break;
                         }
@@ -405,6 +454,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             dateTo,
                             chunkDays,
                             batches,
+                            currentOrderBatchIndex: 0,
                         };
                         // Set ref synchronously so subsequent events in the same tick see batch mode
                         batchSyncRef.current = newBatchState;
@@ -421,31 +471,21 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const batchDateFrom = eventData.created_at_min || '';
                         const batchDateTo = eventData.created_at_max || '';
 
+                        // Respaldo: guardar duración y fechas reales.
+                        // La completitud real la maneja advanceBatchOrderCount cuando orderCount >= totalFetched.
                         setBatchSync(prev => {
                             if (!prev) return prev;
-                            const updatedBatches = prev.batches.map((b, _i) => {
+                            const batch = prev.batches.find(b => b.batchIndex === batchIndex);
+                            if (!batch) return prev;
+                            // Solo actualizar metadata (duración, fechas). No cambiar status.
+                            const updatedBatches = prev.batches.map(b => {
                                 if (b.batchIndex === batchIndex) {
-                                    // Usar totalFetched como orderCount final (los order events llegan después de batch.completed)
-                                    return { ...b, status: 'completed' as const, duration, completedAt: new Date(), dateFrom: batchDateFrom || b.dateFrom, dateTo: batchDateTo || b.dateTo, orderCount: b.totalFetched ?? b.orderCount };
+                                    return { ...b, duration, dateFrom: batchDateFrom || b.dateFrom, dateTo: batchDateTo || b.dateTo };
                                 }
                                 return b;
                             });
-                            // Mark next batch as processing
-                            const nextIdx = batchIndex + 1;
-                            if (nextIdx < prev.totalBatches) {
-                                const nextBatch = updatedBatches.find(b => b.batchIndex === nextIdx);
-                                if (nextBatch && nextBatch.status === 'pending') {
-                                    updatedBatches[updatedBatches.indexOf(nextBatch)] = { ...nextBatch, status: 'processing' };
-                                }
-                            }
-                            const newCompleted = prev.completedBatches + 1;
-                            const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
-                            if (allDone) {
-                                setSyncing(false);
-                            }
-                            return { ...prev, batches: updatedBatches, completedBatches: newCompleted };
+                            return { ...prev, batches: updatedBatches };
                         });
-                        playNotificationSound();
                         break;
                     }
                     case 'integration.sync.batch.failed': {
@@ -463,20 +503,20 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                 }
                                 return b;
                             });
-                            // Mark next batch as processing
-                            const nextIdx = batchIndex + 1;
+                            // Avanzar al siguiente lote
+                            const nextIdx = prev.currentOrderBatchIndex + 1;
                             if (nextIdx < prev.totalBatches) {
                                 const nextBatch = updatedBatches.find(b => b.batchIndex === nextIdx);
                                 if (nextBatch && nextBatch.status === 'pending') {
-                                    updatedBatches[updatedBatches.indexOf(nextBatch)] = { ...nextBatch, status: 'processing' };
+                                    updatedBatches[updatedBatches.indexOf(nextBatch)] = { ...nextBatch, status: 'processing' as const };
                                 }
                             }
                             const newFailed = prev.failedBatches + 1;
                             const allDone = prev.completedBatches + newFailed >= prev.totalBatches;
-                            if (allDone) {
-                                setSyncing(false);
-                            }
-                            return { ...prev, batches: updatedBatches, failedBatches: newFailed };
+                            if (allDone) setSyncing(false);
+                            const newState = { ...prev, batches: updatedBatches, failedBatches: newFailed, currentOrderBatchIndex: nextIdx };
+                            batchSyncRef.current = newState;
+                            return newState;
                         });
                         playNotificationSound();
                         showToast(`Lote ${batchIndex + 1} falló: ${batchError}`, 'error');
