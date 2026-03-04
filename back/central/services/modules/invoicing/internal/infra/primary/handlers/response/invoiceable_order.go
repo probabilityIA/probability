@@ -11,6 +11,8 @@ type InvoiceableOrder struct {
 	TotalAmount  float64   `json:"total_amount"`
 	Currency     string    `json:"currency"`
 	CreatedAt    time.Time `json:"created_at"`
+	Status       string    `json:"status"`   // Estado interno de la orden
+	IsPaid       bool      `json:"is_paid"`  // Si la orden está pagada
 }
 
 // PaginatedInvoiceableOrders representa la respuesta paginada de órdenes facturables

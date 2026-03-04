@@ -1,6 +1,6 @@
 import { testingAPI } from "@/shared/lib/api";
 import type { IOrdersRepository } from "../../domain/ports";
-import type { ReferenceData, GenerateOrdersDTO, GenerateResult } from "../../domain/types";
+import type { ReferenceData, GenerateOrdersDTO, GenerateResult, DeleteResult } from "../../domain/types";
 
 export class OrdersApiRepository implements IOrdersRepository {
   async getReferenceData(businessId: number): Promise<ReferenceData> {
@@ -19,5 +19,12 @@ export class OrdersApiRepository implements IOrdersRepository {
       }
     );
     return res.data;
+  }
+
+  async deleteAllOrders(businessId: number): Promise<DeleteResult> {
+    return testingAPI<DeleteResult>(
+      `/orders?business_id=${businessId}`,
+      { method: "DELETE" }
+    );
   }
 }

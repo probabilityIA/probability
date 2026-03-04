@@ -205,9 +205,16 @@ type IInvoiceRequestPublisher interface {
 
 // IConfigCache define la interfaz para el servicio de caché de configuraciones
 type IConfigCache interface {
+	// Por integration_id (e-commerce): probability:invoicing:config:{integration_id}
 	Get(ctx context.Context, integrationID uint) (*entities.InvoicingConfig, error)
 	Set(ctx context.Context, integrationID uint, config *entities.InvoicingConfig) error
 	Invalidate(ctx context.Context, integrationID uint) error
+
+	// Por business_id: probability:invoicing:config:business:{business_id}
+	// Cachea la configuración activa (enabled=true) de un negocio.
+	GetByBusinessID(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error)
+	SetByBusinessID(ctx context.Context, businessID uint, config *entities.InvoicingConfig) error
+	InvalidateByBusinessID(ctx context.Context, businessID uint) error
 }
 
 // ═══════════════════════════════════════════════════════════════

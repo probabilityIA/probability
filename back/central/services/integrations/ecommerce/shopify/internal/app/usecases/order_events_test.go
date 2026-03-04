@@ -48,7 +48,7 @@ func TestProcessOrderPaid_Success(t *testing.T) {
 	ctx := context.Background()
 	shopDomain := "tienda.myshopify.com"
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 	order := buildOrderForEvent("order-paid-1", "#2001")
 
 	// Act
@@ -68,7 +68,7 @@ func TestProcessOrderPaid_Success(t *testing.T) {
 
 func TestProcessOrderPaid_NilOrder(t *testing.T) {
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderPaid(ctx, "tienda.myshopify.com", nil)
 
@@ -88,7 +88,7 @@ func TestProcessOrderPaid_IntegrationError(t *testing.T) {
 	}
 
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderPaid(ctx, "tienda.myshopify.com", buildOrderForEvent("o1", "#1"))
 
@@ -113,15 +113,15 @@ func TestProcessOrderPaid_PublisherError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(buildIntegrationSvc(t, "tienda.myshopify.com", 1), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, "tienda.myshopify.com", 1), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderPaid(ctx, "tienda.myshopify.com", buildOrderForEvent("o1", "#1"))
 
 	if err == nil {
 		t.Fatal("se esperaba error del publisher, se obtuvo nil")
 	}
-	if !errors.Is(err, publishErr) {
-		t.Errorf("error incorrecto: got %v, want %v", err, publishErr)
+	if !errors.Is(err, domain.ErrPublishFailed) {
+		t.Errorf("error debe envolver ErrPublishFailed: got %v", err)
 	}
 }
 
@@ -133,7 +133,7 @@ func TestProcessOrderFulfilled_Success(t *testing.T) {
 	ctx := context.Background()
 	shopDomain := "tienda.myshopify.com"
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderFulfilled(ctx, shopDomain, buildOrderForEvent("order-fulfilled-1", "#2002"))
 
@@ -147,7 +147,7 @@ func TestProcessOrderFulfilled_Success(t *testing.T) {
 
 func TestProcessOrderFulfilled_NilOrder(t *testing.T) {
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderFulfilled(ctx, "tienda.myshopify.com", nil)
 
@@ -166,15 +166,15 @@ func TestProcessOrderFulfilled_PublisherError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(buildIntegrationSvc(t, "tienda.myshopify.com", 1), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, "tienda.myshopify.com", 1), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderFulfilled(ctx, "tienda.myshopify.com", buildOrderForEvent("o1", "#1"))
 
 	if err == nil {
 		t.Fatal("se esperaba error del publisher, se obtuvo nil")
 	}
-	if !errors.Is(err, publishErr) {
-		t.Errorf("error incorrecto: got %v, want %v", err, publishErr)
+	if !errors.Is(err, domain.ErrPublishFailed) {
+		t.Errorf("error debe envolver ErrPublishFailed: got %v", err)
 	}
 }
 
@@ -186,7 +186,7 @@ func TestProcessOrderCancelled_Success(t *testing.T) {
 	ctx := context.Background()
 	shopDomain := "tienda.myshopify.com"
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderCancelled(ctx, shopDomain, buildOrderForEvent("order-cancelled-1", "#2003"))
 
@@ -200,7 +200,7 @@ func TestProcessOrderCancelled_Success(t *testing.T) {
 
 func TestProcessOrderCancelled_NilOrder(t *testing.T) {
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderCancelled(ctx, "tienda.myshopify.com", nil)
 
@@ -219,7 +219,7 @@ func TestProcessOrderCancelled_IntegrationError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderCancelled(ctx, "tienda.myshopify.com", buildOrderForEvent("o1", "#1"))
 
@@ -239,7 +239,7 @@ func TestProcessOrderUpdated_Success(t *testing.T) {
 	ctx := context.Background()
 	shopDomain := "tienda.myshopify.com"
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderUpdated(ctx, shopDomain, buildOrderForEvent("order-updated-1", "#2004"))
 
@@ -253,7 +253,7 @@ func TestProcessOrderUpdated_Success(t *testing.T) {
 
 func TestProcessOrderUpdated_NilOrder(t *testing.T) {
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderUpdated(ctx, "tienda.myshopify.com", nil)
 
@@ -276,7 +276,7 @@ func TestProcessOrderUpdated_BusinessIDAndIntegrationTypeSet(t *testing.T) {
 	}
 
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	order := buildOrderForEvent("o1", "#1")
 
@@ -304,7 +304,7 @@ func TestProcessOrderPartiallyFulfilled_Success(t *testing.T) {
 	ctx := context.Background()
 	shopDomain := "tienda.myshopify.com"
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, shopDomain, 3), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderPartiallyFulfilled(ctx, shopDomain, buildOrderForEvent("order-partial-1", "#2005"))
 
@@ -318,7 +318,7 @@ func TestProcessOrderPartiallyFulfilled_Success(t *testing.T) {
 
 func TestProcessOrderPartiallyFulfilled_NilOrder(t *testing.T) {
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderPartiallyFulfilled(ctx, "tienda.myshopify.com", nil)
 
@@ -337,14 +337,14 @@ func TestProcessOrderPartiallyFulfilled_PublisherError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(buildIntegrationSvc(t, "tienda.myshopify.com", 1), &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(buildIntegrationSvc(t, "tienda.myshopify.com", 1), &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	err := uc.ProcessOrderPartiallyFulfilled(ctx, "tienda.myshopify.com", buildOrderForEvent("o1", "#1"))
 
 	if err == nil {
 		t.Fatal("se esperaba error del publisher, se obtuvo nil")
 	}
-	if !errors.Is(err, publishErr) {
-		t.Errorf("error incorrecto: got %v, want %v", err, publishErr)
+	if !errors.Is(err, domain.ErrPublishFailed) {
+		t.Errorf("error debe envolver ErrPublishFailed: got %v", err)
 	}
 }

@@ -36,7 +36,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	}
 	rawPayload := []byte(`{"id":1,"financial_status":"paid","fulfillment_status":null}`)
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.CreateOrder(ctx, shopDomain, order, rawPayload)
@@ -83,7 +83,7 @@ func TestCreateOrder_Success(t *testing.T) {
 func TestCreateOrder_NilOrder(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.CreateOrder(ctx, "mi-tienda.myshopify.com", nil, nil)
@@ -106,7 +106,7 @@ func TestCreateOrder_IntegrationServiceError(t *testing.T) {
 	}
 
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	order := &domain.ShopifyOrder{ExternalID: "order-001"}
 
@@ -143,7 +143,7 @@ func TestCreateOrder_PublisherError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	order := &domain.ShopifyOrder{ExternalID: "order-002"}
 
@@ -154,8 +154,8 @@ func TestCreateOrder_PublisherError(t *testing.T) {
 	if err == nil {
 		t.Fatal("se esperaba error del publisher, se obtuvo nil")
 	}
-	if !errors.Is(err, publishErr) {
-		t.Errorf("error incorrecto: got %v, want %v", err, publishErr)
+	if !errors.Is(err, domain.ErrPublishFailed) {
+		t.Errorf("error debe envolver ErrPublishFailed: got %v", err)
 	}
 }
 
@@ -171,7 +171,7 @@ func TestCreateOrder_WithoutRawPayload_NoChannelMetadata(t *testing.T) {
 	}
 
 	publisher := &mockOrderPublisher{}
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher)
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	order := &domain.ShopifyOrder{ExternalID: "order-003"}
 

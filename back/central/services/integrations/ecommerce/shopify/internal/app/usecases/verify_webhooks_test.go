@@ -38,7 +38,7 @@ func TestVerifyWebhooksByURL_Success_MatchingWebhooks(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	matching, err := uc.VerifyWebhooksByURL(ctx, integrationID, baseURL)
@@ -80,7 +80,7 @@ func TestVerifyWebhooksByURL_NoMatches(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	matching, err := uc.VerifyWebhooksByURL(ctx, "integration-1", baseURL)
@@ -119,7 +119,7 @@ func TestVerifyWebhooksByURL_URLNormalization(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	matching, err := uc.VerifyWebhooksByURL(ctx, "integration-1", baseURL)
@@ -144,7 +144,7 @@ func TestVerifyWebhooksByURL_IntegrationServiceError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	matching, err := uc.VerifyWebhooksByURL(ctx, "integration-1", "https://api.miempresa.com")
@@ -181,7 +181,7 @@ func TestVerifyWebhooksByURL_ShopifyClientError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	matching, err := uc.VerifyWebhooksByURL(ctx, "integration-1", "https://api.miempresa.com")

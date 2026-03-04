@@ -168,6 +168,28 @@ func (m *mockLoggerILogger) WithService(service string) log.ILogger     { return
 func (m *mockLoggerILogger) WithModule(module string) log.ILogger       { return m }
 func (m *mockLoggerILogger) WithBusinessID(businessID uint) log.ILogger { return m }
 
+// ─── Mock: ISyncEventPublisher ─────────────────────────────────────────────
+
+type capturedSyncEvent struct {
+	IntegrationID uint
+	BusinessID    *uint
+	EventType     string
+	Data          map[string]interface{}
+}
+
+type mockSyncEventPublisher struct {
+	Events []capturedSyncEvent
+}
+
+func (m *mockSyncEventPublisher) PublishSyncEvent(ctx context.Context, integrationID uint, businessID *uint, eventType string, data map[string]interface{}) {
+	m.Events = append(m.Events, capturedSyncEvent{
+		IntegrationID: integrationID,
+		BusinessID:    businessID,
+		EventType:     eventType,
+		Data:          data,
+	})
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // newTestUseCase construye una instancia de SyncOrdersUseCase con todos los mocks
@@ -176,12 +198,14 @@ func newTestUseCase(
 	integrationSvc *mockIntegrationService,
 	shopifyClient *mockShopifyClient,
 	publisher *mockOrderPublisher,
+	syncEventPub *mockSyncEventPublisher,
 ) *SyncOrdersUseCase {
 	return &SyncOrdersUseCase{
 		integrationService: integrationSvc,
 		shopifyClient:      shopifyClient,
 		orderPublisher:     publisher,
 		log:                &mockLoggerILogger{},
+		syncEventPublisher: syncEventPub,
 	}
 }
 
@@ -195,5 +219,16 @@ func newIntegration(id uint, storeName string) *domain.Integration {
 		Config: map[string]interface{}{
 			"store_name": storeName,
 		},
+	}
+}
+
+// newIntegrationWithConfig es un helper para crear una Integration con config personalizado.
+func newIntegrationWithConfig(id uint, name string, config map[string]interface{}) *domain.Integration {
+	businessID := uint(99)
+	return &domain.Integration{
+		ID:         id,
+		BusinessID: &businessID,
+		Name:       name,
+		Config:     config,
 	}
 }

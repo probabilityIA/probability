@@ -22,7 +22,7 @@ func TestTestConnection_Success(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(&mockIntegrationService{}, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	config := map[string]interface{}{
 		"store_name": "mi-tienda.myshopify.com",
@@ -43,7 +43,7 @@ func TestTestConnection_Success(t *testing.T) {
 func TestTestConnection_MissingStoreName(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	config := map[string]interface{}{} // sin store_name
 	credentials := map[string]interface{}{
@@ -62,7 +62,7 @@ func TestTestConnection_MissingStoreName(t *testing.T) {
 func TestTestConnection_EmptyStoreName(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	config := map[string]interface{}{
 		"store_name": "",
@@ -83,7 +83,7 @@ func TestTestConnection_EmptyStoreName(t *testing.T) {
 func TestTestConnection_MissingAccessToken(t *testing.T) {
 	// Arrange
 	ctx := context.Background()
-	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	config := map[string]interface{}{
 		"store_name": "mi-tienda.myshopify.com",
@@ -110,7 +110,7 @@ func TestTestConnection_InvalidCredentials(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(&mockIntegrationService{}, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	config := map[string]interface{}{
 		"store_name": "tienda-invalida.myshopify.com",
@@ -139,7 +139,7 @@ func TestTestConnection_ClientError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(&mockIntegrationService{}, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(&mockIntegrationService{}, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	config := map[string]interface{}{
 		"store_name": "mi-tienda.myshopify.com",

@@ -22,8 +22,6 @@ export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
 
     const menuItems = [
         { href: '/invoicing/invoices', label: 'Facturas', icon: '🧾' },
-        { href: '/invoicing/providers', label: 'Proveedores', icon: '🏢' },
-        { href: '/invoicing/configs', label: 'Configuraciones', icon: '⚙️' },
     ];
 
     return (

@@ -192,6 +192,22 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     }).format(amount);
   };
 
+  const translateOrderStatus = (status: string): { label: string; color: string } => {
+    const map: Record<string, { label: string; color: string }> = {
+      pending:               { label: 'Pendiente',           color: 'bg-yellow-100 text-yellow-800' },
+      confirmed:             { label: 'Confirmado',          color: 'bg-blue-100 text-blue-800' },
+      processing:            { label: 'En proceso',          color: 'bg-blue-100 text-blue-800' },
+      shipped:               { label: 'Enviado',             color: 'bg-indigo-100 text-indigo-800' },
+      delivered:             { label: 'Entregado',           color: 'bg-green-100 text-green-800' },
+      fulfilled:             { label: 'Completado',          color: 'bg-green-100 text-green-800' },
+      partially_fulfilled:   { label: 'Parcialmente completado', color: 'bg-orange-100 text-orange-800' },
+      cancelled:             { label: 'Cancelado',           color: 'bg-red-100 text-red-800' },
+      refunded:              { label: 'Reembolsado',         color: 'bg-red-100 text-red-800' },
+      new:                   { label: 'Nuevo',               color: 'bg-gray-100 text-gray-700' },
+    };
+    return map[status?.toLowerCase()] ?? { label: status || '—', color: 'bg-gray-100 text-gray-600' };
+  };
+
   // Filtrar órdenes por búsqueda
   const filteredOrders = useMemo(() => {
     if (!searchQuery.trim()) return orders;
@@ -499,7 +515,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                             <p className="text-sm text-gray-600">
                               {order.customer_name}
                             </p>
-                            <div className="flex items-center gap-2 mt-1">
+                            <div className="flex items-center gap-2 mt-1 flex-wrap">
                               <p className="text-xs text-gray-500">
                                 {new Date(order.created_at).toLocaleDateString('es-CO', {
                                   year: 'numeric',
@@ -507,7 +523,28 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                                   day: 'numeric',
                                 })}
                               </p>
-                              {/* Mostrar Business ID para super admin */}
+                              {/* Estado de la orden */}
+                              {order.status && (() => {
+                                const s = translateOrderStatus(order.status);
+                                return (
+                                  <>
+                                    <span className="text-xs text-gray-400">•</span>
+                                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${s.color}`}>
+                                      {s.label}
+                                    </span>
+                                  </>
+                                );
+                              })()}
+                              {/* Estado de pago */}
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                order.is_paid
+                                  ? 'bg-green-100 text-green-800'
+                                  : 'bg-orange-100 text-orange-800'
+                              }`}>
+                                {order.is_paid ? 'Pagado' : 'Sin pagar'}
+                              </span>
+                              {/* Business ID para super admin */}
                               {isSuperAdmin && (
                                 <>
                                   <span className="text-xs text-gray-400">•</span>

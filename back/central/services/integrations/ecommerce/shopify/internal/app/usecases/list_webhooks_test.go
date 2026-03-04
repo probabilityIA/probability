@@ -39,7 +39,7 @@ func TestListWebhooks_Success(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	webhooks, err := uc.ListWebhooks(ctx, integrationID)
@@ -69,7 +69,7 @@ func TestListWebhooks_IntegrationNotFound(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	webhooks, err := uc.ListWebhooks(ctx, "integration-inexistente")
@@ -100,7 +100,7 @@ func TestListWebhooks_DecryptCredentialError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	webhooks, err := uc.ListWebhooks(ctx, "integration-1")
@@ -136,7 +136,7 @@ func TestListWebhooks_StoreNameMissingInConfig(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	webhooks, err := uc.ListWebhooks(ctx, "integration-1")
@@ -170,7 +170,7 @@ func TestListWebhooks_ClientError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	webhooks, err := uc.ListWebhooks(ctx, "integration-1")
@@ -206,7 +206,7 @@ func TestListWebhooks_EmptyResult(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	webhooks, err := uc.ListWebhooks(ctx, "integration-1")

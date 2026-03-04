@@ -31,9 +31,11 @@ interface ConfigsClientProps {
   businesses?: BusinessSimple[];
   isSuperAdmin: boolean;
   selectedBusinessId?: number | null;
+  hideNavbarButton?: boolean;
+  onConfigsChange?: () => void;
 }
 
-export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, selectedBusinessId }: ConfigsClientProps) {
+export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, selectedBusinessId, hideNavbarButton, onConfigsChange }: ConfigsClientProps) {
   const { showToast } = useToast();
   const router = useRouter();
   const { setActionButtons } = useNavbarActions();
@@ -45,6 +47,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
+    if (hideNavbarButton) return;
     setActionButtons(
       <button
         onClick={() => router.push('/invoicing/configs/new')}
@@ -55,7 +58,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
       </button>
     );
     return () => setActionButtons(null);
-  }, [setActionButtons, router]);
+  }, [setActionButtons, router, hideNavbarButton]);
 
   const handleToggleEnabled = async (config: InvoicingConfig) => {
     try {

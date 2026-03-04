@@ -48,7 +48,7 @@ func TestDeleteWebhook_Success(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.DeleteWebhook(ctx, integrationID, webhookID)
@@ -107,7 +107,7 @@ func TestDeleteWebhook_LastWebhookCleared(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.DeleteWebhook(ctx, "integration-5", webhookID)
@@ -133,7 +133,7 @@ func TestDeleteWebhook_IntegrationServiceError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.DeleteWebhook(ctx, "integration-1", "wh-1")
@@ -161,7 +161,7 @@ func TestDeleteWebhook_DecryptCredentialError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.DeleteWebhook(ctx, "integration-1", "wh-1")
@@ -193,7 +193,7 @@ func TestDeleteWebhook_StoreNameMissing(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.DeleteWebhook(ctx, "integration-1", "wh-1")
@@ -224,7 +224,7 @@ func TestDeleteWebhook_ShopifyClientError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	err := uc.DeleteWebhook(ctx, "integration-1", "wh-1")

@@ -5,7 +5,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
-import { EyeIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
@@ -14,6 +14,7 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
 import { InvoiceDetailModal } from './InvoiceDetailPanel';
 import { InvoiceComparisonModal } from './InvoiceComparisonModal';
+import { ConfigsModal } from './ConfigsModal';
 import {
   getInvoicesAction,
   cancelInvoiceAction,
@@ -52,6 +53,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [compareLoading, setCompareLoading] = useState(false);
   const [compareCorrelationId, setCompareCorrelationId] = useState<string | null>(null);
   const [compareData, setCompareData] = useState<CompareResponseData | null>(null);
+  const [showConfigsModal, setShowConfigsModal] = useState(false);
 
   useImperativeHandle(ref, () => ({
     openBulkModal: () => setShowBulkModal(true),
@@ -431,13 +433,20 @@ export const InvoiceList = forwardRef(function InvoiceList(
           />
         </div>
         <button
+          onClick={() => setShowConfigsModal(true)}
+          className="ml-3 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Configuraciones de facturación"
+        >
+          <Cog6ToothIcon className="w-5 h-5" />
+        </button>
+        <button
           onClick={() => {
             setShowCompareModal(true);
             setCompareData(null);
             setCompareLoading(false);
             setCompareCorrelationId(null);
           }}
-          className="ml-3 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Comparar con proveedor"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -626,6 +635,13 @@ export const InvoiceList = forwardRef(function InvoiceList(
         loading={compareLoading}
         compareData={compareData}
         onRequestComparison={handleRequestComparison}
+      />
+
+      {/* Modal de configuraciones de facturación */}
+      <ConfigsModal
+        isOpen={showConfigsModal}
+        onClose={() => setShowConfigsModal(false)}
+        selectedBusinessId={selectedBusinessId}
       />
     </>
   );

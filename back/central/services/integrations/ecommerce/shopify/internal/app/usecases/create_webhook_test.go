@@ -51,7 +51,7 @@ func TestCreateWebhook_Success(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	result, err := uc.CreateWebhook(ctx, integrationID, baseURL)
@@ -91,7 +91,7 @@ func TestCreateWebhook_LocalhostBlocked(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	tests := []struct {
 		name    string
@@ -132,7 +132,7 @@ func TestCreateWebhook_IntegrationServiceError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	result, err := uc.CreateWebhook(ctx, "integration-1", "https://api.miempresa.com")
@@ -167,7 +167,7 @@ func TestCreateWebhook_StoreNameMissing(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	result, err := uc.CreateWebhook(ctx, "integration-1", "https://api.miempresa.com")
@@ -204,7 +204,7 @@ func TestCreateWebhook_AllEventsFailToCreate_ReturnsError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	result, err := uc.CreateWebhook(ctx, "integration-1", "https://api.miempresa.com")
@@ -259,7 +259,7 @@ func TestCreateWebhook_DeletesExistingWebhooksBeforeCreating(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, shopifyClient, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	result, err := uc.CreateWebhook(ctx, "integration-1", baseURL)

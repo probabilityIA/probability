@@ -52,6 +52,7 @@ interface BatchSyncState {
     chunkDays: number;
     batches: BatchInfo[];
     currentOrderBatchIndex: number; // Índice del lote que está recibiendo órdenes
+    currentFetchBatchIndex: number; // Índice del lote que el provider está fetcheando
 }
 
 // Helper para formatear fecha corta
@@ -157,6 +158,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             createdAt?: string;
             orderStatus?: string;
             timestamp: Date;
+            batchIndex?: number;
         }>;
     } | null>(null);
 
@@ -164,6 +166,45 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     const [batchSync, setBatchSync] = useState<BatchSyncState | null>(null);
     const batchSyncRef = useRef<BatchSyncState | null>(null);
     useEffect(() => { batchSyncRef.current = batchSync; }, [batchSync]);
+
+    // Timers para completar lotes: se inician con batch.completed y se reinician con cada orden
+    const batchCompletionTimers = useRef<Map<number, NodeJS.Timeout>>(new Map());
+    const batchCompletedFlags = useRef<Set<number>>(new Set());
+
+    // Completar un lote y avanzar al siguiente
+    const completeBatch = useCallback((batchIndex: number) => {
+        setBatchSync(prev => {
+            if (!prev) return prev;
+            const batch = prev.batches[batchIndex];
+            if (!batch || batch.status !== 'processing') return prev;
+            console.log(`[Lote ${batchIndex + 1}] Completado: ${batch.orderCount} órdenes`);
+            const updatedBatch: BatchInfo = { ...batch, status: 'completed', completedAt: new Date() };
+            const newCompleted = prev.completedBatches + 1;
+            const nextIdx = batchIndex + 1;
+            const updatedBatches = prev.batches.map((b, i) => {
+                if (b.batchIndex === batchIndex) return updatedBatch;
+                if (i === nextIdx && b.status === 'pending') return { ...b, status: 'processing' as const };
+                return b;
+            });
+            const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
+            if (allDone) setSyncing(false);
+            const newState = { ...prev, batches: updatedBatches, completedBatches: newCompleted, currentOrderBatchIndex: nextIdx };
+            batchSyncRef.current = newState;
+            return newState;
+        });
+    }, []);
+
+    // Iniciar/reiniciar timer de completado para un lote
+    const startBatchCompletionTimer = useCallback((batchIndex: number, delayMs: number = 3000) => {
+        const existing = batchCompletionTimers.current.get(batchIndex);
+        if (existing) clearTimeout(existing);
+        const timer = setTimeout(() => {
+            console.log(`[Lote ${batchIndex + 1}] Timer: completando tras ${delayMs / 1000}s sin órdenes nuevas`);
+            completeBatch(batchIndex);
+            batchCompletionTimers.current.delete(batchIndex);
+        }, delayMs);
+        batchCompletionTimers.current.set(batchIndex, timer);
+    }, [completeBatch]);
 
     // Estados para las opciones de filtros dinámicos desde la BD
     const [orderStatusOptions, setOrderStatusOptions] = useState<Array<{ value: string; label: string; mappedStatus?: string }>>([]);
@@ -199,6 +240,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         'integration.sync.completed',
         'integration.sync.failed',
         'integration.sync.batched.started',
+        'integration.sync.batch.processing',
         'integration.sync.batch.completed',
         'integration.sync.batch.failed'
     ] : [];
@@ -226,31 +268,20 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         if (!prev) return prev;
                         const idx = prev.currentOrderBatchIndex;
                         const batch = prev.batches[idx];
-                        if (!batch) return prev;
+                        if (!batch || batch.status === 'completed' || batch.status === 'failed') return prev;
                         const newOrderCount = batch.orderCount + increment;
                         const updatedBatch = { ...batch, orderCount: newOrderCount };
-
-                        // Si ya llegaron todas las órdenes de este lote, completar y avanzar
-                        if (updatedBatch.totalFetched !== null && newOrderCount >= updatedBatch.totalFetched) {
-                            updatedBatch.status = 'completed';
-                            updatedBatch.completedAt = new Date();
-                            const newCompleted = prev.completedBatches + 1;
-                            const nextIdx = idx + 1;
-                            const updatedBatches = prev.batches.map((b, i) => {
-                                if (i === idx) return updatedBatch;
-                                if (i === nextIdx && b.status === 'pending') return { ...b, status: 'processing' as const };
-                                return b;
-                            });
-                            const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
-                            if (allDone) setSyncing(false);
-                            const newState = { ...prev, batches: updatedBatches, completedBatches: newCompleted, currentOrderBatchIndex: nextIdx };
-                            batchSyncRef.current = newState;
-                            return newState;
-                        }
+                        console.log(`[Lote ${idx + 1}] orden recibida: ${newOrderCount}`);
 
                         const updatedBatches = prev.batches.map((b, i) => i === idx ? updatedBatch : b);
                         const newState = { ...prev, batches: updatedBatches };
                         batchSyncRef.current = newState;
+
+                        // Si batch.completed ya llegó para este lote, reiniciar timer (3s sin órdenes → completar)
+                        if (batchCompletedFlags.current.has(idx)) {
+                            startBatchCompletionTimer(idx);
+                        }
+
                         return newState;
                     });
                 };
@@ -260,10 +291,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
                         const createdAt = eventData.created_at || eventData.synced_at || event.metadata?.created_at || null;
                         const orderStatus = eventData.status || event.metadata?.status || null;
+                        const orderBatchIdx = batchSyncRef.current?.currentOrderBatchIndex;
 
                         setSyncProgress(prev => {
                             const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
-                            const updated = { ...base, created: base.created + 1, total: base.total + 1, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...base.orders] };
+                            const updated = { ...base, created: base.created + 1, total: base.total + 1, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] };
                             if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
                                 setSyncing(false);
                             }
@@ -280,10 +312,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderNumber = eventData.order_number || event.metadata?.order_number || 'Desconocida';
                         const createdAt = eventData.created_at || eventData.updated_at || event.metadata?.created_at || null;
                         const orderStatus = eventData.status || event.metadata?.status || null;
+                        const orderBatchIdx = batchSyncRef.current?.currentOrderBatchIndex;
 
                         setSyncProgress(prev => {
                             const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
-                            const updated = { ...base, updated: base.updated + 1, total: base.total + 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...base.orders] };
+                            const updated = { ...base, updated: base.updated + 1, total: base.total + 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] };
                             if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
                                 setSyncing(false);
                             }
@@ -302,10 +335,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const error = eventData.error || event.metadata?.error || '';
                         const createdAt = eventData.created_at || eventData.rejected_at || event.metadata?.created_at || null;
                         const orderStatus = eventData.status || event.metadata?.status || null;
+                        const orderBatchIdx = batchSyncRef.current?.currentOrderBatchIndex;
 
                         setSyncProgress(prev => {
                             const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
-                            const updated = { ...base, rejected: base.rejected + 1, total: base.total + 1, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...base.orders] };
+                            const updated = { ...base, rejected: base.rejected + 1, total: base.total + 1, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date(), batchIndex: orderBatchIdx }, ...base.orders] };
                             if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
                                 setSyncing(false);
                             }
@@ -331,36 +365,20 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         break;
                     }
                     case 'integration.sync.completed': {
-                        // En modo batch, capturar totalFetched en el lote actual (no en el global)
+                        // En modo batch, solo guardar metadata (totalFetched). La completitud la maneja batch.completed + timer.
                         if (batchSyncRef.current) {
                             const batchTotalFetched = Number(eventData.total_fetched) || 0;
+                            const fetchIdx = batchSyncRef.current.currentFetchBatchIndex;
+                            console.log(`[Lote ${fetchIdx + 1}] sync.completed: totalFetched=${batchTotalFetched}`);
                             setBatchSync(prev => {
                                 if (!prev) return prev;
-                                const idx = prev.currentOrderBatchIndex;
+                                const idx = prev.currentFetchBatchIndex;
                                 const batch = prev.batches[idx];
                                 if (!batch) return prev;
-                                const updatedBatch = { ...batch, totalFetched: batchTotalFetched };
-
-                                // Si totalFetched=0 o ya llegaron todas las órdenes, completar y avanzar
-                                if (batchTotalFetched === 0 || updatedBatch.orderCount >= batchTotalFetched) {
-                                    updatedBatch.status = 'completed';
-                                    updatedBatch.completedAt = new Date();
-                                    const newCompleted = prev.completedBatches + 1;
-                                    const nextIdx = idx + 1;
-                                    const updatedBatches = prev.batches.map((b, i) => {
-                                        if (i === idx) return updatedBatch;
-                                        if (i === nextIdx && b.status === 'pending') return { ...b, status: 'processing' as const };
-                                        return b;
-                                    });
-                                    const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
-                                    if (allDone) setSyncing(false);
-                                    const newState = { ...prev, batches: updatedBatches, completedBatches: newCompleted, currentOrderBatchIndex: nextIdx };
-                                    batchSyncRef.current = newState;
-                                    return newState;
-                                }
-
-                                const updatedBatches = prev.batches.map((b, i) => i === idx ? updatedBatch : b);
-                                const newState = { ...prev, batches: updatedBatches };
+                                const updatedBatches = prev.batches.map((b, i) =>
+                                    i === idx ? { ...b, totalFetched: batchTotalFetched } : b
+                                );
+                                const newState = { ...prev, batches: updatedBatches, currentFetchBatchIndex: idx + 1 };
                                 batchSyncRef.current = newState;
                                 return newState;
                             });
@@ -406,8 +424,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         break;
                     }
                     case 'integration.sync.failed': {
-                        // En modo batch, los fallos se manejan con batch.failed
-                        if (batchSyncRef.current) break;
+                        // En modo batch, avanzar fetchIndex (no habrá sync.completed para este lote)
+                        if (batchSyncRef.current) {
+                            setBatchSync(prev => {
+                                if (!prev) return prev;
+                                const newState = { ...prev, currentFetchBatchIndex: prev.currentFetchBatchIndex + 1 };
+                                batchSyncRef.current = newState;
+                                return newState;
+                            });
+                            break;
+                        }
 
                         const integrationId = event.integration_id;
                         const integration = integrations.find(i => i.id === integrationId);
@@ -455,6 +481,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             chunkDays,
                             batches,
                             currentOrderBatchIndex: 0,
+                            currentFetchBatchIndex: 0,
                         };
                         // Set ref synchronously so subsequent events in the same tick see batch mode
                         batchSyncRef.current = newBatchState;
@@ -465,19 +492,59 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         showToast(`Sincronización por lotes iniciada: ${totalBatches} lotes`, 'info');
                         break;
                     }
+                    case 'integration.sync.batch.processing': {
+                        // El backend emite esto ANTES de procesar cada lote.
+                        // Usamos esto para completar el lote anterior y avanzar currentOrderBatchIndex.
+                        const batchIndex = Number(eventData.batch_index);
+                        console.log(`[Lote ${batchIndex + 1}] batch.processing del backend`);
+
+                        setBatchSync(prev => {
+                            if (!prev) return prev;
+                            const prevBatchIdx = batchIndex - 1;
+                            let newCompleted = prev.completedBatches;
+
+                            const updatedBatches = prev.batches.map((b, i) => {
+                                // Completar el lote anterior si estaba processing
+                                if (i === prevBatchIdx && b.status === 'processing') {
+                                    newCompleted++;
+                                    console.log(`[Lote ${prevBatchIdx + 1}] Completado por batch.processing(${batchIndex}): ${b.orderCount} órdenes`);
+                                    return { ...b, status: 'completed' as const, completedAt: new Date() };
+                                }
+                                // Marcar el lote actual como processing
+                                if (i === batchIndex) {
+                                    return { ...b, status: 'processing' as const };
+                                }
+                                return b;
+                            });
+
+                            // Limpiar timer del lote anterior si había
+                            if (batchCompletionTimers.current.has(prevBatchIdx)) {
+                                clearTimeout(batchCompletionTimers.current.get(prevBatchIdx)!);
+                                batchCompletionTimers.current.delete(prevBatchIdx);
+                            }
+                            batchCompletedFlags.current.delete(prevBatchIdx);
+
+                            const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
+                            if (allDone) setSyncing(false);
+
+                            const newState = { ...prev, batches: updatedBatches, completedBatches: newCompleted, currentOrderBatchIndex: batchIndex };
+                            batchSyncRef.current = newState;
+                            return newState;
+                        });
+                        break;
+                    }
                     case 'integration.sync.batch.completed': {
+                        // Para el ÚLTIMO lote, batch.processing no llega después.
+                        // Usamos timer de 3s: si no llegan más órdenes, completar.
                         const batchIndex = Number(eventData.batch_index);
                         const duration = eventData.duration || '';
                         const batchDateFrom = eventData.created_at_min || '';
                         const batchDateTo = eventData.created_at_max || '';
+                        console.log(`[Lote ${batchIndex + 1}] batch.completed del backend → iniciando timer 3s`);
 
-                        // Respaldo: guardar duración y fechas reales.
-                        // La completitud real la maneja advanceBatchOrderCount cuando orderCount >= totalFetched.
+                        // Guardar metadata (duración, fechas reales)
                         setBatchSync(prev => {
                             if (!prev) return prev;
-                            const batch = prev.batches.find(b => b.batchIndex === batchIndex);
-                            if (!batch) return prev;
-                            // Solo actualizar metadata (duración, fechas). No cambiar status.
                             const updatedBatches = prev.batches.map(b => {
                                 if (b.batchIndex === batchIndex) {
                                     return { ...b, duration, dateFrom: batchDateFrom || b.dateFrom, dateTo: batchDateTo || b.dateTo };
@@ -486,6 +553,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             });
                             return { ...prev, batches: updatedBatches };
                         });
+
+                        // Solo iniciar timer si es el último lote (o si batch.processing no lo completó ya)
+                        batchCompletedFlags.current.add(batchIndex);
+                        startBatchCompletionTimer(batchIndex);
                         break;
                     }
                     case 'integration.sync.batch.failed': {
@@ -846,6 +917,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         setBatchSync(null);
         setSyncing(false);
         setSyncError(null);
+        // Limpiar timers y flags de batch
+        batchCompletionTimers.current.forEach(t => clearTimeout(t));
+        batchCompletionTimers.current.clear();
+        batchCompletedFlags.current.clear();
         // Limpiar opciones
         setOrderStatusOptions([]);
         setFinancialStatusOptions([]);
@@ -1063,7 +1138,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
                 return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className={`bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh] overflow-hidden transition-all duration-300 ${isShowingProgress ? 'w-full max-w-5xl' : 'w-full max-w-lg'}`}>
+                    <div className={`bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ${isShowingProgress ? 'w-full max-w-5xl overflow-hidden' : 'w-full max-w-3xl overflow-visible'}`}>
                         {/* Header */}
                         <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
                             <div className="flex items-center justify-between">
@@ -1098,12 +1173,12 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 min-h-0 overflow-y-auto">
+                        <div className={`flex-1 min-h-0 ${isShowingProgress ? 'overflow-y-auto' : 'overflow-visible'}`}>
                             {/* Phase 1: Form (before sync starts) */}
                             {!isShowingProgress && (
                                 <div className="px-6 py-4 space-y-4">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                        <div className="sm:col-span-2">
+                                    <div className="space-y-4">
+                                        <div>
                                             <label className="block text-sm font-medium text-gray-700 mb-1">Rango de Fechas</label>
                                             <DateRangePicker
                                                 startDate={syncFilters.created_at_min}
@@ -1113,45 +1188,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                 }}
                                                 placeholder="Seleccionar rango de fechas (opcional)"
                                             />
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado de Orden</label>
-                                            {loadingMappings ? (
-                                                <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner size="sm" /> Cargando...</div>
-                                            ) : (
-                                                <Select
-                                                    value={syncFilters.status || 'any'}
-                                                    onChange={(e) => setSyncFilters(prev => ({ ...prev, status: e.target.value }))}
-                                                    options={orderStatusOptions.length > 0 ? orderStatusOptions : [{ value: 'any', label: 'Todos' }]}
-                                                    disabled={orderStatusOptions.length === 0}
-                                                />
-                                            )}
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado Financiero</label>
-                                            {loadingMappings ? (
-                                                <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner size="sm" /> Cargando...</div>
-                                            ) : (
-                                                <Select
-                                                    value={syncFilters.financial_status || 'any'}
-                                                    onChange={(e) => setSyncFilters(prev => ({ ...prev, financial_status: e.target.value }))}
-                                                    options={financialStatusOptions.length > 0 ? financialStatusOptions : [{ value: 'any', label: 'Todos' }]}
-                                                    disabled={financialStatusOptions.length === 0}
-                                                />
-                                            )}
-                                        </div>
-                                        <div className="sm:col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado de Envío</label>
-                                            {loadingMappings ? (
-                                                <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner size="sm" /> Cargando...</div>
-                                            ) : (
-                                                <Select
-                                                    value={syncFilters.fulfillment_status || 'any'}
-                                                    onChange={(e) => setSyncFilters(prev => ({ ...prev, fulfillment_status: e.target.value }))}
-                                                    options={fulfillmentStatusOptions.length > 0 ? fulfillmentStatusOptions : [{ value: 'any', label: 'Todos' }]}
-                                                    disabled={fulfillmentStatusOptions.length === 0}
-                                                />
-                                            )}
                                         </div>
                                     </div>
                                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
@@ -1269,24 +1305,14 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                 </div>
                                                                 <div className="mt-1 ml-6 text-gray-500">
                                                                     {formatShortDate(batch.dateFrom)} → {formatShortDate(batch.dateTo)}
-                                                                    {batch.orderCount > 0 && <span> · {batch.orderCount}{batch.totalFetched !== null ? `/${batch.totalFetched}` : ''} {batch.orderCount === 1 ? 'orden' : 'órdenes'}</span>}
-                                                                    {batch.totalFetched === 0 && batch.status === 'completed' && <span> · Sin órdenes</span>}
+                                                                    {batch.orderCount > 0 && <span> · {batch.orderCount} {batch.orderCount === 1 ? 'orden' : 'órdenes'}</span>}
+                                                                    {batch.orderCount === 0 && batch.status === 'completed' && <span> · Sin órdenes</span>}
                                                                 </div>
-                                                                {/* Mini progress bar per batch */}
-                                                                {batch.status === 'processing' && batch.totalFetched !== null && batch.totalFetched > 0 && (
+                                                                {/* Animated bar for processing batch */}
+                                                                {batch.status === 'processing' && (
                                                                     <div className="mt-1.5 ml-6">
                                                                         <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                                                                            <div
-                                                                                className="h-full bg-blue-500 transition-all duration-300 ease-out"
-                                                                                style={{ width: `${Math.min(100, Math.round((batch.orderCount / batch.totalFetched) * 100))}%` }}
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                )}
-                                                                {batch.status === 'completed' && batch.totalFetched !== null && batch.totalFetched > 0 && (
-                                                                    <div className="mt-1.5 ml-6">
-                                                                        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                                                                            <div className="h-full bg-green-500 w-full" />
+                                                                            <div className="h-full bg-blue-500 animate-pulse" style={{ width: '100%' }} />
                                                                         </div>
                                                                     </div>
                                                                 )}
@@ -1344,6 +1370,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                                 'bg-red-500'
                                                                             }`} />
                                                                             <span className="font-medium text-gray-800 truncate">#{order.orderNumber}</span>
+                                                                            {order.batchIndex !== undefined && (
+                                                                                <span className="px-1 py-0.5 bg-indigo-100 text-indigo-600 rounded text-[10px] flex-shrink-0 font-medium">
+                                                                                    L{order.batchIndex + 1}
+                                                                                </span>
+                                                                            )}
                                                                             {order.orderStatus && (
                                                                                 <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] flex-shrink-0">
                                                                                     {order.orderStatus}

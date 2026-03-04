@@ -68,7 +68,12 @@ func (c *SyncBatchConsumer) handleMessage(body []byte) error {
 		Time("date_to", msg.CreatedAtMax).
 		Msg("📦 Procesando lote de sincronización")
 
-	startTime := time.Now()
+	// Resolver IDs para los eventos SSE (necesarios antes del evento batch.processing)
+	var businessID uint
+	if msg.BusinessID != nil {
+		businessID = *msg.BusinessID
+	}
+	integrationIDUint, _ := strconv.ParseUint(msg.IntegrationID, 10, 64)
 
 	// Resolver provider
 	provider, ok := c.providerFn(msg.IntegrationTypeID)
@@ -78,6 +83,20 @@ func (c *SyncBatchConsumer) handleMessage(body []byte) error {
 			Msg("No hay provider registrado para este tipo de integración — se omite lote")
 		return nil
 	}
+
+	// Publicar evento SSE: este lote está siendo procesado.
+	// El frontend usa esto para completar el lote anterior y asignar órdenes al lote correcto.
+	rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{ //nolint:errcheck
+		Type:          "integration.sync.batch.processing",
+		Category:      "integration",
+		BusinessID:    businessID,
+		IntegrationID: uint(integrationIDUint),
+		Data: map[string]interface{}{
+			"job_id":        msg.JobID,
+			"batch_index":   msg.BatchIndex,
+			"total_batches": msg.TotalBatches,
+		},
+	})
 
 	// Construir params como map[string]interface{} para el provider
 	params := map[string]interface{}{
@@ -94,16 +113,11 @@ func (c *SyncBatchConsumer) handleMessage(body []byte) error {
 		params["fulfillment_status"] = msg.FulfillmentStatus
 	}
 
+	startTime := time.Now()
+
 	// Ejecutar sincronización del lote
 	err := provider.SyncOrdersByIntegrationIDWithParams(ctx, msg.IntegrationID, params)
 	duration := time.Since(startTime)
-
-	// Resolver IDs para los eventos SSE
-	var businessID uint
-	if msg.BusinessID != nil {
-		businessID = *msg.BusinessID
-	}
-	integrationIDUint, _ := strconv.ParseUint(msg.IntegrationID, 10, 64)
 
 	if err != nil {
 		c.log.Error(ctx).

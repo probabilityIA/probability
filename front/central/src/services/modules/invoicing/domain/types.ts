@@ -382,6 +382,8 @@ export interface InvoiceableOrder {
   total_amount: number;
   currency: string;
   created_at: string;
+  status: string;
+  is_paid: boolean;
 }
 
 export interface PaginatedInvoiceableOrders {

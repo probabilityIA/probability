@@ -63,6 +63,9 @@ func (r *Repository) CreateInvoicingConfig(ctx context.Context, config *entities
 		go r.configCache.Set(context.Background(), id, config)
 	}
 
+	// Invalidar caché de negocio para forzar re-lectura desde BD
+	go r.configCache.InvalidateByBusinessID(context.Background(), config.BusinessID)
+
 	return nil
 }
 
@@ -250,6 +253,9 @@ func (r *Repository) UpdateInvoicingConfig(ctx context.Context, config *entities
 		go r.configCache.Set(context.Background(), id, config)
 	}
 
+	// Invalidar caché de negocio para forzar re-lectura desde BD
+	go r.configCache.InvalidateByBusinessID(context.Background(), config.BusinessID)
+
 	return nil
 }
 
@@ -285,6 +291,9 @@ func (r *Repository) DeleteInvoicingConfig(ctx context.Context, id uint) error {
 		go r.configCache.Invalidate(context.Background(), integID)
 	}
 
+	// Invalidar caché de negocio
+	go r.configCache.InvalidateByBusinessID(context.Background(), model.BusinessID)
+
 	return nil
 }
 
@@ -308,11 +317,25 @@ func (r *Repository) ConfigExistsForIntegration(ctx context.Context, integration
 }
 
 // GetEnabledConfigByBusiness retorna la primera configuración activa (enabled=true) de un negocio.
+// Implementa read-through cache: primero intenta desde Redis, luego desde BD.
 // Retorna nil (sin error) si no existe ninguna activa.
 func (r *Repository) GetEnabledConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error) {
+	// 1. Intentar desde caché
+	cachedConfig, err := r.configCache.GetByBusinessID(ctx, businessID)
+	if err != nil {
+		r.log.Warn(ctx).Err(err).Uint("business_id", businessID).Msg("Error al leer caché por business, consultando BD")
+	}
+	if cachedConfig != nil {
+		return cachedConfig, nil
+	}
+
+	// 2. Cache MISS - consultar base de datos
 	var model models.InvoicingConfig
 
-	err := r.db.Conn(ctx).
+	err = r.db.Conn(ctx).
+		Preload("ConfigIntegrations").
+		Preload("InvoicingIntegration").
+		Preload("InvoicingIntegration.IntegrationType").
 		Where("business_id = ?", businessID).
 		Where("enabled = ?", true).
 		Where("deleted_at IS NULL").
@@ -323,7 +346,12 @@ func (r *Repository) GetEnabledConfigByBusiness(ctx context.Context, businessID 
 		return nil, nil
 	}
 
-	return mappers.ConfigToDomain(&model), nil
+	config := mappers.ConfigToDomain(&model)
+
+	// 3. Actualizar caché en background
+	go r.configCache.SetByBusinessID(context.Background(), businessID, config)
+
+	return config, nil
 }
 
 // GetAnyConfigByBusiness retorna la primera configuración de un negocio sin filtrar por enabled.

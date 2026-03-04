@@ -64,6 +64,11 @@ export interface GenerateResult {
   errors: OrderError[] | null;
 }
 
+export interface DeleteResult {
+  deleted: number;
+  message: string;
+}
+
 export interface APICallLog {
   index: number;
   success: boolean;

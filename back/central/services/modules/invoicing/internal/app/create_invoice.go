@@ -46,6 +46,26 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			uc.log.Error(ctx).Err(err).Uint("business_id", order.BusinessID).Msg("Error al obtener configuración de facturación por negocio")
 			return nil, errors.ErrProviderNotConfigured
 		}
+		// Validar que la integración de origen de la orden está permitida en la config.
+		// Si IntegrationIDs está vacío, la config aplica a todas las integraciones.
+		// Si tiene entradas, la orden DEBE venir de una de ellas.
+		if config != nil && len(config.IntegrationIDs) > 0 {
+			allowed := false
+			for _, id := range config.IntegrationIDs {
+				if id == order.IntegrationID {
+					allowed = true
+					break
+				}
+			}
+			if !allowed {
+				uc.log.Info(ctx).
+					Str("order_id", order.ID).
+					Uint("order_integration_id", order.IntegrationID).
+					Uints("config_integration_ids", config.IntegrationIDs).
+					Msg("Integración de origen no está en las fuentes configuradas — se omite")
+				return nil, errors.ErrProviderNotConfigured
+			}
+		}
 	}
 	if config == nil {
 		uc.log.Info(ctx).

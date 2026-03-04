@@ -38,7 +38,7 @@ func TestGetClientSecretByShopDomain_Success(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	secret, err := uc.GetClientSecretByShopDomain(ctx, shopDomain)
@@ -62,7 +62,7 @@ func TestGetClientSecretByShopDomain_IntegrationNotFound(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	secret, err := uc.GetClientSecretByShopDomain(ctx, "dominio-desconocido.myshopify.com")
@@ -87,7 +87,7 @@ func TestGetClientSecretByShopDomain_IntegrationServiceError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	secret, err := uc.GetClientSecretByShopDomain(ctx, "mi-tienda.myshopify.com")
@@ -118,7 +118,7 @@ func TestGetClientSecretByShopDomain_DecryptError(t *testing.T) {
 		},
 	}
 
-	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{})
+	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
 	secret, err := uc.GetClientSecretByShopDomain(ctx, "mi-tienda.myshopify.com")

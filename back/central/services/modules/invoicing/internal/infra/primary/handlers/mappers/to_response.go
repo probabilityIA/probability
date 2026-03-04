@@ -279,5 +279,7 @@ func ToInvoiceableOrderResponse(order *dtos.OrderData) response.InvoiceableOrder
 		TotalAmount:  order.TotalAmount,
 		Currency:     order.Currency,
 		CreatedAt:    order.CreatedAt,
+		Status:       order.Status,
+		IsPaid:       order.IsPaid,
 	}
 }

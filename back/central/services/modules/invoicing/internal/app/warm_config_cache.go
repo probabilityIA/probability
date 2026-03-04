@@ -7,7 +7,7 @@ import (
 )
 
 // WarmConfigCache pre-carga todas las configuraciones de facturación activas en Redis al iniciar el servidor.
-// Para cada config, cachea bajo CADA integration_id que tenga asociado.
+// Cachea bajo CADA integration_id que tenga asociado, y también bajo el business_id del negocio.
 func (uc *useCase) WarmConfigCache(ctx context.Context) error {
 	ctx = log.WithFunctionCtx(ctx, "WarmConfigCache")
 
@@ -53,9 +53,36 @@ func (uc *useCase) WarmConfigCache(ctx context.Context) error {
 		}
 	}
 
+	// 3. Cachear por business_id usando los datos ya cargados de BD.
+	// Se usa la primera config activa por negocio (ListAllActiveConfigs está ordenado por created_at DESC).
+	seenBusinessIDs := make(map[uint]bool)
+	businessSuccessCount := 0
+	businessErrorCount := 0
+
+	for _, config := range configs {
+		if seenBusinessIDs[config.BusinessID] {
+			continue // Solo cachear la primera config activa por negocio
+		}
+		seenBusinessIDs[config.BusinessID] = true
+
+		// GetEnabledConfigByBusiness populará el caché vía read-through si no está ya
+		if _, err := uc.repo.GetEnabledConfigByBusiness(ctx, config.BusinessID); err != nil {
+			uc.log.Warn(ctx).
+				Err(err).
+				Uint("business_id", config.BusinessID).
+				Uint("config_id", config.ID).
+				Msg("⚠️ Failed to warm business config cache")
+			businessErrorCount++
+		} else {
+			businessSuccessCount++
+		}
+	}
+
 	uc.log.Info(ctx).
-		Int("success", successCount).
-		Int("errors", errorCount).
+		Int("integration_success", successCount).
+		Int("integration_errors", errorCount).
+		Int("business_success", businessSuccessCount).
+		Int("business_errors", businessErrorCount).
 		Msg("✅ Config cache warming completed")
 
 	return nil
