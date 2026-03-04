@@ -38,6 +38,7 @@ interface BatchInfo {
     error?: string;
     completedAt?: Date;
     orderCount: number;
+    totalFetched: number | null;
 }
 
 // Estado completo de sincronización por lotes
@@ -305,8 +306,17 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         break;
                     }
                     case 'integration.sync.completed': {
-                        // En modo batch, ignorar: el provider emite esto por CADA lote y sobreescribe totalFetched
-                        if (batchSyncRef.current) break;
+                        // En modo batch, capturar totalFetched en el lote actual (no en el global)
+                        if (batchSyncRef.current) {
+                            const batchTotalFetched = Number(eventData.total_fetched) || 0;
+                            setBatchSync(prev => {
+                                if (!prev) return prev;
+                                return { ...prev, batches: prev.batches.map(b =>
+                                    b.status === 'processing' ? { ...b, totalFetched: batchTotalFetched } : b
+                                )};
+                            });
+                            break;
+                        }
 
                         const integrationId = event.integration_id;
                         const integration = integrations.find(i => i.id === integrationId);
@@ -382,10 +392,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                 dateFrom: batchStart.toISOString(),
                                 dateTo: (batchEnd > endCap ? endCap : batchEnd).toISOString(),
                                 orderCount: 0,
+                                totalFetched: null,
                             });
                         }
 
-                        setBatchSync({
+                        const newBatchState: BatchSyncState = {
                             jobId,
                             totalBatches,
                             completedBatches: 0,
@@ -394,7 +405,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             dateTo,
                             chunkDays,
                             batches,
-                        });
+                        };
+                        // Set ref synchronously so subsequent events in the same tick see batch mode
+                        batchSyncRef.current = newBatchState;
+                        setBatchSync(newBatchState);
 
                         // Initialize order progress
                         setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] });
@@ -1214,8 +1228,27 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                 </div>
                                                                 <div className="mt-1 ml-6 text-gray-500">
                                                                     {formatShortDate(batch.dateFrom)} → {formatShortDate(batch.dateTo)}
-                                                                    {batch.orderCount > 0 && <span> · {batch.orderCount} {batch.orderCount === 1 ? 'orden' : 'órdenes'}</span>}
+                                                                    {batch.orderCount > 0 && <span> · {batch.orderCount}{batch.totalFetched !== null ? `/${batch.totalFetched}` : ''} {batch.orderCount === 1 ? 'orden' : 'órdenes'}</span>}
+                                                                    {batch.totalFetched === 0 && batch.status === 'completed' && <span> · Sin órdenes</span>}
                                                                 </div>
+                                                                {/* Mini progress bar per batch */}
+                                                                {batch.status === 'processing' && batch.totalFetched !== null && batch.totalFetched > 0 && (
+                                                                    <div className="mt-1.5 ml-6">
+                                                                        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                                                            <div
+                                                                                className="h-full bg-blue-500 transition-all duration-300 ease-out"
+                                                                                style={{ width: `${Math.min(100, Math.round((batch.orderCount / batch.totalFetched) * 100))}%` }}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                                {batch.status === 'completed' && batch.totalFetched !== null && batch.totalFetched > 0 && (
+                                                                    <div className="mt-1.5 ml-6">
+                                                                        <div className="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                                                            <div className="h-full bg-green-500 w-full" />
+                                                                        </div>
+                                                                    </div>
+                                                                )}
                                                                 {batch.status === 'failed' && batch.error && (
                                                                     <div className="mt-1 ml-6 text-red-600 text-[11px]">
                                                                         {batch.error}
