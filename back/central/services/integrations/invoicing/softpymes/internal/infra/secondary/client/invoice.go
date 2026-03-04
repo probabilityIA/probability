@@ -276,6 +276,16 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 
 	// Verificar que haya info en la respuesta
 	if invoiceResp.Info == nil {
+		// Softpymes puede responder HTTP 200 sin info cuando la DIAN está validando.
+		// Esto NO es un error: el documento fue aceptado por Softpymes y está en cola de validación.
+		if strings.Contains(strings.ToLower(invoiceResp.Message), "validación") {
+			c.log.Info(ctx).
+				Str("message", invoiceResp.Message).
+				Msg("Invoice accepted by Softpymes, pending DIAN validation")
+			result.PendingValidation = true
+			result.ProviderMessage = invoiceResp.Message
+			return result, nil
+		}
 		c.log.Warn(ctx).
 			Str("message", invoiceResp.Message).
 			Msg("Invoice response has no info")

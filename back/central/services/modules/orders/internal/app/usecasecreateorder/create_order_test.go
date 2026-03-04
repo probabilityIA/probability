@@ -271,8 +271,9 @@ func (m *mockRabbitPublisher) PublishOrderEvent(ctx context.Context, event *enti
 // ─── Mock: IIntegrationEventPublisher ───────────────────────────────────────
 
 type mockIntegrationEventPublisher struct {
-	PublishSyncOrderCreatedFn func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
-	PublishSyncOrderUpdatedFn func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
+	PublishSyncOrderCreatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
+	PublishSyncOrderUpdatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
+	PublishSyncOrderRejectedFn func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 }
 
 func (m *mockIntegrationEventPublisher) PublishSyncOrderCreated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{}) {
@@ -283,6 +284,11 @@ func (m *mockIntegrationEventPublisher) PublishSyncOrderCreated(ctx context.Cont
 func (m *mockIntegrationEventPublisher) PublishSyncOrderUpdated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{}) {
 	if m.PublishSyncOrderUpdatedFn != nil {
 		m.PublishSyncOrderUpdatedFn(ctx, integrationID, businessID, data)
+	}
+}
+func (m *mockIntegrationEventPublisher) PublishSyncOrderRejected(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{}) {
+	if m.PublishSyncOrderRejectedFn != nil {
+		m.PublishSyncOrderRejectedFn(ctx, integrationID, businessID, data)
 	}
 }
 

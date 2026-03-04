@@ -60,9 +60,11 @@ type AuditData struct {
 // CreateInvoiceResult resultado de crear una factura en Softpymes
 // Se retorna siempre (incluso en error) para incluir audit data
 type CreateInvoiceResult struct {
-	InvoiceNumber string
-	ExternalID    string
-	IssuedAt      string
-	ProviderInfo  map[string]interface{}
-	AuditData     *AuditData
+	InvoiceNumber     string
+	ExternalID        string
+	IssuedAt          string
+	ProviderInfo      map[string]interface{}
+	AuditData         *AuditData
+	PendingValidation bool   // true cuando Softpymes aceptó pero DIAN aún valida
+	ProviderMessage   string // mensaje del proveedor (ej: "El documento quedó en validación...")
 }

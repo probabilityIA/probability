@@ -460,6 +460,32 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		return c.createErrorResponse(request, "api_error", err.Error(), startTime, auditData)
 	}
 
+	// 7b. Si Softpymes aceptó pero DIAN está validando, retornar como pending_validation
+	if result.PendingValidation {
+		c.log.Info(ctx).
+			Uint("invoice_id", request.InvoiceID).
+			Str("message", result.ProviderMessage).
+			Msg("Invoice pending DIAN validation")
+
+		processingTime := time.Since(startTime).Milliseconds()
+		resp := &queue.InvoiceResponseMessage{
+			InvoiceID:      request.InvoiceID,
+			Provider:       "softpymes",
+			Status:         "pending_validation",
+			CorrelationID:  request.CorrelationID,
+			Timestamp:      time.Now(),
+			ProcessingTime: processingTime,
+			Error:          result.ProviderMessage,
+		}
+		if result.AuditData != nil {
+			resp.AuditRequestURL = result.AuditData.RequestURL
+			resp.AuditRequestPayload = toMapPayload(result.AuditData.RequestPayload)
+			resp.AuditResponseStatus = result.AuditData.ResponseStatus
+			resp.AuditResponseBody = result.AuditData.ResponseBody
+		}
+		return resp
+	}
+
 	// 8. Consultar documento completo (GetDocumentByNumber)
 	var fullDocument map[string]interface{}
 	if result.InvoiceNumber != "" {

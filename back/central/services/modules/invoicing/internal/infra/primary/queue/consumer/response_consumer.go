@@ -169,9 +169,12 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 			c.handleCancelError(ctx, invoice, syncLog, &response)
 		}
 	} else {
-		if response.Status == dtos.ResponseStatusSuccess {
+		switch response.Status {
+		case dtos.ResponseStatusSuccess:
 			c.handleSuccess(ctx, invoice, syncLog, &response)
-		} else {
+		case dtos.ResponseStatusPendingValidation:
+			c.handlePendingValidation(ctx, invoice, syncLog, &response)
+		default:
 			c.handleError(ctx, invoice, syncLog, &response)
 		}
 	}
@@ -271,6 +274,60 @@ func (c *ResponseConsumer) handleSuccess(
 		Str("invoice_number", invoice.InvoiceNumber).
 		Int64("processing_time_ms", response.ProcessingTime).
 		Msg("✅ Invoice response processed successfully")
+}
+
+// handlePendingValidation procesa una respuesta donde Softpymes aceptó el documento
+// pero la DIAN aún lo está validando. La factura se mantiene en "pending" (no "failed").
+func (c *ResponseConsumer) handlePendingValidation(
+	ctx context.Context,
+	invoice *entities.Invoice,
+	syncLog *entities.InvoiceSyncLog,
+	response *dtos.InvoiceResponseMessage,
+) {
+	c.log.Info(ctx).
+		Uint("invoice_id", invoice.ID).
+		Str("provider_message", response.Error).
+		Msg("⏳ Invoice accepted by provider, pending DIAN validation")
+
+	// Mantener invoice en estado pending (NO marcar como failed)
+	invoice.Status = constants.InvoiceStatusPending
+	if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to update invoice status to pending")
+		return
+	}
+
+	// Actualizar sync log como pending (validación DIAN en curso)
+	if syncLog != nil {
+		completedAt := time.Now()
+		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
+		syncLog.Status = constants.SyncStatusPending
+		syncLog.CompletedAt = &completedAt
+		syncLog.Duration = &duration
+		providerMsg := response.Error
+		syncLog.ErrorMessage = &providerMsg
+
+		c.populateSyncLogAudit(syncLog, response)
+
+		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+			c.log.Error(ctx).Err(err).Msg("Failed to update sync log for pending validation")
+		}
+	}
+
+	// Publicar SSE para que el frontend sepa que está en validación DIAN
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.pending_validation",
+		Category:   "invoice",
+		BusinessID: invoice.BusinessID,
+		Data: map[string]interface{}{
+			"invoice_id":       invoice.ID,
+			"order_id":         invoice.OrderID,
+			"provider_message": response.Error,
+		},
+	})
+
+	c.log.Info(ctx).
+		Uint("invoice_id", invoice.ID).
+		Msg("⏳ Invoice kept as pending - awaiting DIAN validation")
 }
 
 // handleError procesa una respuesta de error
