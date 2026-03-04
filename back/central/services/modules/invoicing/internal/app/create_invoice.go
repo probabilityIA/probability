@@ -259,6 +259,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		ShippingCost: invoice.ShippingCost,
 		Currency:     invoice.Currency,
 		OrderID:      invoice.OrderID,
+		OrderNumber:  order.OrderNumber,
 		Config:       invoiceConfigData,
 	}
 

@@ -169,6 +169,7 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		ShippingCost: invoice.ShippingCost,
 		Currency:     invoice.Currency,
 		OrderID:      invoice.OrderID,
+		OrderNumber:  order.OrderNumber,
 		Config:       invoiceConfigData,
 	}
 

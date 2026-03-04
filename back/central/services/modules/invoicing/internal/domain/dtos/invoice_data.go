@@ -35,5 +35,6 @@ type InvoiceData struct {
 	ShippingCost  float64                `json:"shipping_cost"`
 	Currency      string                 `json:"currency"`
 	OrderID       string                 `json:"order_id"`
+	OrderNumber   string                 `json:"order_number,omitempty"`
 	Config        map[string]interface{} `json:"config"`
 }

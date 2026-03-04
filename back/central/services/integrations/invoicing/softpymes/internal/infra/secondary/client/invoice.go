@@ -196,9 +196,14 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	documentDate := time.Now().In(loc).Format("2006-01-02")
 
 	// comment: identifica la orden de origen para idempotencia y trazabilidad
+	// Formato: "order:<UUID> | #<OrderNumber>" — el cliente ve el OrderNumber (Shopify)
+	// y findExistingInvoiceByOrderID busca por "order:<UUID>" (strings.Contains)
 	comment := ""
 	if req.OrderID != "" {
 		comment = "order:" + req.OrderID
+		if req.OrderNumber != "" {
+			comment += " | #" + req.OrderNumber
+		}
 	}
 
 	// Construir request según formato de Softpymes

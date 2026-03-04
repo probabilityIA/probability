@@ -40,6 +40,7 @@ type CreateInvoiceRequest struct {
 	ShippingCost float64
 	Currency     string
 	OrderID      string
+	OrderNumber  string
 	Credentials  Credentials
 	Config       map[string]interface{}
 	// IsRetry indica que es un reintento: activa la consulta de idempotencia en Softpymes

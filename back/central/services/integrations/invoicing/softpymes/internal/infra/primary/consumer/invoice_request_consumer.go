@@ -55,6 +55,7 @@ type invoiceData struct {
 	ShippingCost  float64                `json:"shipping_cost"`
 	Currency      string                 `json:"currency"`
 	OrderID       string                 `json:"order_id"`
+	OrderNumber   string                 `json:"order_number,omitempty"`
 	Config        map[string]interface{} `json:"config"`
 }
 
@@ -431,6 +432,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		ShippingCost: request.InvoiceData.ShippingCost,
 		Currency:     request.InvoiceData.Currency,
 		OrderID:      request.InvoiceData.OrderID,
+		OrderNumber:  request.InvoiceData.OrderNumber,
 		Credentials: spDtos.Credentials{
 			APIKey:    apiKey,
 			APISecret: apiSecret,
