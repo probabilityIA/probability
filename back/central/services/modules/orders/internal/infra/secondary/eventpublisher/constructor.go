@@ -45,3 +45,18 @@ func (p *integrationEventPublisher) PublishSyncOrderUpdated(ctx context.Context,
 		Data:          data,
 	})
 }
+
+func (p *integrationEventPublisher) PublishSyncOrderRejected(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{}) {
+	var bID uint
+	if businessID != nil {
+		bID = *businessID
+	}
+
+	rabbitmq.PublishEvent(ctx, p.queue, rabbitmq.EventEnvelope{ //nolint:errcheck
+		Type:          "integration.sync.order.rejected",
+		Category:      "integration",
+		BusinessID:    bID,
+		IntegrationID: integrationID,
+		Data:          data,
+	})
+}

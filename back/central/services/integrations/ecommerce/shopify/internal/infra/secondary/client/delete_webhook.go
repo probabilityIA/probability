@@ -5,22 +5,17 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 )
 
 // DeleteWebhook elimina un webhook de Shopify por su ID
 func (c *shopifyClient) DeleteWebhook(ctx context.Context, storeName, accessToken, webhookID string) error {
-	// Normalizar el nombre de la tienda (remover .myshopify.com si está presente)
-	shop := strings.TrimSuffix(storeName, ".myshopify.com")
-
 	// Validar que webhookID sea un número válido
 	_, err := strconv.ParseInt(webhookID, 10, 64)
 	if err != nil {
 		return fmt.Errorf("webhook ID inválido: %s", webhookID)
 	}
 
-	// Construir la URL según el formato de Shopify API
-	url := fmt.Sprintf("https://%s.myshopify.com/admin/api/2024-10/webhooks/%s.json", shop, webhookID)
+	url := buildURL(storeName, fmt.Sprintf("/admin/api/2024-10/webhooks/%s.json", webhookID))
 
 	var errorResponse struct {
 		Errors map[string]interface{} `json:"errors"`

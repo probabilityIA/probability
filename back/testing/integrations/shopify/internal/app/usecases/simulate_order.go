@@ -501,7 +501,7 @@ func (s *OrderSimulator) generateNoteAttributes() []domain.NoteAttribute {
 		},
 		{
 			Name:  "_customer_dni",
-			Value: "1098720627",
+			Value: fmt.Sprintf("%d", rand.Intn(90000000)+10000000),
 		},
 	}
 }

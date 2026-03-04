@@ -105,12 +105,22 @@ type WebhookURLResponse struct {
 	Data    *WebhookURLData `json:"data"`
 }
 
+// WebhookInfoResponse representa un webhook individual con JSON tags
+type WebhookInfoResponse struct {
+	ID        string `json:"id" example:"123456789"`
+	Address   string `json:"address" example:"https://api.example.com/webhook"`
+	Topic     string `json:"topic" example:"orders/create"`
+	Format    string `json:"format" example:"json"`
+	CreatedAt string `json:"created_at" example:"2024-01-15T10:30:00Z"`
+	UpdatedAt string `json:"updated_at" example:"2024-01-15T10:30:00Z"`
+}
+
 // ListWebhooksResponse representa la respuesta con la lista de webhooks
 //
 //	@Description	Respuesta con la lista de webhooks configurados para una integración
 type ListWebhooksResponse struct {
-	Success bool          `json:"success" example:"true"`
-	Data    []interface{} `json:"data"`
+	Success bool                  `json:"success" example:"true"`
+	Data    []WebhookInfoResponse `json:"data"`
 }
 
 // DeleteWebhookResponse representa la respuesta al eliminar un webhook
@@ -125,17 +135,17 @@ type DeleteWebhookResponse struct {
 //
 //	@Description	Respuesta con la lista de webhooks que coinciden con nuestra URL
 type VerifyWebhooksResponse struct {
-	Success bool          `json:"success" example:"true"`
-	Data    []interface{} `json:"data"` // Lista de webhooks que coinciden
-	Message string        `json:"message" example:"Webhooks verificados exitosamente"`
+	Success bool                  `json:"success" example:"true"`
+	Data    []WebhookInfoResponse `json:"data"`
+	Message string                `json:"message" example:"Webhooks verificados exitosamente"`
 }
 
 // CreateWebhookResponseData contiene los datos del resultado de crear webhooks
 type CreateWebhookResponseData struct {
-	ExistingWebhooks []interface{} `json:"existing_webhooks"` // Webhooks encontrados que coinciden
-	DeletedWebhooks  []interface{} `json:"deleted_webhooks"`  // Webhooks eliminados
-	CreatedWebhooks  []string      `json:"created_webhooks"`  // IDs de webhooks creados
-	WebhookURL       string        `json:"webhook_url"`       // URL del webhook
+	ExistingWebhooks []WebhookInfoResponse `json:"existing_webhooks"`
+	DeletedWebhooks  []WebhookInfoResponse `json:"deleted_webhooks"`
+	CreatedWebhooks  []string              `json:"created_webhooks"`
+	WebhookURL       string                `json:"webhook_url"`
 }
 
 // CreateWebhookResponse representa la respuesta al crear webhooks

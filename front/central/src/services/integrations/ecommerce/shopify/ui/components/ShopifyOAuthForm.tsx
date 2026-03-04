@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Input, Button, Alert } from '@/shared/ui';
 import { TokenStorage } from '@/shared/utils';
+import { BeakerIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import ShopifyWebhookManager from './ShopifyWebhookManager';
 
 interface ShopifyOAuthFormProps {
@@ -17,6 +18,8 @@ interface ShopifyOAuthFormProps {
         config?: any;
         credentials?: any;
         business_id?: number | null;
+        is_testing?: boolean;
+        base_url_test?: string;
     };
     isEdit?: boolean;
     integrationId?: number;
@@ -34,15 +37,36 @@ export default function ShopifyOAuthForm({
     const [formData, setFormData] = useState({
         name: initialData?.name || '',
         shop_domain: initialData?.store_id || '',
-        client_id: '',
-        client_secret: ''
+        client_id: initialData?.credentials?.client_id || '',
+        client_secret: initialData?.credentials?.client_secret || '',
     });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isTesting, setIsTesting] = useState(initialData?.is_testing || false);
+    const [showSecrets, setShowSecrets] = useState(false);
+
+    const accessToken = initialData?.credentials?.access_token || '';
 
     const handleConnectShopify = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // In edit mode, call onSubmit with updated data including is_testing
+        if (isEdit && onSubmit) {
+            const credentials: any = {};
+            if (formData.client_id) credentials.client_id = formData.client_id;
+            if (formData.client_secret) credentials.client_secret = formData.client_secret;
+            if (accessToken) credentials.access_token = accessToken;
+
+            onSubmit({
+                name: formData.name,
+                store_id: formData.shop_domain,
+                config: initialData?.config || {},
+                credentials: Object.keys(credentials).length > 0 ? credentials : undefined,
+                is_testing: isTesting,
+            });
+            return;
+        }
 
         if (!formData.name || !formData.shop_domain || !formData.client_id || !formData.client_secret) {
             setError('Por favor completa todos los campos');
@@ -53,8 +77,6 @@ export default function ShopifyOAuthForm({
         setError(null);
 
         try {
-            // Llamar al backend para iniciar el flujo OAuth Custom
-            // Usar ruta relativa para que funcione tanto en dev (vía rewrite) como en producción
             const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
             const response = await fetch(`${apiBaseUrl}/integrations/shopify/connect/custom`, {
                 method: 'POST',
@@ -62,7 +84,7 @@ export default function ShopifyOAuthForm({
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${TokenStorage.getSessionToken()}`
                 },
-                credentials: 'include', // Enviar cookies de sesión (HttpOnly)
+                credentials: 'include',
                 body: JSON.stringify({
                     shop_domain: formData.shop_domain,
                     integration_name: formData.name,
@@ -77,7 +99,6 @@ export default function ShopifyOAuthForm({
                 throw new Error(data.error || data.message || 'Error al iniciar OAuth');
             }
 
-            // Redirigir al usuario a Shopify para autorización
             if (data.authorization_url) {
                 window.location.href = data.authorization_url;
             } else {
@@ -102,14 +123,15 @@ export default function ShopifyOAuthForm({
                 <div className="space-y-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                         <div className="flex items-start gap-3">
-                            <span className="text-2xl">ℹ️</span>
+                            <span className="text-2xl">&#8505;&#65039;</span>
                             <div>
                                 <p className="text-sm font-medium text-blue-900 mb-1">
                                     Conexión Shopify Custom App
                                 </p>
                                 <p className="text-xs text-blue-700">
-                                    Ingresa las credenciales de tu Custom App creada en el Shopify Partner Dashboard.
-                                    Serás redirigido a Shopify para autorizar.
+                                    {isEdit
+                                        ? 'Datos de tu Custom App de Shopify. Puedes modificar las credenciales si es necesario.'
+                                        : 'Ingresa las credenciales de tu Custom App creada en el Shopify Partner Dashboard. Serás redirigido a Shopify para autorizar.'}
                                 </p>
                             </div>
                         </div>
@@ -148,17 +170,47 @@ export default function ShopifyOAuthForm({
                         />
                     </div>
 
+                    {/* Access Token - Solo en modo edición, read-only */}
+                    {isEdit && accessToken && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Access Token (OAuth)
+                            </label>
+                            <div className="relative">
+                                <Input
+                                    type={showSecrets ? 'text' : 'password'}
+                                    value={accessToken}
+                                    readOnly
+                                    className="w-full bg-gray-50 pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowSecrets(!showSecrets)}
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                                >
+                                    {showSecrets
+                                        ? <EyeSlashIcon className="w-5 h-5" />
+                                        : <EyeIcon className="w-5 h-5" />}
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-500 mt-1">
+                                Obtenido automáticamente durante el flujo OAuth (solo lectura)
+                            </p>
+                        </div>
+                    )}
+
                     {/* Client ID */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Client ID (API Key) *
+                            Client ID (API Key) {!isEdit && '*'}
                         </label>
                         <Input
                             type="text"
-                            required
-                            placeholder="Pegar Client ID aquí"
+                            required={!isEdit}
+                            placeholder={isEdit ? '' : 'Pegar Client ID aquí'}
                             value={formData.client_id}
                             onChange={(e) => setFormData({ ...formData, client_id: e.target.value })}
+                            autoComplete="off"
                             className="w-full"
                         />
                     </div>
@@ -166,16 +218,28 @@ export default function ShopifyOAuthForm({
                     {/* Client Secret */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
-                            Client Secret *
+                            Client Secret {!isEdit && '*'}
                         </label>
-                        <Input
-                            type="password"
-                            required
-                            placeholder="Pegar Client Secret aquí"
-                            value={formData.client_secret}
-                            onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
-                            className="w-full"
-                        />
+                        <div className="relative">
+                            <Input
+                                type={showSecrets ? 'text' : 'password'}
+                                required={!isEdit}
+                                placeholder={isEdit ? '' : 'Pegar Client Secret aquí'}
+                                value={formData.client_secret}
+                                onChange={(e) => setFormData({ ...formData, client_secret: e.target.value })}
+                                autoComplete="new-password"
+                                className="w-full pr-10"
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowSecrets(!showSecrets)}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                            >
+                                {showSecrets
+                                    ? <EyeSlashIcon className="w-5 h-5" />
+                                    : <EyeIcon className="w-5 h-5" />}
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -187,6 +251,43 @@ export default function ShopifyOAuthForm({
                         Webhooks
                     </h3>
                     <ShopifyWebhookManager integrationId={integrationId} />
+                </div>
+            )}
+
+            {/* Modo de Pruebas - Solo en modo edición */}
+            {isEdit && (
+                <div className="bg-orange-50 rounded-xl p-6 space-y-4 border border-orange-200">
+                    <div className="flex items-center gap-2 mb-2">
+                        <BeakerIcon className="w-5 h-5 text-orange-600" />
+                        <h3 className="text-lg font-semibold text-gray-900">
+                            Modo de Pruebas
+                        </h3>
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                        <div className="flex-1">
+                            <p className="text-sm font-medium text-gray-800">Activar modo testing</p>
+                            <p className="text-xs text-gray-500 mt-0.5">
+                                Las peticiones a Shopify se redirigirán a la URL de pruebas configurada.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            onClick={() => setIsTesting(!isTesting)}
+                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ml-4 flex-shrink-0 ${isTesting ? 'bg-orange-500' : 'bg-gray-200'}`}
+                        >
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
+                        </button>
+                    </div>
+                    {isTesting && (
+                        <Alert type="warning">
+                            Modo de pruebas activado. Las peticiones de sincronización y webhooks se enviarán al servidor de pruebas en lugar de Shopify.
+                            {initialData?.base_url_test && (
+                                <p className="mt-2 text-xs font-mono text-orange-800 break-all">
+                                    URL sandbox: {initialData.base_url_test}
+                                </p>
+                            )}
+                        </Alert>
+                    )}
                 </div>
             )}
 
@@ -204,11 +305,13 @@ export default function ShopifyOAuthForm({
                 )}
                 <Button
                     type="submit"
-                    disabled={loading || !formData.name || !formData.shop_domain || !formData.client_id || !formData.client_secret}
+                    disabled={loading || !formData.name || !formData.shop_domain || (!isEdit && (!formData.client_id || !formData.client_secret))}
                     loading={loading}
                     variant="primary"
                 >
-                    {loading ? 'Conectando...' : '🔗 Conectar con Shopify'}
+                    {isEdit
+                        ? (loading ? 'Guardando...' : 'Guardar Cambios')
+                        : (loading ? 'Conectando...' : 'Conectar con Shopify')}
                 </Button>
             </div>
         </form>

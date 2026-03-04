@@ -4,6 +4,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 type IntegrationUseCase struct {
@@ -14,10 +15,11 @@ type IntegrationUseCase struct {
 	log         log.ILogger
 	observers   []domain.IntegrationCreatedObserver
 	config      env.IConfig
+	queue       rabbitmq.IQueue
 }
 
 // New crea una nueva instancia del caso de uso de integraciones
-func New(repo domain.IRepository, encryption domain.IEncryptionService, cache domain.IIntegrationCache, logger log.ILogger, config env.IConfig) *IntegrationUseCase {
+func New(repo domain.IRepository, encryption domain.IEncryptionService, cache domain.IIntegrationCache, logger log.ILogger, config env.IConfig, queue rabbitmq.IQueue) *IntegrationUseCase {
 	return &IntegrationUseCase{
 		repo:        repo,
 		encryption:  encryption,
@@ -26,6 +28,7 @@ func New(repo domain.IRepository, encryption domain.IEncryptionService, cache do
 		log:         logger,
 		observers:   make([]domain.IntegrationCreatedObserver, 0),
 		config:      config,
+		queue:       queue,
 	}
 }
 

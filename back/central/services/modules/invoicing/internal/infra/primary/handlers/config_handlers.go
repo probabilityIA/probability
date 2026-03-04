@@ -26,7 +26,7 @@ func (h *handler) CreateConfig(c *gin.Context) {
 
 	logInfo := h.log.Info(ctx).
 		Uint("business_id", req.BusinessID).
-		Uint("integration_id", req.IntegrationID).
+		Int("integration_ids_count", len(req.IntegrationIDs)).
 		Uint("invoicing_integration_id", req.InvoicingIntegrationID)
 
 	if req.InvoicingProviderID != nil {
@@ -148,6 +148,15 @@ func (h *handler) UpdateConfig(c *gin.Context) {
 		return
 	}
 
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		c.JSON(http.StatusBadRequest, response.Error{
+			Error:   "business_id_required",
+			Message: "business_id is required",
+		})
+		return
+	}
+
 	var req request.UpdateConfig
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.log.Error(ctx).Err(err).Msg("Invalid request body")
@@ -161,6 +170,7 @@ func (h *handler) UpdateConfig(c *gin.Context) {
 	h.log.Info(ctx).Uint("config_id", uint(id)).Msg("Updating config")
 
 	dto := mappers.UpdateConfigRequestToDTO(&req)
+	dto.RequestingBusinessID = &businessID
 
 	config, err := h.useCase.UpdateConfig(ctx, uint(id), dto)
 	if err != nil {

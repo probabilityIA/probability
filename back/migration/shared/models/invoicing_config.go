@@ -13,23 +13,24 @@ import (
 
 // InvoicingConfig define qué integraciones deben facturar automáticamente
 // y con qué proveedor de facturación.
-// Ejemplo: "Órdenes de Shopify se facturan con Softpymes"
+// Ejemplo: "Órdenes de Shopify y Plataforma se facturan con Softpymes"
 type InvoicingConfig struct {
 	gorm.Model
 
 	// Relación con Business
-	BusinessID uint     `gorm:"not null;index;uniqueIndex:idx_business_integration_config,priority:1"`
+	BusinessID uint     `gorm:"not null;index"`
 	Business   Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
-	// Relación con Integration (fuente de órdenes)
-	IntegrationID uint        `gorm:"not null;index;uniqueIndex:idx_business_integration_config,priority:2"`
-	Integration   Integration `gorm:"foreignKey:IntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	// NOTA: La relación con las integraciones de e-commerce (fuentes de órdenes)
+	// ahora se gestiona via tabla pivote invoicing_config_integrations.
+	ConfigIntegrations []InvoicingConfigIntegration `gorm:"foreignKey:ConfigID"`
 
 	// Relación con InvoicingProvider (DEPRECATED - mantener temporalmente para dual-read)
 	InvoicingProviderID *uint             `gorm:"index"`
 	InvoicingProvider   InvoicingProvider `gorm:"foreignKey:InvoicingProviderID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
-	// Relación con Integration (nuevo - provider de facturación desde integrations/)
+	// Relación con Integration (proveedor de facturación desde integrations/)
+	// Unique: solo una config por negocio + proveedor de facturación (aplicado via índice parcial en migración)
 	InvoicingIntegrationID *uint       `gorm:"index"`
 	InvoicingIntegration   Integration `gorm:"foreignKey:InvoicingIntegrationID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 
@@ -38,25 +39,9 @@ type InvoicingConfig struct {
 	AutoInvoice  bool `gorm:"default:false;index"` // Si factura automáticamente al crear orden
 
 	// Filtros (JSON - define qué órdenes deben facturarse)
-	// Estructura:
-	//   {
-	//     "min_amount": 50000,                    // Monto mínimo para facturar
-	//     "payment_status": "paid",               // Solo facturar si está pagada
-	//     "payment_methods": [1, 3, 5],           // IDs de métodos de pago permitidos (opcional)
-	//     "order_types": ["delivery", "pickup"],  // Tipos de orden permitidos (opcional)
-	//     "exclude_statuses": ["cancelled"]       // Estados a excluir
-	//   }
 	Filters datatypes.JSON `gorm:"type:jsonb"`
 
 	// Configuración adicional de facturación
-	// Ejemplo:
-	//   {
-	//     "include_shipping": true,           // Si incluye costo de envío
-	//     "apply_discount": true,             // Si aplica descuentos
-	//     "default_tax_rate": 0.19,           // Tasa de impuesto por defecto
-	//     "invoice_type": "electronic",       // Tipo de factura
-	//     "notes": "Gracias por su compra"    // Notas por defecto
-	//   }
 	InvoiceConfig datatypes.JSON `gorm:"type:jsonb"`
 
 	// Metadata

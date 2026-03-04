@@ -3,6 +3,8 @@ package usecases
 import (
 	"context"
 	"fmt"
+
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/utils"
 )
 
 // DeleteWebhook elimina un webhook de Shopify y actualiza el config de la integración
@@ -25,6 +27,9 @@ func (uc *SyncOrdersUseCase) DeleteWebhook(ctx context.Context, integrationID, w
 	if !ok || storeName == "" {
 		return fmt.Errorf("store_name no encontrado en la configuración")
 	}
+
+	// En modo test, usar la URL de pruebas
+	storeName = utils.ResolveEffectiveStoreDomain(integration, storeName)
 
 	// Eliminar webhook usando el cliente
 	if err := uc.shopifyClient.DeleteWebhook(ctx, storeName, accessToken, webhookID); err != nil {

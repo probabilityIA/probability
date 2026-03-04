@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/infra/secondary/client/mappers"
@@ -13,11 +12,7 @@ import (
 )
 
 func (c *shopifyClient) GetOrder(ctx context.Context, storeName, accessToken string, orderID string) (*domain.ShopifyOrder, error) {
-	if !strings.HasSuffix(storeName, ".myshopify.com") {
-		storeName = storeName + ".myshopify.com"
-	}
-
-	url := fmt.Sprintf("https://%s/admin/api/2024-10/orders/%s.json", storeName, orderID)
+	url := buildURL(storeName, fmt.Sprintf("/admin/api/2024-10/orders/%s.json", orderID))
 
 	// 1. Perform Request
 	var orderResp response.OrderResponse

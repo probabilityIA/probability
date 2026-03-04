@@ -106,11 +106,13 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 		Message: "Recibido",
 	})
 
-	// Procesar el webhook de forma asíncrona para no bloquear la respuesta
+	// Procesar el webhook de forma asíncrona para no bloquear la respuesta (requisito de Shopify: 200 OK rápido)
 	go h.processWebhookAsync(headers.Topic, headers.ShopDomain, bodyBytes)
 }
 
-// processWebhookAsync procesa el webhook de forma asíncrona
+// processWebhookAsync procesa el webhook de forma asíncrona.
+// Usa context.Background() intencionalmente: el handler HTTP ya respondió 200 OK,
+// y el procesamiento debe continuar independientemente del ciclo de vida del request.
 func (h *ShopifyHandler) processWebhookAsync(topic string, shopDomain string, bodyBytes []byte) {
 	ctx := context.Background()
 

@@ -78,30 +78,36 @@ func (h *ShopifyHandler) ComplianceWebhookHandler(c *gin.Context) {
 		switch topic {
 		case "customers/data_request":
 			var payload CustomerDataRequestPayload
-			if err := json.Unmarshal(bodyBytes, &payload); err == nil {
-				h.logger.Info().
-					Int64("customer_id", payload.Customer.ID).
-					Msg("Procesando solicitud de datos de cliente (GDPR)")
-				// TODO: Implementar lógica de procesamiento
+			if err := json.Unmarshal(bodyBytes, &payload); err != nil {
+				h.logger.Error().Err(err).Str("topic", topic).Msg("Error al parsear payload de compliance webhook")
+				return
 			}
+			h.logger.Info().
+				Int64("customer_id", payload.Customer.ID).
+				Msg("Procesando solicitud de datos de cliente (GDPR)")
+			// TODO: Implementar lógica de procesamiento
 
 		case "customers/redact":
 			var payload CustomerRedactPayload
-			if err := json.Unmarshal(bodyBytes, &payload); err == nil {
-				h.logger.Info().
-					Int64("customer_id", payload.Customer.ID).
-					Msg("Procesando eliminación de datos de cliente (GDPR)")
-				// TODO: Implementar lógica de procesamiento
+			if err := json.Unmarshal(bodyBytes, &payload); err != nil {
+				h.logger.Error().Err(err).Str("topic", topic).Msg("Error al parsear payload de compliance webhook")
+				return
 			}
+			h.logger.Info().
+				Int64("customer_id", payload.Customer.ID).
+				Msg("Procesando eliminación de datos de cliente (GDPR)")
+			// TODO: Implementar lógica de procesamiento
 
 		case "shop/redact":
 			var payload ShopRedactPayload
-			if err := json.Unmarshal(bodyBytes, &payload); err == nil {
-				h.logger.Info().
-					Int64("shop_id", payload.ShopID).
-					Msg("Procesando eliminación de datos de tienda")
-				// TODO: Implementar lógica de procesamiento
+			if err := json.Unmarshal(bodyBytes, &payload); err != nil {
+				h.logger.Error().Err(err).Str("topic", topic).Msg("Error al parsear payload de compliance webhook")
+				return
 			}
+			h.logger.Info().
+				Int64("shop_id", payload.ShopID).
+				Msg("Procesando eliminación de datos de tienda")
+			// TODO: Implementar lógica de procesamiento
 		}
 	}()
 }

@@ -104,6 +104,7 @@ type IIntegrationUseCase interface {
 	// Sync (absorbe ICoreOperationsService)
 	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
 	SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error
+	SyncOrdersByIntegrationIDWithBatches(ctx context.Context, integrationID string, params *SyncBatchParams) error
 	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
 
 	// Webhooks (absorbe ICoreOperationsService)

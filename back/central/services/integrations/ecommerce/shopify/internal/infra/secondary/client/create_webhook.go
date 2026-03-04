@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 // CreateWebhookResponse representa la respuesta de Shopify al crear un webhook
@@ -21,11 +20,7 @@ type CreateWebhookResponse struct {
 
 // CreateWebhook crea un webhook en Shopify para un evento específico
 func (c *shopifyClient) CreateWebhook(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error) {
-	// Normalizar el nombre de la tienda (remover .myshopify.com si está presente)
-	shop := strings.TrimSuffix(storeName, ".myshopify.com")
-
-	// Construir la URL según el formato de Shopify API
-	url := fmt.Sprintf("https://%s.myshopify.com/admin/api/2024-10/webhooks.json", shop)
+	url := buildURL(storeName, "/admin/api/2024-10/webhooks.json")
 
 	// Construir el payload para crear el webhook
 	payload := map[string]interface{}{

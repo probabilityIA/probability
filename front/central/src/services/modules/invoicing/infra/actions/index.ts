@@ -234,8 +234,11 @@ export async function createConfigAction(data: CreateConfigDTO): Promise<Invoici
   });
 }
 
-export async function updateConfigAction(id: number, data: UpdateConfigDTO): Promise<InvoicingConfig> {
-  return fetchWithAuth(`${API_BASE_URL}/invoicing/configs/${id}`, {
+export async function updateConfigAction(id: number, data: UpdateConfigDTO, businessId?: number): Promise<InvoicingConfig> {
+  const url = businessId
+    ? `${API_BASE_URL}/invoicing/configs/${id}?business_id=${businessId}`
+    : `${API_BASE_URL}/invoicing/configs/${id}`;
+  return fetchWithAuth(url, {
     method: 'PUT',
     body: JSON.stringify(data),
   });

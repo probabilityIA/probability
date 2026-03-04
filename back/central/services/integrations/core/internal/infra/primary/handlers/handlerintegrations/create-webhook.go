@@ -35,8 +35,7 @@ func (h *IntegrationHandler) CreateWebhookHandler(c *gin.Context) {
 		return
 	}
 
-	// Convertir el resultado del dominio (sin etiquetas JSON) a la estructura de respuesta (con etiquetas JSON)
-	// El resultado viene como interface{} desde el core, necesitamos convertirlo correctamente
+	// Convertir el resultado del dominio (sin etiquetas JSON) a la estructura de respuesta
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
 		h.logger.Error().Err(err).Str("id", idStr).Msg("Error al serializar resultado de creación de webhooks")
@@ -57,18 +56,17 @@ func (h *IntegrationHandler) CreateWebhookHandler(c *gin.Context) {
 
 	// Mapear desde nombres PascalCase (dominio sin etiquetas) a la estructura de respuesta
 	data := response.CreateWebhookResponseData{
-		ExistingWebhooks: []interface{}{},
-		DeletedWebhooks:  []interface{}{},
+		ExistingWebhooks: []response.WebhookInfoResponse{},
+		DeletedWebhooks:  []response.WebhookInfoResponse{},
 		CreatedWebhooks:  []string{},
 		WebhookURL:       "",
 	}
 
-	// Sin etiquetas JSON en el dominio, los campos se serializan con nombres PascalCase
 	if existing, ok := resultMap["ExistingWebhooks"].([]interface{}); ok {
-		data.ExistingWebhooks = existing
+		data.ExistingWebhooks = mapRawWebhooksToResponse(existing)
 	}
 	if deleted, ok := resultMap["DeletedWebhooks"].([]interface{}); ok {
-		data.DeletedWebhooks = deleted
+		data.DeletedWebhooks = mapRawWebhooksToResponse(deleted)
 	}
 	if created, ok := resultMap["CreatedWebhooks"].([]interface{}); ok {
 		createdStrings := make([]string, len(created))
@@ -88,4 +86,22 @@ func (h *IntegrationHandler) CreateWebhookHandler(c *gin.Context) {
 		Data:    data,
 		Message: "Webhooks creados exitosamente",
 	})
+}
+
+// mapRawWebhooksToResponse convierte []interface{} de un json.Unmarshal a []WebhookInfoResponse
+func mapRawWebhooksToResponse(raw []interface{}) []response.WebhookInfoResponse {
+	result := make([]response.WebhookInfoResponse, 0, len(raw))
+	for _, item := range raw {
+		if m, ok := item.(map[string]interface{}); ok {
+			result = append(result, response.WebhookInfoResponse{
+				ID:        getStringField(m, "ID"),
+				Address:   getStringField(m, "Address"),
+				Topic:     getStringField(m, "Topic"),
+				Format:    getStringField(m, "Format"),
+				CreatedAt: getStringField(m, "CreatedAt"),
+				UpdatedAt: getStringField(m, "UpdatedAt"),
+			})
+		}
+	}
+	return result
 }

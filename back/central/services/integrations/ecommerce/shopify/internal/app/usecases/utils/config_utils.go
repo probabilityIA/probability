@@ -40,6 +40,16 @@ func ExtractStoreName(config map[string]interface{}, integrationName string) (st
 	return "", fmt.Errorf("store_url, store_name not found in config and integration name is empty")
 }
 
+// ResolveEffectiveStoreDomain devuelve la URL efectiva para las llamadas a la API.
+// Si la integración está en modo pruebas y tiene una URL de test configurada (base_url_test),
+// retorna esa URL. De lo contrario, retorna el storeDomain normal de Shopify.
+func ResolveEffectiveStoreDomain(integration *domain.Integration, storeDomain string) string {
+	if integration.IsTesting && integration.BaseURLTest != "" {
+		return integration.BaseURLTest
+	}
+	return storeDomain
+}
+
 func GetAccessToken(ctx context.Context, integrationService domain.IIntegrationService, integrationID string) (string, error) {
 	accessToken, err := integrationService.DecryptCredential(ctx, integrationID, "access_token")
 	if err != nil {

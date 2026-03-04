@@ -11,11 +11,17 @@ import (
 
 func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte) error {
 	if order == nil {
-		return fmt.Errorf("order payload is nil")
+		return domain.ErrOrderPayloadNil
 	}
+
+	uc.log.Info(ctx).
+		Str("shop_domain", shopDomain).
+		Str("external_id", order.ExternalID).
+		Msg("Processing orders/create webhook")
 
 	integration, err := uc.integrationService.GetIntegrationByExternalID(ctx, shopDomain, domain.IntegrationTypeID)
 	if err != nil {
+		uc.log.Error(ctx).Err(err).Str("shop_domain", shopDomain).Msg("Failed to get integration by store domain")
 		return fmt.Errorf("failed to get integration by store domain: %w", err)
 	}
 
@@ -43,7 +49,8 @@ func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string,
 	}
 
 	if err := uc.orderPublisher.Publish(ctx, probabilityOrder); err != nil {
-		return fmt.Errorf("failed to publish order: %w", err)
+		uc.log.Error(ctx).Err(err).Str("external_id", order.ExternalID).Msg("Failed to publish order to queue")
+		return fmt.Errorf("%w: %v", domain.ErrPublishFailed, err)
 	}
 
 	return nil

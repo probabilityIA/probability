@@ -93,8 +93,8 @@ func (c *ConfigCache) Get(ctx context.Context, integrationID uint) (*entities.In
 	return &config, nil
 }
 
-// Set guarda una configuración en Redis con TTL
-func (c *ConfigCache) Set(ctx context.Context, config *entities.InvoicingConfig) error {
+// Set guarda una configuración en Redis con TTL bajo la clave integrationID
+func (c *ConfigCache) Set(ctx context.Context, integrationID uint, config *entities.InvoicingConfig) error {
 	// Si Redis no está disponible, no hacer nada (resiliente)
 	if c.redis == nil {
 		return nil
@@ -104,14 +104,14 @@ func (c *ConfigCache) Set(ctx context.Context, config *entities.InvoicingConfig)
 		return nil
 	}
 
-	key := c.buildCacheKey(config.IntegrationID)
+	key := c.buildCacheKey(integrationID)
 
 	// Serializar a JSON
 	data, err := json.Marshal(config)
 	if err != nil {
 		c.log.Error(ctx).
 			Err(err).
-			Uint("integration_id", config.IntegrationID).
+			Uint("integration_id", integrationID).
 			Msg("Failed to marshal config for cache")
 		return err
 	}

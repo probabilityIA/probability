@@ -12,10 +12,10 @@ type InvoicingConfig struct {
 	DeletedAt *time.Time
 
 	// Relaciones (solo IDs)
-	BusinessID     uint
-	IntegrationID  uint                // Integración de e-commerce (Shopify, MeLi, etc.)
-	InvoicingProviderID *uint          // DEPRECATED: Mantener temporalmente para dual-read
-	InvoicingIntegrationID *uint       // Integración de facturación (Softpymes - desde integrations/)
+	BusinessID             uint
+	IntegrationIDs         []uint              // IDs de integraciones de e-commerce (Shopify, MeLi, Plataforma, etc.)
+	InvoicingProviderID    *uint               // DEPRECATED: Mantener temporalmente para dual-read
+	InvoicingIntegrationID *uint               // Integración de facturación (Softpymes - desde integrations/)
 
 	// Estado
 	Enabled     bool
@@ -31,7 +31,7 @@ type InvoicingConfig struct {
 	UpdatedByID *uint
 
 	// Nombres de relaciones (opcionales - populados por repo)
-	IntegrationName  *string
+	IntegrationNames []string // Nombres de las integraciones de e-commerce
 	ProviderName     *string
 	ProviderImageURL *string // URL del logo del proveedor de facturación
 

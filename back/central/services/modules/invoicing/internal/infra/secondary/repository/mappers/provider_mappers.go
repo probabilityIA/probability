@@ -157,7 +157,6 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 		CreatedAt:              model.CreatedAt,
 		UpdatedAt:              model.UpdatedAt,
 		BusinessID:             model.BusinessID,
-		IntegrationID:          model.IntegrationID,
 		InvoicingProviderID:    model.InvoicingProviderID,    // Campo deprecado (legacy)
 		InvoicingIntegrationID: model.InvoicingIntegrationID, // Campo nuevo (actual)
 		Enabled:                model.Enabled,
@@ -171,9 +170,12 @@ func ConfigToDomain(model *models.InvoicingConfig) *entities.InvoicingConfig {
 		entity.DeletedAt = &model.DeletedAt.Time
 	}
 
-	// Extraer nombre de la integración de e-commerce si está preloaded
-	if model.Integration.ID > 0 && model.Integration.Name != "" {
-		entity.IntegrationName = &model.Integration.Name
+	// Poblar IntegrationIDs e IntegrationNames desde la tabla join
+	for _, ci := range model.ConfigIntegrations {
+		entity.IntegrationIDs = append(entity.IntegrationIDs, ci.IntegrationID)
+		if ci.Integration.ID > 0 && ci.Integration.Name != "" {
+			entity.IntegrationNames = append(entity.IntegrationNames, ci.Integration.Name)
+		}
 	}
 
 	// Extraer nombre y logo de la integración de facturación (Softpymes) si está preloaded
@@ -223,7 +225,6 @@ func ConfigToModel(entity *entities.InvoicingConfig) *models.InvoicingConfig {
 			UpdatedAt: entity.UpdatedAt,
 		},
 		BusinessID:             entity.BusinessID,
-		IntegrationID:          entity.IntegrationID,
 		InvoicingProviderID:    entity.InvoicingProviderID,    // Campo deprecado (legacy)
 		InvoicingIntegrationID: entity.InvoicingIntegrationID, // Campo nuevo (actual)
 		Enabled:                entity.Enabled,

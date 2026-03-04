@@ -65,6 +65,9 @@ type IRepository interface {
 	UpdateInvoicingConfig(ctx context.Context, config *entities.InvoicingConfig) error
 	DeleteInvoicingConfig(ctx context.Context, id uint) error
 	ConfigExistsForIntegration(ctx context.Context, integrationID uint) (bool, error)
+	// GetConfigByInvoicingIntegration retorna la config activa de un negocio para un proveedor de facturación específico.
+	// Usa el nuevo constraint único (business_id, invoicing_integration_id).
+	GetConfigByInvoicingIntegration(ctx context.Context, businessID uint, invoicingIntegrationID uint) (*entities.InvoicingConfig, error)
 	// GetEnabledConfigByBusiness retorna la configuración activa (enabled=true) de un negocio,
 	// o nil si no existe ninguna activa. Usado para garantizar que solo un config esté activo a la vez.
 	GetEnabledConfigByBusiness(ctx context.Context, businessID uint) (*entities.InvoicingConfig, error)
@@ -203,7 +206,7 @@ type IInvoiceRequestPublisher interface {
 // IConfigCache define la interfaz para el servicio de caché de configuraciones
 type IConfigCache interface {
 	Get(ctx context.Context, integrationID uint) (*entities.InvoicingConfig, error)
-	Set(ctx context.Context, config *entities.InvoicingConfig) error
+	Set(ctx context.Context, integrationID uint, config *entities.InvoicingConfig) error
 	Invalidate(ctx context.Context, integrationID uint) error
 }
 

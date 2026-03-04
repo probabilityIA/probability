@@ -9,29 +9,33 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
 
-func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.Integration, storeDomain, accessToken string, params *domain.GetOrdersParams) error {
+func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.Integration, storeDomain, accessToken string, params *domain.GetOrdersParams) (int, error) {
 	totalOrders := 0
 	nextURL := ""
 
 	for {
 		if nextURL == "" {
-			fmt.Println("[GetOrders] Fetching first page...")
+			uc.log.Info(ctx).Msg("Fetching first page of orders")
 		} else {
 			time.Sleep(500 * time.Millisecond)
-			fmt.Printf("[GetOrders] Fetching next page: %s\n", nextURL)
+			uc.log.Info(ctx).Str("next_url", nextURL).Msg("Fetching next page of orders")
 		}
 
 		orders, fetchedNextURL, err := uc.shopifyClient.GetOrders(ctx, storeDomain, accessToken, params)
 		if err != nil {
-			return fmt.Errorf("error fetching orders: %w", err)
+			return totalOrders, fmt.Errorf("error fetching orders: %w", err)
 		}
 
-		fmt.Printf("[GetOrders] Fetched %d orders. NextURL: %s\n", len(orders), fetchedNextURL)
+		uc.log.Info(ctx).
+			Int("fetched_count", len(orders)).
+			Str("next_url", fetchedNextURL).
+			Msg("Orders page fetched")
 
 		if integration.BusinessID == nil {
-			err := fmt.Errorf("integration %d has no BusinessID assigned - cannot process orders", integration.ID)
-			fmt.Printf("[GetOrders] ERR: %v\n", err)
-			return err
+			uc.log.Error(ctx).
+				Uint("integration_id", integration.ID).
+				Msg("Integration has no BusinessID assigned")
+			return totalOrders, fmt.Errorf("integration %d: %w", integration.ID, domain.ErrBusinessIDMissing)
 		}
 
 		publishedCount := 0
@@ -41,7 +45,6 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 			order.IntegrationType = "shopify"
 			order.BusinessID = integration.BusinessID
 
-			fmt.Printf("[GetOrders] Processing order ID: %s\n", order.ExternalID)
 			probabilityOrder := mapper.MapShopifyOrderToProbability(&order)
 
 			// Enriquecer la orden con detalles extraídos del JSON original (PaymentDetails, FulfillmentDetails, etc.)
@@ -49,7 +52,10 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 			mapper.EnrichOrderWithDetails(probabilityOrder, order.RawData)
 
 			if err := uc.orderPublisher.Publish(ctx, probabilityOrder); err != nil {
-				fmt.Printf("[GetOrders] Error publishing order: %v. \n", err)
+				uc.log.Error(ctx).
+					Err(err).
+					Str("external_id", order.ExternalID).
+					Msg("Error publishing order to queue")
 				publishErrorCount++
 				// User requested NO fallback. Strict RabbitMQ usage.
 				continue
@@ -58,12 +64,22 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 			totalOrders++
 		}
 
+		if publishErrorCount > 0 {
+			uc.log.Warn(ctx).
+				Int("publish_errors", publishErrorCount).
+				Int("published", publishedCount).
+				Int("total_in_page", len(orders)).
+				Msg("Some orders failed to publish in this page")
+		}
+
 		if fetchedNextURL == "" {
 			break
 		}
 		nextURL = fetchedNextURL
 	}
 
-	fmt.Printf("[GetOrders] Completed: %d orders processed\n", totalOrders)
-	return nil
+	uc.log.Info(ctx).
+		Int("total_published", totalOrders).
+		Msg("GetOrders completed")
+	return totalOrders, nil
 }

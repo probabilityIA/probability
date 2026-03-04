@@ -4,15 +4,10 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"strings"
 )
 
 func (c *shopifyClient) ValidateToken(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error) {
-	if !strings.HasSuffix(storeName, ".myshopify.com") {
-		storeName = storeName + ".myshopify.com"
-	}
-
-	url := fmt.Sprintf("https://%s/admin/api/2024-10/shop.json", storeName)
+	url := buildURL(storeName, "/admin/api/2024-10/shop.json")
 
 	resp, err := c.client.R().
 		SetContext(ctx).

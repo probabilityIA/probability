@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
@@ -21,10 +22,11 @@ const OrdersCanonicalQueueName = rabbitmq.QueueOrdersCanonical
 // OrderConsumer consume órdenes canónicas de RabbitMQ y las procesa
 // Implementa ports.IOrderConsumer
 type OrderConsumer struct {
-	queue    rabbitmq.IQueue
-	logger   log.ILogger
-	createUC ports.IOrderCreateUseCase
-	repo     ports.IRepository
+	queue          rabbitmq.IQueue
+	logger         log.ILogger
+	createUC       ports.IOrderCreateUseCase
+	repo           ports.IRepository
+	eventPublisher ports.IIntegrationEventPublisher
 }
 
 // New crea una nueva instancia del consumidor de órdenes
@@ -33,12 +35,14 @@ func New(
 	logger log.ILogger,
 	createUC ports.IOrderCreateUseCase,
 	repo ports.IRepository,
+	eventPublisher ports.IIntegrationEventPublisher,
 ) ports.IOrderConsumer {
 	return &OrderConsumer{
-		queue:    queue,
-		logger:   logger,
-		createUC: createUC,
-		repo:     repo,
+		queue:          queue,
+		logger:         logger,
+		createUC:       createUC,
+		repo:           repo,
+		eventPublisher: eventPublisher,
 	}
 }
 
@@ -85,6 +89,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 
 		// Guardar error con JSON original
 		c.saveOrderError(ctx, nil, err, "unmarshal_error", messageBody)
+		c.publishRejected(ctx, &orderDTO, "Error de formato: "+err.Error())
 		return fmt.Errorf("failed to unmarshal order message: %w", err)
 	}
 
@@ -95,6 +100,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Str("queue", OrdersCanonicalQueueName).
 			Msg("Order message missing external_id")
 		c.saveOrderError(ctx, &orderDTO, err, "validation_error", messageBody)
+		c.publishRejected(ctx, &orderDTO, "Falta external_id")
 		return err
 	}
 
@@ -105,6 +111,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Str("external_id", orderDTO.ExternalID).
 			Msg("Order message missing integration_id")
 		c.saveOrderError(ctx, &orderDTO, err, "validation_error", messageBody)
+		c.publishRejected(ctx, &orderDTO, "Falta integration_id")
 		return err
 	}
 
@@ -118,7 +125,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Order already exists, skipping")
-			// No publicar evento de rechazo para órdenes duplicadas (es comportamiento esperado)
+			c.publishRejected(ctx, &orderDTO, "Orden duplicada")
 			return nil
 		}
 
@@ -128,6 +135,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Discarding invalid message: missing required fields (drain queue)")
+			c.publishRejected(ctx, &orderDTO, "Campos requeridos faltantes")
 			return nil
 		}
 
@@ -138,6 +146,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("queue", OrdersCanonicalQueueName).
 				Str("external_id", orderDTO.ExternalID).
 				Msg("Order failed with data integrity error (FK violation), discarding message")
+			c.publishRejected(ctx, &orderDTO, "Error de integridad de datos")
 			return nil
 		}
 
@@ -149,6 +158,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 				Str("external_id", orderDTO.ExternalID).
 				Uint("integration_id", orderDTO.IntegrationID).
 				Msg("Order already exists (race condition detected), skipping duplicate message")
+			c.publishRejected(ctx, &orderDTO, "Orden duplicada")
 			return nil
 		}
 
@@ -162,6 +172,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 
 		// Guardar error con JSON original
 		c.saveOrderError(ctx, &orderDTO, err, "processing_error", messageBody)
+		c.publishRejected(ctx, &orderDTO, "Error procesando: "+err.Error())
 		return fmt.Errorf("failed to map and save order: %w", err)
 	}
 
@@ -253,6 +264,21 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 			Err(saveErr).
 			Msg("Failed to save order error to database")
 	}
+}
+
+// publishRejected emite un evento SSE integration.sync.order.rejected para que el frontend
+// sepa que esta orden fue procesada (aunque falló) y pueda completar la barra de progreso.
+func (c *OrderConsumer) publishRejected(ctx context.Context, dto *dtos.ProbabilityOrderDTO, reason string) {
+	if c.eventPublisher == nil || dto == nil {
+		return
+	}
+
+	c.eventPublisher.PublishSyncOrderRejected(ctx, dto.IntegrationID, dto.BusinessID, map[string]interface{}{
+		"order_number": dto.OrderNumber,
+		"external_id":  dto.ExternalID,
+		"reason":       reason,
+		"rejected_at":  time.Now().Format(time.RFC3339),
+	})
 }
 
 func contains(s, substr string) bool {

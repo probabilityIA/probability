@@ -15,6 +15,7 @@ type IRepository interface {
 	GetOrderStatuses(ctx context.Context) ([]entities.OrderStatus, error)
 	GetIntegrationTypeCode(ctx context.Context, integrationID uint) (string, error)
 	GetIntegrationCategoryID(ctx context.Context, integrationID uint) (uint, error)
+	DeleteAllOrders(ctx context.Context, businessID uint) (int64, error)
 }
 
 type ICentralClient interface {
@@ -32,4 +33,5 @@ type IWebhookSimulator interface {
 type IUseCase interface {
 	GetReferenceData(ctx context.Context, businessID uint) (*entities.ReferenceData, error)
 	GenerateOrders(ctx context.Context, businessID uint, dto *dtos.GenerateOrdersDTO, token string) (*entities.GenerateResult, error)
+	DeleteAllOrders(ctx context.Context, businessID uint) (int64, error)
 }

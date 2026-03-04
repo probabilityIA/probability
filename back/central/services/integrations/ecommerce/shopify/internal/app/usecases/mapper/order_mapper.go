@@ -85,7 +85,6 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 
 		// Fallback: Si Address2 está vacío, intentar usar DefaultAddress del cliente
 		if address.Street2 == "" && s.Customer.DefaultAddress != nil && s.Customer.DefaultAddress.Address2 != "" {
-			fmt.Printf("[Mapper] Usando DefaultAddress.Address2 como fallback para orden %s: %s\n", s.OrderNumber, s.Customer.DefaultAddress.Address2)
 			address.Street2 = s.Customer.DefaultAddress.Address2
 		}
 		if s.ShippingAddress.Coordinates != nil {
@@ -95,11 +94,14 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		addresses = append(addresses, address)
 	}
 
-	itemsJSON, _ := json.Marshal(orderItems)
+	itemsJSON, err := json.Marshal(orderItems)
+	if err != nil {
+		itemsJSON = []byte("[]")
+	}
 
 	var metadataJSON []byte
 	if s.Metadata != nil {
-		metadataJSON, _ = json.Marshal(s.Metadata)
+		metadataJSON, _ = json.Marshal(s.Metadata) // safe: marshaling map[string]interface{}
 	}
 
 	// Extraer y mapear shipments desde fulfillments del raw_data
@@ -322,7 +324,10 @@ func extractShipmentsFromRawData(rawData []byte) []domain.ProbabilityShipmentDTO
 		}
 
 		// Serializar metadata del fulfillment
-		metadataJSON, _ := json.Marshal(fulfillment)
+		metadataJSON, err := json.Marshal(fulfillment)
+		if err != nil {
+			metadataJSON = nil
+		}
 
 		shipment := domain.ProbabilityShipmentDTO{
 			TrackingNumber: trackingNumber,

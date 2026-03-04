@@ -3,9 +3,11 @@ package core
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases"
+	shopifyDomain "github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
 
 type ShopifyCore struct {
@@ -23,6 +25,46 @@ func (s *ShopifyCore) TestConnection(ctx context.Context, config map[string]inte
 
 func (s *ShopifyCore) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
 	return s.useCase.SyncOrders(ctx, integrationID)
+}
+
+// SyncOrdersByIntegrationIDWithParams sincroniza órdenes con parámetros de filtrado.
+// Convierte map[string]interface{} a domain.SyncOrdersParams y delega al use case.
+func (s *ShopifyCore) SyncOrdersByIntegrationIDWithParams(ctx context.Context, integrationID string, params interface{}) error {
+	paramsMap, ok := params.(map[string]interface{})
+	if !ok {
+		// Fallback a sincronización por defecto
+		return s.SyncOrdersByIntegrationID(ctx, integrationID)
+	}
+
+	syncParams := &shopifyDomain.SyncOrdersParams{}
+
+	if v, ok := paramsMap["created_at_min"]; ok {
+		if t, ok := v.(time.Time); ok {
+			syncParams.CreatedAtMin = &t
+		}
+	}
+	if v, ok := paramsMap["created_at_max"]; ok {
+		if t, ok := v.(time.Time); ok {
+			syncParams.CreatedAtMax = &t
+		}
+	}
+	if v, ok := paramsMap["status"]; ok {
+		if s, ok := v.(string); ok {
+			syncParams.Status = s
+		}
+	}
+	if v, ok := paramsMap["financial_status"]; ok {
+		if s, ok := v.(string); ok {
+			syncParams.FinancialStatus = s
+		}
+	}
+	if v, ok := paramsMap["fulfillment_status"]; ok {
+		if s, ok := v.(string); ok {
+			syncParams.FulfillmentStatus = s
+		}
+	}
+
+	return s.useCase.SyncOrdersWithParams(ctx, integrationID, syncParams)
 }
 
 // GetWebhookURL construye la URL del webhook para Shopify

@@ -9,12 +9,14 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrationtype"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/queue/consumer"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/secondary/encryption"
 	"github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
@@ -86,6 +88,7 @@ type IIntegrationCore interface {
 	GetRegisteredIntegration(integrationType int) (IIntegrationContract, bool)
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 	SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error
+	SyncOrdersByIntegrationIDWithBatches(ctx context.Context, integrationID string, params *domain.SyncBatchParams) error
 	SyncOrdersByBusiness(ctx context.Context, businessID uint) error
 	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
@@ -104,7 +107,7 @@ type integrationCore struct {
 // Constructor
 // ============================================
 
-func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, logger log.ILogger, config env.IConfig, s3 storage.IS3Service) IIntegrationCore {
+func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, logger log.ILogger, config env.IConfig, s3 storage.IS3Service, rabbitMQ rabbitmq.IQueue) IIntegrationCore {
 	// 1. Inicializar Servicio de Encriptación
 	encryptionService := encryption.New(config, logger)
 
@@ -123,7 +126,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 	repo := repository.New(db, logger, encryptionService, integrationCache)
 
 	// 4. Inicializar Casos de Uso
-	integrationUseCase := usecaseintegrations.New(repo, encryptionService, integrationCache, logger, config)
+	integrationUseCase := usecaseintegrations.New(repo, encryptionService, integrationCache, logger, config, rabbitMQ)
 	integrationTypeUseCase := usecaseintegrationtype.New(repo, s3, integrationCache, logger, config, encryptionService)
 
 	// 5. Inicializar Handlers (solo dependen del use case)
@@ -142,6 +145,21 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 			logger.Error(bgCtx).Err(err).Msg("Cache warming failed")
 		} else {
 			logger.Info(bgCtx).Msg("Cache warming completed successfully")
+		}
+	}()
+
+	// 8. Iniciar SyncBatchConsumer (procesa lotes de sincronización de órdenes)
+	syncBatchConsumer := consumer.NewSyncBatchConsumer(
+		rabbitMQ,
+		func(integrationTypeID int) (domain.IIntegrationContract, bool) {
+			return integrationUseCase.GetProvider(integrationTypeID)
+		},
+		logger,
+	)
+	go func() {
+		bgCtx := context.Background()
+		if err := syncBatchConsumer.Start(bgCtx); err != nil {
+			logger.Error(bgCtx).Err(err).Msg("Error al iniciar SyncBatchConsumer")
 		}
 	}()
 
@@ -199,6 +217,10 @@ func (ic *integrationCore) TestConnection(ctx context.Context, config map[string
 
 func (ic *integrationCore) SyncOrdersByIntegrationID(ctx context.Context, integrationID string) error {
 	return ic.useCase.SyncOrdersByIntegrationID(ctx, integrationID)
+}
+
+func (ic *integrationCore) SyncOrdersByIntegrationIDWithBatches(ctx context.Context, integrationID string, params *domain.SyncBatchParams) error {
+	return ic.useCase.SyncOrdersByIntegrationIDWithBatches(ctx, integrationID, params)
 }
 
 func (ic *integrationCore) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {

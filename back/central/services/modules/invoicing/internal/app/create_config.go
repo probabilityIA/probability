@@ -10,27 +10,30 @@ import (
 
 // CreateConfig crea una nueva configuración de facturación
 func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) (*entities.InvoicingConfig, error) {
-	uc.log.Info(ctx).Uint("integration_id", dto.IntegrationID).Msg("Creating invoicing config")
+	uc.log.Info(ctx).
+		Interface("integration_ids", dto.IntegrationIDs).
+		Uint("invoicing_integration_id", dto.InvoicingIntegrationID).
+		Msg("Creating invoicing config")
 
-	// 1. Verificar si ya existe config para esta integración
-	existingConfig, err := uc.repo.GetConfigByIntegration(ctx, dto.IntegrationID)
+	// 1. Verificar si ya existe config para este business + invoicing integration
+	existingConfig, err := uc.repo.GetConfigByInvoicingIntegration(ctx, dto.BusinessID, dto.InvoicingIntegrationID)
 	if err == nil && existingConfig != nil {
 		if existingConfig.Enabled {
 			// Config activa: bloquear — el usuario debe desactivarla primero
 			uc.log.Warn(ctx).
-				Uint("integration_id", dto.IntegrationID).
+				Interface("integration_ids", dto.IntegrationIDs).
 				Uint("existing_config_id", existingConfig.ID).
-				Msg("Active config already exists for this integration")
+				Msg("Active config already exists for this invoicing integration")
 			return nil, errors.ErrConfigAlreadyExists
 		}
 		// Config inactiva: actualizarla con los nuevos datos (upsert)
 		uc.log.Info(ctx).
-			Uint("integration_id", dto.IntegrationID).
 			Uint("existing_config_id", existingConfig.ID).
 			Msg("Updating existing disabled config with new values")
 
 		invoicingIntegrationID := &dto.InvoicingIntegrationID
 		existingConfig.InvoicingIntegrationID = invoicingIntegrationID
+		existingConfig.IntegrationIDs = dto.IntegrationIDs
 		existingConfig.Enabled = dto.Enabled
 		existingConfig.AutoInvoice = dto.AutoInvoice
 		existingConfig.Filters = dto.Filters
@@ -77,13 +80,6 @@ func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) 
 		}
 	}
 
-	// 2. TODO: Validar que el proveedor existe y está activo usando integrationCore
-	// Por ahora omitimos la validación para que compile
-	// provider, err := uc.integrationCore.GetIntegrationByID(ctx, fmt.Sprintf("%d", dto.InvoicingProviderID))
-	// if err != nil {
-	// 	return nil, errors.ErrProviderNotFound
-	// }
-
 	// 3. Crear entidad
 	invoicingIntegrationID := &dto.InvoicingIntegrationID
 
@@ -94,7 +90,7 @@ func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) 
 
 	config := &entities.InvoicingConfig{
 		BusinessID:             dto.BusinessID,
-		IntegrationID:          dto.IntegrationID,
+		IntegrationIDs:         dto.IntegrationIDs,
 		InvoicingIntegrationID: invoicingIntegrationID,
 		Enabled:                dto.Enabled,
 		AutoInvoice:            dto.AutoInvoice,
@@ -118,10 +114,20 @@ func (uc *useCase) CreateConfig(ctx context.Context, dto *dtos.CreateConfigDTO) 
 func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateConfigDTO) (*entities.InvoicingConfig, error) {
 	uc.log.Info(ctx).Uint("config_id", id).Msg("Updating invoicing config")
 
-	// Obtener config existente
+	// Obtener config existente (con IntegrationIDs cargados)
 	config, err := uc.repo.GetInvoicingConfigByID(ctx, id)
 	if err != nil {
 		return nil, errors.ErrConfigNotFound
+	}
+
+	// Validar que el solicitante es dueño de esta config
+	if dto.RequestingBusinessID != nil && *dto.RequestingBusinessID != config.BusinessID {
+		uc.log.Warn(ctx).
+			Uint("requesting_business_id", *dto.RequestingBusinessID).
+			Uint("config_business_id", config.BusinessID).
+			Uint("config_id", id).
+			Msg("Business does not own this config")
+		return nil, errors.ErrConfigNotFound // No revelar que existe pero pertenece a otro
 	}
 
 	// Si se está activando, verificar que no hay otro config activo para este negocio
@@ -151,6 +157,10 @@ func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateCo
 
 	if dto.InvoicingIntegrationID != nil {
 		config.InvoicingIntegrationID = dto.InvoicingIntegrationID
+	}
+
+	if dto.IntegrationIDs != nil {
+		config.IntegrationIDs = *dto.IntegrationIDs
 	}
 
 	if dto.Filters != nil {

@@ -106,7 +106,11 @@ export function InvoicingConfigList({
                   )}
 
                   <h3 className="font-medium text-gray-900">
-                    Integración #{config.integration_id}
+                    {config.integration_names && config.integration_names.length > 0
+                      ? config.integration_names.join(', ')
+                      : config.integration_ids && config.integration_ids.length > 0
+                        ? config.integration_ids.map(id => `#${id}`).join(', ')
+                        : 'Integración'}
                   </h3>
 
                   {/* Badge de auto-facturación - CLICKEABLE */}

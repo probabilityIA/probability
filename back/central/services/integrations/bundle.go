@@ -23,7 +23,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// Events publisher se inicializa en init.go (módulo unificado services/events)
 
 	// Inicializar Integration Core (hub central de integraciones)
-	integrationCore := core.New(router, db, redisClient, logger, config, s3)
+	integrationCore := core.New(router, db, redisClient, logger, config, s3, rabbitMQ)
 
 	// ═══════════════════════════════════════════════════════════════
 	// REGISTRO DE INTEGRACIONES

@@ -10,8 +10,14 @@ import (
 )
 
 func (uc *SyncOrdersUseCase) GetOrder(ctx context.Context, integrationID string, orderID string) error {
+	uc.log.Info(ctx).
+		Str("integration_id", integrationID).
+		Str("order_id", orderID).
+		Msg("Getting single order from Shopify")
+
 	integration, err := uc.integrationService.GetIntegrationByID(ctx, integrationID)
 	if err != nil {
+		uc.log.Error(ctx).Err(err).Str("integration_id", integrationID).Msg("Failed to get integration")
 		return fmt.Errorf("failed to get integration: %w", err)
 	}
 
@@ -24,6 +30,9 @@ func (uc *SyncOrdersUseCase) GetOrder(ctx context.Context, integrationID string,
 	if err != nil {
 		return fmt.Errorf("failed to extract store name: %w", err)
 	}
+
+	// En modo test, usar la URL de pruebas (base_url_test) en vez del dominio de Shopify
+	storeName = utils.ResolveEffectiveStoreDomain(integration, storeName)
 
 	accessToken, err := utils.GetAccessToken(ctx, uc.integrationService, integrationID)
 	if err != nil {
@@ -47,7 +56,8 @@ func (uc *SyncOrdersUseCase) GetOrder(ctx context.Context, integrationID string,
 	mapper.EnrichOrderWithDetails(probabilityOrder, order.RawData)
 
 	if err := uc.orderPublisher.Publish(ctx, probabilityOrder); err != nil {
-		return fmt.Errorf("failed to publish order: %w", err)
+		uc.log.Error(ctx).Err(err).Str("order_id", orderID).Msg("Failed to publish order to queue")
+		return fmt.Errorf("%w: %v", domain.ErrPublishFailed, err)
 	}
 
 	return nil

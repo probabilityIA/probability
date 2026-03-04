@@ -86,13 +86,14 @@ func NewRandomDataGenerator() *RandomDataGenerator {
 	return &RandomDataGenerator{}
 }
 
-// GenerateCustomer genera un cliente aleatorio
+// GenerateCustomer genera un cliente aleatorio con datos diversos
 func (g *RandomDataGenerator) GenerateCustomer() *domain.Customer {
-	// Usar datos específicos de Carlos Arrieta para testing
-	firstName := "Carlos"
-	lastName := "Arrieta"
-	email := "carlos.arrieta@example.com"
-	phone := "+573023406789"
+	firstName := g.randomChoice(firstNames)
+	lastName := g.randomChoice(lastNames)
+	// Generar email único usando nombre + número aleatorio
+	emailNum := rand.Intn(99999)
+	email := fmt.Sprintf("%s.%s.%d@example.com", toLower(firstName), toLower(lastName), emailNum)
+	phone := fmt.Sprintf("+57%d", rand.Intn(9999999999)+3000000000)
 
 	now := time.Now()
 	createdAt := now.AddDate(0, 0, -rand.Intn(365))

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import {
     PlayIcon,
     ArrowPathIcon,
@@ -26,6 +26,41 @@ import { playNotificationSound } from '@/shared/utils';
 interface IntegrationListProps {
     onEdit?: (integration: Integration) => void;
     filterCategory?: string;
+}
+
+// Estado de un lote individual
+interface BatchInfo {
+    batchIndex: number;
+    status: 'pending' | 'processing' | 'completed' | 'failed';
+    dateFrom: string;
+    dateTo: string;
+    duration?: string;
+    error?: string;
+    completedAt?: Date;
+    orderCount: number;
+}
+
+// Estado completo de sincronización por lotes
+interface BatchSyncState {
+    jobId: string;
+    totalBatches: number;
+    completedBatches: number;
+    failedBatches: number;
+    dateFrom: string;
+    dateTo: string;
+    chunkDays: number;
+    batches: BatchInfo[];
+}
+
+// Helper para formatear fecha corta
+function formatShortDate(dateStr: string): string {
+    try {
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return dateStr;
+        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch {
+        return dateStr;
+    }
 }
 
 // Estado inicial para los filtros de sincronización
@@ -103,6 +138,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     });
     const [syncFilters, setSyncFilters] = useState<SyncOrdersParams>(initialSyncFilters);
     const [syncing, setSyncing] = useState(false);
+    const [syncError, setSyncError] = useState<string | null>(null);
 
     // Estados para el progreso de sincronización en tiempo real
     const [syncProgress, setSyncProgress] = useState<{
@@ -110,6 +146,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         created: number;
         rejected: number;
         updated: number;
+        totalFetched: number | null; // Total de órdenes publicadas a cola (set by integration.sync.completed)
+        fetchDuration: string | null; // Duración de la fase de fetch
         orders: Array<{
             orderNumber: string;
             status: 'created' | 'rejected' | 'updated';
@@ -119,6 +157,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             timestamp: Date;
         }>;
     } | null>(null);
+
+    // Estado para sincronización por lotes
+    const [batchSync, setBatchSync] = useState<BatchSyncState | null>(null);
+    const batchSyncRef = useRef<BatchSyncState | null>(null);
+    useEffect(() => { batchSyncRef.current = batchSync; }, [batchSync]);
 
     // Estados para las opciones de filtros dinámicos desde la BD
     const [orderStatusOptions, setOrderStatusOptions] = useState<Array<{ value: string; label: string; mappedStatus?: string }>>([]);
@@ -152,7 +195,10 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         'integration.sync.order.rejected',
         'integration.sync.started',
         'integration.sync.completed',
-        'integration.sync.failed'
+        'integration.sync.failed',
+        'integration.sync.batched.started',
+        'integration.sync.batch.completed',
+        'integration.sync.batch.failed'
     ] : [];
 
     const { isConnected } = useSSE({
@@ -164,10 +210,13 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 const event = JSON.parse(messageEvent.data);
                 const eventType = event.event_type || event.type || messageEvent.type;
 
-                // Solo procesar si es de la integración que está sincronizando
-                if (syncModal.id && event.integration_id !== syncModal.id) return;
-
                 const eventData = event.data?.data || event.data || {};
+
+                // Extraer integration_id del evento (puede estar a nivel raíz, en data, o en metadata)
+                const eventIntegrationId = Number(event.integration_id || eventData.integration_id || event.metadata?.integration_id || 0);
+
+                // Solo procesar si es de la integración que está sincronizando
+                if (syncModal.id && eventIntegrationId && eventIntegrationId !== syncModal.id) return;
 
                 switch (eventType) {
                     case 'integration.sync.order.created': {
@@ -176,11 +225,21 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderStatus = eventData.status || event.metadata?.status || null;
 
                         setSyncProgress(prev => {
-                            if (!prev) {
-                                return { total: 1, created: 1, rejected: 0, updated: 0, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }] };
+                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
+                            const updated = { ...base, created: base.created + 1, total: base.total + 1, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...base.orders] };
+                            // Auto-finish: solo en modo directo (no batch)
+                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
+                                setSyncing(false);
                             }
-                            return { ...prev, created: prev.created + 1, total: prev.total + 1, orders: [{ orderNumber, status: 'created' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...prev.orders] };
+                            return updated;
                         });
+                        // Incrementar orderCount del lote en procesamiento
+                        if (batchSyncRef.current) {
+                            setBatchSync(prev => {
+                                if (!prev) return prev;
+                                return { ...prev, batches: prev.batches.map(b => b.status === 'processing' ? { ...b, orderCount: b.orderCount + 1 } : b) };
+                            });
+                        }
                         playNotificationSound();
                         showToast(`Orden creada: #${orderNumber}`, 'success');
                         break;
@@ -191,11 +250,19 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderStatus = eventData.status || event.metadata?.status || null;
 
                         setSyncProgress(prev => {
-                            if (!prev) {
-                                return { total: 1, created: 0, rejected: 0, updated: 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }] };
+                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
+                            const updated = { ...base, updated: base.updated + 1, total: base.total + 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...base.orders] };
+                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
+                                setSyncing(false);
                             }
-                            return { ...prev, updated: prev.updated + 1, total: prev.total + 1, orders: [{ orderNumber, status: 'updated' as const, createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...prev.orders] };
+                            return updated;
                         });
+                        if (batchSyncRef.current) {
+                            setBatchSync(prev => {
+                                if (!prev) return prev;
+                                return { ...prev, batches: prev.batches.map(b => b.status === 'processing' ? { ...b, orderCount: b.orderCount + 1 } : b) };
+                            });
+                        }
                         playNotificationSound();
                         showToast(`Orden actualizada: #${orderNumber}`, 'info');
                         break;
@@ -208,51 +275,196 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         const orderStatus = eventData.status || event.metadata?.status || null;
 
                         setSyncProgress(prev => {
-                            if (!prev) {
-                                return { total: 1, created: 0, rejected: 1, updated: 0, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }] };
+                            const base = prev || { total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] };
+                            const updated = { ...base, rejected: base.rejected + 1, total: base.total + 1, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...base.orders] };
+                            if (!batchSyncRef.current && updated.totalFetched !== null && updated.created + updated.updated + updated.rejected >= updated.totalFetched) {
+                                setSyncing(false);
                             }
-                            return { ...prev, rejected: prev.rejected + 1, total: prev.total + 1, orders: [{ orderNumber, status: 'rejected' as const, reason: reason + (error ? `: ${error}` : ''), createdAt: createdAt || undefined, orderStatus: orderStatus || undefined, timestamp: new Date() }, ...prev.orders] };
+                            return updated;
                         });
+                        if (batchSyncRef.current) {
+                            setBatchSync(prev => {
+                                if (!prev) return prev;
+                                return { ...prev, batches: prev.batches.map(b => b.status === 'processing' ? { ...b, orderCount: b.orderCount + 1 } : b) };
+                            });
+                        }
                         playNotificationSound();
                         showToast(`Orden rechazada: #${orderNumber} - ${reason}${error ? `: ${error}` : ''}`, 'error');
                         break;
                     }
                     case 'integration.sync.started': {
+                        // En modo batch, ignorar: el provider emite esto por CADA lote y resetea contadores
+                        if (batchSyncRef.current) break;
+
                         const integrationId = event.integration_id;
                         const integration = integrations.find(i => i.id === integrationId);
                         const integrationName = integration?.name || `Integración ${integrationId}`;
 
-                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, orders: [] });
+                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] });
                         showToast(`Sincronización iniciada: ${integrationName}`, 'info');
                         break;
                     }
                     case 'integration.sync.completed': {
+                        // En modo batch, ignorar: el provider emite esto por CADA lote y sobreescribe totalFetched
+                        if (batchSyncRef.current) break;
+
                         const integrationId = event.integration_id;
                         const integration = integrations.find(i => i.id === integrationId);
                         const integrationName = integration?.name || `Integración ${integrationId}`;
-                        const totalOrders = Number(eventData.total_orders) || 0;
-                        const createdOrders = Number(eventData.created_orders) || 0;
-                        const updatedOrders = Number(eventData.updated_orders) || 0;
-                        const rejectedOrders = Number(eventData.rejected_orders) || 0;
+                        const totalFetched = Number(eventData.total_fetched) || 0;
+                        const duration = eventData.duration || '';
 
+                        // Si no se obtuvieron órdenes, la sincronización terminó inmediatamente
+                        if (totalFetched === 0) {
+                            setSyncProgress(prev => ({
+                                ...(prev || { total: 0, created: 0, rejected: 0, updated: 0, orders: [] }),
+                                totalFetched: 0,
+                                fetchDuration: duration,
+                            }));
+                            setSyncing(false);
+                            playNotificationSound();
+                            showToast(`Sincronización completada: ${integrationName} - No se encontraron órdenes`, 'info');
+                            break;
+                        }
+
+                        // Guardar totalFetched pero NO sobreescribir contadores acumulados
+                        // Los contadores se actualizan con eventos individuales (order.created/updated/rejected)
                         setSyncProgress(prev => {
-                            if (!prev) return { total: totalOrders, created: createdOrders, rejected: rejectedOrders, updated: updatedOrders, orders: [] };
-                            return { ...prev, total: totalOrders, created: createdOrders, rejected: rejectedOrders, updated: updatedOrders, orders: prev.orders };
+                            const updated = {
+                                ...(prev || { total: 0, created: 0, rejected: 0, updated: 0, orders: [] }),
+                                totalFetched,
+                                fetchDuration: duration,
+                            };
+                            // Si ya se procesaron todas las órdenes, marcar como terminado
+                            if (updated.created + updated.updated + updated.rejected >= totalFetched) {
+                                setSyncing(false);
+                            }
+                            return updated;
                         });
-                        setSyncing(false);
+
                         playNotificationSound();
-                        showToast(`Sincronización completada: ${integrationName} - Total: ${totalOrders}, Creadas: ${createdOrders}, Actualizadas: ${updatedOrders}, Rechazadas: ${rejectedOrders}`, 'success');
+                        showToast(`Fetch completado: ${integrationName} - ${totalFetched} órdenes obtenidas, procesando...`, 'info');
                         break;
                     }
                     case 'integration.sync.failed': {
+                        // En modo batch, los fallos se manejan con batch.failed
+                        if (batchSyncRef.current) break;
+
                         const integrationId = event.integration_id;
                         const integration = integrations.find(i => i.id === integrationId);
                         const integrationName = integration?.name || `Integración ${integrationId}`;
-                        const error = eventData.error || event.metadata?.error || 'Error desconocido';
+                        const failError = eventData.error || event.metadata?.error || 'Error desconocido';
 
-                        setSyncProgress(null);
+                        setSyncing(false);
+                        setSyncError(failError);
                         playNotificationSound();
-                        showToast(`Sincronización fallida: ${integrationName} - ${error}`, 'error');
+                        showToast(`Sincronización fallida: ${integrationName} - ${failError}`, 'error');
+                        break;
+                    }
+                    case 'integration.sync.batched.started': {
+                        const jobId = eventData.job_id || '';
+                        const totalBatches = Number(eventData.total_batches) || 0;
+                        const dateFrom = eventData.date_from || '';
+                        const dateTo = eventData.date_to || '';
+                        const chunkDays = Number(eventData.chunk_days) || 7;
+
+                        // Pre-calculate batches from date range
+                        const batches: BatchInfo[] = [];
+                        const startDate = new Date(dateFrom);
+                        for (let i = 0; i < totalBatches; i++) {
+                            const batchStart = new Date(startDate.getTime() + i * chunkDays * 24 * 60 * 60 * 1000);
+                            const batchEnd = new Date(batchStart.getTime() + chunkDays * 24 * 60 * 60 * 1000);
+                            // Cap the last batch at dateTo
+                            const endCap = new Date(dateTo);
+                            batches.push({
+                                batchIndex: i,
+                                status: i === 0 ? 'processing' : 'pending',
+                                dateFrom: batchStart.toISOString(),
+                                dateTo: (batchEnd > endCap ? endCap : batchEnd).toISOString(),
+                                orderCount: 0,
+                            });
+                        }
+
+                        setBatchSync({
+                            jobId,
+                            totalBatches,
+                            completedBatches: 0,
+                            failedBatches: 0,
+                            dateFrom,
+                            dateTo,
+                            chunkDays,
+                            batches,
+                        });
+
+                        // Initialize order progress
+                        setSyncProgress({ total: 0, created: 0, rejected: 0, updated: 0, totalFetched: null, fetchDuration: null, orders: [] });
+                        showToast(`Sincronización por lotes iniciada: ${totalBatches} lotes`, 'info');
+                        break;
+                    }
+                    case 'integration.sync.batch.completed': {
+                        const batchIndex = Number(eventData.batch_index);
+                        const duration = eventData.duration || '';
+                        const batchDateFrom = eventData.created_at_min || '';
+                        const batchDateTo = eventData.created_at_max || '';
+
+                        setBatchSync(prev => {
+                            if (!prev) return prev;
+                            const updatedBatches = prev.batches.map((b, _i) => {
+                                if (b.batchIndex === batchIndex) {
+                                    return { ...b, status: 'completed' as const, duration, completedAt: new Date(), dateFrom: batchDateFrom || b.dateFrom, dateTo: batchDateTo || b.dateTo };
+                                }
+                                return b;
+                            });
+                            // Mark next batch as processing
+                            const nextIdx = batchIndex + 1;
+                            if (nextIdx < prev.totalBatches) {
+                                const nextBatch = updatedBatches.find(b => b.batchIndex === nextIdx);
+                                if (nextBatch && nextBatch.status === 'pending') {
+                                    updatedBatches[updatedBatches.indexOf(nextBatch)] = { ...nextBatch, status: 'processing' };
+                                }
+                            }
+                            const newCompleted = prev.completedBatches + 1;
+                            const allDone = newCompleted + prev.failedBatches >= prev.totalBatches;
+                            if (allDone) {
+                                setSyncing(false);
+                            }
+                            return { ...prev, batches: updatedBatches, completedBatches: newCompleted };
+                        });
+                        playNotificationSound();
+                        break;
+                    }
+                    case 'integration.sync.batch.failed': {
+                        const batchIndex = Number(eventData.batch_index);
+                        const duration = eventData.duration || '';
+                        const batchError = eventData.error || 'Error desconocido';
+                        const batchDateFrom = eventData.created_at_min || '';
+                        const batchDateTo = eventData.created_at_max || '';
+
+                        setBatchSync(prev => {
+                            if (!prev) return prev;
+                            const updatedBatches = prev.batches.map(b => {
+                                if (b.batchIndex === batchIndex) {
+                                    return { ...b, status: 'failed' as const, duration, error: batchError, dateFrom: batchDateFrom || b.dateFrom, dateTo: batchDateTo || b.dateTo };
+                                }
+                                return b;
+                            });
+                            // Mark next batch as processing
+                            const nextIdx = batchIndex + 1;
+                            if (nextIdx < prev.totalBatches) {
+                                const nextBatch = updatedBatches.find(b => b.batchIndex === nextIdx);
+                                if (nextBatch && nextBatch.status === 'pending') {
+                                    updatedBatches[updatedBatches.indexOf(nextBatch)] = { ...nextBatch, status: 'processing' };
+                                }
+                            }
+                            const newFailed = prev.failedBatches + 1;
+                            const allDone = prev.completedBatches + newFailed >= prev.totalBatches;
+                            if (allDone) {
+                                setSyncing(false);
+                            }
+                            return { ...prev, batches: updatedBatches, failedBatches: newFailed };
+                        });
+                        playNotificationSound();
+                        showToast(`Lote ${batchIndex + 1} falló: ${batchError}`, 'error');
                         break;
                     }
                 }
@@ -267,6 +479,22 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             console.log('Conexión SSE de eventos de integraciones establecida');
         },
     });
+
+    // Safety timeout (fallback): normalmente created+updated+rejected === totalFetched
+    // gracias a los eventos order.rejected del backend. Este timeout solo aplica si se pierde algún evento SSE.
+    // En modo batch, la finalización la maneja batch.completed/batch.failed exclusivamente.
+    useEffect(() => {
+        if (!syncing || !syncProgress?.totalFetched) return;
+        if (batchSyncRef.current) return;
+        const processed = syncProgress.created + syncProgress.updated + syncProgress.rejected;
+        if (processed >= syncProgress.totalFetched) return; // Already done
+
+        const timer = setTimeout(() => {
+            setSyncing(false);
+        }, 10000);
+
+        return () => clearTimeout(timer);
+    }, [syncing, syncProgress?.totalFetched, syncProgress?.created, syncProgress?.updated, syncProgress?.rejected]);
 
     // Filtros dinámicos - sincronizar con el hook
     const [filters, setFilters] = useState<{
@@ -494,6 +722,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     created: 0,
                     rejected: 0,
                     updated: 0,
+                    totalFetched: null,
+                    fetchDuration: null,
                     orders: []
                 });
                 showToast('🔄 Hay una sincronización en curso. Mostrando progreso actual...', 'info');
@@ -516,12 +746,15 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
     const handleSyncConfirm = async () => {
         if (syncModal.id) {
             setSyncing(true);
+            setSyncError(null);
             // Inicializar progreso
             setSyncProgress({
                 total: 0,
                 created: 0,
                 rejected: 0,
                 updated: 0,
+                totalFetched: null,
+                fetchDuration: null,
                 orders: []
             });
             try {
@@ -555,7 +788,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
         setSyncModal({ show: false, id: null, name: '' });
         setSyncFilters(initialSyncFilters);
         setSyncProgress(null);
+        setBatchSync(null);
         setSyncing(false);
+        setSyncError(null);
         // Limpiar opciones
         setOrderStatusOptions([]);
         setFinancialStatusOptions([]);
@@ -656,7 +891,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 >
                     <PlayIcon className="w-4 h-4" />
                 </button>
-                {integration.category !== 'messaging' && (
+                {integration.category === 'ecommerce' && (
                     <button
                         onClick={() => handleSyncClick(integration.id, integration.name)}
                         className="p-2 bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
@@ -763,270 +998,425 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             />
 
             {/* Modal de Sincronización con Filtros */}
-            {syncModal.show && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col max-h-[90vh] overflow-hidden">
-                        {/* Header fijo */}
+            {syncModal.show && (() => {
+                const hasProgress = syncProgress && (syncProgress.total > 0 || syncProgress.totalFetched !== null);
+                const isShowingProgress = syncing || batchSync || syncError || hasProgress;
+                const isBatchMode = !!batchSync;
+                const batchFinished = batchSync && (batchSync.completedBatches + batchSync.failedBatches >= batchSync.totalBatches);
+                const directFinished = !isBatchMode && !syncing && (syncError || hasProgress);
+                const allFinished = batchFinished || directFinished;
+
+                return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className={`bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh] overflow-hidden transition-all duration-300 ${isShowingProgress ? 'w-full max-w-5xl' : 'w-full max-w-lg'}`}>
+                        {/* Header */}
                         <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
-                            <div className="flex items-start justify-between">
-                                <div className="flex-1">
-                                    <h3 className="text-lg font-semibold text-gray-900">
-                                        ↻ Sincronizar Órdenes
-                                    </h3>
-                                    <p className="text-sm text-gray-500 mt-1">
-                                        Integración: <strong>{syncModal.name}</strong>
-                                    </p>
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div>
+                                        <h3 className="text-lg font-semibold text-gray-900">
+                                            Sincronizar Órdenes
+                                        </h3>
+                                        <p className="text-sm text-gray-500 mt-0.5">
+                                            {syncModal.name}
+                                        </p>
+                                    </div>
+                                    {isShowingProgress && (
+                                        <div className="flex items-center gap-1.5 ml-2">
+                                            <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'} ${isConnected && syncing ? 'animate-pulse' : ''}`} />
+                                            <span className="text-xs text-gray-400">{isConnected ? 'SSE conectado' : 'SSE desconectado'}</span>
+                                        </div>
+                                    )}
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        setSyncModal({ show: false, id: null, name: '' });
-                                        setSyncProgress(null);
-                                        setSyncing(false);
-                                    }}
-                                    className="ml-4 text-gray-400 hover:text-gray-600 transition-colors"
-                                    aria-label="Cerrar modal"
-                                >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                </button>
+                                {!syncing && (
+                                    <button
+                                        onClick={handleSyncCancel}
+                                        className="text-gray-400 hover:text-gray-600 transition-colors"
+                                        aria-label="Cerrar modal"
+                                    >
+                                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                    </button>
+                                )}
                             </div>
                         </div>
 
-                        {/* Contenido scrolleable */}
-                        <div className="px-6 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Rango de Fechas
-                                </label>
-                                <DateRangePicker
-                                    startDate={syncFilters.created_at_min}
-                                    endDate={syncFilters.created_at_max}
-                                    onChange={(startDate, endDate) => {
-                                        setSyncFilters(prev => ({
-                                            ...prev,
-                                            created_at_min: startDate || '',
-                                            created_at_max: endDate || ''
-                                        }));
-                                    }}
-                                    placeholder="Seleccionar rango de fechas (opcional)"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Estado de Orden
-                                </label>
-                                {loadingMappings ? (
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <Spinner size="sm" /> Cargando estados...
-                                    </div>
-                                ) : (
-                                    <Select
-                                        value={syncFilters.status || 'any'}
-                                        onChange={(e) => setSyncFilters(prev => ({
-                                            ...prev,
-                                            status: e.target.value
-                                        }))}
-                                        options={orderStatusOptions.length > 0 ? orderStatusOptions : [{ value: 'any', label: 'Todos' }]}
-                                        disabled={orderStatusOptions.length === 0}
-                                    />
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Estado Financiero
-                                </label>
-                                {loadingMappings ? (
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <Spinner size="sm" /> Cargando estados...
-                                    </div>
-                                ) : (
-                                    <Select
-                                        value={syncFilters.financial_status || 'any'}
-                                        onChange={(e) => setSyncFilters(prev => ({
-                                            ...prev,
-                                            financial_status: e.target.value
-                                        }))}
-                                        options={financialStatusOptions.length > 0 ? financialStatusOptions : [{ value: 'any', label: 'Todos' }]}
-                                        disabled={financialStatusOptions.length === 0}
-                                    />
-                                )}
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
-                                    Estado de Envío
-                                </label>
-                                {loadingMappings ? (
-                                    <div className="flex items-center gap-2 text-sm text-gray-500">
-                                        <Spinner size="sm" /> Cargando estados...
-                                    </div>
-                                ) : (
-                                    <Select
-                                        value={syncFilters.fulfillment_status || 'any'}
-                                        onChange={(e) => setSyncFilters(prev => ({
-                                            ...prev,
-                                            fulfillment_status: e.target.value
-                                        }))}
-                                        options={fulfillmentStatusOptions.length > 0 ? fulfillmentStatusOptions : [{ value: 'any', label: 'Todos' }]}
-                                        disabled={fulfillmentStatusOptions.length === 0}
-                                    />
-                                )}
-                            </div>
-
-                            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                <p className="text-sm text-blue-700">
-                                    💡 Los estados mostrados están mapeados a estados de Probability. Si no especificas filtros, se sincronizarán las órdenes de los últimos 30 días.
-                                </p>
-                            </div>
-
-                            {/* Barra de Progreso en Tiempo Real */}
-                            {syncProgress && (
-                                <div className="space-y-4 pt-4 border-t border-gray-200">
-                                    <div>
-                                        <div className="flex justify-between items-center mb-2">
-                                            <h4 className="text-sm font-semibold text-gray-700">Progreso de Sincronización</h4>
-                                            <span className="text-xs text-gray-500">
-                                                {syncProgress.total > 0
-                                                    ? `${syncProgress.created + syncProgress.rejected + syncProgress.updated} / ${syncProgress.total}`
-                                                    : 'Iniciando...'}
-                                            </span>
+                        {/* Content */}
+                        <div className="flex-1 min-h-0 overflow-y-auto">
+                            {/* Phase 1: Form (before sync starts) */}
+                            {!isShowingProgress && (
+                                <div className="px-6 py-4 space-y-4">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Rango de Fechas</label>
+                                            <DateRangePicker
+                                                startDate={syncFilters.created_at_min}
+                                                endDate={syncFilters.created_at_max}
+                                                onChange={(startDate, endDate) => {
+                                                    setSyncFilters(prev => ({ ...prev, created_at_min: startDate || '', created_at_max: endDate || '' }));
+                                                }}
+                                                placeholder="Seleccionar rango de fechas (opcional)"
+                                            />
                                         </div>
-
-                                        {/* Barra de progreso total con colores */}
-                                        <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden flex">
-                                            {syncProgress.total > 0 && (
-                                                <>
-                                                    {/* Porción verde (creadas) */}
-                                                    {syncProgress.created > 0 && (
-                                                        <div
-                                                            className="h-full bg-green-500 transition-all duration-300"
-                                                            style={{
-                                                                width: `${(syncProgress.created / syncProgress.total) * 100}%`
-                                                            }}
-                                                            title={`${syncProgress.created} órdenes creadas`}
-                                                        ></div>
-                                                    )}
-                                                    {/* Porción roja (rechazadas) */}
-                                                    {syncProgress.rejected > 0 && (
-                                                        <div
-                                                            className="h-full bg-red-500 transition-all duration-300"
-                                                            style={{
-                                                                width: `${(syncProgress.rejected / syncProgress.total) * 100}%`
-                                                            }}
-                                                            title={`${syncProgress.rejected} órdenes rechazadas`}
-                                                        ></div>
-                                                    )}
-                                                    {/* Porción amarilla (actualizadas) */}
-                                                    {syncProgress.updated > 0 && (
-                                                        <div
-                                                            className="h-full bg-yellow-500 transition-all duration-300"
-                                                            style={{
-                                                                width: `${(syncProgress.updated / syncProgress.total) * 100}%`
-                                                            }}
-                                                            title={`${syncProgress.updated} órdenes actualizadas`}
-                                                        ></div>
-                                                    )}
-                                                </>
-                                            )}
-                                            {syncProgress.total === 0 && (
-                                                <div
-                                                    className="h-full bg-blue-500 animate-pulse"
-                                                    style={{ width: '10%' }}
-                                                ></div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado de Orden</label>
+                                            {loadingMappings ? (
+                                                <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner size="sm" /> Cargando...</div>
+                                            ) : (
+                                                <Select
+                                                    value={syncFilters.status || 'any'}
+                                                    onChange={(e) => setSyncFilters(prev => ({ ...prev, status: e.target.value }))}
+                                                    options={orderStatusOptions.length > 0 ? orderStatusOptions : [{ value: 'any', label: 'Todos' }]}
+                                                    disabled={orderStatusOptions.length === 0}
+                                                />
                                             )}
                                         </div>
+                                        <div>
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado Financiero</label>
+                                            {loadingMappings ? (
+                                                <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner size="sm" /> Cargando...</div>
+                                            ) : (
+                                                <Select
+                                                    value={syncFilters.financial_status || 'any'}
+                                                    onChange={(e) => setSyncFilters(prev => ({ ...prev, financial_status: e.target.value }))}
+                                                    options={financialStatusOptions.length > 0 ? financialStatusOptions : [{ value: 'any', label: 'Todos' }]}
+                                                    disabled={financialStatusOptions.length === 0}
+                                                />
+                                            )}
+                                        </div>
+                                        <div className="sm:col-span-2">
+                                            <label className="block text-sm font-medium text-gray-700 mb-1">Estado de Envío</label>
+                                            {loadingMappings ? (
+                                                <div className="flex items-center gap-2 text-sm text-gray-500"><Spinner size="sm" /> Cargando...</div>
+                                            ) : (
+                                                <Select
+                                                    value={syncFilters.fulfillment_status || 'any'}
+                                                    onChange={(e) => setSyncFilters(prev => ({ ...prev, fulfillment_status: e.target.value }))}
+                                                    options={fulfillmentStatusOptions.length > 0 ? fulfillmentStatusOptions : [{ value: 'any', label: 'Todos' }]}
+                                                    disabled={fulfillmentStatusOptions.length === 0}
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        <p className="text-sm text-blue-700">
+                                            Los estados mostrados están mapeados a estados de Probability. Si no especificas filtros, se sincronizarán las órdenes de los últimos 30 días. Los rangos mayores a 14 días se procesarán por lotes automáticamente.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
 
-                                        {/* Estadísticas */}
-                                        <div className="flex gap-4 mt-3 text-xs">
-                                            <div className="flex items-center gap-1">
-                                                <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                                                <span className="text-gray-600">Creadas: <strong>{syncProgress.created}</strong></span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                                                <span className="text-gray-600">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
-                                            </div>
-                                            {syncProgress.updated > 0 && (
-                                                <div className="flex items-center gap-1">
-                                                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                                                    <span className="text-gray-600">Actualizadas: <strong>{syncProgress.updated}</strong></span>
+                            {/* Phase 2: Progress */}
+                            {isShowingProgress && (
+                                <div className="px-6 py-4">
+                                    {isBatchMode ? (
+                                        /* Batch mode: two-column layout */
+                                        <div className="grid grid-cols-5 gap-6">
+                                            {/* Left column: Batches (3/5) */}
+                                            <div className="col-span-3 space-y-4">
+                                                {/* Batch progress bar */}
+                                                <div>
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <h4 className="text-sm font-semibold text-gray-700">Progreso por Lotes</h4>
+                                                        <span className="text-xs text-gray-500">
+                                                            {batchSync.completedBatches + batchSync.failedBatches} / {batchSync.totalBatches}
+                                                            {' '}({batchSync.totalBatches > 0 ? Math.round(((batchSync.completedBatches + batchSync.failedBatches) / batchSync.totalBatches) * 100) : 0}%)
+                                                        </span>
+                                                    </div>
+                                                    {/* Segmented progress bar */}
+                                                    <div className="w-full bg-gray-200 rounded-full h-5 overflow-hidden flex">
+                                                        {batchSync.batches.map((batch) => {
+                                                            const widthPct = 100 / batchSync.totalBatches;
+                                                            let bgClass = 'bg-gray-300';
+                                                            if (batch.status === 'completed') bgClass = 'bg-green-500';
+                                                            else if (batch.status === 'failed') bgClass = 'bg-red-500';
+                                                            else if (batch.status === 'processing') bgClass = 'bg-blue-500 animate-pulse';
+                                                            return (
+                                                                <div
+                                                                    key={batch.batchIndex}
+                                                                    className={`h-full ${bgClass} transition-all duration-500 ease-out border-r border-white/30 last:border-r-0`}
+                                                                    style={{ width: `${widthPct}%` }}
+                                                                    title={`Lote ${batch.batchIndex + 1}: ${batch.status}`}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    {/* Summary badges */}
+                                                    <div className="flex gap-3 mt-2 text-xs">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full">
+                                                            <div className="w-2 h-2 rounded-full bg-green-500" /> {batchSync.completedBatches} completados
+                                                        </span>
+                                                        {batchSync.failedBatches > 0 && (
+                                                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-red-100 text-red-700 rounded-full">
+                                                                <div className="w-2 h-2 rounded-full bg-red-500" /> {batchSync.failedBatches} fallidos
+                                                            </span>
+                                                        )}
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                                                            <div className="w-2 h-2 rounded-full bg-gray-400" /> {batchSync.totalBatches - batchSync.completedBatches - batchSync.failedBatches} pendientes
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </div>
 
-                                    {/* Lista de órdenes procesadas */}
-                                    {syncProgress.orders.length > 0 && (
-                                        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg">
-                                            <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0">
-                                                <p className="text-xs font-semibold text-gray-700">Órdenes Procesadas</p>
-                                            </div>
-                                            <div className="divide-y divide-gray-100">
-                                                {syncProgress.orders.slice(0, 50).map((order, index) => (
-                                                    <div
-                                                        key={index}
-                                                        className={`p-3 text-xs ${order.status === 'created'
-                                                            ? 'bg-green-50 hover:bg-green-100'
-                                                            : order.status === 'updated'
-                                                                ? 'bg-blue-50 hover:bg-blue-100'
-                                                                : 'bg-red-50 hover:bg-red-100'
-                                                            } transition-colors`}
-                                                    >
-                                                        <div className="flex items-start justify-between gap-2">
-                                                            <div className="flex-1 min-w-0">
-                                                                <div className="flex items-center gap-2 mb-1">
-                                                                    <div className={`w-2 h-2 rounded-full flex-shrink-0 ${order.status === 'created' ? 'bg-green-500'
-                                                                        : order.status === 'updated' ? 'bg-blue-500'
-                                                                            : 'bg-red-500'
-                                                                        }`}></div>
-                                                                    <span className="font-medium text-gray-800">
-                                                                        #{order.orderNumber}
-                                                                    </span>
-                                                                    {order.orderStatus && (
-                                                                        <span className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs font-medium">
-                                                                            {order.orderStatus}
-                                                                        </span>
-                                                                    )}
-                                                                </div>
-                                                                {order.createdAt && (
-                                                                    <div className="text-gray-600 text-xs ml-4">
-                                                                        Creada: {(() => {
-                                                                            try {
-                                                                                const date = new Date(order.createdAt);
-                                                                                return isNaN(date.getTime())
-                                                                                    ? order.createdAt
-                                                                                    : date.toLocaleString('es-ES', {
-                                                                                        year: 'numeric',
-                                                                                        month: '2-digit',
-                                                                                        day: '2-digit',
-                                                                                        hour: '2-digit',
-                                                                                        minute: '2-digit'
-                                                                                    });
-                                                                            } catch {
-                                                                                return order.createdAt;
-                                                                            }
-                                                                        })()}
+                                                {/* Batch history */}
+                                                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                                    <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                                                        <p className="text-xs font-semibold text-gray-700">Historial de Lotes</p>
+                                                    </div>
+                                                    <div className="max-h-[50vh] overflow-y-auto divide-y divide-gray-100">
+                                                        {batchSync.batches.map((batch) => (
+                                                            <div
+                                                                key={batch.batchIndex}
+                                                                className={`p-3 text-xs transition-colors ${
+                                                                    batch.status === 'processing' ? 'bg-blue-50 border-l-2 border-l-blue-500' :
+                                                                    batch.status === 'completed' ? 'bg-white hover:bg-gray-50' :
+                                                                    batch.status === 'failed' ? 'bg-red-50 hover:bg-red-100' :
+                                                                    'bg-gray-50'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-center justify-between">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {/* Status icon */}
+                                                                        {batch.status === 'completed' && (
+                                                                            <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        )}
+                                                                        {batch.status === 'failed' && (
+                                                                            <svg className="w-4 h-4 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+                                                                                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                                                                            </svg>
+                                                                        )}
+                                                                        {batch.status === 'processing' && (
+                                                                            <Spinner size="sm" />
+                                                                        )}
+                                                                        {batch.status === 'pending' && (
+                                                                            <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                                                                        )}
+                                                                        <span className="font-medium text-gray-800">Lote {batch.batchIndex + 1}</span>
                                                                     </div>
-                                                                )}
-                                                                {order.status === 'rejected' && order.reason && (
-                                                                    <div className="text-red-600 text-xs ml-4 mt-1">
-                                                                        {order.reason}
+                                                                    <div className="flex items-center gap-2">
+                                                                        {batch.duration && (
+                                                                            <span className="text-gray-400">{batch.duration}</span>
+                                                                        )}
+                                                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+                                                                            batch.status === 'completed' ? 'bg-green-100 text-green-700' :
+                                                                            batch.status === 'failed' ? 'bg-red-100 text-red-700' :
+                                                                            batch.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                                                                            'bg-gray-100 text-gray-500'
+                                                                        }`}>
+                                                                            {batch.status === 'completed' ? 'Completado' :
+                                                                             batch.status === 'failed' ? 'Fallido' :
+                                                                             batch.status === 'processing' ? 'Procesando' :
+                                                                             'Pendiente'}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="mt-1 ml-6 text-gray-500">
+                                                                    {formatShortDate(batch.dateFrom)} → {formatShortDate(batch.dateTo)}
+                                                                    {batch.orderCount > 0 && <span> · {batch.orderCount} {batch.orderCount === 1 ? 'orden' : 'órdenes'}</span>}
+                                                                </div>
+                                                                {batch.status === 'failed' && batch.error && (
+                                                                    <div className="mt-1 ml-6 text-red-600 text-[11px]">
+                                                                        {batch.error}
                                                                     </div>
                                                                 )}
                                                             </div>
-                                                            <span className="text-gray-400 text-xs flex-shrink-0">
-                                                                {order.timestamp.toLocaleTimeString()}
-                                                            </span>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Right column: Orders (2/5) */}
+                                            <div className="col-span-2 space-y-3">
+                                                {/* Order stats mini */}
+                                                {syncProgress && (
+                                                    <div className="flex gap-3 text-xs flex-wrap">
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
+                                                            <span className="text-gray-600">Creadas: <strong>{syncProgress.created}</strong></span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
+                                                            <span className="text-gray-600">Actualizadas: <strong>{syncProgress.updated}</strong></span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
+                                                            <span className="text-gray-600">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
                                                         </div>
                                                     </div>
-                                                ))}
+                                                )}
+                                                {/* Orders feed */}
+                                                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                                    <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                                                        <p className="text-xs font-semibold text-gray-700">Órdenes Procesadas</p>
+                                                    </div>
+                                                    <div className="max-h-[60vh] overflow-y-auto divide-y divide-gray-100">
+                                                        {syncProgress && syncProgress.orders.length > 0 ? (
+                                                            syncProgress.orders.slice(0, 100).map((order, index) => (
+                                                                <div
+                                                                    key={index}
+                                                                    className={`px-3 py-2 text-xs ${
+                                                                        order.status === 'created' ? 'bg-green-50' :
+                                                                        order.status === 'updated' ? 'bg-blue-50' :
+                                                                        'bg-red-50'
+                                                                    }`}
+                                                                >
+                                                                    <div className="flex items-center justify-between gap-1">
+                                                                        <div className="flex items-center gap-1.5 min-w-0">
+                                                                            <div className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                                                                order.status === 'created' ? 'bg-green-500' :
+                                                                                order.status === 'updated' ? 'bg-blue-500' :
+                                                                                'bg-red-500'
+                                                                            }`} />
+                                                                            <span className="font-medium text-gray-800 truncate">#{order.orderNumber}</span>
+                                                                            {order.orderStatus && (
+                                                                                <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 rounded text-[10px] flex-shrink-0">
+                                                                                    {order.orderStatus}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <span className="text-gray-400 text-[10px] flex-shrink-0">
+                                                                            {order.timestamp.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                                                                        </span>
+                                                                    </div>
+                                                                    {order.status === 'rejected' && order.reason && (
+                                                                        <div className="text-red-600 text-[10px] mt-0.5 ml-3 truncate" title={order.reason}>
+                                                                            {order.reason}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                            ))
+                                                        ) : (
+                                                            <div className="p-4 text-center text-xs text-gray-400">
+                                                                Esperando órdenes...
+                                                            </div>
+                                                        )}
+                                                        {syncProgress && syncProgress.orders.length > 100 && (
+                                                            <div className="p-2 bg-gray-50 text-xs text-gray-500 text-center">
+                                                                Y {syncProgress.orders.length - 100} órdenes más...
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
-                                            {syncProgress.orders.length > 50 && (
-                                                <div className="p-2 bg-gray-50 text-xs text-gray-500 text-center">
-                                                    Y {syncProgress.orders.length - 50} órdenes más...
+                                        </div>
+                                    ) : (
+                                        /* Direct mode (no batches): single column with orders */
+                                        <div className="space-y-4">
+                                            {syncError && (
+                                                <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                                                    <p className="text-sm text-red-700 font-medium">Sincronización fallida</p>
+                                                    <p className="text-sm text-red-600 mt-1">{syncError}</p>
+                                                </div>
+                                            )}
+                                            <div>
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <h4 className="text-sm font-semibold text-gray-700">Progreso de Sincronización</h4>
+                                                    {syncProgress && (
+                                                        <span className="text-xs text-gray-500">
+                                                            {(() => {
+                                                                const processed = syncProgress.created + syncProgress.updated + syncProgress.rejected;
+                                                                if (allFinished && processed > 0) return `${processed} procesadas`;
+                                                                const denominator = syncProgress.totalFetched ?? syncProgress.total;
+                                                                if (denominator > 0) return `${processed} / ${denominator} procesadas`;
+                                                                if (syncProgress.totalFetched === null && syncing) return 'Obteniendo órdenes...';
+                                                                return 'Iniciando...';
+                                                            })()}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {/* Progress bar */}
+                                                <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden flex">
+                                                    {(() => {
+                                                        const processed = (syncProgress?.created ?? 0) + (syncProgress?.updated ?? 0) + (syncProgress?.rejected ?? 0);
+                                                        // When finished, use processed as denominator so bar reaches 100%
+                                                        const denominator = allFinished && processed > 0
+                                                            ? processed
+                                                            : (syncProgress?.totalFetched ?? syncProgress?.total ?? 0);
+                                                        if (syncProgress && denominator > 0) {
+                                                            return (
+                                                                <>
+                                                                    {syncProgress.created > 0 && (
+                                                                        <div className="h-full bg-green-500 transition-all duration-500 ease-out" style={{ width: `${(syncProgress.created / denominator) * 100}%` }} title={`${syncProgress.created} creadas`} />
+                                                                    )}
+                                                                    {syncProgress.rejected > 0 && (
+                                                                        <div className="h-full bg-red-500 transition-all duration-500 ease-out" style={{ width: `${(syncProgress.rejected / denominator) * 100}%` }} title={`${syncProgress.rejected} rechazadas`} />
+                                                                    )}
+                                                                    {syncProgress.updated > 0 && (
+                                                                        <div className="h-full bg-yellow-500 transition-all duration-500 ease-out" style={{ width: `${(syncProgress.updated / denominator) * 100}%` }} title={`${syncProgress.updated} actualizadas`} />
+                                                                    )}
+                                                                </>
+                                                            );
+                                                        }
+                                                        return <div className="h-full bg-blue-500 animate-pulse" style={{ width: '10%' }} />;
+                                                    })()}
+                                                </div>
+                                                {/* Stats */}
+                                                {syncProgress && (
+                                                    <div className="flex gap-4 mt-3 text-xs">
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-3 h-3 rounded-full bg-green-500" />
+                                                            <span className="text-gray-600">Creadas: <strong>{syncProgress.created}</strong></span>
+                                                        </div>
+                                                        <div className="flex items-center gap-1">
+                                                            <div className="w-3 h-3 rounded-full bg-red-500" />
+                                                            <span className="text-gray-600">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
+                                                        </div>
+                                                        {syncProgress.updated > 0 && (
+                                                            <div className="flex items-center gap-1">
+                                                                <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                                                                <span className="text-gray-600">Actualizadas: <strong>{syncProgress.updated}</strong></span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            {/* Orders list */}
+                                            {syncProgress && syncProgress.orders.length > 0 && (
+                                                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                                                    <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0">
+                                                        <p className="text-xs font-semibold text-gray-700">Órdenes Procesadas</p>
+                                                    </div>
+                                                    <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
+                                                        {syncProgress.orders.slice(0, 50).map((order, index) => (
+                                                            <div
+                                                                key={index}
+                                                                className={`p-3 text-xs ${order.status === 'created' ? 'bg-green-50 hover:bg-green-100' : order.status === 'updated' ? 'bg-blue-50 hover:bg-blue-100' : 'bg-red-50 hover:bg-red-100'} transition-colors`}
+                                                            >
+                                                                <div className="flex items-start justify-between gap-2">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-2 mb-1">
+                                                                            <div className={`w-2 h-2 rounded-full flex-shrink-0 ${order.status === 'created' ? 'bg-green-500' : order.status === 'updated' ? 'bg-blue-500' : 'bg-red-500'}`} />
+                                                                            <span className="font-medium text-gray-800">#{order.orderNumber}</span>
+                                                                            {order.orderStatus && (
+                                                                                <span className="px-2 py-0.5 bg-gray-200 text-gray-700 rounded text-xs font-medium">{order.orderStatus}</span>
+                                                                            )}
+                                                                        </div>
+                                                                        {order.createdAt && (
+                                                                            <div className="text-gray-600 text-xs ml-4">
+                                                                                Creada: {(() => {
+                                                                                    try {
+                                                                                        const date = new Date(order.createdAt);
+                                                                                        return isNaN(date.getTime()) ? order.createdAt : date.toLocaleString('es-ES', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+                                                                                    } catch { return order.createdAt; }
+                                                                                })()}
+                                                                            </div>
+                                                                        )}
+                                                                        {order.status === 'rejected' && order.reason && (
+                                                                            <div className="text-red-600 text-xs ml-4 mt-1">{order.reason}</div>
+                                                                        )}
+                                                                    </div>
+                                                                    <span className="text-gray-400 text-xs flex-shrink-0">{order.timestamp.toLocaleTimeString()}</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    {syncProgress.orders.length > 50 && (
+                                                        <div className="p-2 bg-gray-50 text-xs text-gray-500 text-center">
+                                                            Y {syncProgress.orders.length - 50} órdenes más...
+                                                        </div>
+                                                    )}
                                                 </div>
                                             )}
                                         </div>
@@ -1035,45 +1425,63 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             )}
                         </div>
 
-                        {/* Footer fijo */}
-                        <div className="px-6 py-4 border-t border-gray-200 flex justify-end gap-3 flex-shrink-0 bg-white">
-                            {!syncing && syncProgress && syncProgress.total > 0 && (
-                                <Button
-                                    variant="primary"
-                                    onClick={handleSyncCancel}
-                                >
-                                    Cerrar
-                                </Button>
-                            )}
-                            {!syncing && (!syncProgress || syncProgress.total === 0) && (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        onClick={handleSyncCancel}
-                                    >
-                                        Cancelar
-                                    </Button>
-                                    <Button
-                                        variant="primary"
-                                        onClick={handleSyncConfirm}
-                                    >
-                                        ↻ Iniciar Sincronización
-                                    </Button>
-                                </>
-                            )}
-                            {syncing && (
-                                <Button
-                                    variant="outline"
-                                    onClick={handleSyncCancel}
-                                    disabled={true}
-                                >
-                                    Sincronizando... (No cerrar)
-                                </Button>
-                            )}
+                        {/* Footer */}
+                        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between flex-shrink-0 bg-white">
+                            <div className="text-xs text-gray-500">
+                                {syncing && isBatchMode && batchSync && (
+                                    <span className="flex items-center gap-2">
+                                        <Spinner size="sm" />
+                                        Procesando lote {Math.min(batchSync.completedBatches + batchSync.failedBatches + 1, batchSync.totalBatches)} de {batchSync.totalBatches}... No cerrar esta ventana.
+                                    </span>
+                                )}
+                                {syncing && !isBatchMode && (
+                                    <span className="flex items-center gap-2">
+                                        <Spinner size="sm" />
+                                        {syncProgress?.totalFetched !== null && syncProgress?.totalFetched !== undefined
+                                            ? `Procesando órdenes (${syncProgress.created + syncProgress.updated + syncProgress.rejected}/${syncProgress.totalFetched})... No cerrar.`
+                                            : 'Obteniendo órdenes... No cerrar esta ventana.'}
+                                    </span>
+                                )}
+                                {allFinished && isBatchMode && batchSync && batchSync.failedBatches > 0 && (
+                                    <span className="text-amber-600 font-medium">
+                                        {batchSync.failedBatches} lote(s) fallaron de {batchSync.totalBatches} total.
+                                    </span>
+                                )}
+                                {allFinished && isBatchMode && batchSync && batchSync.failedBatches === 0 && (
+                                    <span className="text-green-600 font-medium">
+                                        Todos los lotes completados exitosamente.
+                                    </span>
+                                )}
+                                {allFinished && !isBatchMode && syncError && (
+                                    <span className="text-red-600 font-medium">
+                                        Sincronización fallida: {syncError}
+                                    </span>
+                                )}
+                                {allFinished && !isBatchMode && !syncError && syncProgress && (
+                                    <span className="text-green-600 font-medium">
+                                        Sincronización completada. {syncProgress.created} creadas, {syncProgress.updated} actualizadas, {syncProgress.rejected} rechazadas.
+                                    </span>
+                                )}
+                            </div>
+                            <div className="flex gap-3">
+                                {!isShowingProgress && (
+                                    <>
+                                        <Button variant="outline" onClick={handleSyncCancel}>Cancelar</Button>
+                                        <Button variant="primary" onClick={handleSyncConfirm}>Iniciar Sincronización</Button>
+                                    </>
+                                )}
+                                {allFinished && (
+                                    <Button variant="primary" onClick={handleSyncCancel}>Cerrar</Button>
+                                )}
+                                {syncing && (
+                                    <Button variant="outline" disabled>Sincronizando...</Button>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
-            )}
+                );
+            })()}
         </div>
     );
 }

@@ -1,11 +1,13 @@
 package handlerintegrations
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/integrations/core/internal/domain"
 )
 
 // SyncOrdersRequest representa los parámetros para sincronizar órdenes
@@ -31,7 +33,7 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 	if integrationID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "integration_id is required",
+			"message": "integration_id es requerido",
 		})
 		return
 	}
@@ -53,7 +55,7 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"success": false,
-					"message": "Invalid created_at_min format. Use RFC3339 or YYYY-MM-DD",
+					"message": "Formato inválido en created_at_min. Use RFC3339 o YYYY-MM-DD",
 					"error":   err.Error(),
 				})
 				return
@@ -68,7 +70,7 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"success": false,
-					"message": "Invalid created_at_max format. Use RFC3339 or YYYY-MM-DD",
+					"message": "Formato inválido en created_at_max. Use RFC3339 o YYYY-MM-DD",
 					"error":   err.Error(),
 				})
 				return
@@ -89,29 +91,58 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 		}
 	}
 
-	// Usar método con parámetros si están presentes, sino usar el método por defecto
-	var err error
-	if syncParams != nil {
-		err = h.usecase.SyncOrdersByIntegrationIDWithParams(c.Request.Context(), integrationID, syncParams)
-	} else {
-		err = h.usecase.SyncOrdersByIntegrationID(c.Request.Context(), integrationID)
+	// Decidir entre flujo directo y flujo por lotes
+	useBatches := false
+
+	if syncParams != nil && syncParams.CreatedAtMin != nil && syncParams.CreatedAtMax != nil {
+		dateRange := syncParams.CreatedAtMax.Sub(*syncParams.CreatedAtMin)
+		if dateRange > 14*24*time.Hour {
+			useBatches = true
+		}
 	}
 
-	if err != nil {
-		h.logger.Error().Err(err).Str("integration_id", integrationID).Msg("Failed to sync orders")
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"success": false,
-			"message": "Failed to start sync",
-			"error":   err.Error(),
-		})
-		return
+	if useBatches {
+		// Flujo por lotes: publica mensajes a la cola y retorna rápido
+		batchParams := &domain.SyncBatchParams{
+			CreatedAtMin:      syncParams.CreatedAtMin,
+			CreatedAtMax:      syncParams.CreatedAtMax,
+			Status:            syncParams.Status,
+			FinancialStatus:   syncParams.FinancialStatus,
+			FulfillmentStatus: syncParams.FulfillmentStatus,
+		}
+		if err := h.usecase.SyncOrdersByIntegrationIDWithBatches(c.Request.Context(), integrationID, batchParams); err != nil {
+			h.logger.Error().Err(err).Str("integration_id", integrationID).Msg("Error al iniciar sincronización por lotes")
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error al iniciar sincronización",
+				"error":   err.Error(),
+			})
+			return
+		}
+	} else if syncParams != nil {
+		// Flujo directo con params: ejecutar en goroutine (es sincrónico y puede tardar)
+		// Los eventos SSE (started/completed/failed) notificarán al frontend
+		go func() {
+			if err := h.usecase.SyncOrdersByIntegrationIDWithParams(context.Background(), integrationID, syncParams); err != nil {
+				h.logger.Error().Err(err).Str("integration_id", integrationID).Msg("Error en sincronización directa con params")
+			}
+		}()
+	} else {
+		// Flujo directo sin params: ejecutar en goroutine
+		go func() {
+			if err := h.usecase.SyncOrdersByIntegrationID(context.Background(), integrationID); err != nil {
+				h.logger.Error().Err(err).Str("integration_id", integrationID).Msg("Error en sincronización directa")
+			}
+		}()
 	}
 
-	message := "Order synchronization started in background"
-	if syncParams != nil {
-		message += " with custom filters"
+	message := "Sincronización de órdenes iniciada en segundo plano"
+	if useBatches {
+		message += " usando procesamiento por lotes (rango de fechas grande)"
+	} else if syncParams != nil {
+		message += " con filtros personalizados"
 	} else {
-		message += " (last 30 days)"
+		message += " (últimos 30 días)"
 	}
 
 	c.JSON(http.StatusAccepted, gin.H{
@@ -144,16 +175,16 @@ func (h *IntegrationHandler) SyncOrdersByBusinessHandler(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
-			"message": "invalid business_id",
+			"message": "business_id inválido",
 		})
 		return
 	}
 
 	if err := h.usecase.SyncOrdersByBusiness(c.Request.Context(), uint(businessID)); err != nil {
-		h.logger.Error().Err(err).Uint("business_id", uint(businessID)).Msg("Failed to sync orders")
+		h.logger.Error().Err(err).Uint("business_id", uint(businessID)).Msg("Error al sincronizar órdenes por negocio")
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"success": false,
-			"message": "Failed to start sync",
+			"message": "Error al iniciar sincronización",
 			"error":   err.Error(),
 		})
 		return
@@ -161,6 +192,6 @@ func (h *IntegrationHandler) SyncOrdersByBusinessHandler(c *gin.Context) {
 
 	c.JSON(http.StatusAccepted, gin.H{
 		"success": true,
-		"message": "Order synchronization started in background for all integrations",
+		"message": "Sincronización de órdenes iniciada en segundo plano para todas las integraciones",
 	})
 }

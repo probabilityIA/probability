@@ -19,7 +19,8 @@ type SyncOrdersUseCase struct {
 type IShopifyUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 	SyncOrders(ctx context.Context, integrationID string) error
-	GetOrders(ctx context.Context, integration *domain.Integration, storeDomain, accessToken string, params *domain.GetOrdersParams) error
+	SyncOrdersWithParams(ctx context.Context, integrationID string, syncParams *domain.SyncOrdersParams) error
+	GetOrders(ctx context.Context, integration *domain.Integration, storeDomain, accessToken string, params *domain.GetOrdersParams) (int, error)
 	GetOrder(ctx context.Context, integrationID string, orderID string) error
 	CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte) error
 	ProcessOrderPaid(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error

@@ -36,7 +36,7 @@ func (h *IntegrationHandler) VerifyWebhooksHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.VerifyWebhooksResponse{
 		Success: true,
-		Data:    webhooks,
+		Data:    mapWebhooksToResponse(webhooks),
 		Message: "Webhooks verificados exitosamente",
 	})
 }

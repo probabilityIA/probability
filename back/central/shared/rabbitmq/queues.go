@@ -94,6 +94,11 @@ const (
 	// Publisher: integrations/messaging/whatsapp/webhook_publisher
 	// Consumer: modules/orders/whatsapp_consumer
 	QueueWhatsAppOrderNovelty = "orders.whatsapp.novelty"
+
+	// QueueSyncBatches recibe lotes de sincronización de órdenes (date-range chunks).
+	// Publisher: integrations/core (SyncOrdersByIntegrationIDWithBatches)
+	// Consumer: integrations/core/sync_batch_consumer
+	QueueSyncBatches = "integration.sync.batches"
 )
 
 // ─── Routing Keys: Orders (fanout exchange, informational only) ──

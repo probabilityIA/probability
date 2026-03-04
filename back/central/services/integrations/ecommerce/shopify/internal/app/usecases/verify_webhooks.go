@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/utils"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
 
@@ -29,6 +30,9 @@ func (uc *SyncOrdersUseCase) VerifyWebhooksByURL(ctx context.Context, integratio
 	if !ok || storeName == "" {
 		return nil, fmt.Errorf("store_name no encontrado en la configuración")
 	}
+
+	// En modo test, usar la URL de pruebas
+	storeName = utils.ResolveEffectiveStoreDomain(integration, storeName)
 
 	// Construir nuestra URL de webhook
 	ourWebhookURL := fmt.Sprintf("%s/integrations/shopify/webhook", baseURL)

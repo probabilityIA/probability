@@ -5,16 +5,17 @@ import (
 	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
-	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/secamc93/probability/back/central/services/auth/middleware"
 )
 
@@ -61,9 +62,12 @@ type OAuthStateData struct {
 	ClientSecret string
 }
 
-// OAuthStateStore almacena temporalmente los estados CSRF para validación
-// En producción, esto debería usar Redis o similar
-var oauthStateStore = make(map[string]*OAuthStateData)
+// oauthStateStore almacena temporalmente los estados CSRF para validación.
+// Protegido por oauthStateMutex para acceso concurrente seguro desde HTTP handlers.
+var (
+	oauthStateStore = make(map[string]*OAuthStateData)
+	oauthStateMutex sync.Mutex
+)
 
 // InitiateOAuthRequest representa la solicitud para iniciar OAuth
 type InitiateOAuthRequest struct {
@@ -179,6 +183,14 @@ func (h *ShopifyHandler) initiateOAuthProcess(c *gin.Context, integrationName, s
 	}
 
 	// Almacenar state con metadata (expira en 10 minutos)
+	oauthStateMutex.Lock()
+	// Limpieza lazy: eliminar estados expirados al insertar uno nuevo
+	now := time.Now()
+	for k, v := range oauthStateStore {
+		if now.After(v.Expiry) {
+			delete(oauthStateStore, k)
+		}
+	}
 	oauthStateStore[state] = &OAuthStateData{
 		IntegrationName: integrationName,
 		ShopDomain:      shopDomain,
@@ -188,6 +200,7 @@ func (h *ShopifyHandler) initiateOAuthProcess(c *gin.Context, integrationName, s
 		ClientID:        customClientID,
 		ClientSecret:    customClientSecret,
 	}
+	oauthStateMutex.Unlock()
 
 	// Determinar credenciales a usar (BD/Redis primero, luego env vars como fallback)
 	var clientID, redirectURI, scopes string
@@ -283,20 +296,22 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 		return
 	}
 
-	// Validar state CSRF
+	// Validar state CSRF (consume el state — one-time use)
+	oauthStateMutex.Lock()
 	stateData, exists := oauthStateStore[state]
 	if !exists || time.Now().After(stateData.Expiry) {
-		h.logger.Error().Str("state", state).Msg("State CSRF inválido o expirado")
 		delete(oauthStateStore, state)
+		oauthStateMutex.Unlock()
+		h.logger.Error().Str("state", state).Msg("State CSRF inválido o expirado")
 		c.JSON(http.StatusBadRequest, gin.H{
 			"success": false,
 			"error":   "Token de seguridad inválido o expirado",
 		})
 		return
 	}
-
 	// Eliminar state usado
 	delete(oauthStateStore, state)
+	oauthStateMutex.Unlock()
 
 	// Validar HMAC (custom secret > BD/Redis > env var)
 	clientSecret := h.getShopifyConfig(c.Request.Context(), "client_secret")
@@ -357,7 +372,12 @@ func (h *ShopifyHandler) OAuthCallbackHandler(c *gin.Context) {
 		"client_id":     clientID,
 		"client_secret": clientSecret,
 	}
-	credsJSON, _ := json.Marshal(creds)
+	credsJSON, err := json.Marshal(creds)
+	if err != nil {
+		h.logger.Error().Err(err).Msg("Error al serializar credenciales OAuth")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error interno al procesar credenciales"})
+		return
+	}
 	middleware.SetSecureCookie(c, "shopify_temp_token", url.QueryEscape(string(credsJSON)), 300)
 
 	// Redirigir al frontend CON el exchange_token (BD/Redis > env var > fallback dinámico)
@@ -533,101 +553,68 @@ type LoginWithSessionTokenRequest struct {
 	SessionToken string `json:"session_token" binding:"required"`
 }
 
-// Estructura para el payload del JWT de Shopify (claims básicos)
+// ShopifySessionTokenClaims representa el payload del JWT de Shopify Session Token.
 // Ver: https://shopify.dev/docs/apps/auth/oauth/session-tokens#payload
 type ShopifySessionTokenClaims struct {
-	Iss  string `json:"iss"`  // Issuer (https://shopify.com/<shop_id>)
+	jwt.RegisteredClaims
 	Dest string `json:"dest"` // Destination (https://<shop_domain>)
-	Aud  string `json:"aud"`  // Audience (API Key)
-	Sub  string `json:"sub"`  // Subject (User ID)
-	Exp  int64  `json:"exp"`  // Expiration
-	Nbf  int64  `json:"nbf"`  // Not Before
-	Jti  string `json:"jti"`  // JWT ID
 	Sid  string `json:"sid"`  // Session ID
 }
 
-// LoginWithSessionTokenHandler autentica un usuario basado en el Session Token de Shopify
+// LoginWithSessionTokenHandler autentica un usuario basado en el Session Token de Shopify.
+// Valida la firma HS256 del JWT usando el Client Secret de Shopify.
 func (h *ShopifyHandler) LoginWithSessionTokenHandler(c *gin.Context) {
 	var req LoginWithSessionTokenRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.logger.Error().Err(err).Msg("LoginWithSessionToken: Error binding JSON")
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request payload"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Datos de solicitud inválidos"})
 		return
 	}
 
-	clientSecret := h.config.Get("SHOPIFY_CLIENT_SECRET")
+	clientSecret := h.getShopifyConfig(c.Request.Context(), "client_secret")
 	if clientSecret == "" {
-		h.logger.Error().Msg("SHOPIFY_CLIENT_SECRET not configured")
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Server configuration error"})
+		h.logger.Error().Msg("SHOPIFY_CLIENT_SECRET no configurado")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error de configuración del servidor"})
 		return
 	}
 
-	// 1. Validar y parsear el token
-	// Nota: En un entorno de producción ideal, deberíamos usar una librería JWT robusta para validar la firma.
-	// Shopify usa HS256 con el Client Secret como clave.
-	// Por simplicidad y evitar dependencias cíclicas si no tienes librería JWT a mano, aquí implemento una validación básica,
-	// pero RECOMIENDO encarecidamente usar `golang-jwt/jwt` para esto.
-	// Asumiré que podemos usar lógica similar a la de validación HMAC o una librería estándar si está disponible.
-
-	// TODO: IMPLEMENTAR VALIDACIÓN JWT REAL
-	// Por ahora, para avanzar, parseamos el claims sin verificar firma (INSEGURO - SOLO PARA DEMO/DEV ACEPTADO POR AHORA)
-	// OJO: En producción DEBES validar la firma.
-
-	/*
-		token, err := jwt.ParseWithClaims(req.SessionToken, &ShopifySessionTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
-			return []byte(clientSecret), nil
-		})
-	*/
-
-	// SIMULACIÓN DE EXTRACCIÓN DE DOMINIO (Para ilustrar el flujo)
-	// En realidad, decodificamos el payload base64.
-	// El token es header.payload.signature
-	parts := strings.Split(req.SessionToken, ".")
-	if len(parts) != 3 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token format"})
-		return
-	}
-
-	payloadBytes, err := base64.RawURLEncoding.DecodeString(parts[1])
+	// Validar firma HS256 y parsear claims usando golang-jwt/jwt
+	token, err := jwt.ParseWithClaims(req.SessionToken, &ShopifySessionTokenClaims{}, func(token *jwt.Token) (interface{}, error) {
+		// Verificar que el algoritmo sea HMAC (HS256)
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("algoritmo de firma inesperado: %v", token.Header["alg"])
+		}
+		return []byte(clientSecret), nil
+	})
 	if err != nil {
-		h.logger.Error().Err(err).Msg("Error decoding JWT payload")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token encoding"})
+		h.logger.Error().Err(err).Msg("Session token JWT inválido")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token de sesión inválido o expirado"})
 		return
 	}
 
-	var claims ShopifySessionTokenClaims
-	if err := json.Unmarshal(payloadBytes, &claims); err != nil {
-		h.logger.Error().Err(err).Msg("Error unmarshalling JWT claims")
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+	claims, ok := token.Claims.(*ShopifySessionTokenClaims)
+	if !ok || !token.Valid {
+		h.logger.Error().Msg("Claims del session token inválidos")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Token de sesión inválido"})
 		return
 	}
 
 	// El campo 'dest' contiene la URL de la tienda, ej: https://tienda.myshopify.com
 	if claims.Dest == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing 'dest' claim"})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Falta el claim 'dest' en el token"})
 		return
 	}
 
 	// Limpiar el protocolo para obtener solo el dominio
 	shopDomain := strings.TrimPrefix(claims.Dest, "https://")
 
-	// 2. Buscar si existe un business integrado con este shopDomain
-	// Aquí deberías tener un servicio/repositorio para buscar el 'Business' por 'ShopifyDomain'
-	// Como no tengo acceso directo a tu repositorio de 'Business' desde este handler (solo integration),
-	// simularé la respuesta o dejaré el TODO claro.
+	h.logger.Info().Str("shop", shopDomain).Str("sub", claims.Subject).Msg("Login vía Session Token validado")
 
-	// TODO: h.businessService.GetByShopifyShop(shopDomain)
-	// Si encuentro el negocio, genero el token de sesión de TU app.
-
-	h.logger.Info().Str("shop", shopDomain).Msg("Intento de login vía Session Token")
-
-	// RESPUESTA MOCK (Para que el frontend avance):
-	// Si el dominio coincide con algo conocido o simplemente para probar el flujo:
-	// Devolvemos un token dummy o un error específico si no está registrado.
+	// TODO: Buscar el business asociado a este shopDomain e integrar con el sistema de auth
+	// h.businessService.GetByShopifyShop(shopDomain)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Login successful (MOCK)",
+		"message": "Login exitoso",
 		"shop":    shopDomain,
-		"token":   "MOCK_PROBABILITY_TOKEN_" + shopDomain, // Este token lo usaría el frontend para futuras llamadas
 	})
 }

@@ -149,6 +149,7 @@ type IOrderUseCase interface {
 type IIntegrationEventPublisher interface {
 	PublishSyncOrderCreated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 	PublishSyncOrderUpdated(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
+	PublishSyncOrderRejected(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 }
 
 // IOrderRabbitPublisher publica eventos de órdenes a RabbitMQ

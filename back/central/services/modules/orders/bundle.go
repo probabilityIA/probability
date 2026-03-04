@@ -48,7 +48,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	h.RegisterRoutes(router)
 
 	// 5. Inicializar Consumers (background goroutines)
-	startRabbitMQConsumer(rabbitMQ, logger, createUC, repo)
+	startRabbitMQConsumer(rabbitMQ, logger, createUC, repo, integrationEventPub)
 	startWhatsAppConsumer(rabbitMQ, logger, repo, rabbitPublisher)
 
 	return createUC
@@ -123,13 +123,13 @@ func initRequestConfirmationUseCase(repo ports.IRepository, rabbitPublisher port
 }
 
 // startRabbitMQConsumer inicia el consumer de RabbitMQ para órdenes
-func startRabbitMQConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, createUC ports.IOrderCreateUseCase, repo ports.IRepository) {
+func startRabbitMQConsumer(rabbitMQ rabbitmq.IQueue, logger log.ILogger, createUC ports.IOrderCreateUseCase, repo ports.IRepository, eventPub ports.IIntegrationEventPublisher) {
 	if rabbitMQ == nil {
 		logger.Warn(context.Background()).Msg("RabbitMQ no disponible, consumer de órdenes deshabilitado")
 		return
 	}
 
-	consumer := queue.New(rabbitMQ, logger, createUC, repo)
+	consumer := queue.New(rabbitMQ, logger, createUC, repo, eventPub)
 
 	go func() {
 		if err := consumer.Start(context.Background()); err != nil {

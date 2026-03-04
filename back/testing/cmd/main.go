@@ -60,7 +60,17 @@ func main() {
 	}()
 
 	// 4. Initialize Shopify integration (shared between API and CLI)
-	shopifyIntegration := shopify.New(config, logger)
+	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
+	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
+
+	// 4b. Start Shopify Mock API (simula GET /admin/api/2024-10/orders.json)
+	go func() {
+		initialOrders := 500 // Pre-generar 500 órdenes distribuidas en 6 meses
+		if err := shopifyIntegration.Start(initialOrders); err != nil {
+			logger.Error().Msgf("Error starting Shopify Mock API: %s", err.Error())
+			os.Exit(1)
+		}
+	}()
 
 	// 5. Start Testing Platform API (background)
 	apiPort := config.GetWithDefault("TESTING_API_PORT", "9092")
@@ -78,9 +88,10 @@ func main() {
 
 	fmt.Println("========================================")
 	fmt.Printf("Testing Server - Simuladores\n")
-	fmt.Printf("Softpymes HTTP: http://localhost:%s\n", softpymesPort)
-	fmt.Printf("EnvioClick HTTP: http://localhost:%s\n", envioclickPort)
-	fmt.Printf("Testing API:    http://localhost:%s\n", apiPort)
+	fmt.Printf("Softpymes HTTP:    http://localhost:%s\n", softpymesPort)
+	fmt.Printf("EnvioClick HTTP:   http://localhost:%s\n", envioclickPort)
+	fmt.Printf("Shopify Mock API:  http://localhost:%s\n", shopifyMockPort)
+	fmt.Printf("Testing API:       http://localhost:%s\n", apiPort)
 	fmt.Println("========================================")
 
 	// 6. In server mode (Docker), block forever without interactive CLI

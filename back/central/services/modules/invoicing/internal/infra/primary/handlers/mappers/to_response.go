@@ -171,7 +171,7 @@ func ConfigToResponse(config *entities.InvoicingConfig, baseURL string, bucket s
 		CreatedAt:           config.CreatedAt,
 		UpdatedAt:           config.UpdatedAt,
 		BusinessID:          config.BusinessID,
-		IntegrationID:       config.IntegrationID,
+		IntegrationIDs:      config.IntegrationIDs,
 		InvoicingProviderID: invoicingProviderID,
 		Enabled:             config.Enabled,
 		AutoInvoice:         config.AutoInvoice,
@@ -179,8 +179,8 @@ func ConfigToResponse(config *entities.InvoicingConfig, baseURL string, bucket s
 	}
 
 	// Incluir nombres de relaciones si están disponibles
-	if config.IntegrationName != nil {
-		resp.IntegrationName = config.IntegrationName
+	if len(config.IntegrationNames) > 0 {
+		resp.IntegrationNames = config.IntegrationNames
 	}
 
 	if config.ProviderName != nil {

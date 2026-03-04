@@ -93,7 +93,7 @@ export function useInvoicingConfig(businessId?: number) {
     setError(null);
 
     try {
-      await updateConfigAction(id, data);
+      await updateConfigAction(id, data, businessId);
 
       // Recargar configuraciones
       await fetchConfigs();

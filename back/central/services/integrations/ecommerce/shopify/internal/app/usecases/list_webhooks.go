@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/app/usecases/utils"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
 
@@ -26,6 +27,9 @@ func (uc *SyncOrdersUseCase) ListWebhooks(ctx context.Context, integrationID str
 	if !ok || storeName == "" {
 		return nil, fmt.Errorf("store_name no encontrado en la configuración")
 	}
+
+	// En modo test, usar la URL de pruebas
+	storeName = utils.ResolveEffectiveStoreDomain(integration, storeName)
 
 	// Listar webhooks usando el cliente
 	webhooks, err := uc.shopifyClient.ListWebhooks(ctx, storeName, accessToken)

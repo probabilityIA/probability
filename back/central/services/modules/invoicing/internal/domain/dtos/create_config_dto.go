@@ -5,8 +5,9 @@ type CreateConfigDTO struct {
 	// ID del negocio
 	BusinessID uint
 
-	// ID de la integración (fuente de órdenes)
-	IntegrationID uint
+	// IDs de las integraciones de e-commerce (fuentes de órdenes)
+	// Ejemplo: [shopify_integration_id, platform_integration_id]
+	IntegrationIDs []uint
 
 	// ID de la integración de facturación (nuevo campo - FK a integrations)
 	InvoicingIntegrationID uint

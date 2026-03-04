@@ -76,7 +76,7 @@ func CreateConfigRequestToDTO(req *request.CreateConfig, userID uint) *dtos.Crea
 
 	return &dtos.CreateConfigDTO{
 		BusinessID:             req.BusinessID,
-		IntegrationID:          req.IntegrationID,
+		IntegrationIDs:         req.IntegrationIDs,
 		InvoicingIntegrationID: req.InvoicingIntegrationID,
 		InvoicingProviderID:    invoicingProviderID, // Deprecado pero mantener compatibilidad
 		Enabled:                enabled,
@@ -100,6 +100,10 @@ func UpdateConfigRequestToDTO(req *request.UpdateConfig) *dtos.UpdateConfigDTO {
 
 	if req.InvoicingIntegrationID != nil {
 		dto.InvoicingIntegrationID = req.InvoicingIntegrationID
+	}
+
+	if req.IntegrationIDs != nil {
+		dto.IntegrationIDs = req.IntegrationIDs
 	}
 
 	if req.Filters != nil {

@@ -214,21 +214,25 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
 
     const handleShopifyUpdate = async (data: {
         name: string;
-        code: string;
+        code?: string;
         store_id: string;
         config: any;
         credentials: any;
         business_id?: number | null;
+        is_testing?: boolean;
     }) => {
         if (!integration) return;
 
         try {
             const updateData: any = {
                 name: data.name,
-                code: data.code,
                 store_id: data.store_id,
                 config: data.config,
+                is_testing: data.is_testing,
             };
+            if (data.code) {
+                updateData.code = data.code;
+            }
             // Solo incluir credenciales si hay valores ingresados
             if (data.credentials && Object.keys(data.credentials).some(k => data.credentials[k])) {
                 updateData.credentials = data.credentials;
@@ -294,6 +298,8 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         config: parsedConfig as any,
                         credentials: integration.credentials as any,
                         business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType?.base_url_test,
                     }}
                     isEdit={true}
                     integrationId={integration.id}

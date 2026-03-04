@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
@@ -24,11 +23,7 @@ type ListWebhooksResponse struct {
 
 // ListWebhooks lista todos los webhooks de la tienda de Shopify
 func (c *shopifyClient) ListWebhooks(ctx context.Context, storeName, accessToken string) ([]domain.WebhookInfo, error) {
-	// Normalizar el nombre de la tienda (remover .myshopify.com si está presente)
-	shop := strings.TrimSuffix(storeName, ".myshopify.com")
-
-	// Construir la URL según el formato de Shopify API
-	url := fmt.Sprintf("https://%s.myshopify.com/admin/api/2024-10/webhooks.json", shop)
+	url := buildURL(storeName, "/admin/api/2024-10/webhooks.json")
 
 	var result ListWebhooksResponse
 	var errorResponse struct {
@@ -48,6 +43,11 @@ func (c *shopifyClient) ListWebhooks(ctx context.Context, storeName, accessToken
 	}
 
 	if resp.StatusCode() != http.StatusOK {
+		// 404 = no hay webhooks configurados, retornar lista vacía
+		if resp.StatusCode() == http.StatusNotFound {
+			return []domain.WebhookInfo{}, nil
+		}
+
 		// Si hay errores en la respuesta
 		if len(errorResponse.Errors) > 0 {
 			return nil, fmt.Errorf("error al listar webhooks en Shopify: %v", errorResponse.Errors)
@@ -59,8 +59,6 @@ func (c *shopifyClient) ListWebhooks(ctx context.Context, storeName, accessToken
 			return nil, fmt.Errorf("token de acceso inválido o expirado")
 		case http.StatusForbidden: // 403
 			return nil, fmt.Errorf("acceso denegado. Verifica que la app tenga permisos para listar webhooks")
-		case http.StatusNotFound: // 404
-			return nil, fmt.Errorf("tienda no encontrada: %s", storeName)
 		case http.StatusTooManyRequests: // 429
 			return nil, fmt.Errorf("demasiadas solicitudes a Shopify. Intenta nuevamente en unos minutos")
 		default:

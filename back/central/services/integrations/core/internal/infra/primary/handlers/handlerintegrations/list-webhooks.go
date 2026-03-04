@@ -1,6 +1,7 @@
 package handlerintegrations
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,46 @@ func (h *IntegrationHandler) ListWebhooksHandler(c *gin.Context) {
 
 	c.JSON(http.StatusOK, response.ListWebhooksResponse{
 		Success: true,
-		Data:    webhooks,
+		Data:    mapWebhooksToResponse(webhooks),
 	})
 }
 
+// mapWebhooksToResponse convierte []interface{} (domain structs sin JSON tags) a []WebhookInfoResponse (con JSON tags snake_case)
+func mapWebhooksToResponse(webhooks []interface{}) []response.WebhookInfoResponse {
+	if len(webhooks) == 0 {
+		return []response.WebhookInfoResponse{}
+	}
+
+	// Los domain structs no tienen JSON tags, se serializan como PascalCase
+	data, err := json.Marshal(webhooks)
+	if err != nil {
+		return []response.WebhookInfoResponse{}
+	}
+
+	var rawList []map[string]interface{}
+	if err := json.Unmarshal(data, &rawList); err != nil {
+		return []response.WebhookInfoResponse{}
+	}
+
+	result := make([]response.WebhookInfoResponse, 0, len(rawList))
+	for _, raw := range rawList {
+		result = append(result, response.WebhookInfoResponse{
+			ID:        getStringField(raw, "ID"),
+			Address:   getStringField(raw, "Address"),
+			Topic:     getStringField(raw, "Topic"),
+			Format:    getStringField(raw, "Format"),
+			CreatedAt: getStringField(raw, "CreatedAt"),
+			UpdatedAt: getStringField(raw, "UpdatedAt"),
+		})
+	}
+	return result
+}
+
+func getStringField(m map[string]interface{}, key string) string {
+	if v, ok := m[key]; ok {
+		if s, ok := v.(string); ok {
+			return s
+		}
+	}
+	return ""
+}

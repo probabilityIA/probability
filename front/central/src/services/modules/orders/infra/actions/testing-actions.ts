@@ -4,6 +4,27 @@ import { getAuthToken } from '@/shared/utils/server-auth';
 import { env } from '@/shared/config/env';
 import { SimulateShopifyResult } from '../../domain/types';
 
+export async function deleteAllOrdersAction(businessId: number): Promise<{ deleted: number }> {
+    const token = await getAuthToken();
+    if (!token) {
+        throw new Error('No autorizado');
+    }
+
+    const response = await fetch(`${env.TESTING_API_URL}/orders?business_id=${businessId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    });
+
+    if (!response.ok) {
+        const errorBody = await response.text();
+        throw new Error(`Error ${response.status}: ${errorBody}`);
+    }
+
+    return response.json();
+}
+
 interface SimulateShopifyResponse {
     success: boolean;
     data?: SimulateShopifyResult;

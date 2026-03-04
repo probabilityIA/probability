@@ -17,16 +17,15 @@ func extractShipmentStatusFromFulfillments(fulfillments []response.Fulfillment, 
 		// Buscar el fulfillment más reciente con shipment_status
 		var latestShipmentStatus *string
 		var latestUpdatedAt time.Time
-		var foundDelivered bool
-		
+
 		for _, fulfillment := range fulfillments {
 			if fulfillment.ShipmentStatus != nil {
 				// Priorizar "delivered" sobre otros estados
 				if *fulfillment.ShipmentStatus == "delivered" {
 					return *fulfillment.ShipmentStatus
 				}
-				// Si no hay delivered, tomar el más reciente
-				if !foundDelivered && (latestShipmentStatus == nil || fulfillment.UpdatedAt.After(latestUpdatedAt)) {
+				// Tomar el más reciente
+				if latestShipmentStatus == nil || fulfillment.UpdatedAt.After(latestUpdatedAt) {
 					latestShipmentStatus = fulfillment.ShipmentStatus
 					latestUpdatedAt = fulfillment.UpdatedAt
 				}
@@ -51,6 +50,7 @@ func extractShipmentStatusFromFulfillments(fulfillments []response.Fulfillment, 
 // MapOrderResponseToShopifyOrder mapea una Order de respuesta de Shopify a ShopifyOrder del dominio
 func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, businessID *uint, integrationID uint, integrationType string) domain.ShopifyOrder {
 	// Convertir precios de string a float64 (shop_money - USD)
+	// ParseFloat devuelve 0.0 en caso de error, que es un default seguro para campos monetarios
 	totalAmount, _ := strconv.ParseFloat(orderResp.TotalPrice, 64)
 
 	// Extraer precios en presentment_money (moneda local) si están disponibles

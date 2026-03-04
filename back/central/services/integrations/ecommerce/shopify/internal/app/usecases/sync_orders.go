@@ -39,6 +39,9 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 		return fmt.Errorf("failed to extract store name: %w", err)
 	}
 
+	// En modo test, usar la URL de pruebas (base_url_test) en vez del dominio de Shopify
+	storeDomain = utils.ResolveEffectiveStoreDomain(integration, storeDomain)
+
 	accessToken, err := utils.GetAccessToken(ctx, uc.integrationService, integrationID)
 	if err != nil {
 		return err
@@ -74,12 +77,24 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 		params.FulfillmentStatus = syncParams.FulfillmentStatus
 	}
 
-	fmt.Printf("[SyncOrders] Starting sync for integration %s. Params: CreatedAtMin=%v, CreatedAtMax=%v, Status=%s, FinancialStatus=%s, FulfillmentStatus=%s\n",
-		integrationID, params.CreatedAtMin, params.CreatedAtMax, params.Status, params.FinancialStatus, params.FulfillmentStatus)
+	// Parsear integration ID a uint para eventos SSE
+	integrationIDUint, err := strconv.ParseUint(integrationID, 10, 32)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Str("integration_id", integrationID).Msg("integration_id inválido")
+		return fmt.Errorf("%w: %s", domain.ErrInvalidIntegrationID, integrationID)
+	}
+	intIDUint := uint(integrationIDUint)
+
+	uc.log.Info(ctx).
+		Str("integration_id", integrationID).
+		Interface("created_at_min", params.CreatedAtMin).
+		Interface("created_at_max", params.CreatedAtMax).
+		Str("status", params.Status).
+		Str("financial_status", params.FinancialStatus).
+		Str("fulfillment_status", params.FulfillmentStatus).
+		Msg("Iniciando sincronización de órdenes")
 
 	// Publicar evento de inicio de sincronización
-	integrationIDUint, _ := strconv.ParseUint(integrationID, 10, 32)
-	intIDUint := uint(integrationIDUint)
 	uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.started", map[string]interface{}{
 		"integration_id":   intIDUint,
 		"integration_type": "shopify",
@@ -93,35 +108,30 @@ func (uc *SyncOrdersUseCase) SyncOrdersWithParams(ctx context.Context, integrati
 		"started_at": time.Now(),
 	})
 
-	go func() {
-		ctx := context.Background()
-		startTime := time.Now()
-		var totalOrders, createdOrders, updatedOrders, rejectedOrders int
+	startTime := time.Now()
 
-		if err := uc.GetOrders(ctx, integration, storeDomain, accessToken, params); err != nil {
-			fmt.Printf("[SyncOrders] Error in GetOrders: %v\n", err)
-			// Publicar evento de sincronización fallida
-			uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.failed", map[string]interface{}{
-				"integration_id":   intIDUint,
-				"integration_type": "shopify",
-				"error":            err.Error(),
-				"failed_at":        time.Now(),
-			})
-			return
-		}
-
-		// Publicar evento de sincronización completada
-		uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.completed", map[string]interface{}{
+	totalFetched, err := uc.GetOrders(ctx, integration, storeDomain, accessToken, params)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).Str("integration_id", integrationID).Msg("Error en GetOrders")
+		// Publicar evento de sincronización fallida
+		uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.failed", map[string]interface{}{
 			"integration_id":   intIDUint,
 			"integration_type": "shopify",
-			"total_orders":     totalOrders,
-			"created_orders":   createdOrders,
-			"updated_orders":   updatedOrders,
-			"rejected_orders":  rejectedOrders,
-			"duration":         time.Since(startTime).String(),
-			"completed_at":     time.Now(),
+			"error":            err.Error(),
+			"failed_at":        time.Now(),
 		})
-	}()
+		return err
+	}
+
+	// Publicar evento de sincronización completada
+	// total_fetched = órdenes publicadas a la cola (aún no procesadas por consumers)
+	uc.syncEventPublisher.PublishSyncEvent(ctx, intIDUint, integration.BusinessID, "integration.sync.completed", map[string]interface{}{
+		"integration_id":   intIDUint,
+		"integration_type": "shopify",
+		"total_fetched":    totalFetched,
+		"duration":         time.Since(startTime).String(),
+		"completed_at":     time.Now(),
+	})
 
 	return nil
 }

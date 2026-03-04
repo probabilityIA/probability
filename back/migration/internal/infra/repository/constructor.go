@@ -93,6 +93,135 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to drop orders.items column: %w", err)
 	}
 
+	// Migrate InvoicingConfig: join table for multiple integration_ids
+	if err := r.migrateInvoicingConfigIntegrations(ctx); err != nil {
+		return fmt.Errorf("failed to migrate invoicing config integrations: %w", err)
+	}
+
+	return nil
+}
+
+// migrateInvoicingConfigIntegrations crea la tabla pivote invoicing_config_integrations,
+// migra los integration_id existentes a ella, y elimina la columna integration_id de invoicing_configs.
+// Es idempotente: detecta si ya fue ejecutada verificando si la columna integration_id existe.
+func (r *Repository) migrateInvoicingConfigIntegrations(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Crear la tabla join (idempotente via AutoMigrate)
+	if err := db.AutoMigrate(&models.InvoicingConfigIntegration{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate invoicing_config_integrations: %w", err)
+	}
+
+	// 2. Si la columna legacy integration_id todavía existe, migrar y limpiar
+	if db.Migrator().HasColumn("invoicing_configs", "integration_id") {
+		// 3. Leer configs con integration_id legacy usando GORM (struct temporal para scan)
+		type legacyRow struct {
+			ID            uint
+			IntegrationID uint
+		}
+		var legacyRows []legacyRow
+		if err := db.Model(&models.InvoicingConfig{}).
+			Select("id, integration_id").
+			Where("integration_id IS NOT NULL AND integration_id > ?", 0).
+			Scan(&legacyRows).Error; err != nil {
+			return fmt.Errorf("failed to query legacy configs: %w", err)
+		}
+
+		// 4. Insertar en join table sólo las filas que no existen aún
+		for _, row := range legacyRows {
+			var count int64
+			db.Model(&models.InvoicingConfigIntegration{}).
+				Where("config_id = ? AND integration_id = ? AND deleted_at IS NULL",
+					row.ID, row.IntegrationID).
+				Count(&count)
+			if count == 0 {
+				entry := models.InvoicingConfigIntegration{
+					ConfigID:      row.ID,
+					IntegrationID: row.IntegrationID,
+				}
+				if err := db.Create(&entry).Error; err != nil {
+					return fmt.Errorf("failed to create join entry for config %d: %w", row.ID, err)
+				}
+			}
+		}
+
+		// 5. Eliminar la columna legacy via Migrator (usa ALTER TABLE internamente, seguro)
+		if err := db.Migrator().DropColumn("invoicing_configs", "integration_id"); err != nil {
+			return fmt.Errorf("failed to drop integration_id column: %w", err)
+		}
+	}
+
+	// 6. Eliminar el viejo unique index via Migrator
+	if db.Migrator().HasIndex("invoicing_configs", "idx_business_integration_config") {
+		if err := db.Migrator().DropIndex("invoicing_configs", "idx_business_integration_config"); err != nil {
+			return fmt.Errorf("failed to drop idx_business_integration_config: %w", err)
+		}
+	}
+
+	// 7. Deduplicar: por cada (business_id, invoicing_integration_id) con múltiples registros activos,
+	// conservar el de menor id, reasignar join entries al superviviente, soft-delete el resto.
+	type dupGroup struct {
+		BusinessID             uint
+		InvoicingIntegrationID uint
+		MinID                  uint
+	}
+	var groups []dupGroup
+	if err := db.Model(&models.InvoicingConfig{}).
+		Select("business_id, invoicing_integration_id, MIN(id) AS min_id").
+		Where("invoicing_integration_id IS NOT NULL AND deleted_at IS NULL").
+		Group("business_id, invoicing_integration_id").
+		Having("COUNT(*) > 1").
+		Scan(&groups).Error; err != nil {
+		return fmt.Errorf("failed to query duplicate configs: %w", err)
+	}
+
+	for _, g := range groups {
+		// Obtener IDs de los configs duplicados (todos excepto el superviviente)
+		var duplicateIDs []uint
+		if err := db.Model(&models.InvoicingConfig{}).
+			Where("business_id = ? AND invoicing_integration_id = ? AND id != ? AND deleted_at IS NULL",
+				g.BusinessID, g.InvoicingIntegrationID, g.MinID).
+			Pluck("id", &duplicateIDs).Error; err != nil {
+			return fmt.Errorf("failed to find duplicate config ids: %w", err)
+		}
+
+		for _, dupID := range duplicateIDs {
+			// Leer join entries del duplicado
+			var joinEntries []models.InvoicingConfigIntegration
+			if err := db.Where("config_id = ? AND deleted_at IS NULL", dupID).
+				Find(&joinEntries).Error; err != nil {
+				continue
+			}
+			// Reasignar cada entry al config superviviente si no existe ya
+			for _, entry := range joinEntries {
+				var exists int64
+				db.Model(&models.InvoicingConfigIntegration{}).
+					Where("config_id = ? AND integration_id = ? AND deleted_at IS NULL",
+						g.MinID, entry.IntegrationID).
+					Count(&exists)
+				if exists == 0 {
+					db.Model(&models.InvoicingConfigIntegration{}).
+						Where("id = ?", entry.ID).
+						Update("config_id", g.MinID)
+				}
+			}
+			// Soft-delete el config duplicado via GORM (respeta gorm.Model.DeletedAt)
+			db.Delete(&models.InvoicingConfig{}, dupID)
+		}
+	}
+
+	// 8. Crear índice único parcial (DDL estático, sin valores de usuario — no hay riesgo de inyección)
+	// GORM no soporta índices parciales via struct tags, por eso se usa Exec con SQL estático.
+	if !db.Migrator().HasIndex("invoicing_configs", "idx_business_invoicing_integration") {
+		if err := db.Exec(
+			`CREATE UNIQUE INDEX idx_business_invoicing_integration
+			 ON invoicing_configs (business_id, invoicing_integration_id)
+			 WHERE invoicing_integration_id IS NOT NULL AND deleted_at IS NULL`,
+		).Error; err != nil {
+			return fmt.Errorf("failed to create idx_business_invoicing_integration: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -1146,6 +1275,19 @@ func (r *Repository) migrateOrderItemsFromJSONB(ctx context.Context) error {
 		Name     string  `json:"name"`
 		Price    float64 `json:"price"`
 		Quantity int     `json:"quantity"`
+	}
+
+	// Check if orders.items column still exists (idempotency)
+	var colExists int64
+	db.Raw(`
+		SELECT COUNT(*) FROM information_schema.columns
+		WHERE table_schema = CURRENT_SCHEMA()
+		  AND table_name = 'orders'
+		  AND column_name = 'items'
+	`).Scan(&colExists)
+	if colExists == 0 {
+		// Column already dropped — migration was previously completed
+		return nil
 	}
 
 	var rows []orderRow

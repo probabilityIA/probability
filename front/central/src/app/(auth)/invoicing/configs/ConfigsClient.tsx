@@ -11,6 +11,7 @@ import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
+import { Modal } from '@/shared/ui/modal';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import {
   deleteConfigAction,
@@ -19,9 +20,11 @@ import {
   enableAutoInvoiceAction,
   disableAutoInvoiceAction,
 } from '@/services/modules/invoicing/infra/actions';
+import { InvoicingConfigForm } from '@/services/modules/invoicing/ui/components/InvoicingConfigForm';
 import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
 import type { BusinessSimple } from '@/services/auth/business/domain/types';
 import { useRouter } from 'next/navigation';
+import { PencilSquareIcon } from '@heroicons/react/24/outline';
 
 interface ConfigsClientProps {
   initialConfigs: InvoicingConfig[];
@@ -37,6 +40,8 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
   const [configs, setConfigs] = useState<InvoicingConfig[]>(initialConfigs);
   const [selectedConfig, setSelectedConfig] = useState<InvoicingConfig | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingConfig, setEditingConfig] = useState<InvoicingConfig | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -170,7 +175,13 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
       label: 'Integración',
       render: (_: unknown, config: InvoicingConfig) => (
         <div>
-          <div className="font-medium">{config.integration_name || `ID: ${config.integration_id}`}</div>
+          <div className="font-medium">
+            {config.integration_names && config.integration_names.length > 0
+              ? config.integration_names.join(', ')
+              : config.integration_ids && config.integration_ids.length > 0
+                ? config.integration_ids.map(id => `ID: ${id}`).join(', ')
+                : '—'}
+          </div>
           {config.description && (
             <div className="text-xs text-gray-500">{config.description}</div>
           )}
@@ -262,17 +273,31 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
       key: 'actions',
       label: 'Acciones',
       render: (_: unknown, config: InvoicingConfig) => (
-        <Button
-          variant="danger"
-          size="sm"
-          onClick={() => {
-            setSelectedConfig(config);
-            setShowDeleteModal(true);
-          }}
-          disabled={actionLoading}
-        >
-          Eliminar
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              setEditingConfig(config);
+              setShowEditModal(true);
+            }}
+            disabled={actionLoading}
+          >
+            <PencilSquareIcon className="w-4 h-4 mr-1" />
+            Editar
+          </Button>
+          <Button
+            variant="danger"
+            size="sm"
+            onClick={() => {
+              setSelectedConfig(config);
+              setShowDeleteModal(true);
+            }}
+            disabled={actionLoading}
+          >
+            Eliminar
+          </Button>
+        </div>
       ),
     },
   ];
@@ -410,6 +435,31 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
         cancelText="Cancelar"
         type="danger"
       />
+
+      <Modal
+        isOpen={showEditModal}
+        onClose={() => { setShowEditModal(false); setEditingConfig(null); }}
+        title="Editar Configuración"
+        size="md"
+      >
+        {editingConfig && (
+          <div className="p-4">
+            <InvoicingConfigForm
+              integrationIds={editingConfig.integration_ids ?? []}
+              invoicingIntegrationId={editingConfig.invoicing_integration_id ?? editingConfig.invoicing_provider_id ?? 0}
+              businessId={editingConfig.business_id}
+              initialData={editingConfig}
+              onSuccess={() => {
+                setShowEditModal(false);
+                setEditingConfig(null);
+                showToast('Configuración actualizada exitosamente', 'success');
+                router.refresh();
+              }}
+              onCancel={() => { setShowEditModal(false); setEditingConfig(null); }}
+            />
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }
