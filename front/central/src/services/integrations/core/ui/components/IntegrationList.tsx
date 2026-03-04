@@ -425,7 +425,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                             if (!prev) return prev;
                             const updatedBatches = prev.batches.map((b, _i) => {
                                 if (b.batchIndex === batchIndex) {
-                                    return { ...b, status: 'completed' as const, duration, completedAt: new Date(), dateFrom: batchDateFrom || b.dateFrom, dateTo: batchDateTo || b.dateTo };
+                                    // Usar totalFetched como orderCount final (los order events llegan después de batch.completed)
+                                    return { ...b, status: 'completed' as const, duration, completedAt: new Date(), dateFrom: batchDateFrom || b.dateFrom, dateTo: batchDateTo || b.dateTo, orderCount: b.totalFetched ?? b.orderCount };
                                 }
                                 return b;
                             });
