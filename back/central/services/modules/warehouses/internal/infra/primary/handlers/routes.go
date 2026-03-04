@@ -1,10 +1,14 @@
 package handlers
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
+)
 
 // RegisterRoutes registra todas las rutas del módulo warehouses
 func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	warehouses := router.Group("/warehouses")
+	warehouses.Use(middleware.JWT())
 	{
 		warehouses.GET("", h.ListWarehouses)
 		warehouses.POST("", h.CreateWarehouse)
