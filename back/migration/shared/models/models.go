@@ -231,7 +231,7 @@ type BusinessStaff struct {
 // ───────────────────────────────────────────
 type Client struct {
 	gorm.Model
-	BusinessID uint    `gorm:"not null;index;uniqueIndex:idx_business_client_email,priority:1"`
+	BusinessID uint    `gorm:"not null;index;uniqueIndex:idx_business_client_email,priority:1;uniqueIndex:idx_business_client_dni,priority:1"`
 	Name       string  `gorm:"size:255;not null"`
 	Email      *string `gorm:"size:255;uniqueIndex:idx_business_client_email,priority:2"`
 	Phone      string  `gorm:"size:20"`

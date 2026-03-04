@@ -98,6 +98,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate invoicing config integrations: %w", err)
 	}
 
+	// Fix client DNI unique index: was UNIQUE(dni) global, should be UNIQUE(business_id, dni)
+	// to allow same DNI across different businesses (multi-tenant)
+	if err := r.fixClientDniIndex(ctx); err != nil {
+		return fmt.Errorf("failed to fix client DNI index: %w", err)
+	}
+
 	return nil
 }
 
@@ -1362,6 +1368,30 @@ func (r *Repository) migrateOrderItemsFromJSONB(ctx context.Context) error {
 				return fmt.Errorf("failed to create order_item for order %s: %w", row.ID, err)
 			}
 		}
+	}
+
+	return nil
+}
+
+// fixClientDniIndex corrige el índice único de DNI en la tabla client.
+// El índice original era UNIQUE(dni) global, lo cual impedía que dos negocios
+// tuvieran clientes con el mismo DNI. Se cambia a UNIQUE(business_id, dni)
+// con filtro parcial para soportar multi-tenant correctamente.
+func (r *Repository) fixClientDniIndex(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Eliminar el índice viejo global UNIQUE(dni)
+	if err := db.Exec(`DROP INDEX IF EXISTS idx_business_client_dni`).Error; err != nil {
+		return fmt.Errorf("failed to drop old idx_business_client_dni: %w", err)
+	}
+
+	// 2. Crear nuevo índice compuesto UNIQUE(business_id, dni) con filtro parcial
+	if err := db.Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_business_client_dni
+		ON client (business_id, dni)
+		WHERE dni IS NOT NULL AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to create new idx_business_client_dni: %w", err)
 	}
 
 	return nil

@@ -38,7 +38,7 @@ export const createOrderAction = async (data: CreateOrderDTO) => {
         return await (await getUseCases()).createOrder(data);
     } catch (error: any) {
         console.error('Create Order Action Error:', error.message);
-        throw new Error(error.message);
+        return { success: false, message: error.message || 'Error al crear orden', data: null };
     }
 };
 
