@@ -204,6 +204,7 @@ func (uc *IntegrationUseCase) mapToPublicIntegration(integration *domain.Integra
 		Name:            integration.Name,
 		StoreID:         integration.StoreID,
 		IntegrationType: integrationTypeID,
+		IsActive:        integration.IsActive,
 		Config:          config,
 		IsTesting:       integration.IsTesting,
 	}

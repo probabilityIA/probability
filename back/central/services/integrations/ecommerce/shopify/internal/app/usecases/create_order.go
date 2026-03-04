@@ -25,6 +25,11 @@ func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string,
 		return fmt.Errorf("failed to get integration by store domain: %w", err)
 	}
 
+	if !integration.IsActive {
+		uc.log.Warn(ctx).Uint("integration_id", integration.ID).Str("shop_domain", shopDomain).Msg("Integration is inactive, skipping webhook")
+		return domain.ErrIntegrationInactive
+	}
+
 	order.BusinessID = integration.BusinessID
 	order.IntegrationID = integration.ID
 	order.IntegrationType = "shopify"
