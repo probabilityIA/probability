@@ -57,14 +57,17 @@ func (r *Repository) CreateInvoicingConfig(ctx context.Context, config *entities
 		Interface("integration_ids", config.IntegrationIDs).
 		Msg("Invoicing config created")
 
-	// Guardar en caché por cada integration_id
+	// Guardar en caché por cada integration_id (síncrono para consistencia)
 	for _, integrationID := range config.IntegrationIDs {
-		id := integrationID
-		go r.configCache.Set(context.Background(), id, config)
+		if err := r.configCache.Set(context.Background(), integrationID, config); err != nil {
+			r.log.Warn(ctx).Err(err).Uint("integration_id", integrationID).Msg("Failed to cache new config")
+		}
 	}
 
 	// Invalidar caché de negocio para forzar re-lectura desde BD
-	go r.configCache.InvalidateByBusinessID(context.Background(), config.BusinessID)
+	if err := r.configCache.InvalidateByBusinessID(context.Background(), config.BusinessID); err != nil {
+		r.log.Warn(ctx).Err(err).Uint("business_id", config.BusinessID).Msg("Failed to invalidate business config cache")
+	}
 
 	return nil
 }
@@ -237,24 +240,30 @@ func (r *Repository) UpdateInvoicingConfig(ctx context.Context, config *entities
 
 	r.log.Info(ctx).Uint("config_id", config.ID).Msg("Invoicing config updated")
 
-	// Invalidar caché para IDs anteriores
+	// Invalidar caché de forma SÍNCRONA para garantizar consistencia inmediata.
+	// Antes era async (goroutines) y causaba que el caché sirviera valores stale
+	// después de desactivar la facturación.
 	for _, integrationID := range oldIntegrationIDs {
-		id := integrationID
-		go r.configCache.Invalidate(context.Background(), id)
+		if err := r.configCache.Invalidate(context.Background(), integrationID); err != nil {
+			r.log.Warn(ctx).Err(err).Uint("integration_id", integrationID).Msg("Failed to invalidate config cache")
+		}
 	}
 
-	// Actualizar caché con nuevos IDs
+	// Re-cachear con datos actualizados
 	newIDs := config.IntegrationIDs
 	if len(newIDs) == 0 {
 		newIDs = oldIntegrationIDs // Si no cambiaron, re-cachear con los mismos
 	}
 	for _, integrationID := range newIDs {
-		id := integrationID
-		go r.configCache.Set(context.Background(), id, config)
+		if err := r.configCache.Set(context.Background(), integrationID, config); err != nil {
+			r.log.Warn(ctx).Err(err).Uint("integration_id", integrationID).Msg("Failed to re-cache config")
+		}
 	}
 
 	// Invalidar caché de negocio para forzar re-lectura desde BD
-	go r.configCache.InvalidateByBusinessID(context.Background(), config.BusinessID)
+	if err := r.configCache.InvalidateByBusinessID(context.Background(), config.BusinessID); err != nil {
+		r.log.Warn(ctx).Err(err).Uint("business_id", config.BusinessID).Msg("Failed to invalidate business config cache")
+	}
 
 	return nil
 }
@@ -285,14 +294,17 @@ func (r *Repository) DeleteInvoicingConfig(ctx context.Context, id uint) error {
 
 	r.log.Info(ctx).Uint("config_id", id).Msg("Invoicing config permanently deleted (hard delete)")
 
-	// Invalidar caché para todos los integration IDs
+	// Invalidar caché para todos los integration IDs (síncrono para consistencia)
 	for _, integrationID := range integrationIDs {
-		integID := integrationID
-		go r.configCache.Invalidate(context.Background(), integID)
+		if err := r.configCache.Invalidate(context.Background(), integrationID); err != nil {
+			r.log.Warn(ctx).Err(err).Uint("integration_id", integrationID).Msg("Failed to invalidate config cache on delete")
+		}
 	}
 
 	// Invalidar caché de negocio
-	go r.configCache.InvalidateByBusinessID(context.Background(), model.BusinessID)
+	if err := r.configCache.InvalidateByBusinessID(context.Background(), model.BusinessID); err != nil {
+		r.log.Warn(ctx).Err(err).Uint("business_id", model.BusinessID).Msg("Failed to invalidate business config cache on delete")
+	}
 
 	return nil
 }
