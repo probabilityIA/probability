@@ -196,6 +196,16 @@ func (c *IntegrationCache) InvalidateIntegration(ctx context.Context, integratio
 	return nil
 }
 
+// InvalidateMetadata elimina solo metadata de cache, preservando credentials
+func (c *IntegrationCache) InvalidateMetadata(ctx context.Context, integrationID uint) error {
+	if err := c.redis.Delete(ctx, integrationKey(integrationID)); err != nil {
+		c.log.Warn(ctx).Err(err).Msg("Failed to delete metadata cache")
+	}
+
+	c.log.Info(ctx).Uint("integration_id", integrationID).Msg("🗑️ Metadata cache invalidated")
+	return nil
+}
+
 // GetByCode busca por código usando index
 func (c *IntegrationCache) GetByCode(ctx context.Context, code string) (*domain.CachedIntegration, error) {
 	// 1. Get ID from index

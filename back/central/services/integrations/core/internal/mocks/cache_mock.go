@@ -48,6 +48,11 @@ func (m *CacheMock) InvalidateIntegration(ctx context.Context, integrationID uin
 	return args.Error(0)
 }
 
+func (m *CacheMock) InvalidateMetadata(ctx context.Context, integrationID uint) error {
+	args := m.Called(ctx, integrationID)
+	return args.Error(0)
+}
+
 func (m *CacheMock) GetByCode(ctx context.Context, code string) (*domain.CachedIntegration, error) {
 	args := m.Called(ctx, code)
 	if args.Get(0) == nil {

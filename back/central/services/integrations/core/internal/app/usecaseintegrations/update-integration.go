@@ -90,9 +90,18 @@ func (uc *IntegrationUseCase) UpdateIntegration(ctx context.Context, id uint, dt
 		existing.Credentials = nil
 	}
 
-	// ✅ NUEVO - Invalidar cache antes de actualizar
-	if err := uc.cache.InvalidateIntegration(ctx, id); err != nil {
-		uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate cache")
+	// Invalidar cache antes de actualizar
+	// Si solo cambia config/metadata, no borrar credentials cache (evita "no credentials found")
+	if dto.Credentials != nil {
+		// Credenciales cambiaron → invalidar todo (metadata + credentials)
+		if err := uc.cache.InvalidateIntegration(ctx, id); err != nil {
+			uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate cache")
+		}
+	} else {
+		// Solo metadata/config cambió → invalidar solo metadata, preservar credentials cache
+		if err := uc.cache.InvalidateMetadata(ctx, id); err != nil {
+			uc.log.Warn(ctx).Err(err).Msg("Failed to invalidate metadata cache")
+		}
 	}
 
 	// Guardar cambios
