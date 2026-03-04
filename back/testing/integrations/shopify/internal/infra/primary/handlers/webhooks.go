@@ -37,6 +37,17 @@ func (h *Handler) handleGetShop(c *gin.Context) {
 		return
 	}
 
+	// Obtener currency de la config del business (USD para dual-currency, COP por defecto)
+	shopCurrency := "COP"
+	moneyFormat := "$ {{amount_no_decimals}}"
+	config := h.mockAPI.GetBusinessConfig()
+	if config != nil && config.ShopCurrency != "" {
+		shopCurrency = config.ShopCurrency
+		if shopCurrency == "USD" {
+			moneyFormat = "${{amount}}"
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"shop": gin.H{
 			"id":                      1,
@@ -49,8 +60,8 @@ func (h *Handler) handleGetShop(c *gin.Context) {
 			"zip":                     "110111",
 			"city":                    "Bogotá",
 			"phone":                   "+573001234567",
-			"currency":                "COP",
-			"money_format":            "$ {{amount_no_decimals}}",
+			"currency":                shopCurrency,
+			"money_format":            moneyFormat,
 			"plan_name":               "developer",
 			"myshopify_domain":        "mock-probability.myshopify.com",
 			"iana_timezone":           "America/Bogota",

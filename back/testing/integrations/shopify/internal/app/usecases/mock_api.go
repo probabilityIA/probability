@@ -23,14 +23,19 @@ type MockAPIServer struct {
 }
 
 // NewMockAPIServer crea un nuevo servidor mock de Shopify API.
-func NewMockAPIServer(logger log.ILogger) *MockAPIServer {
+func NewMockAPIServer(logger log.ILogger, businessConfig *domain.BusinessConfig) *MockAPIServer {
 	return &MockAPIServer{
 		orders:         make([]*domain.Order, 0),
 		dataGenerator:  NewRandomDataGenerator(),
-		businessConfig: domain.DefaultTestBusinessConfig(),
+		businessConfig: businessConfig,
 		logger:         logger,
 		orderSeq:       1000,
 	}
+}
+
+// GetBusinessConfig retorna la configuración del business para uso en handlers
+func (m *MockAPIServer) GetBusinessConfig() *domain.BusinessConfig {
+	return m.businessConfig
 }
 
 // GenerateOrders pre-genera N órdenes distribuidas en un rango de fechas.
@@ -209,7 +214,16 @@ func (m *MockAPIServer) matchesFilters(order *domain.Order, params OrderQueryPar
 }
 
 // generateOrderAtDate genera una orden con un created_at específico.
+// Delega a OrderSimulator para reutilizar la lógica dual-currency.
 func (m *MockAPIServer) generateOrderAtDate(orderNumber string, createdAt time.Time) *domain.Order {
+	if m.businessConfig.IsDualCurrency() {
+		return m.generateDualCurrencyOrderAtDate(orderNumber, createdAt)
+	}
+	return m.generateSingleCurrencyOrderAtDate(orderNumber, createdAt)
+}
+
+// generateSingleCurrencyOrderAtDate genera una orden single-currency con created_at específico
+func (m *MockAPIServer) generateSingleCurrencyOrderAtDate(orderNumber string, createdAt time.Time) *domain.Order {
 	orderID := int64(rand.Intn(9999999999) + 1000000000)
 	currency := "COP"
 
@@ -328,6 +342,161 @@ func (m *MockAPIServer) generateOrderAtDate(orderNumber string, createdAt time.T
 		Refunds:                  []domain.Refund{},
 		ShippingAddress:          m.dataGenerator.GenerateAddress(),
 		ShippingLines:            shippingLines,
+	}
+
+	return order
+}
+
+// generateDualCurrencyOrderAtDate genera una orden dual-currency USD/COP con created_at específico
+func (m *MockAPIServer) generateDualCurrencyOrderAtDate(orderNumber string, createdAt time.Time) *domain.Order {
+	orderID := int64(rand.Intn(9999999999) + 1000000000)
+	exchangeRate := m.businessConfig.ExchangeRate
+
+	customer := m.dataGenerator.GenerateCustomer()
+	customer.Currency = "COP"
+
+	lineItems := m.dataGenerator.GenerateDualCurrencyLineItems(rand.Intn(3)+1, exchangeRate)
+
+	// Calcular totales en COP (precios incluyen IVA)
+	totalCOP := 0.0
+	totalTaxCOP := 0.0
+	for _, item := range lineItems {
+		var copPrice float64
+		fmt.Sscanf(item.PriceSet.PresentmentMoney.Amount, "%f", &copPrice)
+		totalCOP += copPrice * float64(item.Quantity)
+		for _, tax := range item.TaxLines {
+			var taxCOP float64
+			fmt.Sscanf(tax.PriceSet.PresentmentMoney.Amount, "%f", &taxCOP)
+			totalTaxCOP += taxCOP
+		}
+	}
+
+	subtotalCOP := totalCOP - totalTaxCOP
+
+	shippingLines := m.dataGenerator.GenerateDualCurrencyShippingLines(exchangeRate)
+	var shippingCOP float64
+	if len(shippingLines) > 0 {
+		fmt.Sscanf(shippingLines[0].PriceSet.PresentmentMoney.Amount, "%f", &shippingCOP)
+	}
+
+	grandTotalCOP := totalCOP + shippingCOP
+
+	subtotalUSD := subtotalCOP / exchangeRate
+	taxUSD := totalTaxCOP / exchangeRate
+	grandTotalUSD := grandTotalCOP / exchangeRate
+
+	subtotalUSDStr := fmt.Sprintf("%.2f", subtotalUSD)
+	taxUSDStr := fmt.Sprintf("%.2f", taxUSD)
+	totalUSDStr := fmt.Sprintf("%.2f", grandTotalUSD)
+
+	updatedAt := createdAt.Add(time.Duration(rand.Intn(3600)) * time.Second)
+
+	billingAddress := m.dataGenerator.GenerateAddress()
+	if rand.Float32() < 0.4 {
+		dni := fmt.Sprintf("%d", rand.Intn(90000000)+10000000)
+		billingAddress.Company = &dni
+	}
+
+	noteAttrs := m.generateNoteAttributes()
+	noteAttrs = append(noteAttrs, domain.NoteAttribute{
+		Name:  "_shipping_cost_cop",
+		Value: fmt.Sprintf("%.0f", shippingCOP),
+	})
+
+	order := &domain.Order{
+		ID:                    orderID,
+		AdminGraphQLAPIID:     fmt.Sprintf("gid://shopify/Order/%d", orderID),
+		AppID:                 int64Ptr(int64(rand.Intn(999999) + 100000)),
+		BrowserIP:             m.dataGenerator.stringPtr(fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255))),
+		BuyerAcceptsMarketing: rand.Float32() < 0.3,
+		CancelReason:          nil,
+		CancelledAt:           nil,
+		CartToken:             m.dataGenerator.stringPtr(fmt.Sprintf("%x", rand.Int63())),
+		CheckoutID:            int64Ptr(int64(rand.Intn(9999999999) + 1000000000)),
+		CheckoutToken:         m.dataGenerator.stringPtr(fmt.Sprintf("ct_%x", rand.Int63())),
+		ClientDetails:         m.generateClientDetails(),
+		ClosedAt:              nil,
+		Confirmed:             true,
+		ContactEmail:          customer.Email,
+		CreatedAt:             createdAt,
+		Currency:              "USD",
+		CurrentSubtotalPrice:  subtotalUSDStr,
+		CurrentSubtotalPriceSet:  m.dataGenerator.GenerateDualCurrencyMoneySet(subtotalCOP, exchangeRate),
+		CurrentTotalDiscounts:    "0.00",
+		CurrentTotalDiscountsSet: m.dataGenerator.GenerateDualCurrencyMoneySet(0, exchangeRate),
+		CurrentTotalDutiesSet:    nil,
+		CurrentTotalPrice:        totalUSDStr,
+		CurrentTotalPriceSet:     m.dataGenerator.GenerateDualCurrencyMoneySet(grandTotalCOP, exchangeRate),
+		CurrentTotalTax:          taxUSDStr,
+		CurrentTotalTaxSet:       m.dataGenerator.GenerateDualCurrencyMoneySet(totalTaxCOP, exchangeRate),
+		CustomerLocale:           m.dataGenerator.stringPtr("es-CO"),
+		DeviceID:                 nil,
+		DiscountCodes:            []domain.DiscountCode{},
+		Email:                    customer.Email,
+		EstimatedTaxes:           false,
+		FinancialStatus:          "pending",
+		FulfillmentStatus:        nil,
+		Gateway:                  m.dataGenerator.stringPtr("shopify_payments"),
+		LandingSite:              m.dataGenerator.stringPtr("/"),
+		LandingSiteRef:           nil,
+		LocationID:               nil,
+		MerchantOfRecordAppID:    nil,
+		Name:                     orderNumber,
+		Note:                     nil,
+		NoteAttributes:           noteAttrs,
+		Number:                   m.orderSeq,
+		OrderNumber:              m.orderSeq,
+		OrderStatusURL:           m.dataGenerator.stringPtr(fmt.Sprintf("https://%s/orders/%s/authenticate?key=abc", m.businessConfig.ShopDomain, orderNumber)),
+		OriginalTotalDutiesSet:   nil,
+		PaymentGatewayNames:      []string{"shopify_payments"},
+		Phone:                    customer.Phone,
+		PresentmentCurrency:      "COP",
+		ProcessedAt:              createdAt,
+		ProcessingMethod:         m.dataGenerator.stringPtr("direct"),
+		Reference:                nil,
+		ReferringSite:            nil,
+		SourceIdentifier:         nil,
+		SourceName:               "web",
+		SourceURL:                nil,
+		SubtotalPrice:            subtotalUSDStr,
+		SubtotalPriceSet:         m.dataGenerator.GenerateDualCurrencyMoneySet(subtotalCOP, exchangeRate),
+		Tags:                     "",
+		TaxLines: []domain.TaxLine{
+			{
+				Price:         taxUSDStr,
+				Rate:          0.19,
+				Title:         "IVA",
+				PriceSet:      m.dataGenerator.GenerateDualCurrencyMoneySet(totalTaxCOP, exchangeRate),
+				ChannelLiable: false,
+			},
+		},
+		TaxesIncluded:          true,
+		Test:                   false,
+		Token:                  fmt.Sprintf("ct_%x", rand.Int63()),
+		TotalDiscounts:         "0.00",
+		TotalDiscountsSet:      m.dataGenerator.GenerateDualCurrencyMoneySet(0, exchangeRate),
+		TotalLineItemsPrice:    fmt.Sprintf("%.2f", totalCOP/exchangeRate),
+		TotalLineItemsPriceSet: m.dataGenerator.GenerateDualCurrencyMoneySet(totalCOP, exchangeRate),
+		TotalOutstanding:       totalUSDStr,
+		TotalPrice:             totalUSDStr,
+		TotalPriceSet:          m.dataGenerator.GenerateDualCurrencyMoneySet(grandTotalCOP, exchangeRate),
+		TotalPriceUSD:          totalUSDStr,
+		TotalShippingPriceSet:  m.dataGenerator.GenerateDualCurrencyMoneySet(shippingCOP, exchangeRate),
+		TotalTax:               taxUSDStr,
+		TotalTaxSet:            m.dataGenerator.GenerateDualCurrencyMoneySet(totalTaxCOP, exchangeRate),
+		TotalTipReceived:       "0.00",
+		TotalWeight:            rand.Intn(5000) + 100,
+		UpdatedAt:              updatedAt,
+		UserID:                 nil,
+		BillingAddress:         billingAddress,
+		Customer:               customer,
+		DiscountApplications:   []domain.DiscountApplication{},
+		Fulfillments:           []domain.Fulfillment{},
+		LineItems:              lineItems,
+		PaymentTerms:           nil,
+		Refunds:                []domain.Refund{},
+		ShippingAddress:        m.dataGenerator.GenerateAddress(),
+		ShippingLines:          shippingLines,
 	}
 
 	return order

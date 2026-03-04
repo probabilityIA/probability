@@ -72,6 +72,42 @@ var (
 	}
 
 	currencies = []string{"COP"}
+
+	// Productos con precios COP realistas (IVA incluido) para simulación dual-currency
+	dualCurrencyProducts = []struct {
+		Name    string
+		SKU     string
+		Price   float64 // COP con IVA incluido
+		Taxable bool
+	}{
+		{"Proteína Aislada (ISO) - 2 Lb (910g) - Vainilla", "PT01001", 134900, true},
+		{"Proteína Whey - 2lb (910g) - Vainilla", "PT01002", 96900, true},
+		{"Proteína Whey - 2lb (910g) - Chocolate", "PT01003", 96900, true},
+		{"Creatina Monohidrato - 300g", "PT01004", 76900, true},
+		{"Proteína Aislada (ISO) - 2 Lb (910g) - Chocolate", "PT01005", 134900, true},
+		{"Proteína Vegetal - 2 Libras (910g) - Vainilla", "PT01006", 119900, true},
+		{"Proteína Vegetal - 2 Libras (910g) - Chocolate", "PT01007", 119900, true},
+		{"Multivitaminico - Gomas", "PT02038", 42900, true},
+		{"Omega 3 + prebioticos - Gomas", "PT02039", 44900, true},
+		{"Citrato de Magnesio Limon - 210g", "PT02041", 52900, true},
+		{"BCAAs sabor limon mandarino - 300g", "PT02043", 62900, true},
+		{"PR - 600g", "PT02044", 89900, true},
+		{"Colágeno Hidrolizado - 300g", "PT01015", 56900, true},
+		{"Pancakes de Proteina (770)", "PT01016", 35900, true},
+		{"Creatina Monohidrato - 100g", "PT02050", 33900, true},
+	}
+
+	// Métodos de envío con precios COP realistas para dual-currency
+	dualCurrencyShipping = []struct {
+		Title string
+		Code  string
+		Price float64 // COP
+	}{
+		{"Entrega Estándar (3 a 6 días hábiles)", "standard", 12000.0},
+		{"Envío Nacional (5 a 8 días hábiles)", "nacional", 17000.0},
+		{"Envío Express", "express", 15000.0},
+		{"Envío Gratis", "free_shipping", 0.0},
+	}
 )
 
 func init() {
@@ -278,6 +314,105 @@ func (g *RandomDataGenerator) floatPtr(f float64) *float64 {
 
 func (g *RandomDataGenerator) timePtr(t time.Time) *time.Time {
 	return &t
+}
+
+// GenerateDualCurrencyMoneySet genera un MoneySet con shop_money en USD y presentment_money en COP
+func (g *RandomDataGenerator) GenerateDualCurrencyMoneySet(copAmount, exchangeRate float64) *domain.MoneySet {
+	usdAmount := copAmount / exchangeRate
+	return &domain.MoneySet{
+		ShopMoney: domain.Money{
+			Amount:       fmt.Sprintf("%.2f", usdAmount),
+			CurrencyCode: "USD",
+		},
+		PresentmentMoney: domain.Money{
+			Amount:       fmt.Sprintf("%.2f", copAmount),
+			CurrencyCode: "COP",
+		},
+	}
+}
+
+// GenerateDualCurrencyLineItems genera line items con precios COP realistas y PriceSet dual USD/COP
+func (g *RandomDataGenerator) GenerateDualCurrencyLineItems(count int, exchangeRate float64) []domain.LineItem {
+	items := make([]domain.LineItem, 0, count)
+
+	for i := 0; i < count; i++ {
+		product := dualCurrencyProducts[rand.Intn(len(dualCurrencyProducts))]
+		copPrice := product.Price
+		usdPrice := copPrice / exchangeRate
+		quantity := rand.Intn(3) + 1
+
+		// IVA 19% incluido en el precio COP → base = copPrice / 1.19
+		copBase := copPrice / 1.19
+		copTax := copPrice - copBase
+		usdTax := copTax / exchangeRate
+
+		usdPriceStr := fmt.Sprintf("%.2f", usdPrice)
+
+		item := domain.LineItem{
+			ID:                         int64(rand.Intn(999999999) + 100000000),
+			AdminGraphQLAPIID:          fmt.Sprintf("gid://shopify/LineItem/%d", rand.Intn(999999999)+100000000),
+			FulfillableQuantity:        quantity,
+			FulfillmentService:         g.stringPtr("manual"),
+			FulfillmentStatus:          nil,
+			GiftCard:                   false,
+			Grams:                      rand.Intn(5000) + 100,
+			Name:                       product.Name,
+			Price:                      usdPriceStr, // Shopify order.line_items.price = shop currency (USD)
+			PriceSet:                   g.GenerateDualCurrencyMoneySet(copPrice, exchangeRate),
+			ProductExists:              true,
+			ProductID:                  int64(rand.Intn(999999999) + 100000000),
+			Properties:                 []domain.Property{},
+			Quantity:                   quantity,
+			RequiresShipping:           true,
+			SKU:                        product.SKU,
+			Taxable:                    product.Taxable,
+			Title:                      product.Name,
+			TotalDiscount:              "0.00",
+			TotalDiscountSet:           g.GenerateDualCurrencyMoneySet(0, exchangeRate),
+			VariantID:                  int64(rand.Intn(999999999) + 100000000),
+			VariantInventoryManagement: g.stringPtr("shopify"),
+			VariantTitle:               nil,
+			Vendor:                     g.stringPtr("Probability Nutrition"),
+			TaxLines: []domain.TaxLine{
+				{
+					Price:         fmt.Sprintf("%.2f", usdTax*float64(quantity)),
+					Rate:          0.19,
+					Title:         "IVA",
+					PriceSet:      g.GenerateDualCurrencyMoneySet(copTax*float64(quantity), exchangeRate),
+					ChannelLiable: false,
+				},
+			},
+			Duties:              []domain.Duty{},
+			DiscountAllocations: []domain.DiscountAllocation{},
+		}
+
+		items = append(items, item)
+	}
+
+	return items
+}
+
+// GenerateDualCurrencyShippingLines genera líneas de envío con precios COP y PriceSet dual
+func (g *RandomDataGenerator) GenerateDualCurrencyShippingLines(exchangeRate float64) []domain.ShippingLine {
+	method := dualCurrencyShipping[rand.Intn(len(dualCurrencyShipping))]
+	copPrice := method.Price
+	usdPrice := copPrice / exchangeRate
+	usdPriceStr := fmt.Sprintf("%.2f", usdPrice)
+
+	return []domain.ShippingLine{
+		{
+			ID:                 int64(rand.Intn(999999999) + 100000000),
+			Title:              method.Title,
+			Code:               g.stringPtr(method.Code),
+			Price:              usdPriceStr, // shop currency (USD)
+			PriceSet:           g.GenerateDualCurrencyMoneySet(copPrice, exchangeRate),
+			DiscountedPrice:    usdPriceStr,
+			DiscountedPriceSet: g.GenerateDualCurrencyMoneySet(copPrice, exchangeRate),
+			Source:             g.stringPtr("shopify"),
+			TaxLines:           []domain.TaxLine{},
+			DiscountAllocations: []domain.DiscountAllocation{},
+		},
+	}
 }
 
 

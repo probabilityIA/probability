@@ -13,7 +13,7 @@ func NewWebhookClient(config env.IConfig, logger log.ILogger) domain.IWebhookCli
 }
 
 // NewOrderSimulator crea una nueva instancia del simulador de órdenes
-func NewOrderSimulator(webhookClient domain.IWebhookClient, config env.IConfig, logger log.ILogger) *OrderSimulator {
+func NewOrderSimulator(webhookClient domain.IWebhookClient, config env.IConfig, logger log.ILogger, businessConfig *domain.BusinessConfig) *OrderSimulator {
 	return &OrderSimulator{
 		webhookClient:   webhookClient,
 		config:          config,
@@ -21,19 +21,6 @@ func NewOrderSimulator(webhookClient domain.IWebhookClient, config env.IConfig, 
 		orderRepository: domain.NewOrderRepository(),
 		dataGenerator:   NewRandomDataGenerator(),
 		orderNumberSeq:  1000,
-		businessConfig:  domain.DefaultTestBusinessConfig(), // Usar config del business de prueba
+		businessConfig:  businessConfig,
 	}
 }
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -46,11 +46,21 @@ func (h *Handler) handleHealth(c *gin.Context) {
 
 // handleMockInfo retorna información sobre el estado actual del mock.
 func (h *Handler) handleMockInfo(c *gin.Context) {
+	config := h.mockAPI.GetBusinessConfig()
+	currencyMode := "single-currency"
+	if config != nil && config.IsDualCurrency() {
+		currencyMode = config.ShopCurrency + "/" + config.PresentmentCurrency
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"total_orders": h.mockAPI.GetTotalOrders(),
-		"service":      "shopify-mock-api",
-		"api_version":  "2024-10",
-		"descripcion":  "Mock del API REST de Shopify para pruebas de sincronización por lotes",
+		"total_orders":   h.mockAPI.GetTotalOrders(),
+		"service":        "shopify-mock-api",
+		"api_version":    "2024-10",
+		"currency_mode":  currencyMode,
+		"shop_currency":  config.ShopCurrency,
+		"taxes_included": config.TaxesIncluded,
+		"exchange_rate":  config.ExchangeRate,
+		"descripcion":    "Mock del API REST de Shopify para pruebas de sincronización por lotes",
 	})
 }
 

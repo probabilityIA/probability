@@ -193,7 +193,15 @@ func (s *OrderSimulator) generateUniqueOrderNumber() string {
 
 // generateRandomOrder genera una orden completamente aleatoria
 func (s *OrderSimulator) generateRandomOrder(orderNumber string) *domain.Order {
-	now := time.Now()
+	if s.businessConfig.IsDualCurrency() {
+		return s.generateDualCurrencyOrder(orderNumber, time.Now())
+	}
+	return s.generateSingleCurrencyOrder(orderNumber, time.Now())
+}
+
+// generateSingleCurrencyOrder genera una orden single-currency (comportamiento original)
+func (s *OrderSimulator) generateSingleCurrencyOrder(orderNumber string, createdAt time.Time) *domain.Order {
+	now := createdAt
 	orderID := int64(rand.Intn(9999999999) + 1000000000)
 	currency := s.dataGenerator.randomChoice([]string{"COP", "USD", "EUR"})
 
@@ -312,6 +320,168 @@ func (s *OrderSimulator) generateRandomOrder(orderNumber string) *domain.Order {
 		ShippingAddress:          s.dataGenerator.GenerateAddress(),
 		ShippingLines:            shippingLines,
 	}
+
+	return order
+}
+
+// generateDualCurrencyOrder genera una orden dual-currency USD/COP
+// Los precios base son en COP (presentment) y se convierten a USD (shop) usando el exchange rate
+func (s *OrderSimulator) generateDualCurrencyOrder(orderNumber string, createdAt time.Time) *domain.Order {
+	now := createdAt
+	orderID := int64(rand.Intn(9999999999) + 1000000000)
+	exchangeRate := s.businessConfig.ExchangeRate
+
+	customer := s.dataGenerator.GenerateCustomer()
+	customer.Currency = "COP" // El comprador usa COP
+
+	lineItems := s.dataGenerator.GenerateDualCurrencyLineItems(rand.Intn(3)+1, exchangeRate)
+
+	// Calcular totales en COP (los precios ya incluyen IVA)
+	totalCOP := 0.0
+	totalTaxCOP := 0.0
+	for _, item := range lineItems {
+		// Precio COP del presentment_money
+		var copPrice float64
+		fmt.Sscanf(item.PriceSet.PresentmentMoney.Amount, "%f", &copPrice)
+		totalCOP += copPrice * float64(item.Quantity)
+
+		// Tax del line item
+		for _, tax := range item.TaxLines {
+			var taxCOP float64
+			fmt.Sscanf(tax.PriceSet.PresentmentMoney.Amount, "%f", &taxCOP)
+			totalTaxCOP += taxCOP
+		}
+	}
+
+	// Cuando taxes_included=true, el subtotal es total - tax
+	subtotalCOP := totalCOP - totalTaxCOP
+
+	// Shipping
+	shippingLines := s.dataGenerator.GenerateDualCurrencyShippingLines(exchangeRate)
+	var shippingCOP float64
+	if len(shippingLines) > 0 {
+		fmt.Sscanf(shippingLines[0].PriceSet.PresentmentMoney.Amount, "%f", &shippingCOP)
+	}
+
+	grandTotalCOP := totalCOP + shippingCOP
+
+	// Convertir a USD
+	subtotalUSD := subtotalCOP / exchangeRate
+	taxUSD := totalTaxCOP / exchangeRate
+	grandTotalUSD := grandTotalCOP / exchangeRate
+
+	subtotalUSDStr := fmt.Sprintf("%.2f", subtotalUSD)
+	taxUSDStr := fmt.Sprintf("%.2f", taxUSD)
+	totalUSDStr := fmt.Sprintf("%.2f", grandTotalUSD)
+
+	// Billing address con DNI en Company (~40% de las órdenes)
+	billingAddress := s.dataGenerator.GenerateAddress()
+	if rand.Float32() < 0.4 {
+		dni := fmt.Sprintf("%d", rand.Intn(90000000)+10000000)
+		billingAddress.Company = &dni
+	}
+
+	order := &domain.Order{
+		ID:                    orderID,
+		AdminGraphQLAPIID:     fmt.Sprintf("gid://shopify/Order/%d", orderID),
+		AppID:                 int64Ptr(int64(rand.Intn(999999) + 100000)),
+		BrowserIP:             s.dataGenerator.stringPtr(fmt.Sprintf("%d.%d.%d.%d", rand.Intn(255), rand.Intn(255), rand.Intn(255), rand.Intn(255))),
+		BuyerAcceptsMarketing: rand.Float32() < 0.3,
+		CancelReason:          nil,
+		CancelledAt:           nil,
+		CartToken:             s.dataGenerator.stringPtr(fmt.Sprintf("%x", rand.Int63())),
+		CheckoutID:            int64Ptr(int64(rand.Intn(9999999999) + 1000000000)),
+		CheckoutToken:         s.dataGenerator.stringPtr(fmt.Sprintf("ct_%x", rand.Int63())),
+		ClientDetails:         s.generateClientDetails(),
+		ClosedAt:              nil,
+		Confirmed:             true,
+		ContactEmail:          customer.Email,
+		CreatedAt:             now.Add(-time.Duration(rand.Intn(30)) * time.Minute),
+		Currency:              "USD",                                                            // Shop currency
+		CurrentSubtotalPrice:  subtotalUSDStr,                                                   // USD
+		CurrentSubtotalPriceSet:  s.dataGenerator.GenerateDualCurrencyMoneySet(subtotalCOP, exchangeRate),
+		CurrentTotalDiscounts:    "0.00",
+		CurrentTotalDiscountsSet: s.dataGenerator.GenerateDualCurrencyMoneySet(0, exchangeRate),
+		CurrentTotalDutiesSet:    nil,
+		CurrentTotalPrice:        totalUSDStr,
+		CurrentTotalPriceSet:     s.dataGenerator.GenerateDualCurrencyMoneySet(grandTotalCOP, exchangeRate),
+		CurrentTotalTax:          taxUSDStr,
+		CurrentTotalTaxSet:       s.dataGenerator.GenerateDualCurrencyMoneySet(totalTaxCOP, exchangeRate),
+		CustomerLocale:           s.dataGenerator.stringPtr("es-CO"),
+		DeviceID:                 nil,
+		DiscountCodes:            []domain.DiscountCode{},
+		Email:                    customer.Email,
+		EstimatedTaxes:           false,
+		FinancialStatus:          "pending",
+		FulfillmentStatus:        nil,
+		Gateway:                  s.dataGenerator.stringPtr("shopify_payments"),
+		LandingSite:              s.dataGenerator.stringPtr("/"),
+		LandingSiteRef:           nil,
+		LocationID:               nil,
+		MerchantOfRecordAppID:    nil,
+		Name:                     orderNumber,
+		Note:                     nil,
+		NoteAttributes:           s.generateNoteAttributes(),
+		Number:                   s.orderNumberSeq,
+		OrderNumber:              s.orderNumberSeq,
+		OrderStatusURL:           s.dataGenerator.stringPtr(fmt.Sprintf("https://%s/orders/%s/authenticate?key=abc", s.businessConfig.ShopDomain, orderNumber)),
+		OriginalTotalDutiesSet:   nil,
+		PaymentGatewayNames:      []string{"shopify_payments"},
+		Phone:                    customer.Phone,
+		PresentmentCurrency:      "COP",                                                         // Comprador paga en COP
+		ProcessedAt:              now.Add(-time.Duration(rand.Intn(30)) * time.Minute),
+		ProcessingMethod:         s.dataGenerator.stringPtr("direct"),
+		Reference:                nil,
+		ReferringSite:            nil,
+		SourceIdentifier:         nil,
+		SourceName:               "web",
+		SourceURL:                nil,
+		SubtotalPrice:            subtotalUSDStr,
+		SubtotalPriceSet:         s.dataGenerator.GenerateDualCurrencyMoneySet(subtotalCOP, exchangeRate),
+		Tags:                     "",
+		TaxLines: []domain.TaxLine{
+			{
+				Price:         taxUSDStr,
+				Rate:          0.19,
+				Title:         "IVA",
+				PriceSet:      s.dataGenerator.GenerateDualCurrencyMoneySet(totalTaxCOP, exchangeRate),
+				ChannelLiable: false,
+			},
+		},
+		TaxesIncluded:          true, // Precios incluyen IVA
+		Test:                   false,
+		Token:                  fmt.Sprintf("ct_%x", rand.Int63()),
+		TotalDiscounts:         "0.00",
+		TotalDiscountsSet:      s.dataGenerator.GenerateDualCurrencyMoneySet(0, exchangeRate),
+		TotalLineItemsPrice:    fmt.Sprintf("%.2f", totalCOP/exchangeRate),
+		TotalLineItemsPriceSet: s.dataGenerator.GenerateDualCurrencyMoneySet(totalCOP, exchangeRate),
+		TotalOutstanding:       totalUSDStr,
+		TotalPrice:             totalUSDStr,
+		TotalPriceSet:          s.dataGenerator.GenerateDualCurrencyMoneySet(grandTotalCOP, exchangeRate),
+		TotalPriceUSD:          totalUSDStr,
+		TotalShippingPriceSet:  s.dataGenerator.GenerateDualCurrencyMoneySet(shippingCOP, exchangeRate),
+		TotalTax:               taxUSDStr,
+		TotalTaxSet:            s.dataGenerator.GenerateDualCurrencyMoneySet(totalTaxCOP, exchangeRate),
+		TotalTipReceived:       "0.00",
+		TotalWeight:            rand.Intn(5000) + 100,
+		UpdatedAt:              now,
+		UserID:                 nil,
+		BillingAddress:         billingAddress,
+		Customer:               customer,
+		DiscountApplications:   []domain.DiscountApplication{},
+		Fulfillments:           []domain.Fulfillment{},
+		LineItems:              lineItems,
+		PaymentTerms:           nil,
+		Refunds:                []domain.Refund{},
+		ShippingAddress:        s.dataGenerator.GenerateAddress(),
+		ShippingLines:          shippingLines,
+	}
+
+	// Agregar _shipping_cost_cop al note attributes para referencia
+	order.NoteAttributes = append(order.NoteAttributes, domain.NoteAttribute{
+		Name:  "_shipping_cost_cop",
+		Value: fmt.Sprintf("%.0f", shippingCOP),
+	})
 
 	return order
 }
