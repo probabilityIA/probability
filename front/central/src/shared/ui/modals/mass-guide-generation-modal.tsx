@@ -7,6 +7,8 @@ import { getOrdersAction, updateOrderAction } from '@/services/modules/orders/in
 import { quoteShipmentAction, generateGuideAction } from '@/services/modules/shipments/infra/actions';
 import { EnvioClickQuoteRequest, EnvioClickRate } from '@/services/modules/shipments/domain/types';
 import { getWalletBalanceAction } from '@/services/modules/wallet/infra/actions';
+import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
+import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 
 const normalizeString = (str: string) =>
@@ -63,6 +65,8 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
     const [selectedOrderForEdit, setSelectedOrderForEdit] = useState<OrderWithQuote | null>(null);
     const [editForm, setEditForm] = useState<Partial<OrderWithQuote>>({});
     const [isSaving, setIsSaving] = useState(false);
+    const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+    const [selectedWarehouse, setSelectedWarehouse] = useState<Warehouse | null>(null);
 
     // const repo = new ShipmentApiRepository(); // Eliminado para usar Server Actions
 
@@ -70,8 +74,22 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         if (isOpen && step === 'select') {
             loadOrders();
             loadWalletBalance();
+            loadWarehouses();
         }
     }, [isOpen, step]);
+
+    const loadWarehouses = async () => {
+        try {
+            const res = await getWarehousesAction({ is_active: true, page: 1, page_size: 100 });
+            if (res.data) {
+                setWarehouses(res.data);
+                const defaultWh = res.data.find((w: Warehouse) => w.is_default) || res.data[0];
+                if (defaultWh) setSelectedWarehouse(defaultWh);
+            }
+        } catch (err) {
+            console.error('Error loading warehouses:', err);
+        }
+    };
 
     const loadOrders = async () => {
         setLoading(true);
@@ -188,8 +206,8 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     includeGuideCost: false,
                     codPaymentMethod: 'cash',
                     origin: {
-                        daneCode: '11001000', // Default Bogotá
-                        address: 'Calle 1 # 1-1',
+                        daneCode: selectedWarehouse?.city_dane_code || '11001000',
+                        address: selectedWarehouse?.street || selectedWarehouse?.address || 'Dirección no especificada',
                     },
                     destination: {
                         daneCode: findDaneCode(order.shipping_city || "", order.shipping_state || "") || '11001001',
@@ -253,16 +271,16 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         length: order.length || 10,
                     }],
                     origin: {
-                        daneCode: '11001000', // Still defaulting Bogota for origin as we don't have business address here easily
-                        address: 'Calle Principal',
-                        company: 'Mi Empresa',
-                        firstName: 'Admin',
-                        lastName: 'User',
-                        email: 'admin@example.com',
-                        phone: '3001234567',
-                        suburb: 'Centro',
-                        crossStreet: 'Calle Principal',
-                        reference: 'Oficina',
+                        daneCode: selectedWarehouse?.city_dane_code || '11001000',
+                        address: selectedWarehouse?.street || selectedWarehouse?.address || 'Dirección no especificada',
+                        company: selectedWarehouse?.company || selectedWarehouse?.name || 'Mi Empresa',
+                        firstName: selectedWarehouse?.first_name || selectedWarehouse?.contact_name?.split(' ')[0] || 'Admin',
+                        lastName: selectedWarehouse?.last_name || selectedWarehouse?.contact_name?.split(' ').slice(1).join(' ') || '',
+                        email: selectedWarehouse?.email || selectedWarehouse?.contact_email || '',
+                        phone: selectedWarehouse?.phone || '',
+                        suburb: selectedWarehouse?.suburb || '',
+                        crossStreet: selectedWarehouse?.street || selectedWarehouse?.address || '',
+                        reference: '',
                     },
                     destination: {
                         daneCode: destDane,
@@ -305,6 +323,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         setGeneratedCount(0);
         setFailedCount(0);
         setGenerationErrors([]);
+        setSelectedWarehouse(null);
         onClose();
     };
 
@@ -323,6 +342,34 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 {/* Step 1: Select Orders */}
                 {step === 'select' && (
                     <div className="space-y-4">
+                        {/* Warehouse Selector */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <label className="block text-sm font-semibold text-blue-800 mb-2">Bodega de origen</label>
+                            {warehouses.length === 0 ? (
+                                <p className="text-sm text-blue-600">Cargando bodegas...</p>
+                            ) : (
+                                <select
+                                    value={selectedWarehouse?.id?.toString() || ''}
+                                    onChange={(e) => {
+                                        const wh = warehouses.find(w => w.id === parseInt(e.target.value));
+                                        setSelectedWarehouse(wh || null);
+                                    }}
+                                    className="w-full border border-blue-300 rounded-md p-2 text-sm bg-white"
+                                >
+                                    {warehouses.map(wh => (
+                                        <option key={wh.id} value={wh.id}>
+                                            {wh.name} — {wh.city}, {wh.state} {wh.is_default ? '(Por defecto)' : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                            {selectedWarehouse && (
+                                <p className="text-xs text-blue-600 mt-1">
+                                    DANE: {selectedWarehouse.city_dane_code} | {selectedWarehouse.street || selectedWarehouse.address}
+                                </p>
+                            )}
+                        </div>
+
                         <div className="flex justify-between items-center">
                             <p className="text-sm text-gray-600">
                                 Selecciona las órdenes para generar guías ({selectedOrderIds.size} seleccionadas)
@@ -590,8 +637,8 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="space-y-1">
                                 <p className="font-bold text-gray-500 uppercase text-[10px]">Origen</p>
-                                <p>Bogotá D.C. (Fallback)</p>
-                                <p className="text-xs text-gray-500">Calle 1 # 1-1</p>
+                                <p>{selectedWarehouse ? `${selectedWarehouse.city}, ${selectedWarehouse.state}` : 'Sin bodega seleccionada'}</p>
+                                <p className="text-xs text-gray-500">{selectedWarehouse?.street || selectedWarehouse?.address || 'Sin dirección'}</p>
                             </div>
                             <div className="space-y-1">
                                 <p className="font-bold text-gray-500 uppercase text-[10px]">Destino</p>
