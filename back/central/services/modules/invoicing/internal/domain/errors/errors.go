@@ -77,6 +77,9 @@ var (
 	// Fecha
 	ErrOrderOutsideDateRange = errors.New("la orden está fuera del rango de fechas permitido")
 
+	// Moneda
+	ErrCurrencyNotAllowed = errors.New("solo se pueden facturar órdenes en COP (pesos colombianos)")
+
 	// Config
 	ErrInvalidFilterConfig = errors.New("configuración de filtros inválida")
 )

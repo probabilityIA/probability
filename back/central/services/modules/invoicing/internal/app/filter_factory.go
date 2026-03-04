@@ -8,6 +8,9 @@ import (
 func CreateValidators(config *entities.FilterConfig) []FilterValidator {
 	var validators []FilterValidator
 
+	// Moneda — siempre activo: solo COP es facturable (DIAN Colombia)
+	validators = append(validators, &CurrencyCOPValidator{})
+
 	// Monto
 	if config.MinAmount != nil {
 		validators = append(validators, &MinAmountValidator{MinAmount: *config.MinAmount})

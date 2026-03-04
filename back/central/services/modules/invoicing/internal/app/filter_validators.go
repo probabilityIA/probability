@@ -1,6 +1,8 @@
 package app
 
 import (
+	"strings"
+
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/errors"
 )
@@ -8,6 +10,22 @@ import (
 // FilterValidator define la interfaz para validadores de filtros
 type FilterValidator interface {
 	Validate(order *dtos.OrderData) error
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VALIDADORES DE MONEDA (hardcoded, siempre activos)
+// ═══════════════════════════════════════════════════════════════
+
+// CurrencyCOPValidator rechaza órdenes que no estén en COP.
+// La facturación electrónica colombiana (DIAN) solo acepta pesos colombianos.
+type CurrencyCOPValidator struct{}
+
+func (v *CurrencyCOPValidator) Validate(order *dtos.OrderData) error {
+	currency := strings.ToUpper(strings.TrimSpace(order.Currency))
+	if currency == "" || currency == "COP" {
+		return nil
+	}
+	return errors.ErrCurrencyNotAllowed
 }
 
 // ═══════════════════════════════════════════════════════════════
