@@ -331,6 +331,13 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
             <br />
             Ve a <strong>Integraciones</strong> para conectar Shopify, MercadoLibre, etc.
           </p>
+          <button
+            onClick={() => router.push('/invoicing/configs/new')}
+            style={{ background: '#7c3aed' }}
+            className="mt-4 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+          >
+            + Nueva Configuración
+          </button>
         </div>
       ) : (
         <div className="configsTable">
