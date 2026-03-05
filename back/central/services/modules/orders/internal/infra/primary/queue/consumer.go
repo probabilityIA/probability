@@ -162,6 +162,19 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			return nil
 		}
 
+		// If error is a data-too-long error (varchar overflow), discard to avoid infinite retry loop
+		if contains(errStr, "value too long for type") || contains(errStr, "SQLSTATE 22001") {
+			c.logger.Warn().
+				Err(err).
+				Str("queue", OrdersCanonicalQueueName).
+				Str("external_id", orderDTO.ExternalID).
+				Uint("integration_id", orderDTO.IntegrationID).
+				Msg("Order failed with data length error (varchar overflow), discarding message")
+			c.saveOrderError(ctx, &orderDTO, err, "data_length_error", messageBody)
+			c.publishRejected(ctx, &orderDTO, "Error de longitud de datos")
+			return nil
+		}
+
 		c.logger.Error().
 			Err(err).
 			Str("queue", OrdersCanonicalQueueName).

@@ -49,7 +49,7 @@ type Invoice struct {
 	// Información del cliente (desnormalizada de la orden)
 	CustomerName  string `gorm:"size:255;not null"` // Nombre del cliente
 	CustomerEmail string `gorm:"size:255"`          // Email
-	CustomerPhone string `gorm:"size:32"`           // Teléfono
+	CustomerPhone string `gorm:"size:50"`           // Teléfono
 	CustomerDNI   string `gorm:"size:64"`           // DNI/NIT/Identificación
 
 	// Estado de la factura

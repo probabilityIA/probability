@@ -69,7 +69,7 @@ type Order struct {
 	CustomerFirstName string `gorm:"size:128"`       // Nombre (Principalmente para órdenes manuales)
 	CustomerLastName  string `gorm:"size:128"`       // Apellido (Principalmente para órdenes manuales)
 	CustomerEmail     string `gorm:"size:255;index"` // Email
-	CustomerPhone     string `gorm:"size:32"`        // Teléfono
+	CustomerPhone     string `gorm:"size:50"`        // Teléfono
 	CustomerDNI       string `gorm:"size:64"`        // DNI/Identificación
 
 	// ============================================

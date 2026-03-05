@@ -47,6 +47,14 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		// Inventory (tablas nuevas)
 		&models.InventoryLevel{},
 		&models.StockMovement{},
+
+		// Ampliar columnas varchar para soportar datos largos de Shopify
+		// Client.Phone: 20→50, Client.Dni: 30→50
+		&models.Client{},
+		// Order.CustomerPhone: 32→50
+		&models.Order{},
+		// Invoice.CustomerPhone: 32→50
+		&models.Invoice{},
 	); err != nil {
 		return err
 	}
