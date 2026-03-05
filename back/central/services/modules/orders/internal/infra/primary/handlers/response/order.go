@@ -124,6 +124,9 @@ type Order struct {
 	// Enlaces Externos
 	OrderStatusURL string `json:"order_status_url,omitempty"`
 
+	// Items de la orden
+	OrderItems []OrderItemResponse `json:"order_items,omitempty"`
+
 	// Datos estructurados (JSONB) - usando datatypes.JSON
 	Metadata           datatypes.JSON `json:"metadata,omitempty"`
 	FinancialDetails   datatypes.JSON `json:"financial_details,omitempty"`

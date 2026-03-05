@@ -46,7 +46,7 @@ func (uc *UseCaseCreateOrder) publishSyncOrderCreated(ctx context.Context, order
 		"customer_email": order.CustomerEmail,
 		"currency":       order.Currency,
 		"status":         order.Status,
-		"created_at":     order.CreatedAt,
+		"created_at":     order.OccurredAt,
 		"total_amount":   order.TotalAmount,
 		"synced_at":      time.Now(),
 	})

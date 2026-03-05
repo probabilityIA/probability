@@ -98,7 +98,7 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 	if orderResp.Customer != nil {
 		customer.Name = orderResp.Customer.FirstName + " " + orderResp.Customer.LastName
 		customer.Email = orderResp.Customer.Email
-		if orderResp.Customer.Phone != nil {
+		if orderResp.Customer.Phone != nil && *orderResp.Customer.Phone != "" {
 			customer.Phone = *orderResp.Customer.Phone
 		}
 		// Map Orders Count and Total Spent
@@ -133,6 +133,17 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		// Si no hay customer, usar email de la orden
 		customer.Name = orderResp.Email
 		customer.Email = orderResp.Email
+	}
+
+	// Fallback: teléfono desde shipping_address o default_address
+	if customer.Phone == "" {
+		if orderResp.ShippingAddress != nil && orderResp.ShippingAddress.Phone != nil && *orderResp.ShippingAddress.Phone != "" {
+			customer.Phone = *orderResp.ShippingAddress.Phone
+		} else if orderResp.BillingAddress != nil && orderResp.BillingAddress.Phone != nil && *orderResp.BillingAddress.Phone != "" {
+			customer.Phone = *orderResp.BillingAddress.Phone
+		} else if orderResp.Customer != nil && orderResp.Customer.DefaultAddress != nil && orderResp.Customer.DefaultAddress.Phone != nil && *orderResp.Customer.DefaultAddress.Phone != "" {
+			customer.Phone = *orderResp.Customer.DefaultAddress.Phone
+		}
 	}
 
 	// Mapear shipping address
@@ -249,6 +260,16 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 	// Extraer datos de note_attributes (incluye _customer_dni, _business_id, etc.)
 	for _, attr := range orderResp.NoteAttributes {
 		metadata["note_attr_"+attr.Name] = attr.Value
+	}
+
+	// Extraer DNI desde billing_address.company o default_address.company
+	// En tiendas colombianas, el campo "company" del checkout se usa para el número de cédula
+	if orderResp.BillingAddress != nil && orderResp.BillingAddress.Company != nil && *orderResp.BillingAddress.Company != "" {
+		metadata["billing_company_dni"] = *orderResp.BillingAddress.Company
+	} else if orderResp.ShippingAddress != nil && orderResp.ShippingAddress.Company != nil && *orderResp.ShippingAddress.Company != "" {
+		metadata["billing_company_dni"] = *orderResp.ShippingAddress.Company
+	} else if orderResp.Customer != nil && orderResp.Customer.DefaultAddress != nil && orderResp.Customer.DefaultAddress.Company != nil && *orderResp.Customer.DefaultAddress.Company != "" {
+		metadata["billing_company_dni"] = *orderResp.Customer.DefaultAddress.Company
 	}
 
 	// Determinar OrderStatusURL

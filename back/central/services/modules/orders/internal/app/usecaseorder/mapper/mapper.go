@@ -124,6 +124,9 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		InvoiceProvider: order.InvoiceProvider,
 		OrderStatusURL:  order.OrderStatusURL,
 
+		// Items de la orden
+		OrderItems: order.OrderItems,
+
 		// Datos estructurados
 		Metadata:           order.Metadata,
 		FinancialDetails:   order.FinancialDetails,
@@ -189,6 +192,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		OrderStatus:            order.OrderStatus,       // Información del estado de Probability
 		PaymentStatus:          order.PaymentStatus,     // Información completa del estado de pago
 		FulfillmentStatus:      order.FulfillmentStatus, // Información completa del estado de fulfillment
+		OrderStatusURL:         order.OrderStatusURL,
 		GuideLink:              order.GuideLink,
 		IsPaid:                 order.IsPaid,
 		IsConfirmed:            order.IsConfirmed,

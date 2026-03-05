@@ -229,15 +229,50 @@ func TestMapShopifyOrderToProbability_NegativePriceClamped(t *testing.T) {
 }
 
 func TestMapShopifyOrderToProbability_Invoiceable(t *testing.T) {
-	order := &domain.ShopifyOrder{
+	// Orden en COP → facturable
+	orderCOP := &domain.ShopifyOrder{
 		ExternalID: "123",
+		Currency:   "COP",
 		Metadata:   map[string]interface{}{},
 	}
+	resultCOP := MapShopifyOrderToProbability(orderCOP)
+	if !resultCOP.Invoiceable {
+		t.Error("Invoiceable debe ser true para ordenes en COP")
+	}
 
-	result := MapShopifyOrderToProbability(order)
+	// Orden en USD → no facturable
+	orderUSD := &domain.ShopifyOrder{
+		ExternalID: "456",
+		Currency:   "USD",
+		Metadata:   map[string]interface{}{},
+	}
+	resultUSD := MapShopifyOrderToProbability(orderUSD)
+	if resultUSD.Invoiceable {
+		t.Error("Invoiceable debe ser false para ordenes en USD")
+	}
 
-	if !result.Invoiceable {
-		t.Error("Invoiceable debe ser true para todas las ordenes de Shopify")
+	// Orden sin moneda → no facturable
+	orderEmpty := &domain.ShopifyOrder{
+		ExternalID: "789",
+		Metadata:   map[string]interface{}{},
+	}
+	resultEmpty := MapShopifyOrderToProbability(orderEmpty)
+	if resultEmpty.Invoiceable {
+		t.Error("Invoiceable debe ser false para ordenes sin moneda definida")
+	}
+
+	// Orden dual-currency con presentment COP → facturable
+	orderDual := &domain.ShopifyOrder{
+		ExternalID:             "101",
+		Currency:               "USD",
+		CurrencyPresentment:    "COP",
+		TotalAmountPresentment: 100000,
+		TotalAmount:            25,
+		Metadata:               map[string]interface{}{},
+	}
+	resultDual := MapShopifyOrderToProbability(orderDual)
+	if !resultDual.Invoiceable {
+		t.Error("Invoiceable debe ser true para ordenes dual-currency con presentment COP")
 	}
 }
 

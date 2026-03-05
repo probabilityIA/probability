@@ -124,6 +124,9 @@ type OrderResponse struct {
 	// Enlaces Externos
 	OrderStatusURL string
 
+	// Items de la orden
+	OrderItems []entities.ProbabilityOrderItem
+
 	// Datos estructurados (JSONB) - almacenados como []byte
 	Metadata           []byte
 	FinancialDetails   []byte

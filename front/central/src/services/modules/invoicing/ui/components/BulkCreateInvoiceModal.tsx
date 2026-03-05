@@ -330,7 +330,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-8 bg-white">
+          <div className="flex-1 flex flex-col overflow-hidden p-8 bg-white">
             {/* Filtro de Business (solo Super Admin) - siempre visible arriba */}
             {isSuperAdmin && (
               <div className="mb-4">
@@ -416,7 +416,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 </p>
               </div>
             ) : (
-              <>
+              <div className="flex-1 flex flex-col min-h-0">
                 <p className="text-sm text-gray-600 mb-4">
                   Selecciona las órdenes para las cuales deseas crear facturas
                   electrónicas. Cada orden se procesará individualmente.
@@ -451,7 +451,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 </div>
 
                 {/* Orders List con scroll suave */}
-                <div className="border border-gray-200 rounded-lg max-h-96 overflow-y-auto scroll-smooth">
+                <div className="border border-gray-200 rounded-lg flex-1 min-h-0 overflow-y-auto scroll-smooth">
                   {filteredOrders.map((order) => {
                     const orderStatus = orderStatuses[order.id];
 
@@ -589,12 +589,12 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   })}
                 </div>
 
-                <div className="mt-4 text-sm text-gray-600">
+                <div className="mt-4 text-sm text-gray-600 flex-shrink-0">
                   {selectedOrderIds.length === 0
                     ? 'Ninguna orden seleccionada'
                     : `${selectedOrderIds.length} orden(es) seleccionada(s)`}
                 </div>
-              </>
+              </div>
             )}
           </div>
 

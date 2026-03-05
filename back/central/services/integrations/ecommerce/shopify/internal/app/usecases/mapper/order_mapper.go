@@ -11,6 +11,9 @@ import (
 )
 
 func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrderDTO {
+	// Detectar si es dual-currency (shop ≠ presentment)
+	isDualCurrency := s.CurrencyPresentment != "" && s.CurrencyPresentment != s.Currency
+
 	orderItems := make([]domain.ProbabilityOrderItemDTO, len(s.Items))
 	for i, item := range s.Items {
 		// Convertir ProductID y VariantID a string si están disponibles
@@ -50,6 +53,21 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			}
 		}
 
+		// En dual-currency, los campos principales usan presentment (COP) y los _presentment mantienen el mismo valor
+		itemUnitPrice := item.UnitPrice
+		itemTotalPrice := totalPrice
+		itemDiscount := item.Discount
+		itemTax := item.Tax
+		itemCurrency := s.Currency
+
+		if isDualCurrency && item.UnitPricePresentment > 0 {
+			itemUnitPrice = item.UnitPricePresentment
+			itemTotalPrice = totalPricePresentment
+			itemDiscount = item.DiscountPresentment
+			itemTax = item.TaxPresentment
+			itemCurrency = s.CurrencyPresentment
+		}
+
 		orderItems[i] = domain.ProbabilityOrderItemDTO{
 			ProductID:    productIDStr,
 			ProductSKU:   sku,
@@ -57,14 +75,14 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			ProductTitle: item.Title,
 			VariantID:    variantIDStr,
 			Quantity:     item.Quantity,
-			UnitPrice:    item.UnitPrice,
-			TotalPrice:   totalPrice,
-			Currency:     s.Currency,
-			Discount:     item.Discount,
-			Tax:          item.Tax,
+			UnitPrice:    itemUnitPrice,
+			TotalPrice:   itemTotalPrice,
+			Currency:     itemCurrency,
+			Discount:     itemDiscount,
+			Tax:          itemTax,
 			TaxRate:      item.TaxRate,
 			Weight:       item.Weight,
-			// Precios en moneda local
+			// Precios en moneda local (mantener originales para referencia)
 			UnitPricePresentment:  item.UnitPricePresentment,
 			TotalPricePresentment: totalPricePresentment,
 			DiscountPresentment:   item.DiscountPresentment,
@@ -172,10 +190,12 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		codTotal = &amount
 	}
 
-	// Extraer customer_dni de note_attributes (viene en metadata como "note_attr__customer_dni")
+	// Extraer customer_dni: primero note_attributes, luego billing_address.company
 	customerDNI := ""
 	if s.Metadata != nil {
 		if dni, ok := s.Metadata["note_attr__customer_dni"].(string); ok && dni != "" {
+			customerDNI = dni
+		} else if dni, ok := s.Metadata["billing_company_dni"].(string); ok && dni != "" {
 			customerDNI = dni
 		}
 	}
@@ -217,9 +237,8 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 		ShippingCostPresentment: s.ShippingCostPresentment,
 		TotalAmountPresentment:  s.TotalAmountPresentment,
 		CurrencyPresentment:     s.CurrencyPresentment,
-		// Facturación - Por defecto todas las órdenes de Shopify son facturables
-		// Esto puede ser modificado por filtros y reglas de facturación
-		Invoiceable:             true,
+		// Facturación - Solo órdenes en COP son facturables
+		Invoiceable:             strings.EqualFold(currency, "COP"),
 	}
 
 	if len(s.RawData) > 0 {

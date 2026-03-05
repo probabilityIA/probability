@@ -35,6 +35,7 @@ type OrderSummary struct {
 	OrderStatus            *OrderStatusInfo       `json:"order_status,omitempty"`
 	PaymentStatus          *PaymentStatusInfo     `json:"payment_status,omitempty"`
 	FulfillmentStatus      *FulfillmentStatusInfo `json:"fulfillment_status,omitempty"`
+	OrderStatusURL         string                 `json:"order_status_url,omitempty"`
 	GuideLink              *string                `json:"guide_link,omitempty"`
 	IsPaid                 bool                   `json:"is_paid"`
 	IsConfirmed            *bool                  `json:"is_confirmed"`

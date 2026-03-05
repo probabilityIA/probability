@@ -297,6 +297,12 @@ export function InvoiceComparisonModal({
                                     {row.customer_nit && ` · NIT: ${row.customer_nit}`}
                                   </p>
                                 )}
+                                {row.comment && (
+                                  <p className="mt-1 text-xs text-gray-500">
+                                    Comentario:{' '}
+                                    <span className="font-medium font-mono">{row.comment}</span>
+                                  </p>
+                                )}
                               </td>
                             </tr>
                           )}

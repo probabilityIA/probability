@@ -50,18 +50,23 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 	if req.CreatedAtMin != nil || req.CreatedAtMax != nil || req.Status != "" || req.FinancialStatus != "" || req.FulfillmentStatus != "" {
 		syncParams = &syncOrdersParams{}
 
+		// Usar zona horaria de Colombia (UTC-5) para que los filtros coincidan con Shopify
+		colombiaLoc, _ := time.LoadLocation("America/Bogota")
+
 		if req.CreatedAtMin != nil && *req.CreatedAtMin != "" {
 			parsedMin, err := parseFlexibleDate(*req.CreatedAtMin)
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"success": false,
-					"message": "Formato inválido en created_at_min. Use RFC3339 o YYYY-MM-DD",
+					"message": "Formato inválido en created_at_min. Use RFC3339, YYYY-MM-DDTHH:MM o YYYY-MM-DD",
 					"error":   err.Error(),
 				})
 				return
 			}
-			// Ajustar a inicio del día en UTC
-			parsedMin = time.Date(parsedMin.Year(), parsedMin.Month(), parsedMin.Day(), 0, 0, 0, 0, time.UTC)
+			// Si tiene hora explícita, usar esa hora; si no, ajustar a inicio del día en Colombia
+			if !hasExplicitTime(*req.CreatedAtMin) {
+				parsedMin = time.Date(parsedMin.Year(), parsedMin.Month(), parsedMin.Day(), 0, 0, 0, 0, colombiaLoc)
+			}
 			syncParams.CreatedAtMin = &parsedMin
 		}
 
@@ -70,13 +75,15 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 			if err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"success": false,
-					"message": "Formato inválido en created_at_max. Use RFC3339 o YYYY-MM-DD",
+					"message": "Formato inválido en created_at_max. Use RFC3339, YYYY-MM-DDTHH:MM o YYYY-MM-DD",
 					"error":   err.Error(),
 				})
 				return
 			}
-			// Ajustar a fin del día en UTC (23:59:59.999)
-			parsedMax = time.Date(parsedMax.Year(), parsedMax.Month(), parsedMax.Day(), 23, 59, 59, 999999999, time.UTC)
+			// Si tiene hora explícita, usar esa hora; si no, ajustar a fin del día en Colombia
+			if !hasExplicitTime(*req.CreatedAtMax) {
+				parsedMax = time.Date(parsedMax.Year(), parsedMax.Month(), parsedMax.Day(), 23, 59, 59, 999999999, colombiaLoc)
+			}
 			syncParams.CreatedAtMax = &parsedMax
 		}
 
@@ -122,8 +129,25 @@ func (h *IntegrationHandler) SyncOrdersByIntegrationIDHandler(c *gin.Context) {
 	} else if syncParams != nil {
 		// Flujo directo con params: ejecutar en goroutine (es sincrónico y puede tardar)
 		// Los eventos SSE (started/completed/failed) notificarán al frontend
+		// Convertir struct a map[string]interface{} para que el provider pueda hacer type assertion
+		genericParams := map[string]interface{}{}
+		if syncParams.CreatedAtMin != nil {
+			genericParams["created_at_min"] = *syncParams.CreatedAtMin
+		}
+		if syncParams.CreatedAtMax != nil {
+			genericParams["created_at_max"] = *syncParams.CreatedAtMax
+		}
+		if syncParams.Status != "" {
+			genericParams["status"] = syncParams.Status
+		}
+		if syncParams.FinancialStatus != "" {
+			genericParams["financial_status"] = syncParams.FinancialStatus
+		}
+		if syncParams.FulfillmentStatus != "" {
+			genericParams["fulfillment_status"] = syncParams.FulfillmentStatus
+		}
 		go func() {
-			if err := h.usecase.SyncOrdersByIntegrationIDWithParams(context.Background(), integrationID, syncParams); err != nil {
+			if err := h.usecase.SyncOrdersByIntegrationIDWithParams(context.Background(), integrationID, genericParams); err != nil {
 				h.logger.Error().Err(err).Str("integration_id", integrationID).Msg("Error en sincronización directa con params")
 			}
 		}()
@@ -157,6 +181,7 @@ func parseFlexibleDate(dateStr string) (time.Time, error) {
 		time.RFC3339,
 		"2006-01-02T15:04:05Z",
 		"2006-01-02T15:04:05",
+		"2006-01-02T15:04",
 		"2006-01-02",
 	}
 
@@ -167,6 +192,11 @@ func parseFlexibleDate(dateStr string) (time.Time, error) {
 	}
 
 	return time.Time{}, &time.ParseError{Layout: "RFC3339 or YYYY-MM-DD", Value: dateStr}
+}
+
+// hasExplicitTime returns true if the date string includes time information (not just YYYY-MM-DD)
+func hasExplicitTime(dateStr string) bool {
+	return len(dateStr) > 10
 }
 
 func (h *IntegrationHandler) SyncOrdersByBusinessHandler(c *gin.Context) {

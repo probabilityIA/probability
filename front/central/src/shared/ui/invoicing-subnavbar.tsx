@@ -1,18 +1,74 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useInvoicingBusiness } from '@/shared/contexts/invoicing-business-context';
+import { usePermissions } from '@/shared/contexts/permissions-context';
+import { useToast } from '@/shared/providers/toast-provider';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
+import {
+    getConfigsAction,
+    enableConfigAction,
+    disableConfigAction,
+} from '@/services/modules/invoicing/infra/actions';
+import type { InvoicingConfig } from '@/services/modules/invoicing/domain/types';
 
 export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
     const pathname = usePathname();
     const { actionButtons } = useNavbarActions();
     const { selectedBusinessId, setSelectedBusinessId } = useInvoicingBusiness();
+    const { permissions, isSuperAdmin } = usePermissions();
+    const { showToast } = useToast();
+    const [config, setConfig] = useState<InvoicingConfig | null>(null);
+    const [toggling, setToggling] = useState(false);
 
     const isInModule = pathname.startsWith('/invoicing');
+
+    const loadConfig = useCallback(async () => {
+        try {
+            const effectiveBusinessId = isSuperAdmin
+                ? (selectedBusinessId ?? undefined)
+                : (permissions?.business_id || undefined);
+            if (!effectiveBusinessId) {
+                setConfig(null);
+                return;
+            }
+            const response = await getConfigsAction({ business_id: effectiveBusinessId });
+            const configs = response.data || [];
+            setConfig(configs.length > 0 ? configs[0] : null);
+        } catch {
+            setConfig(null);
+        }
+    }, [isSuperAdmin, selectedBusinessId, permissions?.business_id]);
+
+    useEffect(() => {
+        if (isInModule) {
+            loadConfig();
+        }
+    }, [isInModule, loadConfig]);
+
+    const handleToggle = async () => {
+        if (!config || toggling) return;
+        setToggling(true);
+        const wasEnabled = config.enabled;
+        setConfig(prev => prev ? { ...prev, enabled: !prev.enabled } : prev);
+        try {
+            if (wasEnabled) {
+                await disableConfigAction(config.id);
+                showToast('Facturacion desactivada', 'success');
+            } else {
+                await enableConfigAction(config.id);
+                showToast('Facturacion activada', 'success');
+            }
+        } catch (error: any) {
+            setConfig(prev => prev ? { ...prev, enabled: wasEnabled } : prev);
+            showToast('Error al cambiar estado: ' + error.message, 'error');
+        } finally {
+            setToggling(false);
+        }
+    };
 
     if (!isInModule) {
         return null;
@@ -43,6 +99,20 @@ export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
                                 {item.label}
                             </Link>
                         ))}
+                        {config && (
+                            <button
+                                onClick={handleToggle}
+                                disabled={toggling}
+                                className={`px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                                    config.enabled
+                                        ? 'bg-green-500 hover:bg-green-600 text-white'
+                                        : 'bg-red-500 hover:bg-red-600 text-white'
+                                } ${toggling ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg hover:scale-105'}`}
+                                title={config.enabled ? 'Facturacion activa - clic para desactivar' : 'Facturacion inactiva - clic para activar'}
+                            >
+                                {config.enabled ? 'Facturacion Activa' : 'Facturacion Inactiva'}
+                            </button>
+                        )}
                     </div>
                     <div className="flex items-center gap-2 ml-4">
                         <SuperAdminBusinessSelector

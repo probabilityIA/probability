@@ -81,7 +81,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         novelty: order?.novelty || '',
 
         // Items
-        items: order?.items || [],
+        items: order?.order_items || order?.items || [],
 
         // Extra
         integration_type: order?.integration_type || '',
@@ -89,14 +89,22 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     });
 
     const [selectedProducts, setSelectedProducts] = useState<Product[]>(() => {
-        if (!order?.items || !Array.isArray(order.items)) return [];
-        return (order.items as any[])
+        // Try order_items first (structured items from backend), then fallback to items
+        const items = order?.order_items ?? order?.items;
+        if (!items || !Array.isArray(items)) return [];
+        return (items as any[])
             .map((item: any) => ({
                 ...item,
-                // Normalize field names that differ between stored format and Product interface
+                // Map order_item fields to Product interface
+                id: item.id?.toString() || item.product_id || '',
+                sku: item.sku || item.product_sku || '',
+                name: item.name || item.product_name || item.product_title || '',
+                price: item.price ?? item.unit_price ?? 0,
+                quantity: item.quantity ?? 1,
                 stock: item.stock ?? item.stock_quantity ?? 0,
                 manage_stock: item.manage_stock ?? item.track_inventory ?? false,
                 thumbnail: item.thumbnail || item.image_url || undefined,
+                currency: item.currency || order?.currency || 'COP',
             } as Product))
             .filter((p: any) => p.id);
     });

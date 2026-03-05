@@ -304,8 +304,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         if (batchSyncRef.current) {
                             advanceBatchOrderCount(1);
                         }
-                        playNotificationSound();
-                        showToast(`Orden creada: #${orderNumber}`, 'success');
                         break;
                     }
                     case 'integration.sync.order.updated': {
@@ -325,8 +323,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         if (batchSyncRef.current) {
                             advanceBatchOrderCount(1);
                         }
-                        playNotificationSound();
-                        showToast(`Orden actualizada: #${orderNumber}`, 'info');
                         break;
                     }
                     case 'integration.sync.order.rejected': {
@@ -348,8 +344,6 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         if (batchSyncRef.current) {
                             advanceBatchOrderCount(1);
                         }
-                        playNotificationSound();
-                        showToast(`Orden rechazada: #${orderNumber} - ${reason}${error ? `: ${error}` : ''}`, 'error');
                         break;
                     }
                     case 'integration.sync.started': {
@@ -1415,6 +1409,22 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                     <p className="text-sm text-red-600 mt-1">{syncError}</p>
                                                 </div>
                                             )}
+                                            {/* Empty result message */}
+                                            {syncProgress && syncProgress.totalFetched === 0 && !syncing && (
+                                                <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                                                    <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                                                    </svg>
+                                                    <p className="text-lg font-medium">No se encontraron órdenes</p>
+                                                    <p className="text-sm mt-1">No hay órdenes en el rango de fechas seleccionado</p>
+                                                    {syncProgress.fetchDuration && (
+                                                        <p className="text-xs mt-2 text-gray-400">Consulta completada en {syncProgress.fetchDuration}</p>
+                                                    )}
+                                                </div>
+                                            )}
+                                            {/* Progress section (only when there are orders or still syncing) */}
+                                            {!(syncProgress && syncProgress.totalFetched === 0 && !syncing) && (
+                                            <>
                                             <div>
                                                 <div className="flex justify-between items-center mb-2">
                                                     <h4 className="text-sm font-semibold text-gray-700">Progreso de Sincronización</h4>
@@ -1523,6 +1533,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                         </div>
                                                     )}
                                                 </div>
+                                            )}
+                                            </>
                                             )}
                                         </div>
                                     )}

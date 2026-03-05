@@ -136,6 +136,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		InvoiceID:               dto.InvoiceID,
 		InvoiceProvider:         dto.InvoiceProvider,
 		OrderStatusURL:          dto.OrderStatusURL,
+		OrderItems:              mapOrderItemsToResponse(dto.OrderItems),
 		Metadata:                metadataJSON,
 		FinancialDetails:        financialDetailsJSON,
 		ShippingDetails:         shippingDetailsJSON,
@@ -195,6 +196,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		OrderStatus:            orderStatus,
 		PaymentStatus:          paymentStatus,
 		FulfillmentStatus:      fulfillmentStatus,
+		OrderStatusURL:         dto.OrderStatusURL,
 		GuideLink:              dto.GuideLink,
 		IsPaid:                 dto.IsPaid,
 		IsConfirmed:            dto.IsConfirmed,
@@ -230,6 +232,39 @@ func OrdersListToResponse(dto *dtos.OrdersListResponse) *response.OrdersList {
 		PageSize:   dto.PageSize,
 		TotalPages: dto.TotalPages,
 	}
+}
+
+// mapOrderItemsToResponse convierte items de dominio a response HTTP
+func mapOrderItemsToResponse(items []entities.ProbabilityOrderItem) []response.OrderItemResponse {
+	if len(items) == 0 {
+		return nil
+	}
+	result := make([]response.OrderItemResponse, len(items))
+	for i, item := range items {
+		result[i] = response.OrderItemResponse{
+			ID:                    item.ID,
+			ProductID:             item.ProductID,
+			ProductSKU:            item.ProductSKU,
+			ProductName:           item.ProductName,
+			ProductTitle:          item.ProductTitle,
+			VariantID:             item.VariantID,
+			Quantity:              item.Quantity,
+			UnitPrice:             item.UnitPrice,
+			TotalPrice:            item.TotalPrice,
+			Currency:              item.Currency,
+			Discount:              item.Discount,
+			Tax:                   item.Tax,
+			TaxRate:               item.TaxRate,
+			UnitPricePresentment:  item.UnitPricePresentment,
+			TotalPricePresentment: item.TotalPricePresentment,
+			DiscountPresentment:   item.DiscountPresentment,
+			TaxPresentment:        item.TaxPresentment,
+			ImageURL:              item.ImageURL,
+			ProductURL:            item.ProductURL,
+			Weight:                item.Weight,
+		}
+	}
+	return result
 }
 
 // mapOrderStatusToResponse convierte OrderStatusInfo de entities a response

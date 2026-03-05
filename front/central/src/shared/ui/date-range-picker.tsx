@@ -3,8 +3,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import { es } from 'date-fns/locale';
-import { format, parse } from 'date-fns';
-// Los estilos se aplican inline con styled-jsx
+import { format } from 'date-fns';
 
 interface DateRangePickerProps {
     startDate?: string;
@@ -12,43 +11,73 @@ interface DateRangePickerProps {
     onChange: (startDate: string | undefined, endDate: string | undefined) => void;
     placeholder?: string;
     className?: string;
+    /** Mostrar inputs de hora junto a cada fecha */
+    showTime?: boolean;
 }
 
-// Función helper para parsear fechas sin problemas de zona horaria
 function parseDate(dateString: string | undefined): Date | undefined {
     if (!dateString) return undefined;
-    // Si viene en formato YYYY-MM-DD, parsearlo directamente para evitar problemas de zona horaria
+    // YYYY-MM-DD
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
         const [year, month, day] = dateString.split('-').map(Number);
         return new Date(year, month - 1, day);
     }
-    // Si viene en otro formato, intentar parsearlo
+    // YYYY-MM-DDTHH:MM
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(dateString)) {
+        const [datePart, timePart] = dateString.split('T');
+        const [year, month, day] = datePart.split('-').map(Number);
+        const [hours, minutes] = timePart.split(':').map(Number);
+        return new Date(year, month - 1, day, hours, minutes);
+    }
     const parsed = new Date(dateString);
     return isNaN(parsed.getTime()) ? undefined : parsed;
 }
 
-export function DateRangePicker({ 
-    startDate, 
-    endDate, 
-    onChange, 
+function extractTime(dateString: string | undefined): string {
+    if (!dateString) return '00:00';
+    const match = dateString.match(/T(\d{2}:\d{2})/);
+    return match ? match[1] : '00:00';
+}
+
+function formatDateOutput(date: Date, time: string): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}T${time}`;
+}
+
+function formatDateOnly(date: Date): string {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+export function DateRangePicker({
+    startDate,
+    endDate,
+    onChange,
     placeholder = 'Seleccionar rango de fechas',
-    className = '' 
+    className = '',
+    showTime = false
 }: DateRangePickerProps) {
     const [isOpen, setIsOpen] = useState(false);
-    // Estado temporal para la selección (no se aplica hasta hacer clic en "Aplicar")
     const [tempRange, setTempRange] = useState<DateRange | undefined>(() => {
         const from = parseDate(startDate);
         const to = parseDate(endDate);
         return (from || to) ? { from, to } : undefined;
     });
+    const [startTime, setStartTime] = useState(() => extractTime(startDate));
+    const [endTime, setEndTime] = useState(() => extractTime(endDate) || '23:59');
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Sincronizar el estado temporal con las props cuando se abre el calendario o cambian las props
     useEffect(() => {
         if (isOpen) {
             const from = parseDate(startDate);
             const to = parseDate(endDate);
             setTempRange((from || to) ? { from, to } : undefined);
+            setStartTime(extractTime(startDate));
+            setEndTime(extractTime(endDate) || '23:59');
         }
     }, [isOpen, startDate, endDate]);
 
@@ -69,44 +98,31 @@ export function DateRangePicker({
     }, [isOpen]);
 
     const handleSelect = (range: DateRange | undefined) => {
-        // Solo actualizar el estado temporal, NO aplicar los cambios aún
-        // Asegurarse de que las fechas estén en hora local (sin zona horaria)
         if (range?.from) {
-            const year = range.from.getFullYear();
-            const month = range.from.getMonth();
-            const day = range.from.getDate();
-            range.from = new Date(year, month, day);
+            range.from = new Date(range.from.getFullYear(), range.from.getMonth(), range.from.getDate());
         }
         if (range?.to) {
-            const year = range.to.getFullYear();
-            const month = range.to.getMonth();
-            const day = range.to.getDate();
-            range.to = new Date(year, month, day);
+            range.to = new Date(range.to.getFullYear(), range.to.getMonth(), range.to.getDate());
         }
         setTempRange(range);
-        // NO cerrar el calendario, esperar a que el usuario haga clic en "Aplicar"
     };
 
     const handleApply = () => {
-        // Aplicar los cambios solo cuando se hace clic en "Aplicar"
-        // Usar getFullYear, getMonth, getDate para evitar problemas de zona horaria
         let fromString: string | undefined = undefined;
         let toString: string | undefined = undefined;
-        
+
         if (tempRange?.from) {
-            const year = tempRange.from.getFullYear();
-            const month = String(tempRange.from.getMonth() + 1).padStart(2, '0');
-            const day = String(tempRange.from.getDate()).padStart(2, '0');
-            fromString = `${year}-${month}-${day}`;
+            fromString = showTime
+                ? formatDateOutput(tempRange.from, startTime)
+                : formatDateOnly(tempRange.from);
         }
-        
+
         if (tempRange?.to) {
-            const year = tempRange.to.getFullYear();
-            const month = String(tempRange.to.getMonth() + 1).padStart(2, '0');
-            const day = String(tempRange.to.getDate()).padStart(2, '0');
-            toString = `${year}-${month}-${day}`;
+            toString = showTime
+                ? formatDateOutput(tempRange.to, endTime)
+                : formatDateOnly(tempRange.to);
         }
-        
+
         onChange(fromString, toString);
         setIsOpen(false);
     };
@@ -114,39 +130,26 @@ export function DateRangePicker({
     const getDisplayText = () => {
         const from = parseDate(startDate);
         const to = parseDate(endDate);
-        
+
+        const fromTimeStr = showTime && startDate?.includes('T') ? ` ${extractTime(startDate)}` : '';
+        const toTimeStr = showTime && endDate?.includes('T') ? ` ${extractTime(endDate)}` : '';
+
         if (from && to) {
-            // Formato compacto: "21/11/2025 → 12/12/2025"
-            const fromStr = format(from, 'dd/MM/yyyy', { locale: es });
-            const toStr = format(to, 'dd/MM/yyyy', { locale: es });
-            return `${fromStr} → ${toStr}`;
+            return `${format(from, 'dd/MM/yyyy', { locale: es })}${fromTimeStr} → ${format(to, 'dd/MM/yyyy', { locale: es })}${toTimeStr}`;
         } else if (from) {
-            const fromStr = format(from, 'dd/MM/yyyy', { locale: es });
-            return `Desde: ${fromStr}`;
+            return `Desde: ${format(from, 'dd/MM/yyyy', { locale: es })}${fromTimeStr}`;
         } else if (to) {
-            const toStr = format(to, 'dd/MM/yyyy', { locale: es });
-            return `Hasta: ${toStr}`;
+            return `Hasta: ${format(to, 'dd/MM/yyyy', { locale: es })}${toTimeStr}`;
         }
         return '';
-    };
-    
-    const getFullDisplayText = () => {
-        const from = parseDate(startDate);
-        const to = parseDate(endDate);
-        
-        if (from && to) {
-            return `Rango: ${format(from, 'dd/MM/yyyy', { locale: es })} hasta ${format(to, 'dd/MM/yyyy', { locale: es })}`;
-        } else if (from) {
-            return `Fecha inicio: ${format(from, 'dd/MM/yyyy', { locale: es })} - Selecciona fecha fin`;
-        } else if (to) {
-            return `Fecha fin: ${format(to, 'dd/MM/yyyy', { locale: es })} - Selecciona fecha inicio`;
-        }
-        return placeholder;
     };
 
     const clearDates = () => {
         setTempRange(undefined);
-        // No aplicar los cambios hasta hacer clic en "Aplicar"
+        setStartTime('00:00');
+        setEndTime('23:59');
+        onChange(undefined, undefined);
+        setIsOpen(false);
     };
 
     return (
@@ -158,34 +161,48 @@ export function DateRangePicker({
                     value={getDisplayText()}
                     placeholder={placeholder}
                     onClick={() => setIsOpen(!isOpen)}
-                    title={getFullDisplayText()}
                     className="w-full px-3 py-2 pr-8 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white cursor-pointer text-sm"
-                    style={{ 
-                        textOverflow: 'ellipsis',
-                        overflow: 'hidden',
-                        whiteSpace: 'nowrap'
-                    }}
+                    style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}
                 />
-                {/* Icono de calendario */}
                 <div className="absolute right-2 top-1/2 transform -translate-y-1/2 pointer-events-none">
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                 </div>
             </div>
-            
+
             {isOpen && (
                 <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-auto">
-                    {/* Indicador de selección */}
+                    {/* Indicador de selección con horas */}
                     <div className="mb-3 px-2 py-2 bg-gray-50 rounded-md">
                         <div className="flex items-center gap-2 text-sm">
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.from ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
-                                {tempRange?.from ? format(tempRange.from, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar inicio'}
-                            </span>
+                            <div className="flex items-center gap-1">
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.from ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                                    {tempRange?.from ? format(tempRange.from, 'dd/MM/yyyy', { locale: es }) : 'Inicio'}
+                                </span>
+                                {showTime && tempRange?.from && (
+                                    <input
+                                        type="time"
+                                        value={startTime}
+                                        onChange={(e) => setStartTime(e.target.value)}
+                                        className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-[70px]"
+                                    />
+                                )}
+                            </div>
                             <span className="text-gray-400">→</span>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.to ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
-                                {tempRange?.to ? format(tempRange.to, 'dd/MM/yyyy', { locale: es }) : 'Seleccionar fin'}
-                            </span>
+                            <div className="flex items-center gap-1">
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.to ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                                    {tempRange?.to ? format(tempRange.to, 'dd/MM/yyyy', { locale: es }) : 'Fin'}
+                                </span>
+                                {showTime && tempRange?.to && (
+                                    <input
+                                        type="time"
+                                        value={endTime}
+                                        onChange={(e) => setEndTime(e.target.value)}
+                                        className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-[70px]"
+                                    />
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -221,7 +238,7 @@ export function DateRangePicker({
                             day_hidden: 'invisible',
                         }}
                     />
-                    
+
                     {/* Botones de acción */}
                     <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
                         <button
@@ -244,4 +261,3 @@ export function DateRangePicker({
         </div>
     );
 }
-

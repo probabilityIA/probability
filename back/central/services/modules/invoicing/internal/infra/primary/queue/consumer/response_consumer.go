@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/invoicing/internal/domain/constants"
@@ -733,6 +734,14 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 			systemOnly++
 		}
 	}
+
+	// Ordenar resultados: por fecha descendente, luego por número de factura descendente
+	sort.Slice(results, func(i, j int) bool {
+		if results[i].DocumentDate != results[j].DocumentDate {
+			return results[i].DocumentDate > results[j].DocumentDate
+		}
+		return results[i].InvoiceNumber > results[j].InvoiceNumber
+	})
 
 	summary := dtos.CompareSummary{
 		Matched:      matched,
