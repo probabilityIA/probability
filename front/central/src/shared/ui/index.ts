@@ -23,6 +23,7 @@ export * from './inventory-subnavbar';
 export * from './integrations-subnavbar';
 export * from './notifications-subnavbar';
 export * from './invoicing-subnavbar';
+export * from './delivery-subnavbar';
 export * from './spinner';
 export * from './stepper';
 export * from './table';

@@ -5,6 +5,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/ai"
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
+	"github.com/secamc93/probability/back/central/services/modules/drivers"
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
@@ -14,7 +15,9 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
 	"github.com/secamc93/probability/back/central/services/modules/products"
+	"github.com/secamc93/probability/back/central/services/modules/routes"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
+	"github.com/secamc93/probability/back/central/services/modules/vehicles"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -76,6 +79,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de inventory (stock + movimientos + cache Redis)
 	inventory.New(router, database, logger, environment, rabbitMQ, redisClient)
+
+	// Ultima milla
+	drivers.New(router, database)
+	vehicles.New(router, database)
+	routes.New(router, database)
 
 	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
 	if rabbitMQ != nil {

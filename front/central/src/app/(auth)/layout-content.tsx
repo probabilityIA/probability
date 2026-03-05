@@ -1,12 +1,13 @@
 'use client';
 
 import React from 'react';
-import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
 import { NotificationBusinessProvider } from '@/shared/contexts/notification-business-context';
 import { InvoicingBusinessProvider } from '@/shared/contexts/invoicing-business-context';
 import { OrdersBusinessProvider } from '@/shared/contexts/orders-business-context';
+import { DeliveryBusinessProvider } from '@/shared/contexts/delivery-business-context';
 import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 
 interface LayoutContentProps {
@@ -71,14 +72,17 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         <InventoryBusinessProvider>
         <NotificationBusinessProvider>
         <InvoicingBusinessProvider>
+        <DeliveryBusinessProvider>
           <OrdersSubNavbar />
           <InventorySubNavbar />
           <IntegrationsSubNavbar />
           <NotificationsSubNavbar />
           <InvoicingSubNavbar />
+          <DeliverySubNavbar />
           <div className="w-full min-w-0 flex-1">
             {children}
           </div>
+        </DeliveryBusinessProvider>
         </InvoicingBusinessProvider>
         </NotificationBusinessProvider>
         </InventoryBusinessProvider>

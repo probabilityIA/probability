@@ -55,6 +55,12 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.Order{},
 		// Invoice.CustomerPhone: 32→50
 		&models.Invoice{},
+
+		// Ultima milla (drivers, vehicles, routes)
+		&models.Driver{},
+		&models.Vehicle{},
+		&models.Route{},
+		&models.RouteStop{},
 	); err != nil {
 		return err
 	}

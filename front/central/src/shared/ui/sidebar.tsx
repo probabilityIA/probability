@@ -59,10 +59,12 @@ export function Sidebar({ user }: SidebarProps) {
   const ordersRoutes = ['/orders', '/shipments', '/order-status'];
   const inventoryRoutes = ['/products', '/warehouses', '/inventory'];
   const invoicingRoutes = ['/invoicing'];
+  const deliveryRoutes = ['/delivery'];
   const hasSecondarySidebar = iamRoutes.some(route => pathname.startsWith(route)) ||
     ordersRoutes.some(route => pathname.startsWith(route)) ||
     inventoryRoutes.some(route => pathname.startsWith(route)) ||
-    invoicingRoutes.some(route => pathname.startsWith(route));
+    invoicingRoutes.some(route => pathname.startsWith(route)) ||
+    deliveryRoutes.some(route => pathname.startsWith(route));
 
   // Si está cargando, no hay permisos definidos, o resources es null/vacío, mostrar todo por defecto
   // Si está cargando, esperamos (no mostramos nada o mostramos skeleton si se implementara)
@@ -105,6 +107,9 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewInvoices = isSuperAdmin || hasPermission('Facturacion', 'Read');
   const canViewInvoicingProviders = isSuperAdmin || hasPermission('Facturacion', 'Read');
   const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Facturacion', 'Read');
+
+  // Ultima milla
+  const canViewDelivery = isSuperAdmin || hasPermission('Ultima Milla', 'Read') || hasPermission('Delivery', 'Read');
 
   // Verificar si tiene acceso a los módulos principales
   const canAccessIAM = canViewBusinesses || canViewUsers || canViewRoles || canViewPermissions || canViewResources;
@@ -399,6 +404,35 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Ordenes</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {/* Item Ultima Milla */}
+              {canViewDelivery && (
+                <li>
+                  <Link
+                    href="/delivery/routes"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/delivery')
+                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/delivery') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Ultima Milla</span>
                     )}
                   </Link>
                 </li>
