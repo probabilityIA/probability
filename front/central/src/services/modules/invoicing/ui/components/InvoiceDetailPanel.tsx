@@ -171,7 +171,7 @@ export function InvoiceDetailModal({
   };
 
   const hasPendingRetries = syncLogs.some(
-    log => log.status === 'failed' && log.next_retry_at
+    log => (log.status === 'failed' || log.status === 'pending') && log.next_retry_at
   );
 
   // Detectar si los reintentos automáticos están cancelados
@@ -511,7 +511,7 @@ export function InvoiceDetailModal({
 
             {/* Acciones */}
             <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200">
-              {invoice.status === 'failed' && (
+              {(invoice.status === 'failed' || invoice.status === 'pending') && (
                 <Button
                   variant="primary"
                   size="sm"
@@ -596,7 +596,7 @@ export function InvoiceDetailModal({
                       {/* Info de reintentos */}
                       <div className="flex items-center gap-4 text-xs text-gray-600">
                         <span>Intento {log.retry_count + 1} de {log.max_retries}</span>
-                        {log.next_retry_at && log.status === 'failed' && (
+                        {log.next_retry_at && (log.status === 'failed' || log.status === 'pending') && (
                           <span className="text-orange-600">
                             Próximo reintento: {formatDate(log.next_retry_at)}
                           </span>
