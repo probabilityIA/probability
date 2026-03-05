@@ -80,18 +80,27 @@ func (c *RetryConsumer) processRetries(ctx context.Context) {
 
 	c.log.Info(ctx).
 		Int("count", len(logs)).
-		Msg("Found pending retries")
+		Msg("Found pending retries/checks")
 
-	// Procesar cada reintento
 	successCount := 0
 	failCount := 0
 
 	for _, syncLog := range logs {
-		if err := c.retryInvoice(ctx, syncLog.InvoiceID); err != nil {
+		var err error
+		if syncLog.Status == "pending" {
+			// Pending DIAN: solo buscar documento, NO re-enviar POST
+			err = c.useCase.CheckPendingInvoice(ctx, syncLog.InvoiceID)
+		} else {
+			// Failed: reintentar con POST (incluye verificación de idempotencia)
+			err = c.useCase.RetryInvoice(ctx, syncLog.InvoiceID)
+		}
+
+		if err != nil {
 			c.log.Error(ctx).
 				Err(err).
 				Uint("invoice_id", syncLog.InvoiceID).
-				Msg("Failed to retry invoice")
+				Str("sync_status", syncLog.Status).
+				Msg("Failed to process invoice")
 			failCount++
 		} else {
 			successCount++
@@ -102,29 +111,6 @@ func (c *RetryConsumer) processRetries(ctx context.Context) {
 		Int("success", successCount).
 		Int("failed", failCount).
 		Int("total", len(logs)).
-		Msg("Retry batch completed")
+		Msg("Retry/check batch completed")
 }
 
-// retryInvoice reintenta una factura específica
-func (c *RetryConsumer) retryInvoice(ctx context.Context, invoiceID uint) error {
-	c.log.Debug(ctx).
-		Uint("invoice_id", invoiceID).
-		Msg("Retrying invoice")
-
-	// Usar el caso de uso de reintento
-	err := c.useCase.RetryInvoice(ctx, invoiceID)
-	if err != nil {
-		// Log pero no fallar - el sync log ya registrará el intento
-		c.log.Warn(ctx).
-			Err(err).
-			Uint("invoice_id", invoiceID).
-			Msg("Retry invoice failed - will try again later if within max retries")
-		return err
-	}
-
-	c.log.Info(ctx).
-		Uint("invoice_id", invoiceID).
-		Msg("Invoice retry successful")
-
-	return nil
-}

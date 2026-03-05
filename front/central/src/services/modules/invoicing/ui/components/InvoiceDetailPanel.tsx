@@ -511,7 +511,7 @@ export function InvoiceDetailModal({
 
             {/* Acciones */}
             <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200">
-              {(invoice.status === 'failed' || invoice.status === 'pending') && (
+              {invoice.status === 'failed' && (
                 <Button
                   variant="primary"
                   size="sm"
@@ -519,6 +519,16 @@ export function InvoiceDetailModal({
                   disabled={retrying || maxRetriesReached}
                 >
                   {retrying ? 'Reintentando...' : 'Reintentar'}
+                </Button>
+              )}
+              {invoice.status === 'pending' && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleRetry}
+                  disabled={retrying || maxRetriesReached}
+                >
+                  {retrying ? 'Consultando...' : 'Consultar Estado DIAN'}
                 </Button>
               )}
               {(autoRetriesEnabled || autoRetriesDisabled) && (

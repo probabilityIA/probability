@@ -241,6 +241,7 @@ type IUseCase interface {
 	CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO) (*entities.Invoice, error)
 	CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error
 	RetryInvoice(ctx context.Context, invoiceID uint) error
+	CheckPendingInvoice(ctx context.Context, invoiceID uint) error
 	CancelRetry(ctx context.Context, invoiceID uint) error
 	EnableRetry(ctx context.Context, invoiceID uint) error
 	GetInvoice(ctx context.Context, invoiceID uint) (*entities.Invoice, error)
