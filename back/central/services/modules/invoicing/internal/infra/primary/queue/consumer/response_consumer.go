@@ -297,6 +297,7 @@ func (c *ResponseConsumer) handlePendingValidation(
 	}
 
 	// Actualizar sync log como pending (validación DIAN en curso)
+	// Programar reintento automático para que el retry consumer re-consulte
 	if syncLog != nil {
 		completedAt := time.Now()
 		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
@@ -307,6 +308,17 @@ func (c *ResponseConsumer) handlePendingValidation(
 		syncLog.ErrorMessage = &providerMsg
 
 		c.populateSyncLogAudit(syncLog, response)
+
+		// Programar reintento automático: la DIAN puede tardar, reintentar en 5-30 min
+		if syncLog.RetryCount < syncLog.MaxRetries {
+			nextRetry := c.calculateNextRetry(syncLog.RetryCount)
+			syncLog.NextRetryAt = &nextRetry
+			c.log.Info(ctx).
+				Uint("invoice_id", invoice.ID).
+				Time("next_retry_at", nextRetry).
+				Int("retry_count", syncLog.RetryCount).
+				Msg("⏳ DIAN pending validation - scheduled automatic retry")
+		}
 
 		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
 			c.log.Error(ctx).Err(err).Msg("Failed to update sync log for pending validation")
