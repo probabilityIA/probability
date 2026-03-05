@@ -156,6 +156,13 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	}
 
 	// Mapear items al formato de Softpymes
+	// Lógica de precios:
+	// 1. Si hay presentment prices (> 0) y currency es COP → usar presentment (moneda local)
+	// 2. Si no → usar shop_money (UnitPrice) como fallback
+	// 3. Shopify envía precios con IVA incluido (taxes_included: true)
+	//    Softpymes espera unitValue como base pre-impuesto y le agrega IVA 19%
+	//    → Extraer base gravable: unitValue = precio / 1.19 cuando el item tiene IVA
+	usePresentment := req.Currency != "COP" // Si la moneda de la tienda NO es COP, usar presentment (que sí es COP)
 	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
 	for _, item := range req.Items {
 		itemCode := item.SKU
@@ -164,24 +171,56 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		}
 
 		quantity := float64(item.Quantity)
-		discount := item.Discount
 
-		// unitCode por defecto "UNI" (UNIDADES) - código estándar en Softpymes
-		unitCode := "UNI"
+		// Determinar precio unitario efectivo (presentment vs shop_money)
+		effectiveUnitPrice := item.UnitPrice
+		effectiveDiscount := item.Discount
+		if usePresentment && item.UnitPricePresentment > 0 {
+			effectiveUnitPrice = item.UnitPricePresentment
+			effectiveDiscount = item.DiscountPresentment
+		}
+
+		// Determinar si el item tiene IVA usando TaxRate
+		taxRate := 0.0
+		if item.TaxRate != nil {
+			taxRate = *item.TaxRate
+		}
+
+		// Extraer base gravable: si tiene IVA, el precio incluye impuesto
+		// unitValue = precio_con_iva / (1 + taxRate)
+		unitValue := effectiveUnitPrice
+		if taxRate > 0 {
+			unitValue = effectiveUnitPrice / (1 + taxRate)
+		}
 
 		softpymesItem := map[string]interface{}{
 			"itemCode": itemCode,
 			"quantity": quantity,
-			"discount": discount,
-			"unitCode": unitCode,
+			"discount": effectiveDiscount,
+			"unitCode": "UNI",
 		}
 
 		// Solo incluir unitValue si tiene valor (Softpymes espera String)
-		if item.UnitPrice > 0 {
-			softpymesItem["unitValue"] = fmt.Sprintf("%.2f", item.UnitPrice)
+		if unitValue > 0 {
+			softpymesItem["unitValue"] = fmt.Sprintf("%.2f", unitValue)
 		}
 
 		softpymesItems = append(softpymesItems, softpymesItem)
+	}
+
+	// BUG-004: Agregar shipping como línea de factura si hay costo de envío
+	if req.ShippingCost > 0 {
+		shippingCost := req.ShippingCost
+		// Extraer base pre-tax del shipping (asumimos IVA 19% incluido)
+		shippingBase := shippingCost / 1.19
+		shippingItem := map[string]interface{}{
+			"itemCode":  "SHIPPING",
+			"quantity":  1.0,
+			"discount":  0.0,
+			"unitCode":  "UNI",
+			"unitValue": fmt.Sprintf("%.2f", shippingBase),
+		}
+		softpymesItems = append(softpymesItems, shippingItem)
 	}
 
 	// Mapear currency al formato de Softpymes

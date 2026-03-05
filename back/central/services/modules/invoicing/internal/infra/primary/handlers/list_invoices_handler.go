@@ -53,6 +53,11 @@ func (h *handler) ListInvoices(c *gin.Context) {
 		filters["customer_name"] = customerName
 	}
 
+	// Currency
+	if currency := c.Query("currency"); currency != "" {
+		filters["currency"] = currency
+	}
+
 	// Date range
 	if startDate := c.Query("start_date"); startDate != "" {
 		filters["start_date"] = startDate

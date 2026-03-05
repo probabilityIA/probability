@@ -103,6 +103,10 @@ func (r *Repository) ListInvoices(ctx context.Context, filters map[string]interf
 		query = query.Where("invoicing_provider_id = ?", providerID)
 	}
 
+	if currency, ok := filters["currency"].(string); ok && currency != "" {
+		query = query.Where("currency = ?", currency)
+	}
+
 	if invoiceNumber, ok := filters["invoice_number"].(string); ok && invoiceNumber != "" {
 		query = query.Where("invoice_number ILIKE ?", "%"+invoiceNumber+"%")
 	}

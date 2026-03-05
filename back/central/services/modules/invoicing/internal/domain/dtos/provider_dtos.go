@@ -101,4 +101,9 @@ type OrderItemData struct {
 	Discount     float64
 	CategoryID   *uint
 	CategoryName *string
+	// Precios en moneda presentment (moneda local, ej: COP)
+	UnitPricePresentment  float64
+	TotalPricePresentment float64
+	DiscountPresentment   float64
+	TaxPresentment        float64
 }

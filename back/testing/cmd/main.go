@@ -61,13 +61,7 @@ func main() {
 
 	// 4. Initialize Shopify integration (shared between API and CLI)
 	shopifyMockPort := getEnv("SHOPIFY_MOCK_PORT", "9093")
-	var shopifyIntegration *shopify.ShopifyIntegration
-	if os.Getenv("SHOPIFY_DUAL_CURRENCY") == "true" {
-		shopifyIntegration = shopify.NewDualCurrency(config, logger, shopifyMockPort)
-		logger.Info().Msg("🔄 Shopify dual-currency mode: USD/COP (taxes_included=true, rate=4200)")
-	} else {
-		shopifyIntegration = shopify.New(config, logger, shopifyMockPort)
-	}
+	shopifyIntegration := shopify.New(config, logger, shopifyMockPort)
 
 	// 4b. Start Shopify Mock API (simula GET /admin/api/2024-10/orders.json)
 	go func() {

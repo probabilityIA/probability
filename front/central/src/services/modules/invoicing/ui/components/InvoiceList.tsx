@@ -288,6 +288,16 @@ export const InvoiceList = forwardRef(function InvoiceList(
       ],
     },
     {
+      key: 'currency',
+      label: 'Moneda',
+      type: 'select',
+      options: [
+        { value: 'COP', label: 'COP' },
+        { value: 'USD', label: 'USD' },
+        { value: 'EUR', label: 'EUR' },
+      ],
+    },
+    {
       key: 'created_at',
       label: 'Rango de fechas',
       type: 'date-range',
@@ -309,6 +319,9 @@ export const InvoiceList = forwardRef(function InvoiceList(
     if (filters.status) {
       const statusLabels: Record<string, string> = { issued: 'Emitida', pending: 'Pendiente', cancelled: 'Cancelada', failed: 'Fallida' };
       active.push({ key: 'status', label: 'Estado', value: statusLabels[filters.status] || filters.status, type: 'select' });
+    }
+    if (filters.currency) {
+      active.push({ key: 'currency', label: 'Moneda', value: filters.currency, type: 'select' });
     }
     if (filters.start_date || filters.end_date) {
       active.push({
@@ -393,11 +406,23 @@ export const InvoiceList = forwardRef(function InvoiceList(
       key: 'total_amount',
       label: 'Total',
       render: (_: unknown, invoice: Invoice) => (
-        <div className="font-semibold">
-          {new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: invoice.currency || 'COP',
-          }).format(invoice.total_amount)}
+        <div className="flex items-center gap-1.5">
+          <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold ${
+            (invoice.currency || 'COP') === 'COP'
+              ? 'bg-green-100 text-green-800'
+              : (invoice.currency || 'COP') === 'EUR'
+                ? 'bg-purple-100 text-purple-800'
+                : 'bg-blue-100 text-blue-800'
+          }`}>
+            {invoice.currency || 'COP'}
+          </span>
+          <span className="font-semibold">
+            {new Intl.NumberFormat('es-CO', {
+              style: 'decimal',
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(invoice.total_amount)}
+          </span>
         </div>
       ),
     },

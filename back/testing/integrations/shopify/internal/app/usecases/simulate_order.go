@@ -191,19 +191,20 @@ func (s *OrderSimulator) generateUniqueOrderNumber() string {
 	}
 }
 
-// generateRandomOrder genera una orden completamente aleatoria
+// generateRandomOrder genera una orden completamente aleatoria.
+// Mix realista: ~60% dual-currency USD/COP, ~40% single-currency COP
 func (s *OrderSimulator) generateRandomOrder(orderNumber string) *domain.Order {
-	if s.businessConfig.IsDualCurrency() {
+	if rand.Float32() < 0.6 {
 		return s.generateDualCurrencyOrder(orderNumber, time.Now())
 	}
 	return s.generateSingleCurrencyOrder(orderNumber, time.Now())
 }
 
-// generateSingleCurrencyOrder genera una orden single-currency (comportamiento original)
+// generateSingleCurrencyOrder genera una orden single-currency COP
 func (s *OrderSimulator) generateSingleCurrencyOrder(orderNumber string, createdAt time.Time) *domain.Order {
 	now := createdAt
 	orderID := int64(rand.Intn(9999999999) + 1000000000)
-	currency := s.dataGenerator.randomChoice([]string{"COP", "USD", "EUR"})
+	currency := "COP"
 
 	customer := s.dataGenerator.GenerateCustomer()
 	lineItems := s.dataGenerator.GenerateLineItems(rand.Intn(3) + 1)
@@ -616,10 +617,10 @@ func (s *OrderSimulator) generateShippingLines(currency string) []domain.Shippin
 		code  string
 		price float64
 	}{
-		{"Entrega Estándar CUNDINAMARCA (3 a 6 días hábiles municipios principales en Cundinamarca - 3 o más días a otros municipios)", "standard_cundinamarca", 3.15},
-		{"Envío Express", "express", 5.00},
+		{"Entrega Estándar (3 a 6 días hábiles)", "standard", 12000.0},
+		{"Envío Nacional (5 a 8 días hábiles)", "nacional", 17000.0},
+		{"Envío Express", "express", 15000.0},
 		{"Envío Gratis", "free_shipping", 0.00},
-		{"Recogida en Tienda", "pickup", 0.00},
 	}
 
 	method := shippingMethods[rand.Intn(len(shippingMethods))]

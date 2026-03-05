@@ -214,9 +214,9 @@ func (m *MockAPIServer) matchesFilters(order *domain.Order, params OrderQueryPar
 }
 
 // generateOrderAtDate genera una orden con un created_at específico.
-// Delega a OrderSimulator para reutilizar la lógica dual-currency.
+// Mix realista: ~60% dual-currency USD/COP, ~40% single-currency COP
 func (m *MockAPIServer) generateOrderAtDate(orderNumber string, createdAt time.Time) *domain.Order {
-	if m.businessConfig.IsDualCurrency() {
+	if rand.Float32() < 0.6 {
 		return m.generateDualCurrencyOrderAtDate(orderNumber, createdAt)
 	}
 	return m.generateSingleCurrencyOrderAtDate(orderNumber, createdAt)
@@ -546,10 +546,10 @@ func (m *MockAPIServer) generateShippingLines(currency string) []domain.Shipping
 		code  string
 		price float64
 	}{
-		{"Entrega Estándar CUNDINAMARCA", "standard_cundinamarca", 3.15},
-		{"Envío Express", "express", 5.00},
+		{"Entrega Estándar (3 a 6 días hábiles)", "standard", 12000.0},
+		{"Envío Nacional (5 a 8 días hábiles)", "nacional", 17000.0},
+		{"Envío Express", "express", 15000.0},
 		{"Envío Gratis", "free_shipping", 0.00},
-		{"Recogida en Tienda", "pickup", 0.00},
 	}
 
 	method := methods[rand.Intn(len(methods))]

@@ -172,11 +172,16 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		unitPrice, _ := strconv.ParseFloat(item.Price, 64)
 		totalDiscount, _ := strconv.ParseFloat(item.TotalDiscount, 64)
 
-		// Calcular impuesto total de tax_lines
+		// Calcular impuesto total y extraer tasa de tax_lines
 		var totalTax float64
+		var taxRate *float64
 		for _, taxLine := range item.TaxLines {
 			taxPrice, _ := strconv.ParseFloat(taxLine.Price, 64)
 			totalTax += taxPrice
+			if taxRate == nil && taxLine.Rate > 0 {
+				rate := taxLine.Rate
+				taxRate = &rate
+			}
 		}
 
 		// Extraer precios en moneda local del item (presentment_money)
@@ -217,6 +222,7 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			VariantTitle: item.VariantTitle,
 			Discount:     totalDiscount,
 			Tax:          totalTax,
+			TaxRate:      taxRate,
 			Weight:       weight,
 			// Precios en moneda local
 			UnitPricePresentment: unitPricePresentment,

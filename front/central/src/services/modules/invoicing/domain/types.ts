@@ -273,6 +273,7 @@ export interface InvoiceFilters {
   order_id?: string;
   integration_id?: number;
   status?: string;
+  currency?: string;
   provider_id?: number;
   invoice_number?: string;
   order_number?: string;

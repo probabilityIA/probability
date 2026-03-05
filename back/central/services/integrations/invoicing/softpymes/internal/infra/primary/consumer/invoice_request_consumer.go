@@ -41,6 +41,11 @@ type invoiceItemData struct {
 	Tax         float64  `json:"tax"`
 	TaxRate     *float64 `json:"tax_rate"`
 	Discount    float64  `json:"discount"`
+	// Precios en moneda presentment (moneda local, ej: COP)
+	UnitPricePresentment  float64 `json:"unit_price_presentment"`
+	TotalPricePresentment float64 `json:"total_price_presentment"`
+	DiscountPresentment   float64 `json:"discount_presentment"`
+	TaxPresentment        float64 `json:"tax_presentment"`
 }
 
 // invoiceData datos completos (replicado de invoicing module)
@@ -683,16 +688,20 @@ func mapItemsToClientDTOs(items []invoiceItemData) []spDtos.ItemData {
 	result := make([]spDtos.ItemData, 0, len(items))
 	for _, item := range items {
 		result = append(result, spDtos.ItemData{
-			ProductID:   item.ProductID,
-			SKU:         item.SKU,
-			Name:        item.Name,
-			Description: item.Description,
-			Quantity:    item.Quantity,
-			UnitPrice:   item.UnitPrice,
-			TotalPrice:  item.TotalPrice,
-			Tax:         item.Tax,
-			TaxRate:     item.TaxRate,
-			Discount:    item.Discount,
+			ProductID:             item.ProductID,
+			SKU:                   item.SKU,
+			Name:                  item.Name,
+			Description:           item.Description,
+			Quantity:              item.Quantity,
+			UnitPrice:             item.UnitPrice,
+			TotalPrice:            item.TotalPrice,
+			Tax:                   item.Tax,
+			TaxRate:               item.TaxRate,
+			Discount:              item.Discount,
+			UnitPricePresentment:  item.UnitPricePresentment,
+			TotalPricePresentment: item.TotalPricePresentment,
+			DiscountPresentment:   item.DiscountPresentment,
+			TaxPresentment:        item.TaxPresentment,
 		})
 	}
 	return result

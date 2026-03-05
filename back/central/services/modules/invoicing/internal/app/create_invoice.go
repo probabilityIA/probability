@@ -155,20 +155,35 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	// 9. Crear items de factura desde los items de la orden
+	// Para órdenes dual-currency (ej: tienda USD, comprador COP), los totales de la orden
+	// ya están en moneda presentment (COP) pero los items tienen UnitPrice en shop currency (USD).
+	// Usar precios presentment cuando estén disponibles para mantener consistencia con los totales.
 	invoiceItems := make([]*entities.InvoiceItem, 0, len(order.Items))
 	for _, orderItem := range order.Items {
+		unitPrice := orderItem.UnitPrice
+		totalPrice := orderItem.TotalPrice
+		tax := orderItem.Tax
+		discount := orderItem.Discount
+
+		if orderItem.UnitPricePresentment > 0 {
+			unitPrice = orderItem.UnitPricePresentment
+			totalPrice = orderItem.TotalPricePresentment
+			tax = orderItem.TaxPresentment
+			discount = orderItem.DiscountPresentment
+		}
+
 		item := &entities.InvoiceItem{
 			ProductID:   orderItem.ProductID,
 			SKU:         orderItem.SKU,
 			Name:        orderItem.Name,
 			Description: orderItem.Description,
 			Quantity:    orderItem.Quantity,
-			UnitPrice:   orderItem.UnitPrice,
-			TotalPrice:  orderItem.TotalPrice,
+			UnitPrice:   unitPrice,
+			TotalPrice:  totalPrice,
 			Currency:    order.Currency,
-			Tax:         orderItem.Tax,
+			Tax:         tax,
 			TaxRate:     orderItem.TaxRate,
-			Discount:    orderItem.Discount,
+			Discount:    discount,
 			Metadata:    make(map[string]interface{}),
 		}
 		invoiceItems = append(invoiceItems, item)
@@ -217,8 +232,8 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 
 	// 13. Preparar datos de facturación tipados para el proveedor
 	invoiceItemDTOs := make([]dtos.InvoiceItemData, 0, len(invoiceItems))
-	for _, item := range invoiceItems {
-		invoiceItemDTOs = append(invoiceItemDTOs, dtos.InvoiceItemData{
+	for i, item := range invoiceItems {
+		itemDTO := dtos.InvoiceItemData{
 			ProductID:   item.ProductID,
 			SKU:         item.SKU,
 			Name:        item.Name,
@@ -229,7 +244,16 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			Tax:         item.Tax,
 			TaxRate:     item.TaxRate,
 			Discount:    item.Discount,
-		})
+		}
+		// Propagar presentment desde order items (si están disponibles)
+		if i < len(order.Items) {
+			oi := order.Items[i]
+			itemDTO.UnitPricePresentment = oi.UnitPricePresentment
+			itemDTO.TotalPricePresentment = oi.TotalPricePresentment
+			itemDTO.DiscountPresentment = oi.DiscountPresentment
+			itemDTO.TaxPresentment = oi.TaxPresentment
+		}
+		invoiceItemDTOs = append(invoiceItemDTOs, itemDTO)
 	}
 
 	// Config específico de facturación (invoice_config desde DB)

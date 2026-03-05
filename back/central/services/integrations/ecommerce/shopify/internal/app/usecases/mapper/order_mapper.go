@@ -62,6 +62,7 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			Currency:     s.Currency,
 			Discount:     item.Discount,
 			Tax:          item.Tax,
+			TaxRate:      item.TaxRate,
 			Weight:       item.Weight,
 			// Precios en moneda local
 			UnitPricePresentment:  item.UnitPricePresentment,

@@ -129,6 +129,10 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 			Tax:         orderItem.Tax,
 			TaxRate:     orderItem.TaxRate,
 			Discount:    orderItem.Discount,
+			UnitPricePresentment:  orderItem.UnitPricePresentment,
+			TotalPricePresentment: orderItem.TotalPricePresentment,
+			DiscountPresentment:   orderItem.DiscountPresentment,
+			TaxPresentment:        orderItem.TaxPresentment,
 		}
 
 		// Obtener información del producto desde la relación (si existe y no está soft-deleted)

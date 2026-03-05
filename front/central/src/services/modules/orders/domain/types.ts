@@ -194,6 +194,7 @@ export interface GetOrdersParams {
     order_number?: string;
     internal_number?: string;
     platform?: string;
+    currency_presentment?: string;
     is_paid?: boolean;
     is_cod?: boolean;
     payment_status_id?: number;

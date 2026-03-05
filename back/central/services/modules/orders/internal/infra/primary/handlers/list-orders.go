@@ -92,6 +92,10 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		filters["platform"] = platform
 	}
 
+	if currencyPresentment := c.Query("currency_presentment"); currencyPresentment != "" {
+		filters["currency_presentment"] = currencyPresentment
+	}
+
 	if isPaid := c.Query("is_paid"); isPaid != "" {
 		if paid, err := strconv.ParseBool(isPaid); err == nil {
 			filters["is_paid"] = paid

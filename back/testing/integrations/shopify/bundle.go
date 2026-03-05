@@ -12,24 +12,11 @@ import (
 	sharedtypes "github.com/secamc93/probability/back/testing/shared/types"
 )
 
-// New inicializa el módulo de Shopify para pruebas de integración (single-currency COP).
+// New inicializa el módulo de Shopify para pruebas de integración.
+// Genera un mix de órdenes: ~60% dual-currency USD/COP, ~40% single-currency COP.
 // port es el puerto donde se levantará el mock Shopify API (ej: "9092").
 func New(config env.IConfig, logger log.ILogger, port string) *ShopifyIntegration {
-	return newWithConfig(config, logger, port, domain.DefaultTestBusinessConfig())
-}
-
-// NewDualCurrency inicializa el módulo de Shopify con simulación dual-currency USD/COP.
-// Genera órdenes con shop_money en USD y presentment_money en COP (como una tienda Shopify real en USD con compradores colombianos).
-func NewDualCurrency(config env.IConfig, logger log.ILogger, port string) *ShopifyIntegration {
-	return newWithConfig(config, logger, port, domain.DualCurrencyTestBusinessConfig())
-}
-
-// NewWithBusinessConfig inicializa el módulo con una configuración de business personalizada.
-func NewWithBusinessConfig(config env.IConfig, logger log.ILogger, port string, businessConfig *domain.BusinessConfig) *ShopifyIntegration {
-	return newWithConfig(config, logger, port, businessConfig)
-}
-
-func newWithConfig(config env.IConfig, logger log.ILogger, port string, businessConfig *domain.BusinessConfig) *ShopifyIntegration {
+	businessConfig := domain.DefaultTestBusinessConfig()
 	webhookClient := usecases.NewWebhookClient(config, logger)
 	orderSimulator := usecases.NewOrderSimulator(webhookClient, config, logger, businessConfig)
 	mockAPI := usecases.NewMockAPIServer(logger, businessConfig)
@@ -93,15 +80,10 @@ func (s *ShopifyIntegration) Start(initialOrders int) error {
 
 	s.handler.RegisterRoutes(router)
 
-	currencyMode := "single-currency"
-	if s.businessConfig.IsDualCurrency() {
-		currencyMode = s.businessConfig.ShopCurrency + "/" + s.businessConfig.PresentmentCurrency
-	}
-
 	s.logger.Info().
 		Str("port", s.port).
 		Int("initial_orders", initialOrders).
-		Str("currency_mode", currencyMode).
+		Str("mode", "mixed USD/COP + COP (~60/40)").
 		Msg("🚀 Shopify Mock API Server iniciado")
 
 	return router.Run(":" + s.port)
@@ -142,7 +124,3 @@ func (s *ShopifyIntegration) GetOrderByNumber(orderNumber string) (*domain.Order
 	return s.orderSimulator.GetOrderByNumber(orderNumber)
 }
 
-// IsDualCurrency retorna si la integración está configurada en modo dual-currency
-func (s *ShopifyIntegration) IsDualCurrency() bool {
-	return s.businessConfig.IsDualCurrency()
-}

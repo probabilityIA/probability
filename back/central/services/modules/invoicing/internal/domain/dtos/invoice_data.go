@@ -21,6 +21,11 @@ type InvoiceItemData struct {
 	Tax         float64  `json:"tax"`
 	TaxRate     *float64 `json:"tax_rate"`
 	Discount    float64  `json:"discount"`
+	// Precios en moneda presentment (moneda local, ej: COP)
+	UnitPricePresentment  float64 `json:"unit_price_presentment"`
+	TotalPricePresentment float64 `json:"total_price_presentment"`
+	DiscountPresentment   float64 `json:"discount_presentment"`
+	TaxPresentment        float64 `json:"tax_presentment"`
 }
 
 // InvoiceData datos completos para crear factura (viaja por RabbitMQ)

@@ -198,6 +198,10 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("platform = ?", platform)
 	}
 
+	if currencyPresentment, ok := filters["currency_presentment"].(string); ok && currencyPresentment != "" {
+		query = query.Where("currency_presentment = ?", currencyPresentment)
+	}
+
 	if isPaid, ok := filters["is_paid"].(bool); ok {
 		query = query.Where("is_paid = ?", isPaid)
 	}

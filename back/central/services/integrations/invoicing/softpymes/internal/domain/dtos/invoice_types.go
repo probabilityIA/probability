@@ -27,6 +27,11 @@ type ItemData struct {
 	Tax         float64
 	TaxRate     *float64
 	Discount    float64
+	// Precios en moneda presentment (moneda local, ej: COP)
+	UnitPricePresentment  float64
+	TotalPricePresentment float64
+	DiscountPresentment   float64
+	TaxPresentment        float64
 }
 
 // CreateInvoiceRequest datos tipados para crear una factura en Softpymes

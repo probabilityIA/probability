@@ -19,8 +19,9 @@ type SerializableProbabilityOrderDTO struct {
 	Discount           float64                         `json:"discount"`
 	ShippingCost       float64                         `json:"shipping_cost"`
 	TotalAmount        float64                         `json:"total_amount"`
-	Currency           string                          `json:"currency"`
-	CodTotal           *float64                        `json:"cod_total"`
+	Currency            string                          `json:"currency"`
+	CurrencyPresentment string                          `json:"currency_presentment"`
+	CodTotal            *float64                        `json:"cod_total"`
 	CustomerID         *uint                           `json:"customer_id"`
 	CustomerName       string                          `json:"customer_name"`
 	CustomerEmail      string                          `json:"customer_email"`
@@ -68,6 +69,11 @@ type SerializableOrderItemDTO struct {
 	Discount     float64         `json:"discount"`
 	Tax          float64         `json:"tax"`
 	TaxRate      *float64        `json:"tax_rate"`
+	// Precios en moneda presentment (presentment_money - moneda local)
+	UnitPricePresentment  float64 `json:"unit_price_presentment"`
+	TotalPricePresentment float64 `json:"total_price_presentment"`
+	DiscountPresentment   float64 `json:"discount_presentment"`
+	TaxPresentment        float64 `json:"tax_presentment"`
 	ImageURL     *string         `json:"image_url"`
 	ProductURL   *string         `json:"product_url"`
 	Weight       *float64        `json:"weight"`

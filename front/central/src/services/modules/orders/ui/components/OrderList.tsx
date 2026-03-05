@@ -110,8 +110,19 @@ const OrderRow = memo(({
                 <div className="text-xs text-gray-500">{order.customer_email}</div>
             </td>
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
-                <div className="text-sm font-semibold text-gray-900">
-                    {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
+                <div className="flex items-center gap-1.5">
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold ${
+                        (order.currency_presentment || order.currency) === 'COP'
+                            ? 'bg-green-100 text-green-800'
+                            : (order.currency_presentment || order.currency) === 'EUR'
+                                ? 'bg-purple-100 text-purple-800'
+                                : 'bg-blue-100 text-blue-800'
+                    }`}>
+                        {order.currency_presentment || order.currency || 'USD'}
+                    </span>
+                    <span className="text-sm font-semibold text-gray-900">
+                        {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
+                    </span>
                 </div>
             </td>
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
@@ -495,6 +506,16 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             options: integrationsList,
         },
         {
+            key: 'currency_presentment',
+            label: 'Moneda',
+            type: 'select',
+            options: [
+                { value: 'COP', label: 'COP' },
+                { value: 'USD', label: 'USD' },
+                { value: 'EUR', label: 'EUR' },
+            ],
+        },
+        {
             key: 'is_paid',
             label: 'Estado de pago (boolean)',
             type: 'boolean',
@@ -562,6 +583,15 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 key: 'platform',
                 label: 'Plataforma',
                 value: filters.platform,
+                type: 'select',
+            });
+        }
+
+        if (filters.currency_presentment) {
+            active.push({
+                key: 'currency_presentment',
+                label: 'Moneda',
+                value: filters.currency_presentment,
                 type: 'select',
             });
         }
@@ -876,17 +906,12 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     const formatCurrency = useCallback((amount: number, currency: string = 'USD', amountPresentment?: number, currencyPresentment?: string) => {
         // Priorizar moneda local (presentment) si está disponible
-        if (amountPresentment && amountPresentment > 0 && currencyPresentment) {
-            return new Intl.NumberFormat('es-CO', {
-                style: 'currency',
-                currency: currencyPresentment,
-            }).format(amountPresentment);
-        }
-        // Fallback a USD si no hay moneda local
+        const finalAmount = (amountPresentment && amountPresentment > 0 && currencyPresentment) ? amountPresentment : amount;
         return new Intl.NumberFormat('es-CO', {
-            style: 'currency',
-            currency: currency,
-        }).format(amount);
+            style: 'decimal',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(finalAmount);
     }, []);
 
     const formatDate = useCallback((dateString: string): { date: string; time: string } => {

@@ -99,6 +99,7 @@ type ShopifyOrderItem struct {
 	VariantTitle *string  // Título de la variante
 	Discount     float64  // Descuento aplicado
 	Tax          float64  // Impuesto
+	TaxRate      *float64 // Tasa de impuesto (ej: 0.19 para 19% IVA)
 	Weight       *float64 // Peso en gramos
 
 	// Precios en moneda presentment (presentment_money - moneda local)
