@@ -74,6 +74,10 @@ func (m *mockShopifyClient) GetOrders(ctx context.Context, storeName, accessToke
 	return nil, "", nil
 }
 
+func (m *mockShopifyClient) GetOrdersByURL(ctx context.Context, nextPageURL, accessToken string) ([]domain.ShopifyOrder, string, error) {
+	return nil, "", nil
+}
+
 func (m *mockShopifyClient) GetOrder(ctx context.Context, storeName, accessToken string, orderID string) (*domain.ShopifyOrder, error) {
 	if m.GetOrderFn != nil {
 		return m.GetOrderFn(ctx, storeName, accessToken, orderID)

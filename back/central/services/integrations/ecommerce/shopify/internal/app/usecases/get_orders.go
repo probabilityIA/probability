@@ -14,14 +14,19 @@ func (uc *SyncOrdersUseCase) GetOrders(ctx context.Context, integration *domain.
 	nextURL := ""
 
 	for {
+		var orders []domain.ShopifyOrder
+		var fetchedNextURL string
+		var err error
+
 		if nextURL == "" {
 			uc.log.Info(ctx).Msg("Fetching first page of orders")
+			orders, fetchedNextURL, err = uc.shopifyClient.GetOrders(ctx, storeDomain, accessToken, params)
 		} else {
 			time.Sleep(500 * time.Millisecond)
 			uc.log.Info(ctx).Str("next_url", nextURL).Msg("Fetching next page of orders")
+			orders, fetchedNextURL, err = uc.shopifyClient.GetOrdersByURL(ctx, nextURL, accessToken)
 		}
 
-		orders, fetchedNextURL, err := uc.shopifyClient.GetOrders(ctx, storeDomain, accessToken, params)
 		if err != nil {
 			return totalOrders, fmt.Errorf("error fetching orders: %w", err)
 		}

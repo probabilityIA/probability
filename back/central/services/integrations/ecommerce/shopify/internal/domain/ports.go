@@ -11,6 +11,7 @@ type OrderPublisher interface {
 type ShopifyClient interface {
 	ValidateToken(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error)
 	GetOrders(ctx context.Context, storeName, accessToken string, params *GetOrdersParams) ([]ShopifyOrder, string, error)
+	GetOrdersByURL(ctx context.Context, nextPageURL, accessToken string) ([]ShopifyOrder, string, error)
 	GetOrder(ctx context.Context, storeName, accessToken string, orderID string) (*ShopifyOrder, error)
 	CreateWebhook(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error) // Crea un webhook en Shopify y retorna el webhook ID
 	ListWebhooks(ctx context.Context, storeName, accessToken string) ([]WebhookInfo, error)              // Lista todos los webhooks de la tienda
