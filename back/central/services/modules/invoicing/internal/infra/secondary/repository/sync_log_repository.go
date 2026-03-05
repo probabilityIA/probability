@@ -40,7 +40,7 @@ func (r *Repository) GetPendingSyncLogRetries(ctx context.Context, limit int) ([
 	now := time.Now()
 
 	if err := r.db.Conn(ctx).
-		Where("status IN (?, ?) AND next_retry_at IS NOT NULL AND next_retry_at <= ? AND retry_count < max_retries", "failed", "pending", now).
+		Where("status = ? AND next_retry_at IS NOT NULL AND next_retry_at <= ? AND retry_count < max_retries", "failed", now).
 		Order("next_retry_at ASC").
 		Limit(limit).
 		Find(&models).Error; err != nil {

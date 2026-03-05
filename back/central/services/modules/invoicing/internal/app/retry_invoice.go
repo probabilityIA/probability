@@ -22,8 +22,10 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		return errors.ErrInvoiceNotFound
 	}
 
-	// 2. Validar que esté en estado failed o pending (pending = DIAN validando)
-	if invoice.Status != constants.InvoiceStatusFailed && invoice.Status != constants.InvoiceStatusPending {
+	// 2. Validar que esté en estado failed (solo se puede reintentar desde failed)
+	// NOTA: facturas en "pending" (DIAN validando) NO deben reintentarse porque
+	// re-enviar POST /sales_invoice/ crea documentos duplicados en Softpymes.
+	if invoice.Status != constants.InvoiceStatusFailed {
 		return errors.ErrRetryNotAllowed
 	}
 
@@ -46,9 +48,9 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		return errors.ErrMaxRetriesExceeded
 	}
 
-	// 5. Cancelar reintentos automáticos pendientes (failed o pending con next_retry_at)
+	// 5. Cancelar reintentos automáticos pendientes
 	for _, l := range logs {
-		if (l.Status == constants.SyncStatusFailed || l.Status == constants.SyncStatusPending) && l.NextRetryAt != nil {
+		if l.Status == constants.SyncStatusFailed && l.NextRetryAt != nil {
 			l.Status = constants.SyncStatusCancelled
 			l.NextRetryAt = nil
 			if err := uc.repo.UpdateInvoiceSyncLog(ctx, l); err != nil {
