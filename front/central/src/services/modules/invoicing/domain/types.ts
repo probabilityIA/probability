@@ -421,6 +421,7 @@ export type InvoiceSSEEventType =
   | 'invoice.created'
   | 'invoice.failed'
   | 'invoice.cancelled'
+  | 'invoice.pending_validation'
   | 'credit_note.created'
   | 'bulk_job.progress'
   | 'bulk_job.completed'

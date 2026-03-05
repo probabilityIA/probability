@@ -14,6 +14,7 @@ import (
 
 // CheckPendingInvoice busca en el proveedor si una factura pendiente de validación DIAN
 // ya fue procesada. NO re-envía POST — solo consulta documentos existentes.
+// No tiene límite de intentos porque buscar es inofensivo (solo lectura).
 func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) error {
 	uc.log.Info(ctx).Uint("invoice_id", invoiceID).Msg("Checking pending invoice status in provider")
 
@@ -28,17 +29,13 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 		return errors.ErrRetryNotAllowed
 	}
 
-	// 3. Obtener sync logs para verificar conteo
+	// 3. Obtener sync logs para conteo (sin límite — buscar es seguro)
 	logs, err := uc.repo.GetSyncLogsByInvoiceID(ctx, invoiceID)
 	if err != nil || len(logs) == 0 {
 		return fmt.Errorf("no sync logs found for invoice")
 	}
 
 	lastLog := logs[0]
-
-	if lastLog.RetryCount >= lastLog.MaxRetries {
-		return errors.ErrMaxRetriesExceeded
-	}
 
 	// 4. Cancelar checks pendientes anteriores
 	for _, l := range logs {
@@ -54,10 +51,10 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 	// 5. Crear sync log para este check
 	syncLog := &entities.InvoiceSyncLog{
 		InvoiceID:     invoiceID,
-		OperationType: constants.OperationTypeCreate,
+		OperationType: constants.OperationTypeQuery,
 		Status:        constants.SyncStatusProcessing,
 		StartedAt:     time.Now(),
-		MaxRetries:    constants.MaxRetries,
+		MaxRetries:    constants.MaxCheckAttempts,
 		RetryCount:    lastLog.RetryCount + 1,
 		TriggeredBy:   constants.TriggerAuto,
 	}
@@ -150,7 +147,7 @@ func (uc *useCase) CheckPendingInvoice(ctx context.Context, invoiceID uint) erro
 		Uint("invoice_id", invoice.ID).
 		Str("provider", provider).
 		Str("correlation_id", correlationID).
-		Int("retry_count", syncLog.RetryCount).
+		Int("check_count", syncLog.RetryCount).
 		Msg("Check status request published — searching for existing document")
 
 	return nil

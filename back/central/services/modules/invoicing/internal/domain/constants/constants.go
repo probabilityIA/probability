@@ -62,7 +62,8 @@ const (
 // Reintentos
 const (
 	MaxRetries              = 3
-	DefaultRetryIntervalMin = 5 // minutos
+	MaxCheckAttempts        = 50 // check_status (solo lectura, sin límite práctico)
+	DefaultRetryIntervalMin = 5  // minutos
 )
 
 // Monedas

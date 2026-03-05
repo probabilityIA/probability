@@ -42,7 +42,7 @@ export function InvoiceDetailModal({
   const [cancellingRetry, setCancellingRetry] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [retryProgress, setRetryProgress] = useState(0);
-  const [retryResult, setRetryResult] = useState<'success' | 'failed' | null>(null);
+  const [retryResult, setRetryResult] = useState<'success' | 'failed' | 'pending_validation' | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, fieldId: string) => {
@@ -92,10 +92,22 @@ export function InvoiceDetailModal({
     }
   }, [invoice, retrying]);
 
+  const handleInvoicePendingValidation = useCallback((data: InvoiceSSEEventData) => {
+    if (!invoice || !retrying) return;
+    if (data.invoice_id === invoice.id || data.order_id === invoice.order_id) {
+      setRetryProgress(100);
+      setRetryResult('pending_validation');
+      setRetrying(false);
+      loadSyncLogs();
+      onRefresh();
+    }
+  }, [invoice, retrying]);
+
   useInvoiceSSE({
     businessId,
     onInvoiceCreated: handleInvoiceCreated,
     onInvoiceFailed: handleInvoiceFailed,
+    onInvoicePendingValidation: handleInvoicePendingValidation,
   });
 
   useEffect(() => {
@@ -181,7 +193,10 @@ export function InvoiceDetailModal({
 
   // Calcular estado de reintentos desde el último sync log
   const lastLog = syncLogs.length > 0 ? syncLogs[0] : null;
-  const maxRetriesReached = lastLog ? lastLog.retry_count >= lastLog.max_retries : false;
+  // Para pending (check_status): sin límite práctico. Para failed (retry): límite normal.
+  const maxRetriesReached = invoice?.status === 'pending'
+    ? false
+    : (lastLog ? lastLog.retry_count >= lastLog.max_retries : false);
   const retriesUsed = lastLog ? lastLog.retry_count : 0;
   const maxRetries = lastLog ? lastLog.max_retries : 3;
 
@@ -487,8 +502,10 @@ export function InvoiceDetailModal({
                     {retryResult === 'success'
                       ? 'Factura emitida exitosamente'
                       : retryResult === 'failed'
-                        ? 'Reintento fallido'
-                        : 'Reintentando emisión...'}
+                        ? (invoice.status === 'pending' ? 'Consulta fallida' : 'Reintento fallido')
+                        : retryResult === 'pending_validation'
+                          ? 'DIAN aún validando — se consultará de nuevo automáticamente'
+                          : (invoice.status === 'pending' ? 'Consultando estado DIAN...' : 'Reintentando emisión...')}
                   </span>
                   <span className="text-sm text-gray-500">
                     {Math.round(retryProgress)}%
@@ -501,7 +518,9 @@ export function InvoiceDetailModal({
                         ? 'bg-green-500'
                         : retryResult === 'failed'
                           ? 'bg-red-500'
-                          : 'bg-blue-600'
+                          : retryResult === 'pending_validation'
+                            ? 'bg-amber-500'
+                            : 'bg-blue-600'
                     }`}
                     style={{ width: `${Math.min(retryProgress, 100)}%` }}
                   />

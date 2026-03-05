@@ -13,6 +13,7 @@ const INVOICE_EVENT_TYPES: InvoiceSSEEventType[] = [
   'invoice.created',
   'invoice.failed',
   'invoice.cancelled',
+  'invoice.pending_validation',
   'credit_note.created',
   'bulk_job.progress',
   'bulk_job.completed',
@@ -24,6 +25,7 @@ interface UseInvoiceSSEOptions {
   onInvoiceCreated?: (data: InvoiceSSEEventData) => void;
   onInvoiceFailed?: (data: InvoiceSSEEventData) => void;
   onInvoiceCancelled?: (data: InvoiceSSEEventData) => void;
+  onInvoicePendingValidation?: (data: InvoiceSSEEventData) => void;
   onCreditNoteCreated?: (data: InvoiceSSEEventData) => void;
   onBulkJobProgress?: (data: InvoiceSSEEventData) => void;
   onBulkJobCompleted?: (data: InvoiceSSEEventData) => void;
@@ -36,6 +38,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
     onInvoiceCreated,
     onInvoiceFailed,
     onInvoiceCancelled,
+    onInvoicePendingValidation,
     onCreditNoteCreated,
     onBulkJobProgress,
     onBulkJobCompleted,
@@ -47,6 +50,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
     onInvoiceCreated,
     onInvoiceFailed,
     onInvoiceCancelled,
+    onInvoicePendingValidation,
     onCreditNoteCreated,
     onBulkJobProgress,
     onBulkJobCompleted,
@@ -58,6 +62,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
       onInvoiceCreated,
       onInvoiceFailed,
       onInvoiceCancelled,
+      onInvoicePendingValidation,
       onCreditNoteCreated,
       onBulkJobProgress,
       onBulkJobCompleted,
@@ -82,6 +87,9 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
           break;
         case 'invoice.cancelled':
           callbacksRef.current.onInvoiceCancelled?.(data);
+          break;
+        case 'invoice.pending_validation':
+          callbacksRef.current.onInvoicePendingValidation?.(data);
           break;
         case 'credit_note.created':
           callbacksRef.current.onCreditNoteCreated?.(data);

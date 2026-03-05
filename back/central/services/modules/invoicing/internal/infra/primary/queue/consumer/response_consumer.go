@@ -297,8 +297,7 @@ func (c *ResponseConsumer) handlePendingValidation(
 	}
 
 	// Actualizar sync log como pending (validación DIAN en curso)
-	// Programar reintento automático: el retry verifica idempotencia primero
-	// (findExistingInvoiceByOrderID) antes de hacer POST, así que no crea duplicados.
+	// Programar check_status automático: solo busca el documento, nunca re-envía POST.
 	if syncLog != nil {
 		completedAt := time.Now()
 		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
@@ -310,16 +309,15 @@ func (c *ResponseConsumer) handlePendingValidation(
 
 		c.populateSyncLogAudit(syncLog, response)
 
-		// Programar próximo reintento si no se excedió el límite
-		if syncLog.RetryCount < syncLog.MaxRetries {
-			nextRetry := c.calculateNextRetry(syncLog.RetryCount)
-			syncLog.NextRetryAt = &nextRetry
-			c.log.Info(ctx).
-				Uint("invoice_id", invoice.ID).
-				Time("next_retry_at", nextRetry).
-				Int("retry_count", syncLog.RetryCount).
-				Msg("Scheduled retry for pending DIAN validation (idempotency check will run)")
-		}
+		// Siempre programar próxima consulta — buscar es inofensivo.
+		// Backoff progresivo: 15min, 30min, 1h, 2h, 4h (DIAN puede tardar horas)
+		nextCheck := c.calculateCheckBackoff(syncLog.RetryCount)
+		syncLog.NextRetryAt = &nextCheck
+		c.log.Info(ctx).
+			Uint("invoice_id", invoice.ID).
+			Time("next_check_at", nextCheck).
+			Int("check_count", syncLog.RetryCount).
+			Msg("Scheduled next check_status for pending DIAN validation")
 
 		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
 			c.log.Error(ctx).Err(err).Msg("Failed to update sync log for pending validation")
@@ -878,7 +876,7 @@ func formatOrderDate(orderDates map[string]*time.Time, orderID string) *string {
 	return nil
 }
 
-// calculateNextRetry calcula el próximo intento (exponential backoff)
+// calculateNextRetry calcula el próximo intento de retry (exponential backoff para failed)
 func (c *ResponseConsumer) calculateNextRetry(retryCount int) time.Time {
 	// Backoff exponencial: 5min, 15min, 30min
 	delays := []time.Duration{
@@ -888,6 +886,25 @@ func (c *ResponseConsumer) calculateNextRetry(retryCount int) time.Time {
 	}
 
 	delayIndex := retryCount
+	if delayIndex >= len(delays) {
+		delayIndex = len(delays) - 1
+	}
+
+	return time.Now().Add(delays[delayIndex])
+}
+
+// calculateCheckBackoff calcula cuándo hacer el próximo check_status para pending DIAN.
+// Backoff más largo que retries: DIAN puede tardar horas en validar.
+func (c *ResponseConsumer) calculateCheckBackoff(checkCount int) time.Time {
+	delays := []time.Duration{
+		15 * time.Minute,
+		30 * time.Minute,
+		1 * time.Hour,
+		2 * time.Hour,
+		4 * time.Hour,
+	}
+
+	delayIndex := checkCount
 	if delayIndex >= len(delays) {
 		delayIndex = len(delays) - 1
 	}
