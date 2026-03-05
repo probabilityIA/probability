@@ -65,7 +65,7 @@ func (c *RetryConsumer) Stop() {
 // processRetries procesa todos los reintentos pendientes
 func (c *RetryConsumer) processRetries(ctx context.Context) {
 	// Obtener logs con reintentos pendientes
-	// - status = failed
+	// - status IN (failed, pending)
 	// - retry_count < max_retries (3)
 	// - next_retry_at <= now
 	logs, err := c.repo.GetPendingSyncLogRetries(ctx, 50) // Máximo 50 por batch

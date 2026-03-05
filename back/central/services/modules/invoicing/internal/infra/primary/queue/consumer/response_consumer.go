@@ -297,8 +297,8 @@ func (c *ResponseConsumer) handlePendingValidation(
 	}
 
 	// Actualizar sync log como pending (validación DIAN en curso)
-	// NO programar reintento automático: re-enviar POST /sales_invoice/ crea duplicados.
-	// El usuario puede reintentar manualmente, que primero verifica idempotencia.
+	// Programar reintento automático: el retry verifica idempotencia primero
+	// (findExistingInvoiceByOrderID) antes de hacer POST, así que no crea duplicados.
 	if syncLog != nil {
 		completedAt := time.Now()
 		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
@@ -309,6 +309,17 @@ func (c *ResponseConsumer) handlePendingValidation(
 		syncLog.ErrorMessage = &providerMsg
 
 		c.populateSyncLogAudit(syncLog, response)
+
+		// Programar próximo reintento si no se excedió el límite
+		if syncLog.RetryCount < syncLog.MaxRetries {
+			nextRetry := c.calculateNextRetry(syncLog.RetryCount)
+			syncLog.NextRetryAt = &nextRetry
+			c.log.Info(ctx).
+				Uint("invoice_id", invoice.ID).
+				Time("next_retry_at", nextRetry).
+				Int("retry_count", syncLog.RetryCount).
+				Msg("Scheduled retry for pending DIAN validation (idempotency check will run)")
+		}
 
 		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
 			c.log.Error(ctx).Err(err).Msg("Failed to update sync log for pending validation")
