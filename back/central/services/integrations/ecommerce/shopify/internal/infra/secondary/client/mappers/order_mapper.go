@@ -183,6 +183,15 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		unitPrice, _ := strconv.ParseFloat(item.Price, 64)
 		totalDiscount, _ := strconv.ParseFloat(item.TotalDiscount, 64)
 
+		// Si total_discount es 0, sumar discount_allocations (descuentos automáticos/across)
+		// Shopify pone descuentos automáticos en discount_allocations, no en total_discount
+		if totalDiscount == 0 && len(item.DiscountAllocations) > 0 {
+			for _, alloc := range item.DiscountAllocations {
+				allocAmount, _ := strconv.ParseFloat(alloc.Amount, 64)
+				totalDiscount += allocAmount
+			}
+		}
+
 		// Calcular impuesto total y extraer tasa de tax_lines
 		var totalTax float64
 		var taxRate *float64
@@ -202,6 +211,15 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		}
 		if item.TotalDiscountSet != nil && item.TotalDiscountSet.PresentmentMoney.Amount != "" {
 			discountPresentment, _ = strconv.ParseFloat(item.TotalDiscountSet.PresentmentMoney.Amount, 64)
+		}
+		// Si discount presentment es 0, sumar desde discount_allocations presentment_money
+		if discountPresentment == 0 && len(item.DiscountAllocations) > 0 {
+			for _, alloc := range item.DiscountAllocations {
+				if alloc.AmountSet != nil && alloc.AmountSet.PresentmentMoney.Amount != "" {
+					allocAmount, _ := strconv.ParseFloat(alloc.AmountSet.PresentmentMoney.Amount, 64)
+					discountPresentment += allocAmount
+				}
+			}
 		}
 		// Calcular tax en moneda local sumando las tax_lines
 		for _, taxLine := range item.TaxLines {
