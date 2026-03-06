@@ -172,6 +172,12 @@ function AdminWalletView() {
                                         businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
                                         onSuccess={fetchWalletsAndBusinesses}
                                     />
+                                    <AdjustBalanceButton
+                                        businessId={row.BusinessID}
+                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                        currentBalance={row.Balance}
+                                        onSuccess={fetchWalletsAndBusinesses}
+                                    />
                                 </div>
                             )
                         }
@@ -332,6 +338,79 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
                     <div className="flex justify-end gap-2">
                         <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
                         <Button variant="danger" onClick={handleClear} loading={loading}>Borrar Historial</Button>
+                    </div>
+                </div>
+            </Modal>
+        </>
+    );
+}
+
+function AdjustBalanceButton({ businessId, businessName, currentBalance, onSuccess }: { businessId: number, businessName: string, currentBalance: number, onSuccess: () => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [amount, setAmount] = useState('');
+    const [reference, setReference] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleAdjust = async () => {
+        if (!amount || isNaN(Number(amount)) || Number(amount) === 0) {
+            alert('Ingresa un monto válido (no puede ser 0)');
+            return;
+        }
+        if (!reference.trim()) {
+            alert('Ingresa un motivo para el ajuste');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const { adminAdjustBalanceAction } = await import('@/services/modules/wallet/infra/actions');
+            const res = await adminAdjustBalanceAction(businessId, Number(amount), reference);
+            if (res.success) {
+                setIsOpen(false);
+                setAmount('');
+                setReference('');
+                onSuccess();
+                const newBalance = currentBalance + Number(amount);
+                alert(`Saldo ajustado exitosamente. Nuevo saldo: $${newBalance.toLocaleString('es-CO')}`);
+            } else {
+                alert(`Error: ${res.error || 'Error desconocido'}`);
+            }
+        } catch (e: any) {
+            alert(`Error: ${e.message || 'Error desconocido'}`);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <Button size="sm" variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => setIsOpen(true)}>
+                Ajustar Saldo
+            </Button>
+            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={`Ajustar saldo de ${businessName}`}>
+                <div className="space-y-4 p-4">
+                    <div className="bg-blue-50 p-3 rounded border border-blue-200">
+                        <p className="text-sm text-blue-900">
+                            Saldo actual: <strong>${currentBalance.toLocaleString('es-CO')}</strong>
+                        </p>
+                    </div>
+                    <Input
+                        label="Monto a ajustar"
+                        type="number"
+                        value={amount}
+                        onChange={e => setAmount(e.target.value)}
+                        placeholder="Ej: 400000 (suma) o -50000 (resta)"
+                        helperText="Positivo suma, negativo resta"
+                    />
+                    <Input
+                        label="Motivo del ajuste"
+                        value={reference}
+                        onChange={e => setReference(e.target.value)}
+                        placeholder="Ej: Corrección de saldo negativo"
+                    />
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
+                        <Button variant="primary" onClick={handleAdjust} loading={loading}>Ajustar Saldo</Button>
                     </div>
                 </div>
             </Modal>

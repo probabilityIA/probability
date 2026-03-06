@@ -132,3 +132,28 @@ func (h *walletHandler) ClearRechargeHistory(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Recharge history cleared successfully"})
 }
+
+// AdminAdjustBalance maneja POST /pay/wallet/admin/adjust-balance (sin restricción de mínimo)
+func (h *walletHandler) AdminAdjustBalance(c *gin.Context) {
+	var req struct {
+		BusinessID uint    `json:"business_id" binding:"required"`
+		Amount     float64 `json:"amount" binding:"required"`
+		Reference  string  `json:"reference" binding:"required,max=255"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	if err := h.walletUC.AdminAdjustBalance(c.Request.Context(), &dtos.AdminAdjustBalanceDTO{
+		BusinessID: req.BusinessID,
+		Amount:     req.Amount,
+		Reference:  req.Reference,
+	}); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Balance adjusted successfully"})
+}

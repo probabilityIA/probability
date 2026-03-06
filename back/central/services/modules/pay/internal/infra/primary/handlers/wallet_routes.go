@@ -23,6 +23,7 @@ func (h *walletHandler) RegisterWalletRoutes(router *gin.RouterGroup) {
 		wallet.POST("/admin/requests/:id/approve", h.ApproveTransaction)
 		wallet.POST("/admin/requests/:id/reject", h.RejectTransaction)
 		wallet.POST("/admin/manual-debit", h.ManualDebit)
+		wallet.POST("/admin/adjust-balance", h.AdminAdjustBalance)
 		wallet.DELETE("/admin/history/:business_id", h.ClearRechargeHistory)
 	}
 }

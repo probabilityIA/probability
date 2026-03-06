@@ -231,6 +231,33 @@ export async function getWalletHistoryAction(businessId?: number) {
 }
 
 /**
+ * Admin adjust wallet balance without restrictions (Admin only)
+ * @param businessId - Business ID
+ * @param amount - Amount to add (positive) or subtract (negative)
+ * @param reference - Reason for adjustment
+ */
+export async function adminAdjustBalanceAction(businessId: number, amount: number, reference: string) {
+    try {
+        const headers = await getAuthHeader();
+        const res = await fetch(`${env.API_BASE_URL}/pay/wallet/admin/adjust-balance`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ business_id: businessId, amount, reference })
+        });
+
+        if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `Failed to adjust balance: ${res.status}`);
+        }
+
+        return { success: true };
+    } catch (error: any) {
+        console.error('adminAdjustBalanceAction error:', error);
+        return { success: false, error: error.message };
+    }
+}
+
+/**
  * Clear recharge history for a business (Admin only)
  */
 export async function clearRechargeHistoryAction(businessId: number) {
