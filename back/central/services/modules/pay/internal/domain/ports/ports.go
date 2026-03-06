@@ -41,6 +41,7 @@ type IRepository interface {
 	GetPendingRechargeTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
 	GetProcessedTransactions(ctx context.Context) ([]*entities.WalletTransaction, error)
 	DeleteTransactionsByWalletIDAndType(ctx context.Context, walletID uuid.UUID, txType string) error
+	DeleteAllTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) error
 }
 
 // IRequestPublisher publica solicitudes de pago a la cola pay.requests

@@ -145,6 +145,12 @@ func (r *Repository) DeleteTransactionsByWalletIDAndType(ctx context.Context, wa
 		Delete(&models.WalletTransaction{}).Error
 }
 
+func (r *Repository) DeleteAllTransactionsByWalletID(ctx context.Context, walletID uuid.UUID) error {
+	return r.db.Conn(ctx).
+		Where("wallet_id = ?", walletID).
+		Delete(&models.WalletTransaction{}).Error
+}
+
 // ──────────────────────────────────────────────────────
 // Wallet Mappers
 // ──────────────────────────────────────────────────────
