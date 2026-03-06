@@ -99,3 +99,39 @@ type ReorderStopsDTO struct {
 	BusinessID uint
 	StopIDs    []uint
 }
+
+// DriverOption is a simplified driver for selection dropdowns
+type DriverOption struct {
+	ID             uint
+	FirstName      string
+	LastName       string
+	Phone          string
+	Identification string
+	Status         string
+	LicenseType    string
+}
+
+// VehicleOption is a simplified vehicle for selection dropdowns
+type VehicleOption struct {
+	ID           uint
+	Type         string
+	LicensePlate string
+	Brand        string
+	VehicleModel string
+	Status       string
+}
+
+// AssignableOrder represents an order available for route assignment
+type AssignableOrder struct {
+	ID            string
+	OrderNumber   string
+	CustomerName  string
+	CustomerPhone string
+	Address       string
+	City          string
+	Lat           *float64
+	Lng           *float64
+	TotalAmount   float64
+	ItemCount     int
+	CreatedAt     time.Time
+}

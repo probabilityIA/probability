@@ -9,4 +9,5 @@ type CreateConfig struct {
 	Enabled                *bool                  `json:"enabled"`                                        // Por defecto true
 	AutoInvoice            *bool                  `json:"auto_invoice"`                                   // Por defecto false (manual)
 	Filters                map[string]interface{} `json:"filters"`                                        // min_amount, payment_status, etc.
+	Config                 map[string]interface{} `json:"config"`                                         // Configuración adicional (cash receipt, payment type, etc.)
 }

@@ -31,6 +31,11 @@ type IRepository interface {
 	GetStopsByRouteID(ctx context.Context, routeID uint) ([]entities.RouteStop, error)
 	SetPendingStopsStatus(ctx context.Context, routeID uint, status string) error
 
+	// Assignable orders (processing status, no driver assigned)
+	ListAssignableOrders(ctx context.Context, businessID uint) ([]dtos.AssignableOrder, error)
+	ListDriversForBusiness(ctx context.Context, businessID uint) ([]dtos.DriverOption, error)
+	ListVehiclesForBusiness(ctx context.Context, businessID uint) ([]dtos.VehicleOption, error)
+
 	// Cross-module queries (replicated locally per isolation rule)
 	GetDriverNameByID(ctx context.Context, driverID uint) (string, error)
 	UpdateDriverStatus(ctx context.Context, driverID uint, status string) error

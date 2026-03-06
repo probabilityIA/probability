@@ -50,7 +50,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
                     phone: formData.phone,
                     email: formData.email || undefined,
                     license_type: formData.license_type || undefined,
-                    license_expiry: formData.license_expiry || undefined,
+                    license_expiry: formData.license_expiry ? `${formData.license_expiry}T00:00:00Z` : undefined,
                     notes: formData.notes || null,
                     status: formData.status,
                 };
@@ -63,7 +63,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
                     phone: formData.phone,
                     email: formData.email || undefined,
                     license_type: formData.license_type || undefined,
-                    license_expiry: formData.license_expiry || undefined,
+                    license_expiry: formData.license_expiry ? `${formData.license_expiry}T00:00:00Z` : undefined,
                     notes: formData.notes || undefined,
                 };
                 await createDriverAction(createData, businessId);

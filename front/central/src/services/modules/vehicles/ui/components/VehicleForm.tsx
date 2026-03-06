@@ -66,8 +66,8 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
                     status: formData.status,
                     weight_capacity_kg: formData.weight_capacity_kg ? Number(formData.weight_capacity_kg) : null,
                     volume_capacity_m3: formData.volume_capacity_m3 ? Number(formData.volume_capacity_m3) : null,
-                    insurance_expiry: formData.insurance_expiry || null,
-                    registration_expiry: formData.registration_expiry || null,
+                    insurance_expiry: formData.insurance_expiry ? `${formData.insurance_expiry}T00:00:00Z` : null,
+                    registration_expiry: formData.registration_expiry ? `${formData.registration_expiry}T00:00:00Z` : null,
                 };
                 await updateVehicleAction(vehicle.id, updateData, businessId);
             } else {
@@ -80,8 +80,8 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
                     color: formData.color || undefined,
                     weight_capacity_kg: formData.weight_capacity_kg ? Number(formData.weight_capacity_kg) : undefined,
                     volume_capacity_m3: formData.volume_capacity_m3 ? Number(formData.volume_capacity_m3) : undefined,
-                    insurance_expiry: formData.insurance_expiry || undefined,
-                    registration_expiry: formData.registration_expiry || undefined,
+                    insurance_expiry: formData.insurance_expiry ? `${formData.insurance_expiry}T00:00:00Z` : undefined,
+                    registration_expiry: formData.registration_expiry ? `${formData.registration_expiry}T00:00:00Z` : undefined,
                 };
                 await createVehicleAction(createData, businessId);
             }

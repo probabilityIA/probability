@@ -13,6 +13,9 @@ import {
     UpdateStopStatusDTO,
     ReorderStopsDTO,
     DeleteRouteResponse,
+    DriverOption,
+    VehicleOption,
+    AssignableOrder,
 } from '../../domain/types';
 
 export class RouteApiRepository implements IRouteRepository {
@@ -151,5 +154,21 @@ export class RouteApiRepository implements IRouteRepository {
             method: 'PUT',
             body: JSON.stringify(data),
         });
+    }
+
+    // ============================================
+    // Form options
+    // ============================================
+
+    async getAvailableDrivers(businessId?: number): Promise<DriverOption[]> {
+        return this.fetch<DriverOption[]>(this.withBusinessId('/routes/available-drivers', businessId));
+    }
+
+    async getAvailableVehicles(businessId?: number): Promise<VehicleOption[]> {
+        return this.fetch<VehicleOption[]>(this.withBusinessId('/routes/available-vehicles', businessId));
+    }
+
+    async getAssignableOrders(businessId?: number): Promise<AssignableOrder[]> {
+        return this.fetch<AssignableOrder[]>(this.withBusinessId('/routes/assignable-orders', businessId));
     }
 }

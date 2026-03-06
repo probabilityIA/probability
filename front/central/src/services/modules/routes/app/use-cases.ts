@@ -62,4 +62,17 @@ export class RouteUseCases {
     async reorderStops(routeId: number, data: ReorderStopsDTO, businessId?: number) {
         return this.repository.reorderStops(routeId, data, businessId);
     }
+
+    // Form options
+    async getAvailableDrivers(businessId?: number) {
+        return this.repository.getAvailableDrivers(businessId);
+    }
+
+    async getAvailableVehicles(businessId?: number) {
+        return this.repository.getAvailableVehicles(businessId);
+    }
+
+    async getAssignableOrders(businessId?: number) {
+        return this.repository.getAssignableOrders(businessId);
+    }
 }

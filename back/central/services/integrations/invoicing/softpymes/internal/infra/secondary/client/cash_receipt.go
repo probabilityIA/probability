@@ -4,60 +4,109 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"time"
 )
 
-// cashReceiptRequest datos para crear un recibo de caja en Softpymes.
-// El recibo de caja registra el pago de una o más facturas y mueve la cuenta
-// contable de "cuentas por cobrar" (130505xx) a la cuenta de pago correspondiente.
-// Endpoint: POST /app/integration/cash_receipt/
-// Documentación: https://api-integracion.softpymes.com.co/doc/#api-Documentos-PostCashReceipt
-type cashReceiptRequest struct {
-	DocumentNumber     string  // Número del documento a pagar (ej: "0000000026" o "26")
-	Prefix             string  // Prefijo del documento (ej: "FEV")
-	BranchCode         string  // Código de sucursal donde se genera el recibo
-	CustomerNit        string  // NIT del cliente (sin puntos, comas ni dígito verificación)
-	CustomerBranchCode string  // Código de sucursal del cliente
-	PaymentType        string  // Tipo de pago: "EF"=Efectivo, "TR"=Transferencia, "TC"=Tarjeta crédito, "TD"=Tarjeta débito, "CH"=Cheque, "BN"=Bonos
-	Amount             float64 // Valor a pagar
-	DocumentDate       string  // Fecha del recibo YYYY-MM-DD (zona horaria Colombia)
-	AccountNumber      string  // Número de cuenta (OBLIGATORIO para TR/CH). Ver /app/integration/bank_account
-	BankName           string  // Nombre del banco (OBLIGATORIO para CH)
-}
+// SendCashReceiptFromDocument envía un recibo de caja a Softpymes usando datos
+// del documento completo retornado por GetDocumentByNumber y la configuración
+// de la integración.
+//
+// Extrae del fullDocument: prefix, documentNumber, total, customerIdentification,
+// branchCode, documentDate.
+// Lee de config: payment_type, payment_bank_account_id, payment_financial_entity_id,
+// payment_bonus_code, payment_bank_name, payment_account_number.
+func (c *Client) SendCashReceiptFromDocument(
+	ctx context.Context,
+	apiKey, apiSecret, referer, baseURL string,
+	fullDocument map[string]interface{},
+	config map[string]interface{},
+) error {
+	// 1. Authenticate
+	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, baseURL)
+	if err != nil {
+		return fmt.Errorf("cash receipt auth failed: %w", err)
+	}
 
-// sendCashReceipt envía un recibo de caja a Softpymes para registrar el pago de una factura.
-// Esto mueve la cuenta contable de "cuentas por cobrar" (130505xx) a la cuenta del medio de pago.
-// El token de autenticación es el mismo obtenido durante la creación de la factura.
-func (c *Client) sendCashReceipt(ctx context.Context, token, referer, baseURL string, req *cashReceiptRequest) error {
-	payment := map[string]interface{}{
-		"type":  req.PaymentType,
-		"value": req.Amount,
+	// 2. Extract fields from fullDocument
+	prefix, _ := fullDocument["prefix"].(string)
+	documentNumber, _ := fullDocument["documentNumber"].(string)
+	customerNit, _ := fullDocument["customerIdentification"].(string)
+	branchCode, _ := fullDocument["branchCode"].(string)
+	customerBranchCode, _ := fullDocument["customerBranchCode"].(string)
+	documentDate, _ := fullDocument["documentDate"].(string)
+
+	// Parse total from document (may be string or float64)
+	var amount float64
+	switch v := fullDocument["total"].(type) {
+	case float64:
+		amount = v
+	case string:
+		if parsed, err := strconv.ParseFloat(v, 64); err == nil {
+			amount = parsed
+		}
 	}
-	if req.AccountNumber != "" {
-		payment["accountNumber"] = req.AccountNumber
+
+	// Fallbacks
+	if branchCode == "" {
+		branchCode = "001"
+		if bc, ok := config["branch_code"].(string); ok && bc != "" {
+			branchCode = bc
+		}
 	}
-	if req.BankName != "" {
-		payment["bankName"] = req.BankName
+	if customerBranchCode == "" {
+		customerBranchCode = "001"
+		if cb, ok := config["customer_branch_code"].(string); ok && cb != "" {
+			customerBranchCode = cb
+		}
+	}
+	if documentDate == "" {
+		loc, _ := time.LoadLocation("America/Bogota")
+		documentDate = time.Now().In(loc).Format("2006-01-02")
+	}
+
+	if documentNumber == "" {
+		return fmt.Errorf("cash receipt: documentNumber is empty in full document")
+	}
+	if amount <= 0 {
+		return fmt.Errorf("cash receipt: total is 0 or negative in full document")
+	}
+
+	// 3. Read payment config
+	paymentType, _ := config["payment_type"].(string)
+	if paymentType == "" {
+		paymentType = "EF"
+	}
+
+	// 4. Build payment body per type
+	payment := buildPaymentBody(paymentType, amount, config)
+
+	// 5. Build and send request
+	// Split prefix from documentNumber if it's combined (e.g. "FEV0000000026")
+	docPrefix := prefix
+	docNumber := documentNumber
+	if docPrefix == "" {
+		docPrefix, docNumber = splitDocumentNumber(documentNumber)
 	}
 
 	body := map[string]interface{}{
 		"documents": []map[string]interface{}{
 			{
-				"documentNumber": req.DocumentNumber,
-				"prefix":         req.Prefix,
+				"documentNumber": docNumber,
+				"prefix":         docPrefix,
 			},
 		},
-		"documentDate":       req.DocumentDate,
-		"branchCode":         req.BranchCode,
-		"customerNit":        req.CustomerNit,
-		"customerBranchCode": req.CustomerBranchCode,
+		"documentDate":       documentDate,
+		"branchCode":         branchCode,
+		"customerNit":        customerNit,
+		"customerBranchCode": customerBranchCode,
 		"payment":            []map[string]interface{}{payment},
 	}
 
 	c.log.Info(ctx).
-		Str("document_number", req.DocumentNumber).
-		Str("prefix", req.Prefix).
-		Str("payment_type", req.PaymentType).
-		Float64("amount", req.Amount).
+		Str("document_number", docNumber).
+		Str("prefix", docPrefix).
+		Str("payment_type", paymentType).
+		Float64("amount", amount).
 		Msg("Sending cash receipt to Softpymes")
 
 	var receiptResp struct {
@@ -95,11 +144,61 @@ func (c *Client) sendCashReceipt(ctx context.Context, token, referer, baseURL st
 	}
 
 	c.log.Info(ctx).
-		Str("document_number", req.DocumentNumber).
+		Str("document_number", docNumber).
 		Str("message", receiptResp.Message).
 		Msg("Cash receipt sent successfully - payment registered in Softpymes")
 
 	return nil
+}
+
+// buildPaymentBody construye el objeto de pago según el tipo.
+//
+// Tipos soportados:
+//   - EF (Efectivo): solo type + value
+//   - BN (Bonos): type + value + code
+//   - CH (Cheque): type + value + accountNumber + bankName
+//   - TR (Transferencia): type + value + bankAccountId (int)
+//   - TC/TD (Tarjeta crédito/débito): type + value + finantialEntityId (int)
+func buildPaymentBody(paymentType string, amount float64, config map[string]interface{}) map[string]interface{} {
+	payment := map[string]interface{}{
+		"type":  paymentType,
+		"value": amount,
+	}
+
+	switch paymentType {
+	case "BN":
+		if code, ok := config["payment_bonus_code"].(string); ok && code != "" {
+			payment["code"] = code
+		}
+	case "CH":
+		if acct, ok := config["payment_account_number"].(string); ok && acct != "" {
+			payment["accountNumber"] = acct
+		}
+		if bank, ok := config["payment_bank_name"].(string); ok && bank != "" {
+			payment["bankName"] = bank
+		}
+	case "TR":
+		if bankAcctID := getConfigInt(config, "payment_bank_account_id"); bankAcctID > 0 {
+			payment["bankAccountId"] = bankAcctID
+		}
+	case "TC", "TD":
+		if entityID := getConfigInt(config, "payment_financial_entity_id"); entityID > 0 {
+			payment["finantialEntityId"] = entityID
+		}
+	}
+
+	return payment
+}
+
+// getConfigInt extracts an int from config (which may store float64 from JSON).
+func getConfigInt(config map[string]interface{}, key string) int {
+	if v, ok := config[key].(float64); ok {
+		return int(v)
+	}
+	if v, ok := config[key].(int); ok {
+		return v
+	}
+	return 0
 }
 
 // splitDocumentNumber separa el número combinado que retorna Softpymes en creación (ej: "FEV26")

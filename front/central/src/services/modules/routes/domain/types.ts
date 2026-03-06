@@ -147,3 +147,40 @@ export interface DeleteRouteResponse {
     message?: string;
     error?: string;
 }
+
+// ============================================
+// FORM OPTIONS (for route creation)
+// ============================================
+
+export interface DriverOption {
+    id: number;
+    first_name: string;
+    last_name: string;
+    phone: string;
+    identification: string;
+    status: string;
+    license_type: string;
+}
+
+export interface VehicleOption {
+    id: number;
+    type: string;
+    license_plate: string;
+    brand: string;
+    vehicle_model: string;
+    status: string;
+}
+
+export interface AssignableOrder {
+    id: string;
+    order_number: string;
+    customer_name: string;
+    customer_phone: string;
+    address: string;
+    city: string;
+    lat: number | null;
+    lng: number | null;
+    total_amount: number;
+    item_count: number;
+    created_at: string;
+}

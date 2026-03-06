@@ -537,7 +537,11 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		}
 	}
 
-	// 9. Parsear issued_at
+	// 9. Send cash receipt if configured (non-fatal)
+	referer, _ := combinedConfig["referer"].(string)
+	c.sendCashReceiptIfConfigured(ctx, fullDocument, combinedConfig, apiKey, apiSecret, referer, effectiveURL, request.InvoiceID)
+
+	// 10. Parsear issued_at
 	var issuedAt *time.Time
 	if result.IssuedAt != "" {
 		if parsed, parseErr := time.Parse(time.RFC3339, result.IssuedAt); parseErr == nil {
@@ -545,7 +549,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		}
 	}
 
-	// 10. Construir response exitosa con audit data
+	// 11. Construir response exitosa con audit data
 	processingTime := time.Since(startTime).Milliseconds()
 
 	resp := &queue.InvoiceResponseMessage{
@@ -691,7 +695,10 @@ func (c *InvoiceRequestConsumer) processCheckStatus(
 				}
 			}
 
-			// 6. Parsear fecha
+			// 6. Send cash receipt if configured (non-fatal)
+			c.sendCashReceiptIfConfigured(ctx, fullDocument, combinedConfig, apiKey, apiSecret, referer, effectiveURL, request.InvoiceID)
+
+			// 7. Parsear fecha
 			var issuedAt *time.Time
 			if doc.DocumentDate != "" {
 				if parsed, parseErr := time.Parse("2006-01-02", doc.DocumentDate); parseErr == nil {
@@ -902,6 +909,42 @@ func (c *InvoiceRequestConsumer) createErrorResponse(
 	}
 
 	return resp
+}
+
+// sendCashReceiptIfConfigured envía un recibo de caja si la config lo tiene habilitado.
+// Es non-fatal: si falla, se loguea el error pero no afecta el resultado de la factura.
+func (c *InvoiceRequestConsumer) sendCashReceiptIfConfigured(
+	ctx context.Context,
+	fullDocument map[string]interface{},
+	config map[string]interface{},
+	apiKey, apiSecret, referer, baseURL string,
+	invoiceID uint,
+) {
+	sendCashReceipt, _ := config["send_cash_receipt"].(bool)
+	if !sendCashReceipt {
+		return
+	}
+
+	if fullDocument == nil {
+		c.log.Warn(ctx).
+			Uint("invoice_id", invoiceID).
+			Msg("Cash receipt configured but full document is nil — skipping")
+		return
+	}
+
+	c.log.Info(ctx).
+		Uint("invoice_id", invoiceID).
+		Msg("Sending cash receipt (configured in integration)")
+
+	if err := c.softpymesClient.SendCashReceiptFromDocument(ctx, apiKey, apiSecret, referer, baseURL, fullDocument, config); err != nil {
+		c.log.Error(ctx).Err(err).
+			Uint("invoice_id", invoiceID).
+			Msg("Cash receipt failed — invoice created but payment not registered in Softpymes")
+	} else {
+		c.log.Info(ctx).
+			Uint("invoice_id", invoiceID).
+			Msg("Cash receipt sent successfully")
+	}
 }
 
 // toMapPayload convierte cualquier valor (struct o map) a map[string]interface{} via JSON.

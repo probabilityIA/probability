@@ -21,6 +21,9 @@ type IUseCase interface {
 	DeleteStop(ctx context.Context, businessID, routeID, stopID uint) error
 	UpdateStopStatus(ctx context.Context, dto dtos.UpdateStopStatusDTO) error
 	ReorderStops(ctx context.Context, dto dtos.ReorderStopsDTO) error
+	ListDriversForBusiness(ctx context.Context, businessID uint) ([]dtos.DriverOption, error)
+	ListVehiclesForBusiness(ctx context.Context, businessID uint) ([]dtos.VehicleOption, error)
+	ListAssignableOrders(ctx context.Context, businessID uint) ([]dtos.AssignableOrder, error)
 }
 
 type UseCase struct {

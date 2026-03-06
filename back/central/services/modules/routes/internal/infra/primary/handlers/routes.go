@@ -6,6 +6,9 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 	routes := router.Group("/routes")
 	{
 		routes.GET("", h.ListRoutes)
+		routes.GET("/available-drivers", h.ListAvailableDrivers)
+		routes.GET("/available-vehicles", h.ListAvailableVehicles)
+		routes.GET("/assignable-orders", h.ListAssignableOrders)
 		routes.GET("/:id", h.GetRoute)
 		routes.POST("", h.CreateRoute)
 		routes.PUT("/:id", h.UpdateRoute)

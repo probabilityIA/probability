@@ -127,3 +127,31 @@ export const reorderStopsAction = async (routeId: number, data: ReorderStopsDTO,
         throw new Error(error.message);
     }
 };
+
+// ============================================
+// Form options (for route creation)
+// ============================================
+
+export const getAvailableDriversAction = async (businessId?: number) => {
+    try {
+        return await (await getUseCases()).getAvailableDrivers(businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
+export const getAvailableVehiclesAction = async (businessId?: number) => {
+    try {
+        return await (await getUseCases()).getAvailableVehicles(businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
+export const getAssignableOrdersAction = async (businessId?: number) => {
+    try {
+        return await (await getUseCases()).getAssignableOrders(businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};

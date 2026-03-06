@@ -167,6 +167,10 @@ func (uc *useCase) UpdateConfig(ctx context.Context, id uint, dto *dtos.UpdateCo
 		config.Filters = dto.Filters
 	}
 
+	if dto.InvoiceConfig != nil {
+		config.InvoiceConfig = dto.InvoiceConfig
+	}
+
 	// Guardar cambios
 	if err := uc.repo.UpdateInvoicingConfig(ctx, config); err != nil {
 		uc.log.Error(ctx).Err(err).Msg("Failed to update config")

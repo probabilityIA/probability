@@ -8,4 +8,5 @@ type UpdateConfig struct {
 	Enabled                *bool                   `json:"enabled,omitempty"`
 	AutoInvoice            *bool                   `json:"auto_invoice,omitempty"`
 	Filters                *map[string]interface{} `json:"filters,omitempty"`
+	Config                 map[string]interface{}  `json:"config,omitempty"`                   // Configuración adicional (cash receipt, payment type, etc.)
 }

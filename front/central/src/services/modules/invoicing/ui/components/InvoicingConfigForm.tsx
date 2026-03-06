@@ -32,6 +32,14 @@ export function InvoicingConfigForm({
     enabled: initialData?.enabled ?? true,
     auto_invoice: initialData?.auto_invoice ?? false,
     payment_status: (initialData?.filters?.payment_status as string) ?? '',
+    // Cash receipt fields (from invoice_config)
+    send_cash_receipt: initialData?.config?.send_cash_receipt ?? false,
+    payment_type: (initialData?.config?.payment_type as string) ?? 'EF',
+    payment_bank_account_id: initialData?.config?.payment_bank_account_id ?? '' as string | number,
+    payment_financial_entity_id: initialData?.config?.payment_financial_entity_id ?? '' as string | number,
+    payment_bonus_code: (initialData?.config?.payment_bonus_code as string) ?? '',
+    payment_bank_name: (initialData?.config?.payment_bank_name as string) ?? '',
+    payment_account_number: (initialData?.config?.payment_account_number as string) ?? '',
   });
 
   // Selección de integraciones de origen
@@ -78,6 +86,23 @@ export function InvoicingConfigForm({
       ? { payment_status: formData.payment_status as 'paid' | 'unpaid' | 'partial' }
       : {};
 
+    // Build invoice_config with cash receipt settings
+    const invoiceConfig: Record<string, any> = {};
+    if (formData.send_cash_receipt) {
+      invoiceConfig.send_cash_receipt = true;
+      invoiceConfig.payment_type = formData.payment_type || 'EF';
+      if (formData.payment_type === 'TR' && formData.payment_bank_account_id)
+        invoiceConfig.payment_bank_account_id = Number(formData.payment_bank_account_id);
+      if (formData.payment_type === 'CH') {
+        if (formData.payment_account_number) invoiceConfig.payment_account_number = formData.payment_account_number;
+        if (formData.payment_bank_name) invoiceConfig.payment_bank_name = formData.payment_bank_name;
+      }
+      if ((formData.payment_type === 'TC' || formData.payment_type === 'TD') && formData.payment_financial_entity_id)
+        invoiceConfig.payment_financial_entity_id = Number(formData.payment_financial_entity_id);
+      if (formData.payment_type === 'BN' && formData.payment_bonus_code)
+        invoiceConfig.payment_bonus_code = formData.payment_bonus_code;
+    }
+
     try {
       if (initialData?.id) {
         const result = await updateConfig(initialData.id, {
@@ -85,6 +110,7 @@ export function InvoicingConfigForm({
           auto_invoice: formData.auto_invoice,
           filters,
           integration_ids: selectedIntegrationIds,
+          config: invoiceConfig,
         });
 
         if (result.success) {
@@ -100,6 +126,7 @@ export function InvoicingConfigForm({
           enabled: formData.enabled,
           auto_invoice: formData.auto_invoice,
           filters,
+          config: invoiceConfig,
         };
 
         const result = await createConfig(createData);
@@ -177,6 +204,119 @@ export function InvoicingConfigForm({
               <option value="partial">Pago parcial</option>
             </select>
           </div>
+        </div>
+      )}
+
+      {/* Recibo de Caja */}
+      {formData.enabled && (
+        <div className="bg-white p-4 rounded-lg border border-gray-200">
+          <label className="flex items-center gap-3 cursor-pointer mb-3">
+            <input
+              type="checkbox"
+              checked={formData.send_cash_receipt}
+              onChange={(e) => setFormData({ ...formData, send_cash_receipt: e.target.checked })}
+              disabled={loading}
+              className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
+            />
+            <div>
+              <span className="text-sm font-medium text-gray-900">Enviar recibo de caja</span>
+              <p className="text-xs text-gray-500">Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)</p>
+            </div>
+          </label>
+
+          {formData.send_cash_receipt && (
+            <div className="space-y-3 pl-8">
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Medio de pago</label>
+                <select
+                  value={formData.payment_type}
+                  onChange={(e) => setFormData({ ...formData, payment_type: e.target.value })}
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                >
+                  <option value="EF">EF — Efectivo</option>
+                  <option value="TR">TR — Transferencia bancaria</option>
+                  <option value="TC">TC — Tarjeta de credito</option>
+                  <option value="TD">TD — Tarjeta de debito</option>
+                  <option value="CH">CH — Cheque</option>
+                  <option value="BN">BN — Bonos</option>
+                </select>
+              </div>
+
+              {/* TR: bankAccountId */}
+              {formData.payment_type === 'TR' && (
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">ID Cuenta Bancaria (Softpymes)</label>
+                  <input
+                    type="number"
+                    value={formData.payment_bank_account_id}
+                    onChange={(e) => setFormData({ ...formData, payment_bank_account_id: e.target.value })}
+                    placeholder="ID numerico de la cuenta"
+                    disabled={loading}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  />
+                </div>
+              )}
+
+              {/* CH: accountNumber + bankName */}
+              {formData.payment_type === 'CH' && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">Numero de cuenta</label>
+                    <input
+                      type="text"
+                      value={formData.payment_account_number}
+                      onChange={(e) => setFormData({ ...formData, payment_account_number: e.target.value })}
+                      placeholder="Numero de cuenta"
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">Nombre del banco</label>
+                    <input
+                      type="text"
+                      value={formData.payment_bank_name}
+                      onChange={(e) => setFormData({ ...formData, payment_bank_name: e.target.value })}
+                      placeholder="Ej: Bancolombia"
+                      disabled={loading}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* TC/TD: finantialEntityId */}
+              {(formData.payment_type === 'TC' || formData.payment_type === 'TD') && (
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">ID Entidad Financiera (Softpymes)</label>
+                  <input
+                    type="number"
+                    value={formData.payment_financial_entity_id}
+                    onChange={(e) => setFormData({ ...formData, payment_financial_entity_id: e.target.value })}
+                    placeholder="ID numerico de la entidad"
+                    disabled={loading}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  />
+                </div>
+              )}
+
+              {/* BN: code */}
+              {formData.payment_type === 'BN' && (
+                <div>
+                  <label className="block text-sm text-gray-700 mb-1">Codigo del bono</label>
+                  <input
+                    type="text"
+                    value={formData.payment_bonus_code}
+                    onChange={(e) => setFormData({ ...formData, payment_bonus_code: e.target.value })}
+                    placeholder="Codigo identificador"
+                    disabled={loading}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

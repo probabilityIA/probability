@@ -82,6 +82,7 @@ func CreateConfigRequestToDTO(req *request.CreateConfig, userID uint) *dtos.Crea
 		Enabled:                enabled,
 		AutoInvoice:            autoInvoice,
 		Filters:                req.Filters,
+		InvoiceConfig:          req.Config,
 		CreatedByUserID:        userID,
 	}
 }
@@ -108,6 +109,10 @@ func UpdateConfigRequestToDTO(req *request.UpdateConfig) *dtos.UpdateConfigDTO {
 
 	if req.Filters != nil {
 		dto.Filters = *req.Filters
+	}
+
+	if req.Config != nil {
+		dto.InvoiceConfig = req.Config
 	}
 
 	return dto

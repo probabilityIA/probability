@@ -154,6 +154,15 @@ export interface InvoicingSettings {
   resolution_id?: number;          // ID de resolución de Softpymes (requerido)
   branch_code?: string;            // Código de sucursal (default: "001")
   seller_nit?: string;             // NIT del vendedor (opcional)
+
+  // Recibo de caja (cash receipt)
+  send_cash_receipt?: boolean;              // true = enviar recibo de caja al facturar
+  payment_type?: string;                    // EF, TR, TC, TD, CH, BN
+  payment_bank_account_id?: number;         // TR: bankAccountId (int en Softpymes)
+  payment_financial_entity_id?: number;     // TC/TD: finantialEntityId (int en Softpymes)
+  payment_bonus_code?: string;              // BN: code del bono
+  payment_bank_name?: string;               // CH: nombre del banco
+  payment_account_number?: string;          // CH: numero de cuenta
 }
 
 // ===================================
@@ -214,7 +223,7 @@ export interface CreateConfigDTO {
   enabled?: boolean;
   auto_invoice?: boolean;
   filters?: InvoicingFilters;
-  config?: InvoicingSettings;
+  config?: InvoicingSettings | Record<string, any>;
   description?: string;
 }
 
@@ -222,7 +231,7 @@ export interface UpdateConfigDTO {
   enabled?: boolean;
   auto_invoice?: boolean;
   filters?: InvoicingFilters;
-  config?: InvoicingSettings;
+  config?: InvoicingSettings | Record<string, any>;
   invoicing_integration_id?: number;
   integration_ids?: number[];
 }

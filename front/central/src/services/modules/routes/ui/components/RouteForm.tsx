@@ -1,9 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { PlusIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { RouteInfo, CreateRouteDTO, UpdateRouteDTO, CreateRouteStopDTO } from '../../domain/types';
-import { createRouteAction, updateRouteAction } from '../../infra/actions';
+import { useState, useEffect } from 'react';
+import { CheckIcon } from '@heroicons/react/24/outline';
+import {
+    RouteInfo,
+    CreateRouteDTO,
+    UpdateRouteDTO,
+    CreateRouteStopDTO,
+    DriverOption,
+    VehicleOption,
+    AssignableOrder,
+} from '../../domain/types';
+import {
+    createRouteAction,
+    updateRouteAction,
+    getAvailableDriversAction,
+    getAvailableVehiclesAction,
+    getAssignableOrdersAction,
+} from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
 
 interface RouteFormProps {
@@ -12,20 +26,6 @@ interface RouteFormProps {
     onCancel: () => void;
     businessId?: number;
 }
-
-interface StopEntry {
-    order_id: string;
-    address: string;
-    customer_name: string;
-    customer_phone: string;
-}
-
-const emptyStop = (): StopEntry => ({
-    order_id: '',
-    address: '',
-    customer_name: '',
-    customer_phone: '',
-});
 
 export default function RouteForm({ route, onSuccess, onCancel, businessId }: RouteFormProps) {
     const isEditing = !!route;
@@ -36,22 +36,57 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
     const [originAddress, setOriginAddress] = useState(route?.origin_address || '');
     const [notes, setNotes] = useState(route?.notes || '');
 
-    const [stops, setStops] = useState<StopEntry[]>([emptyStop()]);
+    // Form options
+    const [drivers, setDrivers] = useState<DriverOption[]>([]);
+    const [vehicles, setVehicles] = useState<VehicleOption[]>([]);
+    const [assignableOrders, setAssignableOrders] = useState<AssignableOrder[]>([]);
+    const [selectedOrderIds, setSelectedOrderIds] = useState<Set<string>>(new Set());
+    const [loadingOptions, setLoadingOptions] = useState(false);
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
 
-    const addStop = () => {
-        setStops((prev) => [...prev, emptyStop()]);
+    // Load form options on mount
+    useEffect(() => {
+        const loadOptions = async () => {
+            setLoadingOptions(true);
+            try {
+                const [driversList, vehiclesList, ordersList] = await Promise.all([
+                    getAvailableDriversAction(businessId),
+                    getAvailableVehiclesAction(businessId),
+                    isEditing ? Promise.resolve([]) : getAssignableOrdersAction(businessId),
+                ]);
+                setDrivers(driversList);
+                setVehicles(vehiclesList);
+                setAssignableOrders(ordersList);
+            } catch {
+                // Silently fail — selectors will just be empty
+            } finally {
+                setLoadingOptions(false);
+            }
+        };
+        loadOptions();
+    }, [businessId, isEditing]);
+
+    const toggleOrder = (orderId: string) => {
+        setSelectedOrderIds((prev) => {
+            const next = new Set(prev);
+            if (next.has(orderId)) {
+                next.delete(orderId);
+            } else {
+                next.add(orderId);
+            }
+            return next;
+        });
     };
 
-    const removeStop = (index: number) => {
-        setStops((prev) => prev.filter((_, i) => i !== index));
-    };
-
-    const updateStopField = (index: number, field: keyof StopEntry, value: string) => {
-        setStops((prev) => prev.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
+    const selectAllOrders = () => {
+        if (selectedOrderIds.size === assignableOrders.length) {
+            setSelectedOrderIds(new Set());
+        } else {
+            setSelectedOrderIds(new Set(assignableOrders.map((o) => o.id)));
+        }
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -71,14 +106,17 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                 };
                 await updateRouteAction(route.id, updateData, businessId);
             } else {
-                // Build stops array from entries that have at minimum an address and customer name
-                const validStops: CreateRouteStopDTO[] = stops
-                    .filter((s) => s.address.trim() && s.customer_name.trim())
-                    .map((s) => ({
-                        order_id: s.order_id.trim() || undefined,
-                        address: s.address.trim(),
-                        customer_name: s.customer_name.trim(),
-                        customer_phone: s.customer_phone.trim() || undefined,
+                // Build stops from selected orders
+                const validStops: CreateRouteStopDTO[] = assignableOrders
+                    .filter((o) => selectedOrderIds.has(o.id))
+                    .map((o) => ({
+                        order_id: o.id,
+                        address: o.address || 'Sin direccion',
+                        city: o.city || undefined,
+                        lat: o.lat ?? undefined,
+                        lng: o.lng ?? undefined,
+                        customer_name: o.customer_name || 'Sin nombre',
+                        customer_phone: o.customer_phone || undefined,
                     }));
 
                 const createData: CreateRouteDTO = {
@@ -100,6 +138,9 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
             setLoading(false);
         }
     };
+
+    const formatCurrency = (amount: number) =>
+        new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(amount);
 
     return (
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -128,35 +169,47 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     />
                 </div>
 
-                {/* Driver ID */}
+                {/* Conductor */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ID Conductor
+                        Conductor
                     </label>
-                    <Input
-                        type="number"
+                    <select
                         value={driverId}
                         onChange={(e) => setDriverId(e.target.value)}
-                        placeholder="ID del conductor"
-                        min={1}
-                    />
+                        disabled={loadingOptions}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="">— Sin conductor —</option>
+                        {drivers.map((d) => (
+                            <option key={d.id} value={d.id}>
+                                {d.first_name} {d.last_name} — {d.identification} {d.license_type ? `(${d.license_type})` : ''}
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
-                {/* Vehicle ID */}
+                {/* Vehiculo */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ID Vehiculo
+                        Vehiculo
                     </label>
-                    <Input
-                        type="number"
+                    <select
                         value={vehicleId}
                         onChange={(e) => setVehicleId(e.target.value)}
-                        placeholder="ID del vehiculo"
-                        min={1}
-                    />
+                        disabled={loadingOptions}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                        <option value="">— Sin vehiculo —</option>
+                        {vehicles.map((v) => (
+                            <option key={v.id} value={v.id}>
+                                {v.license_plate} — {v.brand} {v.vehicle_model} ({v.type})
+                            </option>
+                        ))}
+                    </select>
                 </div>
 
-                {/* Origin Address */}
+                {/* Direccion de origen */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Direccion de origen
@@ -169,7 +222,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     />
                 </div>
 
-                {/* Notes */}
+                {/* Notas */}
                 <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Notas
@@ -184,70 +237,87 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                 </div>
             </div>
 
-            {/* Stops section - only for creation */}
+            {/* Order selector - only for creation */}
             {!isEditing && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-gray-700">Paradas</h3>
-                        <button
-                            type="button"
-                            onClick={addStop}
-                            className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700"
-                        >
-                            <PlusIcon className="w-4 h-4" />
-                            Agregar parada
-                        </button>
+                        <h3 className="text-sm font-semibold text-gray-700">
+                            Ordenes en procesamiento
+                            {assignableOrders.length > 0 && (
+                                <span className="ml-2 text-xs font-normal text-gray-400">
+                                    ({selectedOrderIds.size} de {assignableOrders.length} seleccionadas)
+                                </span>
+                            )}
+                        </h3>
+                        {assignableOrders.length > 0 && (
+                            <button
+                                type="button"
+                                onClick={selectAllOrders}
+                                className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                            >
+                                {selectedOrderIds.size === assignableOrders.length ? 'Deseleccionar todas' : 'Seleccionar todas'}
+                            </button>
+                        )}
                     </div>
 
-                    {stops.length === 0 && (
-                        <p className="text-sm text-gray-400 text-center py-4">
-                            No hay paradas. Puedes agregar paradas despues de crear la ruta.
-                        </p>
-                    )}
-
-                    {stops.map((stop, index) => (
-                        <div key={index} className="border border-gray-200 rounded-lg p-3 space-y-2 relative">
-                            <div className="flex items-center justify-between mb-1">
-                                <span className="text-xs font-medium text-gray-500">Parada {index + 1}</span>
-                                {stops.length > 1 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => removeStop(index)}
-                                        className="text-red-400 hover:text-red-600"
-                                        title="Eliminar parada"
-                                    >
-                                        <TrashIcon className="w-4 h-4" />
-                                    </button>
-                                )}
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <Input
-                                    type="text"
-                                    value={stop.order_id}
-                                    onChange={(e) => updateStopField(index, 'order_id', e.target.value)}
-                                    placeholder="ID de orden (opcional)"
-                                />
-                                <Input
-                                    type="text"
-                                    value={stop.address}
-                                    onChange={(e) => updateStopField(index, 'address', e.target.value)}
-                                    placeholder="Direccion *"
-                                />
-                                <Input
-                                    type="text"
-                                    value={stop.customer_name}
-                                    onChange={(e) => updateStopField(index, 'customer_name', e.target.value)}
-                                    placeholder="Nombre del cliente *"
-                                />
-                                <Input
-                                    type="text"
-                                    value={stop.customer_phone}
-                                    onChange={(e) => updateStopField(index, 'customer_phone', e.target.value)}
-                                    placeholder="Telefono del cliente"
-                                />
-                            </div>
+                    {loadingOptions ? (
+                        <div className="text-sm text-gray-400 text-center py-6">
+                            Cargando ordenes disponibles...
                         </div>
-                    ))}
+                    ) : assignableOrders.length === 0 ? (
+                        <div className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg">
+                            No hay ordenes en procesamiento disponibles para asignar
+                        </div>
+                    ) : (
+                        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                            {assignableOrders.map((order) => {
+                                const isSelected = selectedOrderIds.has(order.id);
+                                return (
+                                    <button
+                                        key={order.id}
+                                        type="button"
+                                        onClick={() => toggleOrder(order.id)}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
+                                            isSelected
+                                                ? 'bg-blue-50 hover:bg-blue-100'
+                                                : 'bg-white hover:bg-gray-50'
+                                        }`}
+                                    >
+                                        {/* Checkbox */}
+                                        <div
+                                            className={`flex-shrink-0 w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+                                                isSelected
+                                                    ? 'bg-blue-600 border-blue-600'
+                                                    : 'border-gray-300'
+                                            }`}
+                                        >
+                                            {isSelected && <CheckIcon className="w-3.5 h-3.5 text-white" />}
+                                        </div>
+
+                                        {/* Order info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-sm font-medium text-gray-900">
+                                                    #{order.order_number}
+                                                </span>
+                                                <span className="text-xs text-gray-400">
+                                                    {order.item_count} {order.item_count === 1 ? 'item' : 'items'}
+                                                </span>
+                                                <span className="text-xs font-medium text-green-600">
+                                                    {formatCurrency(order.total_amount)}
+                                                </span>
+                                            </div>
+                                            <div className="text-xs text-gray-500 truncate">
+                                                {order.customer_name}
+                                                {order.address ? ` — ${order.address}` : ''}
+                                                {order.city ? `, ${order.city}` : ''}
+                                            </div>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    )}
                 </div>
             )}
 

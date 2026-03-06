@@ -18,6 +18,10 @@ type UpdateConfigDTO struct {
 	// Filtros de configuración
 	Filters map[string]interface{}
 
+	// Configuración adicional de facturación (cash receipt, payment type, etc.)
+	// Se guarda en invoicing_configs.invoice_config (JSONB)
+	InvoiceConfig map[string]interface{}
+
 	// Business ID del solicitante (para validar pertenencia)
 	// Super admin: proviene de ?business_id query param
 	// Usuario normal: proviene del JWT

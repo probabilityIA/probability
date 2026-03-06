@@ -399,6 +399,112 @@ func (r *Repository) ClearOrderDriverInfo(ctx context.Context, orderID string) e
 }
 
 // ============================================
+// Form options (drivers, vehicles, assignable orders)
+// ============================================
+
+func (r *Repository) ListDriversForBusiness(ctx context.Context, businessID uint) ([]dtos.DriverOption, error) {
+	var drivers []models.Driver
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND status = ? AND deleted_at IS NULL", businessID, "active").
+		Find(&drivers).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dtos.DriverOption, len(drivers))
+	for i, d := range drivers {
+		result[i] = dtos.DriverOption{
+			ID:             d.ID,
+			FirstName:      d.FirstName,
+			LastName:       d.LastName,
+			Phone:          d.Phone,
+			Identification: d.Identification,
+			Status:         d.Status,
+			LicenseType:    d.LicenseType,
+		}
+	}
+	return result, nil
+}
+
+func (r *Repository) ListVehiclesForBusiness(ctx context.Context, businessID uint) ([]dtos.VehicleOption, error) {
+	var vehicles []models.Vehicle
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND status = ? AND deleted_at IS NULL", businessID, "active").
+		Find(&vehicles).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]dtos.VehicleOption, len(vehicles))
+	for i, v := range vehicles {
+		result[i] = dtos.VehicleOption{
+			ID:           v.ID,
+			Type:         v.Type,
+			LicensePlate: v.LicensePlate,
+			Brand:        v.Brand,
+			VehicleModel: v.VehicleModel,
+			Status:       v.Status,
+		}
+	}
+	return result, nil
+}
+
+func (r *Repository) ListAssignableOrders(ctx context.Context, businessID uint) ([]dtos.AssignableOrder, error) {
+	var orders []models.Order
+	err := r.db.Conn(ctx).
+		Where("business_id = ? AND status_id = ? AND driver_id IS NULL AND deleted_at IS NULL", businessID, 2).
+		Order("created_at DESC").
+		Find(&orders).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect order IDs for item count subquery
+	orderIDs := make([]string, len(orders))
+	for i, o := range orders {
+		orderIDs[i] = o.ID
+	}
+
+	// Get item counts per order
+	itemCounts := make(map[string]int)
+	if len(orderIDs) > 0 {
+		type countResult struct {
+			OrderID string
+			Count   int
+		}
+		var counts []countResult
+		r.db.Conn(ctx).
+			Table("order_items").
+			Select("order_id, COUNT(*) as count").
+			Where("order_id IN ? AND deleted_at IS NULL", orderIDs).
+			Group("order_id").
+			Scan(&counts)
+
+		for _, c := range counts {
+			itemCounts[c.OrderID] = c.Count
+		}
+	}
+
+	result := make([]dtos.AssignableOrder, len(orders))
+	for i, o := range orders {
+		result[i] = dtos.AssignableOrder{
+			ID:            o.ID,
+			OrderNumber:   o.OrderNumber,
+			CustomerName:  o.CustomerName,
+			CustomerPhone: o.CustomerPhone,
+			Address:       o.ShippingStreet,
+			City:          o.ShippingCity,
+			Lat:           o.ShippingLat,
+			Lng:           o.ShippingLng,
+			TotalAmount:   o.TotalAmount,
+			ItemCount:     itemCounts[o.ID],
+			CreatedAt:     o.CreatedAt,
+		}
+	}
+	return result, nil
+}
+
+// ============================================
 // Mappers
 // ============================================
 

@@ -42,6 +42,11 @@ type ISoftpymesClient interface {
 	// dateFrom y dateTo son requeridos (YYYY-MM-DD); máx 30 días entre fechas
 	// baseURL: URL base efectiva (producción o testing); vacío usa la URL del constructor
 	ListDocuments(ctx context.Context, apiKey, apiSecret, referer string, params ListDocumentsParams, baseURL string) ([]ListedDocument, error)
+
+	// SendCashReceiptFromDocument envía un recibo de caja usando datos del documento completo
+	// de Softpymes (GetDocumentByNumber) y la configuración de pago de la integración.
+	// Esto registra el pago y mueve la cuenta contable de "cuentas por cobrar" al medio de pago.
+	SendCashReceiptFromDocument(ctx context.Context, apiKey, apiSecret, referer, baseURL string, fullDocument map[string]interface{}, config map[string]interface{}) error
 }
 
 // ListDocumentsParams parámetros para listar documentos
