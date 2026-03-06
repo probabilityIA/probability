@@ -155,6 +155,15 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	}
 
 	// 9. Crear items de factura desde los items de la orden
+	// Validar que la orden tenga items — sin items no se puede crear factura
+	if len(order.Items) == 0 {
+		uc.log.Warn(ctx).
+			Str("order_id", order.ID).
+			Str("order_number", order.OrderNumber).
+			Msg("Orden sin items en order_items — no se puede facturar")
+		return nil, fmt.Errorf("la orden %s no tiene items (order_items vacío)", order.OrderNumber)
+	}
+
 	// Para órdenes dual-currency (ej: tienda USD, comprador COP), los totales de la orden
 	// ya están en moneda presentment (COP) pero los items tienen UnitPrice en shop currency (USD).
 	// Usar precios presentment cuando estén disponibles para mantener consistencia con los totales.

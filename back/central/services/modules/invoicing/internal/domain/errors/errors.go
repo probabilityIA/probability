@@ -99,6 +99,13 @@ var (
 	ErrNoRetriesToCancel  = errors.New("no se encontraron reintentos pendientes para cancelar")
 )
 
+// Errores de eliminación
+var (
+	ErrInvoiceCannotBeDeleted    = errors.New("solo se pueden eliminar facturas en estado pendiente con 3+ consultas sin respuesta")
+	ErrInvoiceNotPending         = errors.New("la factura no está en estado pendiente")
+	ErrInsufficientQueryAttempts = errors.New("la factura no tiene suficientes intentos de consulta (mínimo 3)")
+)
+
 // Errores de notas de crédito
 var (
 	ErrCreditNoteNotFound      = errors.New("nota de crédito no encontrada")

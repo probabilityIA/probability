@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
-import { XMarkIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ExclamationTriangleIcon, ClockIcon } from '@heroicons/react/24/outline';
 import { CookieStorage } from '@/shared/utils/cookie-storage';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import {
@@ -39,7 +39,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
 
   // Individual order processing status
   interface OrderProcessingStatus {
-    status: 'pending' | 'processing' | 'success' | 'failed';
+    status: 'pending' | 'processing' | 'success' | 'failed' | 'pending_validation';
     error_message?: string;
     invoice_id?: number;
     invoice_number?: string;
@@ -101,12 +101,26 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
     }
   }, [selectedOrderIds]);
 
+  const handleInvoicePendingValidation = useCallback((data: InvoiceSSEEventData) => {
+    if (data.order_id && selectedOrderIds.includes(data.order_id)) {
+      setOrderStatuses((prev) => ({
+        ...prev,
+        [data.order_id!]: {
+          status: 'pending_validation',
+          invoice_id: data.invoice_id,
+          invoice_number: data.invoice_number,
+        },
+      }));
+    }
+  }, [selectedOrderIds]);
+
   useInvoiceSSE({
     businessId: currentBusinessId,
     onBulkJobProgress: handleBulkJobProgress,
     onBulkJobCompleted: handleBulkJobCompleted,
     onInvoiceCreated: handleInvoiceCreated,
     onInvoiceFailed: handleInvoiceFailed,
+    onInvoicePendingValidation: handleInvoicePendingValidation,
   });
 
   useEffect(() => {
@@ -464,6 +478,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                       if (orderStatus.status === 'processing') return 'bg-yellow-50 border-yellow-200';
                       if (orderStatus.status === 'success') return 'bg-green-50 border-green-200';
                       if (orderStatus.status === 'failed') return 'bg-red-50 border-red-200';
+                      if (orderStatus.status === 'pending_validation') return 'bg-amber-50 border-amber-200';
                       return '';
                     };
 
@@ -478,6 +493,9 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                       }
                       if (orderStatus.status === 'failed') {
                         return <XCircleIcon className="w-5 h-5 text-red-600" />;
+                      }
+                      if (orderStatus.status === 'pending_validation') {
+                        return <ClockIcon className="w-5 h-5 text-amber-600" />;
                       }
                       return null;
                     };
@@ -569,6 +587,21 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                                 </div>
                               </div>
                             )}
+                            {orderStatus?.status === 'pending_validation' && (
+                              <div className="mt-2 p-2.5 bg-amber-100 border border-amber-300 rounded-lg text-xs text-amber-800">
+                                <div className="flex items-start gap-2">
+                                  <ClockIcon className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+                                  <div>
+                                    <p className="font-semibold">Factura enviada — Pendiente validación DIAN</p>
+                                    {orderStatus.invoice_number ? (
+                                      <p className="mt-0.5 text-amber-700 font-mono">{orderStatus.invoice_number}</p>
+                                    ) : orderStatus.invoice_id ? (
+                                      <p className="mt-0.5 text-amber-700">ID: {orderStatus.invoice_id}</p>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                             {orderStatus?.status === 'failed' && (
                               <div className="mt-2 p-2.5 bg-red-100 border border-red-300 rounded-lg text-xs text-red-800">
                                 <div className="flex items-start gap-2">
@@ -611,26 +644,36 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
               </div>
               <div className="w-full bg-gray-200 rounded-full h-3 overflow-hidden flex">
                 {bulkCompleted || (bulkProgress.successful ?? 0) > 0 || (bulkProgress.failed ?? 0) > 0 ? (
-                  <>
-                    {/* Segmento verde (exitosas) */}
-                    {(bulkProgress.successful ?? 0) > 0 && (
-                      <div
-                        className="h-3 bg-green-500 transition-all duration-300"
-                        style={{
-                          width: `${((bulkProgress.successful ?? 0) / (bulkProgress.total_orders || 1)) * 100}%`,
-                        }}
-                      />
-                    )}
-                    {/* Segmento rojo (fallidas) */}
-                    {(bulkProgress.failed ?? 0) > 0 && (
-                      <div
-                        className="h-3 bg-red-500 transition-all duration-300"
-                        style={{
-                          width: `${((bulkProgress.failed ?? 0) / (bulkProgress.total_orders || 1)) * 100}%`,
-                        }}
-                      />
-                    )}
-                  </>
+                  (() => {
+                    const total = bulkProgress.total_orders || 1;
+                    const pendingValidationCount = Object.values(orderStatuses).filter(s => s.status === 'pending_validation').length;
+                    const pureSuccess = Math.max((bulkProgress.successful ?? 0) - pendingValidationCount, 0);
+                    return (
+                      <>
+                        {/* Segmento verde (exitosas confirmadas) */}
+                        {pureSuccess > 0 && (
+                          <div
+                            className="h-3 bg-green-500 transition-all duration-300"
+                            style={{ width: `${(pureSuccess / total) * 100}%` }}
+                          />
+                        )}
+                        {/* Segmento ámbar (pendientes validación DIAN) */}
+                        {pendingValidationCount > 0 && (
+                          <div
+                            className="h-3 bg-amber-400 transition-all duration-300"
+                            style={{ width: `${(pendingValidationCount / total) * 100}%` }}
+                          />
+                        )}
+                        {/* Segmento rojo (fallidas) */}
+                        {(bulkProgress.failed ?? 0) > 0 && (
+                          <div
+                            className="h-3 bg-red-500 transition-all duration-300"
+                            style={{ width: `${((bulkProgress.failed ?? 0) / total) * 100}%` }}
+                          />
+                        )}
+                      </>
+                    );
+                  })()
                 ) : (
                   /* Barra azul mientras procesa (sin resultados aún) */
                   <div
@@ -640,9 +683,22 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 )}
               </div>
               <div className="flex gap-4 mt-2 text-xs text-gray-500">
-                <span className="text-green-600">
-                  Exitosas: {bulkProgress.successful ?? 0}
-                </span>
+                {(() => {
+                  const pendingValidationCount = Object.values(orderStatuses).filter(s => s.status === 'pending_validation').length;
+                  const successCount = (bulkProgress.successful ?? 0) - pendingValidationCount;
+                  return (
+                    <>
+                      <span className="text-green-600">
+                        Exitosas: {Math.max(successCount, 0)}
+                      </span>
+                      {pendingValidationCount > 0 && (
+                        <span className="text-amber-600">
+                          Pendientes DIAN: {pendingValidationCount}
+                        </span>
+                      )}
+                    </>
+                  );
+                })()}
                 <span className="text-red-600">
                   Fallidas: {bulkProgress.failed ?? 0}
                 </span>

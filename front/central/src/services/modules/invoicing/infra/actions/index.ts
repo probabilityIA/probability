@@ -139,6 +139,12 @@ export async function enableRetryAction(id: number): Promise<void> {
   });
 }
 
+export async function deletePendingInvoiceAction(id: number): Promise<void> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}`, {
+    method: 'DELETE',
+  });
+}
+
 export async function getInvoiceSyncLogsAction(id: number): Promise<SyncLog[]> {
   const response = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/sync-logs`);
   return response.sync_logs || [];
@@ -329,6 +335,36 @@ export async function createBulkInvoicesAction(
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Error desconocido al crear facturas';
     console.error('[createBulkInvoicesAction] Error:', message);
+    return { success: false, error: message };
+  }
+}
+
+// ============================================
+// FACTURA MANUAL (Registro externo)
+// ============================================
+
+/**
+ * Registra una factura externa (hecha por fuera del sistema).
+ * Crea el registro con status "issued" y marca la orden como facturada.
+ */
+export async function registerManualInvoiceAction(
+  orderID: string,
+  invoiceNumber: string,
+  businessId?: number
+): Promise<{ success: true; data: Invoice } | { success: false; error: string }> {
+  try {
+    const params = businessId ? `?business_id=${businessId}` : '';
+    const data = await fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/manual${params}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        order_id: orderID,
+        invoice_number: invoiceNumber,
+      }),
+    });
+    return { success: true, data };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Error desconocido al registrar factura manual';
+    console.error('[registerManualInvoiceAction] Error:', message);
     return { success: false, error: message };
   }
 }

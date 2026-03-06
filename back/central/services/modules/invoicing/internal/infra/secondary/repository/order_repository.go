@@ -172,9 +172,13 @@ func (r *Repository) GetInvoiceableOrders(ctx context.Context, businessID uint, 
 	}
 
 	// Construir query base
+	// Excluir órdenes que ya tienen factura en la tabla invoices (pending, issued, etc.)
+	// invoice_id IS NULL no es suficiente porque solo se actualiza cuando la factura es emitida exitosamente
+	noInvoiceSubquery := "NOT EXISTS (SELECT 1 FROM invoices i WHERE i.order_id = orders.id AND i.deleted_at IS NULL)"
 	countQuery := r.db.Conn(ctx).Model(&models.Order{}).
 		Where("invoiceable = ?", true).
-		Where("invoice_id IS NULL")
+		Where("invoice_id IS NULL").
+		Where(noInvoiceSubquery)
 
 	// Super admin (businessID = 0): ver todas las órdenes de todos los businesses
 	// Usuario normal: solo su business
@@ -207,6 +211,7 @@ func (r *Repository) GetInvoiceableOrders(ctx context.Context, businessID uint, 
 		Model(&models.Order{}).
 		Where("invoiceable = ?", true).
 		Where("invoice_id IS NULL").
+		Where(noInvoiceSubquery).
 		Order("created_at DESC").
 		Offset(offset).
 		Limit(pageSize)

@@ -12,6 +12,7 @@ import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui';
 import { useToast } from '@/shared/providers/toast-provider';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
+import { ManualInvoiceModal } from './ManualInvoiceModal';
 import { InvoiceDetailModal } from './InvoiceDetailPanel';
 import { InvoiceComparisonModal } from './InvoiceComparisonModal';
 import { ConfigsModal } from './ConfigsModal';
@@ -55,6 +56,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [compareCorrelationId, setCompareCorrelationId] = useState<string | null>(null);
   const [compareData, setCompareData] = useState<CompareResponseData | null>(null);
   const [showConfigsModal, setShowConfigsModal] = useState(false);
+  const [showManualModal, setShowManualModal] = useState(false);
   const [newInvoiceIds, setNewInvoiceIds] = useState<Set<number>>(new Set());
 
   useImperativeHandle(ref, () => ({
@@ -517,6 +519,15 @@ export const InvoiceList = forwardRef(function InvoiceList(
           </svg>
         </button>
         <button
+          onClick={() => setShowManualModal(true)}
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Registrar Factura Manual"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </button>
+        <button
           onClick={() => setShowBulkModal(true)}
           className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Crear Facturas"
@@ -717,6 +728,14 @@ export const InvoiceList = forwardRef(function InvoiceList(
         loading={compareLoading}
         compareData={compareData}
         onRequestComparison={handleRequestComparison}
+      />
+
+      {/* Modal de factura manual */}
+      <ManualInvoiceModal
+        isOpen={showManualModal}
+        onClose={() => setShowManualModal(false)}
+        onSuccess={() => loadInvoices(currentPage, pageSize)}
+        businessId={businessId}
       />
 
       {/* Modal de configuraciones de facturación */}

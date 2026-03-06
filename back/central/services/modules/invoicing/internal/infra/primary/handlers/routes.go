@@ -12,13 +12,15 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 		// Facturas
 		invoices := invoicing.Group("/invoices")
 		{
-			invoices.POST("", middleware.JWT(), h.CreateInvoice)                     // Crear factura manual
+			invoices.POST("", middleware.JWT(), h.CreateInvoice)                     // Crear factura (envía al proveedor)
+		invoices.POST("/manual", middleware.JWT(), h.RegisterManualInvoice)       // Registrar factura externa (sin proveedor)
 			invoices.GET("", middleware.JWT(), h.ListInvoices)                       // Listar facturas
 			invoices.GET("/:id", middleware.JWT(), h.GetInvoice)                     // Obtener factura
 			invoices.POST("/:id/cancel", middleware.JWT(), h.CancelInvoice)          // Cancelar factura
 			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)            // Reintentar factura
 			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)           // Cancelar reintentos pendientes
 			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)              // Habilitar reintentos automáticos
+			invoices.DELETE("/:id", middleware.JWT(), h.DeleteInvoice)                // Eliminar factura pendiente (3+ consultas)
 			invoices.GET("/:id/sync-logs", middleware.JWT(), h.GetInvoiceSyncLogs)   // Historial de sincronización
 			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote) // Crear nota de crédito
 

@@ -337,6 +337,10 @@ func (c *ResponseConsumer) handlePendingValidation(
 		},
 	})
 
+	// Para bulk jobs: contar como exitosa (el proveedor aceptó el documento).
+	// La factura queda en "pending" y el check_status automático la actualizará cuando DIAN responda.
+	c.updateBulkJobOnResult(ctx, invoice.ID, true)
+
 	c.log.Info(ctx).
 		Uint("invoice_id", invoice.ID).
 		Msg("⏳ Invoice kept as pending - awaiting DIAN validation")

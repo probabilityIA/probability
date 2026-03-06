@@ -16,12 +16,14 @@ type IHandler interface {
 
 	// Facturas
 	CreateInvoice(c *gin.Context)
+	RegisterManualInvoice(c *gin.Context)
 	ListInvoices(c *gin.Context)
 	GetInvoice(c *gin.Context)
 	CancelInvoice(c *gin.Context)
 	RetryInvoice(c *gin.Context)
 	CancelRetry(c *gin.Context)
 	EnableRetry(c *gin.Context)
+	DeleteInvoice(c *gin.Context)
 	GetInvoiceSyncLogs(c *gin.Context)
 
 	// Notas de crédito

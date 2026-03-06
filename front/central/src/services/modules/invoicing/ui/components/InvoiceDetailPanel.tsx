@@ -15,6 +15,7 @@ import {
   cancelRetryAction,
   enableRetryAction,
   retryInvoiceAction,
+  deletePendingInvoiceAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
 import type { Invoice, SyncLog, InvoiceSSEEventData } from '../../domain/types';
@@ -25,6 +26,7 @@ interface InvoiceDetailModalProps {
   onClose: () => void;
   onCancel: (invoice: Invoice) => void;
   onRefresh: () => void;
+  onDelete?: () => void;
   businessId: number;
 }
 
@@ -34,6 +36,7 @@ export function InvoiceDetailModal({
   onClose,
   onCancel,
   onRefresh,
+  onDelete,
   businessId,
 }: InvoiceDetailModalProps) {
   const { showToast } = useToast();
@@ -43,6 +46,7 @@ export function InvoiceDetailModal({
   const [retrying, setRetrying] = useState(false);
   const [retryProgress, setRetryProgress] = useState(0);
   const [retryResult, setRetryResult] = useState<'success' | 'failed' | 'pending_validation' | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, fieldId: string) => {
@@ -182,6 +186,23 @@ export function InvoiceDetailModal({
     }
   };
 
+  const handleDelete = async () => {
+    if (!invoice) return;
+    if (!confirm('¿Estás seguro de eliminar esta factura? Esta acción no se puede deshacer.')) return;
+    try {
+      setDeleting(true);
+      await deletePendingInvoiceAction(invoice.id);
+      showToast('Factura eliminada exitosamente', 'success');
+      onClose();
+      if (onDelete) onDelete();
+      else onRefresh();
+    } catch (error: any) {
+      showToast('Error al eliminar: ' + error.message, 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const hasPendingRetries = syncLogs.some(
     log => (log.status === 'failed' || log.status === 'pending') && log.next_retry_at
   );
@@ -203,6 +224,10 @@ export function InvoiceDetailModal({
   // Estado del toggle: reintentos activos o deshabilitados
   const autoRetriesEnabled = hasPendingRetries;
   const autoRetriesDisabled = hasCancelledRetries && !hasPendingRetries;
+
+  // Puede eliminarse: pending + 3+ intentos de consulta (query)
+  const queryAttempts = syncLogs.filter(log => log.operation_type === 'query').length;
+  const canDelete = invoice?.status === 'pending' && queryAttempts >= 3;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleString('es-CO', {
@@ -572,6 +597,16 @@ export function InvoiceDetailModal({
                   title="Funcionalidad en desarrollo"
                 >
                   Cancelar Factura
+                </Button>
+              )}
+              {canDelete && (
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={deleting}
+                >
+                  {deleting ? 'Eliminando...' : 'Eliminar Factura'}
                 </Button>
               )}
             </div>

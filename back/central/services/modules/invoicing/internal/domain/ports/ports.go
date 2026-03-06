@@ -239,11 +239,13 @@ type IUseCase interface {
 
 	// Facturas
 	CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO) (*entities.Invoice, error)
+	RegisterManualInvoice(ctx context.Context, dto *dtos.RegisterManualInvoiceDTO) (*entities.Invoice, error)
 	CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error
 	RetryInvoice(ctx context.Context, invoiceID uint) error
 	CheckPendingInvoice(ctx context.Context, invoiceID uint) error
 	CancelRetry(ctx context.Context, invoiceID uint) error
 	EnableRetry(ctx context.Context, invoiceID uint) error
+	DeletePendingInvoice(ctx context.Context, invoiceID uint) error
 	GetInvoice(ctx context.Context, invoiceID uint) (*entities.Invoice, error)
 	ListInvoices(ctx context.Context, filters map[string]interface{}) ([]*entities.Invoice, int64, error)
 	GetInvoicesByOrder(ctx context.Context, orderID string) ([]*entities.Invoice, error)

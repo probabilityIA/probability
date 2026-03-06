@@ -110,6 +110,12 @@ func resolveInvoicingError(err error) (int, string) {
 		return http.StatusUnprocessableEntity, "La región de envío no está permitida para facturación"
 	case errors.Is(err, invoicingErrors.ErrOrderOutsideDateRange):
 		return http.StatusUnprocessableEntity, "La orden está fuera del rango de fechas permitido para facturación"
+	case errors.Is(err, invoicingErrors.ErrInvoiceCannotBeDeleted):
+		return http.StatusUnprocessableEntity, "Solo se pueden eliminar facturas en estado pendiente con 3+ consultas sin respuesta"
+	case errors.Is(err, invoicingErrors.ErrInvoiceNotPending):
+		return http.StatusUnprocessableEntity, "La factura no está en estado pendiente"
+	case errors.Is(err, invoicingErrors.ErrInsufficientQueryAttempts):
+		return http.StatusUnprocessableEntity, "La factura no tiene suficientes intentos de consulta (mínimo 3)"
 
 	// ── 400 Bad Request (datos inválidos) ─────────────────────────────────────
 	case errors.Is(err, invoicingErrors.ErrInvalidInvoiceData):
