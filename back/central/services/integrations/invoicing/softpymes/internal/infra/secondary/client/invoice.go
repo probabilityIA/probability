@@ -157,8 +157,9 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 
 	// Mapear items al formato de Softpymes
 	// Softpymes tiene los precios de cada producto en su catálogo.
-	// Solo enviamos: itemCode, quantity, unitCode.
-	// NO enviamos unitValue ni discount — Softpymes calcula precios, IVA y totales.
+	// Enviamos: itemCode, quantity, unitCode, discount.
+	// El campo discount (porcentaje) es requerido por Softpymes aunque sea 0.
+	// NO enviamos unitValue — Softpymes usa precios de su catálogo.
 	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
 	for _, item := range req.Items {
 		itemCode := item.SKU
@@ -170,6 +171,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			"itemCode": itemCode,
 			"quantity": float64(item.Quantity),
 			"unitCode": "UNI",
+			"discount": 0,
 		}
 
 		softpymesItems = append(softpymesItems, softpymesItem)
@@ -182,6 +184,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			"itemCode": "SHIPPING",
 			"quantity": 1.0,
 			"unitCode": "UNI",
+			"discount": 0,
 		}
 		softpymesItems = append(softpymesItems, shippingItem)
 	}
