@@ -351,7 +351,7 @@ function RechargeWalletButton({ businessId, businessName, onSuccess }: { busines
         }
         setLoading(true);
         try {
-            const res = await rechargeWalletAction(businessId, Number(amount));
+            const res = await rechargeWalletAction(Number(amount), businessId);
             if (res.success) {
                 setIsOpen(false);
                 setAmount('');
@@ -360,8 +360,8 @@ function RechargeWalletButton({ businessId, businessName, onSuccess }: { busines
             } else {
                 alert(res.error || 'Error al recargar');
             }
-        } catch (e) {
-            alert("Error al procesar");
+        } catch (e: any) {
+            alert(`Error al procesar: ${e.message || 'Error desconocido'}`);
         } finally {
             setLoading(false);
         }
