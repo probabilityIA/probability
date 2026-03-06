@@ -99,7 +99,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
         try {
             if (isEditing) {
                 const updateData: UpdateRouteDTO = {
-                    date: date || undefined,
+                    date: date ? `${date}T00:00:00Z` : undefined,
                     driver_id: driverId ? Number(driverId) : undefined,
                     vehicle_id: vehicleId ? Number(vehicleId) : undefined,
                     origin_address: originAddress || undefined,
@@ -121,7 +121,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                     }));
 
                 const createData: CreateRouteDTO = {
-                    date,
+                    date: date ? `${date}T00:00:00Z` : date,
                     driver_id: driverId ? Number(driverId) : undefined,
                     vehicle_id: vehicleId ? Number(vehicleId) : undefined,
                     origin_address: originAddress || undefined,
