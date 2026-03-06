@@ -1024,7 +1024,7 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
             render: (val, row) => {
                 const amount = val as number;
                 const type = (row as any).Type as string;
-                const isDebit = type === 'DEBIT' || type === 'DEBIT_GUIDE';
+                const isDebit = type === 'USAGE';
                 return (
                     <span className={`font-bold ${isDebit ? 'text-red-600' : 'text-green-600'}`}>
                         {isDebit ? '-' : '+'}{formatCurrency(amount)}
