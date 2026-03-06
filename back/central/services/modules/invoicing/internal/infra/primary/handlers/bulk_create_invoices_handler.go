@@ -26,14 +26,25 @@ func (h *handler) BulkCreateInvoices(c *gin.Context) {
 		return
 	}
 
+	// Resolver business_id: usuario normal lo tiene en JWT, super admin en body/query
+	businessID, ok := h.resolveBusinessID(c)
+	if !ok {
+		// Si resolveBusinessID falla, intentar con el body (req.BusinessID)
+		if req.BusinessID != nil && *req.BusinessID > 0 {
+			businessID = *req.BusinessID
+		}
+	}
+
 	h.log.Info(ctx).
 		Int("order_count", len(req.OrderIDs)).
+		Uint("business_id", businessID).
 		Msg("Creating bulk invoice job")
 
-	// Convertir a DTO de dominio
+	// Convertir a DTO de dominio - siempre pasar business_id resuelto
+	resolvedBID := businessID
 	dto := &dtos.BulkCreateInvoicesDTO{
 		OrderIDs:   req.OrderIDs,
-		BusinessID: req.BusinessID,
+		BusinessID: &resolvedBID,
 	}
 
 	// Ejecutar caso de uso asíncrono - retorna jobID inmediatamente
