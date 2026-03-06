@@ -889,22 +889,6 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                             onSuccess={fetchHistory}
                         />
                     )}
-                    {isSuperAdmin && (
-                        <div className="flex gap-4">
-                            <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
-                                <p className="text-xs text-green-700 font-medium">Total Aprobado</p>
-                                <p className="text-lg font-bold text-green-800">
-                                    {formatCurrency(history.filter(t => t.Status === 'COMPLETED').reduce((acc, t) => acc + t.Amount, 0))}
-                                </p>
-                            </div>
-                            <div className="bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-100">
-                                <p className="text-xs text-yellow-700 font-medium">Total Pendiente</p>
-                                <p className="text-lg font-bold text-yellow-800">
-                                    {formatCurrency(history.filter(t => t.Status === 'PENDING').reduce((acc, t) => acc + t.Amount, 0))}
-                                </p>
-                            </div>
-                        </div>
-                    )}
                 </div>
 
                 <div className="space-y-8">
