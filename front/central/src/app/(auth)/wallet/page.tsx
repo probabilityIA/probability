@@ -882,13 +882,6 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             <div className="mt-12 space-y-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h2 className="text-2xl font-bold text-gray-900">Historial de Transacciones</h2>
-                    {isSuperAdminView && (
-                        <ClearHistoryButton
-                            businessId={businessId || 0}
-                            businessName={displayName}
-                            onSuccess={fetchHistory}
-                        />
-                    )}
                 </div>
 
                 <div className="space-y-8">
