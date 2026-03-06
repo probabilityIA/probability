@@ -2,13 +2,14 @@
 
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
+import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-theme';
 
 interface SuperAdminBusinessSelectorProps {
     value: number | null;
     onChange: (businessId: number | null) => void;
     /** Variante visual: 'navbar' para uso compacto en barras, 'default' para uso en contenido */
     variant?: 'navbar' | 'default';
-    /** Texto del option por defecto (sin selección) */
+    /** Texto del option por defecto (sin seleccion) */
     placeholder?: string;
 }
 
@@ -36,7 +37,24 @@ export function SuperAdminBusinessSelector({
 
     const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
         const val = e.target.value;
-        onChange(val ? Number(val) : null);
+        const businessId = val ? Number(val) : null;
+        onChange(businessId);
+
+        if (businessId) {
+            const selected = businesses.find(b => b.id === businessId);
+            if (selected) {
+                applyBusinessTheme({
+                    name: selected.name,
+                    logo_url: selected.logo_url,
+                    primary_color: selected.primary_color,
+                    secondary_color: selected.secondary_color,
+                    tertiary_color: selected.tertiary_color,
+                    quaternary_color: selected.quaternary_color,
+                });
+            }
+        } else {
+            resetTheme();
+        }
     };
 
     if (variant === 'navbar') {

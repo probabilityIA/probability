@@ -159,7 +159,6 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	// Softpymes tiene los precios de cada producto en su catálogo.
 	// Solo enviamos: itemCode, quantity, unitCode.
 	// NO enviamos unitValue ni discount — Softpymes calcula precios, IVA y totales.
-	// La única excepción es SHIPPING: no existe en catálogo, requiere unitValue explícito.
 	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
 	for _, item := range req.Items {
 		itemCode := item.SKU
@@ -177,15 +176,12 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	}
 
 	// Agregar shipping como línea de factura si hay costo de envío.
-	// SHIPPING no existe en el catálogo de Softpymes, así que requiere unitValue explícito.
-	// Shopify envía shipping con IVA incluido → extraer base pre-tax (/ 1.19).
+	// SHIPPING debe existir en el catálogo de Softpymes con su precio configurado.
 	if req.ShippingCost > 0 {
-		shippingBase := req.ShippingCost / 1.19
 		shippingItem := map[string]interface{}{
-			"itemCode":  "SHIPPING",
-			"quantity":  1.0,
-			"unitCode":  "UNI",
-			"unitValue": fmt.Sprintf("%.2f", shippingBase),
+			"itemCode": "SHIPPING",
+			"quantity": 1.0,
+			"unitCode": "UNI",
 		}
 		softpymesItems = append(softpymesItems, shippingItem)
 	}

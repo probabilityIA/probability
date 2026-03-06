@@ -35,12 +35,17 @@ func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
 		return
 	}
 
-	// Mapear solo a formato simple (id, name)
+	// Mapear a formato simple (id, name, logo, colores)
 	simpleBusinesses := make([]response.BusinessSimpleResponse, 0, len(businesses))
 	for _, business := range businesses {
 		simpleBusinesses = append(simpleBusinesses, response.BusinessSimpleResponse{
-			ID:   business.ID,
-			Name: business.Name,
+			ID:              business.ID,
+			Name:            business.Name,
+			LogoURL:         business.LogoURL,
+			PrimaryColor:    business.PrimaryColor,
+			SecondaryColor:  business.SecondaryColor,
+			TertiaryColor:   business.TertiaryColor,
+			QuaternaryColor: business.QuaternaryColor,
 		})
 	}
 

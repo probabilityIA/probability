@@ -7,10 +7,11 @@ import { TokenStorage } from '@/shared/config';
 import type { BusinessColors } from './cookie-storage';
 
 interface Business {
-  primary_color: string;
-  secondary_color: string;
-  tertiary_color: string;
-  quaternary_color: string;
+  primary_color?: string;
+  secondary_color?: string;
+  tertiary_color?: string;
+  quaternary_color?: string;
+  logo_url?: string;
   name: string;
 }
 
@@ -35,10 +36,16 @@ export function applyBusinessTheme(business: Business): void {
     document.documentElement.style.setProperty('--color-tertiary', colors.tertiary || '#06b6d4');
     document.documentElement.style.setProperty('--color-quaternary', colors.quaternary || '#f59e0b');
 
+    // Guardar logo del negocio seleccionado
+    if (business.logo_url) {
+      localStorage.setItem('selected_business_logo', business.logo_url);
+    } else {
+      localStorage.removeItem('selected_business_logo');
+    }
+    localStorage.setItem('selected_business_name', business.name);
+
     // Disparar evento para que otros componentes se enteren
     window.dispatchEvent(new Event('businessChanged'));
-
-    console.log(`✅ Tema aplicado para: ${business.name}`, colors);
   }
 }
 
@@ -60,6 +67,11 @@ export function resetTheme(): void {
     document.documentElement.style.setProperty('--color-secondary', defaultColors.secondary || '#be185d');
     document.documentElement.style.setProperty('--color-tertiary', defaultColors.tertiary || '#06b6d4');
     document.documentElement.style.setProperty('--color-quaternary', defaultColors.quaternary || '#f59e0b');
+
+    localStorage.removeItem('selected_business_logo');
+    localStorage.removeItem('selected_business_name');
+
+    window.dispatchEvent(new Event('businessChanged'));
   }
 }
 

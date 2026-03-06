@@ -41,6 +41,21 @@ export function Sidebar({ user }: SidebarProps) {
     return active?.logo_url || null;
   }, [isSuperAdmin, permissions]);
 
+  // Logo del negocio seleccionado por super admin
+  const [superAdminBusinessLogo, setSuperAdminBusinessLogo] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isSuperAdmin) return;
+
+    const updateLogo = () => {
+      setSuperAdminBusinessLogo(localStorage.getItem('selected_business_logo'));
+    };
+
+    updateLogo();
+    window.addEventListener('businessChanged', updateLogo);
+    return () => window.removeEventListener('businessChanged', updateLogo);
+  }, [isSuperAdmin]);
+
   useEffect(() => {
     // When primary sidebar collapses, ensure submenus collapse too
     if (!primaryExpanded) {
@@ -219,7 +234,7 @@ export function Sidebar({ user }: SidebarProps) {
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="flex items-center justify-center py-4 transition-all duration-300">
+          <div className="flex flex-col items-center py-4 transition-all duration-300 gap-2">
             <div className={`relative transition-all duration-300 flex items-center justify-center ${primaryExpanded ? 'w-56 h-10' : 'w-8 h-8'}`}>
               {businessLogo ? (
                 <img
@@ -238,6 +253,15 @@ export function Sidebar({ user }: SidebarProps) {
                 />
               )}
             </div>
+            {isSuperAdmin && superAdminBusinessLogo && (
+              <div className={`transition-all duration-300 flex items-center justify-center ${primaryExpanded ? 'w-32 h-8' : 'w-7 h-7'}`}>
+                <img
+                  src={superAdminBusinessLogo}
+                  alt="Negocio seleccionado"
+                  className={`object-contain transition-all duration-300 ${primaryExpanded ? 'max-w-full max-h-full' : 'w-7 h-7 rounded'}`}
+                />
+              </div>
+            )}
           </div>
           <div className="mx-auto w-[85%] h-[1px] rounded-full bg-gradient-to-r from-transparent via-gray-200 dark:via-gray-600 to-transparent" />
 
