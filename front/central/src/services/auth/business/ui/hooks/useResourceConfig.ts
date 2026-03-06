@@ -5,6 +5,7 @@ import {
     deactivateResourceAction
 } from '../../infra/actions';
 import { BusinessConfiguredResources, ConfiguredResource } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useResourceConfig = (businessId: number) => {
     const [config, setConfig] = useState<BusinessConfiguredResources | null>(null);
@@ -18,7 +19,7 @@ export const useResourceConfig = (businessId: number) => {
             const res = await getBusinessConfiguredResourcesAction(businessId);
             setConfig(res.data);
         } catch (err: any) {
-            setError(err.message);
+            setError(getActionError(err));
         } finally {
             setLoading(false);
         }
@@ -38,7 +39,7 @@ export const useResourceConfig = (businessId: number) => {
             }
             await fetchConfig();
         } catch (err: any) {
-            setError(err.message);
+            setError(getActionError(err));
         } finally {
             setActionLoading(null);
         }

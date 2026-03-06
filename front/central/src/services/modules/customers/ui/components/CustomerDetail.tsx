@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { CustomerDetail } from '../../domain/types';
 import { getCustomerByIdAction } from '../../infra/actions';
 import { Spinner, Alert } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface CustomerDetailProps {
     customerId: number;
@@ -41,7 +42,7 @@ export default function CustomerDetailView({ customerId, businessId }: CustomerD
                 const data = await getCustomerByIdAction(customerId, businessId);
                 setCustomer(data);
             } catch (err: any) {
-                setError(err.message || 'Error al cargar el cliente');
+                setError(getActionError(err, 'Error al cargar el cliente'));
             } finally {
                 setLoading(false);
             }

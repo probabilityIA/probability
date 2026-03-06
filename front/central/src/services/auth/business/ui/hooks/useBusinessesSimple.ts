@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getBusinessesSimpleAction } from '../../infra/actions';
 import { BusinessSimple } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 /**
  * Hook optimizado para obtener lista simple de businesses (solo id y name)
@@ -22,7 +23,7 @@ export const useBusinessesSimple = () => {
                 setError(response.message);
             }
         } catch (err: any) {
-            setError(err.message || 'Error al obtener negocios');
+            setError(getActionError(err, 'Error al obtener negocios'));
         } finally {
             setLoading(false);
         }

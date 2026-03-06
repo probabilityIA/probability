@@ -12,6 +12,7 @@ import {
 } from '../../infra/actions';
 import { Integration, SyncOrdersParams } from '../../domain/types';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useIntegrations = (initialCategory: string = '') => {
     const [integrations, setIntegrations] = useState<Integration[]>([]);
@@ -43,7 +44,7 @@ export const useIntegrations = (initialCategory: string = '') => {
             setTotalPages(response.total_pages);
         } catch (err: any) {
             console.error('Error fetching integrations:', err);
-            setError(err.message || 'Error fetching integrations');
+            setError(getActionError(err, 'Error fetching integrations'));
         } finally {
             setLoading(false);
         }
@@ -57,7 +58,7 @@ export const useIntegrations = (initialCategory: string = '') => {
             return true;
         } catch (err: any) {
             console.error('Error deleting integration:', err);
-            setError(err.message || 'Error deleting integration');
+            setError(getActionError(err, 'Error deleting integration'));
             return false;
         }
     };
@@ -74,7 +75,7 @@ export const useIntegrations = (initialCategory: string = '') => {
             return true;
         } catch (err: any) {
             console.error('Error toggling integration status:', err);
-            setError(err.message || 'Error updating status');
+            setError(getActionError(err, 'Error updating status'));
             return false;
         }
     };
@@ -87,7 +88,7 @@ export const useIntegrations = (initialCategory: string = '') => {
             return true;
         } catch (err: any) {
             console.error('Error setting default integration:', err);
-            setError(err.message || 'Error setting default');
+            setError(getActionError(err, 'Error setting default'));
             return false;
         }
     };

@@ -8,6 +8,7 @@ import {
     deleteIntegrationTypeAction
 } from '../../infra/actions';
 import { IntegrationType, CreateIntegrationTypeDTO, UpdateIntegrationTypeDTO } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useIntegrationTypes = (categoryId?: number) => {
     const [integrationTypes, setIntegrationTypes] = useState<IntegrationType[]>([]);
@@ -26,7 +27,7 @@ export const useIntegrationTypes = (categoryId?: number) => {
             }
         } catch (err: any) {
             console.error('Error fetching integration types:', err);
-            setError(err.message || 'Error fetching integration types');
+            setError(getActionError(err, 'Error fetching integration types'));
         } finally {
             setLoading(false);
         }
@@ -44,7 +45,7 @@ export const useIntegrationTypes = (categoryId?: number) => {
             }
         } catch (err: any) {
             console.error('Error creating integration type:', err);
-            setError(err.message || 'Error creating integration type');
+            setError(getActionError(err, 'Error creating integration type'));
             return false;
         }
     };
@@ -61,7 +62,7 @@ export const useIntegrationTypes = (categoryId?: number) => {
             }
         } catch (err: any) {
             console.error('Error updating integration type:', err);
-            setError(err.message || 'Error updating integration type');
+            setError(getActionError(err, 'Error updating integration type'));
             return false;
         }
     };
@@ -78,7 +79,7 @@ export const useIntegrationTypes = (categoryId?: number) => {
             }
         } catch (err: any) {
             console.error('Error deleting integration type:', err);
-            setError(err.message || 'Error deleting integration type');
+            setError(getActionError(err, 'Error deleting integration type'));
             return false;
         }
     };

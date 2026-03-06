@@ -11,6 +11,7 @@ import { BulkPermissionForm } from './BulkPermissionForm';
 import { getPermissionsAction, deletePermissionAction } from '../../infra/actions';
 import { getResourcesAction } from '@/services/auth/resources/infra/actions';
 import { ConfirmModal } from '@/shared/ui/confirm-modal';
+import { getActionError } from '@/shared/utils/action-result';
 
 const PAGE_SIZE = 10;
 
@@ -120,7 +121,7 @@ export const PermissionList: React.FC = () => {
                 setError('Error al cargar permisos');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar permisos');
+            setError(getActionError(err, 'Error al cargar permisos'));
         } finally {
             setLoading(false);
         }
@@ -143,7 +144,7 @@ export const PermissionList: React.FC = () => {
             setDeleteId(null);
             loadPermissions();
         } catch (err: any) {
-            setError(err.message || 'Error al eliminar permiso');
+            setError(getActionError(err, 'Error al eliminar permiso'));
         }
     };
 

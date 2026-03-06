@@ -9,6 +9,7 @@ import { TokenStorage } from '@/shared/utils/token-storage';
 import { TopCustomersTable } from './TopCustomersTable';
 import { TopProductsTable } from './TopProductsTable';
 import { Spinner, Alert, Select } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 import {
     ChartContainer,
     ChartTooltip,
@@ -108,7 +109,7 @@ export default function Dashboard() {
             setStats(response.data);
         } catch (err: any) {
             console.error('Error fetching dashboard stats:', err);
-            setError(err.message || 'Error al cargar las estadísticas');
+            setError(getActionError(err, 'Error al cargar las estadísticas'));
         } finally {
             setLoading(false);
         }

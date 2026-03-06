@@ -7,6 +7,7 @@ import { updateIntegrationAction, testConnectionRawAction } from '@/services/int
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { getActionError } from '@/shared/utils/action-result';
 import {
     KeyIcon,
     Cog6ToothIcon,
@@ -101,7 +102,7 @@ export function EnviameEditForm({ integrationId, initialData, onSuccess, onCance
                 throw new Error(result.message || 'Error al probar conexion');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al probar conexion');
+            setError(getActionError(err, 'Error al probar conexion'));
             showToast('Error al conectar con Enviame: ' + err.message, 'error');
         } finally {
             setTestingConnection(false);
@@ -140,7 +141,7 @@ export function EnviameEditForm({ integrationId, initialData, onSuccess, onCance
                 throw new Error(response.message || 'Error al actualizar integracion');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al actualizar integracion');
+            setError(getActionError(err, 'Error al actualizar integracion'));
             showToast('Error al actualizar integracion Enviame', 'error');
         } finally {
             setLoading(false);

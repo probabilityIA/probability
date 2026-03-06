@@ -8,6 +8,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { testConnectionRawAction } from '@/services/integrations/core/infra/actions';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { getActionError } from '@/shared/utils/action-result';
 import {
     BuildingOfficeIcon,
     KeyIcon,
@@ -124,7 +125,7 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
                 throw new Error(result.message || 'Error al probar conexión');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al probar conexión');
+            setError(getActionError(err, 'Error al probar conexión'));
             showToast('❌ Error al conectar con Softpymes: ' + err.message, 'error');
         } finally {
             setTestingConnection(false);
@@ -181,7 +182,7 @@ export function SoftpymesEditForm({ integrationId, initialData, onSuccess, onCan
                 throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al actualizar integración');
+            setError(getActionError(err, 'Error al actualizar integración'));
             showToast('Error al actualizar integración Softpymes', 'error');
         } finally {
             setLoading(false);

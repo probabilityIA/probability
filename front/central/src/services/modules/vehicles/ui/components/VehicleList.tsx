@@ -5,6 +5,7 @@ import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { getVehiclesAction, deleteVehicleAction } from '../../infra/actions';
 import { VehicleInfo, GetVehiclesParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface VehicleListProps {
     onEdit?: (vehicle: VehicleInfo) => void;
@@ -58,7 +59,7 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar vehiculos');
+            setError(getActionError(err, 'Error al cargar vehiculos'));
         } finally {
             setLoading(false);
         }
@@ -97,7 +98,7 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
             await deleteVehicleAction(vehicle.id, selectedBusinessId);
             fetchVehicles();
         } catch (err: any) {
-            setError(err.message || 'Error al eliminar el vehiculo');
+            setError(getActionError(err, 'Error al eliminar el vehiculo'));
         }
     };
 

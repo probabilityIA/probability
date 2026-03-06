@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getBusinessTypesAction, deleteBusinessTypeAction, createBusinessTypeAction, updateBusinessTypeAction } from '../../infra/actions';
 import { BusinessType, CreateBusinessTypeDTO } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useBusinessTypes = () => {
     const [types, setTypes] = useState<BusinessType[]>([]);
@@ -13,7 +14,7 @@ export const useBusinessTypes = () => {
             const res = await getBusinessTypesAction();
             setTypes(res.data);
         } catch (err: any) {
-            setError(err.message);
+            setError(getActionError(err));
         } finally {
             setLoading(false);
         }
@@ -25,7 +26,7 @@ export const useBusinessTypes = () => {
             fetchTypes();
             return true;
         } catch (err: any) {
-            setError(err.message);
+            setError(getActionError(err));
             return false;
         }
     };
@@ -78,7 +79,7 @@ export const useBusinessTypeForm = (initialData?: BusinessType, onSuccess?: () =
             if (onSuccess) onSuccess();
             return true;
         } catch (err: any) {
-            setError(err.message);
+            setError(getActionError(err));
             return false;
         } finally {
             setLoading(false);

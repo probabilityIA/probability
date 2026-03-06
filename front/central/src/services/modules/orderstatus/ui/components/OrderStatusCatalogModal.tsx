@@ -6,6 +6,7 @@ import { OrderStatusInfo } from '../../domain/types';
 import { getStatusBadgeStyle } from '@/shared/utils/color-utils';
 import { Spinner } from '@/shared/ui';
 import OrderStatusForm from './OrderStatusForm';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderStatusCatalogModalProps {
     isOpen: boolean;
@@ -32,7 +33,7 @@ export default function OrderStatusCatalogModal({ isOpen, onClose }: OrderStatus
                 const sorted = [...(res.data || [])].sort((a, b) => (a.priority ?? 0) - (b.priority ?? 0));
                 setStatuses(sorted);
             })
-            .catch((err) => setError(err.message || 'Error al cargar estados'))
+            .catch((err) => setError(getActionError(err, 'Error al cargar estados')))
             .finally(() => setLoading(false));
     }, []);
 

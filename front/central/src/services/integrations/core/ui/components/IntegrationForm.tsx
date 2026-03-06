@@ -22,6 +22,7 @@ import { MagentoConfigForm, MagentoEditForm } from '@/services/integrations/ecom
 import { AmazonConfigForm, AmazonEditForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm, FalabellaEditForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm, ExitoEditForm } from '@/services/integrations/ecommerce/exito/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 // IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
@@ -177,7 +178,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                 setError(result.message || 'Error al crear la integración de WhatsApp');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al crear la integración de WhatsApp');
+            setError(getActionError(err, 'Error al crear la integración de WhatsApp'));
         } finally {
             setCreatingWhatsapp(false);
         }
@@ -245,7 +246,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                 setError(result.message || 'Error al actualizar la integración');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al actualizar la integración');
+            setError(getActionError(err, 'Error al actualizar la integración'));
         }
     };
 

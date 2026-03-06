@@ -7,6 +7,7 @@ import { updateIntegrationAction } from '@/services/integrations/core/infra/acti
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { getActionError } from '@/shared/utils/action-result';
 import {
     KeyIcon,
     Cog6ToothIcon,
@@ -111,7 +112,7 @@ export function PayUEditForm({ integrationId, initialData, onSuccess, onCancel }
                 throw new Error(response.message || 'Error al actualizar integración');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al actualizar integración');
+            setError(getActionError(err, 'Error al actualizar integración'));
             showToast('Error al actualizar integración PayU', 'error');
         } finally {
             setLoading(false);

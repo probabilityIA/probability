@@ -18,6 +18,7 @@ import {
 } from '@/services/modules/wallet/infra/actions';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { VirtualCard } from './virtual-card';
+import { getActionError } from '@/shared/utils/action-result';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -106,7 +107,7 @@ function AdminWalletView() {
                 setBusinesses(businessMap);
             }
         } catch (err: any) {
-            setError(err.message);
+            setError(getActionError(err));
         } finally {
             setLoading(false);
         }

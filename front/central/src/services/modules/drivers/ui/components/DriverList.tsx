@@ -5,6 +5,7 @@ import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { getDriversAction, deleteDriverAction } from '../../infra/actions';
 import { DriverInfo, GetDriversParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface DriverListProps {
     onEdit?: (driver: DriverInfo) => void;
@@ -45,7 +46,7 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar conductores');
+            setError(getActionError(err, 'Error al cargar conductores'));
         } finally {
             setLoading(false);
         }
@@ -84,7 +85,7 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
             await deleteDriverAction(driver.id, selectedBusinessId);
             fetchDrivers();
         } catch (err: any) {
-            setError(err.message || 'Error al eliminar el conductor');
+            setError(getActionError(err, 'Error al eliminar el conductor'));
         }
     };
 

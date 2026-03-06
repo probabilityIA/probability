@@ -10,6 +10,7 @@ import {
 } from '../../infra/actions';
 import { EcommerceIntegrationType, ChannelStatusInfo, CreateChannelStatusDTO, UpdateChannelStatusDTO } from '../../domain/types';
 import { Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface ChannelStatusManagerProps {
     isOpen: boolean;
@@ -41,7 +42,7 @@ export default function ChannelStatusManager({ isOpen, onClose }: ChannelStatusM
                     setSelectedType(res.data[0]);
                 }
             })
-            .catch((err) => setError(err.message || 'Error al cargar integraciones'))
+            .catch((err) => setError(getActionError(err, 'Error al cargar integraciones')))
             .finally(() => setLoadingTypes(false));
     }, []);
 
@@ -50,7 +51,7 @@ export default function ChannelStatusManager({ isOpen, onClose }: ChannelStatusM
         setError(null);
         getChannelStatusesAction(integrationTypeId)
             .then((res) => setStatuses(res.data || []))
-            .catch((err) => setError(err.message || 'Error al cargar estados'))
+            .catch((err) => setError(getActionError(err, 'Error al cargar estados')))
             .finally(() => setLoadingStatuses(false));
     }, []);
 
@@ -424,7 +425,7 @@ function ChannelStatusForm({ integrationTypeId, integrationTypeName, status, onS
             }
             onSuccess();
         } catch (err: any) {
-            setError(err.message || 'Error al guardar');
+            setError(getActionError(err, 'Error al guardar'));
         } finally {
             setLoading(false);
         }

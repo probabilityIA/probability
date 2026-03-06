@@ -14,6 +14,7 @@ import { useClientSearch } from '../hooks/useClientSearch';
 import { useWarehouses } from '../hooks/useWarehouses';
 import ClientAutocomplete from './ClientAutocomplete';
 import { CustomerInfo } from '../../../customers/domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderFormProps {
     order?: Order;
@@ -267,7 +268,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 showToast(response.message || 'Error al guardar la orden', 'error');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al guardar la orden');
+            setError(getActionError(err, 'Error al guardar la orden'));
             showToast(err.message || 'Error al guardar la orden', 'error');
         } finally {
             setLoading(false);

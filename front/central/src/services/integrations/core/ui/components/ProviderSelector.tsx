@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { IntegrationCategory, IntegrationType } from '../../domain/types';
 import { getActiveIntegrationTypesAction } from '../../infra/actions';
 import { Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface ProviderSelectorProps {
     category: IntegrationCategory;
@@ -47,7 +48,7 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
                 setError('Error al cargar proveedores');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar proveedores');
+            setError(getActionError(err, 'Error al cargar proveedores'));
         } finally {
             setLoading(false);
         }

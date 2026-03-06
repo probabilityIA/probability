@@ -22,6 +22,7 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { BusinessType } from '../../domain/types';
 import { Spinner } from '@/shared/ui/spinner';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const BusinessList: React.FC = () => {
     const { isSuperAdmin, permissions } = usePermissions();
@@ -51,7 +52,7 @@ export const BusinessList: React.FC = () => {
             }
             await loadBusinesses();
         } catch (err: any) {
-            setError(err.message || 'Error al cambiar estado del negocio');
+            setError(getActionError(err, 'Error al cambiar estado del negocio'));
         } finally {
             setTogglingBusiness(null);
         }
@@ -195,7 +196,7 @@ export const BusinessList: React.FC = () => {
                 }
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar negocios');
+            setError(getActionError(err, 'Error al cargar negocios'));
         } finally {
             setLoading(false);
         }
@@ -220,7 +221,7 @@ export const BusinessList: React.FC = () => {
                     setError(response.message || 'Error al eliminar negocio');
                 }
             } catch (err: any) {
-                setError(err.message || 'Error al eliminar negocio');
+                setError(getActionError(err, 'Error al eliminar negocio'));
             }
         }
     };
@@ -242,7 +243,7 @@ export const BusinessList: React.FC = () => {
                 setBusinessResources(response.data.resources || []);
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar recursos');
+            setError(getActionError(err, 'Error al cargar recursos'));
             setBusinessResources([]);
         } finally {
             setLoadingResources(false);
@@ -270,7 +271,7 @@ export const BusinessList: React.FC = () => {
                 )
             );
         } catch (err: any) {
-            setError(err.message || 'Error al actualizar recurso');
+            setError(getActionError(err, 'Error al actualizar recurso'));
         } finally {
             setSavingResource(null);
         }

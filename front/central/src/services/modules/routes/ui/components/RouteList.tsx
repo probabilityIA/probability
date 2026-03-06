@@ -5,6 +5,7 @@ import { EyeIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { getRoutesAction, deleteRouteAction } from '../../infra/actions';
 import { RouteInfo, GetRoutesParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface RouteListProps {
     onView?: (route: RouteInfo) => void;
@@ -56,7 +57,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar rutas');
+            setError(getActionError(err, 'Error al cargar rutas'));
         } finally {
             setLoading(false);
         }
@@ -101,7 +102,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
             await deleteRouteAction(route.id, selectedBusinessId);
             fetchRoutes();
         } catch (err: any) {
-            setError(err.message || 'Error al eliminar la ruta');
+            setError(getActionError(err, 'Error al eliminar la ruta'));
         }
     };
 

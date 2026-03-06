@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getMovementsAction } from '../../infra/actions';
 import { StockMovement, GetMovementsParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface StockMovementListProps {
     warehouseId?: number;
@@ -49,7 +50,7 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar movimientos');
+            setError(getActionError(err, 'Error al cargar movimientos'));
         } finally {
             setLoading(false);
         }

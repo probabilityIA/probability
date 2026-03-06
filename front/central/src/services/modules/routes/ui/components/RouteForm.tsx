@@ -19,6 +19,7 @@ import {
     getAssignableOrdersAction,
 } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface RouteFormProps {
     route?: RouteInfo;
@@ -133,7 +134,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
             setSuccess(isEditing ? 'Ruta actualizada exitosamente' : 'Ruta creada exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(err.message || 'Error al guardar la ruta');
+            setError(getActionError(err, 'Error al guardar la ruta'));
         } finally {
             setLoading(false);
         }

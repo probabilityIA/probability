@@ -1,6 +1,7 @@
 import { FullWidthModal } from '@/shared/ui/full-width-modal';
 import { useEffect, useState } from 'react';
 import { getOrderRawAction } from '../../infra/actions';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface RawOrderModalProps {
     orderId: string;
@@ -124,7 +125,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                 errorMessage.includes('Datos crudos no encontrados')) {
                 setError('Esta orden no tiene datos crudos guardados. Los datos crudos solo están disponibles para órdenes creadas después de la implementación de esta funcionalidad.');
             } else {
-                setError(err.message || 'Error al cargar los datos crudos');
+                setError(getActionError(err, 'Error al cargar los datos crudos'));
             }
         } finally {
             setLoading(false);

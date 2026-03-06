@@ -5,6 +5,7 @@ import { getProductsAction, deleteProductAction } from '../../infra/actions';
 import { Product, GetProductsParams } from '../../domain/types';
 import { Button, Alert, Badge } from '@/shared/ui';
 import ProductIntegrationsModal from './ProductIntegrationsModal';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface ProductListProps {
     onView?: (product: Product) => void;
@@ -76,7 +77,7 @@ const ProductList = forwardRef(function ProductList(
                 setError(response.message || 'Error al cargar los productos');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar los productos');
+            setError(getActionError(err, 'Error al cargar los productos'));
         } finally {
             setLoading(false);
         }

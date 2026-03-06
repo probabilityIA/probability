@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Resource, GetResourcesParams } from '../../domain/types';
 import { getResourcesAction, deleteResourceAction } from '../../infra/actions';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useResources = () => {
     const [resources, setResources] = useState<Resource[]>([]);
@@ -32,7 +33,7 @@ export const useResources = () => {
                 setError(response.message || 'Error al cargar recursos');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar recursos');
+            setError(getActionError(err, 'Error al cargar recursos'));
         } finally {
             setLoading(false);
         }
@@ -53,7 +54,7 @@ export const useResources = () => {
                 return false;
             }
         } catch (err: any) {
-            setError(err.message || 'Error al eliminar recurso');
+            setError(getActionError(err, 'Error al eliminar recurso'));
             return false;
         }
     };

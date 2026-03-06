@@ -16,6 +16,7 @@ import { OrderStatusMapping, GetOrderStatusMappingsParams } from '../../domain/t
 import { Alert, Badge, Table, Spinner } from '@/shared/ui';
 import OrderStatusBadge from './OrderStatusBadge';
 import { DynamicFilters, FilterOption, ActiveFilter } from '@/shared/ui/dynamic-filters';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderStatusMappingListProps {
     onView?: (mapping: OrderStatusMapping) => void;
@@ -85,7 +86,7 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
                 setError('Error al cargar los mappings');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar los mappings');
+            setError(getActionError(err, 'Error al cargar los mappings'));
         } finally {
             setLoading(false);
         }

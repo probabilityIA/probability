@@ -16,6 +16,7 @@ import {
 } from '../../infra/actions';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import { Integration } from '@/services/integrations/core/domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface ProductIntegrationsModalProps {
     product: Product;
@@ -60,7 +61,7 @@ export default function ProductIntegrationsModal({
                 setError(response.message || 'Error al cargar las integraciones');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar las integraciones');
+            setError(getActionError(err, 'Error al cargar las integraciones'));
         } finally {
             setLoading(false);
         }
@@ -128,7 +129,7 @@ export default function ProductIntegrationsModal({
                 setError(response.message || 'Error al agregar la integración');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al agregar la integración');
+            setError(getActionError(err, 'Error al agregar la integración'));
         } finally {
             setLoading(false);
         }
@@ -157,7 +158,7 @@ export default function ProductIntegrationsModal({
                 setError(response.message || 'Error al remover la integración');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al remover la integración');
+            setError(getActionError(err, 'Error al remover la integración'));
         } finally {
             setLoading(false);
         }

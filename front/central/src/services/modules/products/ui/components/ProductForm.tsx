@@ -5,6 +5,7 @@ import { Product, CreateProductDTO, UpdateProductDTO } from '../../domain/types'
 import { createProductAction, updateProductAction } from '../../infra/actions';
 import { Button, Alert, Input, Select } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface ProductFormProps {
     product?: Product;
@@ -70,7 +71,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                 setError(response.message || 'Error al guardar el producto');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al guardar el producto');
+            setError(getActionError(err, 'Error al guardar el producto'));
         } finally {
             setLoading(false);
         }

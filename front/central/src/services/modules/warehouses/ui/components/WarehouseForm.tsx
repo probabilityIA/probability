@@ -5,6 +5,7 @@ import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { Warehouse, CreateWarehouseDTO, UpdateWarehouseDTO } from '../../domain/types';
 import { createWarehouseAction, updateWarehouseAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface WarehouseFormProps {
     warehouse?: Warehouse;
@@ -141,7 +142,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
             setSuccess(warehouse ? 'Bodega actualizada exitosamente' : 'Bodega creada exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(err.message || 'Error al guardar la bodega');
+            setError(getActionError(err, 'Error al guardar la bodega'));
         } finally {
             setLoading(false);
         }

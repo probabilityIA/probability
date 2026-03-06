@@ -10,6 +10,7 @@ import {
     updateStopStatusAction,
 } from '../../infra/actions';
 import { Alert, Spinner, Button } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface RouteDetailProps {
     routeId: number;
@@ -63,7 +64,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             const data = await getRouteByIdAction(routeId, businessId);
             setRoute(data);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar la ruta');
+            setError(getActionError(err, 'Error al cargar la ruta'));
         } finally {
             setLoading(false);
         }
@@ -81,7 +82,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             setRoute(updated);
             onRefreshList?.();
         } catch (err: any) {
-            setError(err.message || 'Error al iniciar la ruta');
+            setError(getActionError(err, 'Error al iniciar la ruta'));
         } finally {
             setActionLoading(null);
         }
@@ -95,7 +96,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             setRoute(updated);
             onRefreshList?.();
         } catch (err: any) {
-            setError(err.message || 'Error al completar la ruta');
+            setError(getActionError(err, 'Error al completar la ruta'));
         } finally {
             setActionLoading(null);
         }
@@ -108,7 +109,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             await fetchRoute();
             onRefreshList?.();
         } catch (err: any) {
-            setError(err.message || 'Error al actualizar el estado de la parada');
+            setError(getActionError(err, 'Error al actualizar el estado de la parada'));
         } finally {
             setActionLoading(null);
         }
@@ -134,7 +135,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             await fetchRoute();
             onRefreshList?.();
         } catch (err: any) {
-            setError(err.message || 'Error al marcar la parada como fallida');
+            setError(getActionError(err, 'Error al marcar la parada como fallida'));
         } finally {
             setActionLoading(null);
         }

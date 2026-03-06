@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { getOrderStatusesSimpleAction } from "../../infra/actions";
 import { OrderStatusSimple } from "../../domain/types";
+import { getActionError } from '@/shared/utils/action-result';
 
 /**
  * Hook para obtener la lista de estados de orden (OrderStatus)
@@ -50,7 +51,7 @@ export function useOrderStatuses(isActive: boolean = true) {
         setOrderStatuses([]);
       }
     } catch (err: any) {
-      setError(err.message || "Error al cargar estados de orden");
+      setError(getActionError(err, "Error al cargar estados de orden"));
       setOrderStatuses([]);
     } finally {
       setLoading(false);

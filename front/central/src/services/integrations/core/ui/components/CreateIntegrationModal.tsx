@@ -29,6 +29,7 @@ import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 // IDs constantes de tipos de integración (tabla integration_types)
 const INTEGRATION_TYPE_IDS = {
@@ -425,7 +426,7 @@ function WhatsAppActivateForm({
                 setError(result.message || 'Error al activar WhatsApp');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al activar WhatsApp');
+            setError(getActionError(err, 'Error al activar WhatsApp'));
         } finally {
             setLoading(false);
         }

@@ -9,6 +9,7 @@ import { getUserByIdAction, updateUserAction } from '@/services/auth/users/infra
 import { getProductsAction } from '@/services/modules/products/infra/actions';
 import { ChangePasswordForm } from '@/services/auth/login/ui';
 import { Modal } from '@/shared/ui/modal';
+import { getActionError } from '@/shared/utils/action-result';
 
 // Tipos para el estado local
 interface UserProfile {
@@ -83,7 +84,7 @@ export default function ProfilePage() {
 
         } catch (err: any) {
             console.error("Error al cargar perfil:", err);
-            setError(err.message || "Error desconocido al cargar perfil");
+            setError(getActionError(err, "Error desconocido al cargar perfil"));
         } finally {
             setLoading(false);
         }

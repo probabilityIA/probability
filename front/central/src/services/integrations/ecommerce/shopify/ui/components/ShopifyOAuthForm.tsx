@@ -5,6 +5,7 @@ import { Input, Button, Alert } from '@/shared/ui';
 import { TokenStorage } from '@/shared/utils';
 import { BeakerIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
 import ShopifyWebhookManager from './ShopifyWebhookManager';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface ShopifyOAuthFormProps {
     onCancel?: () => void;
@@ -106,7 +107,7 @@ export default function ShopifyOAuthForm({
             }
         } catch (err: any) {
             console.error('Error al conectar con Shopify:', err);
-            setError(err.message || 'Error al conectar con Shopify');
+            setError(getActionError(err, 'Error al conectar con Shopify'));
             setLoading(false);
         }
     };

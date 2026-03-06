@@ -14,6 +14,7 @@ import { ConfirmModal } from '@/shared/ui/confirm-modal';
 import { getRolesAction } from '@/services/auth/roles/infra/actions';
 import { getBusinessesAction } from '@/services/auth/business/infra/actions';
 import { Role } from '@/services/auth/roles/domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const UserList: React.FC = () => {
     const [users, setUsers] = useState<User[]>([]);
@@ -215,7 +216,7 @@ export const UserList: React.FC = () => {
                 setError(response.message || 'Error al cargar usuarios');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar usuarios');
+            setError(getActionError(err, 'Error al cargar usuarios'));
         } finally {
             setLoading(false);
         }
@@ -236,7 +237,7 @@ export const UserList: React.FC = () => {
                     setError(response.message || 'Error al eliminar usuario');
                 }
             } catch (err: any) {
-                setError(err.message || 'Error al eliminar usuario');
+                setError(getActionError(err, 'Error al eliminar usuario'));
             }
         }
     };
@@ -336,7 +337,7 @@ export const UserList: React.FC = () => {
             }
         } catch (err: any) {
             console.error('Error assigning role:', err);
-            setError(err.message || 'Error al asignar rol');
+            setError(getActionError(err, 'Error al asignar rol'));
         } finally {
             setAssigningRole(false);
         }

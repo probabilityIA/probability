@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { CustomerInfo, CreateCustomerDTO, UpdateCustomerDTO } from '../../domain/types';
 import { createCustomerAction, updateCustomerAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface CustomerFormProps {
     customer?: CustomerInfo;
@@ -56,7 +57,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel, businessId
             setSuccess(customer ? 'Cliente actualizado exitosamente' : 'Cliente creado exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(err.message || 'Error al guardar el cliente');
+            setError(getActionError(err, 'Error al guardar el cliente'));
         } finally {
             setLoading(false);
         }

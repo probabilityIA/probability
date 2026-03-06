@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createBusinessAction, updateBusinessAction } from '../../infra/actions';
 import { Business, CreateBusinessDTO } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useBusinessForm = (initialData?: Business, onSuccess?: () => void) => {
     const [loading, setLoading] = useState(false);
@@ -65,7 +66,7 @@ export const useBusinessForm = (initialData?: Business, onSuccess?: () => void) 
             return true;
         } catch (err: any) {
             console.error('Error in useBusinessForm submit:', err);
-            setError(err.message || 'Error saving business');
+            setError(getActionError(err, 'Error saving business'));
             return false;
         } finally {
             setLoading(false);

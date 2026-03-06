@@ -15,6 +15,7 @@ import { Warehouse } from "@/services/modules/warehouses/domain/types";
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
 import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
 import { usePermissions } from "@/shared/contexts/permissions-context";
+import { getActionError } from '@/shared/utils/action-result';
 
 const normalizeLocationName = (str: string) => {
     if (!str) return "";
@@ -546,7 +547,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setPendingCorrelationId(response.data?.correlation_id || null);
             // loading stays true until SSE response arrives
         } catch (err: any) {
-            setError(err.message || "Error al cotizar envío");
+            setError(getActionError(err, "Error al cotizar envío"));
             setLoading(false);
         }
     };
@@ -759,7 +760,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setCurrentStep(4);
             // loading stays true until SSE arrives or timeout fires
         } catch (err: any) {
-            setError(err.message || "Error al generar guía");
+            setError(getActionError(err, "Error al generar guía"));
             setLoading(false);
         }
     };

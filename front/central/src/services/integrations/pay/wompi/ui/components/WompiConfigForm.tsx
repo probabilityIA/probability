@@ -7,6 +7,7 @@ import { createIntegrationAction } from '@/services/integrations/core/infra/acti
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { getActionError } from '@/shared/utils/action-result';
 import {
     KeyIcon,
     Cog6ToothIcon,
@@ -108,7 +109,7 @@ export function WompiConfigForm({ integrationTypeId, onSuccess, onCancel, integr
                 throw new Error(response.message || 'Error al crear integración');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al crear integración');
+            setError(getActionError(err, 'Error al crear integración'));
             showToast('Error al crear integración Wompi', 'error');
         } finally {
             setLoading(false);

@@ -15,6 +15,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { playNotificationSound } from '@/shared/utils';
 import RawOrderModal from './RawOrderModal';
+import { getActionError } from '@/shared/utils/action-result';
 
 // Componente memoizado para las filas de la tabla
 const OrderRow = memo(({
@@ -853,7 +854,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 setError(response.message || 'Error al cargar las órdenes');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar las órdenes');
+            setError(getActionError(err, 'Error al cargar las órdenes'));
         } finally {
             setInitialLoading(false);
             setTableLoading(false);

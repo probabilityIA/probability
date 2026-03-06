@@ -5,6 +5,7 @@ import { OrderStatusMapping, CreateOrderStatusMappingDTO, UpdateOrderStatusMappi
 import { createOrderStatusMappingAction, updateOrderStatusMappingAction, getOrderStatusMappingsAction } from '../../infra/actions';
 import { getActiveIntegrationTypesAction } from '@/services/integrations/core/infra/actions';
 import { Button, Alert, Input, Select } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderStatusMappingFormProps {
     mapping?: OrderStatusMapping;
@@ -123,7 +124,7 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                 setError((response as any).message || 'Error al guardar el mapping');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al guardar el mapping');
+            setError(getActionError(err, 'Error al guardar el mapping'));
         } finally {
             setLoading(false);
         }

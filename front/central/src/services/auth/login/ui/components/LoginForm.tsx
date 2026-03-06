@@ -6,6 +6,7 @@ import { TokenStorage } from '@/shared/config';
 import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-theme';
 import { useRouter } from 'next/navigation';
 import { EnvelopeIcon, LockClosedIcon, EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const LoginForm = () => {
     const router = useRouter();
@@ -110,7 +111,7 @@ export const LoginForm = () => {
                 }
             } catch (err: any) {
                 console.error(err);
-                setError(err.message || 'Credenciales inválidas. Por favor intenta de nuevo.');
+                setError(getActionError(err, 'Credenciales inválidas. Por favor intenta de nuevo.'));
             }
         });
     };

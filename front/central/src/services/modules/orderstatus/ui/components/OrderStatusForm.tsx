@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { OrderStatusInfo, CreateOrderStatusDTO, UpdateOrderStatusDTO } from '../../domain/types';
 import { createOrderStatusAction, updateOrderStatusAction } from '../../infra/actions';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface OrderStatusFormProps {
     status?: OrderStatusInfo;
@@ -72,7 +73,7 @@ export default function OrderStatusForm({ status, onSuccess, onCancel }: OrderSt
 
             onSuccess(result.data);
         } catch (err: any) {
-            setError(err.message || 'Error inesperado');
+            setError(getActionError(err, 'Error inesperado'));
         } finally {
             setLoading(false);
         }

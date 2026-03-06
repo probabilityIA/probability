@@ -5,6 +5,7 @@ import { getWarehouseInventoryAction } from '../../infra/actions';
 import { InventoryLevel, GetInventoryParams } from '../../domain/types';
 import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
 import { Alert, Table, Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface InventoryLevelListProps {
     warehouseId: number;
@@ -42,7 +43,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar inventario');
+            setError(getActionError(err, 'Error al cargar inventario'));
         } finally {
             setLoading(false);
         }

@@ -6,6 +6,7 @@ import { transferStockAction } from '../../infra/actions';
 import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import { Button, Alert, Input } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface TransferStockModalProps {
     fromWarehouseId: number;
@@ -68,7 +69,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
             setSuccess('Transferencia realizada exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(err.message || 'Error al transferir stock');
+            setError(getActionError(err, 'Error al transferir stock'));
         } finally {
             setLoading(false);
         }

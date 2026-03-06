@@ -10,6 +10,7 @@ import { getWalletBalanceAction } from '@/services/modules/wallet/infra/actions'
 import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_extendido.json";
+import { getActionError } from '@/shared/utils/action-result';
 
 const normalizeString = (str: string) =>
     str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase().trim();
@@ -101,7 +102,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 setOrders(ordersWithoutGuides);
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar órdenes');
+            setError(getActionError(err, 'Error al cargar órdenes'));
         } finally {
             setLoading(false);
         }

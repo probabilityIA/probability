@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getIntegrationCategoriesAction } from '../../infra/actions';
 import { IntegrationCategory } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export function useCategories() {
     const [categories, setCategories] = useState<IntegrationCategory[]>([]);
@@ -24,7 +25,7 @@ export function useCategories() {
                 setError(response.message || 'Error al obtener categorías');
             }
         } catch (err: any) {
-            setError(err.message || 'Error desconocido');
+            setError(getActionError(err, 'Error desconocido'));
             console.error('Error fetching categories:', err);
         } finally {
             setLoading(false);

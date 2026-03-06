@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { DriverInfo, CreateDriverDTO, UpdateDriverDTO } from '../../domain/types';
 import { createDriverAction, updateDriverAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface DriverFormProps {
     driver?: DriverInfo;
@@ -72,7 +73,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
             setSuccess(driver ? 'Conductor actualizado exitosamente' : 'Conductor creado exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(err.message || 'Error al guardar el conductor');
+            setError(getActionError(err, 'Error al guardar el conductor'));
         } finally {
             setLoading(false);
         }

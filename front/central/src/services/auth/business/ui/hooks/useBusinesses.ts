@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getBusinessesAction, deleteBusinessAction, getBusinessTypesAction } from '../../infra/actions';
 import { Business, BusinessType } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useBusinesses = () => {
     const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -27,7 +28,7 @@ export const useBusinesses = () => {
             setBusinesses(response.data || []);
             setTotalPages(response.pagination.last_page);
         } catch (err: any) {
-            setError(err.message || 'Error fetching businesses');
+            setError(getActionError(err, 'Error fetching businesses'));
         } finally {
             setLoading(false);
         }
@@ -48,7 +49,7 @@ export const useBusinesses = () => {
             fetchBusinesses();
             return true;
         } catch (err: any) {
-            setError(err.message || 'Error deleting business');
+            setError(getActionError(err, 'Error deleting business'));
             return false;
         }
     };

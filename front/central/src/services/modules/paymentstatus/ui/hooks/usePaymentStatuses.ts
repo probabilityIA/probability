@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getPaymentStatusesAction } from '../../infra/actions';
 import { PaymentStatusInfo } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 /**
  * Hook para obtener el catálogo de estados de pago.
@@ -41,7 +42,7 @@ export function usePaymentStatuses(isActive: boolean = true) {
                 setPaymentStatuses([]);
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar estados de pago');
+            setError(getActionError(err, 'Error al cargar estados de pago'));
             setPaymentStatuses([]);
         } finally {
             setLoading(false);

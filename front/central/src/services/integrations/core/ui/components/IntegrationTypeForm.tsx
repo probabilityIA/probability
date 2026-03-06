@@ -8,6 +8,7 @@ import { Input, Select, Button, Alert, FileInput } from '@/shared/ui';
 import { getIntegrationCategoriesAction, getIntegrationTypePlatformCredentialsAction } from '../../infra/actions';
 import { WhatsAppTypeCredentialsForm } from '@/services/integrations/messages/whatsapp/ui/components';
 import type { WhatsAppPlatformCredentials } from '@/services/integrations/messages/whatsapp/ui/components';
+import { getActionError } from '@/shared/utils/action-result';
 
 // IDs de tipos de integración con formularios de credenciales dedicados
 const WHATSAPP_TYPE_ID = 2;
@@ -201,7 +202,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             }
         } catch (err: any) {
             console.error('Error saving integration type:', err);
-            setError(err.message || 'Error al guardar el tipo de integración');
+            setError(getActionError(err, 'Error al guardar el tipo de integración'));
         } finally {
             setLoading(false);
         }

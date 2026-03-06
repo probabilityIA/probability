@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { createResourceAction, updateResourceAction } from '../../infra/actions';
 import { Resource, CreateResourceDTO, UpdateResourceDTO } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 export const useResourceForm = (initialData?: Resource, onSuccess?: () => void) => {
     const [loading, setLoading] = useState(false);
@@ -48,7 +49,7 @@ export const useResourceForm = (initialData?: Resource, onSuccess?: () => void) 
                 return false;
             }
         } catch (err: any) {
-            setError(err.message || 'Error al guardar recurso');
+            setError(getActionError(err, 'Error al guardar recurso'));
             return false;
         } finally {
             setLoading(false);

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Button, Input } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface MassOrderUploadModalProps {
     isOpen: boolean;
@@ -83,7 +84,7 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                 setError(result.message || 'Error al procesar el archivo');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al cargar el archivo');
+            setError(getActionError(err, 'Error al cargar el archivo'));
         } finally {
             setLoading(false);
         }

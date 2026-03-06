@@ -7,6 +7,7 @@ import { createIntegrationAction, testConnectionRawAction } from '@/services/int
 import { useToast } from '@/shared/providers/toast-provider';
 import { getBusinessesSimpleAction } from '@/services/auth/business/infra/actions';
 import { TokenStorage } from '@/shared/utils/token-storage';
+import { getActionError } from '@/shared/utils/action-result';
 import {
     KeyIcon,
     Cog6ToothIcon,
@@ -98,7 +99,7 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                 throw new Error(result.message || 'Error al probar conexion');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al probar conexion');
+            setError(getActionError(err, 'Error al probar conexion'));
             showToast('Error al conectar con Enviame: ' + err.message, 'error');
         } finally {
             setTestingConnection(false);
@@ -144,7 +145,7 @@ export function EnviameConfigForm({ onSuccess, onCancel }: EnviameConfigFormProp
                 throw new Error(response.message || 'Error al crear integracion');
             }
         } catch (err: any) {
-            setError(err.message || 'Error al crear integracion');
+            setError(getActionError(err, 'Error al crear integracion'));
             showToast('Error al crear integracion Enviame', 'error');
         } finally {
             setLoading(false);

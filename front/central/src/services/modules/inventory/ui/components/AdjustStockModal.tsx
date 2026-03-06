@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { AdjustStockDTO } from '../../domain/types';
 import { adjustStockAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface AdjustStockModalProps {
     warehouseId: number;
@@ -43,7 +44,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
             setSuccess('Stock ajustado exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(err.message || 'Error al ajustar stock');
+            setError(getActionError(err, 'Error al ajustar stock'));
         } finally {
             setLoading(false);
         }

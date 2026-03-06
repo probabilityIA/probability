@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getIntegrationsSimpleAction } from '../../infra/actions';
 import { IntegrationSimple } from '../../domain/types';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface UseIntegrationsSimpleOptions {
     businessId?: number;
@@ -26,7 +27,7 @@ export const useIntegrationsSimple = (options?: UseIntegrationsSimpleOptions) =>
                 setError(response.message);
             }
         } catch (err: any) {
-            setError(err.message || 'Error al obtener integraciones');
+            setError(getActionError(err, 'Error al obtener integraciones'));
         } finally {
             setLoading(false);
         }

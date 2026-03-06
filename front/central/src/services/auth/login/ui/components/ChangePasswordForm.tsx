@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { changePasswordAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
 import { Modal } from '@/shared/ui/modal';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface ChangePasswordFormProps {
     onSuccess?: () => void;
@@ -72,7 +73,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                 }
             } catch (err: any) {
                 console.error(err);
-                setError(err.message || 'Error al cambiar la contraseña. Por favor intenta de nuevo.');
+                setError(getActionError(err, 'Error al cambiar la contraseña. Por favor intenta de nuevo.'));
             }
         });
     };

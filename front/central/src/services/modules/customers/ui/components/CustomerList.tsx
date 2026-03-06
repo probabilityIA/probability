@@ -5,6 +5,7 @@ import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { getCustomersAction, deleteCustomerAction } from '../../infra/actions';
 import { CustomerInfo, GetCustomersParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface CustomerListProps {
     onView?: (customer: CustomerInfo) => void;
@@ -40,7 +41,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar clientes');
+            setError(getActionError(err, 'Error al cargar clientes'));
         } finally {
             setLoading(false);
         }
@@ -79,7 +80,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
             await deleteCustomerAction(customer.id, selectedBusinessId);
             fetchCustomers();
         } catch (err: any) {
-            setError(err.message || 'Error al eliminar el cliente');
+            setError(getActionError(err, 'Error al eliminar el cliente'));
         }
     };
 

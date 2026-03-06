@@ -5,6 +5,7 @@ import { PencilIcon, TrashIcon, EyeIcon } from '@heroicons/react/24/outline';
 import { getWarehousesAction, deleteWarehouseAction } from '../../infra/actions';
 import { Warehouse, GetWarehousesParams } from '../../domain/types';
 import { Alert, Table, Spinner } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface WarehouseListProps {
     onView?: (warehouse: Warehouse) => void;
@@ -40,7 +41,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
             setTotalPages(response.total_pages || 1);
             setPage(response.page || page);
         } catch (err: any) {
-            setError(err.message || 'Error al cargar bodegas');
+            setError(getActionError(err, 'Error al cargar bodegas'));
         } finally {
             setLoading(false);
         }
@@ -78,7 +79,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
             await deleteWarehouseAction(warehouse.id, selectedBusinessId);
             fetchWarehouses();
         } catch (err: any) {
-            setError(err.message || 'Error al eliminar la bodega');
+            setError(getActionError(err, 'Error al eliminar la bodega'));
         }
     };
 

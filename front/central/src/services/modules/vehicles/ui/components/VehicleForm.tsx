@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { VehicleInfo, CreateVehicleDTO, UpdateVehicleDTO } from '../../domain/types';
 import { createVehicleAction, updateVehicleAction } from '../../infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
+import { getActionError } from '@/shared/utils/action-result';
 
 interface VehicleFormProps {
     vehicle?: VehicleInfo;
@@ -89,7 +90,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
             setSuccess(vehicle ? 'Vehiculo actualizado exitosamente' : 'Vehiculo creado exitosamente');
             setTimeout(() => onSuccess(), 800);
         } catch (err: any) {
-            setError(err.message || 'Error al guardar el vehiculo');
+            setError(getActionError(err, 'Error al guardar el vehiculo'));
         } finally {
             setLoading(false);
         }
