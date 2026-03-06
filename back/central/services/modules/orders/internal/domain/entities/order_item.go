@@ -23,9 +23,10 @@ type ProbabilityOrderItem struct {
 	TotalPrice float64
 	Currency   string
 
-	Discount float64
-	Tax      float64
-	TaxRate  *float64
+	Discount        float64
+	DiscountPercent float64
+	Tax             float64
+	TaxRate         *float64
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64

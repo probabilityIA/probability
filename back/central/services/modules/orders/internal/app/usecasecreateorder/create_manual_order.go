@@ -239,18 +239,23 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 			orderItems := make([]dtos.ProbabilityOrderItemDTO, 0, len(rawItems))
 			for _, raw := range rawItems {
 				totalPrice := raw.Price * float64(raw.Quantity)
+				var discountPct float64
+				if raw.Price > 0 && raw.Quantity > 0 && raw.Discount > 0 {
+					discountPct = (raw.Discount / (raw.Price * float64(raw.Quantity))) * 100
+				}
 				orderItems = append(orderItems, dtos.ProbabilityOrderItemDTO{
-					ProductID:   raw.ProductID,
-					ProductSKU:  raw.SKU,
-					ProductName: raw.Name,
-					VariantID:   raw.VariantID,
-					Quantity:    raw.Quantity,
-					UnitPrice:   raw.Price,
-					TotalPrice:  totalPrice,
-					Currency:    req.Currency,
-					Discount:    raw.Discount,
-					Tax:         raw.Tax,
-					TaxRate:     raw.TaxRate,
+					ProductID:       raw.ProductID,
+					ProductSKU:      raw.SKU,
+					ProductName:     raw.Name,
+					VariantID:       raw.VariantID,
+					Quantity:        raw.Quantity,
+					UnitPrice:       raw.Price,
+					TotalPrice:      totalPrice,
+					Currency:        req.Currency,
+					Discount:        raw.Discount,
+					DiscountPercent: discountPct,
+					Tax:             raw.Tax,
+					TaxRate:         raw.TaxRate,
 				})
 			}
 			dto.OrderItems = orderItems

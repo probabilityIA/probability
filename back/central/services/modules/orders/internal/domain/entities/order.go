@@ -116,6 +116,7 @@ type ProbabilityOrder struct {
 	InvoiceURL      *string
 	InvoiceID       *string
 	InvoiceProvider *string
+	InvoiceStatus   string // "", "pending", "issued", "failed", "cancelled"
 
 	// Enlaces Externos
 	OrderStatusURL string

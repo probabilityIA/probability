@@ -13,6 +13,7 @@ type Product struct {
 	SKU        string
 	Name       string
 	ExternalID string
+	Price      float64
 }
 
 // ToDomainProduct convierte un modelo de BD a dominio

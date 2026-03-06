@@ -173,18 +173,19 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		}
 
 		item := &entities.InvoiceItem{
-			ProductID:   orderItem.ProductID,
-			SKU:         orderItem.SKU,
-			Name:        orderItem.Name,
-			Description: orderItem.Description,
-			Quantity:    orderItem.Quantity,
-			UnitPrice:   unitPrice,
-			TotalPrice:  totalPrice,
-			Currency:    order.Currency,
-			Tax:         tax,
-			TaxRate:     orderItem.TaxRate,
-			Discount:    discount,
-			Metadata:    make(map[string]interface{}),
+			ProductID:       orderItem.ProductID,
+			SKU:             orderItem.SKU,
+			Name:            orderItem.Name,
+			Description:     orderItem.Description,
+			Quantity:        orderItem.Quantity,
+			UnitPrice:       unitPrice,
+			TotalPrice:      totalPrice,
+			Currency:        order.Currency,
+			Tax:             tax,
+			TaxRate:         orderItem.TaxRate,
+			Discount:        discount,
+			DiscountPercent: orderItem.DiscountPercent,
+			Metadata:        make(map[string]interface{}),
 		}
 		invoiceItems = append(invoiceItems, item)
 	}
@@ -234,16 +235,17 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 	invoiceItemDTOs := make([]dtos.InvoiceItemData, 0, len(invoiceItems))
 	for i, item := range invoiceItems {
 		itemDTO := dtos.InvoiceItemData{
-			ProductID:   item.ProductID,
-			SKU:         item.SKU,
-			Name:        item.Name,
-			Description: item.Description,
-			Quantity:    item.Quantity,
-			UnitPrice:   item.UnitPrice,
-			TotalPrice:  item.TotalPrice,
-			Tax:         item.Tax,
-			TaxRate:     item.TaxRate,
-			Discount:    item.Discount,
+			ProductID:       item.ProductID,
+			SKU:             item.SKU,
+			Name:            item.Name,
+			Description:     item.Description,
+			Quantity:        item.Quantity,
+			UnitPrice:       item.UnitPrice,
+			TotalPrice:      item.TotalPrice,
+			Tax:             item.Tax,
+			TaxRate:         item.TaxRate,
+			Discount:        item.Discount,
+			DiscountPercent: item.DiscountPercent,
 		}
 		// Propagar presentment desde order items (si están disponibles)
 		if i < len(order.Items) {

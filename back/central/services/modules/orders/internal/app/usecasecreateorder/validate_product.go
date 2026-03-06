@@ -21,6 +21,14 @@ func (uc *UseCaseCreateOrder) GetOrCreateProduct(ctx context.Context, businessID
 	}
 
 	if product != nil {
+		// Update price if it changed
+		if itemDTO.UnitPrice > 0 && itemDTO.UnitPrice != product.Price {
+			if err := uc.repo.UpdateProductPrice(ctx, product.ID, itemDTO.UnitPrice); err != nil {
+				uc.logger.Warn(ctx).Err(err).Str("product_id", product.ID).Msg("failed to update product price")
+			} else {
+				product.Price = itemDTO.UnitPrice
+			}
+		}
 		return product, nil
 	}
 
@@ -36,6 +44,7 @@ func (uc *UseCaseCreateOrder) GetOrCreateProduct(ctx context.Context, businessID
 		SKU:        itemDTO.ProductSKU,
 		Name:       itemDTO.ProductName,
 		ExternalID: externalID,
+		Price:      itemDTO.UnitPrice,
 	}
 
 	if err := uc.repo.CreateProduct(ctx, newProduct); err != nil {

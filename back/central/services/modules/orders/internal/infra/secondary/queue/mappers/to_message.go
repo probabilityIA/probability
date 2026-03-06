@@ -92,7 +92,8 @@ func OrderItemsToSnapshot(items []entities.ProbabilityOrderItem) []response.Orde
 			TotalPrice: item.TotalPrice,
 			Tax:       item.Tax,
 			TaxRate:   item.TaxRate,
-			Discount:  item.Discount,
+			Discount:        item.Discount,
+			DiscountPercent: item.DiscountPercent,
 			ImageURL:  item.ImageURL,
 			ProductURL: item.ProductURL,
 		}

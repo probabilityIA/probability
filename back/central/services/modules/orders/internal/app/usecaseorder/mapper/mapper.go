@@ -197,5 +197,6 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		IsPaid:                 order.IsPaid,
 		IsConfirmed:            order.IsConfirmed,
 		Novelty:                order.Novelty,
+		InvoiceStatus:          order.InvoiceStatus,
 	}
 }

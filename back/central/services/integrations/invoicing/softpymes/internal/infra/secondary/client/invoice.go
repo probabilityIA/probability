@@ -156,10 +156,10 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	}
 
 	// Mapear items al formato de Softpymes
-	// Softpymes tiene los precios de cada producto en su catálogo.
-	// Enviamos: itemCode, quantity, unitCode, discount.
+	// Enviamos unitValue siempre para que Softpymes use el precio de la orden
+	// (los precios coinciden entre Shopify y Softpymes, pero enviarlo explícito
+	// garantiza consistencia y permite manejar descuentos/variaciones).
 	// El campo discount (porcentaje) es requerido por Softpymes aunque sea 0.
-	// NO enviamos unitValue — Softpymes usa precios de su catálogo.
 	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
 	for _, item := range req.Items {
 		itemCode := item.SKU
@@ -168,23 +168,25 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		}
 
 		softpymesItem := map[string]interface{}{
-			"itemCode": itemCode,
-			"quantity": float64(item.Quantity),
-			"unitCode": "UNI",
-			"discount": 0,
+			"itemCode":  itemCode,
+			"quantity":  float64(item.Quantity),
+			"unitCode":  "UNI",
+			"discount":  item.DiscountPercent,
+			"unitValue": fmt.Sprintf("%.2f", item.UnitPrice),
 		}
 
 		softpymesItems = append(softpymesItems, softpymesItem)
 	}
 
 	// Agregar shipping como línea de factura si hay costo de envío.
-	// SHIPPING debe existir en el catálogo de Softpymes con su precio configurado.
+	// SHIPPING debe existir en el catálogo de Softpymes como servicio.
 	if req.ShippingCost > 0 {
 		shippingItem := map[string]interface{}{
-			"itemCode": "SHIPPING",
-			"quantity": 1.0,
-			"unitCode": "UNI",
-			"discount": 0,
+			"itemCode":  "SHIPPING",
+			"quantity":  1.0,
+			"unitCode":  "UNI",
+			"discount":  0,
+			"unitValue": fmt.Sprintf("%.2f", req.ShippingCost),
 		}
 		softpymesItems = append(softpymesItems, shippingItem)
 	}

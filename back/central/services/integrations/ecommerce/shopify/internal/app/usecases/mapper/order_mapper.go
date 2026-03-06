@@ -68,6 +68,12 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			itemCurrency = s.CurrencyPresentment
 		}
 
+		// Calcular porcentaje de descuento: (discount / (unit_price * quantity)) * 100
+		var discountPercent float64
+		if itemUnitPrice > 0 && item.Quantity > 0 && itemDiscount > 0 {
+			discountPercent = (itemDiscount / (itemUnitPrice * float64(item.Quantity))) * 100
+		}
+
 		orderItems[i] = domain.ProbabilityOrderItemDTO{
 			ProductID:    productIDStr,
 			ProductSKU:   sku,
@@ -78,7 +84,8 @@ func MapShopifyOrderToProbability(s *domain.ShopifyOrder) *domain.ProbabilityOrd
 			UnitPrice:    itemUnitPrice,
 			TotalPrice:   itemTotalPrice,
 			Currency:     itemCurrency,
-			Discount:     itemDiscount,
+			Discount:        itemDiscount,
+			DiscountPercent: discountPercent,
 			Tax:          itemTax,
 			TaxRate:      item.TaxRate,
 			Weight:       item.Weight,

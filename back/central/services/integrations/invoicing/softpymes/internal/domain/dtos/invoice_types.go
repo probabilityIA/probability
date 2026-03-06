@@ -26,7 +26,8 @@ type ItemData struct {
 	TotalPrice  float64
 	Tax         float64
 	TaxRate     *float64
-	Discount    float64
+	Discount        float64
+	DiscountPercent float64
 	// Precios en moneda presentment (moneda local, ej: COP)
 	UnitPricePresentment  float64
 	TotalPricePresentment float64

@@ -24,9 +24,10 @@ type InvoiceItem struct {
 	Currency    string
 
 	// Impuestos y descuentos
-	Tax      float64
-	TaxRate  *float64
-	Discount float64
+	Tax             float64
+	TaxRate         *float64
+	Discount        float64
+	DiscountPercent float64
 
 	// Información adicional del proveedor
 	ProviderItemID *string

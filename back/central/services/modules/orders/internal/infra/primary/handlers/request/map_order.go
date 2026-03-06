@@ -103,9 +103,10 @@ type MapOrderItem struct {
 	UnitPrice    float64  `json:"unit_price" binding:"required,min=0"`
 	TotalPrice   float64  `json:"total_price" binding:"required,min=0"`
 	Currency     string   `json:"currency" binding:"max=10"`
-	Discount     float64  `json:"discount" binding:"min=0"`
-	Tax          float64  `json:"tax" binding:"min=0"`
-	TaxRate      *float64 `json:"tax_rate"`
+	Discount        float64  `json:"discount" binding:"min=0"`
+	DiscountPercent float64  `json:"discount_percent" binding:"min=0"`
+	Tax             float64  `json:"tax" binding:"min=0"`
+	TaxRate         *float64 `json:"tax_rate"`
 
 	// Precios en moneda presentment
 	UnitPricePresentment  float64        `json:"unit_price_presentment,omitempty"`

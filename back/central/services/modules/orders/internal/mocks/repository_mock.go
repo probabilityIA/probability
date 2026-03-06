@@ -154,6 +154,11 @@ func (m *RepositoryMock) CreateProduct(ctx context.Context, product *entities.Pr
 	return args.Error(0)
 }
 
+func (m *RepositoryMock) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
+	args := m.Called(ctx, productID, price)
+	return args.Error(0)
+}
+
 func (m *RepositoryMock) GetClientByEmail(ctx context.Context, businessID uint, email string) (*entities.Client, error) {
 	args := m.Called(ctx, businessID, email)
 	if args.Get(0) == nil {

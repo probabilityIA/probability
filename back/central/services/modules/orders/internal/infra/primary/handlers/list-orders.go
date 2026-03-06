@@ -140,6 +140,10 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 		filters["end_date"] = endDate
 	}
 
+	if invoiceStatus := c.Query("invoice_status"); invoiceStatus != "" {
+		filters["invoice_status"] = invoiceStatus
+	}
+
 	if sortBy := c.Query("sort_by"); sortBy != "" {
 		filters["sort_by"] = sortBy
 	}

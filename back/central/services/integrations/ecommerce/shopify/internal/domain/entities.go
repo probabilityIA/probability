@@ -178,13 +178,14 @@ type ProbabilityOrderItemDTO struct {
 	UnitPrice    float64
 	TotalPrice   float64
 	Currency     string
-	Discount     float64
-	Tax          float64
-	TaxRate      *float64
-	ImageURL     *string
-	ProductURL   *string
-	Weight       *float64
-	Metadata     []byte
+	Discount        float64
+	DiscountPercent float64
+	Tax             float64
+	TaxRate         *float64
+	ImageURL        *string
+	ProductURL      *string
+	Weight          *float64
+	Metadata        []byte
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64

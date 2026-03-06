@@ -65,6 +65,7 @@ func (uc *UseCaseCreateOrder) saveOrderItems(ctx context.Context, order *entitie
 			TotalPrice:       itemDTO.TotalPrice,
 			Currency:         itemDTO.Currency,
 			Discount:         itemDTO.Discount,
+			DiscountPercent:  itemDTO.DiscountPercent,
 			Tax:              itemDTO.Tax,
 			TaxRate:          itemDTO.TaxRate,
 			ImageURL:         itemDTO.ImageURL,

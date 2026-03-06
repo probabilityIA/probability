@@ -250,6 +250,17 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("driver_id = ?", driverID)
 	}
 
+	// Filtro por estado de factura
+	if invoiceStatus, ok := filters["invoice_status"].(string); ok && invoiceStatus != "" {
+		if invoiceStatus == "none" {
+			// Órdenes sin factura
+			query = query.Where("NOT EXISTS (SELECT 1 FROM invoices WHERE invoices.order_id = orders.id AND invoices.deleted_at IS NULL)")
+		} else {
+			// Órdenes con factura en estado específico
+			query = query.Where("EXISTS (SELECT 1 FROM invoices WHERE invoices.order_id = orders.id AND invoices.deleted_at IS NULL AND invoices.status = ?)", invoiceStatus)
+		}
+	}
+
 	// Filtros de fecha
 	if startDate, ok := filters["start_date"].(string); ok && startDate != "" {
 		query = query.Where("created_at >= ?", startDate)
@@ -305,7 +316,80 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		orders[i] = *mappers.ToDomainOrder(&dbOrder, r.imageURLBase)
 	}
 
+	// Enriquecer con estado de factura (batch query)
+	r.enrichWithInvoiceStatus(ctx, orders)
+
 	return orders, total, nil
+}
+
+// enrichWithInvoiceStatus obtiene el estado de factura más reciente para cada orden.
+// Solo aplica a órdenes cuyo business tiene facturación configurada.
+// - "" = business sin facturación (no mostrar nada)
+// - "none" = business con facturación pero orden sin factura
+// - "pending"/"issued"/"failed"/"cancelled" = estado real de la factura
+func (r *Repository) enrichWithInvoiceStatus(ctx context.Context, orders []entities.ProbabilityOrder) {
+	if len(orders) == 0 {
+		return
+	}
+
+	// Recolectar IDs de órdenes y business_ids únicos
+	orderIDs := make([]string, len(orders))
+	businessIDSet := make(map[uint]bool)
+	for i, o := range orders {
+		orderIDs[i] = o.ID
+		if o.BusinessID != nil {
+			businessIDSet[*o.BusinessID] = true
+		}
+	}
+
+	// Determinar qué businesses tienen facturación configurada
+	var businessIDs []uint
+	for bid := range businessIDSet {
+		businessIDs = append(businessIDs, bid)
+	}
+
+	type configResult struct {
+		BusinessID uint
+	}
+	var configs []configResult
+	if len(businessIDs) > 0 {
+		r.db.Conn(ctx).Raw(`
+			SELECT DISTINCT business_id
+			FROM invoicing_configs
+			WHERE business_id IN (?) AND deleted_at IS NULL
+		`, businessIDs).Scan(&configs)
+	}
+	invoicingBusinesses := make(map[uint]bool, len(configs))
+	for _, c := range configs {
+		invoicingBusinesses[c.BusinessID] = true
+	}
+
+	// Obtener la factura más reciente (por ID desc) para cada orden
+	type invoiceResult struct {
+		OrderID string
+		Status  string
+	}
+	var results []invoiceResult
+	r.db.Conn(ctx).Raw(`
+		SELECT DISTINCT ON (order_id) order_id, status
+		FROM invoices
+		WHERE order_id IN (?) AND deleted_at IS NULL
+		ORDER BY order_id, id DESC
+	`, orderIDs).Scan(&results)
+
+	statusMap := make(map[string]string, len(results))
+	for _, r := range results {
+		statusMap[r.OrderID] = r.Status
+	}
+
+	// Asignar: si tiene factura → su status, si business tiene facturación pero no factura → "none", si no → ""
+	for i := range orders {
+		if status, ok := statusMap[orders[i].ID]; ok {
+			orders[i].InvoiceStatus = status
+		} else if orders[i].BusinessID != nil && invoicingBusinesses[*orders[i].BusinessID] {
+			orders[i].InvoiceStatus = "none"
+		}
+	}
 }
 
 // GetOrderRaw obtiene los metadatos crudos de una orden
@@ -573,6 +657,14 @@ func (r *Repository) CreateProduct(ctx context.Context, product *entities.Produc
 	}
 	product.ID = dbProduct.ID
 	return nil
+}
+
+// UpdateProductPrice actualiza el precio de un producto por su ID
+func (r *Repository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
+	return r.db.Conn(ctx).
+		Model(&models.Product{}).
+		Where("id = ?", productID).
+		Update("price", price).Error
 }
 
 // GetClientByEmail busca un cliente por Email y BusinessID

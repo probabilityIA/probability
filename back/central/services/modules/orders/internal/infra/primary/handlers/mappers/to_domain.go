@@ -193,6 +193,7 @@ func mapOrderItemsRequestToDomain(items []request.MapOrderItem) []dtos.Probabili
 			TotalPrice:            item.TotalPrice,
 			Currency:              item.Currency,
 			Discount:              item.Discount,
+			DiscountPercent:       item.DiscountPercent,
 			Tax:                   item.Tax,
 			TaxRate:               item.TaxRate,
 			UnitPricePresentment:  item.UnitPricePresentment,

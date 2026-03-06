@@ -22,6 +22,7 @@ func ToDBProduct(p *entities.Product) *models.Product {
 		SKU:        p.SKU,
 		Name:       p.Name,
 		ExternalID: p.ExternalID,
+		Price:      p.Price,
 	}
 }
 
@@ -39,6 +40,7 @@ func ToDomainProduct(p *models.Product) *entities.Product {
 		SKU:        p.SKU,
 		Name:       p.Name,
 		ExternalID: p.ExternalID,
+		Price:      p.Price,
 	}
 }
 

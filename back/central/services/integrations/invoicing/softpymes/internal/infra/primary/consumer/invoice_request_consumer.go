@@ -41,7 +41,8 @@ type invoiceItemData struct {
 	TotalPrice  float64  `json:"total_price"`
 	Tax         float64  `json:"tax"`
 	TaxRate     *float64 `json:"tax_rate"`
-	Discount    float64  `json:"discount"`
+	Discount        float64  `json:"discount"`
+	DiscountPercent float64  `json:"discount_percent"`
 	// Precios en moneda presentment (moneda local, ej: COP)
 	UnitPricePresentment  float64 `json:"unit_price_presentment"`
 	TotalPricePresentment float64 `json:"total_price_presentment"`
@@ -870,6 +871,7 @@ func mapItemsToClientDTOs(items []invoiceItemData) []spDtos.ItemData {
 			Tax:                   item.Tax,
 			TaxRate:               item.TaxRate,
 			Discount:              item.Discount,
+			DiscountPercent:       item.DiscountPercent,
 			UnitPricePresentment:  item.UnitPricePresentment,
 			TotalPricePresentment: item.TotalPricePresentment,
 			DiscountPresentment:   item.DiscountPresentment,

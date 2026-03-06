@@ -40,4 +40,5 @@ type OrderSummary struct {
 	IsPaid                 bool                   `json:"is_paid"`
 	IsConfirmed            *bool                  `json:"is_confirmed"`
 	Novelty                *string                `json:"novelty"`
+	InvoiceStatus          string                 `json:"invoice_status"`
 }

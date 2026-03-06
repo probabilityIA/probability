@@ -201,6 +201,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		IsPaid:                 dto.IsPaid,
 		IsConfirmed:            dto.IsConfirmed,
 		Novelty:                dto.Novelty,
+		InvoiceStatus:          dto.InvoiceStatus,
 	}
 }
 
@@ -253,6 +254,7 @@ func mapOrderItemsToResponse(items []entities.ProbabilityOrderItem) []response.O
 			TotalPrice:            item.TotalPrice,
 			Currency:              item.Currency,
 			Discount:              item.Discount,
+			DiscountPercent:       item.DiscountPercent,
 			Tax:                   item.Tax,
 			TaxRate:               item.TaxRate,
 			UnitPricePresentment:  item.UnitPricePresentment,

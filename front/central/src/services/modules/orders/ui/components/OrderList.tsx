@@ -132,17 +132,40 @@ const OrderRow = memo(({
                 )}
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                {order.payment_status?.name ? (
-                    getStatusBadge(order.payment_status.name, order.payment_status.color)
-                ) : order.is_paid ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Pagado
-                    </span>
-                ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                        No pagado
-                    </span>
-                )}
+                <div className="flex flex-col items-center gap-1">
+                    {order.payment_status?.name ? (
+                        getStatusBadge(order.payment_status.name, order.payment_status.color)
+                    ) : order.is_paid ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Pagado
+                        </span>
+                    ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                            No pagado
+                        </span>
+                    )}
+                    {order.invoice_status === 'issued' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-700">
+                            Facturado
+                        </span>
+                    ) : order.invoice_status === 'pending' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-700">
+                            Factura pendiente
+                        </span>
+                    ) : order.invoice_status === 'failed' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-red-100 text-red-700">
+                            Factura fallida
+                        </span>
+                    ) : order.invoice_status === 'cancelled' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
+                            Factura cancelada
+                        </span>
+                    ) : order.invoice_status === 'none' ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">
+                            Sin factura
+                        </span>
+                    ) : null}
+                </div>
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden md:table-cell">
                 {order.delivery_probability !== undefined && order.delivery_probability !== null ? (
@@ -539,6 +562,18 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             options: fulfillmentStatusesList,
         },
         {
+            key: 'invoice_status',
+            label: 'Estado de factura',
+            type: 'select',
+            options: [
+                { value: 'none', label: 'Sin factura' },
+                { value: 'pending', label: 'Factura pendiente' },
+                { value: 'issued', label: 'Facturado' },
+                { value: 'failed', label: 'Factura fallida' },
+                { value: 'cancelled', label: 'Factura cancelada' },
+            ],
+        },
+        {
             key: 'start_date',
             label: 'Rango de fechas',
             type: 'date-range',
@@ -641,6 +676,22 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 key: 'fulfillment_status_id',
                 label: 'Estado de fulfillment',
                 value: fulfillmentStatus ? fulfillmentStatus.label : String(filters.fulfillment_status_id),
+                type: 'select',
+            });
+        }
+
+        if (filters.invoice_status) {
+            const invoiceLabels: Record<string, string> = {
+                none: 'Sin factura',
+                pending: 'Factura pendiente',
+                issued: 'Facturado',
+                failed: 'Factura fallida',
+                cancelled: 'Factura cancelada',
+            };
+            active.push({
+                key: 'invoice_status',
+                label: 'Estado de factura',
+                value: invoiceLabels[filters.invoice_status] || filters.invoice_status,
                 type: 'select',
             });
         }
@@ -1067,7 +1118,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Estado
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Estatus Pago
                                 </th>
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>

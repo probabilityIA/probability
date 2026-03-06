@@ -139,6 +139,7 @@ export interface Order {
     invoice_url?: string;
     invoice_id?: string;
     invoice_provider?: string;
+    invoice_status?: string; // "", "pending", "issued", "failed", "cancelled"
 
     // Enlaces externos
     order_status_url?: string;
@@ -203,6 +204,7 @@ export interface GetOrdersParams {
     driver_id?: number;
     start_date?: string;
     end_date?: string;
+    invoice_status?: string;
     sort_by?: 'created_at' | 'updated_at' | 'total_amount' | 'order_number';
     sort_order?: 'asc' | 'desc';
 }

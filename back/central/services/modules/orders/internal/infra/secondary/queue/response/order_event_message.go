@@ -86,9 +86,10 @@ type OrderItemSnapshot struct {
 	TotalPrice float64 `json:"total_price"`
 
 	// Impuestos y descuentos
-	Tax      float64  `json:"tax"`
-	TaxRate  *float64 `json:"tax_rate,omitempty"`
-	Discount float64  `json:"discount"`
+	Tax             float64  `json:"tax"`
+	TaxRate         *float64 `json:"tax_rate,omitempty"`
+	Discount        float64  `json:"discount"`
+	DiscountPercent float64  `json:"discount_percent"`
 
 	// Información adicional
 	ImageURL   *string `json:"image_url,omitempty"`

@@ -59,6 +59,7 @@ type IRepository interface {
 	// Products
 	GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error)
 	CreateProduct(ctx context.Context, product *entities.Product) error
+	UpdateProductPrice(ctx context.Context, productID string, price float64) error
 
 	// Clients
 	GetClientByEmail(ctx context.Context, businessID uint, email string) (*entities.Client, error)

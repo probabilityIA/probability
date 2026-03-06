@@ -118,6 +118,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to fix client DNI index: %w", err)
 	}
 
+	// Add discount_percent column to order_items
+	if err := r.db.Conn(ctx).AutoMigrate(&models.OrderItem{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate order_items (discount_percent): %w", err)
+	}
+
 	return nil
 }
 

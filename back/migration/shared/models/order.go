@@ -318,9 +318,10 @@ type OrderItem struct {
 	Currency   string  `gorm:"size:10;default:'USD'"`       // Moneda de la venta (shop_money - generalmente USD)
 
 	// Descuentos y ajustes aplicados en esta orden
-	Discount float64  `gorm:"type:decimal(12,2);default:0"` // Descuento aplicado en esta orden
-	Tax      float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto de esta orden
-	TaxRate  *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto aplicada (ej: 0.19 para 19%)
+	Discount        float64  `gorm:"type:decimal(12,2);default:0"` // Descuento aplicado en esta orden (valor absoluto)
+	DiscountPercent float64  `gorm:"type:decimal(5,2);default:0"`  // Descuento en porcentaje (ej: 10.00 para 10%)
+	Tax             float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto de esta orden
+	TaxRate         *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto aplicada (ej: 0.19 para 19%)
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64 `gorm:"column:unit_price_presentment;type:decimal(12,2);not null;default:0"`  // Precio unitario en moneda local
