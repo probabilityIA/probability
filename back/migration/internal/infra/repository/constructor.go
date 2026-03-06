@@ -123,6 +123,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to auto-migrate order_items (discount_percent): %w", err)
 	}
 
+	// Seed new resources and permissions for sidebar modules
+	if err := r.seedNewResourcesAndPermissions(ctx); err != nil {
+		return fmt.Errorf("failed to seed new resources and permissions: %w", err)
+	}
+
 	return nil
 }
 
@@ -1411,6 +1416,172 @@ func (r *Repository) fixClientDniIndex(ctx context.Context) error {
 		WHERE dni IS NOT NULL AND deleted_at IS NULL
 	`).Error; err != nil {
 		return fmt.Errorf("failed to create new idx_business_client_dni: %w", err)
+	}
+
+	return nil
+}
+
+// seedNewResourcesAndPermissions creates missing resources, their CRUD permissions,
+// assigns them to the Administrador role, and adds them to business_resource_configured.
+func (r *Repository) seedNewResourcesAndPermissions(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// =============================================
+	// 1. New resources
+	// =============================================
+	newResources := []models.Resource{
+		{Model: gorm.Model{ID: 19}, Name: "Clientes", Description: "Gestion de clientes"},
+		{Model: gorm.Model{ID: 20}, Name: "Ultima Milla", Description: "Gestion de ultima milla (delivery)"},
+		{Model: gorm.Model{ID: 21}, Name: "Billetera", Description: "Gestion de billetera y transacciones"},
+		{Model: gorm.Model{ID: 22}, Name: "Inventario", Description: "Gestion de inventario"},
+		{Model: gorm.Model{ID: 23}, Name: "Bodegas", Description: "Gestion de bodegas y ubicaciones"},
+	}
+
+	for _, res := range newResources {
+		var count int64
+		db.Model(&models.Resource{}).Where("id = ?", res.ID).Count(&count)
+		if count == 0 {
+			if err := db.Create(&res).Error; err != nil {
+				return fmt.Errorf("failed to create resource %s: %w", res.Name, err)
+			}
+		}
+	}
+
+	// =============================================
+	// 2. CRUD permissions for new resources + missing ones for existing resources
+	// =============================================
+	type permDef struct {
+		ID         uint
+		Name       string
+		ResourceID uint
+		ActionID   uint
+	}
+
+	businessTypeID := ptrUint(1)
+	scopeID := uint(2) // Business scope
+
+	allPerms := []permDef{
+		// Clientes (resource 19)
+		{54, "Create Clientes", 19, 1},
+		{55, "Read Clientes", 19, 2},
+		{56, "Update Clientes", 19, 3},
+		{57, "Delete Clientes", 19, 4},
+		// Ultima Milla (resource 20)
+		{58, "Create Ultima Milla", 20, 1},
+		{59, "Read Ultima Milla", 20, 2},
+		{60, "Update Ultima Milla", 20, 3},
+		{61, "Delete Ultima Milla", 20, 4},
+		// Billetera (resource 21)
+		{62, "Create Billetera", 21, 1},
+		{63, "Read Billetera", 21, 2},
+		{64, "Update Billetera", 21, 3},
+		{65, "Delete Billetera", 21, 4},
+		// Inventario (resource 22)
+		{66, "Create Inventario", 22, 1},
+		{67, "Read Inventario", 22, 2},
+		{68, "Update Inventario", 22, 3},
+		{69, "Delete Inventario", 22, 4},
+		// Bodegas (resource 23)
+		{70, "Create Bodegas", 23, 1},
+		{71, "Read Bodegas", 23, 2},
+		{72, "Update Bodegas", 23, 3},
+		{73, "Delete Bodegas", 23, 4},
+		// Missing CRUD for Permisos (resource 2)
+		{74, "Create Permisos", 2, 1},
+		{75, "Read Permisos", 2, 2},
+		{76, "Update Permisos", 2, 3},
+		{77, "Delete Permisos", 2, 4},
+		// Missing CRUD for Roles (resource 3)
+		{78, "Create Roles", 3, 1},
+		{79, "Read Roles", 3, 2},
+		{80, "Update Roles", 3, 3},
+		{81, "Delete Roles", 3, 4},
+		// Missing CRUD for Recursos (resource 4)
+		{82, "Create Recursos", 4, 1},
+		{83, "Read Recursos", 4, 2},
+		{84, "Update Recursos", 4, 3},
+		{85, "Delete Recursos", 4, 4},
+	}
+
+	newPermIDs := []uint{}
+	for _, p := range allPerms {
+		var count int64
+		db.Model(&models.Permission{}).Where("id = ?", p.ID).Count(&count)
+		if count == 0 {
+			perm := models.Permission{
+				Model:          gorm.Model{ID: p.ID},
+				Name:           p.Name,
+				Description:    p.Name,
+				ResourceID:     p.ResourceID,
+				ActionID:       p.ActionID,
+				ScopeID:        scopeID,
+				BusinessTypeID: businessTypeID,
+			}
+			if err := db.Create(&perm).Error; err != nil {
+				return fmt.Errorf("failed to create permission %s: %w", p.Name, err)
+			}
+			newPermIDs = append(newPermIDs, p.ID)
+		}
+	}
+
+	// =============================================
+	// 3. Assign new permissions to Administrador role (ID 4)
+	// =============================================
+	adminRoleID := uint(4)
+	for _, permID := range newPermIDs {
+		var count int64
+		db.Table("role_permissions").
+			Where("role_id = ? AND permission_id = ?", adminRoleID, permID).
+			Count(&count)
+		if count == 0 {
+			if err := db.Exec(
+				"INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)",
+				adminRoleID, permID,
+			).Error; err != nil {
+				return fmt.Errorf("failed to assign permission %d to admin role: %w", permID, err)
+			}
+		}
+	}
+
+	// =============================================
+	// 4. Add new resources + Notificaciones to business_resource_configured
+	// =============================================
+	resourceIDs := []uint{18, 19, 20, 21, 22, 23} // 18=Notificaciones + new ones
+
+	var businessIDs []uint
+	db.Table("business_resource_configured").
+		Select("DISTINCT business_id").
+		Where("deleted_at IS NULL").
+		Scan(&businessIDs)
+
+	for _, bizID := range businessIDs {
+		for _, resID := range resourceIDs {
+			var count int64
+			db.Model(&models.BusinessResourceConfigured{}).
+				Where("business_id = ? AND resource_id = ? AND deleted_at IS NULL", bizID, resID).
+				Count(&count)
+			if count == 0 {
+				brc := models.BusinessResourceConfigured{
+					BusinessID: bizID,
+					ResourceID: resID,
+					Active:     true,
+				}
+				if err := db.Create(&brc).Error; err != nil {
+					return fmt.Errorf("failed to create business_resource_configured biz=%d res=%d: %w", bizID, resID, err)
+				}
+			}
+		}
+	}
+
+	// Also assign Notificaciones permissions (50-53) to admin role if missing
+	for _, permID := range []uint{50, 51, 52, 53} {
+		var count int64
+		db.Table("role_permissions").
+			Where("role_id = ? AND permission_id = ?", adminRoleID, permID).
+			Count(&count)
+		if count == 0 {
+			db.Exec("INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)", adminRoleID, permID)
+		}
 	}
 
 	return nil
