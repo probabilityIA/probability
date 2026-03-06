@@ -159,6 +159,18 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 	}
 	if req.Status != nil {
 		order.Status = *req.Status
+
+		// Buscar automáticamente el status_id basado en el código del estado
+		statusID, err := uc.repo.GetOrderStatusIDByCode(ctx, *req.Status)
+		if err != nil {
+			uc.logger.Warn(ctx).
+				Err(err).
+				Str("order_id", id).
+				Str("status_code", *req.Status).
+				Msg("No se pudo encontrar status_id para el código de estado")
+		} else if statusID != nil {
+			order.StatusID = statusID
+		}
 	}
 	if req.OriginalStatus != nil {
 		order.OriginalStatus = *req.OriginalStatus

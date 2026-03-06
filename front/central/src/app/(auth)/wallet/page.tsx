@@ -130,11 +130,15 @@ function AdminWalletView() {
         {
             key: 'Balance',
             label: 'Saldo',
-            render: (val) => (
-                <span className="font-bold text-green-600">
-                    {formatCurrency(val as number)}
-                </span>
-            )
+            render: (val) => {
+                const balance = typeof val === 'string' ? parseFloat(val) : (val as number);
+                const isNegative = balance < 0;
+                return (
+                    <span className={`font-bold ${isNegative ? 'text-red-600' : 'text-green-600'}`}>
+                        {isNegative && '-'}${formatCurrency(Math.abs(balance)).replace('$', '')}
+                    </span>
+                );
+            }
         }
     ];
 
@@ -153,6 +157,11 @@ function AdminWalletView() {
                             label: 'Acciones',
                             render: (_, row) => (
                                 <div className="flex gap-2">
+                                    <RechargeWalletButton
+                                        businessId={row.BusinessID}
+                                        businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
+                                        onSuccess={fetchWalletsAndBusinesses}
+                                    />
                                     <ManualDebitButton
                                         businessId={row.BusinessID}
                                         businessName={businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
@@ -288,15 +297,20 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
     const handleClear = async () => {
         setLoading(true);
         try {
+            console.log('Borrando historial para business:', businessId);
             const res = await clearRechargeHistoryAction(businessId);
+            console.log('Respuesta del servidor:', res);
             if (res.success) {
                 setIsOpen(false);
+                alert('Historial borrado exitosamente');
                 onSuccess();
             } else {
-                alert(res.error);
+                console.error('Error del servidor:', res.error);
+                alert(`Error: ${res.error || 'Error desconocido'}`);
             }
-        } catch (e) {
-            alert("Error al procesar");
+        } catch (e: any) {
+            console.error('Error en handleClear:', e);
+            alert(`Error al procesar: ${e.message || e}`);
         } finally {
             setLoading(false);
         }
@@ -318,6 +332,56 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
                     <div className="flex justify-end gap-2">
                         <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
                         <Button variant="danger" onClick={handleClear} loading={loading}>Borrar Historial</Button>
+                    </div>
+                </div>
+            </Modal>
+        </>
+    );
+}
+
+function RechargeWalletButton({ businessId, businessName, onSuccess }: { businessId: number, businessName: string, onSuccess: () => void }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [amount, setAmount] = useState('');
+    const [loading, setLoading] = useState(false);
+
+    const handleRecharge = async () => {
+        if (!amount || isNaN(Number(amount)) || Number(amount) <= 0) {
+            alert('Ingresa un monto válido');
+            return;
+        }
+        setLoading(true);
+        try {
+            const res = await rechargeWalletAction(businessId, Number(amount));
+            if (res.success) {
+                setIsOpen(false);
+                setAmount('');
+                onSuccess();
+                alert('Saldo agregado exitosamente');
+            } else {
+                alert(res.error || 'Error al recargar');
+            }
+        } catch (e) {
+            alert("Error al procesar");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    return (
+        <>
+            <Button size="sm" variant="primary" onClick={() => setIsOpen(true)}>Agregar Saldo</Button>
+            <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title={`Agregar saldo a ${businessName}`}>
+                <div className="space-y-4 p-4">
+                    <Input
+                        label="Monto a agregar"
+                        type="number"
+                        value={amount}
+                        onChange={e => setAmount(e.target.value)}
+                        placeholder="Ej: 10000"
+                    />
+                    <div className="flex justify-end gap-2">
+                        <Button variant="secondary" onClick={() => setIsOpen(false)}>Cancelar</Button>
+                        <Button variant="primary" onClick={handleRecharge} loading={loading}>Agregar Saldo</Button>
                     </div>
                 </div>
             </Modal>
@@ -486,7 +550,7 @@ interface BusinessWalletViewProps {
 }
 
 function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProps = {}) {
-    const { permissions } = usePermissions();
+    const { permissions, isSuperAdmin } = usePermissions();
     const isSuperAdminView = !!businessId;
 
     const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -818,20 +882,29 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             <div className="mt-12 space-y-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                     <h2 className="text-2xl font-bold text-gray-900">Historial de Transacciones</h2>
-                    <div className="flex gap-4">
-                        <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
-                            <p className="text-xs text-green-700 font-medium">Total Aprobado</p>
-                            <p className="text-lg font-bold text-green-800">
-                                {formatCurrency(history.filter(t => t.Status === 'COMPLETED').reduce((acc, t) => acc + t.Amount, 0))}
-                            </p>
+                    {isSuperAdminView && (
+                        <ClearHistoryButton
+                            businessId={businessId || 0}
+                            businessName={displayName}
+                            onSuccess={fetchHistory}
+                        />
+                    )}
+                    {isSuperAdmin && (
+                        <div className="flex gap-4">
+                            <div className="bg-green-50 px-4 py-2 rounded-lg border border-green-100">
+                                <p className="text-xs text-green-700 font-medium">Total Aprobado</p>
+                                <p className="text-lg font-bold text-green-800">
+                                    {formatCurrency(history.filter(t => t.Status === 'COMPLETED').reduce((acc, t) => acc + t.Amount, 0))}
+                                </p>
+                            </div>
+                            <div className="bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-100">
+                                <p className="text-xs text-yellow-700 font-medium">Total Pendiente</p>
+                                <p className="text-lg font-bold text-yellow-800">
+                                    {formatCurrency(history.filter(t => t.Status === 'PENDING').reduce((acc, t) => acc + t.Amount, 0))}
+                                </p>
+                            </div>
                         </div>
-                        <div className="bg-yellow-50 px-4 py-2 rounded-lg border border-yellow-100">
-                            <p className="text-xs text-yellow-700 font-medium">Total Pendiente</p>
-                            <p className="text-lg font-bold text-yellow-800">
-                                {formatCurrency(history.filter(t => t.Status === 'PENDING').reduce((acc, t) => acc + t.Amount, 0))}
-                            </p>
-                        </div>
-                    </div>
+                    )}
                 </div>
 
                 <div className="space-y-8">
@@ -869,7 +942,16 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
         {
             key: 'Amount',
             label: 'Monto',
-            render: (val) => <span className="font-bold text-gray-900">{formatCurrency(val as number)}</span>
+            render: (val, row) => {
+                const amount = val as number;
+                const type = (row as any).Type as string;
+                const isDebit = type === 'DEBIT' || type === 'DEBIT_GUIDE';
+                return (
+                    <span className={`font-bold ${isDebit ? 'text-red-600' : 'text-green-600'}`}>
+                        {isDebit ? '-' : '+'}{formatCurrency(amount)}
+                    </span>
+                );
+            }
         },
         {
             key: 'Status',
