@@ -30,11 +30,12 @@ type WalletTransaction struct {
 	ID                   uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	WalletID             uuid.UUID `gorm:"type:uuid;not null;index"`
 	Amount               float64   `gorm:"type:decimal(15,2);not null"`
-	Type                 string    `gorm:"type:varchar(50);not null"`          // RECHARGE|USAGE
+	Type                 string    `gorm:"type:varchar(50);not null"`                    // RECHARGE|USAGE
 	Status               string    `gorm:"type:varchar(50);not null;default:'PENDING'"` // PENDING|COMPLETED|FAILED
 	Reference            string    `gorm:"type:varchar(255)"`
 	QrCode               string    `gorm:"type:text"`
-	PaymentTransactionID *uint     `gorm:"index"` // FK opcional a payment_transactions
+	PaymentTransactionID *uint     `gorm:"index"`  // FK opcional a payment_transactions
+	UserID               *uint     `gorm:"index"`  // Usuario que generó la transacción
 	CreatedAt            time.Time
 
 	// Relaciones

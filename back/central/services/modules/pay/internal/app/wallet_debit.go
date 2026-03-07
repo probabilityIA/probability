@@ -28,6 +28,7 @@ func (uc *walletUseCase) ManualDebit(ctx context.Context, dto *dtos.ManualDebitD
 		Type:      entities.WalletTxTypeUsage,
 		Status:    entities.WalletTxStatusCompleted,
 		Reference: "MAN_DEB_" + uuid.New().String()[:8] + ": " + dto.Reference,
+		UserID:    dto.UserID,
 		CreatedAt: time.Now(),
 	}
 
@@ -59,5 +60,6 @@ func (uc *walletUseCase) DebitForGuide(ctx context.Context, dto *dtos.DebitForGu
 		BusinessID: dto.BusinessID,
 		Amount:     dto.Amount,
 		Reference:  fmt.Sprintf("Guide generation: %s", dto.TrackingNumber),
+		UserID:     dto.UserID,
 	})
 }

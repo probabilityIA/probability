@@ -399,7 +399,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 // Debit from wallet for async guide generation
                 if (selectedRate) {
                     const totalCost = selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
-                    const debitResponse = await debitForGuideAction(totalCost, data.tracking_number);
+                    const debitResponse = await debitForGuideAction(totalCost, data.tracking_number, order?.business_id);
                     if (debitResponse.success) {
                         // Update wallet balance
                         const balanceResponse = await getWalletBalanceAction();
@@ -732,7 +732,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 setTrackingNumber(tracker);
 
                 // Debit from wallet
-                const debitResponse = await debitForGuideAction(totalCost, tracker);
+                const debitResponse = await debitForGuideAction(totalCost, tracker, order?.business_id);
                 if (debitResponse.success) {
                     // Update wallet balance
                     const balanceResponse = await getWalletBalanceAction();

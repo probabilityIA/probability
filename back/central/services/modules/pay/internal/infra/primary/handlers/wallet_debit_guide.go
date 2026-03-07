@@ -23,10 +23,26 @@ func (h *walletHandler) DebitForGuide(c *gin.Context) {
 		return
 	}
 
+	// Si el caller es admin (business_id=0), usar el business_id del request body
+	if businessID == 0 {
+		if req.BusinessID == nil || *req.BusinessID == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "business_id is required for admin users"})
+			return
+		}
+		businessID = *req.BusinessID
+	}
+
+	// Capturar user_id de quien genera la transacción
+	var userID *uint
+	if uid, ok := middleware.GetUserID(c); ok && uid != 0 {
+		userID = &uid
+	}
+
 	if err := h.walletUC.DebitForGuide(c.Request.Context(), &dtos.DebitForGuideDTO{
 		BusinessID:     businessID,
 		Amount:         req.Amount,
 		TrackingNumber: req.TrackingNumber,
+		UserID:         userID,
 	}); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

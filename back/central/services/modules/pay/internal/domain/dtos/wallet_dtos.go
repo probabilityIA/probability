@@ -11,6 +11,7 @@ type ManualDebitDTO struct {
 	BusinessID uint
 	Amount     float64
 	Reference  string
+	UserID     *uint
 }
 
 // DebitForGuideDTO datos para débito por generación de guía
@@ -18,4 +19,5 @@ type DebitForGuideDTO struct {
 	BusinessID     uint
 	Amount         float64
 	TrackingNumber string
+	UserID         *uint
 }

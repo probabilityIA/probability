@@ -282,14 +282,19 @@ export async function clearRechargeHistoryAction(businessId: number) {
 
 /**
  * Debit from wallet for guide generation
+ * @param businessId Optional - required when admin (business_id=0) generates guide for a specific business
  */
-export async function debitForGuideAction(amount: number, trackingNumber: string) {
+export async function debitForGuideAction(amount: number, trackingNumber: string, businessId?: number) {
     try {
         const headers = await getAuthHeader();
         const res = await fetch(`${env.API_BASE_URL}/pay/wallet/debit-guide`, {
             method: 'POST',
             headers,
-            body: JSON.stringify({ amount, tracking_number: trackingNumber })
+            body: JSON.stringify({
+                amount,
+                tracking_number: trackingNumber,
+                ...(businessId ? { business_id: businessId } : {})
+            })
         });
 
         if (!res.ok) {

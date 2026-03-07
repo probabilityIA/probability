@@ -17,4 +17,5 @@ type ManualDebitRequest struct {
 type DebitForGuideRequest struct {
 	Amount         float64 `json:"amount" binding:"required"`
 	TrackingNumber string  `json:"tracking_number" binding:"required"`
+	BusinessID     *uint   `json:"business_id"` // Requerido cuando el caller es admin (business_id=0)
 }

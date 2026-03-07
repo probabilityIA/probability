@@ -185,6 +185,7 @@ func walletTxToModel(e *entities.WalletTransaction) *models.WalletTransaction {
 		Reference:            e.Reference,
 		QrCode:               e.QrCode,
 		PaymentTransactionID: e.PaymentTransactionID,
+		UserID:               e.UserID,
 		CreatedAt:            e.CreatedAt,
 	}
 }
@@ -199,6 +200,7 @@ func walletTxToDomain(m *models.WalletTransaction) *entities.WalletTransaction {
 		Reference:            m.Reference,
 		QrCode:               m.QrCode,
 		PaymentTransactionID: m.PaymentTransactionID,
+		UserID:               m.UserID,
 		CreatedAt:            m.CreatedAt,
 	}
 }

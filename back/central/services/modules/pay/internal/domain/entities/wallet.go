@@ -38,5 +38,6 @@ type WalletTransaction struct {
 	Reference            string
 	QrCode               string
 	PaymentTransactionID *uint
+	UserID               *uint
 	CreatedAt            time.Time
 }
