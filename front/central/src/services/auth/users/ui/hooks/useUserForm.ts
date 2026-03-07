@@ -84,6 +84,7 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
                 }
                 return true;
             }
+            setError(response.message || 'Error saving user');
             return false;
         } catch (err: unknown) {
             const errorMessage = err instanceof Error ? err.message : 'Error saving user';

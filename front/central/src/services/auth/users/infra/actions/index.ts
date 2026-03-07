@@ -22,7 +22,7 @@ export const getUsersAction = async (params?: GetUsersParams) => {
         return await (await getUseCases()).getUsers(params);
     } catch (error: any) {
         console.error('Get Users Action Error:', error.message);
-        throw new Error(error.message);
+        return { success: false, data: [], pagination: { current_page: 1, per_page: 20, total: 0, last_page: 1, has_next: false, has_prev: false }, message: error.message };
     }
 };
 
@@ -31,7 +31,7 @@ export const getUserByIdAction = async (id: number) => {
         return await (await getUseCases()).getUserById(id);
     } catch (error: any) {
         console.error('Get User By Id Action Error:', error.message);
-        throw new Error(error.message);
+        return { success: false, data: null, message: error.message };
     }
 };
 
@@ -40,7 +40,7 @@ export const createUserAction = async (data: CreateUserDTO) => {
         return await (await getUseCases()).createUser(data);
     } catch (error: any) {
         console.error('Create User Action Error:', error.message);
-        throw new Error(error.message);
+        return { success: false, data: null, message: error.message };
     }
 };
 
@@ -49,7 +49,7 @@ export const updateUserAction = async (id: number, data: UpdateUserDTO) => {
         return await (await getUseCases()).updateUser(id, data);
     } catch (error: any) {
         console.error('Update User Action Error:', error.message);
-        throw new Error(error.message);
+        return { success: false, data: null, message: error.message };
     }
 };
 
@@ -58,7 +58,7 @@ export const deleteUserAction = async (id: number) => {
         return await (await getUseCases()).deleteUser(id);
     } catch (error: any) {
         console.error('Delete User Action Error:', error.message);
-        throw new Error(error.message);
+        return { success: false, message: error.message };
     }
 };
 
@@ -67,6 +67,6 @@ export const assignRolesAction = async (id: number, data: AssignRolesDTO) => {
         return await (await getUseCases()).assignRoles(id, data);
     } catch (error: any) {
         console.error('Assign Roles Action Error:', error.message);
-        throw new Error(error.message);
+        return { success: false, message: error.message };
     }
 };
