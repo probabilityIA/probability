@@ -1,16 +1,21 @@
 package handlers
 
-import "github.com/gin-gonic/gin"
+import (
+	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/services/auth/middleware"
+)
 
 // RegisterRoutes registra todas las rutas del módulo de payments
 func (h *PaymentHandlers) RegisterRoutes(router *gin.RouterGroup) {
 	// Payment Statuses (catálogo)
 	paymentStatuses := router.Group("/payment-statuses")
+	paymentStatuses.Use(middleware.JWT())
 	{
 		paymentStatuses.GET("", h.ListPaymentStatuses) // GET /api/v1/payment-statuses
 	}
 
 	payments := router.Group("/payments")
+	payments.Use(middleware.JWT())
 	{
 		// Channel Payment Methods routes
 		channelMethods := payments.Group("/channel-methods")
