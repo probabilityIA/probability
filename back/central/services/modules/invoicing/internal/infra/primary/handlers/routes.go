@@ -30,6 +30,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 
 			// Comparación con proveedor (auditoría esporádica)
 			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices) // Iniciar comparación
+			invoices.POST("/items", middleware.JWT(), h.ListItems)         // Comparar ítems del proveedor vs productos del sistema
 		}
 
 		// Proveedores de facturación (DEPRECADO - Migrado a integrations/core)

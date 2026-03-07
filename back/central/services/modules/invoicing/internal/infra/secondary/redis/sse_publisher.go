@@ -214,6 +214,43 @@ func (p *SSEPublisher) PublishCompareReady(ctx context.Context, data *dtos.Compa
 	return p.publish(ctx, event)
 }
 
+// PublishListItemsReady publica el resultado de una comparación de ítems/productos
+func (p *SSEPublisher) PublishListItemsReady(ctx context.Context, data *dtos.ItemCompareResponseData) error {
+	results := make([]map[string]interface{}, 0, len(data.Results))
+	for _, r := range data.Results {
+		results = append(results, map[string]interface{}{
+			"status":         r.Status,
+			"item_code":      r.ItemCode,
+			"provider_name":  r.ProviderName,
+			"system_name":    r.SystemName,
+			"provider_price": r.ProviderPrice,
+			"system_price":   r.SystemPrice,
+			"price_diff":     r.PriceDiff,
+			"unit_cost":      r.UnitCost,
+			"description":    r.Description,
+		})
+	}
+
+	event := invoiceSSEEvent{
+		ID:         generateEventID(),
+		EventType:  "invoice.list_items_ready",
+		BusinessID: data.BusinessID,
+		Timestamp:  time.Now(),
+		Data: map[string]interface{}{
+			"correlation_id": data.CorrelationID,
+			"results":        results,
+			"summary": map[string]interface{}{
+				"matched":        data.Summary.Matched,
+				"provider_only":  data.Summary.ProviderOnly,
+				"system_only":    data.Summary.SystemOnly,
+				"total_provider": data.Summary.TotalProvider,
+				"total_system":   data.Summary.TotalSystem,
+			},
+		},
+	}
+	return p.publish(ctx, event)
+}
+
 // PublishBulkJobCompleted publica que un job masivo finalizó
 func (p *SSEPublisher) PublishBulkJobCompleted(ctx context.Context, job *entities.BulkInvoiceJob) error {
 	event := invoiceSSEEvent{
@@ -319,6 +356,9 @@ func (n *noopSSEPublisher) PublishBulkJobCompleted(_ context.Context, _ *entitie
 	return nil
 }
 func (n *noopSSEPublisher) PublishCompareReady(_ context.Context, _ *dtos.CompareResponseData) error {
+	return nil
+}
+func (n *noopSSEPublisher) PublishListItemsReady(_ context.Context, _ *dtos.ItemCompareResponseData) error {
 	return nil
 }
 

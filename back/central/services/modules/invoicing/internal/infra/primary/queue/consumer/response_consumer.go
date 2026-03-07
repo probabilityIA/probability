@@ -123,6 +123,11 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		return c.handleCompareResponse(ctx, message)
 	}
 
+	// Route list_items responses to dedicated handler
+	if disc.Operation == dtos.OperationListItems {
+		return c.handleListItemsResponse(ctx, message)
+	}
+
 	// Deserializar response normal de factura
 	var response dtos.InvoiceResponseMessage
 	if err := json.Unmarshal(message, &response); err != nil {
@@ -923,4 +928,199 @@ func (c *ResponseConsumer) calculateCheckBackoff(checkCount int) time.Time {
 	}
 
 	return time.Now().Add(delays[delayIndex])
+}
+
+// ─── List Items response types (local, no compartidos entre módulos) ───
+
+// listItemsProviderItem ítem del catálogo del proveedor
+type listItemsProviderItem struct {
+	ItemCode      string  `json:"item_code"`
+	ItemName      string  `json:"item_name"`
+	ItemPrice     float64 `json:"item_price"`
+	UnitCost      float64 `json:"unit_cost"`
+	Description   string  `json:"description"`
+	MinimumStock  string  `json:"minimum_stock"`
+	OrderQuantity string  `json:"order_quantity"`
+}
+
+// listItemsResponseMessage mensaje de respuesta de list_items del proveedor
+type listItemsResponseMessage struct {
+	Operation     string                   `json:"operation"`
+	CorrelationID string                   `json:"correlation_id"`
+	BusinessID    uint                     `json:"business_id"`
+	Items         []listItemsProviderItem  `json:"items"`
+	Error         string                   `json:"error,omitempty"`
+	Timestamp     time.Time                `json:"timestamp"`
+}
+
+// handleListItemsResponse procesa la respuesta de list_items del proveedor,
+// consulta los productos del sistema y realiza la reconciliación en memoria.
+func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message []byte) error {
+	var msg listItemsResponseMessage
+	if err := json.Unmarshal(message, &msg); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to unmarshal list_items response")
+		return fmt.Errorf("failed to unmarshal list_items response: %w", err)
+	}
+
+	c.log.Info(ctx).
+		Str("correlation_id", msg.CorrelationID).
+		Uint("business_id", msg.BusinessID).
+		Int("provider_items", len(msg.Items)).
+		Msg("📦 Processing list_items response")
+
+	// Si el proveedor reportó error, publicar SSE con resultado vacío
+	if msg.Error != "" {
+		c.log.Warn(ctx).Str("error", msg.Error).Msg("Provider returned error in list_items response")
+		data := &dtos.ItemCompareResponseData{
+			CorrelationID: msg.CorrelationID,
+			BusinessID:    msg.BusinessID,
+			Results:       []dtos.ItemCompareResult{},
+			Summary:       dtos.ItemCompareSummary{},
+		}
+		go c.publishListItemsEvent(ctx, data)
+		return c.ssePublisher.PublishListItemsReady(ctx, data)
+	}
+
+	// Obtener productos del sistema
+	systemProducts, err := c.repo.ListProductsByBusinessID(ctx, msg.BusinessID)
+	if err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to get system products for items comparison")
+		return fmt.Errorf("failed to get system products: %w", err)
+	}
+
+	// Construir mapa del proveedor: itemCode → providerItem
+	providerMap := make(map[string]listItemsProviderItem, len(msg.Items))
+	for _, item := range msg.Items {
+		if item.ItemCode != "" {
+			providerMap[item.ItemCode] = item
+		}
+	}
+
+	// Construir mapa del sistema: sku → systemProduct
+	systemMap := make(map[string]dtos.SystemProduct, len(systemProducts))
+	for _, prod := range systemProducts {
+		if prod.SKU != "" {
+			systemMap[prod.SKU] = prod
+		}
+	}
+
+	// Cruzar resultados
+	results := make([]dtos.ItemCompareResult, 0)
+	matched, providerOnly, systemOnly := 0, 0, 0
+
+	// 1. Recorrer ítems del proveedor
+	for code, pItem := range providerMap {
+		if sProd, found := systemMap[code]; found {
+			// Matched: existe en ambos
+			results = append(results, dtos.ItemCompareResult{
+				Status:        dtos.CompareStatusMatched,
+				ItemCode:      code,
+				ProviderName:  pItem.ItemName,
+				SystemName:    sProd.Name,
+				ProviderPrice: pItem.ItemPrice,
+				SystemPrice:   sProd.Price,
+				PriceDiff:     pItem.ItemPrice - sProd.Price,
+				UnitCost:      pItem.UnitCost,
+				Description:   pItem.Description,
+			})
+			matched++
+		} else {
+			// provider_only: está en proveedor pero no en sistema
+			results = append(results, dtos.ItemCompareResult{
+				Status:        dtos.CompareStatusProviderOnly,
+				ItemCode:      code,
+				ProviderName:  pItem.ItemName,
+				ProviderPrice: pItem.ItemPrice,
+				UnitCost:      pItem.UnitCost,
+				Description:   pItem.Description,
+			})
+			providerOnly++
+		}
+	}
+
+	// 2. Recorrer productos del sistema que no están en el proveedor
+	for sku, sProd := range systemMap {
+		if _, found := providerMap[sku]; !found {
+			results = append(results, dtos.ItemCompareResult{
+				Status:      dtos.CompareStatusSystemOnly,
+				ItemCode:    sku,
+				SystemName:  sProd.Name,
+				SystemPrice: sProd.Price,
+			})
+			systemOnly++
+		}
+	}
+
+	// Ordenar resultados: matched primero, luego provider_only, luego system_only
+	sort.Slice(results, func(i, j int) bool {
+		statusOrder := map[string]int{
+			dtos.CompareStatusMatched:      0,
+			dtos.CompareStatusProviderOnly: 1,
+			dtos.CompareStatusSystemOnly:   2,
+		}
+		if statusOrder[results[i].Status] != statusOrder[results[j].Status] {
+			return statusOrder[results[i].Status] < statusOrder[results[j].Status]
+		}
+		return results[i].ItemCode < results[j].ItemCode
+	})
+
+	summary := dtos.ItemCompareSummary{
+		Matched:       matched,
+		ProviderOnly:  providerOnly,
+		SystemOnly:    systemOnly,
+		TotalProvider: len(msg.Items),
+		TotalSystem:   len(systemProducts),
+	}
+
+	responseData := &dtos.ItemCompareResponseData{
+		CorrelationID: msg.CorrelationID,
+		BusinessID:    msg.BusinessID,
+		Results:       results,
+		Summary:       summary,
+	}
+
+	c.log.Info(ctx).
+		Str("correlation_id", msg.CorrelationID).
+		Int("matched", matched).
+		Int("provider_only", providerOnly).
+		Int("system_only", systemOnly).
+		Msg("📦 Items comparison complete, publishing SSE")
+
+	go c.publishListItemsEvent(ctx, responseData)
+	return c.ssePublisher.PublishListItemsReady(ctx, responseData)
+}
+
+// publishListItemsEvent publica el evento invoice.list_items_ready al exchange de eventos (RabbitMQ)
+func (c *ResponseConsumer) publishListItemsEvent(ctx context.Context, data *dtos.ItemCompareResponseData) {
+	results := make([]map[string]interface{}, 0, len(data.Results))
+	for _, r := range data.Results {
+		results = append(results, map[string]interface{}{
+			"status":         r.Status,
+			"item_code":      r.ItemCode,
+			"provider_name":  r.ProviderName,
+			"system_name":    r.SystemName,
+			"provider_price": r.ProviderPrice,
+			"system_price":   r.SystemPrice,
+			"price_diff":     r.PriceDiff,
+			"unit_cost":      r.UnitCost,
+			"description":    r.Description,
+		})
+	}
+
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.list_items_ready",
+		Category:   "invoice",
+		BusinessID: data.BusinessID,
+		Data: map[string]interface{}{
+			"correlation_id": data.CorrelationID,
+			"results":        results,
+			"summary": map[string]interface{}{
+				"matched":        data.Summary.Matched,
+				"provider_only":  data.Summary.ProviderOnly,
+				"system_only":    data.Summary.SystemOnly,
+				"total_provider": data.Summary.TotalProvider,
+				"total_system":   data.Summary.TotalSystem,
+			},
+		},
+	})
 }

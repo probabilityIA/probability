@@ -47,6 +47,22 @@ type ISoftpymesClient interface {
 	// de Softpymes (GetDocumentByNumber) y la configuración de pago de la integración.
 	// Esto registra el pago y mueve la cuenta contable de "cuentas por cobrar" al medio de pago.
 	SendCashReceiptFromDocument(ctx context.Context, apiKey, apiSecret, referer, baseURL string, fullDocument map[string]interface{}, config map[string]interface{}) error
+
+	// ListItems lista todos los ítems del catálogo de Softpymes con paginación.
+	// Endpoint: GET /app/integration/items?page=X&pageSize=Y
+	// baseURL: URL base efectiva (producción o testing)
+	ListItems(ctx context.Context, apiKey, apiSecret, referer, baseURL string, page, pageSize int) ([]ListedItem, error)
+}
+
+// ListedItem ítem del catálogo de Softpymes
+type ListedItem struct {
+	ItemCode      string
+	ItemName      string
+	ItemPrice     float64
+	UnitCost      float64
+	Description   string
+	MinimumStock  string
+	OrderQuantity string
 }
 
 // ListDocumentsParams parámetros para listar documentos

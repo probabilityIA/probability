@@ -161,6 +161,11 @@ func (m *mockIntegrationUseCase) SyncOrdersByIntegrationIDWithParams(ctx context
 	return args.Error(0)
 }
 
+func (m *mockIntegrationUseCase) SyncOrdersByIntegrationIDWithBatches(ctx context.Context, integrationID string, params *domain.SyncBatchParams) error {
+	args := m.Called(ctx, integrationID, params)
+	return args.Error(0)
+}
+
 func (m *mockIntegrationUseCase) SyncOrdersByBusiness(ctx context.Context, businessID uint) error {
 	args := m.Called(ctx, businessID)
 	return args.Error(0)
@@ -345,8 +350,10 @@ func TestGetIntegrationByIDHandler_IDValido(t *testing.T) {
 	uc := new(mockIntegrationUseCase)
 	h, _ := handlerSetup(uc)
 
-	integracion := &domain.Integration{ID: 5, Name: "Shopify Store"}
-	uc.On("GetIntegrationByID", mock.Anything, uint(5)).Return(integracion, nil)
+	integracionConCreds := &domain.IntegrationWithCredentials{
+		Integration: domain.Integration{ID: 5, Name: "Shopify Store"},
+	}
+	uc.On("GetIntegrationByIDWithCredentials", mock.Anything, uint(5)).Return(integracionConCreds, nil)
 
 	r := gin.New()
 	r.GET("/integrations/:id", h.GetIntegrationByIDHandler)
@@ -388,7 +395,7 @@ func TestGetIntegrationByIDHandler_NoEncontrado(t *testing.T) {
 	uc := new(mockIntegrationUseCase)
 	h, _ := handlerSetup(uc)
 
-	uc.On("GetIntegrationByID", mock.Anything, uint(99)).Return(nil, errors.New("not found"))
+	uc.On("GetIntegrationByIDWithCredentials", mock.Anything, uint(99)).Return(nil, domain.ErrIntegrationNotFound)
 
 	r := gin.New()
 	r.GET("/integrations/:id", h.GetIntegrationByIDHandler)
@@ -399,8 +406,8 @@ func TestGetIntegrationByIDHandler_NoEncontrado(t *testing.T) {
 	// Act
 	r.ServeHTTP(w, req)
 
-	// Assert — Sin ErrIntegrationNotFound explícito retorna 500
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	// Assert
+	assert.Equal(t, http.StatusNotFound, w.Code)
 }
 
 // ============================================
@@ -518,12 +525,13 @@ func TestSyncOrdersByIntegrationIDHandler_SinBody(t *testing.T) {
 	assert.Equal(t, http.StatusAccepted, w.Code)
 }
 
-func TestSyncOrdersByIntegrationIDHandler_ErrorDeUseCase(t *testing.T) {
+func TestSyncOrdersByIntegrationIDHandler_SinBody_Retorna202(t *testing.T) {
 	// Arrange
 	uc := new(mockIntegrationUseCase)
 	h, _ := handlerSetup(uc)
 
-	uc.On("SyncOrdersByIntegrationID", mock.Anything, "5").Return(errors.New("sync error"))
+	// Sin body → flujo directo en goroutine → siempre retorna 202 (fire-and-forget)
+	uc.On("SyncOrdersByIntegrationID", mock.Anything, "5").Return(errors.New("sync error")).Maybe()
 
 	r := gin.New()
 	r.POST("/integrations/:id/sync", h.SyncOrdersByIntegrationIDHandler)
@@ -534,8 +542,8 @@ func TestSyncOrdersByIntegrationIDHandler_ErrorDeUseCase(t *testing.T) {
 	// Act
 	r.ServeHTTP(w, req)
 
-	// Assert
-	assert.Equal(t, http.StatusInternalServerError, w.Code)
+	// Assert — el handler ejecuta en goroutine y siempre retorna 202
+	assert.Equal(t, http.StatusAccepted, w.Code)
 }
 
 func TestSyncOrdersByIntegrationIDHandler_ConFiltros(t *testing.T) {

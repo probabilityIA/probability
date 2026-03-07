@@ -75,6 +75,27 @@ type CompareResponseMessage struct {
 	Timestamp         time.Time         `json:"timestamp"`
 }
 
+// ListItemsItem ítem del catálogo del proveedor para list_items
+type ListItemsItem struct {
+	ItemCode      string  `json:"item_code"`
+	ItemName      string  `json:"item_name"`
+	ItemPrice     float64 `json:"item_price"`
+	UnitCost      float64 `json:"unit_cost"`
+	Description   string  `json:"description"`
+	MinimumStock  string  `json:"minimum_stock"`
+	OrderQuantity string  `json:"order_quantity"`
+}
+
+// ListItemsResponseMessage mensaje de respuesta de list_items publicado a invoicing.responses
+type ListItemsResponseMessage struct {
+	Operation     string          `json:"operation"` // "list_items"
+	CorrelationID string          `json:"correlation_id"`
+	BusinessID    uint            `json:"business_id"`
+	Items         []ListItemsItem `json:"items"`
+	Error         string          `json:"error,omitempty"`
+	Timestamp     time.Time       `json:"timestamp"`
+}
+
 // ResponsePublisher publica responses de facturación
 type ResponsePublisher struct {
 	queue rabbitmq.IQueue
@@ -165,6 +186,43 @@ func (p *ResponsePublisher) PublishCompareResponse(ctx context.Context, response
 		Str("correlation_id", response.CorrelationID).
 		Int("documents", len(response.ProviderDocuments)).
 		Msg("📤 Compare response published successfully")
+
+	return nil
+}
+
+// PublishListItemsResponse publica el resultado de list_items del proveedor
+func (p *ResponsePublisher) PublishListItemsResponse(ctx context.Context, response *ListItemsResponseMessage) error {
+	if response.Timestamp.IsZero() {
+		response.Timestamp = time.Now()
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		p.log.Error(ctx).Err(err).Msg("Failed to marshal list_items response")
+		return fmt.Errorf("failed to marshal list_items response: %w", err)
+	}
+
+	if p.queue == nil {
+		p.log.Warn(ctx).
+			Str("correlation_id", response.CorrelationID).
+			Msg("RabbitMQ client is nil, cannot publish list_items response")
+		return nil
+	}
+
+	if err := p.queue.Publish(ctx, QueueInvoiceResponses, data); err != nil {
+		p.log.Error(ctx).
+			Err(err).
+			Str("queue", QueueInvoiceResponses).
+			Str("correlation_id", response.CorrelationID).
+			Msg("Failed to publish list_items response")
+		return fmt.Errorf("failed to publish list_items response: %w", err)
+	}
+
+	p.log.Info(ctx).
+		Str("queue", QueueInvoiceResponses).
+		Str("correlation_id", response.CorrelationID).
+		Int("items", len(response.Items)).
+		Msg("📤 List items response published successfully")
 
 	return nil
 }

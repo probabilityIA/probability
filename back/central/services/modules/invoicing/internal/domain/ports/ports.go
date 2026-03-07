@@ -133,6 +133,15 @@ type IRepository interface {
 	// GetOrderCreatedAtsByIDs retorna map[orderID]createdAt para un batch de órdenes.
 	// Replica query de solo lectura sobre tabla orders (módulo orders — no compartir repo).
 	GetOrderCreatedAtsByIDs(ctx context.Context, orderIDs []string) (map[string]*time.Time, error)
+
+	// ============================================
+	// PRODUCTOS (queries replicadas localmente — regla de aislamiento)
+	// ============================================
+
+	// ListProductsByBusinessID retorna productos del negocio para comparación con proveedor.
+	// Tabla consultada: products (gestionada por módulo products).
+	// Replicado localmente para no compartir repositorios entre módulos.
+	ListProductsByBusinessID(ctx context.Context, businessID uint) ([]dtos.SystemProduct, error)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -191,6 +200,8 @@ type IInvoiceSSEPublisher interface {
 	PublishBulkJobCompleted(ctx context.Context, job *entities.BulkInvoiceJob) error
 	// Comparación de facturas
 	PublishCompareReady(ctx context.Context, data *dtos.CompareResponseData) error
+	// Comparación de ítems/productos
+	PublishListItemsReady(ctx context.Context, data *dtos.ItemCompareResponseData) error
 }
 
 // IInvoiceRequestPublisher publica solicitudes de facturación a colas específicas de proveedores
@@ -295,4 +306,8 @@ type IUseCase interface {
 	// Comparación de facturas con proveedor (auditoría esporádica, sin persistencia)
 	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.compare_ready"
 	RequestComparison(ctx context.Context, dto *dtos.CompareRequestDTO) (string, error)
+
+	// Comparación de ítems del proveedor vs productos del sistema (sin persistencia)
+	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.list_items_ready"
+	RequestListItems(ctx context.Context, dto *dtos.ListItemsRequestDTO) (string, error)
 }

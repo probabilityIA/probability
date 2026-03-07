@@ -19,7 +19,9 @@ func newTestUseCase(
 	logger *mocks.LoggerMock,
 	cfg *mocks.ConfigMock,
 ) *IntegrationUseCase {
-	return New(repo, enc, cache, logger, cfg)
+	q := new(mocks.QueueMock)
+	q.On("Publish", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	return New(repo, enc, cache, logger, cfg, q)
 }
 
 // configurarLoggerPermisivo configura el logger para que acepte cualquier llamada

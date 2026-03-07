@@ -19,6 +19,7 @@ const (
 	OperationCancel      = "cancel"
 	OperationCompare     = "compare"
 	OperationCheckStatus = "check_status"
+	OperationListItems   = "list_items"
 )
 
 // Providers

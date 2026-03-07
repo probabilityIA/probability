@@ -62,6 +62,9 @@ type IHandler interface {
 
 	// Comparación con proveedor (auditoría esporádica)
 	CompareInvoices(c *gin.Context)
+
+	// Comparación de ítems del proveedor vs productos del sistema
+	ListItems(c *gin.Context)
 }
 
 // handler implementa IHandler
