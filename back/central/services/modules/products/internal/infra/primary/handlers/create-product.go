@@ -64,6 +64,8 @@ func (h *Handlers) CreateProduct(c *gin.Context) {
 		return
 	}
 
+	product.ImageURL = h.buildImageURL(product.ImageURL)
+
 	c.JSON(http.StatusCreated, gin.H{
 		"success": true,
 		"message": "Producto creado exitosamente",

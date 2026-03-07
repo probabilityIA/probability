@@ -73,7 +73,7 @@ func Init(ctx context.Context) error {
 	events.New(v1Group, logger, rabbitMQ, redisClient)
 
 	// Initialize Order Module (and others)
-	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient)
+	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, Softpymes, etc.)
 	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)

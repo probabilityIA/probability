@@ -9,7 +9,8 @@ import {
     UpdateProductDTO,
     ActionResponse,
     AddProductIntegrationDTO,
-    ProductIntegrationsResponse
+    ProductIntegrationsResponse,
+    UploadImageResponse
 } from '../../domain/types';
 
 export class ProductApiRepository implements IProductRepository {
@@ -84,6 +85,26 @@ export class ProductApiRepository implements IProductRepository {
         return this.fetch<ActionResponse>(this.withBusinessId(`/products/${id}`, businessId), {
             method: 'DELETE',
         });
+    }
+
+    async uploadProductImage(productId: string, formData: FormData, businessId?: number): Promise<UploadImageResponse> {
+        const url = `${this.baseUrl}${this.withBusinessId(`/products/${productId}/image`, businessId)}`;
+        const headers: Record<string, string> = {
+            'Accept': 'application/json',
+        };
+        if (this.token) {
+            headers['Authorization'] = `Bearer ${this.token}`;
+        }
+        const res = await fetch(url, {
+            method: 'POST',
+            headers,
+            body: formData,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            throw new Error(data.message || data.error || 'Error uploading image');
+        }
+        return data;
     }
 
     // ═══════════════════════════════════════════

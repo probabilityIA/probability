@@ -8,10 +8,11 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // New inicializa el módulo de products
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig) {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, s3 storage.IS3Service) {
 	// 1. Init Repositories
 	repo := repository.New(database)
 
@@ -19,7 +20,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	uc := usecases.New(repo)
 
 	// 3. Init Handlers
-	h := handlers.New(uc, logger)
+	h := handlers.New(uc, logger, s3, environment)
 
 	// 4. Register Routes
 	h.RegisterRoutes(router)

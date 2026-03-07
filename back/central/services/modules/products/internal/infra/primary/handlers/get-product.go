@@ -58,6 +58,8 @@ func (h *Handlers) GetProductByID(c *gin.Context) {
 		return
 	}
 
+	product.ImageURL = h.buildImageURL(product.ImageURL)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Producto obtenido exitosamente",

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Product, CreateProductDTO, UpdateProductDTO } from '../../domain/types';
-import { createProductAction, updateProductAction } from '../../infra/actions';
+import { createProductAction, updateProductAction, uploadProductImageAction } from '../../infra/actions';
 import { Button, Alert, Input, Select } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { getActionError } from '@/shared/utils/action-result';
@@ -34,6 +34,9 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(product?.image_url || null);
+    const [uploadingImage, setUploadingImage] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -79,6 +82,36 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
     const handleChange = (field: keyof CreateProductDTO, value: any) => {
         setFormData({ ...formData, [field]: value });
+    };
+
+    const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !product) return;
+
+        // Preview local
+        const reader = new FileReader();
+        reader.onloadend = () => setImagePreview(reader.result as string);
+        reader.readAsDataURL(file);
+
+        // Upload al backend
+        setUploadingImage(true);
+        setError(null);
+        try {
+            const formData = new FormData();
+            formData.append('image', file);
+            const result = await uploadProductImageAction(product.id, formData, businessId);
+            if (result.success) {
+                setImagePreview(result.image_url);
+                setSuccess('Imagen subida exitosamente');
+                setTimeout(() => setSuccess(null), 3000);
+            } else {
+                setError(result.message || 'Error al subir imagen');
+            }
+        } catch (err: any) {
+            setError(getActionError(err, 'Error al subir imagen'));
+        } finally {
+            setUploadingImage(false);
+        }
     };
 
     return (
@@ -182,6 +215,50 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     />
                 </div>
             </div>
+
+            {/* Imagen del producto (solo en modo edicion) */}
+            {product && (
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Imagen del producto
+                    </label>
+                    <div className="flex items-start gap-4">
+                        {imagePreview ? (
+                            <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
+                                <img
+                                    src={imagePreview}
+                                    alt={product.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            </div>
+                        ) : (
+                            <div className="w-32 h-32 rounded-lg border-2 border-dashed border-gray-300 flex items-center justify-center text-gray-400 text-sm text-center">
+                                Sin imagen
+                            </div>
+                        )}
+                        <div className="flex flex-col gap-2">
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/jpeg,image/png,image/gif,image/webp"
+                                onChange={handleImageUpload}
+                                className="hidden"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => fileInputRef.current?.click()}
+                                disabled={uploadingImage}
+                            >
+                                {uploadingImage ? 'Subiendo...' : 'Cambiar imagen'}
+                            </Button>
+                            <p className="text-xs text-gray-500">
+                                JPG, PNG, GIF o WebP. Max 10MB.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Description */}
             <div>

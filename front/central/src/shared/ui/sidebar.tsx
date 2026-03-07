@@ -126,6 +126,9 @@ export function Sidebar({ user }: SidebarProps) {
   const canViewInvoicingProviders = isSuperAdmin || hasPermission('Facturacion', 'Read');
   const canViewInvoicingConfigs = isSuperAdmin || hasPermission('Facturacion', 'Read');
 
+  // Storefront / Tienda
+  const canViewStorefront = isSuperAdmin || hasPermission('Storefront', 'Read');
+
   // Ultima milla
   const canViewDelivery = isSuperAdmin || hasPermission('Ultima Milla', 'Read') || hasPermission('Delivery', 'Read');
 
@@ -519,6 +522,35 @@ export function Sidebar({ user }: SidebarProps) {
                     </svg>
                     {primaryExpanded && (
                       <span className="text-sm font-medium transition-opacity duration-300">Clientes</span>
+                    )}
+                  </Link>
+                </li>
+              )}
+
+              {/* Item Tienda / Storefront */}
+              {canViewStorefront && (
+                <li>
+                  <Link
+                    href="/storefront/catalogo"
+                    className={`
+                      flex items-center gap-3 p-3 rounded-lg transition-all duration-300
+                      ${pathname.startsWith('/storefront')
+                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
+                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                      }
+                    `}
+                  >
+                    {pathname.startsWith('/storefront') && (
+                      <div
+                        className="absolute left-0 w-1 h-8 rounded-r-full"
+                        style={{ backgroundColor: 'var(--color-tertiary)' }}
+                      />
+                    )}
+                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z" />
+                    </svg>
+                    {primaryExpanded && (
+                      <span className="text-sm font-medium transition-opacity duration-300">Tienda</span>
                     )}
                   </Link>
                 </li>

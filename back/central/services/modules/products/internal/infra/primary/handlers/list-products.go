@@ -191,6 +191,11 @@ func (h *Handlers) ListProducts(c *gin.Context) {
 		return
 	}
 
+	// Construir URLs completas de imagenes
+	for i := range response.Data {
+		response.Data[i].ImageURL = h.buildImageURL(response.Data[i].ImageURL)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success":     true,
 		"message":     "Productos obtenidos exitosamente",

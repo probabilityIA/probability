@@ -128,6 +128,24 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to seed new resources and permissions: %w", err)
 	}
 
+	// Add user_id column to clients table (storefront)
+	if err := r.db.Conn(ctx).AutoMigrate(&models.Client{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate clients (user_id): %w", err)
+	}
+
+	// Seed cliente_final role, storefront resource and permissions
+	if err := r.seedStorefrontRoleAndPermissions(ctx); err != nil {
+		return fmt.Errorf("failed to seed storefront role and permissions: %w", err)
+	}
+
+	// Update product defaults: is_active=true, status='active' and apply to all existing products
+	if err := r.db.Conn(ctx).AutoMigrate(&models.Product{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate products (is_active default): %w", err)
+	}
+	if err := r.activateAllProducts(ctx); err != nil {
+		return fmt.Errorf("failed to activate all products: %w", err)
+	}
+
 	return nil
 }
 
@@ -1585,6 +1603,115 @@ func (r *Repository) seedNewResourcesAndPermissions(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// seedStorefrontRoleAndPermissions creates the cliente_final role, storefront resource and permissions
+func (r *Repository) seedStorefrontRoleAndPermissions(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	// 1. Create storefront resource (id=24)
+	var resCount int64
+	db.Model(&models.Resource{}).Where("id = ?", 24).Count(&resCount)
+	if resCount == 0 {
+		res := models.Resource{
+			Model:       gorm.Model{ID: 24},
+			Name:        "Storefront",
+			Description: "Modulo de tienda para clientes finales",
+		}
+		if err := db.Create(&res).Error; err != nil {
+			return fmt.Errorf("failed to create storefront resource: %w", err)
+		}
+	}
+
+	// 2. Create storefront permissions (read=86, create=87)
+	scopeID := uint(2) // Business scope
+	storefrontPerms := []struct {
+		ID       uint
+		Name     string
+		ActionID uint // 1=create, 2=read
+	}{
+		{86, "Read Storefront", 2},
+		{87, "Create Storefront", 1},
+	}
+
+	permIDs := []uint{}
+	for _, p := range storefrontPerms {
+		var count int64
+		db.Model(&models.Permission{}).Where("id = ?", p.ID).Count(&count)
+		if count == 0 {
+			perm := models.Permission{
+				Model:       gorm.Model{ID: p.ID},
+				Name:        p.Name,
+				Description: p.Name,
+				ResourceID:  24,
+				ActionID:    p.ActionID,
+				ScopeID:     scopeID,
+			}
+			if err := db.Create(&perm).Error; err != nil {
+				return fmt.Errorf("failed to create permission %s: %w", p.Name, err)
+			}
+			permIDs = append(permIDs, p.ID)
+		}
+	}
+
+	// 3. Create cliente_final role (level=5, scope=business, is_system=true)
+	var roleCount int64
+	db.Model(&models.Role{}).Where("name = ?", "cliente_final").Count(&roleCount)
+	if roleCount == 0 {
+		role := models.Role{
+			Name:        "cliente_final",
+			Description: "Rol para clientes finales del storefront",
+			Level:       5,
+			IsSystem:    true,
+			ScopeID:     scopeID,
+		}
+		if err := db.Create(&role).Error; err != nil {
+			return fmt.Errorf("failed to create cliente_final role: %w", err)
+		}
+
+		// Assign storefront permissions to the new role
+		for _, permID := range []uint{86, 87} {
+			if err := db.Exec(
+				"INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)",
+				role.ID, permID,
+			).Error; err != nil {
+				return fmt.Errorf("failed to assign permission %d to cliente_final role: %w", permID, err)
+			}
+		}
+	}
+
+	// 4. Add storefront resource to all businesses' configured resources
+	var businessIDs []uint
+	db.Table("business_resource_configured").
+		Select("DISTINCT business_id").
+		Where("deleted_at IS NULL").
+		Scan(&businessIDs)
+
+	for _, bizID := range businessIDs {
+		var count int64
+		db.Model(&models.BusinessResourceConfigured{}).
+			Where("business_id = ? AND resource_id = ? AND deleted_at IS NULL", bizID, 24).
+			Count(&count)
+		if count == 0 {
+			brc := models.BusinessResourceConfigured{
+				BusinessID: bizID,
+				ResourceID: 24,
+				Active:     true,
+			}
+			if err := db.Create(&brc).Error; err != nil {
+				return fmt.Errorf("failed to create business_resource_configured biz=%d res=24: %w", bizID, err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// activateAllProducts sets is_active=true and status='active' for all existing products
+func (r *Repository) activateAllProducts(ctx context.Context) error {
+	return r.db.Conn(ctx).Exec(
+		"UPDATE products SET is_active = true, status = 'active' WHERE is_active = false OR status != 'active'",
+	).Error
 }
 
 // ptrUint es un helper para crear punteros a uint

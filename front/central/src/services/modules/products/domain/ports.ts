@@ -7,7 +7,8 @@ import {
     UpdateProductDTO,
     ActionResponse,
     AddProductIntegrationDTO,
-    ProductIntegrationsResponse
+    ProductIntegrationsResponse,
+    UploadImageResponse
 } from './types';
 
 export interface IProductRepository {
@@ -16,6 +17,7 @@ export interface IProductRepository {
     createProduct(data: CreateProductDTO, businessId?: number): Promise<SingleResponse<Product>>;
     updateProduct(id: string, data: UpdateProductDTO, businessId?: number): Promise<SingleResponse<Product>>;
     deleteProduct(id: string, businessId?: number): Promise<ActionResponse>;
+    uploadProductImage(productId: string, formData: FormData, businessId?: number): Promise<UploadImageResponse>;
 
     // Product-Integration Management
     addProductIntegration(productId: string, data: AddProductIntegrationDTO, businessId?: number): Promise<SingleResponse<any>>;

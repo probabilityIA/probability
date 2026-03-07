@@ -17,6 +17,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/products"
 	"github.com/secamc93/probability/back/central/services/modules/routes"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
+	"github.com/secamc93/probability/back/central/services/modules/storefront"
 	"github.com/secamc93/probability/back/central/services/modules/vehicles"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -24,6 +25,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // ModuleBundles contiene referencias a los bundles de módulos que otros servicios pueden necesitar
@@ -38,7 +40,7 @@ type ModuleBundles struct {
 
 // New inicializa todos los módulos (excepto invoicing que requiere integrationCore)
 // y retorna referencias a bundles compartidos
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis) *ModuleBundles {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service) *ModuleBundles {
 	// Inicializar módulo de payments
 	payments.New(router, database, logger, environment)
 
@@ -49,7 +51,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	orders.New(router, database, logger, environment, rabbitMQ)
 
 	// Inicializar módulo de products
-	products.New(router, database, logger, environment)
+	products.New(router, database, logger, environment, s3)
 
 	// Inicializar módulo de customers
 	customers.New(router, database)
@@ -84,6 +86,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	drivers.New(router, database)
 	vehicles.New(router, database)
 	routes.New(router, database)
+
+	// Inicializar módulo de storefront (tienda para clientes finales)
+	storefront.New(router, database, logger, rabbitMQ, environment)
 
 	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
 	if rabbitMQ != nil {

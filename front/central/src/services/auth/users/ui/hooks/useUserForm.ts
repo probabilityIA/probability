@@ -76,7 +76,7 @@ export const useUserForm = (initialData?: User, onSuccess?: () => void) => {
             }
 
             if (response.success) {
-                if (!initialData && response.password) {
+                if (!initialData && 'password' in response && response.password) {
                     setSuccessMessage(`User created successfully. Password: ${response.password}`);
                     // Don't close modal immediately if we need to show password
                 } else {

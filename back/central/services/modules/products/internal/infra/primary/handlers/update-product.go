@@ -81,6 +81,8 @@ func (h *Handlers) UpdateProduct(c *gin.Context) {
 		return
 	}
 
+	product.ImageURL = h.buildImageURL(product.ImageURL)
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Producto actualizado exitosamente",

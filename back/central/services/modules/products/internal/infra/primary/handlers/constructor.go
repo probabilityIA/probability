@@ -6,20 +6,26 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/products/internal/app/usecases"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
+	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
 // Handlers contiene todos los handlers del módulo products
 type Handlers struct {
 	uc  *usecases.UseCases
 	log log.ILogger
+	s3  storage.IS3Service
+	env env.IConfig
 }
 
 // New crea una nueva instancia de Handlers
-func New(uc *usecases.UseCases, logger log.ILogger) *Handlers {
+func New(uc *usecases.UseCases, logger log.ILogger, s3 storage.IS3Service, environment env.IConfig) *Handlers {
 	return &Handlers{
 		uc:  uc,
 		log: logger,
+		s3:  s3,
+		env: environment,
 	}
 }
 

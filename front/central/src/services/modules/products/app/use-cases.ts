@@ -29,6 +29,10 @@ export class ProductUseCases {
         return this.repository.deleteProduct(id, businessId);
     }
 
+    async uploadProductImage(productId: string, formData: FormData, businessId?: number) {
+        return this.repository.uploadProductImage(productId, formData, businessId);
+    }
+
     // ═══════════════════════════════════════════
     // Product-Integration Management
     // ═══════════════════════════════════════════

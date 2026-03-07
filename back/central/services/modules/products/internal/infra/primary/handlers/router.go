@@ -16,6 +16,9 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		products.PUT("/:id", middleware.JWT(), h.UpdateProduct)
 		products.DELETE("/:id", middleware.JWT(), h.DeleteProduct)
 
+		// Upload de imagen
+		products.POST("/:id/image", middleware.JWT(), h.UploadProductImage)
+
 		// Gestión de integraciones
 		products.POST("/:id/integrations", middleware.JWT(), h.AddProductIntegration)
 		products.GET("/:id/integrations", middleware.JWT(), h.GetProductIntegrations)

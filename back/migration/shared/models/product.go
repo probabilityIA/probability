@@ -65,8 +65,8 @@ type Product struct {
 	Brand    string         `gorm:"size:255;index" json:"brand"`      // Marca
 
 	// Estado
-	Status     string `gorm:"size:50;default:'draft';index" json:"status"` // Estado: active, draft, archived
-	IsActive   bool   `gorm:"default:false;index" json:"is_active"`        // Si está activo
+	Status     string `gorm:"size:50;default:'active';index" json:"status"` // Estado: active, draft, archived
+	IsActive   bool   `gorm:"default:true;index" json:"is_active"`          // Si está activo
 	IsFeatured bool   `gorm:"default:false;index" json:"is_featured"`      // Si es destacado
 
 	// Metadata

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { getProductsAction, deleteProductAction } from '../../infra/actions';
+import { getProductsAction, deleteProductAction, updateProductAction } from '../../infra/actions';
 import { Product, GetProductsParams } from '../../domain/types';
 import { Button, Alert, Badge } from '@/shared/ui';
 import ProductIntegrationsModal from './ProductIntegrationsModal';
@@ -98,6 +98,19 @@ const ProductList = forwardRef(function ProductList(
         }
     };
 
+    const handleToggleActive = async (product: Product) => {
+        try {
+            const response = await updateProductAction(product.id, { is_active: !product.is_active }, selectedBusinessId);
+            if (response.success) {
+                setProducts(prev => prev.map(p => p.id === product.id ? { ...p, is_active: !p.is_active } : p));
+            } else {
+                alert(response.message || 'Error al actualizar el producto');
+            }
+        } catch (err: any) {
+            alert(err.message || 'Error al actualizar el producto');
+        }
+    };
+
     const formatCurrency = (amount: number, currency: string = 'USD') => {
         return new Intl.NumberFormat('es-CO', {
             style: 'currency',
@@ -170,8 +183,10 @@ const ProductList = forwardRef(function ProductList(
                                     <tr key={product.id}>
                                         <td className="px-3 sm:px-6 py-4">
                                             <div className="flex items-center">
-                                                {product.thumbnail && (
-                                                    <img src={product.thumbnail} alt={product.name} className="h-10 w-10 rounded-full mr-3 object-cover" />
+                                                {product.image_url ? (
+                                                    <img src={product.image_url} alt={product.name} className="h-10 w-10 rounded-full mr-3 object-cover" />
+                                                ) : (
+                                                    <div className="h-10 w-10 rounded-full mr-3 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">N/A</div>
                                                 )}
                                                 <div>
                                                     <div className="text-sm font-medium text-gray-900">
@@ -197,9 +212,17 @@ const ProductList = forwardRef(function ProductList(
                                             </div>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
-                                            <Badge type={product.is_active ? 'success' : 'secondary'}>
+                                            <button
+                                                onClick={() => handleToggleActive(product)}
+                                                className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full transition-colors duration-200 cursor-pointer ${
+                                                    product.is_active
+                                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
+                                                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                                }`}
+                                                title={product.is_active ? 'Click para desactivar' : 'Click para activar'}
+                                            >
                                                 {product.is_active ? 'Activo' : 'Inactivo'}
-                                            </Badge>
+                                            </button>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
                                             {formatDate(product.created_at)}

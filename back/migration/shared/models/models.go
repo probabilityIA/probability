@@ -236,8 +236,10 @@ type Client struct {
 	Email      *string `gorm:"size:255;uniqueIndex:idx_business_client_email,priority:2"`
 	Phone      string  `gorm:"size:50"`
 	Dni        *string `gorm:"size:50;uniqueIndex:idx_business_client_dni,priority:2"`
+	UserID     *uint   `gorm:"uniqueIndex:idx_clients_user_id"`
 
 	Business Business `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	User     *User    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
 // ───────────────────────────────────────────

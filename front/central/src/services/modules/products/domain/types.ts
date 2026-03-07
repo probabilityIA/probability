@@ -33,6 +33,7 @@ export interface Product {
     length?: number;
 
     // Multimedia
+    image_url?: string;
     images?: string[];
     thumbnail?: string;
 
@@ -128,11 +129,18 @@ export interface UpdateProductDTO {
     height?: number;
     width?: number;
     length?: number;
+    image_url?: string;
     images?: string[];
     thumbnail?: string;
     status?: string;
     is_active?: boolean;
     metadata?: any;
+}
+
+export interface UploadImageResponse {
+    success: boolean;
+    message: string;
+    image_url: string;
 }
 
 // ═══════════════════════════════════════════

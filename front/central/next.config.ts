@@ -3,6 +3,19 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: 'standalone',
 
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.s3.amazonaws.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.s3.*.amazonaws.com',
+      },
+    ],
+  },
+
   // Proxy para desarrollo local - evita problemas de CORS
   async rewrites() {
     return [
@@ -39,7 +52,7 @@ const nextConfig: NextConfig = {
   // Configuración experimental para mejorar el manejo de cookies
   experimental: {
     serverActions: {
-      bodySizeLimit: '2mb',
+      bodySizeLimit: '12mb',
     },
   },
 };

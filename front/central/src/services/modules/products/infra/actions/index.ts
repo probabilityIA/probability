@@ -65,6 +65,18 @@ export const deleteProductAction = async (id: string, businessId?: number) => {
     }
 };
 
+export const uploadProductImageAction = async (productId: string, formData: FormData, businessId?: number) => {
+    try {
+        return await (await getUseCases()).uploadProductImage(productId, formData, businessId);
+    } catch (error: any) {
+        return {
+            success: false,
+            message: error.message || 'Error al subir imagen',
+            image_url: ''
+        };
+    }
+};
+
 // ═══════════════════════════════════════════
 // Product-Integration Management Actions
 // ═══════════════════════════════════════════

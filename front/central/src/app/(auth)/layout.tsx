@@ -71,6 +71,13 @@ export default function AuthLayout({
           }
         }
 
+        // Check if user is cliente_final (level 5) - redirect to storefront
+        const permissions = TokenStorage.getPermissions();
+        if (permissions?.role_name === 'cliente_final') {
+          router.push('/storefront/catalogo');
+          return;
+        }
+
         // Todo OK, setear usuario
         setTimeout(() => {
           setUser(userData);
