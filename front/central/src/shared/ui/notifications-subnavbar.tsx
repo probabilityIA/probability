@@ -7,6 +7,7 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useNotificationBusiness } from '@/shared/contexts/notification-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
+import { MyIntegrationsButton } from './my-integrations-button';
 
 export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
     const pathname = usePathname();
@@ -65,6 +66,7 @@ export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
                         })}
                     </div>
                     <div className="flex items-center gap-2 ml-4">
+                        <MyIntegrationsButton businessId={selectedBusinessId} />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}

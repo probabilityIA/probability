@@ -8,6 +8,7 @@ import { useInvoicingBusiness } from '@/shared/contexts/invoicing-business-conte
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useToast } from '@/shared/providers/toast-provider';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
+import { MyIntegrationsButton } from './my-integrations-button';
 import {
     getConfigsAction,
     enableConfigAction,
@@ -115,6 +116,7 @@ export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
                         )}
                     </div>
                     <div className="flex items-center gap-2 ml-4">
+                        <MyIntegrationsButton businessId={selectedBusinessId} />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={setSelectedBusinessId}

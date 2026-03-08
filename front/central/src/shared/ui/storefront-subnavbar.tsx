@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useStorefrontBusiness } from '@/shared/contexts/storefront-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
+import { MyIntegrationsButton } from './my-integrations-button';
 
 export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
     const pathname = usePathname();
@@ -53,6 +54,7 @@ export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
                         ))}
                     </div>
                     <div className="flex items-center gap-2 ml-4">
+                        <MyIntegrationsButton businessId={selectedBusinessId} />
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId}
                             onChange={handleBusinessChange}
