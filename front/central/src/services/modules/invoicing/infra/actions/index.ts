@@ -25,6 +25,8 @@ import type {
   BulkCreateInvoicesDTO,
   BulkCreateResult,
   SyncLog,
+  CompareResponseData,
+  ItemCompareResponseData,
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -392,4 +394,111 @@ export async function requestInvoiceComparisonAction(
       ...(businessId ? { business_id: businessId } : {}),
     }),
   });
+}
+
+/**
+ * Polls for a compare result by correlation ID.
+ * Returns the data if ready, null if not yet available (404).
+ *
+ * @param correlationId - The correlation_id returned by requestInvoiceComparisonAction
+ * @param businessId - ID del negocio (solo requerido para super admin)
+ */
+export async function getCompareResultAction(
+  correlationId: string,
+  businessId?: number
+): Promise<CompareResponseData | null> {
+  const params = businessId ? `?business_id=${businessId}` : '';
+  const url = `${API_BASE_URL}/invoicing/invoices/compare/${correlationId}${params}`;
+
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('session_token')?.value;
+  const businessToken = cookieStore.get('business_token')?.value;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (sessionToken) headers['Authorization'] = `Bearer ${sessionToken}`;
+  if (businessToken) headers['X-Business-Token'] = businessToken;
+
+  const response = await fetch(url, { headers });
+
+  // 404 means the result is not ready yet
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `Error ${response.status}`;
+    try {
+      const errorBody = JSON.parse(errorText);
+      errorMessage = errorBody.message || errorBody.error || errorMessage;
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+// ============================================
+// COMPARACIÓN DE ÍTEMS/PRODUCTOS (Auditoría)
+// ============================================
+
+/**
+ * Inicia una comparación asíncrona de ítems del proveedor vs productos del sistema.
+ * El resultado llega via SSE con el evento "invoice.list_items_ready".
+ */
+export async function requestListItemsComparisonAction(
+  businessId?: number
+): Promise<{ correlation_id: string; message: string }> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/items`, {
+    method: 'POST',
+    body: JSON.stringify({
+      ...(businessId ? { business_id: businessId } : {}),
+    }),
+  });
+}
+
+/**
+ * Polls for an items compare result by correlation ID.
+ * Returns the data if ready, null if not yet available (404).
+ */
+export async function getListItemsResultAction(
+  correlationId: string,
+  businessId?: number
+): Promise<ItemCompareResponseData | null> {
+  const params = businessId ? `?business_id=${businessId}` : '';
+  const url = `${API_BASE_URL}/invoicing/invoices/items/${correlationId}${params}`;
+
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('session_token')?.value;
+  const businessToken = cookieStore.get('business_token')?.value;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (sessionToken) headers['Authorization'] = `Bearer ${sessionToken}`;
+  if (businessToken) headers['X-Business-Token'] = businessToken;
+
+  const response = await fetch(url, { headers });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `Error ${response.status}`;
+    try {
+      const errorBody = JSON.parse(errorText);
+      errorMessage = errorBody.message || errorBody.error || errorMessage;
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
 }

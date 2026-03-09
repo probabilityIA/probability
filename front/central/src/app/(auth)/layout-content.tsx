@@ -1,14 +1,17 @@
 'use client';
 
 import React from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
 import { NotificationBusinessProvider } from '@/shared/contexts/notification-business-context';
 import { InvoicingBusinessProvider } from '@/shared/contexts/invoicing-business-context';
 import { OrdersBusinessProvider } from '@/shared/contexts/orders-business-context';
 import { DeliveryBusinessProvider } from '@/shared/contexts/delivery-business-context';
 import { StorefrontBusinessProvider } from '@/shared/contexts/storefront-business-context';
+import { StorefrontNav } from '@/services/modules/storefront/ui/components/StorefrontNav';
 import { LinaChatbot } from '@/shared/ui/LinaChatbot';
 
 interface LayoutContentProps {
@@ -25,6 +28,11 @@ interface LayoutContentProps {
 }
 
 function LayoutContent({ user, children }: LayoutContentProps) {
+  const pathname = usePathname();
+  const { permissions } = usePermissions();
+  const isClienteFinal = permissions?.role_name === 'cliente_final';
+  const isStorefrontPath = pathname.startsWith('/storefront');
+
   const {
     primaryExpanded,
     secondaryExpanded,
@@ -54,6 +62,18 @@ function LayoutContent({ user, children }: LayoutContentProps) {
       requestSecondaryCollapse();
     }
   };
+
+  // Cliente final en storefront: layout simple sin sidebar
+  if (isClienteFinal && isStorefrontPath) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <StorefrontNav />
+        <main className="max-w-7xl mx-auto px-4 py-6">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">

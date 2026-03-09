@@ -9,6 +9,8 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/inventory"
 	"github.com/secamc93/probability/back/central/services/modules/invoicing"
 	"github.com/secamc93/probability/back/central/services/modules/monitoring"
+	"github.com/secamc93/probability/back/central/services/modules/publicsite"
+	"github.com/secamc93/probability/back/central/services/modules/websiteconfig"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
@@ -89,6 +91,12 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de storefront (tienda para clientes finales)
 	storefront.New(router, database, logger, rabbitMQ, environment)
+
+	// Inicializar módulo de tienda pública (sin auth)
+	publicsite.New(router, database, logger, environment)
+
+	// Inicializar módulo de configuración de sitio web (con auth)
+	websiteconfig.New(router, database, logger)
 
 	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
 	if rabbitMQ != nil {

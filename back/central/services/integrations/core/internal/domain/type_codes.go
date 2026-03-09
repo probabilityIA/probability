@@ -26,6 +26,8 @@ const (
 	IntegrationTypeFalabella    = 20 // Falabella - Marketplace
 	IntegrationTypeExito        = 21 // Exito - Marketplace
 	IntegrationTypeEmail        = 29 // Email - Mensajería (notificaciones por correo)
+	IntegrationTypeTienda       = 30 // Tienda - Storefront con login
+	IntegrationTypeTiendaWeb    = 31 // Sitio Web - Sitio web público
 )
 
 // IntegrationCategory representa la categoría de integración
@@ -83,6 +85,10 @@ func IntegrationTypeCodeAsInt(code string) int {
 		return IntegrationTypeExito // 21
 	case "email":
 		return IntegrationTypeEmail // 29
+	case "tienda":
+		return IntegrationTypeTienda // 30
+	case "tienda_web":
+		return IntegrationTypeTiendaWeb // 31
 	default:
 		return 0
 	}

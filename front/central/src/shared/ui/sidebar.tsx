@@ -128,6 +128,7 @@ export function Sidebar({ user }: SidebarProps) {
 
   // Storefront / Tienda
   const canViewStorefront = isSuperAdmin || hasPermission('Storefront', 'Read');
+  const canViewWebsiteConfig = isSuperAdmin || user?.role === 'Administrador';
 
   // Ultima milla
   const canViewDelivery = isSuperAdmin || hasPermission('Ultima Milla', 'Read') || hasPermission('Delivery', 'Read');
@@ -527,20 +528,20 @@ export function Sidebar({ user }: SidebarProps) {
                 </li>
               )}
 
-              {/* Item Tienda / Storefront */}
-              {canViewStorefront && (
+              {/* Item Tienda (Storefront + Website Config) */}
+              {(canViewStorefront || canViewWebsiteConfig) && (
                 <li>
                   <Link
                     href="/storefront/catalogo"
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
-                      ${pathname.startsWith('/storefront')
+                      ${pathname.startsWith('/storefront') || pathname.startsWith('/website-config')
                         ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
                         : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
                       }
                     `}
                   >
-                    {pathname.startsWith('/storefront') && (
+                    {(pathname.startsWith('/storefront') || pathname.startsWith('/website-config')) && (
                       <div
                         className="absolute left-0 w-1 h-8 rounded-r-full"
                         style={{ backgroundColor: 'var(--color-tertiary)' }}

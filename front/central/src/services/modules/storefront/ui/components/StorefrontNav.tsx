@@ -11,7 +11,7 @@ export function StorefrontNav() {
 
     const handleLogout = () => {
         TokenStorage.clearSession();
-        router.push('/storefront/login');
+        router.push('/login');
     };
 
     const links = [

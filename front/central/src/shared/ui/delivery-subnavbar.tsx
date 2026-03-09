@@ -7,7 +7,7 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useDeliveryBusiness } from '@/shared/contexts/delivery-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
-import { MyIntegrationsButton } from './my-integrations-button';
+import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 
 export const DeliverySubNavbar = memo(function DeliverySubNavbar() {
     const pathname = usePathname();

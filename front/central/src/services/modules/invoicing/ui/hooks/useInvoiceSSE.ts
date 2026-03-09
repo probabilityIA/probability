@@ -7,6 +7,7 @@ import type {
   InvoiceSSEEventData,
   InvoiceSSEEventType,
   CompareResponseData,
+  ItemCompareResponseData,
 } from '../../domain/types';
 
 const INVOICE_EVENT_TYPES: InvoiceSSEEventType[] = [
@@ -18,6 +19,7 @@ const INVOICE_EVENT_TYPES: InvoiceSSEEventType[] = [
   'bulk_job.progress',
   'bulk_job.completed',
   'invoice.compare_ready',
+  'invoice.list_items_ready',
 ];
 
 interface UseInvoiceSSEOptions {
@@ -30,6 +32,7 @@ interface UseInvoiceSSEOptions {
   onBulkJobProgress?: (data: InvoiceSSEEventData) => void;
   onBulkJobCompleted?: (data: InvoiceSSEEventData) => void;
   onCompareReady?: (data: CompareResponseData) => void;
+  onListItemsReady?: (data: ItemCompareResponseData) => void;
 }
 
 export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
@@ -43,6 +46,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
     onBulkJobProgress,
     onBulkJobCompleted,
     onCompareReady,
+    onListItemsReady,
   } = options;
 
   // Use refs for callbacks to avoid reconnecting when they change
@@ -55,6 +59,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
     onBulkJobProgress,
     onBulkJobCompleted,
     onCompareReady,
+    onListItemsReady,
   });
 
   useEffect(() => {
@@ -67,6 +72,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
       onBulkJobProgress,
       onBulkJobCompleted,
       onCompareReady,
+      onListItemsReady,
     };
   });
 
@@ -102,6 +108,9 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
           break;
         case 'invoice.compare_ready':
           callbacksRef.current.onCompareReady?.(data as unknown as CompareResponseData);
+          break;
+        case 'invoice.list_items_ready':
+          callbacksRef.current.onListItemsReady?.(data as unknown as ItemCompareResponseData);
           break;
       }
     } catch {

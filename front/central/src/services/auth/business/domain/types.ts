@@ -132,6 +132,7 @@ export interface UpdateBusinessTypeDTO extends Partial<CreateBusinessTypeDTO> { 
 export interface BusinessSimple {
     id: number;
     name: string;
+    code?: string;
     logo_url?: string;
     primary_color?: string;
     secondary_color?: string;

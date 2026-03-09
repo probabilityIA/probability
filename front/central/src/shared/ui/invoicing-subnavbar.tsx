@@ -8,7 +8,7 @@ import { useInvoicingBusiness } from '@/shared/contexts/invoicing-business-conte
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useToast } from '@/shared/providers/toast-provider';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
-import { MyIntegrationsButton } from './my-integrations-button';
+import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 import {
     getConfigsAction,
     enableConfigAction,

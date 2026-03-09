@@ -21,12 +21,13 @@ func NewConsumers(
 	repo ports.IRepository,
 	ssePublisher ports.IInvoiceSSEPublisher,
 	eventPublisher ports.IEventPublisher,
+	compareCache ports.ICompareCache,
 	logger log.ILogger,
 ) *Consumers {
 	return &Consumers{
 		Order:       NewOrderConsumer(queue, useCase, logger),
 		Retry:       NewRetryConsumer(repo, useCase, logger),
 		BulkInvoice: NewBulkInvoiceConsumer(queue, useCase, repo, ssePublisher, logger),
-		Response:    NewResponseConsumer(queue, repo, ssePublisher, eventPublisher, logger),
+		Response:    NewResponseConsumer(queue, repo, ssePublisher, eventPublisher, compareCache, logger),
 	}
 }

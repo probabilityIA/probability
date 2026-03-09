@@ -48,13 +48,17 @@ func New(
 
 	// SSE publisher (Redis Pub/Sub) para notificaciones en tiempo real
 	var ssePublisher = invoicingRedis.NewNoopSSEPublisher()
+	// Compare cache (Redis) para almacenar resultados de comparación como entrega alternativa a SSE
+	var compareCache = invoicingRedis.NewNoopCompareCache()
 	if redisClient != nil {
 		ssePublisher = invoicingRedis.NewSSEPublisher(redisClient, moduleLogger, redis.ChannelInvoicingEvents)
+		compareCache = invoicingRedis.NewCompareCache(redisClient, moduleLogger)
 
 		// ═══════════════════════════════════════════════════════════════
 		// REGISTRAR PREFIJOS DE CACHÉ Y CANALES PARA STARTUP LOGS
 		// ═══════════════════════════════════════════════════════════════
 		redisClient.RegisterCachePrefix("probability:invoicing:config:*")
+		redisClient.RegisterCachePrefix("invoicing:compare:*")
 		redisClient.RegisterChannel(redis.ChannelInvoicingEvents)
 	} else {
 		moduleLogger.Warn(ctx).Msg("Redis no disponible - SSE deshabilitado")
@@ -79,6 +83,7 @@ func New(
 		eventPublisher,          // Event publisher (RabbitMQ)
 		ssePublisher,            // SSE publisher (Redis Pub/Sub)
 		invoiceRequestPublisher, // Invoice Request Publisher (RabbitMQ)
+		compareCache,            // Compare cache (Redis) para resultados de comparación
 		moduleLogger,
 	)
 
@@ -111,6 +116,7 @@ func New(
 			repo, // IRepository único
 			ssePublisher,
 			eventPublisher, // Event publisher para ResponseConsumer
+			compareCache,   // Compare cache para almacenar resultados en Redis
 			moduleLogger,
 		)
 

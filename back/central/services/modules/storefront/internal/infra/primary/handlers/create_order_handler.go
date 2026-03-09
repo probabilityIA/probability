@@ -32,6 +32,10 @@ func (h *Handlers) CreateOrder(c *gin.Context) {
 
 	err := h.uc.CreateOrder(c.Request.Context(), businessID, userID, dto)
 	if err != nil {
+		if errors.Is(err, domainerrors.ErrStorefrontNotActive) {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
 		if errors.Is(err, domainerrors.ErrNoItems) || errors.Is(err, domainerrors.ErrInvalidQuantity) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return

@@ -59,6 +59,8 @@ const (
 	IntegrationTypeFalabella    = domain.IntegrationTypeFalabella
 	IntegrationTypeExito        = domain.IntegrationTypeExito
 	IntegrationTypeEmail        = domain.IntegrationTypeEmail
+	IntegrationTypeTienda       = domain.IntegrationTypeTienda
+	IntegrationTypeTiendaWeb    = domain.IntegrationTypeTiendaWeb
 )
 
 // ============================================

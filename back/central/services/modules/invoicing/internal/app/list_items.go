@@ -90,3 +90,21 @@ func (uc *useCase) RequestListItems(ctx context.Context, dto *dtos.ListItemsRequ
 
 	return correlationID, nil
 }
+
+// GetListItemsResult recupera el resultado de una comparación de ítems almacenado en Redis.
+// Retorna nil si no existe (aún no listo o expirado).
+func (uc *useCase) GetListItemsResult(ctx context.Context, correlationID string) (*dtos.ItemCompareResponseData, error) {
+	if correlationID == "" {
+		return nil, fmt.Errorf("correlation_id is required")
+	}
+
+	result, err := uc.compareCache.GetItemCompareResult(ctx, correlationID)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).
+			Str("correlation_id", correlationID).
+			Msg("Failed to get item compare result from cache")
+		return nil, err
+	}
+
+	return result, nil
+}

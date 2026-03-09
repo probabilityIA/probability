@@ -7,7 +7,7 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useNotificationBusiness } from '@/shared/contexts/notification-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
-import { MyIntegrationsButton } from './my-integrations-button';
+import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 
 export const NotificationsSubNavbar = memo(function NotificationsSubNavbar() {
     const pathname = usePathname();

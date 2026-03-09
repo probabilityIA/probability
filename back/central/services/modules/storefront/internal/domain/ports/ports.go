@@ -33,6 +33,9 @@ type IRepository interface {
 
 	// Integration
 	GetPlatformIntegrationID(ctx context.Context, businessID uint) (uint, error)
+
+	// Integration gate — checks if an integration is active (or missing = backward compat)
+	IsIntegrationActiveOrMissing(ctx context.Context, businessID uint, integrationTypeID uint) (bool, error)
 }
 
 // IStorefrontPublisher publishes storefront orders to RabbitMQ

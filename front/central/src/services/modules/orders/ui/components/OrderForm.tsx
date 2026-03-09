@@ -199,7 +199,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
         if (defaultW) {
             setFormData(prev => ({ ...prev, warehouse_id: defaultW.id, warehouse_name: defaultW.name }));
         }
-    }, [warehouses]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [warehouses]);
 
     // Initialize citySearch when order is loaded
     useEffect(() => {

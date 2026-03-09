@@ -29,6 +29,10 @@ func (h *Handlers) GetMyOrder(c *gin.Context) {
 
 	order, err := h.uc.GetMyOrder(c.Request.Context(), orderID, businessID, userID)
 	if err != nil {
+		if errors.Is(err, domainerrors.ErrStorefrontNotActive) {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
 		if errors.Is(err, domainerrors.ErrOrderNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return

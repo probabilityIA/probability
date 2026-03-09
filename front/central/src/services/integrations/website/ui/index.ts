@@ -1,0 +1,1 @@
+export { TiendaWebActivateForm } from './components';

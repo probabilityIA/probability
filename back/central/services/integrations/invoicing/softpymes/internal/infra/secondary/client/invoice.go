@@ -155,6 +155,13 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		return result, fmt.Errorf("no items found in invoice data")
 	}
 
+	// Extract item_mappings from config for configurable item code resolution.
+	// If not configured, behavior is identical to the original (SKU / "SHIPPING").
+	var itemMappings map[string]interface{}
+	if mappings, ok := req.Config["item_mappings"].(map[string]interface{}); ok {
+		itemMappings = mappings
+	}
+
 	// Mapear items al formato de Softpymes
 	// Enviamos unitValue siempre para que Softpymes use el precio de la orden
 	// (los precios coinciden entre Shopify y Softpymes, pero enviarlo explícito
@@ -162,10 +169,7 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	// El campo discount (porcentaje) es requerido por Softpymes aunque sea 0.
 	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
 	for _, item := range req.Items {
-		itemCode := item.SKU
-		if itemCode == "" && item.ProductID != nil {
-			itemCode = *item.ProductID
-		}
+		itemCode := resolveItemCode(item.SKU, item.Name, item.ProductID, itemMappings)
 
 		softpymesItem := map[string]interface{}{
 			"itemCode":  itemCode,
@@ -179,10 +183,9 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	}
 
 	// Agregar shipping como línea de factura si hay costo de envío.
-	// SHIPPING debe existir en el catálogo de Softpymes como servicio.
 	if req.ShippingCost > 0 {
 		shippingItem := map[string]interface{}{
-			"itemCode":  "SHIPPING",
+			"itemCode":  resolveShippingItemCode(itemMappings),
 			"quantity":  1.0,
 			"unitCode":  "UNI",
 			"discount":  0,
@@ -409,6 +412,54 @@ func (c *Client) CancelInvoice(ctx context.Context, apiKey, apiSecret, referer, 
 		Msg("Invoice cancelled successfully in Softpymes")
 
 	return nil
+}
+
+// resolveItemCode determines the Softpymes item code for a regular line item.
+// Resolution order:
+//  1. Named service mappings (membership_sku→membership_code, tip_sku→tip_code)
+//  2. by_sku[SKU]
+//  3. default
+//  4. SKU as-is (original behavior)
+//
+// If itemMappings is nil or no mapping matches, falls back to original behavior.
+// resolveItemCode determines the Softpymes item code for a line item.
+// It matches services by item name: tips ("Tip"/"Propina") and memberships
+// ("Membership"/"Membresía"). For regular products, the original SKU is used.
+func resolveItemCode(itemSKU string, itemName string, productID *string, itemMappings map[string]interface{}) string {
+	if itemMappings != nil && itemName != "" {
+		nameLower := strings.ToLower(strings.TrimSpace(itemName))
+		// Tip: exact match on "tip" or "propina"
+		if nameLower == "tip" || nameLower == "propina" {
+			if code, ok := itemMappings["tip"].(string); ok && code != "" {
+				return code
+			}
+		}
+		// Membership: name contains "membership" or "membresía"/"membresia"
+		if strings.Contains(nameLower, "membership") || strings.Contains(nameLower, "membresía") || strings.Contains(nameLower, "membresia") {
+			if code, ok := itemMappings["membership"].(string); ok && code != "" {
+				return code
+			}
+		}
+	}
+	// Original behavior: SKU, fallback to ProductID
+	if itemSKU != "" {
+		return itemSKU
+	}
+	if productID != nil {
+		return *productID
+	}
+	return ""
+}
+
+// resolveShippingItemCode determines the Softpymes item code for shipping.
+// Uses item_mappings.shipping if configured, otherwise "SHIPPING" (original behavior).
+func resolveShippingItemCode(itemMappings map[string]interface{}) string {
+	if itemMappings != nil {
+		if code, ok := itemMappings["shipping"].(string); ok && code != "" {
+			return code
+		}
+	}
+	return "SHIPPING"
 }
 
 // mapCurrencyToSoftpymes convierte códigos ISO de moneda al formato de Softpymes

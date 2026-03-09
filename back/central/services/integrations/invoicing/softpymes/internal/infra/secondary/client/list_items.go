@@ -9,15 +9,16 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/ports"
 )
 
-// ItemResponse representa un ítem del catálogo de Softpymes
+// ItemResponse representa un ítem del catálogo de Softpymes.
+// Softpymes retorna itemPrice y unitCost como strings ("18000.00").
 type ItemResponse struct {
-	ItemCode      string  `json:"itemCode"`
-	ItemName      string  `json:"itemName"`
-	ItemPrice     float64 `json:"itemPrice"`
-	UnitCost      float64 `json:"unitCost"`
-	Description   string  `json:"description"`
-	MinimumStock  string  `json:"minimumStock"`
-	OrderQuantity string  `json:"orderQuantity"`
+	ItemCode      string `json:"itemCode"`
+	ItemName      string `json:"itemName"`
+	ItemPrice     string `json:"itemPrice"`
+	UnitCost      string `json:"unitCost"`
+	Description   string `json:"description"`
+	MinimumStock  string `json:"minimumStock"`
+	OrderQuantity string `json:"orderQuantity"`
 }
 
 // ListItems lista ítems del catálogo de Softpymes.
@@ -69,14 +70,16 @@ func (c *Client) ListItems(ctx context.Context, apiKey, apiSecret, referer, base
 		return nil, fmt.Errorf("list items failed (status %d): %s", resp.StatusCode(), resp.Status())
 	}
 
-	// Mapear a tipos del dominio
+	// Mapear a tipos del dominio (parsear strings a float64)
 	result := make([]ports.ListedItem, 0, len(items))
 	for _, item := range items {
+		price, _ := strconv.ParseFloat(item.ItemPrice, 64)
+		cost, _ := strconv.ParseFloat(item.UnitCost, 64)
 		result = append(result, ports.ListedItem{
 			ItemCode:      item.ItemCode,
 			ItemName:      item.ItemName,
-			ItemPrice:     item.ItemPrice,
-			UnitCost:      item.UnitCost,
+			ItemPrice:     price,
+			UnitCost:      cost,
 			Description:   item.Description,
 			MinimumStock:  item.MinimumStock,
 			OrderQuantity: item.OrderQuantity,

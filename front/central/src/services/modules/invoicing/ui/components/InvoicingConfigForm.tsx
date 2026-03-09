@@ -40,7 +40,17 @@ export function InvoicingConfigForm({
     payment_bonus_code: (initialData?.config?.payment_bonus_code as string) ?? '',
     payment_bank_name: (initialData?.config?.payment_bank_name as string) ?? '',
     payment_account_number: (initialData?.config?.payment_account_number as string) ?? '',
+    // Item mappings
+    item_mappings_shipping: (initialData?.config?.item_mappings?.shipping as string) ?? '',
+    item_mappings_membership: (initialData?.config?.item_mappings?.membership as string) ?? '',
+    item_mappings_tip: (initialData?.config?.item_mappings?.tip as string) ?? '',
   });
+
+  const [showItemMappings, setShowItemMappings] = useState(
+    !!(initialData?.config?.item_mappings?.shipping ||
+       initialData?.config?.item_mappings?.membership ||
+       initialData?.config?.item_mappings?.tip)
+  );
 
   // Selección de integraciones de origen
   const initialSelected = initialData?.integration_ids?.length
@@ -102,6 +112,13 @@ export function InvoicingConfigForm({
       if (formData.payment_type === 'BN' && formData.payment_bonus_code)
         invoiceConfig.payment_bonus_code = formData.payment_bonus_code;
     }
+
+    // Build item_mappings
+    const itemMappings: Record<string, string> = {};
+    if (formData.item_mappings_shipping) itemMappings.shipping = formData.item_mappings_shipping;
+    if (formData.item_mappings_membership) itemMappings.membership = formData.item_mappings_membership;
+    if (formData.item_mappings_tip) itemMappings.tip = formData.item_mappings_tip;
+    if (Object.keys(itemMappings).length > 0) invoiceConfig.item_mappings = itemMappings;
 
     try {
       if (initialData?.id) {
@@ -319,6 +336,66 @@ export function InvoicingConfigForm({
           )}
         </div>
       )}
+
+      {/* Mapeo de Servicios */}
+        <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-medium text-gray-900">Mapeo de servicios</span>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Probability traduce internamente conceptos como envío, membresía y propina. Aquí defines con qué código se facturan.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowItemMappings(!showItemMappings)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ml-4 ${showItemMappings ? 'bg-purple-500' : 'bg-gray-200'}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showItemMappings ? 'translate-x-6' : 'translate-x-1'}`} />
+            </button>
+          </div>
+
+          {showItemMappings && (
+            <div className="space-y-3 mt-4">
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Servicio de Envío</label>
+                <input
+                  type="text"
+                  value={formData.item_mappings_shipping}
+                  onChange={(e) => setFormData({ ...formData, item_mappings_shipping: e.target.value })}
+                  placeholder="Ej: SE02001 (vacío = SHIPPING)"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                />
+                <p className="text-xs text-gray-400 mt-1">Código con el que se factura el costo de envío</p>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Servicio de Membresía</label>
+                <input
+                  type="text"
+                  value={formData.item_mappings_membership}
+                  onChange={(e) => setFormData({ ...formData, item_mappings_membership: e.target.value })}
+                  placeholder="Ej: SE01001"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                />
+                <p className="text-xs text-gray-400 mt-1">Código con el que se facturan las membresías</p>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-700 mb-1">Servicio de Propina</label>
+                <input
+                  type="text"
+                  value={formData.item_mappings_tip}
+                  onChange={(e) => setFormData({ ...formData, item_mappings_tip: e.target.value })}
+                  placeholder="Ej: SE03001"
+                  disabled={loading}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50"
+                />
+                <p className="text-xs text-gray-400 mt-1">Código con el que se facturan las propinas</p>
+              </div>
+            </div>
+          )}
+        </div>
 
       {/* Integraciones de origen de órdenes */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
