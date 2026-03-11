@@ -10,7 +10,7 @@ import (
 // IJWTService define operaciones de JWT sin depender de otros módulos
 type IJWTService interface {
 	// Token unificado que incluye toda la información
-	GenerateToken(userID, businessID, businessTypeID, roleID uint) (string, error)
+	GenerateToken(userID, businessID, businessTypeID, roleID uint, subscriptionStatus string) (string, error)
 	ValidateToken(tokenString string) (*JWTClaims, error)
 	RefreshToken(tokenString string) (string, error)
 
@@ -28,19 +28,21 @@ type JWTService struct {
 
 // Claims representa los claims internos del token unificado
 type Claims struct {
-	UserID         uint `json:"user_id"`
-	BusinessID     uint `json:"business_id"`
-	BusinessTypeID uint `json:"business_type_id"`
-	RoleID         uint `json:"role_id"`
+	UserID             uint   `json:"user_id"`
+	BusinessID         uint   `json:"business_id"`
+	BusinessTypeID     uint   `json:"business_type_id"`
+	RoleID             uint   `json:"role_id"`
+	SubscriptionStatus string `json:"subscription_status"`
 	jwt.RegisteredClaims
 }
 
 // JWTClaims es la estructura pública que exponemos a consumidores
 type JWTClaims struct {
-	UserID         uint
-	BusinessID     uint
-	BusinessTypeID uint
-	RoleID         uint
+	UserID             uint
+	BusinessID         uint
+	BusinessTypeID     uint
+	RoleID             uint
+	SubscriptionStatus string
 }
 
 // New crea una nueva instancia del servicio JWT (autocontenida)
@@ -51,12 +53,13 @@ func New(secretKey string) IJWTService {
 }
 
 // GenerateToken genera un nuevo token JWT unificado con toda la información
-func (j *JWTService) GenerateToken(userID, businessID, businessTypeID, roleID uint) (string, error) {
+func (j *JWTService) GenerateToken(userID, businessID, businessTypeID, roleID uint, subscriptionStatus string) (string, error) {
 	claims := Claims{
-		UserID:         userID,
-		BusinessID:     businessID,
-		BusinessTypeID: businessTypeID,
-		RoleID:         roleID,
+		UserID:             userID,
+		BusinessID:         businessID,
+		BusinessTypeID:     businessTypeID,
+		RoleID:             roleID,
+		SubscriptionStatus: subscriptionStatus,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(168 * time.Hour)), // 7 días para coincidir con el login cookie
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -94,10 +97,11 @@ func (j *JWTService) ValidateToken(tokenString string) (*JWTClaims, error) {
 
 	if claims, ok := token.Claims.(*Claims); ok && token.Valid {
 		return &JWTClaims{
-			UserID:         claims.UserID,
-			BusinessID:     claims.BusinessID,
-			BusinessTypeID: claims.BusinessTypeID,
-			RoleID:         claims.RoleID,
+			UserID:             claims.UserID,
+			BusinessID:         claims.BusinessID,
+			BusinessTypeID:     claims.BusinessTypeID,
+			RoleID:             claims.RoleID,
+			SubscriptionStatus: claims.SubscriptionStatus,
 		}, nil
 	}
 
@@ -111,5 +115,5 @@ func (j *JWTService) RefreshToken(tokenString string) (string, error) {
 		return "", err
 	}
 
-	return j.GenerateToken(claims.UserID, claims.BusinessID, claims.BusinessTypeID, claims.RoleID)
+	return j.GenerateToken(claims.UserID, claims.BusinessID, claims.BusinessTypeID, claims.RoleID, claims.SubscriptionStatus)
 }

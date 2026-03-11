@@ -13,8 +13,8 @@ func NewAdapter(impl sharedjwt.IJWTService) *Adapter {
 	return &Adapter{impl: impl}
 }
 
-func (a *Adapter) GenerateToken(userID, businessID, businessTypeID, roleID uint) (string, error) {
-	return a.impl.GenerateToken(userID, businessID, businessTypeID, roleID)
+func (a *Adapter) GenerateToken(userID, businessID, businessTypeID, roleID uint, subscriptionStatus string) (string, error) {
+	return a.impl.GenerateToken(userID, businessID, businessTypeID, roleID, subscriptionStatus)
 }
 
 func (a *Adapter) ValidateToken(tokenString string) (*domain.JWTClaims, error) {
@@ -23,10 +23,11 @@ func (a *Adapter) ValidateToken(tokenString string) (*domain.JWTClaims, error) {
 		return nil, err
 	}
 	return &domain.JWTClaims{
-		UserID:         claims.UserID,
-		BusinessID:     claims.BusinessID,
-		BusinessTypeID: claims.BusinessTypeID,
-		RoleID:         claims.RoleID,
+		UserID:             claims.UserID,
+		BusinessID:         claims.BusinessID,
+		BusinessTypeID:     claims.BusinessTypeID,
+		RoleID:             claims.RoleID,
+		SubscriptionStatus: claims.SubscriptionStatus,
 	}, nil
 }
 

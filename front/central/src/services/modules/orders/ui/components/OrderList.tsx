@@ -112,13 +112,12 @@ const OrderRow = memo(({
             </td>
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
-                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold ${
-                        (order.currency_presentment || order.currency) === 'COP'
+                    <span className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-bold ${(order.currency_presentment || order.currency) === 'COP'
                             ? 'bg-green-100 text-green-800'
                             : (order.currency_presentment || order.currency) === 'EUR'
                                 ? 'bg-purple-100 text-purple-800'
                                 : 'bg-blue-100 text-blue-800'
-                    }`}>
+                        }`}>
                         {order.currency_presentment || order.currency || 'USD'}
                     </span>
                     <span className="text-sm font-semibold text-gray-900">
@@ -246,11 +245,10 @@ const OrderRow = memo(({
                         <button
                             onClick={() => onViewRecommendation(order)}
                             disabled={!!order.guide_link}
-                            className={`p-2 rounded-md transition-all duration-200 flex items-center justify-center shadow-sm ${
-                                order.guide_link
+                            className={`p-2 rounded-md transition-all duration-200 flex items-center justify-center shadow-sm ${order.guide_link
                                     ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-60'
                                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
-                            }`}
+                                }`}
                             title={order.guide_link ? 'Guía ya validada' : 'Recomendación Inteligente IA'}
                             aria-label={order.guide_link ? 'Guía ya validada' : 'Ver recomendación IA'}
                         >
@@ -313,16 +311,18 @@ const OrderRow = memo(({
                             </svg>
                         </button>
                     )}
-                    <button
-                        onClick={() => onDelete(order.id)}
-                        className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                        title="Eliminar orden"
-                        aria-label="Eliminar orden"
-                    >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                    </button>
+                    {isSuperAdmin && (
+                        <button
+                            onClick={() => onDelete(order.id)}
+                            className="p-2 bg-red-500 hover:bg-red-600 text-white rounded-md transition-colors duration-200 focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                            title="Eliminar orden"
+                            aria-label="Eliminar orden"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                        </button>
+                    )}
                 </div>
             </td>
         </tr>
@@ -1410,8 +1410,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         <div className="p-8 flex flex-col items-center gap-6">
                             <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center">
                                 <svg className="w-10 h-10 text-red-500" fill="currentColor" viewBox="0 0 24 24">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 4h5v7h7v9H6V4z"/>
-                                    <path d="M8 12h8v1.5H8V12zm0 3h8v1.5H8V15zm0 3h5v1.5H8V18z"/>
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM6 4h5v7h7v9H6V4z" />
+                                    <path d="M8 12h8v1.5H8V12zm0 3h8v1.5H8V15zm0 3h5v1.5H8V18z" />
                                 </svg>
                             </div>
                             <div className="text-center">

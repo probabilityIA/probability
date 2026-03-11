@@ -13,6 +13,7 @@ import { DeliveryBusinessProvider } from '@/shared/contexts/delivery-business-co
 import { StorefrontBusinessProvider } from '@/shared/contexts/storefront-business-context';
 import { StorefrontNav } from '@/services/modules/storefront/ui/components/StorefrontNav';
 import { LinaChatbot } from '@/shared/ui/LinaChatbot';
+import { SubscriptionGuard } from '@/shared/ui/SubscriptionGuard';
 
 interface LayoutContentProps {
   user: {
@@ -90,26 +91,28 @@ function LayoutContent({ user, children }: LayoutContentProps) {
         onMouseEnter={handleMainMouseEnter}
       >
         <OrdersBusinessProvider>
-        <InventoryBusinessProvider>
-        <NotificationBusinessProvider>
-        <InvoicingBusinessProvider>
-        <DeliveryBusinessProvider>
-        <StorefrontBusinessProvider>
-          <OrdersSubNavbar />
-          <InventorySubNavbar />
-          <IntegrationsSubNavbar />
-          <NotificationsSubNavbar />
-          <InvoicingSubNavbar />
-          <DeliverySubNavbar />
-          <StorefrontSubNavbar />
-          <div className="w-full min-w-0 flex-1">
-            {children}
-          </div>
-        </StorefrontBusinessProvider>
-        </DeliveryBusinessProvider>
-        </InvoicingBusinessProvider>
-        </NotificationBusinessProvider>
-        </InventoryBusinessProvider>
+          <InventoryBusinessProvider>
+            <NotificationBusinessProvider>
+              <InvoicingBusinessProvider>
+                <DeliveryBusinessProvider>
+                  <StorefrontBusinessProvider>
+                    <OrdersSubNavbar />
+                    <InventorySubNavbar />
+                    <IntegrationsSubNavbar />
+                    <NotificationsSubNavbar />
+                    <InvoicingSubNavbar />
+                    <DeliverySubNavbar />
+                    <StorefrontSubNavbar />
+                    <div className="w-full min-w-0 flex-1">
+                      <SubscriptionGuard>
+                        {children}
+                      </SubscriptionGuard>
+                    </div>
+                  </StorefrontBusinessProvider>
+                </DeliveryBusinessProvider>
+              </InvoicingBusinessProvider>
+            </NotificationBusinessProvider>
+          </InventoryBusinessProvider>
         </OrdersBusinessProvider>
         <style jsx>{`
           .main-content {

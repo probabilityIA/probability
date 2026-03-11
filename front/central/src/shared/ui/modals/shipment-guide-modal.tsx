@@ -117,6 +117,7 @@ const step1Schema = z.object({
     contentValue: z.number().min(0).max(3000000),
     codValue: z.number().min(0).max(3000000).optional(),
     includeGuideCost: z.boolean(),
+    insurance: z.boolean(),
     codPaymentMethod: z.enum(["cash", "data_phone"]),
 });
 
@@ -139,7 +140,6 @@ const step3Schema = z.object({
     destCrossStreet: z.string().min(2).max(35),
     destReference: z.string().min(2).max(25).optional(),
     requestPickup: z.boolean(),
-    insurance: z.boolean(),
     myShipmentReference: z.string().min(2).max(28),
     external_order_id: z.string().min(1).max(28).optional(),
 });
@@ -231,6 +231,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             contentValue: 0,
             codValue: 0,
             includeGuideCost: false,
+            insurance: false,
             codPaymentMethod: "cash",
         },
     });
@@ -257,7 +258,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             destCrossStreet: "",
             destReference: "",
             requestPickup: true,
-            insurance: false,
             myShipmentReference: "",
             external_order_id: "",
         },
@@ -303,7 +303,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         handleWarehouseSelect(preselect);
                     }
                 }
-            }).catch(() => {});
+            }).catch(() => { });
         }
     }, [isOpen]);
 
@@ -398,7 +398,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                 // Debit from wallet for async guide generation
                 if (selectedRate) {
-                    const totalCost = selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
+                    const insuranceCost = step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
+                    const totalCost = selectedRate.flete + insuranceCost;
                     const debitResponse = await debitForGuideAction(totalCost, data.tracking_number, order?.business_id);
                     if (debitResponse.success) {
                         // Update wallet balance
@@ -514,6 +515,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 contentValue: data.contentValue,
                 codValue: data.codValue,
                 includeGuideCost: data.includeGuideCost,
+                insurance: data.insurance,
                 codPaymentMethod: data.codPaymentMethod,
                 origin: {
                     daneCode: data.originDaneCode,
@@ -663,7 +665,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
         // Check wallet balance
         if (!selectedRate || !step3Data || !step1Data) return;
-        const totalCost = selectedRate.flete + (selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0);
+        const insuranceCost = step1Data.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0;
+        const totalCost = selectedRate.flete + insuranceCost;
         if (walletBalance !== null && walletBalance < totalCost) {
             setError(`Saldo insuficiente. Necesitas $${totalCost.toLocaleString()} pero tienes $${walletBalance.toLocaleString()}`);
             return;
@@ -679,7 +682,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 order_uuid: order?.id,
                 requestPickup: step3Data.requestPickup,
                 pickupDate: new Date().toISOString().split("T")[0],
-                insurance: step3Data.insurance,
+                insurance: step1Data.insurance,
                 description: step1Data.description,
                 contentValue: step1Data.contentValue,
                 codValue: step1Data.codValue,
@@ -990,7 +993,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         />
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                                         <div>
                                             <label className="flex items-center space-x-2">
                                                 <input
@@ -998,7 +1001,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     {...step1Form.register("includeGuideCost")}
                                                     className="rounded"
                                                 />
-                                                <span className="text-sm">Incluir costo de guía en COD</span>
+                                                <span className="text-sm">Incluir costo en COD</span>
+                                            </label>
+                                        </div>
+                                        <div>
+                                            <label className="flex items-center space-x-2">
+                                                <input
+                                                    type="checkbox"
+                                                    {...step1Form.register("insurance")}
+                                                    className="rounded"
+                                                />
+                                                <span className="text-sm">Asegurar envío</span>
                                             </label>
                                         </div>
                                         <div>
@@ -1044,7 +1057,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 ) : (
                                     <div className="grid grid-cols-4 gap-3 auto-rows-max">
                                         {rates.map((rate) => {
-                                            const totalCost = rate.flete + (rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0);
+                                            const insuranceCost = step1Data?.insurance ? ((rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0)) : 0;
+                                            const totalCost = rate.flete + insuranceCost;
                                             const isCOD = rate.cod;
 
                                             return (
@@ -1078,6 +1092,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                     ${totalCost.toLocaleString()}
                                                                 </div>
                                                                 <div className="text-xs text-gray-500">COP</div>
+                                                                {step1Data?.insurance ? (
+                                                                    <div className="mt-1 text-[10px] text-gray-500 leading-tight">
+                                                                        Guía: ${rate.flete.toLocaleString()}<br />
+                                                                        Seguro: ${insuranceCost.toLocaleString()}
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="mt-1 text-[10px] text-gray-500 leading-tight">
+                                                                        Guía: ${rate.flete.toLocaleString()}<br />
+                                                                        Seguro: No asegurado
+                                                                    </div>
+                                                                )}
                                                             </div>
                                                             <div className="text-center">
                                                                 <div className="text-xs text-gray-700 font-medium">
@@ -1273,14 +1298,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         />
                                         <span className="text-sm font-medium">Solicitar recolección</span>
                                     </label>
-                                    <label className="flex items-center space-x-2">
-                                        <input
-                                            type="checkbox"
-                                            {...step3Form.register("insurance")}
-                                            className="rounded w-5 h-5"
-                                        />
-                                        <span className="text-sm font-medium">Asegurar envío</span>
-                                    </label>
                                 </div>
                             </div>
                         </form>
@@ -1304,8 +1321,17 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <div className="text-right">
                                             <div className="text-sm text-gray-600">TOTAL:</div>
                                             <div className="text-2xl font-bold text-purple-600">
-                                                ${(selectedRate.flete + (selectedRate.minimumInsurance ?? 0)).toLocaleString()}
+                                                ${(selectedRate.flete + (step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0)).toLocaleString()}
                                             </div>
+                                            {step1Data?.insurance ? (
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Guía: ${selectedRate.flete.toLocaleString()} | Seguro: ${((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)).toLocaleString()}
+                                                </div>
+                                            ) : (
+                                                <div className="text-xs text-gray-500 mt-1">
+                                                    Guía: ${selectedRate.flete.toLocaleString()} | Seguro: No asegurado
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

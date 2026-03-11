@@ -150,13 +150,14 @@ func (uc *AuthUseCase) GetUserRolesPermissions(ctx context.Context, userID uint,
 
 	// Construir respuesta
 	response := &domain.UserRolesPermissionsResponse{
-		Success:     true,
-		Message:     "Roles y permisos obtenidos exitosamente",
-		UserID:      userID,
-		Email:       user.Email,
-		IsSuper:     isSuper,
-		Role:        domain.RoleInfo{}, // Se llenará después
-		Permissions: make([]domain.PermissionInfo, 0),
+		Success:            true,
+		Message:            "Roles y permisos obtenidos exitosamente",
+		UserID:             userID,
+		Email:              user.Email,
+		IsSuper:            isSuper,
+		Role:               domain.RoleInfo{}, // Se llenará después
+		Permissions:        make([]domain.PermissionInfo, 0),
+		SubscriptionStatus: claims.SubscriptionStatus, // From JWT
 	}
 
 	// Setear campos de business solo si existe

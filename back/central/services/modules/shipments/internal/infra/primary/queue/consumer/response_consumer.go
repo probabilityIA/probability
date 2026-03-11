@@ -216,6 +216,9 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 		Str("correlation_id", response.CorrelationID).
 		Msg("✅ Quote response received")
 
+	// Apply platform markup to the flete of the quotes
+	c.applyServiceFeeToQuoteData(response.Data)
+
 	c.storeQuoteResult(ctx, response.CorrelationID, response.Data, "")
 	c.ssePublisher.PublishQuoteReceived(ctx, businessID, response.CorrelationID, response.Data)
 }
@@ -319,4 +322,50 @@ func (c *ResponseConsumer) resolveBusinessID(ctx context.Context, response *Tran
 		Msg("Transport response missing business_id")
 
 	return 0
+}
+
+// serviceFeeAmount es el cargo fijo de servicio (en pesos) que se suma a cada cotización.
+// Este valor se añade de forma transparente en la asincronía antes de enviar al frontend o a Redis.
+const serviceFeeAmount = 2290.0
+
+// priceFields son los campos de precio que se ajustan en cada cotización de EnvioClick.
+// Solo modificamos "flete", dejando seguros intactos.
+var priceFields = []string{"flete"}
+
+// applyServiceFeeToQuoteData aplica el serviceFeeAmount a todas las tarifas de las cotizaciones
+// en el payload de respuesta de la transportadora.
+func (c *ResponseConsumer) applyServiceFeeToQuoteData(data map[string]interface{}) {
+	if data == nil {
+		return
+	}
+	innerData, ok := data["data"].(map[string]interface{})
+	if !ok {
+		return
+	}
+	rawRates, ok := innerData["rates"]
+	if !ok {
+		return
+	}
+
+	rates, ok := rawRates.([]interface{})
+	if !ok {
+		return
+	}
+
+	for _, r := range rates {
+		rate, ok := r.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for _, field := range priceFields {
+			if val, exists := rate[field]; exists {
+				switch v := val.(type) {
+				case float64:
+					rate[field] = v + serviceFeeAmount
+				case int:
+					rate[field] = float64(v) + serviceFeeAmount
+				}
+			}
+		}
+	}
 }

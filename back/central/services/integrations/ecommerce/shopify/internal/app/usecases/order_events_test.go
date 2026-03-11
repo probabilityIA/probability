@@ -34,7 +34,7 @@ func buildIntegrationSvc(t *testing.T, expectedDomain string, integrationID uint
 			if externalID != expectedDomain {
 				t.Errorf("externalID incorrecto: got %q, want %q", externalID, expectedDomain)
 			}
-			return &domain.Integration{ID: integrationID, BusinessID: &businessID}, nil
+			return &domain.Integration{ID: integrationID, BusinessID: &businessID, IsActive: true}, nil
 		},
 	}
 }
@@ -271,7 +271,7 @@ func TestProcessOrderUpdated_BusinessIDAndIntegrationTypeSet(t *testing.T) {
 
 	integrationSvc := &mockIntegrationService{
 		GetIntegrationByExternalIDFn: func(ctx context.Context, externalID string, integrationType int) (*domain.Integration, error) {
-			return &domain.Integration{ID: integrationID, BusinessID: &businessID}, nil
+			return &domain.Integration{ID: integrationID, BusinessID: &businessID, IsActive: true}, nil
 		},
 	}
 
