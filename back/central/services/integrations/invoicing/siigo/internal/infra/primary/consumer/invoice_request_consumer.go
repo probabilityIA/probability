@@ -146,6 +146,8 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 	switch request.Operation {
 	case "create", "retry":
 		response = c.processCreateInvoice(ctx, &request, startTime)
+	case "create_journal":
+		response = c.processCreateJournal(ctx, &request, startTime)
 	default:
 		c.log.Warn(ctx).
 			Str("operation", request.Operation).
@@ -213,6 +215,17 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 	// api_url es opcional: si no está configurado, el cliente usa su default
 	apiURL, _ := c.integrationCore.DecryptCredential(ctx, integrationIDStr, "api_url")
 
+	// Resolver URL efectiva: si is_testing, usar base_url_test del integration_type
+	effectiveURL := apiURL
+	if integration.IsTesting && integration.BaseURLTest != "" {
+		effectiveURL = integration.BaseURLTest
+	}
+
+	c.log.Info(ctx).
+		Bool("is_testing", integration.IsTesting).
+		Str("effective_url", effectiveURL).
+		Msg("Resolved effective Siigo URL")
+
 	// 4. Combinar config de integración con config de facturación
 	combinedConfig := make(map[string]interface{})
 	for k, v := range integration.Config {
@@ -245,7 +258,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 			AccessKey: accessKey,
 			AccountID: accountID,
 			PartnerID: partnerID,
-			BaseURL:   apiURL,
+			BaseURL:   effectiveURL,
 		},
 		Config: combinedConfig,
 	}

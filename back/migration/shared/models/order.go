@@ -323,6 +323,11 @@ type OrderItem struct {
 	Tax             float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto de esta orden
 	TaxRate         *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto aplicada (ej: 0.19 para 19%)
 
+	// Precio base sin impuestos (calculado al importar la orden)
+	// Fórmula: UnitPrice / (1 + TaxRate) cuando el precio incluye impuestos
+	UnitPriceBase             float64 `gorm:"column:unit_price_base;type:decimal(12,2);not null;default:0"`
+	UnitPriceBasePresentment  float64 `gorm:"column:unit_price_base_presentment;type:decimal(12,2);not null;default:0"`
+
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64 `gorm:"column:unit_price_presentment;type:decimal(12,2);not null;default:0"`  // Precio unitario en moneda local
 	TotalPricePresentment float64 `gorm:"column:total_price_presentment;type:decimal(12,2);not null;default:0"` // Precio total en moneda local

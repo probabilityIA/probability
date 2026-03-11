@@ -22,17 +22,19 @@ type ItemData struct {
 	Name        string
 	Description *string
 	Quantity    int
-	UnitPrice   float64
-	TotalPrice  float64
-	Tax         float64
-	TaxRate     *float64
+	UnitPrice     float64
+	UnitPriceBase float64 // Precio sin impuestos
+	TotalPrice    float64
+	Tax           float64
+	TaxRate       *float64
 	Discount        float64
 	DiscountPercent float64
 	// Precios en moneda presentment (moneda local, ej: COP)
-	UnitPricePresentment  float64
-	TotalPricePresentment float64
-	DiscountPresentment   float64
-	TaxPresentment        float64
+	UnitPricePresentment      float64
+	UnitPriceBasePresentment  float64
+	TotalPricePresentment     float64
+	DiscountPresentment       float64
+	TaxPresentment            float64
 }
 
 // CreateInvoiceRequest datos tipados para crear una factura en Softpymes
@@ -43,8 +45,9 @@ type CreateInvoiceRequest struct {
 	Subtotal     float64
 	Tax          float64
 	Discount     float64
-	ShippingCost float64
-	Currency     string
+	ShippingCost     float64
+	ShippingCostBase float64 // Envío sin impuestos
+	Currency         string
 	OrderID      string
 	OrderNumber  string
 	Credentials  Credentials

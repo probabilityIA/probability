@@ -138,6 +138,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to seed storefront role and permissions: %w", err)
 	}
 
+	// Add unit_price_base columns to order_items and invoice_items
+	if err := r.db.Conn(ctx).AutoMigrate(&models.OrderItem{}, &models.InvoiceItem{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate order_items/invoice_items (unit_price_base): %w", err)
+	}
+
 	// Update product defaults: is_active=true, status='active' and apply to all existing products
 	if err := r.db.Conn(ctx).AutoMigrate(&models.Product{}); err != nil {
 		return fmt.Errorf("failed to auto-migrate products (is_active default): %w", err)

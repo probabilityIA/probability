@@ -33,6 +33,9 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.POST("/items", middleware.JWT(), h.ListItems)         // Comparar ítems del proveedor vs productos del sistema
 		}
 
+		// Journals (comprobantes contables Siigo)
+		invoicing.POST("/journals", middleware.JWT(), h.CreateJournal)
+
 		// Proveedores de facturación (DEPRECADO - Migrado a integrations/core)
 		// NOTA: Estas rutas están deprecadas y serán eliminadas en una futura versión
 		// Usar endpoints de integrations/core para gestión de proveedores de facturación

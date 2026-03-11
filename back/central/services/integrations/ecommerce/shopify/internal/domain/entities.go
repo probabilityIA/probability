@@ -102,6 +102,10 @@ type ShopifyOrderItem struct {
 	TaxRate      *float64 // Tasa de impuesto (ej: 0.19 para 19% IVA)
 	Weight       *float64 // Peso en gramos
 
+	// Precio base sin impuestos (UnitPrice / (1 + TaxRate))
+	UnitPriceBase             float64
+	UnitPriceBasePresentment  float64
+
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment float64
 	DiscountPresentment  float64
@@ -182,6 +186,9 @@ type ProbabilityOrderItemDTO struct {
 	DiscountPercent float64
 	Tax             float64
 	TaxRate         *float64
+	// Precio base sin impuestos
+	UnitPriceBase            float64
+	UnitPriceBasePresentment float64
 	ImageURL        *string
 	ProductURL      *string
 	Weight          *float64

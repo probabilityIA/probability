@@ -19,9 +19,10 @@ type InvoiceItem struct {
 	Name        string
 	Description *string
 	Quantity    int
-	UnitPrice   float64
-	TotalPrice  float64
-	Currency    string
+	UnitPrice     float64
+	UnitPriceBase float64 // Precio sin impuestos
+	TotalPrice    float64
+	Currency      string
 
 	// Impuestos y descuentos
 	Tax             float64

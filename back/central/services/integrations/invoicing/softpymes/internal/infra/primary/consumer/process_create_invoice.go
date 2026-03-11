@@ -87,8 +87,9 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		Subtotal:     request.InvoiceData.Subtotal,
 		Tax:          request.InvoiceData.Tax,
 		Discount:     request.InvoiceData.Discount,
-		ShippingCost: request.InvoiceData.ShippingCost,
-		Currency:     request.InvoiceData.Currency,
+		ShippingCost:     request.InvoiceData.ShippingCost,
+		ShippingCostBase: request.InvoiceData.ShippingCostBase,
+		Currency:         request.InvoiceData.Currency,
 		OrderID:      request.InvoiceData.OrderID,
 		OrderNumber:  request.InvoiceData.OrderNumber,
 		Credentials: spDtos.Credentials{

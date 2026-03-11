@@ -231,6 +231,7 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                     <SiigoConfigForm
                         onSuccess={onSuccess}
                         onCancel={onBack}
+                        integrationTypeBaseURLTest={integrationType.base_url_test}
                     />
                 );
 

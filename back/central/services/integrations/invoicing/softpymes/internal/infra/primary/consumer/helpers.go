@@ -20,15 +20,17 @@ func mapItemsToClientDTOs(items []invoiceItemData) []spDtos.ItemData {
 			Description:           item.Description,
 			Quantity:              item.Quantity,
 			UnitPrice:             item.UnitPrice,
+			UnitPriceBase:         item.UnitPriceBase,
 			TotalPrice:            item.TotalPrice,
 			Tax:                   item.Tax,
 			TaxRate:               item.TaxRate,
 			Discount:              item.Discount,
 			DiscountPercent:       item.DiscountPercent,
-			UnitPricePresentment:  item.UnitPricePresentment,
-			TotalPricePresentment: item.TotalPricePresentment,
-			DiscountPresentment:   item.DiscountPresentment,
-			TaxPresentment:        item.TaxPresentment,
+			UnitPricePresentment:      item.UnitPricePresentment,
+			UnitPriceBasePresentment:  item.UnitPriceBasePresentment,
+			TotalPricePresentment:     item.TotalPricePresentment,
+			DiscountPresentment:       item.DiscountPresentment,
+			TaxPresentment:            item.TaxPresentment,
 		})
 	}
 	return result

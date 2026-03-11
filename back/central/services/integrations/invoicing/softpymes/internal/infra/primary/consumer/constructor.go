@@ -35,32 +35,35 @@ type invoiceItemData struct {
 	Description *string  `json:"description"`
 	Quantity    int      `json:"quantity"`
 	UnitPrice   float64  `json:"unit_price"`
+	UnitPriceBase float64 `json:"unit_price_base"`
 	TotalPrice  float64  `json:"total_price"`
 	Tax         float64  `json:"tax"`
 	TaxRate     *float64 `json:"tax_rate"`
 	Discount        float64  `json:"discount"`
 	DiscountPercent float64  `json:"discount_percent"`
 	// Precios en moneda presentment (moneda local, ej: COP)
-	UnitPricePresentment  float64 `json:"unit_price_presentment"`
-	TotalPricePresentment float64 `json:"total_price_presentment"`
-	DiscountPresentment   float64 `json:"discount_presentment"`
-	TaxPresentment        float64 `json:"tax_presentment"`
+	UnitPricePresentment      float64 `json:"unit_price_presentment"`
+	UnitPriceBasePresentment  float64 `json:"unit_price_base_presentment"`
+	TotalPricePresentment     float64 `json:"total_price_presentment"`
+	DiscountPresentment       float64 `json:"discount_presentment"`
+	TaxPresentment            float64 `json:"tax_presentment"`
 }
 
 // invoiceData datos completos (replicado de invoicing module)
 type invoiceData struct {
-	IntegrationID uint                   `json:"integration_id"`
-	Customer      invoiceCustomerData    `json:"customer"`
-	Items         []invoiceItemData      `json:"items"`
-	Total         float64                `json:"total"`
-	Subtotal      float64                `json:"subtotal"`
-	Tax           float64                `json:"tax"`
-	Discount      float64                `json:"discount"`
-	ShippingCost  float64                `json:"shipping_cost"`
-	Currency      string                 `json:"currency"`
-	OrderID       string                 `json:"order_id"`
-	OrderNumber   string                 `json:"order_number,omitempty"`
-	Config        map[string]interface{} `json:"config"`
+	IntegrationID    uint                   `json:"integration_id"`
+	Customer         invoiceCustomerData    `json:"customer"`
+	Items            []invoiceItemData      `json:"items"`
+	Total            float64                `json:"total"`
+	Subtotal         float64                `json:"subtotal"`
+	Tax              float64                `json:"tax"`
+	Discount         float64                `json:"discount"`
+	ShippingCost     float64                `json:"shipping_cost"`
+	ShippingCostBase float64                `json:"shipping_cost_base"`
+	Currency         string                 `json:"currency"`
+	OrderID          string                 `json:"order_id"`
+	OrderNumber      string                 `json:"order_number,omitempty"`
+	Config           map[string]interface{} `json:"config"`
 }
 
 // InvoiceRequestMessage es el mensaje recibido desde Invoicing Module

@@ -14,20 +14,23 @@ import {
     InformationCircleIcon,
     ArrowLeftIcon,
     EyeIcon,
-    EyeSlashIcon
+    EyeSlashIcon,
+    BeakerIcon
 } from '@heroicons/react/24/outline';
 
 interface SiigoConfigFormProps {
     onSuccess?: () => void;
     onCancel?: () => void;
+    integrationTypeBaseURLTest?: string;
 }
 
-export function SiigoConfigForm({ onSuccess, onCancel }: SiigoConfigFormProps) {
+export function SiigoConfigForm({ onSuccess, onCancel, integrationTypeBaseURLTest }: SiigoConfigFormProps) {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [testingConnection, setTestingConnection] = useState(false);
     const [errorModal, setErrorModal] = useState<string | null>(null);
     const [showAccessKey, setShowAccessKey] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
 
     // Business selection for super admins
     const [isSuperAdmin, setIsSuperAdmin] = useState(false);
@@ -134,6 +137,7 @@ export function SiigoConfigForm({ onSuccess, onCancel }: SiigoConfigFormProps) {
                 credentials: credentials as any,
                 is_active: true,
                 is_default: false,
+                is_testing: isTesting,
             });
 
             if (response.success) {
@@ -394,6 +398,41 @@ export function SiigoConfigForm({ onSuccess, onCancel }: SiigoConfigFormProps) {
                         <li>Obtén el <strong>Account ID</strong> y <strong>Partner ID</strong> desde la documentacion de tu plan</li>
                     </ol>
                 </div>
+            </div>
+
+            {/* Modo de Pruebas */}
+            <div className="bg-orange-50 rounded-xl p-6 space-y-4 border border-orange-200">
+                <div className="flex items-center gap-2 mb-2">
+                    <BeakerIcon className="w-5 h-5 text-orange-600" />
+                    <h3 className="text-lg font-semibold text-gray-900">
+                        Modo de Pruebas
+                    </h3>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                    <div className="flex-1">
+                        <p className="text-sm font-medium text-gray-800">Activar modo testing</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                            Las facturas generadas quedaran marcadas como TEST y usaran la URL de pruebas de Siigo.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setIsTesting(!isTesting)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ml-4 flex-shrink-0 ${isTesting ? 'bg-orange-500' : 'bg-gray-200'}`}
+                    >
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
+                    </button>
+                </div>
+                {isTesting && (
+                    <Alert type="warning">
+                        Modo de pruebas activado. Las facturas generadas con esta integracion quedaran marcadas como <strong>TEST</strong> y no seran enviadas a la DIAN.
+                        {integrationTypeBaseURLTest && (
+                            <p className="mt-2 text-xs font-mono text-orange-800 break-all">
+                                URL sandbox: {integrationTypeBaseURLTest}
+                            </p>
+                        )}
+                    </Alert>
+                )}
             </div>
 
             {/* Action Buttons */}

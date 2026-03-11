@@ -32,6 +32,9 @@ type InvoiceItem struct {
 	TotalPrice  float64 `gorm:"type:decimal(12,2);not null"` // Precio total
 	Currency    string  `gorm:"size:10;default:'COP'"`       // Moneda
 
+	// Precio base sin impuestos (para facturación electrónica)
+	UnitPriceBase float64 `gorm:"column:unit_price_base;type:decimal(12,2);not null;default:0"`
+
 	// Impuestos y descuentos
 	Tax      float64  `gorm:"type:decimal(12,2);default:0"` // Impuesto
 	TaxRate  *float64 `gorm:"type:decimal(5,4)"`            // Tasa de impuesto (ej: 0.19)

@@ -155,11 +155,10 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		return result, fmt.Errorf("no items found in invoice data")
 	}
 
-	// Mapear items al formato de Softpymes
-	// Enviamos unitValue siempre para que Softpymes use el precio de la orden
-	// (los precios coinciden entre Shopify y Softpymes, pero enviarlo explícito
-	// garantiza consistencia y permite manejar descuentos/variaciones).
-	// El campo discount (porcentaje) es requerido por Softpymes aunque sea 0.
+	// Mapear items al formato de Softpymes.
+	// Softpymes espera precios base (sin IVA). Usamos UnitPriceBase que ya fue
+	// calculado al importar la orden desde la plataforma (Shopify, MercadoLibre, etc).
+	// Si UnitPriceBase es 0 (órdenes antiguas sin el campo), fallback a UnitPrice.
 	softpymesItems := make([]map[string]interface{}, 0, len(req.Items))
 	for _, item := range req.Items {
 		itemCode := item.SKU
@@ -167,12 +166,17 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 			itemCode = *item.ProductID
 		}
 
+		unitPrice := item.UnitPriceBase
+		if unitPrice == 0 {
+			unitPrice = item.UnitPrice
+		}
+
 		softpymesItem := map[string]interface{}{
 			"itemCode":  itemCode,
 			"quantity":  float64(item.Quantity),
 			"unitCode":  "UNI",
 			"discount":  item.DiscountPercent,
-			"unitValue": fmt.Sprintf("%.2f", item.UnitPrice),
+			"unitValue": fmt.Sprintf("%.2f", unitPrice),
 		}
 
 		softpymesItems = append(softpymesItems, softpymesItem)
@@ -180,13 +184,19 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 
 	// Agregar shipping como línea de factura si hay costo de envío.
 	// SHIPPING debe existir en el catálogo de Softpymes como servicio.
+	// Usar ShippingCostBase (sin IVA) calculado en el módulo invoicing.
 	if req.ShippingCost > 0 {
+		shippingPrice := req.ShippingCostBase
+		if shippingPrice == 0 {
+			shippingPrice = req.ShippingCost // fallback órdenes antiguas
+		}
+
 		shippingItem := map[string]interface{}{
 			"itemCode":  "SHIPPING",
 			"quantity":  1.0,
 			"unitCode":  "UNI",
 			"discount":  0,
-			"unitValue": fmt.Sprintf("%.2f", req.ShippingCost),
+			"unitValue": fmt.Sprintf("%.2f", shippingPrice),
 		}
 		softpymesItems = append(softpymesItems, shippingItem)
 	}

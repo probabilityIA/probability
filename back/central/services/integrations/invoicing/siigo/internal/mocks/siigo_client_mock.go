@@ -14,6 +14,7 @@ type SiigoClientMock struct {
 	GetCustomerByIdentificationFn func(ctx context.Context, credentials dtos.Credentials, identification string) (*dtos.CustomerResult, error)
 	CreateCustomerFn              func(ctx context.Context, credentials dtos.Credentials, req *dtos.CreateCustomerRequest) (*dtos.CustomerResult, error)
 	ListInvoicesFn                func(ctx context.Context, credentials dtos.Credentials, params dtos.ListInvoicesParams) (*dtos.ListInvoicesResult, error)
+	CreateJournalFn               func(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
 }
 
 // TestAuthentication implementa ports.ISiigoClient.
@@ -72,4 +73,15 @@ func (m *SiigoClientMock) ListInvoices(
 		return m.ListInvoicesFn(ctx, credentials, params)
 	}
 	return &dtos.ListInvoicesResult{}, nil
+}
+
+// CreateJournal implementa ports.ISiigoClient.
+func (m *SiigoClientMock) CreateJournal(
+	ctx context.Context,
+	req *dtos.CreateJournalRequest,
+) (*dtos.CreateJournalResult, error) {
+	if m.CreateJournalFn != nil {
+		return m.CreateJournalFn(ctx, req)
+	}
+	return &dtos.CreateJournalResult{}, nil
 }

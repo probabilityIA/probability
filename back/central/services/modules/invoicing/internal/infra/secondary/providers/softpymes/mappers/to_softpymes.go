@@ -21,14 +21,21 @@ func ToInvoiceRequest(req *dtos.InvoiceRequest) *request.InvoiceRequest {
 		}
 	}
 
-	// Mapear items
+	// Mapear items.
+	// Usar UnitPriceBase (precio sin IVA) calculado al importar la orden.
+	// Fallback a UnitPrice para órdenes antiguas sin el campo.
 	items := make([]request.InvoiceItem, 0, len(req.InvoiceItems))
 	for _, item := range req.InvoiceItems {
+		unitPrice := item.UnitPriceBase
+		if unitPrice == 0 {
+			unitPrice = item.UnitPrice
+		}
+
 		softpymesItem := request.InvoiceItem{
 			Code:        item.SKU,
 			Description: item.Name,
 			Quantity:    float64(item.Quantity),
-			UnitPrice:   item.UnitPrice,
+			UnitPrice:   unitPrice,
 			TotalPrice:  item.TotalPrice,
 			Tax:         item.Tax,
 			Discount:    item.Discount,

@@ -95,6 +95,7 @@ type OrderItemData struct {
 	Description  *string
 	Quantity     int
 	UnitPrice    float64
+	UnitPriceBase float64 // Precio sin impuestos (calculado al importar la orden)
 	TotalPrice   float64
 	Tax          float64
 	TaxRate      *float64
@@ -103,8 +104,9 @@ type OrderItemData struct {
 	CategoryID      *uint
 	CategoryName    *string
 	// Precios en moneda presentment (moneda local, ej: COP)
-	UnitPricePresentment  float64
-	TotalPricePresentment float64
-	DiscountPresentment   float64
-	TaxPresentment        float64
+	UnitPricePresentment      float64
+	UnitPriceBasePresentment  float64
+	TotalPricePresentment     float64
+	DiscountPresentment       float64
+	TaxPresentment            float64
 }

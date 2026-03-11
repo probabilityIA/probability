@@ -391,6 +391,8 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         config: parsedConfig as any,
                         credentials: integration.credentials as any,
                         business_id: integration.business_id,
+                        is_testing: integration.is_testing,
+                        base_url_test: selectedType.base_url_test,
                     }}
                     onSuccess={onSuccess}
                     onCancel={onCancel}
@@ -796,6 +798,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                         <SiigoConfigForm
                             onSuccess={onSuccess}
                             onCancel={onCancel}
+                            integrationTypeBaseURLTest={selectedType.base_url_test}
                         />
                     )}
 

@@ -239,6 +239,18 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		productID := item.ProductID
 		variantID := item.VariantID
 
+		// Calcular precio base sin impuestos.
+		// En Shopify los precios pueden incluir IVA (tax_included=true en la tienda).
+		// El precio base permite a los facturadores usar el valor neto directamente.
+		unitPriceBase := unitPrice
+		unitPriceBasePresentment := unitPricePresentment
+		if taxRate != nil && *taxRate > 0 {
+			unitPriceBase = unitPrice / (1 + *taxRate)
+			if unitPricePresentment > 0 {
+				unitPriceBasePresentment = unitPricePresentment / (1 + *taxRate)
+			}
+		}
+
 		items[i] = domain.ShopifyOrderItem{
 			ExternalID:   strconv.FormatInt(item.VariantID, 10),
 			Name:         item.Name,
@@ -253,6 +265,9 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 			Tax:          totalTax,
 			TaxRate:      taxRate,
 			Weight:       weight,
+			// Precio base sin impuestos
+			UnitPriceBase:            unitPriceBase,
+			UnitPriceBasePresentment: unitPriceBasePresentment,
 			// Precios en moneda local
 			UnitPricePresentment: unitPricePresentment,
 			DiscountPresentment:  discountPresentment,

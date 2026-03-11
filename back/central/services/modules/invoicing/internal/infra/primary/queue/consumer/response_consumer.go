@@ -253,13 +253,15 @@ func (c *ResponseConsumer) handleSuccess(
 		}
 	}
 
-	// Actualizar información de factura en la orden
-	invoiceURL := ""
-	if invoice.InvoiceURL != nil {
-		invoiceURL = *invoice.InvoiceURL
-	}
-	if err := c.repo.UpdateOrderInvoiceInfo(ctx, invoice.OrderID, invoice.InvoiceNumber, invoiceURL); err != nil {
-		c.log.Error(ctx).Err(err).Msg("Failed to update order invoice info")
+	// Actualizar información de factura en la orden (skip para journals)
+	if response.Operation != dtos.OperationCreateJournal {
+		invoiceURL := ""
+		if invoice.InvoiceURL != nil {
+			invoiceURL = *invoice.InvoiceURL
+		}
+		if err := c.repo.UpdateOrderInvoiceInfo(ctx, invoice.OrderID, invoice.InvoiceNumber, invoiceURL); err != nil {
+			c.log.Error(ctx).Err(err).Msg("Failed to update order invoice info")
+		}
 	}
 
 	// Publicar evento de factura creada (RabbitMQ)

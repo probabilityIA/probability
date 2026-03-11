@@ -28,6 +28,10 @@ type ProbabilityOrderItem struct {
 	Tax             float64
 	TaxRate         *float64
 
+	// Precio base sin impuestos
+	UnitPriceBase            float64
+	UnitPriceBasePresentment float64
+
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64
 	TotalPricePresentment float64

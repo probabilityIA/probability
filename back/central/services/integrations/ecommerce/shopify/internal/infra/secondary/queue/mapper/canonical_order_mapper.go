@@ -27,6 +27,8 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 			DiscountPercent: item.DiscountPercent,
 			Tax:          item.Tax,
 			TaxRate:      item.TaxRate,
+			UnitPriceBase:            item.UnitPriceBase,
+			UnitPriceBasePresentment: item.UnitPriceBasePresentment,
 			UnitPricePresentment:  item.UnitPricePresentment,
 			TotalPricePresentment: item.TotalPricePresentment,
 			DiscountPresentment:   item.DiscountPresentment,

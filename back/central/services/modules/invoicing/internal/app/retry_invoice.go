@@ -149,11 +149,6 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 		invoiceConfigData = config.InvoiceConfig
 	}
 
-	// Inyectar URL dinámica para que el consumer seleccione entre producción y testing
-	invoiceConfigData["is_testing"] = config.IsTesting
-	invoiceConfigData["base_url"] = config.BaseURL
-	invoiceConfigData["base_url_test"] = config.BaseURLTest
-
 	invoiceData := dtos.InvoiceData{
 		IntegrationID: integrationID,
 		Customer: dtos.InvoiceCustomerData{
@@ -178,10 +173,18 @@ func (uc *useCase) RetryInvoice(ctx context.Context, invoiceID uint) error {
 	correlationID := uuid.New().String()
 
 	// 13. Construir mensaje de retry request tipado
+	// Usar operación original si está en metadata (para journals, enviar create_journal en vez de retry)
+	operation := dtos.OperationRetry
+	if invoice.Metadata != nil {
+		if origOp, ok := invoice.Metadata["original_operation"].(string); ok && origOp != "" {
+			operation = origOp
+		}
+	}
+
 	requestMessage := &dtos.InvoiceRequestMessage{
 		InvoiceID:     invoice.ID,
 		Provider:      provider,
-		Operation:     dtos.OperationRetry,
+		Operation:     operation,
 		InvoiceData:   invoiceData,
 		CorrelationID: correlationID,
 		Timestamp:     time.Now(),

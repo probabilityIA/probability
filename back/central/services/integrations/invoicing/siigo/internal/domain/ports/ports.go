@@ -32,6 +32,10 @@ type ISiigoClient interface {
 	// ListInvoices consulta la lista paginada de facturas emitidas en Siigo
 	// Endpoint: GET /v1/invoices
 	ListInvoices(ctx context.Context, credentials dtos.Credentials, params dtos.ListInvoicesParams) (*dtos.ListInvoicesResult, error)
+
+	// CreateJournal crea un comprobante contable en Siigo
+	// Endpoint: POST /v1/journals
+	CreateJournal(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
 }
 
 // ═══════════════════════════════════════════════════════════════

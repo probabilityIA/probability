@@ -14,12 +14,13 @@ type InvoiceRequestMessage struct {
 
 // Operations
 const (
-	OperationCreate      = "create"
-	OperationRetry       = "retry"
-	OperationCancel      = "cancel"
-	OperationCompare     = "compare"
-	OperationCheckStatus = "check_status"
-	OperationListItems   = "list_items"
+	OperationCreate        = "create"
+	OperationRetry         = "retry"
+	OperationCancel        = "cancel"
+	OperationCompare       = "compare"
+	OperationCheckStatus   = "check_status"
+	OperationListItems     = "list_items"
+	OperationCreateJournal = "create_journal"
 )
 
 // Providers

@@ -181,6 +181,12 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			discount = orderItem.DiscountPresentment
 		}
 
+		// Seleccionar precio base (sin impuestos) según moneda
+		unitPriceBase := orderItem.UnitPriceBase
+		if orderItem.UnitPriceBasePresentment > 0 {
+			unitPriceBase = orderItem.UnitPriceBasePresentment
+		}
+
 		item := &entities.InvoiceItem{
 			ProductID:       orderItem.ProductID,
 			SKU:             orderItem.SKU,
@@ -188,6 +194,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			Description:     orderItem.Description,
 			Quantity:        orderItem.Quantity,
 			UnitPrice:       unitPrice,
+			UnitPriceBase:   unitPriceBase,
 			TotalPrice:      totalPrice,
 			Currency:        order.Currency,
 			Tax:             tax,
@@ -250,6 +257,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 			Description:     item.Description,
 			Quantity:        item.Quantity,
 			UnitPrice:       item.UnitPrice,
+			UnitPriceBase:   item.UnitPriceBase,
 			TotalPrice:      item.TotalPrice,
 			Tax:             item.Tax,
 			TaxRate:         item.TaxRate,
@@ -260,6 +268,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		if i < len(order.Items) {
 			oi := order.Items[i]
 			itemDTO.UnitPricePresentment = oi.UnitPricePresentment
+			itemDTO.UnitPriceBasePresentment = oi.UnitPriceBasePresentment
 			itemDTO.TotalPricePresentment = oi.TotalPricePresentment
 			itemDTO.DiscountPresentment = oi.DiscountPresentment
 			itemDTO.TaxPresentment = oi.TaxPresentment
@@ -273,29 +282,32 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		invoiceConfigData = config.InvoiceConfig
 	}
 
-	// Inyectar URL dinámica para que el consumer seleccione entre producción y testing
-	invoiceConfigData["is_testing"] = config.IsTesting
-	invoiceConfigData["base_url"] = config.BaseURL
-	invoiceConfigData["base_url_test"] = config.BaseURLTest
+	// Calcular shipping base: usar tasa del primer item como referencia, default 19%
+	shippingTaxRate := 0.19
+	if len(order.Items) > 0 && order.Items[0].TaxRate != nil && *order.Items[0].TaxRate > 0 {
+		shippingTaxRate = *order.Items[0].TaxRate
+	}
+	shippingCostBase := dtos.ShippingCostBase(invoice.ShippingCost, shippingTaxRate)
 
 	invoiceData := dtos.InvoiceData{
-		IntegrationID: integrationID,
+		IntegrationID:    integrationID,
 		Customer: dtos.InvoiceCustomerData{
 			Name:  invoice.CustomerName,
 			Email: invoice.CustomerEmail,
 			Phone: invoice.CustomerPhone,
 			DNI:   invoice.CustomerDNI,
 		},
-		Items:        invoiceItemDTOs,
-		Total:        invoice.TotalAmount,
-		Subtotal:     invoice.Subtotal,
-		Tax:          invoice.Tax,
-		Discount:     invoice.Discount,
-		ShippingCost: invoice.ShippingCost,
-		Currency:     invoice.Currency,
-		OrderID:      invoice.OrderID,
-		OrderNumber:  order.OrderNumber,
-		Config:       invoiceConfigData,
+		Items:            invoiceItemDTOs,
+		Total:            invoice.TotalAmount,
+		Subtotal:         invoice.Subtotal,
+		Tax:              invoice.Tax,
+		Discount:         invoice.Discount,
+		ShippingCost:     invoice.ShippingCost,
+		ShippingCostBase: shippingCostBase,
+		Currency:         invoice.Currency,
+		OrderID:          invoice.OrderID,
+		OrderNumber:      order.OrderNumber,
+		Config:           invoiceConfigData,
 	}
 
 	// 14. Generar correlation ID único para request/response
@@ -347,7 +359,17 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		Str("correlation_id", correlationID).
 		Msg("Invoice request published - waiting for provider response")
 
-	// 17. Retornar invoice inmediatamente (estado pending)
+	// 17. Auto-trigger journal si el config tiene enable_journal (solo Siigo)
+	if provider == dtos.ProviderSiigo {
+		if enableJournal, ok := invoiceConfigData["enable_journal"].(bool); ok && enableJournal {
+			journalDTO := &dtos.CreateJournalDTO{OrderID: dto.OrderID}
+			if _, journalErr := uc.CreateJournal(ctx, journalDTO); journalErr != nil {
+				uc.log.Warn(ctx).Err(journalErr).Msg("Auto journal creation failed (non-blocking)")
+			}
+		}
+	}
+
+	// 18. Retornar invoice inmediatamente (estado pending)
 	return invoice, nil
 }
 

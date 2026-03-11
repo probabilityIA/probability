@@ -114,6 +114,10 @@ type ProbabilityOrderItemDTO struct {
 	Tax             float64  `json:"tax"`
 	TaxRate         *float64 `json:"tax_rate,omitempty"`
 
+	// Precio base sin impuestos
+	UnitPriceBase            float64 `json:"unit_price_base"`
+	UnitPriceBasePresentment float64 `json:"unit_price_base_presentment"`
+
 	// Precios en moneda presentment (presentment_money - moneda local)
 	UnitPricePresentment  float64         `json:"unit_price_presentment"`
 	TotalPricePresentment float64         `json:"total_price_presentment"`

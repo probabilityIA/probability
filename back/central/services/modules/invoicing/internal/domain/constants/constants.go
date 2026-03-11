@@ -37,10 +37,11 @@ const (
 
 // Tipos de operación de sincronización
 const (
-	OperationTypeCreate     = "create"
-	OperationTypeCancel     = "cancel"
-	OperationTypeCreditNote = "credit_note"
-	OperationTypeQuery      = "query"
+	OperationTypeCreate        = "create"
+	OperationTypeCancel        = "cancel"
+	OperationTypeCreditNote    = "credit_note"
+	OperationTypeQuery         = "query"
+	OperationTypeCreateJournal = "create_journal"
 )
 
 // Triggers de sincronización

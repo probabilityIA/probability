@@ -250,6 +250,7 @@ type IUseCase interface {
 
 	// Facturas
 	CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO) (*entities.Invoice, error)
+	CreateJournal(ctx context.Context, dto *dtos.CreateJournalDTO) (*entities.Invoice, error)
 	RegisterManualInvoice(ctx context.Context, dto *dtos.RegisterManualInvoiceDTO) (*entities.Invoice, error)
 	CancelInvoice(ctx context.Context, dto *dtos.CancelInvoiceDTO) error
 	RetryInvoice(ctx context.Context, invoiceID uint) error

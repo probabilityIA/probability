@@ -65,6 +65,9 @@ type IHandler interface {
 
 	// Comparación de ítems del proveedor vs productos del sistema
 	ListItems(c *gin.Context)
+
+	// Journals (comprobantes contables)
+	CreateJournal(c *gin.Context)
 }
 
 // handler implementa IHandler

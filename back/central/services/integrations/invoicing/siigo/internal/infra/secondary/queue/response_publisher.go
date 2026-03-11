@@ -17,8 +17,9 @@ const (
 // InvoiceResponseMessage es el mensaje que se publica de vuelta a Invoicing Module
 type InvoiceResponseMessage struct {
 	InvoiceID      uint                   `json:"invoice_id"`
-	Provider       string                 `json:"provider"` // "siigo"
-	Status         string                 `json:"status"`   // "success", "error"
+	Provider       string                 `json:"provider"`            // "siigo"
+	Status         string                 `json:"status"`              // "success", "error"
+	Operation      string                 `json:"operation,omitempty"` // "create", "create_journal", etc.
 	InvoiceNumber  string                 `json:"invoice_number,omitempty"`
 	ExternalID     string                 `json:"external_id,omitempty"`
 	InvoiceURL     string                 `json:"invoice_url,omitempty"`
