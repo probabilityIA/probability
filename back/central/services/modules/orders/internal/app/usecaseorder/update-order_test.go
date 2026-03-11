@@ -175,6 +175,10 @@ func TestUpdateOrder_StatusChange_PublishesStatusEvent(t *testing.T) {
 	mockRepo.On("UpdateOrder", ctx, mock.AnythingOfType("*entities.ProbabilityOrder")).
 		Return(nil).Maybe()
 
+	statusID := uint(5)
+	mockRepo.On("GetOrderStatusIDByCode", ctx, newStatus).
+		Return(&statusID, nil).Maybe()
+
 	mockScoreUseCase.On("CalculateAndUpdateOrderScore", ctx, orderID).
 		Return(nil).Maybe()
 
@@ -303,6 +307,10 @@ func TestUpdateOrder_RepositoryError(t *testing.T) {
 	mockRepo.On("UpdateOrder", ctx, mock.AnythingOfType("*entities.ProbabilityOrder")).
 		Return(dbError)
 
+	statusID := uint(5)
+	mockRepo.On("GetOrderStatusIDByCode", ctx, newStatus).
+		Return(&statusID, nil).Maybe()
+
 	// Act
 	result, err := useCase.UpdateOrder(ctx, orderID, req)
 
@@ -316,9 +324,9 @@ func TestUpdateOrder_RepositoryError(t *testing.T) {
 
 func TestUpdateOrder_ConfirmationStatus(t *testing.T) {
 	tests := []struct {
-		name                  string
-		confirmationStatus    string
-		expectedIsConfirmed   *bool
+		name                string
+		confirmationStatus  string
+		expectedIsConfirmed *bool
 	}{
 		{
 			name:               "confirmation yes",

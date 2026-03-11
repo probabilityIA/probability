@@ -61,6 +61,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.Vehicle{},
 		&models.Route{},
 		&models.RouteStop{},
+
+		// Subscriptions
+		&models.BusinessSubscription{},
 	); err != nil {
 		return err
 	}
@@ -1076,15 +1079,15 @@ func (r *Repository) migrateOrderStatusPriority(ctx context.Context) error {
 		priority int
 	}
 	seeds := []prioritySeed{
-		{1, 1},  // pending
-		{2, 2},  // processing
-		{9, 3},  // on_hold
-		{3, 4},  // shipped
-		{4, 5},  // delivered
-		{5, 6},  // completed
-		{7, 7},  // refunded
-		{6, 8},  // cancelled
-		{8, 9},  // failed
+		{1, 1}, // pending
+		{2, 2}, // processing
+		{9, 3}, // on_hold
+		{3, 4}, // shipped
+		{4, 5}, // delivered
+		{5, 6}, // completed
+		{7, 7}, // refunded
+		{6, 8}, // cancelled
+		{8, 9}, // failed
 	}
 	for _, s := range seeds {
 		if err := db.Exec(`
@@ -1263,13 +1266,13 @@ func (r *Repository) seedAllowedOrderStatusesByEventType(ctx context.Context) er
 	// Mapeo: eventTypeID → []orderStatusID
 	// IDs de order_statuses: pending=1, processing=2, shipped=3, delivered=4, completed=5, cancelled=6, refunded=7
 	allowedMap := map[uint][]uint{
-		1: {1, 2},       // SSE order.created → pending, processing
-		2: {},            // SSE order.status_changed → todos (vacío)
-		3: {1, 2},       // WA order.created → pending, processing
-		4: {3, 4},       // WA order.shipped → shipped, delivered
-		5: {4, 5},       // WA order.delivered → delivered, completed
-		6: {6, 7},       // WA order.canceled → cancelled, refunded
-		7: {},            // WA invoice.created → todos (vacío)
+		1: {1, 2}, // SSE order.created → pending, processing
+		2: {},     // SSE order.status_changed → todos (vacío)
+		3: {1, 2}, // WA order.created → pending, processing
+		4: {3, 4}, // WA order.shipped → shipped, delivered
+		5: {4, 5}, // WA order.delivered → delivered, completed
+		6: {6, 7}, // WA order.canceled → cancelled, refunded
+		7: {},     // WA invoice.created → todos (vacío)
 	}
 
 	for eventTypeID, statusIDs := range allowedMap {

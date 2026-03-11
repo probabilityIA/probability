@@ -1,0 +1,89 @@
+﻿go : # github.com/secamc93/p
+robability/back/central/serv
+ices/modules/orders/internal
+/app/usecaseupdateorder [git
+hub.com/secamc93/probability
+/back/central/services/modul
+es/orders/internal/app/useca
+seupdateorder.test]
+En línea: 1 Carácter: 1
++ go test ./services/integra
+tions/core/internal/infra/pr
+imary/handlers/ ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: (# git  
+  hub.com/se...dateorder.   
+ test]:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+services\modules\orders\inte
+rnal\app\usecaseupdateorder\
+update_order_test.go:226:26:
+ method mockRepository.Updat
+eProductPrice already 
+declared at services\modules
+\orders\internal\app\usecase
+updateorder\update_order_tes
+t.go:222:26
+# github.com/secamc93/probab
+ility/back/central/services/
+modules/orders/internal/app/
+usecasecreateorder [github.c
+om/secamc93/probability/back
+/central/services/modules/or
+ders/internal/app/usecasecre
+ateorder.test]
+services\modules\orders\inte
+rnal\app\usecasecreateorder\
+create_order_test.go:226:26:
+ method mockRepository.Updat
+eProductPrice already 
+declared at services\modules
+\orders\internal\app\usecase
+createorder\create_order_tes
+t.go:222:26
+ok  	github.com/secamc93/probability/back/central/services/integrations/core/internal/infra/primary/handlers/handlerintegrations	(cached)
+--- FAIL: TestUpdateIntegrationConfig_MergeExitoso (0.00s)
+panic: 
+	assert: mock: I don't know what to return because the method call was unexpected.
+		Either do Mock.On("InvalidateMetadata").Return(...) first, or remove the InvalidateMetadata() call.
+		This method was unexpected:
+			InvalidateMetadata(*context.valueCtx,uint)
+			0: &context.valueCtx{Context:(*context.valueCtx)(0xc0001d5500), key:"UpdateIntegration", val:"UpdateIntegration"}
+			1: 0x9
+		at: [C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/mocks/cache_mock.go:52 C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/app/usecaseintegrations/update-integration.go:102 C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/app/usecaseintegrations/consumer_methods.go:80 C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/app/usecaseintegrations/consumer_methods_test.go:139] [recovered, repanicked]
+
+goroutine 10 [running]:
+testing.tRunner.func1.2({0x7ff616949fe0, 0xc0002281e0})
+	C:/Program Files/Go/src/testing/testing.go:1872 +0x239
+testing.tRunner.func1()
+	C:/Program Files/Go/src/testing/testing.go:1875 +0x35b
+panic({0x7ff616949fe0?, 0xc0002281e0?})
+	C:/Program Files/Go/src/runtime/panic.go:783 +0x132
+github.com/stretchr/testify/mock.(*Mock).fail(0xc0001c6fa0, {0x7ff6169c9aeb?, 0x4?}, {0xc0001a9740?, 0x2?, 0x2?})
+	C:/Users/ACER/go/pkg/mod/github.com/stretchr/testify@v1.11.1/mock/mock.go:359 +0x125
+github.com/stretchr/testify/mock.(*Mock).MethodCalled(0xc0001c6fa0, {0x7ff616a6d575, 0x12}, {0xc0001d8cc0, 0x2, 0x2})
+	C:/Users/ACER/go/pkg/mod/github.com/stretchr/testify@v1.11.1/mock/mock.go:527 +0x77b
+github.com/stretchr/testify/mock.(*Mock).Called(0xc0001c6fa0, {0xc0001d8cc0, 0x2, 0x2})
+	C:/Users/ACER/go/pkg/mod/github.com/stretchr/testify@v1.11.1/mock/mock.go:491 +0x125
+github.com/secamc93/probability/back/central/services/integrations/core/internal/mocks.(*CacheMock).InvalidateMetadata(0xc0001c6fa0, {0x7ff616a23d40, 0xc0001d5830}, 0x9)
+	C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/mocks/cache_mock.go:52 +0xb9
+github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations.(*IntegrationUseCase).UpdateIntegration(0xc0001b3680, {0x7ff616a23d40, 0xc0001d5500}, 0x9, {0x0, 0x0, 0x0, 0x0, 0x0, 0x0, ...})
+	C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/app/usecaseintegrations/update-integration.go:102 +0x775
+github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations.(*IntegrationUseCase).UpdateIntegrationConfig(0xc0001b3680, {0x7ff616a23c98?, 0x7ff616c8ab60?}, {0x7ff616a1ea78, 0x1}, 0xc00002df28)
+	C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/app/usecaseintegrations/consumer_methods.go:80 +0x37e
+github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations.TestUpdateIntegrationConfig_MergeExitoso(0xc00021a380)
+	C:/Users/ACER/OneDrive/Escritorio/Probability/probability/back/central/services/integrations/core/internal/app/usecaseintegrations/consumer_methods_test.go:139 +0x53f
+testing.tRunner(0xc00021a380, 0x7ff6169d2280)
+	C:/Program Files/Go/src/testing/testing.go:1934 +0xc3
+created by testing.(*T).Run in goroutine 1
+	C:/Program Files/Go/src/testing/testing.go:1997 +0x44b
+FAIL	github.com/secamc93/probability/back/central/services/integrations/core/internal/app/usecaseintegrations	0.562s
+FAIL	github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecasecreateorder [build failed]
+FAIL	github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdateorder [build failed]
+FAIL

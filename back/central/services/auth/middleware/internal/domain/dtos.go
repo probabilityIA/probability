@@ -1,10 +1,11 @@
 package domain
 
 type JWTClaims struct {
-	UserID         uint
-	BusinessID     uint
-	BusinessTypeID uint
-	RoleID         uint
+	UserID             uint
+	BusinessID         uint
+	BusinessTypeID     uint
+	RoleID             uint
+	SubscriptionStatus string
 }
 type BusinessTokenClaims struct {
 	UserID         uint

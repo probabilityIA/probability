@@ -89,6 +89,7 @@ type BusinessInfoEntity struct {
 	EnableDelivery     bool
 	EnablePickup       bool
 	EnableReservations bool
+	SubscriptionStatus string // 'active', 'expired', 'cancelled'
 }
 
 type BusinessTypeInfo struct {
@@ -161,17 +162,18 @@ type BusinessStaffRelation struct {
 }
 
 type UserRolesPermissionsResponse struct {
-	Success          bool
-	Message          string
-	UserID           uint
-	Email            string
-	IsSuper          bool
-	BusinessID       uint
-	BusinessName     string
-	BusinessTypeID   uint
-	BusinessTypeName string
-	Role             RoleInfo
-	Permissions      []PermissionInfo
+	Success            bool
+	Message            string
+	UserID             uint
+	Email              string
+	IsSuper            bool
+	BusinessID         uint
+	BusinessName       string
+	BusinessTypeID     uint
+	BusinessTypeName   string
+	Role               RoleInfo
+	Permissions        []PermissionInfo
+	SubscriptionStatus string // from JWT claims
 }
 type PermissionInfo struct {
 	ID          uint

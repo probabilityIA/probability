@@ -45,13 +45,14 @@ type ResourcePermissions struct {
 
 // UserRolesPermissionsResponse representa la respuesta de roles y permisos del usuario
 type UserRolesPermissionsResponse struct {
-	IsSuper          bool                  `json:"is_super"`
-	BusinessID       uint                  `json:"business_id"`
-	BusinessName     string                `json:"business_name"`
-	BusinessTypeID   uint                  `json:"business_type_id"`
-	BusinessTypeName string                `json:"business_type_name"`
-	Role             RoleInfo              `json:"role"`
-	Resources        []ResourcePermissions `json:"resources"`
+	IsSuper            bool                  `json:"is_super"`
+	BusinessID         uint                  `json:"business_id"`
+	BusinessName       string                `json:"business_name"`
+	BusinessTypeID     uint                  `json:"business_type_id"`
+	BusinessTypeName   string                `json:"business_type_name"`
+	Role               RoleInfo              `json:"role"`
+	Resources          []ResourcePermissions `json:"resources"`
+	SubscriptionStatus string                `json:"subscription_status,omitempty"`
 }
 
 // LoginSuccessResponse representa la respuesta exitosa del login para Swagger

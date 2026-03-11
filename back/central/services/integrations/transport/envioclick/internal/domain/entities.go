@@ -50,14 +50,16 @@ type QuoteData struct {
 }
 
 type Rate struct {
-	IDRate        int64   `json:"idRate"`
-	IDProduct     int64   `json:"idProduct"`
-	Product       string  `json:"product"`
-	IDCarrier     int64   `json:"idCarrier"`
-	Carrier       string  `json:"carrier"`
-	Flete         float64 `json:"flete"`
-	DeliveryDays  int     `json:"deliveryDays"`
-	QuotationType string  `json:"quotationType"`
+	IDRate           int64   `json:"idRate"`
+	IDProduct        int64   `json:"idProduct"`
+	Product          string  `json:"product"`
+	IDCarrier        int64   `json:"idCarrier"`
+	Carrier          string  `json:"carrier"`
+	Flete            float64 `json:"flete"`
+	MinimumInsurance float64 `json:"minimumInsurance"`
+	ExtraInsurance   float64 `json:"extraInsurance"`
+	DeliveryDays     int     `json:"deliveryDays"`
+	QuotationType    string  `json:"quotationType"`
 }
 
 type GenerateResponse struct {

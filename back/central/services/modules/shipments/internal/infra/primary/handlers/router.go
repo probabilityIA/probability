@@ -7,6 +7,9 @@ import (
 
 // RegisterRoutes registra todas las rutas del módulo shipments
 func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
+	// Ruta pública (sin JWT) - para webhooks externos como EnvioClick
+	router.POST("/webhooks/envioclick", h.EnvioClickWebhook)
+
 	shipments := router.Group("/shipments", middleware.JWT())
 	{
 		// CRUD básico

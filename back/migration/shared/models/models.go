@@ -75,6 +75,10 @@ type Business struct {
 	CustomDomain    *string `gorm:"size:100;unique"`          // dominio personalizado
 	IsActive        bool    `gorm:"default:true"`
 
+	// Configuración de suscripción
+	SubscriptionStatus  string     `gorm:"size:20;default:'active'"` // 'active', 'expired', 'cancelled'
+	SubscriptionEndDate *time.Time // Fecha en la que vence la suscripción
+
 	// Configuración de funcionalidades
 	EnableDelivery     bool `gorm:"default:false"`
 	EnablePickup       bool `gorm:"default:false"`
@@ -319,13 +323,13 @@ func (IntegrationCategory) TableName() string {
 // ───────────────────────────────────────────
 type IntegrationType struct {
 	gorm.Model
-	Name        string `gorm:"size:100;not null;unique"` // "WhatsApp", "Shopify", "Mercado Libre"
-	Code        string `gorm:"size:50;not null;unique"`  // "whatsapp", "shopify", "mercado_libre"
-	Description string `gorm:"size:500"`                 // Descripción del tipo de integración
-	Icon        string `gorm:"size:100"`                 // Icono para UI
-	ImageURL    string `gorm:"size:500"`                 // URL de la imagen del logo (path relativo en S3)
-	IsActive      bool `gorm:"default:true"`  // Si el tipo está activo y disponible
-	InDevelopment bool `gorm:"default:false"` // Si el tipo está en desarrollo (próximamente)
+	Name          string `gorm:"size:100;not null;unique"` // "WhatsApp", "Shopify", "Mercado Libre"
+	Code          string `gorm:"size:50;not null;unique"`  // "whatsapp", "shopify", "mercado_libre"
+	Description   string `gorm:"size:500"`                 // Descripción del tipo de integración
+	Icon          string `gorm:"size:100"`                 // Icono para UI
+	ImageURL      string `gorm:"size:500"`                 // URL de la imagen del logo (path relativo en S3)
+	IsActive      bool   `gorm:"default:true"`             // Si el tipo está activo y disponible
+	InDevelopment bool   `gorm:"default:false"`            // Si el tipo está en desarrollo (próximamente)
 
 	// Relación con IntegrationCategory
 	CategoryID *uint                `gorm:"index"`

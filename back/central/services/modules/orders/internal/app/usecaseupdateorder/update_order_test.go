@@ -219,7 +219,6 @@ func (m *mockRepository) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 	}
 	return nil, nil
 }
-
 func (m *mockRepository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
 	return nil
 }
@@ -513,7 +512,7 @@ func TestUpdateOrder_CambioInformacionFinanciera_ActualizaCampos(t *testing.T) {
 
 	dto := &dtos.ProbabilityOrderDTO{
 		TotalAmount: 200.0, // Valor diferente al existente
-		Currency:    "USD",  // Moneda diferente
+		Currency:    "USD", // Moneda diferente
 		Subtotal:    160.0, // Subtotal diferente
 	}
 

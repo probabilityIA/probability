@@ -45,6 +45,7 @@ func TestUpdateIntegration_ActualizaNombreYDescripcion(t *testing.T) {
 
 	repo.On("GetIntegrationByID", mock.Anything, uint(1)).Return(integracionExistente, nil)
 	cache.On("InvalidateIntegration", mock.Anything, uint(1)).Return(nil)
+	cache.On("InvalidateMetadata", mock.Anything, uint(1)).Return(nil)
 	repo.On("UpdateIntegration", mock.Anything, uint(1), mock.AnythingOfType("*domain.Integration")).Return(nil)
 	repo.On("GetIntegrationTypeByID", mock.Anything, uint(1)).Return(nil, nil)
 	cache.On("SetIntegration", mock.Anything, mock.Anything).Return(nil)
@@ -108,6 +109,7 @@ func TestUpdateIntegration_ErrorAlGuardar(t *testing.T) {
 
 	repo.On("GetIntegrationByID", mock.Anything, uint(2)).Return(integracionExistente, nil)
 	cache.On("InvalidateIntegration", mock.Anything, uint(2)).Return(nil)
+	cache.On("InvalidateMetadata", mock.Anything, uint(2)).Return(nil)
 	repo.On("UpdateIntegration", mock.Anything, uint(2), mock.AnythingOfType("*domain.Integration")).Return(errors.New("db error"))
 
 	// Act
@@ -145,6 +147,7 @@ func TestUpdateIntegration_MarcarComoDefault(t *testing.T) {
 	repo.On("GetIntegrationByID", mock.Anything, uint(3)).Return(integracionExistente, nil)
 	repo.On("SetIntegrationAsDefault", mock.Anything, uint(3)).Return(nil)
 	cache.On("InvalidateIntegration", mock.Anything, uint(3)).Return(nil)
+	cache.On("InvalidateMetadata", mock.Anything, uint(3)).Return(nil)
 	repo.On("UpdateIntegration", mock.Anything, uint(3), mock.AnythingOfType("*domain.Integration")).Return(nil)
 	repo.On("GetIntegrationTypeByID", mock.Anything, uint(8)).Return(nil, nil)
 	cache.On("SetIntegration", mock.Anything, mock.Anything).Return(nil)
@@ -300,6 +303,7 @@ func TestActivateIntegration_ActivaIntegracionInactiva(t *testing.T) {
 
 	repo.On("GetIntegrationByID", mock.Anything, uint(2)).Return(integracion, nil)
 	cache.On("InvalidateIntegration", mock.Anything, uint(2)).Return(nil)
+	cache.On("InvalidateMetadata", mock.Anything, uint(2)).Return(nil)
 	repo.On("UpdateIntegration", mock.Anything, uint(2), mock.AnythingOfType("*domain.Integration")).Return(nil)
 	repo.On("GetIntegrationTypeByID", mock.Anything, uint(7)).Return(nil, nil)
 	cache.On("SetIntegration", mock.Anything, mock.Anything).Return(nil)
@@ -361,6 +365,7 @@ func TestDeactivateIntegration_DesactivaIntegracionActiva(t *testing.T) {
 
 	repo.On("GetIntegrationByID", mock.Anything, uint(4)).Return(integracion, nil)
 	cache.On("InvalidateIntegration", mock.Anything, uint(4)).Return(nil)
+	cache.On("InvalidateMetadata", mock.Anything, uint(4)).Return(nil)
 	repo.On("UpdateIntegration", mock.Anything, uint(4), mock.AnythingOfType("*domain.Integration")).Return(nil)
 	repo.On("GetIntegrationTypeByID", mock.Anything, uint(8)).Return(nil, nil)
 	cache.On("SetIntegration", mock.Anything, mock.Anything).Return(nil)

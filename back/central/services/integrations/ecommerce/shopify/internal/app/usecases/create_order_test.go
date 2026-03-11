@@ -22,7 +22,7 @@ func TestCreateOrder_Success(t *testing.T) {
 			if integrationType != domain.IntegrationTypeID {
 				t.Errorf("integrationType inesperado: got %d, want %d", integrationType, domain.IntegrationTypeID)
 			}
-			return &domain.Integration{ID: 7, BusinessID: &businessID}, nil
+			return &domain.Integration{ID: 7, BusinessID: &businessID, IsActive: true}, nil
 		},
 	}
 
@@ -133,7 +133,7 @@ func TestCreateOrder_PublisherError(t *testing.T) {
 
 	integrationSvc := &mockIntegrationService{
 		GetIntegrationByExternalIDFn: func(ctx context.Context, externalID string, integrationType int) (*domain.Integration, error) {
-			return &domain.Integration{ID: 3, BusinessID: &businessID}, nil
+			return &domain.Integration{ID: 3, BusinessID: &businessID, IsActive: true}, nil
 		},
 	}
 
@@ -166,7 +166,7 @@ func TestCreateOrder_WithoutRawPayload_NoChannelMetadata(t *testing.T) {
 
 	integrationSvc := &mockIntegrationService{
 		GetIntegrationByExternalIDFn: func(ctx context.Context, externalID string, integrationType int) (*domain.Integration, error) {
-			return &domain.Integration{ID: 1, BusinessID: &businessID}, nil
+			return &domain.Integration{ID: 1, BusinessID: &businessID, IsActive: true}, nil
 		},
 	}
 
