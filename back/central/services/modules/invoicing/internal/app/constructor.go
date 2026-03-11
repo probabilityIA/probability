@@ -11,10 +11,11 @@ type useCase struct {
 	repo ports.IRepository
 
 	// Servicios externos
-	encryption            ports.IEncryptionService
-	eventPublisher        ports.IEventPublisher
-	ssePublisher          ports.IInvoiceSSEPublisher
-	invoiceRequestPub     ports.IInvoiceRequestPublisher // Publisher para requests a proveedores
+	encryption        ports.IEncryptionService
+	eventPublisher    ports.IEventPublisher
+	ssePublisher      ports.IInvoiceSSEPublisher
+	invoiceRequestPub ports.IInvoiceRequestPublisher // Publisher para requests a proveedores
+	compareCache      ports.ICompareCache            // Cache para resultados de comparación
 
 	// Logger
 	log log.ILogger
@@ -27,6 +28,7 @@ func New(
 	eventPublisher ports.IEventPublisher,
 	ssePublisher ports.IInvoiceSSEPublisher,
 	invoiceRequestPub ports.IInvoiceRequestPublisher,
+	compareCache ports.ICompareCache,
 	logger log.ILogger,
 ) ports.IUseCase {
 	return &useCase{
@@ -35,6 +37,7 @@ func New(
 		eventPublisher:    eventPublisher,
 		ssePublisher:      ssePublisher,
 		invoiceRequestPub: invoiceRequestPub,
+		compareCache:      compareCache,
 		log:               logger.WithModule("invoicing.usecase"),
 	}
 }

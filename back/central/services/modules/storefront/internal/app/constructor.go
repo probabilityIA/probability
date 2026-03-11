@@ -9,6 +9,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
+const tiendaIntegrationTypeID = 30
+
 // IUseCase defines the storefront use cases
 type IUseCase interface {
 	ListCatalog(ctx context.Context, businessID uint, filters dtos.CatalogFilters) ([]entities.StorefrontProduct, int64, error)

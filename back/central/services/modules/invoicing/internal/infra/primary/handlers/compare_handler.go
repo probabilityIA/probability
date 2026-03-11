@@ -58,3 +58,62 @@ func (h *handler) CompareInvoices(c *gin.Context) {
 		"message":        "Comparación iniciada. Recibirás el resultado por SSE.",
 	})
 }
+
+// GetCompareResult retorna el resultado de una comparación almacenado en Redis.
+// Es un mecanismo de entrega alternativo a SSE (belt + suspenders).
+// Retorna 404 si el resultado aún no está listo o expiró.
+func (h *handler) GetCompareResult(c *gin.Context) {
+	correlationID := c.Param("correlationId")
+	if correlationID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "correlationId is required"})
+		return
+	}
+
+	result, err := h.useCase.GetCompareResult(c.Request.Context(), correlationID)
+	if err != nil {
+		h.log.Error(c.Request.Context()).Err(err).
+			Str("correlation_id", correlationID).
+			Msg("Failed to get compare result")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve compare result"})
+		return
+	}
+
+	if result == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":   "compare result not found",
+			"message": "El resultado aún no está listo o ya expiró (TTL 5 min).",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// GetListItemsResult retorna el resultado de una comparación de ítems almacenado en Redis.
+// Retorna 404 si el resultado aún no está listo o expiró.
+func (h *handler) GetListItemsResult(c *gin.Context) {
+	correlationID := c.Param("correlationId")
+	if correlationID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "correlationId is required"})
+		return
+	}
+
+	result, err := h.useCase.GetListItemsResult(c.Request.Context(), correlationID)
+	if err != nil {
+		h.log.Error(c.Request.Context()).Err(err).
+			Str("correlation_id", correlationID).
+			Msg("Failed to get list items result")
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to retrieve list items result"})
+		return
+	}
+
+	if result == nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error":   "list items result not found",
+			"message": "El resultado aún no está listo o ya expiró (TTL 5 min).",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}

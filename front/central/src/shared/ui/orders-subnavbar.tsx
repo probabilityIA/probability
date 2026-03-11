@@ -7,7 +7,7 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useOrdersBusiness } from '@/shared/contexts/orders-business-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
-import { MyIntegrationsButton } from './my-integrations-button';
+import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 
 export const OrdersSubNavbar = memo(function OrdersSubNavbar() {
     const pathname = usePathname();

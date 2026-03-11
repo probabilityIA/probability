@@ -33,7 +33,7 @@ export * from './user-profile-modal';
 export * from './footer';
 export * from './shopify-iframe-detector';
 export * from './super-admin-business-selector';
-export * from './my-integrations-button';
+export { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 
 
 // Re-exportar tipos útiles

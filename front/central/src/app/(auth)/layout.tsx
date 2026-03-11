@@ -29,8 +29,9 @@ export default function AuthLayout({
   const [loading, setLoading] = useState(true);
   const [showBusinessSelector] = useState(false);
 
-  // Páginas que NO deben tener sidebar (login)
+  // Páginas que NO deben tener sidebar (login, registro storefront)
   const isLoginPage = pathname === '/login';
+  const isPublicPage = isLoginPage || pathname === '/storefront/registro';
 
   useEffect(() => {
     // Esperar a que Shopify Auth termine de cargar si estamos en iframe
@@ -38,8 +39,8 @@ export default function AuthLayout({
       return;
     }
 
-    // Verificar autenticación (solo si no es login)
-    if (!isLoginPage) {
+    // Verificar autenticación (solo si no es página pública)
+    if (!isPublicPage) {
       try {
         // ✅ NO verificar token (cookie HttpOnly se envía automáticamente)
         // Solo verificar que haya datos del usuario en sessionStorage
@@ -71,13 +72,6 @@ export default function AuthLayout({
           }
         }
 
-        // Check if user is cliente_final (level 5) - redirect to storefront
-        const permissions = TokenStorage.getPermissions();
-        if (permissions?.role_name === 'cliente_final') {
-          router.push('/storefront/catalogo');
-          return;
-        }
-
         // Todo OK, setear usuario
         setTimeout(() => {
           setUser(userData);
@@ -92,12 +86,12 @@ export default function AuthLayout({
     } else {
       setTimeout(() => setLoading(false), 0);
     }
-  }, [router, isLoginPage, pathname, isShopifyEmbedded, isShopifyLoading, shopifySessionToken]);
+  }, [router, isPublicPage, pathname, isShopifyEmbedded, isShopifyLoading, shopifySessionToken]);
 
 
 
   // Si debe mostrar el selector de negocios
-  if (showBusinessSelector && !isLoginPage) {
+  if (showBusinessSelector && !isPublicPage) {
     const businessesData = TokenStorage.getBusinessesData();
     if (businessesData && businessesData.length > 0) {
       // TODO: Migrar BusinessSelector a la nueva arquitectura
@@ -121,7 +115,7 @@ export default function AuthLayout({
     }
   }
 
-  if (loading && !isLoginPage) {
+  if (loading && !isPublicPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -136,8 +130,8 @@ export default function AuthLayout({
     );
   }
 
-  // Si es la página de login, renderizar sin sidebar
-  if (isLoginPage) {
+  // Si es página pública (login, registro storefront), renderizar sin sidebar
+  if (isPublicPage) {
     return (
       <ShopifyIframeDetector>
         {children}

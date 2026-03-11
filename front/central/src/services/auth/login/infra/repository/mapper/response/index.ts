@@ -73,6 +73,7 @@ export interface UserRolesPermissionsResponse {
     business_type_name: string;
     role: RoleInfo;
     resources: ResourcePermissions[];
+    subscription_status?: string; // 'active' | 'expired' | 'cancelled'
 }
 
 export interface UserRolesPermissionsSuccessResponse {

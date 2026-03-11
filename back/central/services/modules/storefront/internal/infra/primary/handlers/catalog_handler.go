@@ -1,11 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/storefront/internal/domain/dtos"
+	domainerrors "github.com/secamc93/probability/back/central/services/modules/storefront/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/modules/storefront/internal/infra/primary/handlers/response"
 )
 
@@ -28,6 +30,10 @@ func (h *Handlers) ListCatalog(c *gin.Context) {
 
 	products, total, err := h.uc.ListCatalog(c.Request.Context(), businessID, filters)
 	if err != nil {
+		if errors.Is(err, domainerrors.ErrStorefrontNotActive) {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

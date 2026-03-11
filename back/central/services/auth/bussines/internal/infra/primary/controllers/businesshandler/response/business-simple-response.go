@@ -4,6 +4,7 @@ package response
 type BusinessSimpleResponse struct {
 	ID              uint   `json:"id"`
 	Name            string `json:"name"`
+	Code            string `json:"code,omitempty"`
 	LogoURL         string `json:"logo_url,omitempty"`
 	PrimaryColor    string `json:"primary_color,omitempty"`
 	SecondaryColor  string `json:"secondary_color,omitempty"`

@@ -262,8 +262,8 @@ func (m *mockHandlerLogger) Panic(ctx ...context.Context) *zerolog.Event { retur
 func (m *mockHandlerLogger) With() zerolog.Context                       { return m.l.With() }
 
 // Implementar WithService, WithModule, WithBusinessID retornando log.ILogger
-func (m *mockHandlerLogger) WithService(service string) log.ILogger    { return m }
-func (m *mockHandlerLogger) WithModule(module string) log.ILogger      { return m }
+func (m *mockHandlerLogger) WithService(service string) log.ILogger     { return m }
+func (m *mockHandlerLogger) WithModule(module string) log.ILogger       { return m }
 func (m *mockHandlerLogger) WithBusinessID(businessID uint) log.ILogger { return m }
 
 // handlerSetup construye un handler listo para tests

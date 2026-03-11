@@ -11,6 +11,14 @@ import (
 )
 
 func (uc *UseCase) CreateOrder(ctx context.Context, businessID, userID uint, dto *dtos.StorefrontCreateOrderDTO) error {
+	active, err := uc.repo.IsIntegrationActiveOrMissing(ctx, businessID, tiendaIntegrationTypeID)
+	if err != nil {
+		return err
+	}
+	if !active {
+		return domainerrors.ErrStorefrontNotActive
+	}
+
 	if len(dto.Items) == 0 {
 		return domainerrors.ErrNoItems
 	}

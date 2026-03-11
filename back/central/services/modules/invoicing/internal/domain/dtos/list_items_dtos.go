@@ -26,30 +26,30 @@ type SystemProduct struct {
 
 // ItemCompareResult resultado de comparación para un ítem/producto
 type ItemCompareResult struct {
-	Status        string  // "matched", "provider_only", "system_only"
-	ItemCode      string  // SKU / itemCode
-	ProviderName  string
-	SystemName    string
-	ProviderPrice float64
-	SystemPrice   float64
-	PriceDiff     float64 // provider - system (0 si falta en alguno)
-	UnitCost      float64
-	Description   string
+	Status        string  `json:"status"`         // "matched", "provider_only", "system_only"
+	ItemCode      string  `json:"item_code"`      // SKU / itemCode
+	ProviderName  string  `json:"provider_name"`
+	SystemName    string  `json:"system_name"`
+	ProviderPrice float64 `json:"provider_price"`
+	SystemPrice   float64 `json:"system_price"`
+	PriceDiff     float64 `json:"price_diff"` // provider - system (0 si falta en alguno)
+	UnitCost      float64 `json:"unit_cost"`
+	Description   string  `json:"description"`
 }
 
 // ItemCompareSummary resumen de la comparación de ítems
 type ItemCompareSummary struct {
-	Matched       int
-	ProviderOnly  int
-	SystemOnly    int
-	TotalProvider int
-	TotalSystem   int
+	Matched       int `json:"matched"`
+	ProviderOnly  int `json:"provider_only"`
+	SystemOnly    int `json:"system_only"`
+	TotalProvider int `json:"total_provider"`
+	TotalSystem   int `json:"total_system"`
 }
 
 // ItemCompareResponseData datos completos de la comparación de ítems (publicado por SSE)
 type ItemCompareResponseData struct {
-	CorrelationID string
-	BusinessID    uint
-	Results       []ItemCompareResult
-	Summary       ItemCompareSummary
+	CorrelationID string             `json:"correlation_id"`
+	BusinessID    uint               `json:"business_id"`
+	Results       []ItemCompareResult `json:"results"`
+	Summary       ItemCompareSummary  `json:"summary"`
 }

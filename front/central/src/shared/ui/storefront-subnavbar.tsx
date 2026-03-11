@@ -5,32 +5,37 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useNavbarActions } from '@/shared/contexts/navbar-context';
 import { useStorefrontBusiness } from '@/shared/contexts/storefront-business-context';
+import { usePermissions } from '@/shared/contexts/permissions-context';
 import { SuperAdminBusinessSelector } from './super-admin-business-selector';
-import { MyIntegrationsButton } from './my-integrations-button';
+import { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
 
 export const StorefrontSubNavbar = memo(function StorefrontSubNavbar() {
     const pathname = usePathname();
     const router = useRouter();
     const { actionButtons } = useNavbarActions();
     const { selectedBusinessId, setSelectedBusinessId } = useStorefrontBusiness();
+    const { isSuperAdmin, permissions } = usePermissions();
 
     const handleBusinessChange = useCallback((id: number | null) => {
         setSelectedBusinessId(id);
         router.refresh();
     }, [setSelectedBusinessId, router]);
 
-    const isInStorefrontModule = pathname.startsWith('/storefront');
+    const isInModule = pathname.startsWith('/storefront') || pathname.startsWith('/website-config');
 
-    if (!isInStorefrontModule) {
+    if (!isInModule) {
         return null;
     }
 
     const isActive = (path: string) => pathname.startsWith(path);
 
+    const canViewWebsiteConfig = isSuperAdmin || permissions?.role_name === 'Administrador';
+
     const menuItems = [
         { href: '/storefront/catalogo', label: 'Catalogo', icon: '🛍️' },
         { href: '/storefront/nuevo-pedido', label: 'Nuevo Pedido', icon: '➕' },
         { href: '/storefront/pedidos', label: 'Pedidos', icon: '📋' },
+        ...(canViewWebsiteConfig ? [{ href: '/website-config', label: 'Mi Sitio Web', icon: '🌐' }] : []),
     ];
 
     return (

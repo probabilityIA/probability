@@ -24,6 +24,10 @@ func (h *Handlers) GetProduct(c *gin.Context) {
 
 	product, err := h.uc.GetProduct(c.Request.Context(), businessID, productID)
 	if err != nil {
+		if errors.Is(err, domainerrors.ErrStorefrontNotActive) {
+			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
+			return
+		}
 		if errors.Is(err, domainerrors.ErrProductNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": err.Error()})
 			return

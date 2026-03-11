@@ -15,11 +15,14 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
 	"github.com/secamc93/probability/back/central/services/modules/products"
+	"github.com/secamc93/probability/back/central/services/modules/publicsite"
 	"github.com/secamc93/probability/back/central/services/modules/routes"
 	"github.com/secamc93/probability/back/central/services/modules/shipments"
 	"github.com/secamc93/probability/back/central/services/modules/storefront"
+	"github.com/secamc93/probability/back/central/services/modules/subscriptions"
 	"github.com/secamc93/probability/back/central/services/modules/vehicles"
 	"github.com/secamc93/probability/back/central/services/modules/warehouses"
+	"github.com/secamc93/probability/back/central/services/modules/websiteconfig"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -89,6 +92,16 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de storefront (tienda para clientes finales)
 	storefront.New(router, database, logger, rabbitMQ, environment)
+
+	// Inicializar módulo de tienda pública (sin auth)
+	publicsite.New(router, database, logger, environment)
+
+	// Inicializar módulo de configuración de sitio web (con auth)
+	websiteconfig.New(router, database, logger)
+
+	// Inicializar módulo de suscripciones
+	subModule := subscriptions.Setup(database)
+	subModule.RegisterRoutes(router)
 
 	// Inicializar módulo de monitoreo (alertas Grafana → RabbitMQ)
 	if rabbitMQ != nil {

@@ -29,8 +29,10 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.POST("/bulk", middleware.JWT(), h.BulkCreateInvoices)                 // Crear facturas masivamente
 
 			// Comparación con proveedor (auditoría esporádica)
-			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices) // Iniciar comparación
-			invoices.POST("/items", middleware.JWT(), h.ListItems)         // Comparar ítems del proveedor vs productos del sistema
+			invoices.POST("/compare", middleware.JWT(), h.CompareInvoices)                          // Iniciar comparación
+			invoices.GET("/compare/:correlationId", middleware.JWT(), h.GetCompareResult)            // Obtener resultado de comparación
+			invoices.POST("/items", middleware.JWT(), h.ListItems)                                   // Comparar ítems del proveedor vs productos del sistema
+			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)             // Obtener resultado de comparación de ítems
 		}
 
 		// Journals (comprobantes contables Siigo)

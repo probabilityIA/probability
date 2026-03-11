@@ -47,6 +47,8 @@ export interface UserPermissions {
     role_id: number;
     role_name: string;
     resources: ResourcePermission[];
+    subscription_status?: string; // 'active' | 'expired' | 'cancelled' | undefined
+    subscription_end_date?: string;
 }
 
 const KEYS = {
@@ -82,7 +84,7 @@ function isShopifyIframe(): boolean {
         return (
             isInIframe() &&
             (referrer.includes('shopify.com') ||
-             referrer.includes('myshopify.com'))
+                referrer.includes('myshopify.com'))
         );
     } catch (e) {
         return false;

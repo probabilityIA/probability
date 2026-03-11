@@ -216,8 +216,21 @@ func (uc *AuthUseCase) Login(ctx context.Context, request domain.LoginRequest) (
 			Msg("Usuario sin businesses - usando business_id = 0")
 	}
 
+	// Determinar subscriptionStatus para incluir en el JWT
+	var subscriptionStatus string
+	if isSuperAdminUser {
+		subscriptionStatus = "active" // Super admins siempre tienen acceso
+	} else if len(businesses) > 0 {
+		subscriptionStatus = businesses[0].SubscriptionStatus
+		if subscriptionStatus == "" {
+			subscriptionStatus = "active" // Default: activo
+		}
+	} else {
+		subscriptionStatus = "active"
+	}
+
 	// Generar token JWT unificado con toda la información
-	token, err := uc.jwtService.GenerateToken(userAuth.ID, businessID, businessTypeID, roleID)
+	token, err := uc.jwtService.GenerateToken(userAuth.ID, businessID, businessTypeID, roleID, subscriptionStatus)
 	if err != nil {
 		uc.log.Error().Err(err).Uint("user_id", userAuth.ID).Msg("Error al generar token JWT")
 		return nil, fmt.Errorf("error interno del servidor")

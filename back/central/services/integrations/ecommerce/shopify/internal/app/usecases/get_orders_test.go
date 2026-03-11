@@ -16,6 +16,7 @@ func TestGetOrders_Success_SinglePage(t *testing.T) {
 		ID:         7,
 		BusinessID: &businessID,
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
 	shopifyClient := &mockShopifyClient{
@@ -52,19 +53,17 @@ func TestGetOrders_Success_MultiPage(t *testing.T) {
 		ID:         7,
 		BusinessID: &businessID,
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
-	callCount := 0
 	shopifyClient := &mockShopifyClient{
 		GetOrdersFn: func(ctx context.Context, storeName, accessToken string, params *domain.GetOrdersParams) ([]domain.ShopifyOrder, string, error) {
-			callCount++
-			if callCount == 1 {
-				return []domain.ShopifyOrder{
-					{ExternalID: "o1", Metadata: map[string]interface{}{}},
-					{ExternalID: "o2", Metadata: map[string]interface{}{}},
-				}, "https://shopify.com/next-page", nil
-			}
-			// Segunda pagina
+			return []domain.ShopifyOrder{
+				{ExternalID: "o1", Metadata: map[string]interface{}{}},
+				{ExternalID: "o2", Metadata: map[string]interface{}{}},
+			}, "https://shopify.com/next-page", nil
+		},
+		GetOrdersByURLFn: func(ctx context.Context, nextPageURL, accessToken string) ([]domain.ShopifyOrder, string, error) {
 			return []domain.ShopifyOrder{
 				{ExternalID: "o3", Metadata: map[string]interface{}{}},
 			}, "", nil
@@ -82,9 +81,6 @@ func TestGetOrders_Success_MultiPage(t *testing.T) {
 	if total != 3 {
 		t.Errorf("total incorrecto: got %d, want 3", total)
 	}
-	if callCount != 2 {
-		t.Errorf("se esperaban 2 llamadas al client, se hicieron %d", callCount)
-	}
 }
 
 func TestGetOrders_EmptyResults(t *testing.T) {
@@ -95,6 +91,7 @@ func TestGetOrders_EmptyResults(t *testing.T) {
 		ID:         7,
 		BusinessID: &businessID,
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
 	shopifyClient := &mockShopifyClient{
@@ -126,6 +123,7 @@ func TestGetOrders_BusinessIDNil_ReturnsError(t *testing.T) {
 		ID:         7,
 		BusinessID: nil, // sin business_id
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
 	shopifyClient := &mockShopifyClient{
@@ -157,6 +155,7 @@ func TestGetOrders_ShopifyClientError(t *testing.T) {
 		ID:         7,
 		BusinessID: &businessID,
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
 	shopifyClient := &mockShopifyClient{
@@ -186,17 +185,16 @@ func TestGetOrders_ShopifyClientErrorOnSecondPage(t *testing.T) {
 		ID:         7,
 		BusinessID: &businessID,
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
-	callCount := 0
 	shopifyClient := &mockShopifyClient{
 		GetOrdersFn: func(ctx context.Context, storeName, accessToken string, params *domain.GetOrdersParams) ([]domain.ShopifyOrder, string, error) {
-			callCount++
-			if callCount == 1 {
-				return []domain.ShopifyOrder{
-					{ExternalID: "o1", Metadata: map[string]interface{}{}},
-				}, "https://shopify.com/next-page", nil
-			}
+			return []domain.ShopifyOrder{
+				{ExternalID: "o1", Metadata: map[string]interface{}{}},
+			}, "https://shopify.com/next-page", nil
+		},
+		GetOrdersByURLFn: func(ctx context.Context, nextPageURL, accessToken string) ([]domain.ShopifyOrder, string, error) {
 			return nil, "", clientErr
 		},
 	}
@@ -226,6 +224,7 @@ func TestGetOrders_PublishErrorContinues(t *testing.T) {
 		ID:         7,
 		BusinessID: &businessID,
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
 	shopifyClient := &mockShopifyClient{
@@ -271,6 +270,7 @@ func TestGetOrders_OrderFieldsAssigned(t *testing.T) {
 		ID:         9,
 		BusinessID: &businessID,
 		Name:       "mi-tienda.myshopify.com",
+		IsActive:   true,
 	}
 
 	shopifyClient := &mockShopifyClient{

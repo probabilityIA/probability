@@ -155,6 +155,13 @@ export interface InvoicingSettings {
   branch_code?: string;            // Código de sucursal (default: "001")
   seller_nit?: string;             // NIT del vendedor (opcional)
 
+  // Mapeo de servicios para facturación
+  item_mappings?: {
+    shipping?: string;     // Código del artículo de envío en el facturador
+    membership?: string;   // Código del artículo de membresía en el facturador
+    tip?: string;          // Código del artículo de propina en el facturador
+  };
+
   // Recibo de caja (cash receipt)
   send_cash_receipt?: boolean;              // true = enviar recibo de caja al facturar
   payment_type?: string;                    // EF, TR, TC, TD, CH, BN
@@ -434,7 +441,8 @@ export type InvoiceSSEEventType =
   | 'credit_note.created'
   | 'bulk_job.progress'
   | 'bulk_job.completed'
-  | 'invoice.compare_ready';
+  | 'invoice.compare_ready'
+  | 'invoice.list_items_ready';
 
 export interface InvoiceSSEEvent {
   id: string;
@@ -511,4 +519,35 @@ export interface CompareResponseData {
   date_to: string;
   results: CompareResult[];
   summary: CompareSummary;
+}
+
+// ===================================
+// COMPARACIÓN DE ÍTEMS/PRODUCTOS (Sistema ↔ Proveedor)
+// ===================================
+
+export interface ItemCompareResult {
+  status: CompareStatus;
+  item_code: string;
+  provider_name: string;
+  system_name: string;
+  provider_price: number;
+  system_price: number;
+  price_diff: number;
+  unit_cost: number;
+  description: string;
+}
+
+export interface ItemCompareSummary {
+  matched: number;
+  provider_only: number;
+  system_only: number;
+  total_provider: number;
+  total_system: number;
+}
+
+export interface ItemCompareResponseData {
+  correlation_id: string;
+  business_id: number;
+  results: ItemCompareResult[];
+  summary: ItemCompareSummary;
 }

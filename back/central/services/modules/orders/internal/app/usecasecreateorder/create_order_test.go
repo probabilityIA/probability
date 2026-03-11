@@ -219,7 +219,6 @@ func (m *mockRepository) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 	}
 	return nil, nil
 }
-
 func (m *mockRepository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
 	return nil
 }

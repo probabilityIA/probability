@@ -41,6 +41,7 @@ func (h *BusinessHandler) GetBusinessesSimple(c *gin.Context) {
 		simpleBusinesses = append(simpleBusinesses, response.BusinessSimpleResponse{
 			ID:              business.ID,
 			Name:            business.Name,
+			Code:            business.Code,
 			LogoURL:         business.LogoURL,
 			PrimaryColor:    business.PrimaryColor,
 			SecondaryColor:  business.SecondaryColor,

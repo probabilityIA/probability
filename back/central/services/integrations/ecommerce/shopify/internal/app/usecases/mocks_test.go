@@ -51,13 +51,14 @@ func (m *mockIntegrationService) UpdateIntegrationConfig(ctx context.Context, in
 // ─── Mock: ShopifyClient ────────────────────────────────────────────────────
 
 type mockShopifyClient struct {
-	ValidateTokenFn func(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error)
-	GetOrdersFn     func(ctx context.Context, storeName, accessToken string, params *domain.GetOrdersParams) ([]domain.ShopifyOrder, string, error)
-	GetOrderFn      func(ctx context.Context, storeName, accessToken string, orderID string) (*domain.ShopifyOrder, error)
-	CreateWebhookFn func(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error)
-	ListWebhooksFn  func(ctx context.Context, storeName, accessToken string) ([]domain.WebhookInfo, error)
-	DeleteWebhookFn func(ctx context.Context, storeName, accessToken, webhookID string) error
-	SetDebugFn      func(enabled bool)
+	ValidateTokenFn  func(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error)
+	GetOrdersFn      func(ctx context.Context, storeName, accessToken string, params *domain.GetOrdersParams) ([]domain.ShopifyOrder, string, error)
+	GetOrdersByURLFn func(ctx context.Context, nextPageURL, accessToken string) ([]domain.ShopifyOrder, string, error)
+	GetOrderFn       func(ctx context.Context, storeName, accessToken string, orderID string) (*domain.ShopifyOrder, error)
+	CreateWebhookFn  func(ctx context.Context, storeName, accessToken, webhookURL, event string) (string, error)
+	ListWebhooksFn   func(ctx context.Context, storeName, accessToken string) ([]domain.WebhookInfo, error)
+	DeleteWebhookFn  func(ctx context.Context, storeName, accessToken, webhookID string) error
+	SetDebugFn       func(enabled bool)
 }
 
 func (m *mockShopifyClient) ValidateToken(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error) {
@@ -75,6 +76,9 @@ func (m *mockShopifyClient) GetOrders(ctx context.Context, storeName, accessToke
 }
 
 func (m *mockShopifyClient) GetOrdersByURL(ctx context.Context, nextPageURL, accessToken string) ([]domain.ShopifyOrder, string, error) {
+	if m.GetOrdersByURLFn != nil {
+		return m.GetOrdersByURLFn(ctx, nextPageURL, accessToken)
+	}
 	return nil, "", nil
 }
 

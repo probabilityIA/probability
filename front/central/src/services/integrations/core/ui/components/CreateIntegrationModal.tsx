@@ -29,6 +29,8 @@ import { AmazonConfigForm } from '@/services/integrations/ecommerce/amazon/ui';
 import { FalabellaConfigForm } from '@/services/integrations/ecommerce/falabella/ui';
 import { ExitoConfigForm } from '@/services/integrations/ecommerce/exito/ui';
 import { WooCommerceConfigForm } from '@/services/integrations/ecommerce/woocommerce/ui';
+import { TiendaActivateForm } from '@/services/integrations/storefront/ui';
+import { TiendaWebActivateForm } from '@/services/integrations/website/ui';
 import { getActionError } from '@/shared/utils/action-result';
 
 // IDs constantes de tipos de integración (tabla integration_types)
@@ -53,6 +55,8 @@ const INTEGRATION_TYPE_IDS = {
     AMAZON: 19,
     FALABELLA: 20,
     EXITO: 21,
+    TIENDA: 30,
+    TIENDA_WEB: 31,
 } as const;
 
 interface CreateIntegrationModalProps {
@@ -348,6 +352,12 @@ function FormWrapper({ integrationType, onSuccess, onCancel, onBack }: FormWrapp
                         onCancel={onBack}
                     />
                 );
+
+            case INTEGRATION_TYPE_IDS.TIENDA:
+                return <TiendaActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
+
+            case INTEGRATION_TYPE_IDS.TIENDA_WEB:
+                return <TiendaWebActivateForm integrationType={integrationType} onSuccess={onSuccess} onBack={onBack} />;
 
             default:
                 return (

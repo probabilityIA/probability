@@ -110,3 +110,21 @@ func (uc *useCase) RequestComparison(ctx context.Context, dto *dtos.CompareReque
 
 	return correlationID, nil
 }
+
+// GetCompareResult recupera el resultado de una comparación almacenado en Redis.
+// Retorna nil si no existe (aún no listo o expirado).
+func (uc *useCase) GetCompareResult(ctx context.Context, correlationID string) (*dtos.CompareResponseData, error) {
+	if correlationID == "" {
+		return nil, fmt.Errorf("correlation_id is required")
+	}
+
+	result, err := uc.compareCache.GetCompareResult(ctx, correlationID)
+	if err != nil {
+		uc.log.Error(ctx).Err(err).
+			Str("correlation_id", correlationID).
+			Msg("Failed to get compare result from cache")
+		return nil, err
+	}
+
+	return result, nil
+}

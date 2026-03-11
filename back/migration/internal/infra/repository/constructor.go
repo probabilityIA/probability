@@ -61,6 +61,9 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.Vehicle{},
 		&models.Route{},
 		&models.RouteStop{},
+
+		// Subscriptions
+		&models.BusinessSubscription{},
 	); err != nil {
 		return err
 	}
@@ -149,6 +152,25 @@ func (r *Repository) Migrate(ctx context.Context) error {
 	}
 	if err := r.activateAllProducts(ctx); err != nil {
 		return fmt.Errorf("failed to activate all products: %w", err)
+	}
+
+	// Public website config + contact submissions (tienda pública)
+	if err := r.db.Conn(ctx).AutoMigrate(
+		&models.BusinessWebsiteConfig{},
+		&models.ContactSubmission{},
+	); err != nil {
+		return fmt.Errorf("failed to auto-migrate public website tables: %w", err)
+	}
+
+	// Seed storefront integration category (id=7) and types (id=30, 31)
+	if err := r.seedStorefrontIntegrationCategory(ctx); err != nil {
+		return fmt.Errorf("failed to seed storefront integration category: %w", err)
+	}
+	if err := r.seedTiendaIntegrationType(ctx); err != nil {
+		return fmt.Errorf("failed to seed tienda integration type: %w", err)
+	}
+	if err := r.seedTiendaWebIntegrationType(ctx); err != nil {
+		return fmt.Errorf("failed to seed tienda web integration type: %w", err)
 	}
 
 	return nil
@@ -1062,15 +1084,15 @@ func (r *Repository) migrateOrderStatusPriority(ctx context.Context) error {
 		priority int
 	}
 	seeds := []prioritySeed{
-		{1, 1},  // pending
-		{2, 2},  // processing
-		{9, 3},  // on_hold
-		{3, 4},  // shipped
-		{4, 5},  // delivered
-		{5, 6},  // completed
-		{7, 7},  // refunded
-		{6, 8},  // cancelled
-		{8, 9},  // failed
+		{1, 1}, // pending
+		{2, 2}, // processing
+		{9, 3}, // on_hold
+		{3, 4}, // shipped
+		{4, 5}, // delivered
+		{5, 6}, // completed
+		{7, 7}, // refunded
+		{6, 8}, // cancelled
+		{8, 9}, // failed
 	}
 	for _, s := range seeds {
 		if err := db.Exec(`
@@ -1249,13 +1271,13 @@ func (r *Repository) seedAllowedOrderStatusesByEventType(ctx context.Context) er
 	// Mapeo: eventTypeID → []orderStatusID
 	// IDs de order_statuses: pending=1, processing=2, shipped=3, delivered=4, completed=5, cancelled=6, refunded=7
 	allowedMap := map[uint][]uint{
-		1: {1, 2},       // SSE order.created → pending, processing
-		2: {},            // SSE order.status_changed → todos (vacío)
-		3: {1, 2},       // WA order.created → pending, processing
-		4: {3, 4},       // WA order.shipped → shipped, delivered
-		5: {4, 5},       // WA order.delivered → delivered, completed
-		6: {6, 7},       // WA order.canceled → cancelled, refunded
-		7: {},            // WA invoice.created → todos (vacío)
+		1: {1, 2}, // SSE order.created → pending, processing
+		2: {},     // SSE order.status_changed → todos (vacío)
+		3: {1, 2}, // WA order.created → pending, processing
+		4: {3, 4}, // WA order.shipped → shipped, delivered
+		5: {4, 5}, // WA order.delivered → delivered, completed
+		6: {6, 7}, // WA order.canceled → cancelled, refunded
+		7: {},     // WA invoice.created → todos (vacío)
 	}
 
 	for eventTypeID, statusIDs := range allowedMap {
@@ -1717,6 +1739,83 @@ func (r *Repository) activateAllProducts(ctx context.Context) error {
 	return r.db.Conn(ctx).Exec(
 		"UPDATE products SET is_active = true, status = 'active' WHERE is_active = false OR status != 'active'",
 	).Error
+}
+
+// seedStorefrontIntegrationCategory crea la categoría "Tu Tienda" (id=7) para integraciones de storefront
+func (r *Repository) seedStorefrontIntegrationCategory(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	category := models.IntegrationCategory{
+		Model:        gorm.Model{ID: 7},
+		Code:         "storefront",
+		Name:         "Tu Tienda",
+		Description:  "Tu tienda propia y sitio web público",
+		Icon:         "storefront",
+		Color:        "#059669",
+		DisplayOrder: 7,
+		IsActive:     true,
+		IsVisible:    true,
+	}
+
+	var existing models.IntegrationCategory
+	err := db.Where("id = ?", 7).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		if err := db.Create(&category).Error; err != nil {
+			return fmt.Errorf("failed to create storefront integration category: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// seedTiendaIntegrationType crea el tipo de integración "Tienda" (id=30)
+func (r *Repository) seedTiendaIntegrationType(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	integrationType := models.IntegrationType{
+		Model:       gorm.Model{ID: 30},
+		Name:        "Tienda",
+		Code:        "tienda",
+		CategoryID:  ptrUint(7),
+		IsActive:    true,
+		Description: "Tienda con login para clientes de tu negocio",
+		Icon:        "shopping-bag",
+	}
+
+	var existing models.IntegrationType
+	err := db.Where("id = ?", 30).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		if err := db.Create(&integrationType).Error; err != nil {
+			return fmt.Errorf("failed to create tienda integration type: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// seedTiendaWebIntegrationType crea el tipo de integración "Tienda Web" (id=31)
+func (r *Repository) seedTiendaWebIntegrationType(ctx context.Context) error {
+	db := r.db.Conn(ctx)
+
+	integrationType := models.IntegrationType{
+		Model:       gorm.Model{ID: 31},
+		Name:        "Sitio Web",
+		Code:        "tienda_web",
+		CategoryID:  ptrUint(7),
+		IsActive:    true,
+		Description: "Sitio web público para tu negocio",
+		Icon:        "globe-alt",
+	}
+
+	var existing models.IntegrationType
+	err := db.Where("id = ?", 31).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		if err := db.Create(&integrationType).Error; err != nil {
+			return fmt.Errorf("failed to create tienda web integration type: %w", err)
+		}
+	}
+
+	return nil
 }
 
 // ptrUint es un helper para crear punteros a uint

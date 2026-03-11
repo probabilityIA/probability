@@ -70,13 +70,14 @@ func ToUserRolesPermissionsResponse(domainResponse *domain.UserRolesPermissionsR
 	resources := groupPermissionsByResource(domainResponse.Permissions)
 
 	return response.UserRolesPermissionsResponse{
-		IsSuper:          domainResponse.IsSuper,
-		BusinessID:       domainResponse.BusinessID,
-		BusinessName:     domainResponse.BusinessName,
-		BusinessTypeID:   domainResponse.BusinessTypeID,
-		BusinessTypeName: domainResponse.BusinessTypeName,
-		Role:             toRoleInfo(domainResponse.Role),
-		Resources:        resources,
+		IsSuper:            domainResponse.IsSuper,
+		BusinessID:         domainResponse.BusinessID,
+		BusinessName:       domainResponse.BusinessName,
+		BusinessTypeID:     domainResponse.BusinessTypeID,
+		BusinessTypeName:   domainResponse.BusinessTypeName,
+		Role:               toRoleInfo(domainResponse.Role),
+		Resources:          resources,
+		SubscriptionStatus: domainResponse.SubscriptionStatus,
 	}
 }
 

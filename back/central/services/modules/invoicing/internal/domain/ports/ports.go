@@ -211,6 +211,21 @@ type IInvoiceRequestPublisher interface {
 }
 
 // ═══════════════════════════════════════════════════════════════
+// CACHE DE RESULTADOS DE COMPARACIÓN (Secondary Port - Driven Adapter)
+// ═══════════════════════════════════════════════════════════════
+
+// ICompareCache almacena y recupera resultados de comparación en Redis.
+// Los resultados se almacenan con TTL corto (5 min) como mecanismo de entrega alternativo a SSE.
+type ICompareCache interface {
+	// Facturas
+	StoreCompareResult(ctx context.Context, correlationID string, data *dtos.CompareResponseData) error
+	GetCompareResult(ctx context.Context, correlationID string) (*dtos.CompareResponseData, error)
+	// Ítems/productos
+	StoreItemCompareResult(ctx context.Context, correlationID string, data *dtos.ItemCompareResponseData) error
+	GetItemCompareResult(ctx context.Context, correlationID string) (*dtos.ItemCompareResponseData, error)
+}
+
+// ═══════════════════════════════════════════════════════════════
 // CACHE DE CONFIGURACIONES (Secondary Port - Driven Adapter)
 // ═══════════════════════════════════════════════════════════════
 
@@ -308,7 +323,15 @@ type IUseCase interface {
 	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.compare_ready"
 	RequestComparison(ctx context.Context, dto *dtos.CompareRequestDTO) (string, error)
 
+	// GetCompareResult recupera el resultado de una comparación almacenado en Redis.
+	// Retorna nil si no existe (aún no listo o expirado).
+	GetCompareResult(ctx context.Context, correlationID string) (*dtos.CompareResponseData, error)
+
 	// Comparación de ítems del proveedor vs productos del sistema (sin persistencia)
 	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.list_items_ready"
 	RequestListItems(ctx context.Context, dto *dtos.ListItemsRequestDTO) (string, error)
+
+	// GetListItemsResult recupera el resultado de una comparación de ítems almacenado en Redis.
+	// Retorna nil si no existe (aún no listo o expirado).
+	GetListItemsResult(ctx context.Context, correlationID string) (*dtos.ItemCompareResponseData, error)
 }

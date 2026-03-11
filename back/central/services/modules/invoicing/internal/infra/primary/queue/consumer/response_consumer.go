@@ -30,6 +30,7 @@ type ResponseConsumer struct {
 	repo         ports.IRepository
 	ssePublisher ports.IInvoiceSSEPublisher
 	eventPub     ports.IEventPublisher
+	compareCache ports.ICompareCache
 	log          log.ILogger
 }
 
@@ -39,6 +40,7 @@ func NewResponseConsumer(
 	repo ports.IRepository,
 	ssePublisher ports.IInvoiceSSEPublisher,
 	eventPub ports.IEventPublisher,
+	compareCache ports.ICompareCache,
 	logger log.ILogger,
 ) *ResponseConsumer {
 	return &ResponseConsumer{
@@ -46,6 +48,7 @@ func NewResponseConsumer(
 		repo:         repo,
 		ssePublisher: ssePublisher,
 		eventPub:     eventPub,
+		compareCache: compareCache,
 		log:          logger.WithModule("invoicing.response_consumer"),
 	}
 }
@@ -643,6 +646,10 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 			},
 			Summary: dtos.CompareSummary{},
 		}
+		// Store in Redis before publishing SSE (belt + suspenders)
+		if err := c.compareCache.StoreCompareResult(ctx, msg.CorrelationID, data); err != nil {
+			c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store compare error result in Redis (non-fatal)")
+		}
 		go c.publishCompareEvent(ctx, data)
 		return c.ssePublisher.PublishCompareReady(ctx, data)
 	}
@@ -774,7 +781,12 @@ func (c *ResponseConsumer) handleCompareResponse(ctx context.Context, message []
 		Int("matched", matched).
 		Int("system_only", systemOnly).
 		Int("provider_only", providerOnly).
-		Msg("📊 Comparison complete, publishing SSE")
+		Msg("📊 Comparison complete, storing in Redis + publishing SSE")
+
+	// Store in Redis before publishing SSE (belt + suspenders)
+	if err := c.compareCache.StoreCompareResult(ctx, msg.CorrelationID, responseData); err != nil {
+		c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store compare result in Redis (non-fatal)")
+	}
 
 	go c.publishCompareEvent(ctx, responseData)
 	return c.ssePublisher.PublishCompareReady(ctx, responseData)
@@ -979,6 +991,10 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 			Results:       []dtos.ItemCompareResult{},
 			Summary:       dtos.ItemCompareSummary{},
 		}
+		// Store in Redis before publishing SSE (belt + suspenders)
+		if err := c.compareCache.StoreItemCompareResult(ctx, msg.CorrelationID, data); err != nil {
+			c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store item compare error result in Redis (non-fatal)")
+		}
 		go c.publishListItemsEvent(ctx, data)
 		return c.ssePublisher.PublishListItemsReady(ctx, data)
 	}
@@ -1086,7 +1102,12 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 		Int("matched", matched).
 		Int("provider_only", providerOnly).
 		Int("system_only", systemOnly).
-		Msg("📦 Items comparison complete, publishing SSE")
+		Msg("📦 Items comparison complete, storing in Redis + publishing SSE")
+
+	// Store in Redis before publishing SSE (belt + suspenders)
+	if err := c.compareCache.StoreItemCompareResult(ctx, msg.CorrelationID, responseData); err != nil {
+		c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store item compare result in Redis (non-fatal)")
+	}
 
 	go c.publishListItemsEvent(ctx, responseData)
 	return c.ssePublisher.PublishListItemsReady(ctx, responseData)

@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useState, useEffect, useCallback, useMemo, forwardRef, useImperativeHandle } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, forwardRef, useImperativeHandle } from 'react';
 import { EyeIcon, Cog6ToothIcon } from '@heroicons/react/24/outline';
 import { Table } from '@/shared/ui/table';
 import { Badge } from '@/shared/ui/badge';
@@ -15,16 +15,20 @@ import { BulkCreateInvoiceModal } from './BulkCreateInvoiceModal';
 import { ManualInvoiceModal } from './ManualInvoiceModal';
 import { InvoiceDetailModal } from './InvoiceDetailPanel';
 import { InvoiceComparisonModal } from './InvoiceComparisonModal';
+import { ItemsComparisonModal } from './ItemsComparisonModal';
 import { ConfigsModal } from './ConfigsModal';
 import {
   getInvoicesAction,
   getInvoiceByIdAction,
   cancelInvoiceAction,
   requestInvoiceComparisonAction,
+  getCompareResultAction,
+  requestListItemsComparisonAction,
+  getListItemsResultAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
 import { usePermissions } from '@/shared/contexts/permissions-context';
-import type { Invoice, InvoiceFilters, CompareResponseData } from '../../domain/types';
+import type { Invoice, InvoiceFilters, CompareResponseData, ItemCompareResponseData } from '../../domain/types';
 
 interface InvoiceListProps {
   businessId: number;
@@ -57,6 +61,10 @@ export const InvoiceList = forwardRef(function InvoiceList(
   const [compareData, setCompareData] = useState<CompareResponseData | null>(null);
   const [showConfigsModal, setShowConfigsModal] = useState(false);
   const [showManualModal, setShowManualModal] = useState(false);
+  const [showItemsModal, setShowItemsModal] = useState(false);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsCorrelationId, setItemsCorrelationId] = useState<string | null>(null);
+  const [itemsData, setItemsData] = useState<ItemCompareResponseData | null>(null);
   const [newInvoiceIds, setNewInvoiceIds] = useState<Set<number>>(new Set());
 
   useImperativeHandle(ref, () => ({
@@ -136,6 +144,14 @@ export const InvoiceList = forwardRef(function InvoiceList(
       if (!compareCorrelationId || data.correlation_id === compareCorrelationId) {
         setCompareData(data);
         setCompareLoading(false);
+        clearCompareTimers();
+      }
+    },
+    onListItemsReady: (data) => {
+      if (!itemsCorrelationId || data.correlation_id === itemsCorrelationId) {
+        setItemsData(data);
+        setItemsLoading(false);
+        clearItemsTimers();
       }
     },
   });
@@ -226,6 +242,84 @@ export const InvoiceList = forwardRef(function InvoiceList(
     setShowDetailModal(true);
   };
 
+  const compareTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Helper to stop all compare timers (polling + timeout)
+  const clearCompareTimers = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+    if (compareTimeoutRef.current) {
+      clearTimeout(compareTimeoutRef.current);
+      compareTimeoutRef.current = null;
+    }
+  }, []);
+
+  // Items comparison timers
+  const itemsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const itemsPollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clearItemsTimers = useCallback(() => {
+    if (itemsPollingRef.current) {
+      clearInterval(itemsPollingRef.current);
+      itemsPollingRef.current = null;
+    }
+    if (itemsTimeoutRef.current) {
+      clearTimeout(itemsTimeoutRef.current);
+      itemsTimeoutRef.current = null;
+    }
+  }, []);
+
+  const handleRequestItemsComparison = useCallback(async () => {
+    if (isSuperAdmin && !selectedBusinessId) {
+      showToast('Selecciona un negocio antes de comparar', 'error');
+      return;
+    }
+    setItemsLoading(true);
+    setItemsData(null);
+    setItemsCorrelationId(null);
+    clearItemsTimers();
+
+    try {
+      const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
+      const result = await requestListItemsComparisonAction(effectiveBusinessId);
+      const correlationId = result.correlation_id;
+      setItemsCorrelationId(correlationId);
+
+      // Polling fallback every 3 seconds
+      itemsPollingRef.current = setInterval(async () => {
+        try {
+          const data = await getListItemsResultAction(correlationId, effectiveBusinessId);
+          if (data !== null) {
+            setItemsData(data);
+            setItemsLoading(false);
+            clearItemsTimers();
+          }
+        } catch {
+          // Polling errors are non-fatal
+        }
+      }, 3000);
+
+      // Hard timeout after 60 seconds
+      itemsTimeoutRef.current = setTimeout(() => {
+        setItemsLoading(prev => {
+          if (prev) {
+            showToast('La comparación de productos tardó demasiado. Intenta de nuevo.', 'error');
+            return false;
+          }
+          return prev;
+        });
+        clearItemsTimers();
+      }, 60000);
+    } catch (error: any) {
+      showToast('Error al iniciar comparación de productos: ' + error.message, 'error');
+      setItemsLoading(false);
+      clearItemsTimers();
+    }
+  }, [showToast, isSuperAdmin, selectedBusinessId, clearItemsTimers]);
+
   const handleRequestComparison = useCallback(async (dateFrom: string, dateTo: string) => {
     if (isSuperAdmin && !selectedBusinessId) {
       showToast('Selecciona un negocio antes de comparar', 'error');
@@ -234,18 +328,49 @@ export const InvoiceList = forwardRef(function InvoiceList(
     setCompareLoading(true);
     setCompareData(null);
     setCompareCorrelationId(null);
+    clearCompareTimers();
+
     try {
+      const effectiveBusinessId = isSuperAdmin ? selectedBusinessId ?? undefined : undefined;
       const result = await requestInvoiceComparisonAction(
         dateFrom,
         dateTo,
-        isSuperAdmin ? selectedBusinessId ?? undefined : undefined
+        effectiveBusinessId
       );
-      setCompareCorrelationId(result.correlation_id);
+      const correlationId = result.correlation_id;
+      setCompareCorrelationId(correlationId);
+
+      // Start polling every 3 seconds as fallback for SSE
+      pollingRef.current = setInterval(async () => {
+        try {
+          const data = await getCompareResultAction(correlationId, effectiveBusinessId);
+          if (data !== null) {
+            setCompareData(data);
+            setCompareLoading(false);
+            clearCompareTimers();
+          }
+        } catch {
+          // Polling errors are non-fatal; keep retrying until timeout
+        }
+      }, 3000);
+
+      // Hard timeout: stop everything after 60 seconds
+      compareTimeoutRef.current = setTimeout(() => {
+        setCompareLoading(prev => {
+          if (prev) {
+            showToast('La comparación tardó demasiado. Intenta de nuevo.', 'error');
+            return false;
+          }
+          return prev;
+        });
+        clearCompareTimers();
+      }, 60000);
     } catch (error: any) {
       showToast('Error al iniciar comparación: ' + error.message, 'error');
       setCompareLoading(false);
+      clearCompareTimers();
     }
-  }, [showToast, isSuperAdmin, selectedBusinessId]);
+  }, [showToast, isSuperAdmin, selectedBusinessId, clearCompareTimers]);
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; type: 'success' | 'warning' | 'error' | 'secondary' }> = {
@@ -506,6 +631,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         </button>
         <button
           onClick={() => {
+            clearCompareTimers();
             setShowCompareModal(true);
             setCompareData(null);
             setCompareLoading(false);
@@ -516,6 +642,21 @@ export const InvoiceList = forwardRef(function InvoiceList(
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+        </button>
+        <button
+          onClick={() => {
+            clearItemsTimers();
+            setShowItemsModal(true);
+            setItemsData(null);
+            setItemsLoading(false);
+            setItemsCorrelationId(null);
+          }}
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          title="Comparar productos con proveedor"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
           </svg>
         </button>
         <button
@@ -724,10 +865,25 @@ export const InvoiceList = forwardRef(function InvoiceList(
       {/* Modal de auditoría comparativa */}
       <InvoiceComparisonModal
         isOpen={showCompareModal}
-        onClose={() => setShowCompareModal(false)}
+        onClose={() => {
+          setShowCompareModal(false);
+          clearCompareTimers();
+        }}
         loading={compareLoading}
         compareData={compareData}
         onRequestComparison={handleRequestComparison}
+      />
+
+      {/* Modal de comparación de productos */}
+      <ItemsComparisonModal
+        isOpen={showItemsModal}
+        onClose={() => {
+          setShowItemsModal(false);
+          clearItemsTimers();
+        }}
+        loading={itemsLoading}
+        data={itemsData}
+        onRequestComparison={handleRequestItemsComparison}
       />
 
       {/* Modal de factura manual */}

@@ -267,6 +267,7 @@ func (r *Repository) GetUserBusinesses(ctx context.Context, userID uint) ([]doma
 			EnableDelivery:     bs.Business.EnableDelivery,
 			EnablePickup:       bs.Business.EnablePickup,
 			EnableReservations: bs.Business.EnableReservations,
+			SubscriptionStatus: bs.Business.SubscriptionStatus,
 		}
 
 		if bs.Business.BusinessType.ID != 0 {

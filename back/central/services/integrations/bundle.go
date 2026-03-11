@@ -1,12 +1,16 @@
 package integrations
 
 import (
+	"context"
+
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce"
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging"
 	pay "github.com/secamc93/probability/back/central/services/integrations/pay"
+	storefrontprovider "github.com/secamc93/probability/back/central/services/integrations/storefront"
+	websiteprovider "github.com/secamc93/probability/back/central/services/integrations/website"
 	"github.com/secamc93/probability/back/central/services/integrations/transport"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/email"
@@ -15,6 +19,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	redisclient "github.com/secamc93/probability/back/central/shared/redis"
 	"github.com/secamc93/probability/back/central/shared/storage"
+	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/gorm"
 )
 
 // New inicializa todos los servicios de integraciones.
@@ -43,6 +49,28 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 
 	// Pay: todos los proveedores de pago (Nequi, etc.) + router de colas
 	pay.New(config, logger, db, rabbitMQ)
+
+	// Storefront: Tienda y Tienda Web
+	integrationCore.RegisterIntegration(core.IntegrationTypeTienda, storefrontprovider.New())
+	integrationCore.RegisterIntegration(core.IntegrationTypeTiendaWeb, websiteprovider.New())
+
+	// Auto-crear BusinessWebsiteConfig al crear integración Tienda Web
+	integrationCore.OnIntegrationCreated(core.IntegrationTypeTiendaWeb, func(ctx context.Context, integration *core.PublicIntegration) {
+		if integration.BusinessID == nil {
+			return
+		}
+		var existing models.BusinessWebsiteConfig
+		if err := db.Conn(ctx).Where("business_id = ?", *integration.BusinessID).First(&existing).Error; err == gorm.ErrRecordNotFound {
+			websiteConfig := models.BusinessWebsiteConfig{
+				BusinessID:           *integration.BusinessID,
+				ShowHero:             true,
+				ShowFeaturedProducts: true,
+				ShowFullCatalog:      true,
+				ShowContact:          true,
+			}
+			db.Conn(ctx).Create(&websiteConfig)
+		}
+	})
 
 	return integrationCore
 }

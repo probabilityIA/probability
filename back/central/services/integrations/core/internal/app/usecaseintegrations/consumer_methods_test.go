@@ -128,6 +128,7 @@ func TestUpdateIntegrationConfig_MergeExitoso(t *testing.T) {
 
 	repo.On("GetIntegrationByID", mock.Anything, uint(9)).Return(integracion, nil)
 	cache.On("InvalidateIntegration", mock.Anything, uint(9)).Return(nil)
+	cache.On("InvalidateMetadata", mock.Anything, uint(9)).Return(nil)
 	repo.On("UpdateIntegration", mock.Anything, uint(9), mock.AnythingOfType("*domain.Integration")).Return(nil)
 	repo.On("GetIntegrationTypeByID", mock.Anything, uint(7)).Return(nil, nil)
 	cache.On("SetIntegration", mock.Anything, mock.Anything).Return(nil)
