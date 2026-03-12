@@ -59,6 +59,7 @@ type invoiceData struct {
 	Tax              float64                `json:"tax"`
 	Discount         float64                `json:"discount"`
 	ShippingCost     float64                `json:"shipping_cost"`
+	ShippingDiscount float64                `json:"shipping_discount"`
 	ShippingCostBase float64                `json:"shipping_cost_base"`
 	Currency         string                 `json:"currency"`
 	OrderID          string                 `json:"order_id"`

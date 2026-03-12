@@ -60,7 +60,9 @@ type ShopifyOrder struct {
 	SubtotalPresentment     float64
 	TaxPresentment          float64
 	DiscountPresentment     float64
-	ShippingCostPresentment float64
+	ShippingCostPresentment     float64
+	ShippingDiscount            float64
+	ShippingDiscountPresentment float64
 	TotalAmountPresentment  float64
 	CurrencyPresentment     string
 }
@@ -132,7 +134,9 @@ type ProbabilityOrderDTO struct {
 	SubtotalPresentment     float64
 	TaxPresentment          float64
 	DiscountPresentment     float64
-	ShippingCostPresentment float64
+	ShippingCostPresentment     float64
+	ShippingDiscount            float64
+	ShippingDiscountPresentment float64
 	TotalAmountPresentment  float64
 	CurrencyPresentment     string
 

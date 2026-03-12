@@ -42,7 +42,8 @@ type Invoice struct {
 	Subtotal     float64 `gorm:"type:decimal(12,2);not null"` // Subtotal
 	Tax          float64 `gorm:"type:decimal(12,2);not null"` // Impuestos
 	Discount     float64 `gorm:"type:decimal(12,2);not null"` // Descuentos
-	ShippingCost float64 `gorm:"type:decimal(12,2);not null"` // Costo de envío
+	ShippingCost     float64 `gorm:"type:decimal(12,2);not null"`           // Costo de envío
+	ShippingDiscount float64 `gorm:"type:decimal(12,2);not null;default:0"` // Descuento de envío
 	TotalAmount  float64 `gorm:"type:decimal(12,2);not null"` // Total
 	Currency     string  `gorm:"size:10;default:'COP'"`       // Moneda
 

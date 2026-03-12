@@ -33,7 +33,9 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		SubtotalPresentment:     dto.SubtotalPresentment,
 		TaxPresentment:          dto.TaxPresentment,
 		DiscountPresentment:     dto.DiscountPresentment,
-		ShippingCostPresentment: dto.ShippingCostPresentment,
+		ShippingCostPresentment:     dto.ShippingCostPresentment,
+		ShippingDiscount:            dto.ShippingDiscount,
+		ShippingDiscountPresentment: dto.ShippingDiscountPresentment,
 		TotalAmountPresentment:  dto.TotalAmountPresentment,
 		CurrencyPresentment:     dto.CurrencyPresentment,
 

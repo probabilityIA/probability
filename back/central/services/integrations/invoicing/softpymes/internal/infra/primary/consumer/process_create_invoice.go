@@ -88,6 +88,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		Tax:          request.InvoiceData.Tax,
 		Discount:     request.InvoiceData.Discount,
 		ShippingCost:     request.InvoiceData.ShippingCost,
+		ShippingDiscount: request.InvoiceData.ShippingDiscount,
 		ShippingCostBase: request.InvoiceData.ShippingCostBase,
 		Currency:         request.InvoiceData.Currency,
 		OrderID:      request.InvoiceData.OrderID,

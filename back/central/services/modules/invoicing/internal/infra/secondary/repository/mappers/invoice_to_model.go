@@ -33,6 +33,7 @@ func InvoiceToModel(entity *entities.Invoice) *models.Invoice {
 		Tax:                 entity.Tax,
 		Discount:            entity.Discount,
 		ShippingCost:        entity.ShippingCost,
+		ShippingDiscount:    entity.ShippingDiscount,
 		TotalAmount:         entity.TotalAmount,
 		Currency:            entity.Currency,
 		CustomerName:        entity.CustomerName,

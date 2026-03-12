@@ -65,6 +65,7 @@ type OrderData struct {
 	Tax              float64
 	Discount         float64
 	ShippingCost     float64
+	ShippingDiscount float64
 	Currency         string
 	CustomerName     string
 	CustomerEmail    string

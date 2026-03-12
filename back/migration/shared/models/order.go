@@ -58,6 +58,8 @@ type Order struct {
 	TaxPresentment          float64 `gorm:"column:tax_presentment;type:decimal(12,2);not null;default:0"`           // Impuestos en moneda local
 	DiscountPresentment     float64 `gorm:"column:discount_presentment;type:decimal(12,2);not null;default:0"`      // Descuentos en moneda local
 	ShippingCostPresentment float64 `gorm:"column:shipping_cost_presentment;type:decimal(12,2);not null;default:0"` // Costo de envío en moneda local
+	ShippingDiscount            float64 `gorm:"column:shipping_discount;type:decimal(12,2);not null;default:0"`            // Descuento de envío (envío gratis, etc.)
+	ShippingDiscountPresentment float64 `gorm:"column:shipping_discount_presentment;type:decimal(12,2);not null;default:0"` // Descuento de envío en moneda local
 	TotalAmountPresentment  float64 `gorm:"column:total_amount_presentment;type:decimal(12,2);not null;default:0"`  // Total final en moneda local
 	CurrencyPresentment     string  `gorm:"size:10"`                                                                // Moneda presentment (moneda local, puede ser COP, EUR, etc.)
 

@@ -317,11 +317,33 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		orderNumber = strconv.Itoa(orderResp.OrderNumber)
 	}
 
-	// Calcular shipping cost total en moneda de la tienda
+	// Calcular shipping cost total y shipping discount desde ShippingLines
+	// Price = precio original, DiscountedPrice = precio después de descuentos de envío
 	var shippingCost float64
+	var actualShippingCost float64
+	var actualShippingCostPresentment float64
 	for _, line := range orderResp.ShippingLines {
 		price, _ := strconv.ParseFloat(line.Price, 64)
 		shippingCost += price
+
+		// DiscountedPrice contiene el precio después de aplicar descuentos de envío
+		discounted, _ := strconv.ParseFloat(line.DiscountedPrice, 64)
+		actualShippingCost += discounted
+
+		if line.DiscountedPriceSet != nil && line.DiscountedPriceSet.PresentmentMoney.Amount != "" {
+			discountedPresentment, _ := strconv.ParseFloat(line.DiscountedPriceSet.PresentmentMoney.Amount, 64)
+			actualShippingCostPresentment += discountedPresentment
+		}
+	}
+
+	// Shipping discount = original price - discounted price
+	shippingDiscount := shippingCost - actualShippingCost
+	if shippingDiscount < 0 {
+		shippingDiscount = 0
+	}
+	shippingDiscountPresentment := shippingCostPresentment - actualShippingCostPresentment
+	if shippingDiscountPresentment < 0 {
+		shippingDiscountPresentment = 0
 	}
 
 	subtotal, _ := strconv.ParseFloat(orderResp.SubtotalPrice, 64)
@@ -352,10 +374,12 @@ func MapOrderResponseToShopifyOrder(orderResp response.Order, rawOrder []byte, b
 		OrderStatusURL:  orderStatusURL,
 		RawData:         rawOrder,
 		// Precios en moneda local
-		SubtotalPresentment:     subtotalPresentment,
-		TaxPresentment:          taxPresentment,
-		DiscountPresentment:     discountPresentment,
-		ShippingCostPresentment: shippingCostPresentment,
+		SubtotalPresentment:         subtotalPresentment,
+		TaxPresentment:              taxPresentment,
+		DiscountPresentment:         discountPresentment,
+		ShippingCostPresentment:     shippingCostPresentment,
+		ShippingDiscount:            shippingDiscount,
+		ShippingDiscountPresentment: shippingDiscountPresentment,
 		TotalAmountPresentment:  totalAmountPresentment,
 		CurrencyPresentment:     currencyPresentment,
 	}

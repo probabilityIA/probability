@@ -28,6 +28,7 @@ func InvoiceToDomain(model *models.Invoice) *entities.Invoice {
 		Tax:                 model.Tax,
 		Discount:            model.Discount,
 		ShippingCost:        model.ShippingCost,
+		ShippingDiscount:    model.ShippingDiscount,
 		TotalAmount:         model.TotalAmount,
 		Currency:            model.Currency,
 		CustomerName:        model.CustomerName,

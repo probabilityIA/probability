@@ -186,13 +186,19 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 		softpymesItems = append(softpymesItems, softpymesItem)
 	}
 
-	// Agregar shipping como línea de factura si hay costo de envío.
+	// Agregar shipping como línea de factura si hay costo de envío efectivo.
 	// SHIPPING debe existir en el catálogo de Softpymes como servicio.
 	// Usar ShippingCostBase (sin IVA) calculado en el módulo invoicing.
-	if req.ShippingCost > 0 {
+	// Si hay descuento de envío (free shipping), restarlo del costo.
+	effectiveShipping := req.ShippingCost - req.ShippingDiscount
+	if effectiveShipping < 0 {
+		effectiveShipping = 0
+	}
+
+	if effectiveShipping > 0 {
 		shippingPrice := req.ShippingCostBase
 		if shippingPrice == 0 {
-			shippingPrice = req.ShippingCost // fallback órdenes antiguas
+			shippingPrice = effectiveShipping // fallback órdenes antiguas
 		}
 
 		shippingItem := map[string]interface{}{

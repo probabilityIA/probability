@@ -23,7 +23,8 @@ type CreateOrderRequest struct {
 	Subtotal     float64  `json:"subtotal"`
 	Tax          float64  `json:"tax"`
 	Discount     float64  `json:"discount"`
-	ShippingCost float64  `json:"shipping_cost"`
+	ShippingCost     float64  `json:"shipping_cost"`
+	ShippingDiscount float64  `json:"shipping_discount"`
 	TotalAmount  float64  `json:"total_amount"`
 	Currency     string   `json:"currency"`
 	CodTotal     *float64 `json:"cod_total,omitempty"`

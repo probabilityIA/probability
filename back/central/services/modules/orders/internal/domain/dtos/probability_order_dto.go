@@ -33,7 +33,9 @@ type ProbabilityOrderDTO struct {
 	SubtotalPresentment     float64 `json:"subtotal_presentment"`
 	TaxPresentment          float64 `json:"tax_presentment"`
 	DiscountPresentment     float64 `json:"discount_presentment"`
-	ShippingCostPresentment float64 `json:"shipping_cost_presentment"`
+	ShippingCostPresentment     float64 `json:"shipping_cost_presentment"`
+	ShippingDiscount            float64 `json:"shipping_discount"`
+	ShippingDiscountPresentment float64 `json:"shipping_discount_presentment"`
 	TotalAmountPresentment  float64 `json:"total_amount_presentment"`
 	CurrencyPresentment     string  `json:"currency_presentment"`
 

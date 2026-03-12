@@ -25,7 +25,8 @@ type Invoice struct {
 	Subtotal     float64
 	Tax          float64
 	Discount     float64
-	ShippingCost float64
+	ShippingCost     float64
+	ShippingDiscount float64
 	TotalAmount  float64
 	Currency     string
 

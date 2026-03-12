@@ -46,6 +46,7 @@ type CreateInvoiceRequest struct {
 	Tax          float64
 	Discount     float64
 	ShippingCost     float64
+	ShippingDiscount float64
 	ShippingCostBase float64 // Envío sin impuestos
 	Currency         string
 	OrderID      string
