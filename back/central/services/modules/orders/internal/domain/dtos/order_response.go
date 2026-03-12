@@ -31,10 +31,12 @@ type OrderResponse struct {
 	Subtotal     float64
 	Tax          float64
 	Discount     float64
-	ShippingCost float64
-	TotalAmount  float64
-	Currency     string
-	CodTotal     *float64
+	ShippingCost                float64
+	ShippingDiscount            float64
+	ShippingDiscountPresentment float64
+	TotalAmount                 float64
+	Currency                    string
+	CodTotal                    *float64
 
 	// Precios en moneda presentment (presentment_money - moneda local)
 	SubtotalPresentment     float64

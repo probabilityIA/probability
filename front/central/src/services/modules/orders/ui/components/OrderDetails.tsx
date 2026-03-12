@@ -376,16 +376,18 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             {formatCurrency(order.subtotal, order.currency, order.subtotal_presentment, order.currency_presentment)}
                                         </span>
                                     </div>
-                                    <div className="flex justify-between">
-                                        <span className="text-sm text-gray-600 font-medium">Impuestos</span>
-                                        <span className="text-sm font-semibold text-gray-900">
-                                            {formatCurrency(order.tax, order.currency, order.tax_presentment, order.currency_presentment)}
-                                        </span>
-                                    </div>
+                                    {(order.tax > 0 || (order.tax_presentment && order.tax_presentment > 0)) && (
+                                        <div className="flex justify-between pl-3">
+                                            <span className="text-xs text-gray-400 italic">IVA incluido</span>
+                                            <span className="text-xs text-gray-400 italic">
+                                                {formatCurrency(order.tax, order.currency, order.tax_presentment, order.currency_presentment)}
+                                            </span>
+                                        </div>
+                                    )}
                                     {(order.discount > 0 || (order.discount_presentment && order.discount_presentment > 0)) && (
-                                        <div className="flex justify-between">
-                                            <span className="text-sm text-gray-600 font-medium">Descuento</span>
-                                            <span className="text-sm font-semibold text-gray-900 text-green-600">
+                                        <div className="flex justify-between pl-3">
+                                            <span className="text-xs text-green-500 italic">Descuento aplicado</span>
+                                            <span className="text-xs text-green-500 italic">
                                                 -{formatCurrency(order.discount, order.currency, order.discount_presentment, order.currency_presentment)}
                                             </span>
                                         </div>
@@ -396,6 +398,14 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             {formatCurrency(order.shipping_cost, order.currency, order.shipping_cost_presentment, order.currency_presentment)}
                                         </span>
                                     </div>
+                                    {((order.shipping_discount && order.shipping_discount > 0) || (order.shipping_discount_presentment && order.shipping_discount_presentment > 0)) && (
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-gray-600 font-medium">Desc. Envío</span>
+                                            <span className="text-sm font-semibold text-green-600">
+                                                -{formatCurrency(order.shipping_discount || 0, order.currency, order.shipping_discount_presentment, order.currency_presentment)}
+                                            </span>
+                                        </div>
+                                    )}
                                     <div className="flex justify-between pt-2 border-t border-gray-300 mt-2">
                                         <span className="text-base font-bold text-gray-900">Total</span>
                                         <span className="text-base font-bold text-purple-600">
@@ -419,6 +429,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                     <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 uppercase">SKU</th>
                                                     <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Cant</th>
                                                     <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Precio</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Desc.</th>
                                                     <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Total</th>
                                                 </tr>
                                             </thead>
@@ -429,6 +440,13 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         <td className="px-2 py-2 text-xs text-gray-600">{item.product_sku || item.sku || '-'}</td>
                                                         <td className="px-2 py-2 text-xs text-gray-900 text-right">{item.quantity || 0}</td>
                                                         <td className="px-2 py-2 text-xs text-gray-900 text-right">{formatCurrency(item.unit_price || item.price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
+                                                        <td className="px-2 py-2 text-xs text-right">
+                                                            {(item.discount > 0 || (item.discount_presentment && item.discount_presentment > 0)) ? (
+                                                                <span className="text-green-600 font-semibold">-{formatCurrency(item.discount, order.currency, item.discount_presentment, order.currency_presentment)}</span>
+                                                            ) : (
+                                                                <span className="text-gray-400">-</span>
+                                                            )}
+                                                        </td>
                                                         <td className="px-2 py-2 text-xs text-gray-900 text-right font-semibold">{formatCurrency(item.total_price || (parseFloat(item.unit_price || item.price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
                                                     </tr>
                                                 ))}
