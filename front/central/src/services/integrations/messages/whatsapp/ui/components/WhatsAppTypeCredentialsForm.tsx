@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { EyeIcon, EyeSlashIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, ClipboardDocumentIcon, ClipboardDocumentCheckIcon } from '@heroicons/react/24/outline';
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import { Input, Button, Modal } from '@/shared/ui';
 import { testConnectionRawAction } from '@/services/integrations/core/infra/actions';
@@ -30,6 +30,15 @@ export default function WhatsAppTypeCredentialsForm({
     const [showVerifyToken, setShowVerifyToken] = useState(false);
     const [testing, setTesting] = useState(false);
     const [testResult, setTestResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const [copied, setCopied] = useState(false);
+
+    const webhookUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3050/api/v1'}/integrations/whatsapp/webhook`;
+
+    const handleCopyWebhook = async () => {
+        await navigator.clipboard.writeText(webhookUrl);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
 
     const handleChange = (field: keyof WhatsAppPlatformCredentials, value: string) => {
         onChange({ ...credentials, [field]: value });
@@ -98,17 +107,33 @@ export default function WhatsAppTypeCredentialsForm({
                 </div>
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Webhook Callback URL
+                        Webhook URL
                     </label>
-                    <Input
-                        type="url"
-                        value={credentials.webhook_callback_url}
-                        onChange={(e) => handleChange('webhook_callback_url', e.target.value)}
-                        placeholder="https://api.tudominio.com/api/integrations/whatsapp/webhook"
-                        className="font-mono"
-                    />
+                    <div className="flex gap-2">
+                        <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md font-mono text-sm text-gray-700 truncate select-all">
+                            {webhookUrl}
+                        </div>
+                        <button
+                            type="button"
+                            onClick={handleCopyWebhook}
+                            className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 text-sm shrink-0"
+                            title="Copiar URL"
+                        >
+                            {copied ? (
+                                <>
+                                    <ClipboardDocumentCheckIcon className="w-4 h-4 text-green-600" />
+                                    <span className="text-green-600">Copiado</span>
+                                </>
+                            ) : (
+                                <>
+                                    <ClipboardDocumentIcon className="w-4 h-4 text-gray-500" />
+                                    <span>Copiar</span>
+                                </>
+                            )}
+                        </button>
+                    </div>
                     <p className="mt-1 text-xs text-gray-500">
-                        URL que se configura en Meta &rarr; WhatsApp &rarr; Configuration &rarr; Webhook
+                        Copia esta URL en Meta &rarr; WhatsApp &rarr; Configuration &rarr; Webhook
                     </p>
                 </div>
                 <div>
