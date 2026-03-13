@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../services/auth/login/ui/providers/login_provider.dart';
 
@@ -57,36 +58,70 @@ class HomeScreen extends StatelessWidget {
               _MenuSection(
                 title: 'Autenticación',
                 items: [
-                  _MenuItem(
-                    icon: Icons.people,
-                    label: 'Usuarios',
-                    route: '/users',
-                  ),
-                  _MenuItem(
-                    icon: Icons.admin_panel_settings,
-                    label: 'Roles',
-                    route: '/roles',
-                  ),
-                  _MenuItem(
-                    icon: Icons.security,
-                    label: 'Permisos',
-                    route: '/permissions',
-                  ),
-                  _MenuItem(
-                    icon: Icons.business,
-                    label: 'Negocios',
-                    route: '/businesses',
-                  ),
-                  _MenuItem(
-                    icon: Icons.widgets,
-                    label: 'Recursos',
-                    route: '/resources',
-                  ),
-                  _MenuItem(
-                    icon: Icons.touch_app,
-                    label: 'Acciones',
-                    route: '/actions',
-                  ),
+                  _MenuItem(icon: Icons.people, label: 'Usuarios', route: '/users'),
+                  _MenuItem(icon: Icons.admin_panel_settings, label: 'Roles', route: '/roles'),
+                  _MenuItem(icon: Icons.security, label: 'Permisos', route: '/permissions'),
+                  _MenuItem(icon: Icons.business, label: 'Negocios', route: '/businesses'),
+                  _MenuItem(icon: Icons.widgets, label: 'Recursos', route: '/resources'),
+                  _MenuItem(icon: Icons.touch_app, label: 'Acciones', route: '/actions'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _MenuSection(
+                title: 'Ventas',
+                items: [
+                  _MenuItem(icon: Icons.shopping_cart, label: 'Órdenes', route: '/orders'),
+                  _MenuItem(icon: Icons.inventory_2, label: 'Productos', route: '/products'),
+                  _MenuItem(icon: Icons.person_outline, label: 'Clientes', route: '/customers'),
+                  _MenuItem(icon: Icons.receipt_long, label: 'Facturación', route: '/invoicing'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _MenuSection(
+                title: 'Estados',
+                items: [
+                  _MenuItem(icon: Icons.assignment, label: 'Estado Orden', route: '/orderstatus'),
+                  _MenuItem(icon: Icons.payment, label: 'Estado Pago', route: '/paymentstatus'),
+                  _MenuItem(icon: Icons.local_shipping, label: 'Estado Envío', route: '/fulfillmentstatus'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _MenuSection(
+                title: 'Logística',
+                items: [
+                  _MenuItem(icon: Icons.local_shipping, label: 'Envíos', route: '/shipments'),
+                  _MenuItem(icon: Icons.warehouse, label: 'Bodegas', route: '/warehouses'),
+                  _MenuItem(icon: Icons.inventory, label: 'Inventario', route: '/inventory'),
+                  _MenuItem(icon: Icons.person_pin, label: 'Conductores', route: '/drivers'),
+                  _MenuItem(icon: Icons.directions_car, label: 'Vehículos', route: '/vehicles'),
+                  _MenuItem(icon: Icons.route, label: 'Rutas', route: '/routes'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _MenuSection(
+                title: 'Finanzas',
+                items: [
+                  _MenuItem(icon: Icons.account_balance_wallet, label: 'Pagos', route: '/pay'),
+                  _MenuItem(icon: Icons.wallet, label: 'Wallet', route: '/wallet'),
+                  _MenuItem(icon: Icons.dashboard, label: 'Dashboard', route: '/dashboard'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _MenuSection(
+                title: 'Configuración',
+                items: [
+                  _MenuItem(icon: Icons.notifications, label: 'Notificaciones', route: '/notification-config'),
+                  _MenuItem(icon: Icons.storefront, label: 'Storefront', route: '/storefront'),
+                  _MenuItem(icon: Icons.public, label: 'Sitio Público', route: '/publicsite'),
+                  _MenuItem(icon: Icons.web, label: 'Config Web', route: '/website-config'),
+                ],
+              ),
+              const SizedBox(height: 16),
+              _MenuSection(
+                title: 'Integraciones',
+                items: [
+                  _MenuItem(icon: Icons.extension, label: 'Mis Integraciones', route: '/my-integrations'),
+                  _MenuItem(icon: Icons.hub, label: 'Catálogo', route: '/integrations'),
                 ],
               ),
             ],
@@ -122,7 +157,7 @@ class _MenuSection extends StatelessWidget {
             crossAxisCount: 3,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1,
+            childAspectRatio: 0.85,
           ),
           itemCount: items.length,
           itemBuilder: (context, index) {
@@ -130,20 +165,25 @@ class _MenuSection extends StatelessWidget {
             return Card(
               child: InkWell(
                 borderRadius: BorderRadius.circular(12),
-                onTap: () {
-                  // Navigation handled by GoRouter
-                },
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(item.icon, size: 32, color: Colors.deepPurple),
-                    const SizedBox(height: 8),
-                    Text(
-                      item.label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                  ],
+                onTap: () => context.push(item.route),
+                child: Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(item.icon, size: 28, color: Colors.deepPurple),
+                      const SizedBox(height: 6),
+                      Flexible(
+                        child: Text(
+                          item.label,
+                          textAlign: TextAlign.center,
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          style: const TextStyle(fontSize: 11),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
