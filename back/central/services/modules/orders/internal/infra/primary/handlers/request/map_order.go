@@ -24,8 +24,10 @@ type MapOrder struct {
 	Subtotal     float64  `json:"subtotal" binding:"required,min=0"`
 	Tax          float64  `json:"tax" binding:"min=0"`
 	Discount     float64  `json:"discount" binding:"min=0"`
-	ShippingCost float64  `json:"shipping_cost" binding:"min=0"`
-	TotalAmount  float64  `json:"total_amount" binding:"required,min=0"`
+	ShippingCost                float64  `json:"shipping_cost" binding:"min=0"`
+	ShippingDiscount            float64  `json:"shipping_discount" binding:"min=0"`
+	ShippingDiscountPresentment float64  `json:"shipping_discount_presentment,omitempty"`
+	TotalAmount                 float64  `json:"total_amount" binding:"required,min=0"`
 	Currency     string   `json:"currency" binding:"max=10"`
 	CodTotal     *float64 `json:"cod_total"`
 

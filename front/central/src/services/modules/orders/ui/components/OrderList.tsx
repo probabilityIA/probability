@@ -179,23 +179,30 @@ const OrderRow = memo(({
                         <span className="text-xs font-semibold text-gray-700 min-w-[40px] text-right">
                             {order.delivery_probability.toFixed(0)}%
                         </span>
+                        {order.negative_factors && order.negative_factors.length > 0 && (
+                            <div className="relative group">
+                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 text-orange-600 cursor-pointer hover:bg-orange-200 transition-colors">
+                                    <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                                    </svg>
+                                </div>
+                                <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
+                                    <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap">
+                                        <div className="font-semibold mb-1">Datos faltantes:</div>
+                                        {order.negative_factors.map((factor, idx) => (
+                                            <div key={idx} className="flex items-center gap-1">
+                                                <span className="text-orange-400">•</span> {factor}
+                                            </div>
+                                        ))}
+                                        <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <span className="text-xs text-gray-400">N/A</span>
                 )}
-            </td>
-            <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
-                <div className="flex flex-wrap gap-1">
-                    {order.negative_factors && order.negative_factors.length > 0 ? (
-                        order.negative_factors.map((factor, idx) => (
-                            <span key={idx} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                {factor}
-                            </span>
-                        ))
-                    ) : (
-                        <span className="text-xs text-gray-400">-</span>
-                    )}
-                </div>
             </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-center">
                 <div className="flex flex-col items-center gap-1">
@@ -1124,9 +1131,6 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Probabilidad
                                 </th>
-                                <th className="px-3 sm:px-6 py-3 text-left text-xs font-bold text-white uppercase tracking-widest hidden lg:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
-                                    Datos Faltantes
-                                </th>
                                 <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
                                     Confirmado
                                 </th>
@@ -1147,7 +1151,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         <tbody>
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={isSuperAdmin ? 11 : 10} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={isSuperAdmin ? 10 : 9} className="px-4 sm:px-6 py-8 text-center text-gray-500">
                                         No hay órdenes disponibles
                                     </td>
                                 </tr>

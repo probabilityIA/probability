@@ -49,6 +49,8 @@ export interface Order {
     tax: number;
     discount: number;
     shipping_cost: number;
+    shipping_discount?: number;
+    shipping_discount_presentment?: number;
     total_amount: number;
     currency: string;
     cod_total?: number;
