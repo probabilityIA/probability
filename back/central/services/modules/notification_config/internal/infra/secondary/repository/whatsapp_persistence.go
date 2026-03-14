@@ -15,6 +15,8 @@ import (
 	"gorm.io/datatypes"
 )
 
+const maxMessageLogsPerBusiness = 50
+
 // whatsAppPersister persiste eventos de WhatsApp en DB
 type whatsAppPersister struct {
 	db     db.IDatabase
@@ -141,6 +143,57 @@ func (r *whatsAppPersister) CreateMessageLog(ctx context.Context, entry *entitie
 
 	if err := r.db.Conn(ctx).Create(model).Error; err != nil {
 		return fmt.Errorf("error creando whatsapp_message_log: %w", err)
+	}
+
+	// Mantener solo los últimos 50 message logs por business
+	if err := r.enforceMessageLogLimit(ctx, convID); err != nil {
+		r.logger.Warn(ctx).
+			Err(err).
+			Str("conversation_id", entry.ConversationID).
+			Msg("Error limpiando message logs antiguos")
+	}
+
+	return nil
+}
+
+// enforceMessageLogLimit mantiene solo los últimos maxMessageLogsPerBusiness message logs
+// por business. Elimina los más antiguos cuando se supera el límite.
+func (r *whatsAppPersister) enforceMessageLogLimit(ctx context.Context, conversationID uuid.UUID) error {
+	// Obtener el business_id de la conversación
+	var businessID uint
+	err := r.db.Conn(ctx).
+		Model(&models.WhatsAppConversation{}).
+		Select("business_id").
+		Where("id = ?", conversationID).
+		Scan(&businessID).Error
+	if err != nil || businessID == 0 {
+		return fmt.Errorf("no se pudo obtener business_id para conversación %s: %w", conversationID, err)
+	}
+
+	// Eliminar message logs que excedan el límite de 50 por business
+	// Mantiene los más recientes por created_at
+	deleteQuery := `
+		DELETE FROM whatsapp_message_logs
+		WHERE id IN (
+			SELECT ml.id
+			FROM whatsapp_message_logs ml
+			INNER JOIN whatsapp_conversations c ON ml.conversation_id = c.id
+			WHERE c.business_id = ?
+			ORDER BY ml.created_at DESC
+			OFFSET ?
+		)
+	`
+
+	result := r.db.Conn(ctx).Exec(deleteQuery, businessID, maxMessageLogsPerBusiness)
+	if result.Error != nil {
+		return fmt.Errorf("error eliminando message logs antiguos: %w", result.Error)
+	}
+
+	if result.RowsAffected > 0 {
+		r.logger.Info(ctx).
+			Uint("business_id", businessID).
+			Int64("deleted_count", result.RowsAffected).
+			Msg("Message logs antiguos eliminados por límite de 50")
 	}
 
 	return nil

@@ -1,2 +1,0 @@
-﻿ok  	github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecasecreateorder	(cached)
-ok  	github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdateorder	(cached)
