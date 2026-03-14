@@ -8,6 +8,7 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { TokenStorage } from '@/shared/utils/token-storage';
 import { TopCustomersTable } from './TopCustomersTable';
 import { TopProductsTable } from './TopProductsTable';
+import { ColombiaMap } from './ColombiaMap';
 import { Spinner, Alert, Select } from '@/shared/ui';
 import { getActionError } from '@/shared/utils/action-result';
 import {
@@ -646,7 +647,7 @@ export default function Dashboard() {
                         <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
                     </div>
                     {(locationData || []).length > 0 ? (
-                        <ModernBarChart data={locationData} xKey="name" dataKey="value" height={340} gradientType="purple" />
+                        <ColombiaMap data={locationData} height={500} />
                     ) : (
                         <p className="text-sm text-gray-500">No hay datos disponibles</p>
                     )}
