@@ -108,7 +108,7 @@ type ITransportRequestPublisher interface {
 type IShipmentSSEPublisher interface {
 	PublishQuoteReceived(ctx context.Context, businessID uint, correlationID string, data map[string]interface{})
 	PublishQuoteFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)
-	PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string)
+	PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string)
 	PublishGuideFailed(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string)
 	PublishTrackingUpdated(ctx context.Context, businessID uint, correlationID string, data map[string]interface{})
 	PublishTrackingFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)

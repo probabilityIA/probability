@@ -129,6 +129,9 @@ type OrderResponse struct {
 	// Items de la orden
 	OrderItems []entities.ProbabilityOrderItem
 
+	// Información del envío (relación con shipments)
+	Shipment *ShipmentData
+
 	// Datos estructurados (JSONB) - almacenados como []byte
 	Metadata           []byte
 	FinancialDetails   []byte
@@ -140,4 +143,13 @@ type OrderResponse struct {
 	// Timestamps
 	OccurredAt time.Time
 	ImportedAt time.Time
+}
+
+// ShipmentData contiene información del envío asociado a la orden
+type ShipmentData struct {
+	ID             uint
+	Carrier        *string
+	TrackingNumber *string
+	GuideURL       *string
+	Status         string
 }

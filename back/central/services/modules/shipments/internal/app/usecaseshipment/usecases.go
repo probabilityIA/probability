@@ -79,6 +79,13 @@ func (uc *UseCaseShipment) CreateShipment(ctx context.Context, req *domain.Creat
 		Metadata:          req.Metadata,
 	}
 
+	// DEBUG: Log the carrier being saved
+	if shipment.Carrier != nil {
+		fmt.Printf("DEBUG USECASE: Creating shipment with carrier: %s\n", *shipment.Carrier)
+	} else {
+		fmt.Printf("DEBUG USECASE: Shipment carrier is nil\n")
+	}
+
 	// Guardar en la base de datos
 	if err := uc.repo.CreateShipment(ctx, shipment); err != nil {
 		return nil, fmt.Errorf("error creating shipment: %w", err)

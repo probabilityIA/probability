@@ -136,6 +136,11 @@ export default function OrdersPage() {
                     setSelectedOrder(null);
                 }}
                 order={selectedOrder || undefined}
+                onGuideGenerated={() => {
+                    // Reload orders list after guide generation to refresh shipment data
+                    setShowGuideModal(false);
+                    handleSuccess();
+                }}
             />
 
             {/* Create Modal */}

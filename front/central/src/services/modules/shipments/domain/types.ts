@@ -88,6 +88,7 @@ export interface EnvioClickPackage {
 export interface EnvioClickQuoteRequest {
     business_id?: number;
     idRate?: number;
+    carrier?: string;
     myShipmentReference?: string;
     external_order_id?: string;
     order_uuid?: string;
@@ -234,6 +235,7 @@ export interface ShipmentSSEEventData {
   correlation_id?: string;
   tracking_number?: string;
   label_url?: string;
+  carrier?: string;
   error_message?: string;
   quotes?: Record<string, any>;
   tracking?: Record<string, any>;

@@ -39,12 +39,13 @@ func (p *SSEPublisher) PublishQuoteFailed(ctx context.Context, businessID uint, 
 }
 
 // PublishGuideGenerated publica evento de guía generada exitosamente
-func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string) {
+func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string) {
 	p.publish(ctx, "shipment.guide_generated", businessID, map[string]interface{}{
 		"shipment_id":     shipmentID,
 		"correlation_id":  correlationID,
 		"tracking_number": trackingNumber,
 		"label_url":       labelURL,
+		"carrier":         carrier,
 	})
 }
 
@@ -118,7 +119,7 @@ func NewNoopSSEPublisher() domain.IShipmentSSEPublisher {
 func (n *noopSSEPublisher) PublishQuoteReceived(_ context.Context, _ uint, _ string, _ map[string]interface{}) {
 }
 func (n *noopSSEPublisher) PublishQuoteFailed(_ context.Context, _ uint, _ string, _ string) {}
-func (n *noopSSEPublisher) PublishGuideGenerated(_ context.Context, _ uint, _ uint, _ string, _ string, _ string) {
+func (n *noopSSEPublisher) PublishGuideGenerated(_ context.Context, _ uint, _ uint, _ string, _ string, _ string, _ string) {
 }
 func (n *noopSSEPublisher) PublishGuideFailed(_ context.Context, _ uint, _ uint, _ string, _ string) {
 }

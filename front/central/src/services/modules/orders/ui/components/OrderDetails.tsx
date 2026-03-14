@@ -33,32 +33,26 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const [showGuideModal, setShowGuideModal] = useState(false);
 
     // Fetch full order details on mount
-    useEffect(() => {
-        let isMounted = true;
+    const fetchDetails = async () => {
+        if (!initialOrder.id) return;
 
-        async function fetchDetails() {
-            if (!initialOrder.id) return;
-
-            setLoadingDetails(true);
-            try {
-                const response = await getOrderByIdAction(initialOrder.id);
-                if (isMounted) {
-                    if (response.success && response.data) {
-                        setFullOrder(response.data);
-                    } else if (!response.success) {
-                        console.error("Failed to load order details:", response.message);
-                    }
-                }
-            } catch (error) {
-                console.error("Error loading order details:", error);
-            } finally {
-                if (isMounted) setLoadingDetails(false);
+        setLoadingDetails(true);
+        try {
+            const response = await getOrderByIdAction(initialOrder.id);
+            if (response.success && response.data) {
+                setFullOrder(response.data);
+            } else if (!response.success) {
+                console.error("Failed to load order details:", response.message);
             }
+        } catch (error) {
+            console.error("Error loading order details:", error);
+        } finally {
+            setLoadingDetails(false);
         }
+    };
 
+    useEffect(() => {
         fetchDetails();
-
-        return () => { isMounted = false; };
     }, [initialOrder.id]);
 
     // Derived order object (prefer full, fallback to initial)
@@ -291,6 +285,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 onClose={() => setShowGuideModal(false)}
                                 order={order}
                                 recommendedCarrier={aiRecommendation?.recommended_carrier}
+                                onGuideGenerated={() => {
+                                    // Reload order details after guide is generated to get updated shipment data
+                                    setShowGuideModal(false);
+                                    fetchDetails();
+                                }}
                             />
                         )}
                     </div>

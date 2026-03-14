@@ -5,12 +5,24 @@ import (
 	"sync"
 )
 
+// RateInfo almacena la información de un rate para poder recuperarlo en generate
+type RateInfo struct {
+	IDCarrier     int64
+	Carrier       string
+	IDProduct     int64
+	Product       string
+	GeneratedOnce bool   // Flag to ensure we only generate once per rate
+	ShipmentID    string // Store the generated shipment ID for this rate
+	TrackingNum   string // Store the generated tracking number for this rate
+}
+
 // ShipmentRepository almacena los envios simulados en memoria
 type ShipmentRepository struct {
-	mu              sync.RWMutex
-	shipmentsByID   map[string]*StoredShipment
+	mu               sync.RWMutex
+	shipmentsByID    map[string]*StoredShipment
 	shipmentsByTrack map[string]*StoredShipment
-	shipmentSeq     int
+	ratesByID        map[int64]*RateInfo
+	shipmentSeq      int
 }
 
 // NewShipmentRepository crea una nueva instancia del repositorio
@@ -18,6 +30,7 @@ func NewShipmentRepository() *ShipmentRepository {
 	return &ShipmentRepository{
 		shipmentsByID:    make(map[string]*StoredShipment),
 		shipmentsByTrack: make(map[string]*StoredShipment),
+		ratesByID:        make(map[int64]*RateInfo),
 		shipmentSeq:      5000,
 	}
 }
@@ -75,4 +88,19 @@ func (r *ShipmentRepository) GenerateShipmentID() string {
 	defer r.mu.Unlock()
 	r.shipmentSeq++
 	return fmt.Sprintf("EC-%06d", r.shipmentSeq)
+}
+
+// SaveRate guarda la información de un rate por su ID
+func (r *ShipmentRepository) SaveRate(rateID int64, rateInfo *RateInfo) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.ratesByID[rateID] = rateInfo
+}
+
+// GetRateByID obtiene la información de un rate por su ID
+func (r *ShipmentRepository) GetRateByID(rateID int64) (*RateInfo, bool) {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	info, exists := r.ratesByID[rateID]
+	return info, exists
 }

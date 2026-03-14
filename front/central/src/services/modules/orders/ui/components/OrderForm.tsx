@@ -792,12 +792,13 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                    Conductor
+                                    Transportadora
                                 </label>
                                 <Input
                                     type="text"
-                                    value={formData.driver_name}
-                                    onChange={(e) => setFormData({ ...formData, driver_name: e.target.value })}
+                                    value={(order as any)?.shipment?.carrier || (order as any)?.carrier || 'Sin asignar'}
+                                    disabled
+                                    className="bg-gray-100 cursor-not-allowed"
                                 />
                             </div>
                         </div>

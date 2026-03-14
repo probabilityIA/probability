@@ -189,6 +189,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [originWarehouses, setOriginWarehouses] = useState<Warehouse[]>([]);
     const [generatedPdfUrl, setGeneratedPdfUrl] = useState<string | null>(null);
     const [trackingNumber, setTrackingNumber] = useState<string | null>(null);
+    const [selectedCarrier, setSelectedCarrier] = useState<string | null>(null);
 
     // DANE search states
     const [originSearch, setOriginSearch] = useState("");
@@ -395,6 +396,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             if (data.label_url) setGeneratedPdfUrl(data.label_url);
             if (data.tracking_number) {
                 setTrackingNumber(data.tracking_number);
+                if (data.carrier) setSelectedCarrier(data.carrier);
 
                 // Debit from wallet for async guide generation
                 if (selectedRate) {
@@ -407,8 +409,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         if (balanceResponse.success && balanceResponse.data) {
                             setWalletBalance(balanceResponse.data.Balance);
                         }
-                        // Show success message
-                        setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera.`);
+                        // Show success message with carrier from selectedRate (since backend carrier not reliable yet)
+                        const carrierName = (selectedRate?.carrier || data.carrier) ?? null;
+                        if (carrierName) setSelectedCarrier(carrierName);
+                        const carrierText = carrierName ? ` con ${carrierName}` : '';
+                        setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
                     } else {
                         console.warn('Warning: Could not debit wallet:', debitResponse.error);
                         // Don't fail the entire flow, just warn the user
@@ -460,6 +465,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             setStep3Data(null);
             setGeneratedPdfUrl(null);
             setTrackingNumber(null);
+            setSelectedCarrier(null);
             setError(null);
             setSuccess(null);
             setPendingCorrelationId(null);
@@ -674,9 +680,15 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
         setLoading(true);
         setError(null);
+
+        // DEBUG: Check carrier data
+        console.log('DEBUG: About to generate guide with selectedRate=', selectedRate);
+        console.log('DEBUG: selectedRate.carrier=', selectedRate.carrier);
+
         try {
             const generatePayload: EnvioClickQuoteRequest = {
                 idRate: selectedRate.idRate,
+                carrier: selectedRate.carrier,
                 myShipmentReference: step3Data.myShipmentReference,
                 external_order_id: step3Data.external_order_id,
                 order_uuid: order?.id,
@@ -731,8 +743,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
             // Sync path: backend returned guide data directly (legacy)
             if (response.data?.data?.url) {
                 const tracker = response.data.data.tracker;
+                const carrier = (response.data?.data as any)?.carrier;
                 setGeneratedPdfUrl(response.data.data.url);
                 setTrackingNumber(tracker);
+                if (carrier) setSelectedCarrier(carrier);
 
                 // Debit from wallet
                 const debitResponse = await debitForGuideAction(totalCost, tracker, order?.business_id);
@@ -743,7 +757,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         setWalletBalance(balanceResponse.data.Balance);
                     }
                     // Show success message
-                    setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera.`);
+                    const carrier = (response.data?.data as any)?.carrier;
+                    const carrierText = carrier ? ` con ${carrier}` : '';
+                    if (carrier) setSelectedCarrier(carrier);
+                    setSuccess(`✅ Guía generada exitosamente. Se descontaron $${totalCost.toLocaleString()} de tu billetera${carrierText}.`);
                 } else {
                     console.warn('Warning: Could not debit wallet:', debitResponse.error);
                     // Don't fail the entire flow, just warn the user
@@ -1380,8 +1397,18 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 </div>
                                                 <div className="text-center min-w-0">
                                                     <p className="font-bold text-emerald-800 text-sm">¡Guía generada exitosamente!</p>
+                                                    {selectedCarrier && (
+                                                        <div className="flex items-center justify-center gap-2 mt-1.5">
+                                                            <img
+                                                                src={getCarrierLogo(selectedCarrier)}
+                                                                alt={selectedCarrier}
+                                                                className="w-5 h-5 object-contain"
+                                                            />
+                                                            <span className="text-xs text-emerald-700 font-semibold">{selectedCarrier}</span>
+                                                        </div>
+                                                    )}
                                                     {trackingNumber && (
-                                                        <p className="text-xs text-emerald-700 mt-1 font-mono bg-emerald-100 px-2 py-0.5 rounded-full inline-block">
+                                                        <p className="text-xs text-emerald-700 mt-1.5 font-mono bg-emerald-100 px-2 py-0.5 rounded-full inline-block">
                                                             {trackingNumber}
                                                         </p>
                                                     )}

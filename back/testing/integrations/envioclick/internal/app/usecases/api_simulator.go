@@ -54,6 +54,16 @@ func (s *APISimulator) HandleQuote(req domain.QuoteRequest) (*domain.QuoteRespon
 
 	rates := GenerateRates(req)
 
+	// Save rates in repository for later use in generate
+	for _, rate := range rates {
+		s.Repository.SaveRate(rate.IDRate, &domain.RateInfo{
+			IDCarrier: rate.IDCarrier,
+			Carrier:   rate.Carrier,
+			IDProduct: rate.IDProduct,
+			Product:   rate.Product,
+		})
+	}
+
 	s.logger.Info().
 		Int("rates_count", len(rates)).
 		Str("origin_city", GetCityName(req.Origin.DaneCode)).
@@ -98,18 +108,58 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 		return nil, fmt.Errorf("El valor declarado es invalido o esta fuera de rango")
 	}
 
-	// Pick a carrier based on IDRate or random
+	// Pick a carrier based on IDRate (must have been saved in a previous quote call)
 	rng := rand.New(rand.NewSource(time.Now().UnixNano()))
 	var carrier *carrierInfo
+	var product string
+	var shipmentID string
+	var trackingNumber string
+
 	if req.IDRate > 0 {
-		// Try to find carrier by the rate's carrier ID - for mock just pick a random one
-		carrier = &carriers[rng.Intn(len(carriers))]
+		// Look up the rate that was saved during the quote
+		if rateInfo, exists := s.Repository.GetRateByID(req.IDRate); exists {
+			carrier = FindCarrierByID(rateInfo.IDCarrier)
+			product = rateInfo.Product
+			if carrier == nil {
+				// Fallback to random if carrier not found
+				carrier = &carriers[rng.Intn(len(carriers))]
+				product = carrier.Products[rng.Intn(len(carrier.Products))].Name
+			}
+
+			// If already generated for this rate, reuse the same tracking number
+			if rateInfo.GeneratedOnce {
+				shipmentID = rateInfo.ShipmentID
+				trackingNumber = rateInfo.TrackingNum
+				s.logger.Info().
+					Str("shipment_id", shipmentID).
+					Str("tracking", trackingNumber).
+					Msg("Reusing previously generated guide for this rate")
+			}
+		} else {
+			// No rate found, pick random
+			carrier = &carriers[rng.Intn(len(carriers))]
+			product = carrier.Products[rng.Intn(len(carrier.Products))].Name
+		}
 	} else {
+		// No IDRate provided, pick random
 		carrier = &carriers[rng.Intn(len(carriers))]
+		product = carrier.Products[rng.Intn(len(carrier.Products))].Name
 	}
 
-	shipmentID := s.Repository.GenerateShipmentID()
-	trackingNumber := GenerateTrackingNumber(*carrier, rng)
+	// Generate new IDs only if not reusing
+	if shipmentID == "" {
+		shipmentID = s.Repository.GenerateShipmentID()
+		trackingNumber = GenerateTrackingNumber(*carrier, rng)
+
+		// Store for future calls with the same rate
+		if req.IDRate > 0 {
+			if rateInfo, exists := s.Repository.GetRateByID(req.IDRate); exists {
+				rateInfo.GeneratedOnce = true
+				rateInfo.ShipmentID = shipmentID
+				rateInfo.TrackingNum = trackingNumber
+			}
+		}
+	}
 
 	// Calculate flete
 	totalWeight := 0.0
@@ -117,9 +167,6 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 		totalWeight += pkg.Weight
 	}
 	flete := calculateFlete(totalWeight, req.ContentValue, rng)
-
-	// Pick product name
-	product := carrier.Products[rng.Intn(len(carrier.Products))].Name
 
 	// Generate and upload PDF to S3; fall back to mock URL on any error
 	labelURL := fmt.Sprintf("https://envioclick-mock.local/labels/%s.pdf", shipmentID)
@@ -183,6 +230,8 @@ func (s *APISimulator) HandleGenerate(req domain.QuoteRequest) (*domain.Generate
 			TrackingNumber:   trackingNumber,
 			LabelURL:         labelURL,
 			MyGuideReference: req.MyShipmentReference,
+			Carrier:          carrier.Name,
+			Product:          product,
 		},
 	}, nil
 }

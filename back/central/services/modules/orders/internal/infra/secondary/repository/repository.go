@@ -87,6 +87,9 @@ func (r *Repository) GetOrderByID(ctx context.Context, id string) (*entities.Pro
 		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+			return db.Order("created_at DESC").Limit(1)
+		}).
 		Where("id = ?", id).
 		First(&order).Error
 

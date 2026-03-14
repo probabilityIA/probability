@@ -142,19 +142,27 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 		return
 	}
 
+	c.log.Info(ctx).Interface("response_data_keys", getKeys(data)).Msg("DEBUG: Response.Data keys")
+
 	// Extract nested data field
 	dataField, _ := data["data"].(map[string]interface{})
 	if dataField == nil {
 		dataField = data
+		c.log.Info(ctx).Msg("DEBUG: Using data directly as dataField (no nested 'data' field)")
+	} else {
+		c.log.Info(ctx).Interface("dataField_keys", getKeys(dataField)).Msg("DEBUG: Using nested dataField")
 	}
 
 	trackingNumber, _ := dataField["tracker"].(string)
 	labelURL, _ := dataField["url"].(string)
+	carrier, _ := dataField["carrier"].(string)
 
 	c.log.Info(ctx).
 		Str("tracking_number", trackingNumber).
 		Str("label_url", labelURL).
+		Str("carrier", carrier).
 		Str("correlation_id", response.CorrelationID).
+		Interface("all_datafield_values", dataField).
 		Msg("✅ Guide generated successfully")
 
 	// If we have a shipment ID, update the shipment
@@ -170,6 +178,9 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 			if labelURL != "" {
 				shipment.GuideURL = &labelURL
+			}
+			if carrier != "" {
+				shipment.Carrier = &carrier
 			}
 			shipment.Status = "pending"
 			shipment.IsTest = response.IsTest
@@ -193,7 +204,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 		}
 
-		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL)
+		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL, carrier)
 	}
 }
 
@@ -331,6 +342,15 @@ const serviceFeeAmount = 2290.0
 // priceFields son los campos de precio que se ajustan en cada cotización de EnvioClick.
 // Solo modificamos "flete", dejando seguros intactos.
 var priceFields = []string{"flete"}
+
+// getKeys retorna una lista de claves disponibles en un mapa para debugging
+func getKeys(data map[string]interface{}) []string {
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	return keys
+}
 
 // applyServiceFeeToQuoteData aplica el serviceFeeAmount a todas las tarifas de las cotizaciones
 // en el payload de respuesta de la transportadora.

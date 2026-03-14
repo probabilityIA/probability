@@ -97,6 +97,15 @@ export interface Order {
     delivered_at?: string;
     delivery_probability?: number;
 
+    // Información del envío (relación con shipments)
+    shipment?: {
+        id: number;
+        carrier?: string;
+        tracking_number?: string;
+        guide_url?: string;
+        status: string;
+    };
+
     // Información de fulfillment
     warehouse_id?: number;
     warehouse_name: string;

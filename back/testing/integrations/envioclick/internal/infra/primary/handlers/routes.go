@@ -86,6 +86,8 @@ func (h *Handler) handleGenerate(c *gin.Context) {
 				"tracker":          numericTracker, // BUG: número en lugar de string
 				"url":              resp.Data.LabelURL,
 				"myGuideReference": resp.Data.MyGuideReference,
+				"carrier":          resp.Data.Carrier,
+				"product":          resp.Data.Product,
 			},
 		})
 		return

@@ -47,6 +47,14 @@ func (h *Handlers) GenerateGuide(c *gin.Context) {
 
 	// 4. Pre-create shipment record so the response consumer can update it
 	shipmentReq := buildShipmentRequest(raw, carrier)
+
+	// DEBUG: Log the carrier being saved
+	if shipmentReq.Carrier != nil {
+		fmt.Printf("DEBUG: Saving shipment with carrier: %s\n", *shipmentReq.Carrier)
+	} else {
+		fmt.Printf("DEBUG: Shipment carrier is nil\n")
+	}
+
 	shipmentResp, err := h.uc.CreateShipment(c.Request.Context(), shipmentReq)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Error al crear registro de envío: " + err.Error()})
@@ -95,6 +103,11 @@ func buildShipmentRequest(raw map[string]interface{}, carrier *domain.CarrierInf
 	req := &domain.CreateShipmentRequest{
 		Status:      "pending",
 		CarrierCode: strPtr(carrier.ProviderCode),
+	}
+
+	// carrier name (from frontend)
+	if v, ok := raw["carrier"].(string); ok && v != "" {
+		req.Carrier = strPtr(v)
 	}
 
 	// order_uuid

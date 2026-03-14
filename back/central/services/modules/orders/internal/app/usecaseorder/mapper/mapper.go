@@ -129,6 +129,9 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		// Items de la orden
 		OrderItems: order.OrderItems,
 
+		// Información del envío (relación con shipments)
+		Shipment: mapShipmentToResponse(order.Shipments),
+
 		// Datos estructurados
 		Metadata:           order.Metadata,
 		FinancialDetails:   order.FinancialDetails,
@@ -152,6 +155,23 @@ func UnmarshalNegativeFactors(jsonData datatypes.JSON) []string {
 	var factors []string
 	_ = json.Unmarshal(jsonData, &factors)
 	return factors
+}
+
+// mapShipmentToResponse convierte el slice de shipments al primer ShipmentData
+// (esperamos solo 1 debido al Limit(1) en el Preload)
+func mapShipmentToResponse(shipments []entities.ProbabilityShipment) *dtos.ShipmentData {
+	if len(shipments) == 0 {
+		return nil
+	}
+
+	s := shipments[0]
+	return &dtos.ShipmentData{
+		ID:             s.ID,
+		Carrier:        s.Carrier,
+		TrackingNumber: s.TrackingNumber,
+		GuideURL:       s.GuideURL,
+		Status:         s.Status,
+	}
 }
 
 // ToOrderSummary convierte un modelo Order a OrderSummary
