@@ -99,7 +99,7 @@ interface ShipmentGuideModalProps {
     isOpen: boolean;
     onClose: () => void;
     order?: Order;
-    onGuideGenerated?: (trackingNumber: string) => void;
+    onGuideGenerated?: (data: { tracking_number: string; carrier?: string; label_url?: string }) => void;
     recommendedCarrier?: string;
 }
 
@@ -420,7 +420,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     }
                 }
 
-                if (onGuideGenerated) onGuideGenerated(data.tracking_number);
+                // Fallback to selectedRate.carrier if data.carrier is empty
+                const carrier = data.carrier || selectedRate?.carrier || '';
+                if (onGuideGenerated) onGuideGenerated({
+                    tracking_number: data.tracking_number,
+                    carrier: carrier,
+                    label_url: data.label_url
+                });
             }
             setLoading(false);
         },
@@ -768,7 +774,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 }
 
                 if (onGuideGenerated && tracker) {
-                    onGuideGenerated(tracker);
+                    onGuideGenerated({
+                        tracking_number: tracker,
+                        carrier: carrier,
+                        label_url: generatedPdfUrl
+                    });
                 }
                 setLoading(false);
                 return;

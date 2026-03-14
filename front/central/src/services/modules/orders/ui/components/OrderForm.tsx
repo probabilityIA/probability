@@ -29,6 +29,31 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     const { permissions } = usePermissions();
     const defaultBusinessId = selectedBusinessId || permissions?.business_id || 0;
     const { showToast } = useToast();
+    const [cachedGuideCarrier, setCachedGuideCarrier] = useState<string | null>(null);
+
+    // Load cached guide data from sessionStorage on mount
+    useEffect(() => {
+        console.log('📋 OrderForm mounted. isEdit:', isEdit, 'order_number:', order?.order_number);
+        if (isEdit && order?.order_number) {
+            const key = `guide_${order.order_number}`;
+            const cached = sessionStorage.getItem(key);
+            console.log('🔍 Looking for cache key:', key, 'Found:', cached);
+            if (cached) {
+                try {
+                    const guideData = JSON.parse(cached);
+                    console.log('✅ Parsed cache data:', guideData);
+                    if (guideData.carrier) {
+                        setCachedGuideCarrier(guideData.carrier);
+                        console.log('🚚 Set carrier from cache:', guideData.carrier);
+                    }
+                } catch (e) {
+                    console.error('❌ Error parsing cache:', e);
+                }
+            } else {
+                console.log('⚠️ No cache found for this order');
+            }
+        }
+    }, [isEdit, order?.order_number]);
 
     const [formData, setFormData] = useState({
         // Integration
@@ -796,7 +821,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 </label>
                                 <Input
                                     type="text"
-                                    value={(order as any)?.shipment?.carrier || (order as any)?.carrier || 'Sin asignar'}
+                                    value={cachedGuideCarrier || (order as any)?.shipment?.carrier || 'Sin asignar'}
                                     disabled
                                     className="bg-gray-100 cursor-not-allowed"
                                 />

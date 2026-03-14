@@ -116,6 +116,9 @@ func (r *Repository) GetOrderByInternalNumber(ctx context.Context, internalNumbe
 		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+			return db.Order("created_at DESC").Limit(1)
+		}).
 		Where("internal_number = ?", internalNumber).
 		First(&order).Error
 
@@ -142,6 +145,9 @@ func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber stri
 		Preload("FulfillmentStatus").  // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Preload("ChannelMetadata").    // Precargar ChannelMetadata para acceso a RawData en scoring
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+			return db.Order("created_at DESC").Limit(1)
+		}).
 		Where("order_number = ?", orderNumber).
 		First(&order).Error
 
@@ -301,7 +307,10 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		Preload("OrderStatus").       // Precargar OrderStatus para obtener información del estado de Probability
 		Preload("PaymentStatus").     // Precargar PaymentStatus
 		Preload("FulfillmentStatus"). // Precargar FulfillmentStatus
-		Preload("OrderItems.Product") // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+			return db.Order("created_at DESC").Limit(1)
+		})
 
 	// Paginación
 	offset = (page - 1) * pageSize
@@ -444,6 +453,9 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 		Preload("PaymentStatus").     // Precargar PaymentStatus
 		Preload("FulfillmentStatus"). // Precargar FulfillmentStatus
 		Preload("OrderItems.Product").
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
+			return db.Order("created_at DESC").Limit(1)
+		}).
 		Where("external_id = ? AND integration_id = ?", externalID, integrationID).
 		First(&order).Error
 

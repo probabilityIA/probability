@@ -37,8 +37,8 @@ type IRepository interface {
 	GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error)
 
 	// Order guide sync (replicated write — module isolation, no shared repo)
-	// Updates guide_link and tracking_number on the orders table after guide generation.
-	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string) error
+	// Updates guide_link, tracking_number, and carrier on the orders table after guide generation.
+	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error
 
 	// Origin Addresses
 	CreateOriginAddress(ctx context.Context, address *OriginAddress) error

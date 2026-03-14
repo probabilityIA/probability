@@ -136,9 +136,18 @@ export default function OrdersPage() {
                     setSelectedOrder(null);
                 }}
                 order={selectedOrder || undefined}
-                onGuideGenerated={() => {
+                onGuideGenerated={(guideData) => {
+                    // Cache guide data in sessionStorage so OrderForm can use it
+                    console.log('🎯 onGuideGenerated callback received:', guideData);
+                    if (selectedOrder?.order_number && guideData?.tracking_number) {
+                        const key = `guide_${selectedOrder.order_number}`;
+                        sessionStorage.setItem(key, JSON.stringify(guideData));
+                        console.log('💾 Saved to sessionStorage:', key, guideData);
+                    } else {
+                        console.warn('⚠️ Missing order_number or tracking_number:', { selectedOrder: selectedOrder?.order_number, guideData });
+                    }
                     // Reload orders list after guide generation to refresh shipment data
-                    setShowGuideModal(false);
+                    // Modal stays open - user can close it manually when ready
                     handleSuccess();
                 }}
             />

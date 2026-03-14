@@ -189,9 +189,9 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 				c.log.Error(ctx).Err(err).Msg("Failed to update shipment with tracking data")
 			}
 
-			// Sync guide_link and tracking_number to the order immediately
+			// Sync guide_link, tracking_number, and carrier to the order immediately
 			if shipment.OrderID != nil && *shipment.OrderID != "" {
-				if err := c.repo.UpdateOrderGuideLink(ctx, *shipment.OrderID, labelURL, trackingNumber); err != nil {
+				if err := c.repo.UpdateOrderGuideLink(ctx, *shipment.OrderID, labelURL, trackingNumber, carrier); err != nil {
 					c.log.Error(ctx).Err(err).
 						Str("order_id", *shipment.OrderID).
 						Msg("Failed to sync guide_link to order")
@@ -199,7 +199,8 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 					c.log.Info(ctx).
 						Str("order_id", *shipment.OrderID).
 						Str("guide_link", labelURL).
-						Msg("✅ guide_link synced to order")
+						Str("carrier", carrier).
+						Msg("✅ guide_link and carrier synced to order")
 				}
 			}
 		}

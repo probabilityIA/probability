@@ -103,16 +103,19 @@ func (r *Repository) GetShipmentBusinessIDByID(ctx context.Context, shipmentID u
 	return result.BusinessID, nil
 }
 
-// UpdateOrderGuideLink updates guide_link and tracking_number on the orders table
+// UpdateOrderGuideLink updates guide_link, tracking_number, and carrier on the orders table
 // after a guide is generated. Replicated write — orders table is owned by the orders
 // module but we update it directly to avoid inter-module repository sharing.
-func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string) error {
+func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error {
 	updates := map[string]interface{}{}
 	if guideLink != "" {
 		updates["guide_link"] = guideLink
 	}
 	if trackingNumber != "" {
 		updates["tracking_number"] = trackingNumber
+	}
+	if carrier != "" {
+		updates["carrier"] = carrier
 	}
 	if len(updates) == 0 {
 		return nil

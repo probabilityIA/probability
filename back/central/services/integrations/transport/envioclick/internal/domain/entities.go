@@ -71,6 +71,7 @@ type GenerateData struct {
 	TrackingNumber   string `json:"tracker"`
 	LabelURL         string `json:"url"`
 	MyGuideReference string `json:"myGuideReference"`
+	Carrier          string `json:"carrier"`
 }
 
 type TrackingResponse struct {
