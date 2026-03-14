@@ -777,7 +777,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     onGuideGenerated({
                         tracking_number: tracker,
                         carrier: carrier,
-                        label_url: generatedPdfUrl
+                        label_url: generatedPdfUrl || undefined
                     });
                 }
                 setLoading(false);
