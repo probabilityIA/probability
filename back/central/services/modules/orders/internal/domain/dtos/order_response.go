@@ -130,7 +130,7 @@ type OrderResponse struct {
 	OrderItems []entities.ProbabilityOrderItem
 
 	// Información del envío (relación con shipments)
-	Shipment *ShipmentData
+	Shipment *ShipmentData `json:"shipment"`
 
 	// Datos estructurados (JSONB) - almacenados como []byte
 	Metadata           []byte
