@@ -22,28 +22,8 @@ func businessTypeIdxKey(businessID uint) string {
 	return fmt.Sprintf("integration:idx:biz:%d:type:%d", businessID, whatsAppTypeID)
 }
 
-func integrationCredsKey(integrationID uint) string {
-	return fmt.Sprintf("integration:creds:%d", integrationID)
-}
-
-func integrationMetaKey(integrationID uint) string {
-	return fmt.Sprintf("integration:meta:%d", integrationID)
-}
-
 func platformCredsKey() string {
 	return fmt.Sprintf("integration:platform_creds:%d", whatsAppTypeID)
-}
-
-// cachedIntegrationMeta replica parcialmente domain.CachedIntegration de core
-type cachedIntegrationMeta struct {
-	ID      uint   `json:"id"`
-	BaseURL string `json:"base_url"`
-}
-
-// cachedCredentials replica parcialmente domain.CachedCredentials de core
-type cachedCredentials struct {
-	IntegrationID uint                   `json:"integration_id"`
-	Credentials   map[string]interface{} `json:"credentials"`
 }
 
 // credentialsCache lee credenciales de WhatsApp desde Redis (claves de integrations/core)
@@ -61,9 +41,10 @@ func newCredentialsCache(redis redisclient.IRedis, logger log.ILogger) ports.ICr
 }
 
 // GetWhatsAppConfig obtiene credenciales de WhatsApp para un business desde Redis.
-// Lee las claves que integrations/core calienta al startup.
+// Todas las integraciones WhatsApp usan las credenciales de plataforma configuradas
+// en el integration_type WhatsApp (phone_number_id, access_token compartidos).
 func (c *credentialsCache) GetWhatsAppConfig(ctx context.Context, businessID uint) (*ports.WhatsAppConfig, error) {
-	// 1. Obtener integration_id desde índice business+type
+	// 1. Obtener integration_id desde índice business+type (para asociar al business)
 	integrationIDStr, err := c.redis.Get(ctx, businessTypeIdxKey(businessID))
 	if err != nil {
 		return nil, fmt.Errorf("no se encontró integración WhatsApp para business %d en cache: %w", businessID, err)
@@ -74,37 +55,13 @@ func (c *credentialsCache) GetWhatsAppConfig(ctx context.Context, businessID uin
 		return nil, fmt.Errorf("integration_id inválido en cache: %s", integrationIDStr)
 	}
 
-	// 2. Obtener credenciales desencriptadas
-	credsJSON, err := c.redis.Get(ctx, integrationCredsKey(uint(integrationID)))
+	// 2. Usar siempre las credenciales de plataforma del integration_type WhatsApp
+	config, err := c.GetWhatsAppDefaultConfig(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("credenciales no encontradas en cache para integration %d: %w", integrationID, err)
+		return nil, fmt.Errorf("credenciales de plataforma no encontradas para WhatsApp (business %d): %w", businessID, err)
 	}
 
-	var creds cachedCredentials
-	if err := json.Unmarshal([]byte(credsJSON), &creds); err != nil {
-		return nil, fmt.Errorf("error deserializando credenciales: %w", err)
-	}
-
-	// 3. Obtener metadata (BaseURL)
-	metaJSON, err := c.redis.Get(ctx, integrationMetaKey(uint(integrationID)))
-	if err != nil {
-		c.log.Warn(ctx).
-			Err(err).
-			Uint("integration_id", uint(integrationID)).
-			Msg("Metadata no encontrada en cache, continuando sin BaseURL")
-	}
-
-	var meta cachedIntegrationMeta
-	if metaJSON != "" {
-		json.Unmarshal([]byte(metaJSON), &meta)
-	}
-
-	// 4. Construir WhatsAppConfig
-	config, err := buildWhatsAppConfig(creds.Credentials, uint(integrationID), meta.BaseURL)
-	if err != nil {
-		return nil, err
-	}
-
+	config.IntegrationID = uint(integrationID)
 	return config, nil
 }
 
@@ -115,7 +72,7 @@ func (c *credentialsCache) GetWhatsAppDefaultConfig(ctx context.Context) (*ports
 		return nil, fmt.Errorf("credenciales de plataforma WhatsApp no encontradas en cache: %w", err)
 	}
 
-	var platCreds map[string]interface{}
+	var platCreds map[string]any
 	if err := json.Unmarshal([]byte(platJSON), &platCreds); err != nil {
 		return nil, fmt.Errorf("error deserializando credenciales de plataforma: %w", err)
 	}
@@ -129,7 +86,7 @@ func (c *credentialsCache) GetWhatsAppDefaultConfig(ctx context.Context) (*ports
 }
 
 // buildWhatsAppConfig construye WhatsAppConfig desde un map de credenciales
-func buildWhatsAppConfig(creds map[string]interface{}, integrationID uint, baseURL string) (*ports.WhatsAppConfig, error) {
+func buildWhatsAppConfig(creds map[string]any, integrationID uint, baseURL string) (*ports.WhatsAppConfig, error) {
 	config := &ports.WhatsAppConfig{
 		IntegrationID: integrationID,
 		WhatsAppURL:   baseURL,

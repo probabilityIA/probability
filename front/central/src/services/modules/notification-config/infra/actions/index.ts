@@ -33,6 +33,7 @@ export {
   getConfigsAction,
   getConfigAction,
   syncConfigsAction,
+  testIntegrationConnectionAction,
 } from "./notification-configs";
 
 // Re-export message audit actions

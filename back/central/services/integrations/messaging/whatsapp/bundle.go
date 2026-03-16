@@ -28,6 +28,8 @@ type IWhatsAppBundle interface {
 	SendMessage(ctx context.Context, orderNumber, phoneNumber string) (string, error)
 	// RegisterRoutes registra las rutas HTTP del módulo
 	RegisterRoutes(router *gin.RouterGroup)
+	// SetPlatformCredsGetter inyecta el getter de credenciales de plataforma (de core) después de la construcción
+	SetPlatformCredsGetter(getter ports.IPlatformCredentialsGetter)
 }
 
 type bundle struct {
@@ -116,8 +118,12 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 
 // RegisterRoutes registra todas las rutas HTTP del módulo
 func (b *bundle) RegisterRoutes(router *gin.RouterGroup) {
-	// Delegar al handler
 	b.handler.RegisterRoutes(router)
+}
+
+// SetPlatformCredsGetter inyecta el getter de credenciales de plataforma (de core)
+func (b *bundle) SetPlatformCredsGetter(getter ports.IPlatformCredentialsGetter) {
+	b.handler.SetPlatformCredsGetter(getter)
 }
 
 // SendMessage expone el método simplificado para enviar mensajes (legacy)

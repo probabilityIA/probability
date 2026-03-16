@@ -70,12 +70,65 @@ func (uc *IntegrationUseCase) WarmCache(ctx context.Context) error {
 		successCount++
 	}
 
+	// 3. Cachear platform credentials de integration_types que las tengan
+	uc.warmPlatformCredentials(ctx, integrations)
+
 	uc.log.Info(ctx).
 		Int("success", successCount).
 		Int("errors", errorCount).
 		Msg("✅ Cache warming completed")
 
 	return nil
+}
+
+// warmPlatformCredentials cachea las credenciales de plataforma de cada integration_type
+// que tenga platform_credentials_encrypted. Esto permite que integraciones con
+// use_platform_token=true puedan resolver sus credenciales desde cache.
+func (uc *IntegrationUseCase) warmPlatformCredentials(ctx context.Context, integrations []*domain.Integration) {
+	// Recolectar integration_type_ids únicos
+	typeIDsSeen := make(map[uint]bool)
+	for _, integration := range integrations {
+		if integration.IntegrationTypeID > 0 && !typeIDsSeen[integration.IntegrationTypeID] {
+			typeIDsSeen[integration.IntegrationTypeID] = true
+		}
+	}
+
+	cachedCount := 0
+	for typeID := range typeIDsSeen {
+		intType, err := uc.repo.GetIntegrationTypeByID(ctx, typeID)
+		if err != nil {
+			continue
+		}
+
+		if len(intType.PlatformCredentialsEncrypted) == 0 {
+			continue
+		}
+
+		creds, err := uc.encryption.DecryptCredentials(ctx, intType.PlatformCredentialsEncrypted)
+		if err != nil {
+			uc.log.Warn(ctx).
+				Err(err).
+				Uint("integration_type_id", typeID).
+				Msg("⚠️ Failed to decrypt platform credentials")
+			continue
+		}
+
+		if err := uc.cache.SetPlatformCredentials(ctx, typeID, creds); err != nil {
+			uc.log.Warn(ctx).
+				Err(err).
+				Uint("integration_type_id", typeID).
+				Msg("⚠️ Failed to cache platform credentials")
+			continue
+		}
+
+		cachedCount++
+	}
+
+	if cachedCount > 0 {
+		uc.log.Info(ctx).
+			Int("cached_count", cachedCount).
+			Msg("✅ Platform credentials cached")
+	}
 }
 
 // cacheIntegrationMetadata cachea metadata de una integración

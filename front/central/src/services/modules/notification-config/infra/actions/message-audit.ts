@@ -7,7 +7,7 @@ import type { MessageAuditFilter } from "../../domain/types";
 
 const getRepository = async () => {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
     return new MessageAuditApiRepository(env.API_BASE_URL, token);
 };
 

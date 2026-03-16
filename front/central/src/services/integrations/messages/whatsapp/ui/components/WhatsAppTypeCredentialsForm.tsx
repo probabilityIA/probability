@@ -110,7 +110,7 @@ export default function WhatsAppTypeCredentialsForm({
                         Webhook URL
                     </label>
                     <div className="flex gap-2">
-                        <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md font-mono text-sm text-gray-700 truncate select-all">
+                        <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md font-mono text-sm text-gray-700 select-all break-all">
                             {webhookUrl}
                         </div>
                         <button

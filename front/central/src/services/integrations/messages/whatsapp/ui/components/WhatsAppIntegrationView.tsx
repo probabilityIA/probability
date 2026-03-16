@@ -30,6 +30,7 @@ export default function WhatsAppIntegrationView({
     onTestConnection,
     onRefresh,
 }: WhatsAppIntegrationViewProps) {
+    const [isActive, setIsActive] = useState(integration.is_active);
     const [toggling, setToggling] = useState(false);
     const [testPhone, setTestPhone] = useState(integration.config?.test_phone_number || '');
     const [saving, setSaving] = useState(false);
@@ -43,8 +44,10 @@ export default function WhatsAppIntegrationView({
         if (!onToggleActive) return;
         setToggling(true);
         try {
-            await onToggleActive(integration.id, integration.is_active);
-            onRefresh?.();
+            const success = await onToggleActive(integration.id, isActive);
+            if (success) {
+                setIsActive((prev) => !prev);
+            }
         } finally {
             setToggling(false);
         }
@@ -131,25 +134,51 @@ export default function WhatsAppIntegrationView({
                 <p className="text-sm text-gray-500 font-mono">{integration.code}</p>
             </div>
 
-            {/* Estado actual */}
+            {/* Estado actual - clickeable para activar/desactivar */}
             <div className="flex items-center justify-center">
-                <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
-                    integration.is_active
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-gray-100 text-gray-600'
-                }`}>
-                    {integration.is_active ? (
-                        <>
+                {onToggleActive ? (
+                    <button
+                        type="button"
+                        onClick={handleToggle}
+                        disabled={toggling}
+                        className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors cursor-pointer ${
+                            isActive
+                                ? 'bg-green-100 text-green-800 hover:bg-red-100 hover:text-red-700'
+                                : 'bg-red-100 text-red-700 hover:bg-green-100 hover:text-green-800'
+                        } ${toggling ? 'opacity-50 cursor-wait' : ''}`}
+                        title={isActive ? 'Clic para desactivar' : 'Clic para activar'}
+                    >
+                        {toggling ? (
+                            <svg className="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                            </svg>
+                        ) : isActive ? (
                             <CheckCircleIcon className="w-5 h-5" />
-                            Activa
-                        </>
-                    ) : (
-                        <>
-                            <span className="w-2 h-2 bg-gray-400 rounded-full" />
-                            Inactiva
-                        </>
-                    )}
-                </span>
+                        ) : (
+                            <span className="w-2.5 h-2.5 bg-red-400 rounded-full" />
+                        )}
+                        {isActive ? 'Activa' : 'Inactiva'}
+                    </button>
+                ) : (
+                    <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium ${
+                        isActive
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-700'
+                    }`}>
+                        {isActive ? (
+                            <>
+                                <CheckCircleIcon className="w-5 h-5" />
+                                Activa
+                            </>
+                        ) : (
+                            <>
+                                <span className="w-2.5 h-2.5 bg-red-400 rounded-full" />
+                                Inactiva
+                            </>
+                        )}
+                    </span>
+                )}
             </div>
 
             {/* Fechas */}
@@ -165,7 +194,7 @@ export default function WhatsAppIntegrationView({
             </div>
 
             {/* Numero de telefono de prueba */}
-            {integration.is_active && (onUpdateConfig || onTestConnection) && (
+            {isActive && (onUpdateConfig || onTestConnection) && (
                 <div className="border border-gray-200 rounded-lg p-4 space-y-3">
                     <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                         <PhoneIcon className="w-4 h-4" />
@@ -217,21 +246,6 @@ export default function WhatsAppIntegrationView({
                 </Alert>
             )}
 
-            {/* Boton de activar/desactivar */}
-            {onToggleActive && (
-                <div className="pt-2 border-t border-gray-200">
-                    <Button
-                        type="button"
-                        variant={integration.is_active ? 'outline' : 'primary'}
-                        onClick={handleToggle}
-                        disabled={toggling}
-                        loading={toggling}
-                        className="w-full"
-                    >
-                        {integration.is_active ? 'Desactivar integracion' : 'Activar integracion'}
-                    </Button>
-                </div>
-            )}
         </div>
     );
 }

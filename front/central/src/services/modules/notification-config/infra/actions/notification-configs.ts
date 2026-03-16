@@ -7,7 +7,7 @@ import { CreateConfigDTO, UpdateConfigDTO, ConfigFilter, SyncConfigsDTO } from "
 
 const getRepository = async () => {
   const cookieStore = await cookies();
-  const token = cookieStore.get("token")?.value || "";
+  const token = cookieStore.get("session_token")?.value || "";
   return new NotificationConfigApiRepository(env.API_BASE_URL, token);
 };
 
@@ -108,6 +108,37 @@ export async function getConfigAction(id: number) {
     const repo = await getRepository();
     const config = await repo.getById(id);
     return { success: true, data: config };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+/**
+ * Probar conexión de una integración (envía mensaje de prueba si tiene test_phone_number)
+ */
+export async function testIntegrationConnectionAction(integrationId: number) {
+  try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("session_token")?.value || "";
+
+    const response = await fetch(
+      `${env.API_BASE_URL}/integrations/${integrationId}/test`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { success: false, error: data.error || data.message || "Error al probar conexión" };
+    }
+
+    return { success: true, message: data.message || "Conexión probada exitosamente" };
   } catch (error: any) {
     return { success: false, error: error.message };
   }
