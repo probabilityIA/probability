@@ -92,20 +92,18 @@ func (u *testConnectionUseCase) TestConnection(ctx context.Context, config map[s
 		return fmt.Errorf("phone_number_id inválido: %w", err)
 	}
 
-	// 5. Construir mensaje
+	// 5. Construir mensaje de prueba usando template prueba_conexion
 	msg := entities.TemplateMessage{
 		MessagingProduct: "whatsapp",
 		To:               testPhone,
 		Type:             "template",
 		Template: entities.TemplateData{
-			Name: "hello_world",
-			Language: entities.TemplateLanguage{
-				Code: "en_US",
-			},
+			Name:     "prueba_conexion",
+			Language: entities.TemplateLanguage{Code: "es"},
 		},
 	}
 
-	u.logger.Info().Msg("Enviando mensaje de prueba...")
+	u.logger.Info().Msg("Enviando mensaje de prueba (prueba_conexion)...")
 
 	// 6. Enviar mensaje
 	resp, err := waClient.SendMessage(ctx, uint(pID), msg, accessToken)

@@ -2,76 +2,407 @@
 
 Integración completa y bidireccional con WhatsApp Business Cloud API para gestión de conversaciones con clientes.
 
+## Cuenta Meta
+
+| Campo | Valor |
+|-------|-------|
+| Porfolio Empresarial | **Probabilityapp** |
+| App | **ProbabilityIA** (ID: `2812884712240202`) |
+| WABA Producción | `1302830408357767` |
+| WABA Test | `946521194991666` |
+| Phone Number ID (Producción) | `1077369948787698` (+57 300 5636160) |
+| Phone Number ID (Test) | `921919641007826` (+1 555 172 9816) |
+| System User | `cam-adm` (ID: `61579689993959`) |
+| PIN 2FA del número | `170122` |
+
+> **IMPORTANTE**: Los tokens del system user se generan desde **Probabilityapp** (Business Settings → System Users → cam-adm → Generar identificador). El system user debe tener asignada la app ProbabilityIA y las cuentas de WhatsApp como activos.
+
 ## Características
 
-- ✅ **11 plantillas conversacionales** con flujo de confirmación de pedidos
-- ✅ **Botones interactivos** (Quick Reply) para respuestas predefinidas
-- ✅ **Webhooks bidireccionales** para recibir respuestas de usuarios en tiempo real
-- ✅ **Persistencia de conversaciones** en PostgreSQL con ventana de 24h
-- ✅ **Máquina de estados** para flujos conversacionales automatizados
-- ✅ **Eventos de negocio** publicados en RabbitMQ para integración con otros servicios
-- ✅ **Arquitectura hexagonal** con separación de capas (domain, app, infra)
+- 12 plantillas conversacionales (11 de negocio + 1 de prueba de conexión)
+- Botones interactivos (Quick Reply) para respuestas predefinidas
+- Webhooks bidireccionales para recibir respuestas de usuarios en tiempo real
+- Persistencia de conversaciones en PostgreSQL con ventana de 24h
+- Máquina de estados para flujos conversacionales automatizados
+- Eventos de negocio publicados en RabbitMQ
+- Credenciales de plataforma compartidas (todas las integraciones WhatsApp usan las mismas credenciales del integration_type)
+- Webhook autenticado via verify_token + HMAC-SHA256 (sin JWT — Meta no envía JWT)
+- Credenciales leídas desde Redis cache via core (no depende de Redis directamente)
 
-## Arquitectura
+## API de Meta — Referencia Rápida
 
-### Estructura de Directorios
+Todas las llamadas usan `https://graph.facebook.com/v22.0/` con header `Authorization: Bearer {ACCESS_TOKEN}`.
 
-```
-whatsApp/
-├── bundle.go                           # Ensamblaje de componentes (DI)
-├── internal/
-│   ├── domain/                         # Núcleo - Reglas de negocio
-│   │   ├── entities/                   # Entidades del dominio (100% puras)
-│   │   │   ├── conversation.go         # Entidades de conversación y estados
-│   │   │   ├── message.go              # Entidades de mensajes
-│   │   │   └── template.go             # Catálogo de 11 plantillas
-│   │   ├── dtos/                       # DTOs de dominio
-│   │   │   └── send_message_request.go # DTOs de entrada
-│   │   ├── ports/                      # Interfaces (contratos)
-│   │   │   └── ports.go                # Repositorios, servicios externos
-│   │   └── errors/                     # Errores del dominio
-│   │       └── errors.go
-│   ├── app/                            # Casos de uso
-│   │   ├── usecasemessaging/
-│   │   │   ├── constructor.go          # Interfaz y constructor
-│   │   │   ├── send-template-message.go    # Envío de plantillas dinámicas
-│   │   │   ├── handle-webhook.go           # Procesamiento de webhooks
-│   │   │   ├── conversation-manager.go     # Máquina de estados conversacional
-│   │   │   ├── send-message.go             # Caso de uso legacy
-│   │   │   └── utils.go                    # Validación de teléfonos
-│   │   └── usecasetestconnection/
-│   │       └── test_connection.go      # Test de integración
-│   └── infra/                          # Infraestructura
-│       ├── primary/                    # Adaptadores de entrada
-│       │   ├── handlers/
-│       │   │   ├── constructor.go      # Interfaz IHandler
-│       │   │   ├── routes.go           # Registro de rutas HTTP
-│       │   │   ├── template_handler.go # Endpoint POST /send-template
-│       │   │   ├── webhook_handler.go  # Endpoints GET/POST /webhook
-│       │   │   ├── request/            # DTOs de entrada HTTP (con tags json)
-│       │   │   │   ├── send_template.go
-│       │   │   │   └── webhook_payload.go  # ✨ Webhooks de Meta (con tags)
-│       │   │   └── response/           # DTOs de salida HTTP (con tags json)
-│       │   │       └── send_template.go
-│       │   ├── consumer/               # Consumidores Redis
-│       │   │   └── consumerevent/
-│       │   └── queue/                  # Consumidores RabbitMQ
-│       │       └── consumerorder/
-│       └── secondary/                  # Adaptadores de salida
-│           ├── client/                 # Cliente HTTP WhatsApp API
-│           ├── repository/             # Repositorios PostgreSQL
-│           │   ├── constructor.go
-│           │   ├── conversation_repository.go
-│           │   ├── message_log_repository.go
-│           │   └── mappers/            # Mappers domain ↔ models
-│           │       ├── to_domain.go
-│           │       └── to_model.go
-│           ├── adapters/               # Adaptadores a otros módulos
-│           └── queue/                  # Publisher RabbitMQ
-│               └── webhook_publisher.go
+### Listar números de teléfono
+
+```bash
+curl -s "https://graph.facebook.com/v22.0/{WABA_ID}/phone_numbers" \
+  -H "Authorization: Bearer {TOKEN}" | jq .
 ```
 
-### Flujo de Conversación
+### Registrar número de teléfono (cambiar estado de Pendiente a Connected)
+
+```bash
+curl -X POST "https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/register" \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messaging_product": "whatsapp",
+    "pin": "123456"
+  }'
+```
+
+El `pin` es un PIN de 6 dígitos que eliges — es para la verificación en dos pasos. Guardarlo.
+
+### Verificar estado de un número
+
+```bash
+curl -s "https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}?fields=verified_name,display_phone_number,quality_rating,platform_type,status,name_status" \
+  -H "Authorization: Bearer {TOKEN}" | jq .
+```
+
+### Debug de token (ver permisos y expiración)
+
+```bash
+curl -s "https://graph.facebook.com/v22.0/debug_token?input_token={TOKEN}&access_token={TOKEN}" | jq .
+```
+
+### Listar templates
+
+```bash
+curl -s "https://graph.facebook.com/v22.0/{WABA_ID}/message_templates?fields=name,status,language,category&limit=50" \
+  -H "Authorization: Bearer {TOKEN}" | jq .
+```
+
+### Crear template via API
+
+Mucho más rápido que hacerlo desde la interfaz gráfica de Meta.
+
+#### Template simple (sin variables ni botones)
+
+```bash
+curl -X POST "https://graph.facebook.com/v22.0/{WABA_ID}/message_templates" \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "mi_template",
+    "language": "es",
+    "category": "UTILITY",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "Texto del mensaje sin variables."
+      }
+    ]
+  }'
+```
+
+#### Template con variables
+
+Las variables se definen como `{{1}}`, `{{2}}`, etc. Se **requiere** un `example` con datos de ejemplo.
+
+```bash
+curl -X POST "https://graph.facebook.com/v22.0/{WABA_ID}/message_templates" \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "mi_template_con_vars",
+    "language": "es",
+    "category": "UTILITY",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "Hola {{1}}, tu pedido {{2}} está listo.",
+        "example": {
+          "body_text": [["Juan", "ORD-001"]]
+        }
+      }
+    ]
+  }'
+```
+
+#### Template con botones Quick Reply
+
+```bash
+curl -X POST "https://graph.facebook.com/v22.0/{WABA_ID}/message_templates" \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "mi_template_con_botones",
+    "language": "es",
+    "category": "UTILITY",
+    "components": [
+      {
+        "type": "BODY",
+        "text": "Hola {{1}}, ¿confirmas tu pedido {{2}}?",
+        "example": {
+          "body_text": [["Juan", "ORD-001"]]
+        }
+      },
+      {
+        "type": "BUTTONS",
+        "buttons": [
+          {"type": "QUICK_REPLY", "text": "Sí, confirmar"},
+          {"type": "QUICK_REPLY", "text": "No, cancelar"}
+        ]
+      }
+    ]
+  }'
+```
+
+#### Reglas importantes de templates
+
+- **Categorías**: `UTILITY` (transaccional), `MARKETING`, `AUTHENTICATION`
+- **UTILITY** se aprueba rápido (minutos a horas)
+- **Variables**: si el ratio variables/texto es muy alto, Meta rechaza. Agregar más texto si falla
+- **Botones Quick Reply**: máximo 3 botones, texto máximo 20 caracteres cada uno
+- **`hello_world`**: solo funciona con números de test de Meta, NO con números empresariales
+- Los templates nuevos quedan en `PENDING` hasta que Meta los aprueba
+
+### Eliminar template
+
+```bash
+curl -X DELETE "https://graph.facebook.com/v22.0/{WABA_ID}/message_templates?name=nombre_template" \
+  -H "Authorization: Bearer {TOKEN}"
+```
+
+### Enviar mensaje con template
+
+```bash
+curl -X POST "https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}/messages" \
+  -H "Authorization: Bearer {TOKEN}" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messaging_product": "whatsapp",
+    "to": "573001234567",
+    "type": "template",
+    "template": {
+      "name": "confirmacion_pedido_contraentrega",
+      "language": {"code": "es"},
+      "components": [
+        {
+          "type": "body",
+          "parameters": [
+            {"type": "text", "text": "Juan"},
+            {"type": "text", "text": "Mi Tienda"},
+            {"type": "text", "text": "ORD-001"},
+            {"type": "text", "text": "Calle 45 #23-67"},
+            {"type": "text", "text": "1x Camiseta"}
+          ]
+        }
+      ]
+    }
+  }'
+```
+
+## Templates del Sistema
+
+Todos los templates están definidos en `internal/domain/entities/template.go` y creados en el WABA `1302830408357767`.
+
+### Formato API para crear cada template
+
+#### prueba_conexion (test de conexión)
+
+```json
+{
+  "name": "prueba_conexion",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "¡Hola! Este es un mensaje de prueba de Probability. Tu conexión de WhatsApp está funcionando correctamente. ✅"}
+  ]
+}
+```
+
+#### confirmacion_pedido_contraentrega
+
+```json
+{
+  "name": "confirmacion_pedido_contraentrega",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {
+      "type": "BODY",
+      "text": "Hola {{1}}, tu pedido en {{2}} ha sido recibido.\n\nOrden: {{3}}\nDirección: {{4}}\nProductos: {{5}}\n\n¿Confirmas tu pedido?",
+      "example": {"body_text": [["Juan", "Mi Tienda", "ORD-001", "Calle 45 #23-67 Bogotá", "1x Camiseta Negra"]]}
+    },
+    {
+      "type": "BUTTONS",
+      "buttons": [
+        {"type": "QUICK_REPLY", "text": "Confirmar pedido"},
+        {"type": "QUICK_REPLY", "text": "No confirmar"}
+      ]
+    }
+  ]
+}
+```
+
+#### pedido_confirmado
+
+```json
+{
+  "name": "pedido_confirmado",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Tu pedido {{1}} ha sido confirmado exitosamente. Pronto estará en camino. ¡Gracias por tu compra!", "example": {"body_text": [["ORD-001"]]}}
+  ]
+}
+```
+
+#### pedido_cancelado
+
+```json
+{
+  "name": "pedido_cancelado",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Tu pedido {{1}} ha sido cancelado. Si tienes alguna duda, contáctanos.", "example": {"body_text": [["ORD-001"]]}}
+  ]
+}
+```
+
+#### menu_no_confirmacion
+
+```json
+{
+  "name": "menu_no_confirmacion",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Entendemos que no deseas confirmar el pedido {{1}}. ¿Qué te gustaría hacer?", "example": {"body_text": [["ORD-001"]]}},
+    {"type": "BUTTONS", "buttons": [{"type": "QUICK_REPLY", "text": "Presentar novedad"}, {"type": "QUICK_REPLY", "text": "Cancelar pedido"}, {"type": "QUICK_REPLY", "text": "Asesor"}]}
+  ]
+}
+```
+
+#### confirmar_cancelacion_pedido
+
+```json
+{
+  "name": "confirmar_cancelacion_pedido",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "¿Estás seguro de que deseas cancelar el pedido {{1}}? Esta acción no se puede deshacer.", "example": {"body_text": [["ORD-001"]]}},
+    {"type": "BUTTONS", "buttons": [{"type": "QUICK_REPLY", "text": "Sí, cancelar"}, {"type": "QUICK_REPLY", "text": "No, volver"}]}
+  ]
+}
+```
+
+#### tipo_novedad_pedido
+
+```json
+{
+  "name": "tipo_novedad_pedido",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Selecciona el tipo de novedad que deseas reportar para tu pedido:"},
+    {"type": "BUTTONS", "buttons": [{"type": "QUICK_REPLY", "text": "Cambio de dirección"}, {"type": "QUICK_REPLY", "text": "Cambio de productos"}, {"type": "QUICK_REPLY", "text": "Cambio medio de pago"}]}
+  ]
+}
+```
+
+#### motivo_cancelacion_pedido
+
+```json
+{
+  "name": "motivo_cancelacion_pedido",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Por favor, cuéntanos el motivo por el cual deseas cancelar tu pedido. Escribe tu respuesta a continuación:"}
+  ]
+}
+```
+
+#### handoff_asesor
+
+```json
+{
+  "name": "handoff_asesor",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Te estamos conectando con un asesor. Por favor espera un momento, pronto te atenderemos."}
+  ]
+}
+```
+
+#### novedad_cambio_direccion
+
+```json
+{
+  "name": "novedad_cambio_direccion",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Hemos recibido tu solicitud de cambio de dirección. Nuestro equipo la procesará a la brevedad."}
+  ]
+}
+```
+
+#### novedad_cambio_productos
+
+```json
+{
+  "name": "novedad_cambio_productos",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Hemos recibido tu solicitud de cambio de productos. Nuestro equipo la revisará y te contactaremos pronto."}
+  ]
+}
+```
+
+#### novedad_cambio_medio_pago
+
+```json
+{
+  "name": "novedad_cambio_medio_pago",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "Hemos recibido tu solicitud de cambio de medio de pago. Nuestro equipo la procesará a la brevedad."}
+  ]
+}
+```
+
+#### alerta_servidor
+
+```json
+{
+  "name": "alerta_servidor",
+  "language": "es",
+  "category": "UTILITY",
+  "components": [
+    {"type": "BODY", "text": "⚠️ Alerta del servidor - Tipo: {{1}}\n\nDetalle: {{2}}\n\nPor favor revisa el estado del sistema.", "example": {"body_text": [["RAM", "87.3% - supera umbral de 85%"]]}}
+  ]
+}
+```
+
+## Tabla resumen de templates
+
+| Template | Variables | Botones | Uso |
+|----------|-----------|---------|-----|
+| `prueba_conexion` | — | — | Test de conexión |
+| `confirmacion_pedido_contraentrega` | nombre, tienda, orden, dirección, productos | Confirmar / No confirmar | Inicio del flujo |
+| `pedido_confirmado` | #pedido | — | Confirmación exitosa |
+| `pedido_cancelado` | #pedido | — | Cancelación completada |
+| `menu_no_confirmacion` | #pedido | Novedad / Cancelar / Asesor | Menú al no confirmar |
+| `confirmar_cancelacion_pedido` | #pedido | Sí cancelar / No volver | Confirmar cancelación |
+| `tipo_novedad_pedido` | — | Dirección / Productos / Pago | Tipo de novedad |
+| `motivo_cancelacion_pedido` | — | — | Pide motivo (texto libre) |
+| `handoff_asesor` | — | — | Derivar a humano |
+| `novedad_cambio_direccion` | — | — | ACK cambio dirección |
+| `novedad_cambio_productos` | — | — | ACK cambio productos |
+| `novedad_cambio_medio_pago` | — | — | ACK cambio medio pago |
+| `alerta_servidor` | tipo, detalle | — | Alerta de monitoreo |
+
+## Flujo de Conversación
 
 ```
 [INICIO] → confirmacion_pedido_contraentrega
@@ -88,321 +419,137 @@ whatsApp/
                                  └─ "Asesor" → handoff_asesor [FIN - HUMANO]
 ```
 
-## Setup Local con ngrok
+## Arquitectura
 
-### Prerrequisitos
+### Credenciales de plataforma (compartidas)
 
-1. **Cuenta de WhatsApp Business en Meta**
-   - Registrarse en https://business.facebook.com
-   - Crear app de WhatsApp Business
-   - Obtener credenciales: Phone Number ID, Access Token
+Todas las integraciones WhatsApp (una por business) usan las mismas credenciales configuradas en el **integration_type** WhatsApp (ID: 2):
+- `phone_number_id` — ID del número en Meta
+- `access_token` — Token permanente del system user
+- `verify_token` — Para verificación de webhook
+- `webhook_secret` — Para validación HMAC-SHA256
 
-2. **ngrok instalado** (para exponer localhost)
-   ```bash
-   # Opción 1: ngrok (más común)
-   curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-   echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-   sudo apt update && sudo apt install ngrok
+Estas credenciales se cachean en Redis (`integration:platform_creds:2`) durante el warmup del servidor y se leen via `core.GetCachedPlatformCredentials()`.
 
-   # Registrarse en ngrok.com y obtener authtoken
-   ngrok config add-authtoken <TU_TOKEN>
+### Webhook (sin JWT)
 
-   # Opción 2: cloudflared (URL permanente, recomendado)
-   wget https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64.deb
-   sudo dpkg -i cloudflared-linux-amd64.deb
-   ```
+Las rutas del webhook (`GET/POST /api/v1/integrations/whatsapp/webhook`) **no usan JWT** porque Meta envía su propia autenticación:
+- **GET** (verificación): Meta envía `hub.verify_token` → se compara con `verify_token` de platform_creds
+- **POST** (eventos): Meta firma el payload con HMAC-SHA256 → se valida con `webhook_secret` de platform_creds
 
-### Configuración
+### Estructura de Directorios
 
-#### 1. Variables de Entorno
-
-Agregar al archivo `/back/central/.env`:
-
-```env
-# WhatsApp Cloud API - Credenciales
-WHATSAPP_PHONE_NUMBER_ID=123456789012345  # ID del número de teléfono de WhatsApp Business
-WHATSAPP_ACCESS_TOKEN=EAAxxxxxxxxxxxxxxx  # Access token de la app de Meta
-
-# WhatsApp Webhooks - Desarrollo Local
-WHATSAPP_VERIFY_TOKEN=mi_token_seguro_para_verificacion_dev_2026
-WHATSAPP_WEBHOOK_SECRET=mi_secreto_hmac_para_firmas_sha256
-
-# Webhook URL pública (se actualiza según el túnel)
-# DESARROLLO LOCAL: Usar URL de ngrok/cloudflared
-WHATSAPP_WEBHOOK_URL=https://1234-tu-ip.ngrok-free.app/api/integrations/whatsapp/webhook
-
-# PRODUCCIÓN: Usar dominio real
-# WHATSAPP_WEBHOOK_URL=https://api.probability.com/api/integrations/whatsapp/webhook
+```
+whatsApp/
+├── bundle.go                           # Ensamblaje de componentes (DI)
+├── internal/
+│   ├── domain/
+│   │   ├── entities/
+│   │   │   ├── conversation.go         # Entidades de conversación y estados
+│   │   │   ├── message.go             # Entidades de mensajes
+│   │   │   └── template.go            # Catálogo de 12 plantillas
+│   │   ├── dtos/
+│   │   ├── ports/
+│   │   │   └── ports.go               # Interfaces (incluye IPlatformCredentialsGetter)
+│   │   └── errors/
+│   ├── app/
+│   │   ├── usecasemessaging/
+│   │   │   ├── send-template-message.go    # Envío de plantillas
+│   │   │   ├── handle-webhook.go           # Procesamiento de webhooks
+│   │   │   └── conversation-manager.go     # Máquina de estados
+│   │   └── usecasetestconnection/
+│   │       └── test-connection.go      # Test con template prueba_conexion
+│   └── infra/
+│       ├── primary/
+│       │   ├── handlers/
+│       │   │   ├── routes.go           # Webhook SIN JWT, send-template CON JWT
+│       │   │   ├── webhook_handler.go  # Lee verify_token/secret de Redis via core
+│       │   │   └── request/
+│       │   │       └── webhook_payload.go  # Structs alineados con formato real de Meta
+│       │   └── queue/
+│       │       ├── consumerorder/      # Consume orders.confirmation.requested
+│       │       └── consumeralert/      # Consume alertas de monitoreo
+│       └── secondary/
+│           ├── client/                 # Cliente HTTP WhatsApp API
+│           ├── cache/
+│           │   └── credentials_cache.go  # Siempre usa platform_creds (no propias)
+│           └── queue/                  # Publishers RabbitMQ
 ```
 
-#### 2. Migraciones de Base de Datos
+## Webhook Payload de Meta
 
-Ejecutar las migraciones SQL ubicadas en `/back/migration/shared/sql/`:
+El struct `request/webhook_payload.go` está alineado con el formato real que Meta envía:
 
-```bash
-# Desde el directorio del proyecto
-psql -h localhost -p 5433 -U postgres -d probability < back/migration/shared/sql/whatsapp_conversations.sql
-psql -h localhost -p 5433 -U postgres -d probability < back/migration/shared/sql/whatsapp_message_logs.sql
-```
-
-O ejecutar el script de migración si existe en el proyecto.
-
-#### 3. Iniciar Backend
-
-```bash
-cd back/central
-go run cmd/main.go
-```
-
-El servidor debería iniciar en `http://localhost:8080`
-
-#### 4. Iniciar Túnel ngrok
-
-En una terminal separada:
-
-```bash
-# Opción A: ngrok (URL cambia cada reinicio)
-ngrok http 8080
-# Copiar la URL generada (ej: https://1234-5678-90ab.ngrok-free.app)
-
-# Opción B: cloudflared (URL permanente)
-cloudflared tunnel --url http://localhost:8080
-# Copiar la URL generada (ej: https://random-words.trycloudflare.com)
-```
-
-⚠️ **IMPORTANTE**: Con ngrok gratuito, la URL cambia cada vez que reinicias. Debes actualizar:
-1. La variable `WHATSAPP_WEBHOOK_URL` en `.env`
-2. La URL del webhook en Meta Business Manager
-
-#### 5. Configurar Webhook en Meta Business Manager
-
-1. Ir a https://business.facebook.com/settings/whatsapp-business-accounts
-2. Seleccionar tu cuenta WhatsApp Business
-3. Ir a **Configuration** → **Webhooks**
-4. Click **Edit** o **Configure**
-5. Ingresar:
-   - **Callback URL**: `https://TU-URL-NGROK.ngrok-free.app/api/integrations/whatsapp/webhook`
-   - **Verify Token**: `mi_token_seguro_para_verificacion_dev_2026` (debe coincidir con tu `.env`)
-6. Marcar campos de suscripción:
-   - ☑️ `messages` (OBLIGATORIO)
-   - ☑️ `message_template_status_update` (OPCIONAL)
-7. Click **Verify and Save**
-8. Meta enviará GET request → Tu endpoint debe retornar el challenge → ✅ Verified
-
-### Verificación
-
-#### 1. Verificar Webhook
-
-```bash
-curl "http://localhost:8080/api/integrations/whatsapp/webhook?hub.mode=subscribe&hub.verify_token=mi_token_seguro_para_verificacion_dev_2026&hub.challenge=test123"
-# Debe retornar: test123
-```
-
-#### 2. Enviar Plantilla de Prueba
-
-```bash
-curl -X POST http://localhost:8080/api/integrations/whatsapp/send-template \
-  -H "Content-Type: application/json" \
-  -d '{
-    "template_name": "confirmacion_pedido_contraentrega",
-    "phone_number": "+573001234567",
-    "order_number": "ORD-12345",
-    "business_id": 1,
-    "variables": {
-      "1": "Juan Pérez",
-      "2": "TiendaDemo",
-      "3": "ORD-12345",
-      "4": "Calle 123 #45-67",
-      "5": "2x Camiseta Azul, 1x Pantalón Negro"
-    }
-  }'
-```
-
-**Respuesta esperada:**
 ```json
 {
-  "message_id": "wamid.HBgNNTczMDA...",
-  "status": "sent"
+  "object": "whatsapp_business_account",
+  "entry": [{
+    "id": "WABA_ID",
+    "changes": [{
+      "value": {
+        "messaging_product": "whatsapp",
+        "metadata": {
+          "display_phone_number": "15551729816",
+          "phone_number_id": "921919641007826"
+        },
+        "statuses": [{
+          "id": "wamid.xxx",
+          "status": "sent",
+          "timestamp": "1773621987",
+          "recipient_id": "573023406789",
+          "recipient_logical_id": "160181375791296",
+          "conversation": {
+            "id": "abc123",
+            "expiration_timestamp": "1773621988",
+            "origin": {"type": "utility"}
+          },
+          "pricing": {
+            "billable": true,
+            "pricing_model": "PMP",
+            "category": "utility",
+            "type": "regular"
+          }
+        }]
+      },
+      "field": "messages"
+    }]
+  }]
 }
 ```
 
-#### 3. Verificar en Base de Datos
-
-```sql
--- Ver conversaciones activas
-SELECT * FROM whatsapp_conversations WHERE expires_at > NOW();
-
--- Ver logs de mensajes
-SELECT * FROM whatsapp_message_logs ORDER BY created_at DESC LIMIT 10;
-```
-
-#### 4. Prueba End-to-End
-
-1. Enviar plantilla inicial → Cliente recibe WhatsApp con 2 botones
-2. Cliente presiona "No confirmar" → Recibe menú con 3 opciones
-3. Cliente presiona "Cancelar pedido" → Recibe confirmación
-4. Cliente presiona "Sí, cancelar" → Recibe solicitud de motivo
-5. Cliente envía texto libre "Ya no lo necesito" → Recibe confirmación de cancelación
-6. Verificar:
-   - Conversación en BD: `current_state = 'COMPLETED'`
-   - Logs de mensajes: 5 registros (3 outbound, 2 inbound)
-   - Evento publicado en RabbitMQ: `orders.whatsapp.cancelled`
-
-## Endpoints HTTP
-
-### POST `/api/integrations/whatsapp/send-template`
-
-Envía una plantilla de WhatsApp con variables dinámicas.
-
-**Request:**
-```json
-{
-  "template_name": "confirmacion_pedido_contraentrega",
-  "phone_number": "+573001234567",
-  "order_number": "ORD-12345",
-  "business_id": 1,
-  "variables": {
-    "1": "Juan Pérez",
-    "2": "TiendaDemo",
-    "3": "ORD-12345",
-    "4": "Calle 123 #45-67",
-    "5": "2x Camiseta Azul, 1x Pantalón Negro"
-  }
-}
-```
-
-**Response:**
-```json
-{
-  "message_id": "wamid.HBgNNTczMDA...",
-  "status": "sent"
-}
-```
-
-### GET `/api/integrations/whatsapp/webhook`
-
-Verificación del webhook (usado por Meta).
-
-**Query Params:**
-- `hub.mode=subscribe`
-- `hub.verify_token=<token>`
-- `hub.challenge=<challenge>`
-
-**Response:** Retorna el challenge si el token es válido.
-
-### POST `/api/integrations/whatsapp/webhook`
-
-Recibe eventos de WhatsApp (mensajes, estados).
-
-**Headers:**
-- `X-Hub-Signature-256: sha256=<hmac_signature>`
-
-**Body:** Webhook payload de Meta (ver estructura en `internal/infra/primary/handlers/request/webhook_payload.go`)
-
-**Response:**
-```json
-{
-  "status": "received"
-}
-```
+**Nota**: `origin` es un **objeto** `{"type": "..."}`, no un string. El mapper extrae `origin.type` al DTO de dominio.
 
 ## Eventos de RabbitMQ
 
-### Colas
-
-| Cola | Evento | Cuándo se publica |
-|------|--------|-------------------|
+| Cola | Evento | Cuándo |
+|------|--------|--------|
+| `orders.confirmation.requested` | Enviar confirmación | Orden creada con config WhatsApp |
 | `orders.whatsapp.confirmed` | Pedido confirmado | Usuario presiona "Confirmar pedido" |
 | `orders.whatsapp.cancelled` | Pedido cancelado | Usuario completa flujo de cancelación |
 | `orders.whatsapp.novelty` | Novedad solicitada | Usuario selecciona tipo de novedad |
 | `customer.whatsapp.handoff` | Handoff a humano | Usuario presiona "Asesor" |
 
-### Formato de Evento
-
-```json
-{
-  "event_type": "order.confirmed",
-  "order_number": "ORD-12345",
-  "phone_number": "+573001234567",
-  "business_id": 1,
-  "source": "whatsapp",
-  "timestamp": 1706284800
-}
-```
-
-## Plantillas Disponibles
-
-| Nombre | Variables | Botones |
-|--------|-----------|---------|
-| `confirmacion_pedido_contraentrega` | {{1}}=Nombre, {{2}}=Tienda, {{3}}=#Orden, {{4}}=Dirección, {{5}}=Productos | "Confirmar pedido", "No confirmar" |
-| `pedido_confirmado` | {{1}}=#Pedido | Ninguno |
-| `menu_no_confirmacion` | {{1}}=#Pedido | "Presentar novedad", "Cancelar pedido", "Asesor" |
-| `tipo_novedad_pedido` | Ninguna | "Cambio de dirección", "Cambio de productos", "Cambio medio de pago" |
-| `confirmar_cancelacion_pedido` | {{1}}=#Pedido | "Sí, cancelar", "No, volver" |
-| `motivo_cancelacion_pedido` | Ninguna | Ninguno (espera texto libre) |
-| `pedido_cancelado` | {{1}}=#Pedido | Ninguno |
-| `novedad_cambio_direccion` | Ninguna | Ninguno |
-| `novedad_cambio_productos` | Ninguna | Ninguno |
-| `novedad_cambio_medio_pago` | Ninguna | Ninguno |
-| `handoff_asesor` | Ninguna | Ninguno |
-
 ## Troubleshooting
 
-### Webhook no se verifica en Meta
+### Token sin permisos para un WABA
 
-- Verificar que ngrok esté corriendo y la URL sea correcta
-- Verificar que `WHATSAPP_VERIFY_TOKEN` en `.env` coincida con el configurado en Meta
-- Verificar logs del backend para ver el GET request
+El token del system user solo tiene acceso a los WABAs asignados como activos. Si da error de permisos:
+1. Business Settings → System Users → cam-adm → Activos asignados
+2. Verificar que el WABA esté asignado con control total
+3. Regenerar token
 
-### Mensajes no llegan al usuario
+### Template rechazado por "too many variables"
 
-- Verificar que `WHATSAPP_PHONE_NUMBER_ID` y `WHATSAPP_ACCESS_TOKEN` sean correctos
-- Verificar que el número de teléfono esté en formato internacional (+573001234567)
-- Verificar que el número esté registrado como destinatario de prueba en Meta (modo development)
+Meta rechaza templates donde el ratio variables/texto es alto. Solución: agregar más texto al body.
 
-### Webhooks no se reciben
+### `hello_world` no funciona con número empresarial
 
-- Verificar que ngrok esté corriendo
-- Verificar que la URL en Meta coincida con la URL de ngrok
-- Verificar logs de ngrok para ver si llegan requests
-- Verificar que `WHATSAPP_WEBHOOK_SECRET` esté configurado correctamente
+Es normal — `hello_world` solo funciona con números de test de Meta. Usar `prueba_conexion` para testing.
 
-### Conversación no avanza
+### Webhook da 401
 
-- Verificar que el texto del botón presionado coincida exactamente con el esperado
-- Verificar en BD que `current_state` sea el esperado
-- Verificar logs del backend para ver transiciones de estado
+Las rutas del webhook NO deben pasar por JWT. Verificar que `routes.go` registre GET/POST `/webhook` sin `middleware.JWT()`.
 
-### Errores de compilación
+### Credenciales no encontradas en cache
 
-Si hay errores al compilar, verificar:
-```bash
-cd back/central
-go mod tidy
-go build ./...
-```
-
-## Limitaciones Conocidas
-
-- **ngrok gratuito**: URL cambia en cada reinicio
-- **Ventana de 24h**: Las conversaciones expiran después de 24h sin actividad
-- **Plantillas aprobadas**: Las plantillas deben estar aprobadas en Meta antes de enviarlas
-- **Rate limits**: WhatsApp Cloud API tiene límites de mensajes por segundo/día
-
-## Próximos Pasos
-
-- [ ] Soporte para mensajes multimedia (imágenes, videos, documentos)
-- [ ] Plantillas con headers dinámicos (imágenes, videos)
-- [ ] List messages para menús más complejos
-- [ ] Flow buttons para formularios in-app
-- [ ] Analytics de conversiones por plantilla
-- [ ] A/B testing de variantes de plantillas
-- [ ] Integración con CRM para handoff automático
-
-## Referencias
-
-- [WhatsApp Cloud API Documentation](https://developers.facebook.com/docs/whatsapp/cloud-api)
-- [Message Templates](https://developers.facebook.com/docs/whatsapp/cloud-api/guides/send-message-templates)
-- [Webhooks Guide](https://developers.facebook.com/docs/whatsapp/cloud-api/webhooks)
-- [ngrok Documentation](https://ngrok.com/docs)
-- [cloudflared Documentation](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)
+El warmup del servidor debe cachear `platform_creds` en Redis. Verificar que `warm_cache.go` ejecute `warmPlatformCredentials()`.
