@@ -84,3 +84,9 @@ type WhatsAppConfig struct {
 	IntegrationID uint
 	WhatsAppURL   string
 }
+
+// IPlatformCredentialsGetter obtiene credenciales de plataforma cacheadas por tipo de integración.
+// Implementado por integrations/core — evita que WhatsApp dependa de Redis directamente.
+type IPlatformCredentialsGetter interface {
+	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
+}

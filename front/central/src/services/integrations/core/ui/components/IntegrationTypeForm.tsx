@@ -50,6 +50,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         phone_number_id: '',
         access_token: '',
         verify_token: '',
+        webhook_secret: '',
         test_phone_number: '',
     });
 
@@ -99,6 +100,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                     phone_number_id: res.data.phone_number_id || '',
                                     access_token: res.data.access_token || '',
                                     verify_token: res.data.verify_token || '',
+                                    webhook_secret: res.data.webhook_secret || '',
                                     test_phone_number: res.data.test_phone_number || '',
                                 });
                             } else {
@@ -147,6 +149,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (whatsappCredentials.phone_number_id.trim()) wa.phone_number_id = whatsappCredentials.phone_number_id.trim();
                 if (whatsappCredentials.access_token.trim()) wa.access_token = whatsappCredentials.access_token.trim();
                 if (whatsappCredentials.verify_token.trim()) wa.verify_token = whatsappCredentials.verify_token.trim();
+                if (whatsappCredentials.webhook_secret.trim()) wa.webhook_secret = whatsappCredentials.webhook_secret.trim();
                 if (whatsappCredentials.test_phone_number.trim()) wa.test_phone_number = whatsappCredentials.test_phone_number.trim();
                 if (Object.keys(wa).length > 0) platformCredentials = wa;
             } else {

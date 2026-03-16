@@ -23,7 +23,7 @@ export async function getNotificationEventTypesAction(
     console.log("📋 [getNotificationEventTypesAction] notificationTypeId:", notificationTypeId);
 
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     console.log("🔑 [getNotificationEventTypesAction] Token presente:", token ? "Sí" : "No");
 
@@ -64,7 +64,7 @@ export async function getNotificationEventTypesAction(
 export async function getNotificationEventTypeByIdAction(id: number) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-event-types/${id}`,
@@ -97,7 +97,7 @@ export async function createNotificationEventTypeAction(
 ) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-event-types`,
@@ -135,7 +135,7 @@ export async function updateNotificationEventTypeAction(
 ) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-event-types/${id}`,
@@ -170,7 +170,7 @@ export async function updateNotificationEventTypeAction(
 export async function deleteNotificationEventTypeAction(id: number) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-event-types/${id}`,
@@ -203,7 +203,7 @@ export async function deleteNotificationEventTypeAction(id: number) {
 export async function toggleNotificationEventTypeActiveAction(id: number) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-event-types/${id}/toggle-active`,

@@ -49,10 +49,10 @@ func (h *handler) VerifyWebhook(c *gin.Context) {
 		return
 	}
 
-	// Obtener token de verificación de la configuración
-	expectedToken := h.config.Get("WHATSAPP_VERIFY_TOKEN")
+	// Obtener token de verificación desde Redis cache (platform_creds) o fallback a env
+	expectedToken := h.getVerifyToken(ctx)
 	if expectedToken == "" {
-		h.log.Error(ctx).Msg("[Webhook Handler] - WHATSAPP_VERIFY_TOKEN no configurado")
+		h.log.Error(ctx).Msg("[Webhook Handler] - verify_token no encontrado en cache ni en env")
 		c.String(http.StatusForbidden, "Token de verificación no configurado")
 		return
 	}
@@ -194,12 +194,39 @@ func (h *handler) processWebhookAsync(webhook request.WebhookPayload) {
 	h.log.Info(ctx).Msg("[Webhook Handler] - procesamiento asíncrono completado")
 }
 
+const whatsAppTypeID = uint(2)
+
+// getPlatformCredField obtiene un campo de las credenciales de plataforma via core cache (sin fallback a env)
+func (h *handler) getPlatformCredField(ctx context.Context, field string) string {
+	if h.platformCredsGetter == nil {
+		return ""
+	}
+	creds, err := h.platformCredsGetter.GetCachedPlatformCredentials(ctx, whatsAppTypeID)
+	if err != nil {
+		return ""
+	}
+	if val, ok := creds[field].(string); ok {
+		return val
+	}
+	return ""
+}
+
+// getVerifyToken obtiene el verify_token desde platform_creds cache
+func (h *handler) getVerifyToken(ctx context.Context) string {
+	return h.getPlatformCredField(ctx, "verify_token")
+}
+
+// getWebhookSecret obtiene el webhook_secret desde platform_creds cache
+func (h *handler) getWebhookSecret(ctx context.Context) string {
+	return h.getPlatformCredField(ctx, "webhook_secret")
+}
+
 // verifySignature verifica la firma HMAC-SHA256 del webhook
 func (h *handler) verifySignature(payload []byte, signatureHeader string) bool {
-	// Obtener secret de configuración
-	secret := h.config.Get("WHATSAPP_WEBHOOK_SECRET")
+	// Obtener secret desde Redis cache (platform_creds) o fallback a env
+	secret := h.getWebhookSecret(context.Background())
 	if secret == "" {
-		h.log.Error().Msg("[Webhook Handler] - WHATSAPP_WEBHOOK_SECRET no configurado")
+		h.log.Error().Msg("[Webhook Handler] - webhook_secret no encontrado en cache ni en env")
 		return false
 	}
 

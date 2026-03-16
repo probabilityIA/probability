@@ -6,6 +6,9 @@ type GenerateOrdersDTO struct {
 	RandomProducts   bool   `json:"random_products"`
 	MaxItemsPerOrder int    `json:"max_items_per_order"`
 	Topic            string `json:"topic"`
+	// Override opcionales para datos del cliente (si vacíos, se generan random)
+	CustomerName  string `json:"customer_name"`
+	CustomerPhone string `json:"customer_phone"`
 }
 
 func (d *GenerateOrdersDTO) ApplyDefaults() {

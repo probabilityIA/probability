@@ -28,6 +28,8 @@ type IWhatsAppBundle interface {
 	SendMessage(ctx context.Context, orderNumber, phoneNumber string) (string, error)
 	// RegisterRoutes registra las rutas HTTP del módulo
 	RegisterRoutes(router *gin.RouterGroup)
+	// SetPlatformCredsGetter inyecta el getter de credenciales de plataforma (de core) después de la construcción
+	SetPlatformCredsGetter(getter ports.IPlatformCredentialsGetter)
 }
 
 type bundle struct {
@@ -62,6 +64,11 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 	publisher := queue.NewWebhookPublisher(rabbit, logger)
 
 	// 2. Capa de aplicación (casos de uso)
+	// Factory para crear clients con URL dinámica (de platform_creds, no de .env)
+	clientFactory := func(baseURL string) ports.IWhatsApp {
+		return client.New(baseURL, logger)
+	}
+
 	useCase := usecasemessaging.New(
 		wa,
 		convCache,
@@ -70,6 +77,7 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		publisher,
 		logger,
 		config,
+		clientFactory,
 	)
 
 	// Test usecase (subdirectorio separado)
@@ -116,8 +124,12 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 
 // RegisterRoutes registra todas las rutas HTTP del módulo
 func (b *bundle) RegisterRoutes(router *gin.RouterGroup) {
-	// Delegar al handler
 	b.handler.RegisterRoutes(router)
+}
+
+// SetPlatformCredsGetter inyecta el getter de credenciales de plataforma (de core)
+func (b *bundle) SetPlatformCredsGetter(getter ports.IPlatformCredentialsGetter) {
+	b.handler.SetPlatformCredsGetter(getter)
 }
 
 // SendMessage expone el método simplificado para enviar mensajes (legacy)

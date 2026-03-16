@@ -95,27 +95,34 @@ type MessageContext struct {
 
 // WebhookStatus representa un cambio de estado de mensaje
 type WebhookStatus struct {
-	ID           string            `json:"id"`                     // ID del mensaje
-	Status       string            `json:"status"`                 // "sent", "delivered", "read", "failed"
-	Timestamp    string            `json:"timestamp"`              // Unix timestamp
-	RecipientID  string            `json:"recipient_id"`           // Número de teléfono del destinatario
-	Conversation *ConversationInfo `json:"conversation,omitempty"`
-	Pricing      *PricingInfo      `json:"pricing,omitempty"`
-	Errors       []WebhookError    `json:"errors,omitempty"`
+	ID                 string            `json:"id"`                      // ID del mensaje
+	Status             string            `json:"status"`                  // "sent", "delivered", "read", "failed"
+	Timestamp          string            `json:"timestamp"`               // Unix timestamp
+	RecipientID        string            `json:"recipient_id"`            // Número de teléfono del destinatario
+	RecipientLogicalID string            `json:"recipient_logical_id"`    // ID lógico del destinatario
+	Conversation       *ConversationInfo `json:"conversation,omitempty"`
+	Pricing            *PricingInfo      `json:"pricing,omitempty"`
+	Errors             []WebhookError    `json:"errors,omitempty"`
 }
 
 // ConversationInfo contiene información de la conversación
 type ConversationInfo struct {
-	ID                  string `json:"id"`                              // ID de la conversación
-	Origin              string `json:"origin"`                          // "business_initiated", "user_initiated"
-	ExpirationTimestamp string `json:"expiration_timestamp,omitempty"`  // Timestamp de expiración
+	ID                  string             `json:"id"`                              // ID de la conversación
+	Origin              ConversationOrigin `json:"origin"`                          // Objeto con tipo de origen
+	ExpirationTimestamp string             `json:"expiration_timestamp,omitempty"`  // Timestamp de expiración
+}
+
+// ConversationOrigin representa el origen de la conversación (Meta envía un objeto)
+type ConversationOrigin struct {
+	Type string `json:"type"` // "utility", "marketing", "service", "authentication"
 }
 
 // PricingInfo contiene información de precio del mensaje
 type PricingInfo struct {
 	Billable     bool   `json:"billable"`      // Si es facturable
-	PricingModel string `json:"pricing_model"` // "CBP" (Conversation-Based Pricing)
-	Category     string `json:"category"`      // "business_initiated", "user_initiated"
+	PricingModel string `json:"pricing_model"` // "PMP" o "CBP"
+	Category     string `json:"category"`      // "utility", "marketing", "service", etc.
+	Type         string `json:"type"`          // "regular"
 }
 
 // WebhookError representa un error en el webhook

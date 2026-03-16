@@ -143,7 +143,7 @@ func mapWebhookStatus(req request.WebhookStatus) dtos.WebhookStatusDTO {
 	if req.Conversation != nil {
 		conversation = &dtos.ConversationInfoDTO{
 			ID:                  req.Conversation.ID,
-			Origin:              req.Conversation.Origin,
+			Origin:              req.Conversation.Origin.Type,
 			ExpirationTimestamp: req.Conversation.ExpirationTimestamp,
 		}
 	}

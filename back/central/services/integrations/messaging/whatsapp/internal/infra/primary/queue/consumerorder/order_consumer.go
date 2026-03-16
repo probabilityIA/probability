@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
@@ -75,11 +74,11 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	// 4: shipping_address
 	// 5: items_summary
 	variables := map[string]string{
-		"1": event.CustomerName,
-		"2": getBusinessName(event.BusinessID), // Helper para obtener nombre del negocio
-		"3": event.OrderNumber,
-		"4": event.ShippingAddress,
-		"5": event.ItemsSummary,
+		"1": orDefault(event.CustomerName, "Cliente"),
+		"2": orDefault(event.BusinessName, "Probability"),
+		"3": orDefault(event.OrderNumber, "N/A"),
+		"4": orDefault(event.ShippingAddress, "No especificada"),
+		"5": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
 	}
 
 	// Obtener BusinessID (puede ser nulo)
@@ -129,15 +128,12 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	return nil
 }
 
-// getBusinessName obtiene el nombre del negocio (implementación simplificada)
-// TODO: En producción, esto debería consultar la BD o tener un caché
-func getBusinessName(businessID *uint) string {
-	if businessID == nil {
-		return "Probability"
+// orDefault retorna el valor si no está vacío, o el default
+func orDefault(value, defaultValue string) string {
+	if strings.TrimSpace(value) == "" {
+		return defaultValue
 	}
-	// Por ahora retornamos un placeholder
-	// En implementación completa, consultar repositorio de Business
-	return fmt.Sprintf("Negocio #%d", *businessID)
+	return value
 }
 
 // isNonRetryableError determina si un error no debe provocar reencolar el mensaje.
@@ -157,12 +153,17 @@ func isNonRetryableError(err error) bool {
 	// Errores de cache (Redis key not found): la integración no está configurada
 	errMsg := err.Error()
 	nonRetryablePhrases := []string{
-		"key not found",             // Redis cache miss
-		"no se encontró integración", // business sin integración WA
+		"key not found",               // Redis cache miss
+		"no se encontró integración",  // business sin integración WA
 		"credenciales no encontradas", // integration sin credenciales en cache
 		"número de teléfono inválido", // teléfono inválido
 		"phone_number_id no encontrado", // credenciales incompletas
 		"access_token no encontrado",    // credenciales incompletas
+		"Required parameter is missing", // Meta: variable vacía en template
+		"does not exist in",             // Meta: template no aprobado
+		"131008",                        // Meta: parámetro requerido faltante
+		"132001",                        // Meta: template no existe
+		"131009",                        // Meta: parámetro inválido
 	}
 	for _, phrase := range nonRetryablePhrases {
 		if strings.Contains(errMsg, phrase) {

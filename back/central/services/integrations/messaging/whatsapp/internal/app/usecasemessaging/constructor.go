@@ -29,9 +29,13 @@ type IUseCase interface {
 	IsTerminalState(state entities.ConversationState) bool
 }
 
+// WhatsAppClientFactory crea un client HTTP de WhatsApp con la URL dada
+type WhatsAppClientFactory func(baseURL string) ports.IWhatsApp
+
 // usecases contiene todas las dependencias compartidas
 type usecases struct {
 	whatsApp         ports.IWhatsApp
+	clientFactory    WhatsAppClientFactory
 	conversationCache ports.IConversationCache
 	credentialsCache  ports.ICredentialsCache
 	persistPublisher  ports.IPersistencePublisher
@@ -49,8 +53,9 @@ func New(
 	publisher ports.IEventPublisher,
 	logger log.ILogger,
 	config env.IConfig,
+	clientFactory ...WhatsAppClientFactory,
 ) IUseCase {
-	return &usecases{
+	uc := &usecases{
 		whatsApp:          whatsApp,
 		conversationCache: conversationCache,
 		credentialsCache:  credentialsCache,
@@ -59,4 +64,8 @@ func New(
 		log:               logger,
 		config:            config,
 	}
+	if len(clientFactory) > 0 {
+		uc.clientFactory = clientFactory[0]
+	}
+	return uc
 }

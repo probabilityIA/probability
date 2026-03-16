@@ -1,6 +1,7 @@
 package messaging
 
 import (
+	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/integrations/core"
 	emailmod "github.com/secamc93/probability/back/central/services/integrations/messaging/email"
 	whatsapp "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp"
@@ -22,16 +23,21 @@ func New(
 	redisClient redisclient.IRedis,
 	integrationCore core.IIntegrationCore,
 	emailService email.IEmailService,
+	router *gin.RouterGroup,
 ) {
 	// WhatsApp (type_id=2) — cache-first, DB-async via RabbitMQ
 	whatsappBundle := whatsapp.New(config, logger, rabbitMQ, redisClient)
 	integrationCore.RegisterIntegration(core.IntegrationTypeWhatsApp, whatsappBundle)
 
+	// Registrar rutas HTTP de WhatsApp (webhook sin JWT, send-template con JWT)
+	integrationsGroup := router.Group("/integrations")
+	if wa, ok := whatsappBundle.(whatsapp.IWhatsAppBundle); ok {
+		wa.RegisterRoutes(integrationsGroup)
+		// Inyectar getter de platform credentials (core implementa la interfaz)
+		wa.SetPlatformCredsGetter(integrationCore)
+	}
+
 	// Email (type_id=29) — notificaciones por correo via SES (stateless, sin DB)
 	emailBundle := emailmod.New(logger, rabbitMQ, emailService)
 	integrationCore.RegisterIntegration(core.IntegrationTypeEmail, emailBundle)
-
-	// SMS — pendiente de implementación
-	// smsBundle := sms.New(config, logger, rabbitMQ)
-	// integrationCore.RegisterIntegration(core.IntegrationTypeSMS, smsBundle)
 }

@@ -18,7 +18,7 @@ import {
 export async function getNotificationTypesAction() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(`${env.API_BASE_URL}/notification-types`, {
       headers: {
@@ -46,7 +46,7 @@ export async function getNotificationTypesAction() {
 export async function getNotificationTypeByIdAction(id: number) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-types/${id}`,
@@ -79,7 +79,7 @@ export async function createNotificationTypeAction(
 ) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(`${env.API_BASE_URL}/notification-types`, {
       method: "POST",
@@ -112,7 +112,7 @@ export async function updateNotificationTypeAction(
 ) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-types/${id}`,
@@ -145,7 +145,7 @@ export async function updateNotificationTypeAction(
 export async function deleteNotificationTypeAction(id: number) {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value || "";
+    const token = cookieStore.get("session_token")?.value || "";
 
     const response = await fetch(
       `${env.API_BASE_URL}/notification-types/${id}`,

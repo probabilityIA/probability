@@ -95,6 +95,9 @@ type IIntegrationCore interface {
 	GetWebhookURL(ctx context.Context, integrationID uint) (*WebhookInfo, error)
 	ListWebhooks(ctx context.Context, integrationID string) ([]interface{}, error)
 	DeleteWebhook(ctx context.Context, integrationID, webhookID string) error
+	// GetCachedPlatformCredentials retorna las credenciales de plataforma cacheadas por integration_type_id.
+	// Usado por módulos como WhatsApp para leer verify_token/webhook_secret sin acceder a Redis directamente.
+	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
 }
 
 // ============================================
@@ -103,6 +106,7 @@ type IIntegrationCore interface {
 
 type integrationCore struct {
 	useCase domain.IIntegrationUseCase
+	cache   domain.IIntegrationCache
 }
 
 // ============================================
@@ -165,7 +169,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, redisClient redis.IRedis, log
 		}
 	}()
 
-	return &integrationCore{useCase: integrationUseCase}
+	return &integrationCore{useCase: integrationUseCase, cache: integrationCache}
 }
 
 // IIntegrationService pass-throughs
@@ -239,4 +243,8 @@ func (ic *integrationCore) ListWebhooks(ctx context.Context, integrationID strin
 
 func (ic *integrationCore) DeleteWebhook(ctx context.Context, integrationID, webhookID string) error {
 	return ic.useCase.DeleteWebhook(ctx, integrationID, webhookID)
+}
+
+func (ic *integrationCore) GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error) {
+	return ic.cache.GetPlatformCredentials(ctx, integrationTypeID)
 }

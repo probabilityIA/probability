@@ -132,6 +132,14 @@ var Templates = map[string]TemplateDefinition{
 		ButtonLabels: []string{},
 		Description:  "Mensaje de espera mientras se conecta con un asesor humano",
 	},
+	"prueba_conexion": {
+		Name:         "prueba_conexion",
+		Language:     "es",
+		Variables:    []string{},
+		HasButtons:   false,
+		ButtonLabels: []string{},
+		Description:  "Mensaje de prueba para verificar conexión de WhatsApp",
+	},
 	"alerta_servidor": {
 		Name:     "alerta_servidor",
 		Language: "es",

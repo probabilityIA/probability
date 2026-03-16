@@ -20,6 +20,8 @@ export default function OrderGenerator({ businessId, onApiLogs }: Props) {
   const [count, setCount] = useState(1);
   const [topic, setTopic] = useState("");
   const [maxItems, setMaxItems] = useState(3);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -91,6 +93,8 @@ export default function OrderGenerator({ businessId, onApiLogs }: Props) {
         random_products: true,
         max_items_per_order: maxItems,
         topic: isEcommerce ? topic : "",
+        customer_name: customerName || undefined,
+        customer_phone: customerPhone || undefined,
       });
 
       const builtPayloads: WebhookPayload[] = result.payloads || [];
@@ -228,6 +232,36 @@ export default function OrderGenerator({ businessId, onApiLogs }: Props) {
               onChange={(e) => setMaxItems(Math.min(5, Math.max(1, Number(e.target.value))))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
             />
+          </div>
+        )}
+
+        {/* Customer override (optional) */}
+        {isPlatform && (
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Customer Name (optional)
+              </label>
+              <input
+                type="text"
+                value={customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Random if empty"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Customer Phone (optional)
+              </label>
+              <input
+                type="text"
+                value={customerPhone}
+                onChange={(e) => setCustomerPhone(e.target.value)}
+                placeholder="+573001234567"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-900"
+              />
+            </div>
           </div>
         )}
 

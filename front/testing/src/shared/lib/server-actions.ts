@@ -97,6 +97,8 @@ export async function buildPayloadsAction(
     random_products: boolean;
     max_items_per_order: number;
     topic: string;
+    customer_name?: string;
+    customer_phone?: string;
   }
 ) {
   const data = await fetchServer(

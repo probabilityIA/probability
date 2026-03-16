@@ -44,7 +44,7 @@ func (p *channelPublisher) PublishToWhatsApp(ctx context.Context, event entities
 		"order_id", "order_number", "internal_number", "external_id",
 		"customer_name", "customer_phone", "customer_email",
 		"total_amount", "currency", "platform",
-		"items_summary", "shipping_address",
+		"items_summary", "shipping_address", "business_name",
 	}
 	for _, field := range dataFields {
 		if val, ok := event.Data[field]; ok && val != nil && val != "" {

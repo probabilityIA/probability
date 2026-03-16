@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/testing/modules/orders/internal/domain/dtos"
@@ -148,6 +149,11 @@ func (uc *useCase) buildEcommercePayloads(ctx context.Context, dto *dtos.Generat
 func buildRandomOrder(rng *rand.Rand, businessID, integrationID uint, products []entities.Product, paymentMethods []entities.PaymentMethod, dto *dtos.GenerateOrdersDTO) map[string]interface{} {
 	firstName := firstNames[rng.Intn(len(firstNames))]
 	lastName := lastNames[rng.Intn(len(lastNames))]
+	if dto.CustomerName != "" {
+		parts := splitName(dto.CustomerName)
+		firstName = parts[0]
+		lastName = parts[1]
+	}
 	cityIdx := rng.Intn(len(cities))
 
 	numItems := rng.Intn(dto.MaxItemsPerOrder) + 1
@@ -185,6 +191,9 @@ func buildRandomOrder(rng *rand.Rand, businessID, integrationID uint, products [
 
 	email := fmt.Sprintf("%s.%s%d@test.probability.com", firstName, lastName, rng.Intn(100))
 	phone := fmt.Sprintf("+5730%08d", rng.Intn(100000000))
+	if dto.CustomerPhone != "" {
+		phone = dto.CustomerPhone
+	}
 	dni := fmt.Sprintf("%d", 1000000000+rng.Intn(999999999))
 
 	timestamp := time.Now().UnixNano()
@@ -224,6 +233,14 @@ func buildRandomOrder(rng *rand.Rand, businessID, integrationID uint, products [
 		"occurred_at":           now,
 		"imported_at":           now,
 	}
+}
+
+func splitName(fullName string) [2]string {
+	parts := strings.SplitN(strings.TrimSpace(fullName), " ", 2)
+	if len(parts) == 1 {
+		return [2]string{parts[0], ""}
+	}
+	return [2]string{parts[0], parts[1]}
 }
 
 func buildItemsJSON(items []map[string]interface{}) json.RawMessage {
