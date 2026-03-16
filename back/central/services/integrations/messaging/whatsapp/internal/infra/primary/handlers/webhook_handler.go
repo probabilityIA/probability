@@ -196,27 +196,29 @@ func (h *handler) processWebhookAsync(webhook request.WebhookPayload) {
 
 const whatsAppTypeID = uint(2)
 
-// getPlatformCredField obtiene un campo de las credenciales de plataforma via core cache, con fallback a env
-func (h *handler) getPlatformCredField(ctx context.Context, field, envFallback string) string {
-	if h.platformCredsGetter != nil {
-		creds, err := h.platformCredsGetter.GetCachedPlatformCredentials(ctx, whatsAppTypeID)
-		if err == nil {
-			if val, ok := creds[field].(string); ok && val != "" {
-				return val
-			}
-		}
+// getPlatformCredField obtiene un campo de las credenciales de plataforma via core cache (sin fallback a env)
+func (h *handler) getPlatformCredField(ctx context.Context, field string) string {
+	if h.platformCredsGetter == nil {
+		return ""
 	}
-	return h.config.Get(envFallback)
+	creds, err := h.platformCredsGetter.GetCachedPlatformCredentials(ctx, whatsAppTypeID)
+	if err != nil {
+		return ""
+	}
+	if val, ok := creds[field].(string); ok {
+		return val
+	}
+	return ""
 }
 
-// getVerifyToken obtiene el verify_token desde platform_creds cache con fallback a env
+// getVerifyToken obtiene el verify_token desde platform_creds cache
 func (h *handler) getVerifyToken(ctx context.Context) string {
-	return h.getPlatformCredField(ctx, "verify_token", "WHATSAPP_VERIFY_TOKEN")
+	return h.getPlatformCredField(ctx, "verify_token")
 }
 
-// getWebhookSecret obtiene el webhook_secret desde platform_creds cache con fallback a env
+// getWebhookSecret obtiene el webhook_secret desde platform_creds cache
 func (h *handler) getWebhookSecret(ctx context.Context) string {
-	return h.getPlatformCredField(ctx, "webhook_secret", "WHATSAPP_WEBHOOK_SECRET")
+	return h.getPlatformCredField(ctx, "webhook_secret")
 }
 
 // verifySignature verifica la firma HMAC-SHA256 del webhook

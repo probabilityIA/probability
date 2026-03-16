@@ -12,6 +12,7 @@ export interface WhatsAppPlatformCredentials {
     phone_number_id: string;
     access_token: string;
     verify_token: string;
+    webhook_secret: string;
     test_phone_number: string;
 }
 
@@ -28,6 +29,7 @@ export default function WhatsAppTypeCredentialsForm({
 }: WhatsAppTypeCredentialsFormProps) {
     const [showAccessToken, setShowAccessToken] = useState(false);
     const [showVerifyToken, setShowVerifyToken] = useState(false);
+    const [showWebhookSecret, setShowWebhookSecret] = useState(false);
     const [testing, setTesting] = useState(false);
     const [testResult, setTestResult] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
     const [copied, setCopied] = useState(false);
@@ -203,6 +205,32 @@ export default function WhatsAppTypeCredentialsForm({
                     </div>
                     <p className="mt-1 text-xs text-gray-500">
                         Token de verificacion para el webhook (Meta &rarr; Configuration)
+                    </p>
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Webhook Secret (App Secret)
+                    </label>
+                    <div className="relative">
+                        <Input
+                            type={showWebhookSecret ? 'text' : 'password'}
+                            name="wa_webhook_secret"
+                            autoComplete="new-password"
+                            value={credentials.webhook_secret}
+                            onChange={(e) => handleChange('webhook_secret', e.target.value)}
+                            placeholder="App Secret de Meta"
+                            className="font-mono pr-10"
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowWebhookSecret((v) => !v)}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                        >
+                            {showWebhookSecret ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
+                        </button>
+                    </div>
+                    <p className="mt-1 text-xs text-gray-500">
+                        App Secret de Meta (Developers &rarr; App &rarr; Settings &rarr; Basic)
                     </p>
                 </div>
 
