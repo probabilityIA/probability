@@ -33,10 +33,43 @@ Integración completa y bidireccional con WhatsApp Business Cloud API para gesti
 
 Todas las llamadas usan `https://graph.facebook.com/v22.0/` con header `Authorization: Bearer {ACCESS_TOKEN}`.
 
-### Listar números de teléfono
+### Listar números de teléfono de un WABA
 
 ```bash
-curl -s "https://graph.facebook.com/v22.0/{WABA_ID}/phone_numbers" \
+curl -s "https://graph.facebook.com/v22.0/{WABA_ID}/phone_numbers?fields=verified_name,display_phone_number,quality_rating,status,messaging_limit_tier,platform_type" \
+  -H "Authorization: Bearer {TOKEN}" | jq .
+```
+
+### Ver suscripciones de webhook de la app
+
+Requiere App Token (`APP_ID|APP_SECRET`):
+
+```bash
+curl -s "https://graph.facebook.com/v22.0/{APP_ID}/subscriptions?access_token={APP_ID}|{APP_SECRET}" | jq .
+```
+
+### Suscribir campos de webhook via API
+
+```bash
+curl -X POST "https://graph.facebook.com/v22.0/{APP_ID}/subscriptions" \
+  -d "object=whatsapp_business_account" \
+  -d "callback_url=https://www.probabilityia.com.co/api/v1/integrations/whatsapp/webhook" \
+  -d "verify_token={VERIFY_TOKEN}" \
+  -d "fields=messages,message_template_status_update" \
+  -d "access_token={APP_ID}|{APP_SECRET}"
+```
+
+### Suscribir app a un WABA (recibir eventos de esa cuenta)
+
+```bash
+curl -X POST "https://graph.facebook.com/v22.0/{WABA_ID}/subscribed_apps" \
+  -H "Authorization: Bearer {TOKEN}"
+```
+
+### Ver health status de un número
+
+```bash
+curl -s "https://graph.facebook.com/v22.0/{PHONE_NUMBER_ID}?fields=health_status,quality_score" \
   -H "Authorization: Bearer {TOKEN}" | jq .
 ```
 
