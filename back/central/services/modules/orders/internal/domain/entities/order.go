@@ -12,6 +12,7 @@ type ProbabilityOrder struct {
 
 	// Identificadores de integración
 	BusinessID         *uint
+	BusinessName       string
 	IntegrationID      uint
 	IntegrationType    string
 	IntegrationLogoURL *string

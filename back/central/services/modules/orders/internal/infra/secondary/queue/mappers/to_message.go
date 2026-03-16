@@ -41,6 +41,7 @@ func OrderToSnapshot(order *entities.ProbabilityOrder) *response.OrderSnapshot {
 		// Información de origen
 		Platform:      order.Platform,
 		IntegrationID: order.IntegrationID,
+		BusinessName:  order.BusinessName,
 
 		// Estados
 		OrderStatusID:       order.StatusID,

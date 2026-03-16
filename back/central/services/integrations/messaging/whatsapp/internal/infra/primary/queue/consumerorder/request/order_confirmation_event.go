@@ -6,6 +6,7 @@ type OrderConfirmationEvent struct {
 	OrderID         string  `json:"order_id"`
 	OrderNumber     string  `json:"order_number"`
 	BusinessID      *uint   `json:"business_id"`
+	BusinessName    string  `json:"business_name"`
 	CustomerName    string  `json:"customer_name"`
 	CustomerPhone   string  `json:"customer_phone"`
 	CustomerEmail   string  `json:"customer_email"`

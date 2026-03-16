@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"strings"
 
 	whaErrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
@@ -76,7 +75,7 @@ func (c *consumer) handleMessage(messageBody []byte) error {
 	// 5: items_summary
 	variables := map[string]string{
 		"1": orDefault(event.CustomerName, "Cliente"),
-		"2": getBusinessName(event.BusinessID),
+		"2": orDefault(event.BusinessName, "Probability"),
 		"3": orDefault(event.OrderNumber, "N/A"),
 		"4": orDefault(event.ShippingAddress, "No especificada"),
 		"5": orDefault(event.ItemsSummary, "Ver detalle en plataforma"),
@@ -135,17 +134,6 @@ func orDefault(value, defaultValue string) string {
 		return defaultValue
 	}
 	return value
-}
-
-// getBusinessName obtiene el nombre del negocio (implementación simplificada)
-// TODO: En producción, esto debería consultar la BD o tener un caché
-func getBusinessName(businessID *uint) string {
-	if businessID == nil {
-		return "Probability"
-	}
-	// Por ahora retornamos un placeholder
-	// En implementación completa, consultar repositorio de Business
-	return fmt.Sprintf("Negocio #%d", *businessID)
 }
 
 // isNonRetryableError determina si un error no debe provocar reencolar el mensaje.

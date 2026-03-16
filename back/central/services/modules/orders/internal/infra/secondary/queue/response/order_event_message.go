@@ -46,6 +46,7 @@ type OrderSnapshot struct {
 	// Información de origen
 	Platform      string `json:"platform"`
 	IntegrationID uint   `json:"integration_id"`
+	BusinessName  string `json:"business_name,omitempty"`
 
 	// Estados
 	OrderStatusID       *uint `json:"order_status_id,omitempty"`
