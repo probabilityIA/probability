@@ -64,6 +64,11 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 	publisher := queue.NewWebhookPublisher(rabbit, logger)
 
 	// 2. Capa de aplicación (casos de uso)
+	// Factory para crear clients con URL dinámica (de platform_creds, no de .env)
+	clientFactory := func(baseURL string) ports.IWhatsApp {
+		return client.New(baseURL, logger)
+	}
+
 	useCase := usecasemessaging.New(
 		wa,
 		convCache,
@@ -72,6 +77,7 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		publisher,
 		logger,
 		config,
+		clientFactory,
 	)
 
 	// Test usecase (subdirectorio separado)

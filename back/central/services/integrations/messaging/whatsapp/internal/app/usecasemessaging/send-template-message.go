@@ -69,14 +69,20 @@ func (u *usecases) SendTemplate(
 		return "", err
 	}
 
-	// 7. Enviar mensaje
+	// 7. Enviar mensaje — usar URL de platform_creds si disponible
 	u.log.Info(ctx).
 		Str("conversation_id", conversation.ID).
 		Str("template_name", templateName).
 		Uint("phone_number_id", whatsappConfig.PhoneNumberID).
+		Str("whatsapp_url", whatsappConfig.WhatsAppURL).
 		Msg("[WhatsApp UseCase] - enviando mensaje a WhatsApp API")
 
-	messageID, err := u.whatsApp.SendMessage(ctx, whatsappConfig.PhoneNumberID, msg, whatsappConfig.AccessToken)
+	waClient := u.whatsApp
+	if whatsappConfig.WhatsAppURL != "" && u.clientFactory != nil {
+		waClient = u.clientFactory(whatsappConfig.WhatsAppURL)
+	}
+
+	messageID, err := waClient.SendMessage(ctx, whatsappConfig.PhoneNumberID, msg, whatsappConfig.AccessToken)
 	if err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("template_name", templateName).
