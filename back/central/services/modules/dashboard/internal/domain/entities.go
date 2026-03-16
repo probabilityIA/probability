@@ -18,9 +18,12 @@ type DashboardStats struct {
 	ProductsByBrand    []ProductByBrand    `json:"products_by_brand"`
 
 	// Nuevas: Envíos
-	ShipmentsByStatus    []ShipmentsByStatus    `json:"shipments_by_status"`
-	ShipmentsByCarrier   []ShipmentsByCarrier   `json:"shipments_by_carrier"`
-	ShipmentsByWarehouse []ShipmentsByWarehouse `json:"shipments_by_warehouse"`
+	ShipmentsByStatus       []ShipmentsByStatus    `json:"shipments_by_status"`
+	ShipmentsByCarrier      []ShipmentsByCarrier   `json:"shipments_by_carrier"`
+	ShipmentsByCarrierToday []ShipmentsByCarrier   `json:"shipments_by_carrier_today"`
+	ShipmentsByWarehouse    []ShipmentsByWarehouse `json:"shipments_by_warehouse"`
+	ShipmentsByDayOfWeek    []ShipmentsByDayOfWeek `json:"shipments_by_day_of_week"`
+	OrdersByDepartment      []OrdersByDepartment   `json:"orders_by_department"`
 
 	// Nuevas: Businesses (solo si es super admin)
 	OrdersByBusiness []OrdersByBusiness `json:"orders_by_business,omitempty"`
@@ -106,4 +109,17 @@ type OrdersByBusiness struct {
 	BusinessID   uint   `json:"business_id"`
 	BusinessName string `json:"business_name"`
 	OrderCount   int64  `json:"order_count"`
+}
+
+// ShipmentsByDayOfWeek representa órdenes agrupadas por día de una semana específica
+type ShipmentsByDayOfWeek struct {
+	Date      string `json:"date"`       // Fecha en formato YYYY-MM-DD
+	DayName   string `json:"day_name"`   // Lunes, Martes, etc
+	Count     int64  `json:"count"`      // Número de órdenes creadas ese día
+}
+
+// OrdersByDepartment representa órdenes agrupadas por departamento
+type OrdersByDepartment struct {
+	Department string `json:"department"`
+	Count      int64  `json:"count"`
 }

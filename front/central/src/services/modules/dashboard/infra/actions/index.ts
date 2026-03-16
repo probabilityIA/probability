@@ -12,10 +12,11 @@ async function getUseCases() {
 
 export const getDashboardStatsAction = async (
     businessId?: number,
-    integrationId?: number
+    integrationId?: number,
+    weekStartDate?: Date
 ) => {
     try {
-        return await (await getUseCases()).getStats(businessId, integrationId);
+        return await (await getUseCases()).getStats(businessId, integrationId, weekStartDate);
     } catch (error: any) {
         console.error('Get Dashboard Stats Action Error:', error.message);
         throw new Error(error.message);

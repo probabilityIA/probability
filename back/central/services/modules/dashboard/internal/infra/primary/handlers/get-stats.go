@@ -3,6 +3,7 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard/internal/domain"
@@ -75,8 +76,15 @@ func (h *DashboardHandlers) GetStats(c *gin.Context) {
 		}
 	}
 
+	var weekStartDate *time.Time
+	if weekStartDateParam := c.Query("week_start_date"); weekStartDateParam != "" {
+		if parsedDate, err := time.Parse("2006-01-02", weekStartDateParam); err == nil {
+			weekStartDate = &parsedDate
+		}
+	}
+
 	// Obtener estadísticas del caso de uso
-	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID, integrationID)
+	stats, err := h.uc.GetDashboardStats(c.Request.Context(), businessID, integrationID, weekStartDate)
 	if err != nil {
 		h.logger.Error().Err(err).Msg("Error al obtener estadísticas del dashboard")
 		c.JSON(http.StatusInternalServerError, gin.H{

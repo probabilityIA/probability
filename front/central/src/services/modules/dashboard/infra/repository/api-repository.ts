@@ -44,12 +44,16 @@ export class DashboardApiRepository implements IDashboardRepository {
         }
     }
 
-    async getStats(businessId?: number, integrationId?: number): Promise<DashboardStatsResponse> {
+    async getStats(businessId?: number, integrationId?: number, weekStartDate?: Date): Promise<DashboardStatsResponse> {
         let params = '';
         const queryParams = [];
 
         if (businessId) queryParams.push(`business_id=${businessId}`);
         if (integrationId) queryParams.push(`integration_id=${integrationId}`);
+        if (weekStartDate) {
+            const dateStr = weekStartDate.toISOString().split('T')[0];
+            queryParams.push(`week_start_date=${dateStr}`);
+        }
 
         if (queryParams.length > 0) {
             params = `?${queryParams.join('&')}`;

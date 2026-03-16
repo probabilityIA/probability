@@ -2,6 +2,7 @@ package domain
 
 import (
 	"context"
+	"time"
 )
 
 // IRepository define la interfaz del repositorio para obtener estadísticas
@@ -32,7 +33,10 @@ type IRepository interface {
 	// Envíos
 	GetShipmentsByStatus(ctx context.Context, businessID *uint, integrationID *uint) ([]ShipmentsByStatus, error)
 	GetShipmentsByCarrier(ctx context.Context, businessID *uint, integrationID *uint) ([]ShipmentsByCarrier, error)
+	GetShipmentsByCarrierToday(ctx context.Context, businessID *uint, integrationID *uint) ([]ShipmentsByCarrier, error)
 	GetShipmentsByWarehouse(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]ShipmentsByWarehouse, error)
+	GetShipmentsByDayOfWeek(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time) ([]ShipmentsByDayOfWeek, error)
+	GetOrdersByDepartment(ctx context.Context, businessID *uint, integrationID *uint) ([]OrdersByDepartment, error)
 
 	// Businesses (solo super admin, businessID debe ser nil)
 	GetOrdersByBusiness(ctx context.Context, limit int) ([]OrdersByBusiness, error)
@@ -40,5 +44,5 @@ type IRepository interface {
 
 // IUseCase define la interfaz del caso de uso para obtener estadísticas del dashboard
 type IUseCase interface {
-	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint) (*DashboardStats, error)
+	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint, weekStartDate *time.Time) (*DashboardStats, error)
 }

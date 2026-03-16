@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/dashboard/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/db"
@@ -131,7 +132,7 @@ func (r *Repository) GetTopCustomers(ctx context.Context, businessID *uint, inte
 	return customers, nil
 }
 
-// GetOrdersByLocation obtiene el conteo de órdenes agrupado por ubicación
+// GetOrdersByLocation obtiene el conteo de órdenes agrupado por ubicación (estado/departamento)
 func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.OrderCountByLocation, error) {
 	type Result struct {
 		City       string `gorm:"column:city"`
@@ -142,9 +143,9 @@ func (r *Repository) GetOrdersByLocation(ctx context.Context, businessID *uint, 
 	var results []Result
 	query := r.db.Conn(ctx).
 		Model(&models.Order{}).
-		Select("orders.shipping_city as city, orders.shipping_state as state, COUNT(*) as order_count").
-		Where("orders.shipping_city != ''").
-		Group("orders.shipping_city, orders.shipping_state").
+		Select("orders.shipping_state as city, '' as state, COUNT(*) as order_count").
+		Where("orders.shipping_state IS NOT NULL AND orders.shipping_state != ''").
+		Group("orders.shipping_state").
 		Order("order_count DESC").
 		Limit(limit)
 
@@ -471,8 +472,52 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 	var results []Result
 	query := r.db.Conn(ctx).
 		Model(&models.Shipment{}).
-		Select("COALESCE(shipments.carrier, 'Sin transportista') as carrier, COUNT(*) as count").
+		Select("shipments.carrier, COUNT(*) as count").
 		Joins("JOIN orders ON orders.id = shipments.order_id").
+		Where("shipments.carrier IS NOT NULL AND shipments.carrier != ''").
+		Group("shipments.carrier").
+		Order("count DESC")
+
+	// Aplicar filtro por business_id si está especificado y no es super user
+	if businessID != nil && *businessID > 0 {
+		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
+	if err := query.Scan(&results).Error; err != nil {
+		return nil, err
+	}
+
+	// Mapear resultados
+	carriers := make([]domain.ShipmentsByCarrier, len(results))
+	for i, result := range results {
+		carriers[i] = domain.ShipmentsByCarrier{
+			Carrier: result.Carrier,
+			Count:   result.Count,
+		}
+	}
+
+	return carriers, nil
+}
+
+// GetShipmentsByCarrierToday obtiene envíos agrupados por transportista del día actual
+func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByCarrier, error) {
+	type Result struct {
+		Carrier string `gorm:"column:carrier"`
+		Count   int64  `gorm:"column:count"`
+	}
+
+	var results []Result
+	query := r.db.Conn(ctx).
+		Model(&models.Shipment{}).
+		Select("shipments.carrier, COUNT(*) as count").
+		Joins("JOIN orders ON orders.id = shipments.order_id").
+		Where("DATE(shipments.created_at AT TIME ZONE 'UTC') = DATE(NOW() AT TIME ZONE 'UTC')").
+		Where("shipments.carrier IS NOT NULL AND shipments.carrier != ''").
 		Group("shipments.carrier").
 		Order("count DESC")
 
@@ -540,6 +585,115 @@ func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *ui
 	}
 
 	return warehouses, nil
+}
+
+// GetShipmentsByDayOfWeek obtiene órdenes agrupadas por día para una semana específica (lunes a domingo)
+func (r *Repository) GetShipmentsByDayOfWeek(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time) ([]domain.ShipmentsByDayOfWeek, error) {
+	// Si no se proporciona startDate, usar el lunes de la semana actual
+	if startDate == nil {
+		now := time.Now()
+		// Calcular el lunes de la semana actual
+		daysToMonday := int(now.Weekday()) - 1
+		if daysToMonday < 0 {
+			daysToMonday = 6 // Si es domingo, ir al lunes de la semana anterior
+		}
+		monday := now.AddDate(0, 0, -daysToMonday)
+		// Normalizar a inicio del día
+		monday = time.Date(monday.Year(), monday.Month(), monday.Day(), 0, 0, 0, 0, monday.Location())
+		startDate = &monday
+	}
+
+	// Calcular el fin de la semana (domingo)
+	endDate := startDate.AddDate(0, 0, 7)
+
+	// Obtener todas las órdenes de la semana
+	var orders []models.Order
+	query := r.db.Conn(ctx).
+		Model(&models.Order{}).
+		Where("orders.created_at >= ?", startDate).
+		Where("orders.created_at < ?", endDate)
+
+	// Aplicar filtro por business_id si está especificado
+	if businessID != nil && *businessID > 0 {
+		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
+	if err := query.Find(&orders).Error; err != nil {
+		r.logger.Error().Err(err).Msg("Error al obtener órdenes para agrupar por día")
+		return nil, err
+	}
+
+	// Agrupar órdenes por fecha en el código Go
+	countMap := make(map[string]int64)
+	for _, order := range orders {
+		// Convertir created_at a fecha YYYY-MM-DD
+		dateStr := order.CreatedAt.Format("2006-01-02")
+		countMap[dateStr]++
+	}
+
+	// Generar 7 días de la semana con sus conteos
+	dayNames := []string{"Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"}
+	ordersByDay := make([]domain.ShipmentsByDayOfWeek, 7)
+
+	for i := 0; i < 7; i++ {
+		currentDate := startDate.AddDate(0, 0, i)
+		dateStr := currentDate.Format("2006-01-02")
+
+		ordersByDay[i] = domain.ShipmentsByDayOfWeek{
+			Date:    dateStr,
+			DayName: dayNames[i],
+			Count:   countMap[dateStr],
+		}
+	}
+
+	return ordersByDay, nil
+}
+
+// GetOrdersByDepartment obtiene TODAS las órdenes agrupadas por departamento
+func (r *Repository) GetOrdersByDepartment(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.OrdersByDepartment, error) {
+	type Result struct {
+		Department string `gorm:"column:department"`
+		Count      int64  `gorm:"column:count"`
+	}
+
+	var results []Result
+	query := r.db.Conn(ctx).
+		Model(&models.Order{}).
+		Select("orders.shipping_state as department, COUNT(*) as count").
+		Where("orders.shipping_state IS NOT NULL AND orders.shipping_state != ''").
+		Group("orders.shipping_state").
+		Order("count DESC")
+
+	// Aplicar filtro por business_id si está especificado
+	if businessID != nil && *businessID > 0 {
+		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
+	if err := query.Scan(&results).Error; err != nil {
+		r.logger.Error().Err(err).Msg("Error al obtener órdenes por departamento")
+		return nil, err
+	}
+
+	// Mapear resultados
+	departments := make([]domain.OrdersByDepartment, len(results))
+	for i, result := range results {
+		departments[i] = domain.OrdersByDepartment{
+			Department: result.Department,
+			Count:      result.Count,
+		}
+	}
+
+	return departments, nil
 }
 
 // GetOrdersByBusiness obtiene órdenes agrupadas por business (solo para super admin)

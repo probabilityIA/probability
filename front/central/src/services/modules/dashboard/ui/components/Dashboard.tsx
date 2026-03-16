@@ -30,6 +30,7 @@ import {
     CubeIcon,
     ArchiveBoxIcon,
     BuildingOfficeIcon,
+    CalendarDaysIcon,
 } from '@heroicons/react/24/outline';
 import {
     PieChart,
@@ -54,6 +55,58 @@ const COLORS = [
 
 ];
 
+// Mapeo de carrier (valor raw de BD) a logo URL
+const CARRIER_LOGOS: Record<string, string> = {
+    'SERVIENTREGA': 'https://i.revistapym.com.co/old/2021/09/WhatsApp-Image-2021-09-25-at-1.08.55-PM.jpeg?w=400&r=1_1',
+    'servientrega': 'https://i.revistapym.com.co/old/2021/09/WhatsApp-Image-2021-09-25-at-1.08.55-PM.jpeg?w=400&r=1_1',
+    'COORDINADORA': 'https://olartemoure.com/wp-content/uploads/2023/05/coordinadora-logo.png',
+    'coordinadora': 'https://olartemoure.com/wp-content/uploads/2023/05/coordinadora-logo.png',
+    'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'dhlexpress': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'dhl': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'FEDEX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
+    'fedex': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
+    'INTERRAPIDISIMO': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+    'interrapidisimo': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+    'interrapidísimo': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+    '472LOGISTICA': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
+    '472logistica': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
+    'SPEED': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'speed': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'SPEEDCARGO': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'speedcargo': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'ENVIA': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
+    'envia': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
+    'PIBOX': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
+    'pibox': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
+    'TCC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    'tcc': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    'TRANSPORTADORADECARACOLOMBIA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    'transportadoradecaracolombia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    '99MINUTOS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
+    '99minutos': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
+    'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
+    'deprisa': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
+};
+
+// Fallback: color determinista por nombre
+const getCarrierColor = (name: string): string => {
+    const palette = ['#3B82F6', '#8B5CF6', '#6366F1', '#EC4899', '#F59E0B', '#10B981'];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return palette[Math.abs(hash) % palette.length];
+};
+
+const getCarrierInitials = (name: string): string => {
+    if (name === 'Sin transportista') return '?';
+    return name
+        .split(/[\s_-]+/)
+        .map((w) => w[0]?.toUpperCase() || '')
+        .slice(0, 2)
+        .join('');
+};
+
 interface Business {
     id: number;
     name: string;
@@ -68,6 +121,16 @@ export default function Dashboard() {
     const [businesses, setBusinesses] = useState<Business[]>([]);
     const [loadingBusinesses, setLoadingBusinesses] = useState(false);
     const [userName, setUserName] = useState<string>('');
+    const [carrierFilter, setCarrierFilter] = useState<'total' | 'today'>('total');
+    const [weekStartDate, setWeekStartDate] = useState<Date>(() => {
+        const today = new Date();
+        const daysToMonday = today.getDay() === 0 ? 6 : today.getDay() - 1;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() - daysToMonday);
+        // Normalizar a medianoche
+        monday.setHours(0, 0, 0, 0);
+        return monday;
+    });
 
     useEffect(() => {
         const userData = TokenStorage.getUser();
@@ -105,7 +168,8 @@ export default function Dashboard() {
 
             const response = await getDashboardStatsAction(
                 selectedBusinessId,
-                undefined // integrationId
+                undefined, // integrationId
+                weekStartDate
             );
             setStats(response.data);
         } catch (err: any) {
@@ -114,7 +178,7 @@ export default function Dashboard() {
         } finally {
             setLoading(false);
         }
-    }, [selectedBusinessId]);
+    }, [selectedBusinessId, weekStartDate]);
 
     useEffect(() => {
         fetchStats();
@@ -302,6 +366,104 @@ export default function Dashboard() {
         );
     };
 
+    // Custom tick para XAxis que muestra logo del carrier
+    const CarrierLogoTick = ({ x, y, payload }: any) => {
+        const carrierName: string = payload?.value || '';
+        const logoUrl = CARRIER_LOGOS[carrierName.toLowerCase()];
+        const SIZE = 36;
+
+        return (
+            <g transform={`translate(${x},${y + 8})`}>
+                <foreignObject x={-SIZE / 2} y={0} width={SIZE} height={SIZE} style={{ overflow: 'visible' }}>
+                    <div
+                        style={{
+                            width: SIZE,
+                            height: SIZE,
+                            borderRadius: '50%',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            backgroundColor: logoUrl ? 'white' : getCarrierColor(carrierName),
+                            border: '2px solid #e5e7eb',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
+                        }}
+                    >
+                        {logoUrl ? (
+                            <img
+                                src={logoUrl}
+                                alt={carrierName}
+                                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: 4 }}
+                                onError={(e) => {
+                                    // Si el logo falla, ocultar imagen y mostrar fondo de color
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                            />
+                        ) : (
+                            <span style={{ fontSize: 12, fontWeight: 700, color: 'white' }}>
+                                {getCarrierInitials(carrierName)}
+                            </span>
+                        )}
+                    </div>
+                </foreignObject>
+                {/* Nombre debajo del logo */}
+                <text
+                    x={0}
+                    y={SIZE + 14}
+                    textAnchor="middle"
+                    fill="#6b7280"
+                    fontSize={11}
+                >
+                    {carrierName.length > 12 ? `${carrierName.substring(0, 12)}…` : carrierName}
+                </text>
+            </g>
+        );
+    };
+
+    // Gráfico de barras especializado para transportistas con logos
+    const CarrierBarChart = ({ data, height = 340 }: any) => {
+        const gradient = CHART_GRADIENTS['indigo'];
+        const mainColor = gradient.colors[0];
+
+        return (
+            <ChartContainer config={{}} className="h-full w-full">
+                <ResponsiveContainer width="100%" height={height}>
+                    <BarChart
+                        data={data}
+                        margin={{ top: 5, right: 20, left: 10, bottom: 80 }}
+                    >
+                        <CartesianGrid
+                            strokeDasharray="3 3"
+                            stroke="#e5e7eb"
+                            strokeOpacity={0.5}
+                            vertical={false}
+                        />
+                        <XAxis
+                            dataKey="name"
+                            height={90}
+                            interval={0}
+                            tick={<CarrierLogoTick />}
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <YAxis
+                            tick={{ fontSize: 12, fill: '#6b7280' }}
+                            stroke="#d1d5db"
+                            axisLine={false}
+                            tickLine={false}
+                        />
+                        <Tooltip cursor={false} content={<CustomTooltip />} />
+                        <Bar
+                            dataKey="value"
+                            shape={(props: any) => <ChartCustomGradientBar {...props} fill={mainColor} />}
+                            className="transition-all duration-300 hover:opacity-80"
+                        />
+                    </BarChart>
+                </ResponsiveContainer>
+            </ChartContainer>
+        );
+    };
+
     if (loading && !stats) {
         return (
             <div className="flex items-center justify-center py-12">
@@ -458,11 +620,19 @@ export default function Dashboard() {
         value: item.count,
     }));
 
-    const shipmentsByCarrierData = (stats.shipments_by_carrier || []).map((item) => ({
-        name: item.carrier.length > 15 ? `${item.carrier.substring(0, 15)}...` : item.carrier,
+    // Seleccionar dataset según toggle
+    const rawCarrierData = carrierFilter === 'today'
+        ? (stats.shipments_by_carrier_today || [])
+        : (stats.shipments_by_carrier || []);
+
+    const shipmentsByCarrierData = rawCarrierData.map((item) => ({
+        name: item.carrier,
         fullName: item.carrier,
         value: item.count,
         unit: 'envíos',
+        logoUrl: CARRIER_LOGOS[item.carrier.toLowerCase()],
+        initials: getCarrierInitials(item.carrier),
+        color: getCarrierColor(item.carrier),
     }));
 
     const shipmentsByWarehouseData = (stats.shipments_by_warehouse || []).map((item) => ({
@@ -470,6 +640,20 @@ export default function Dashboard() {
         fullName: item.warehouse_name,
         value: item.count,
         unit: 'envíos',
+    }));
+
+    const shipmentsByDayOfWeekData = (stats.shipments_by_day_of_week || []).map((item) => {
+        const dateObj = new Date(item.date + 'T00:00:00');
+        const dayNum = dateObj.getDate();
+        return {
+            name: `${item.day_name} ${dayNum}`,
+            value: item.count,
+        };
+    });
+
+    const ordersByDepartmentData = (stats.orders_by_department || []).map((item) => ({
+        name: item.department,
+        value: item.count,
     }));
 
     // Preparar datos para businesses (solo super admin)
@@ -506,6 +690,13 @@ export default function Dashboard() {
         const s: any = stats as any;
         if (typeof s.orders_today === 'number') return s.orders_today;
         if (typeof s.today_orders === 'number') return s.today_orders;
+        // Obtener ordenes de hoy desde shipments_by_day_of_week (el último día, que es hoy o domingo)
+        if (Array.isArray(s.shipments_by_day_of_week) && s.shipments_by_day_of_week.length > 0) {
+            const today = new Date();
+            const todayStr = today.toISOString().split('T')[0];
+            const todayData = s.shipments_by_day_of_week.find((d: any) => d.date === todayStr);
+            if (todayData) return todayData.count ?? 0;
+        }
         if (Array.isArray(s.orders_by_date) && s.orders_by_date.length > 0) {
             const last = s.orders_by_date[s.orders_by_date.length - 1];
             return last.count ?? last.order_count ?? last.value ?? 0;
@@ -635,10 +826,10 @@ export default function Dashboard() {
             )}
 
 
-            {/* Gráficas en 3 columnas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {/* Orders by Location - Gráfico de Barras (primary, wide) */}
-                <div className="bg-white rounded-2xl shadow-md p-6 xl:col-span-2">
+            {/* Primera fila: Mapa de Órdenes + Estado de Envíos */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Orders by Location - Mapa de Colombia */}
+                <div className="bg-white rounded-2xl shadow-md p-6 md:col-span-2">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <MapPinIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -647,13 +838,64 @@ export default function Dashboard() {
                         <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
                     </div>
                     {(locationData || []).length > 0 ? (
-                        <ColombiaMap data={locationData} height={500} />
+                        <ColombiaMap data={locationData} height={420} />
                     ) : (
                         <p className="text-sm text-gray-500">No hay datos disponibles</p>
                     )}
                 </div>
 
+                {/* Orders by Department - Horizontal Bar Chart */}
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center">
+                            <MapPinIcon className="w-6 h-6 text-purple-500 mr-3" />
+                            <div>
+                                <h2 className="text-xl font-bold text-gray-900">Órdenes por Departamento</h2>
+                                <p className="text-xs text-gray-500 mt-1">Total de órdenes agrupadas por región</p>
+                            </div>
+                        </div>
+                        <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                    </div>
+                    {ordersByDepartmentData.length > 0 ? (
+                        <div style={{ height: 420, overflowY: 'auto', paddingRight: 8, borderRadius: 8 }}>
+                            <ChartContainer config={{}} className="h-full w-full">
+                                <ResponsiveContainer width="100%" height={Math.max(420, ordersByDepartmentData.length * 40)}>
+                                    <BarChart data={ordersByDepartmentData} layout="vertical" margin={{ top: 10, right: 100, left: 10, bottom: 10 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} opacity={0.5} />
+                                        <XAxis type="number" tick={{ fontSize: 13, fill: '#6b7280', fontWeight: 500 }} />
+                                        <YAxis type="category" dataKey="name" width={0} tick={false} />
+                                        <Tooltip
+                                            cursor={{ fill: 'rgba(168, 85, 247, 0.1)' }}
+                                            content={<CustomTooltip />}
+                                            contentStyle={{ borderRadius: 8, border: '2px solid #a855f7' }}
+                                        />
+                                        <Bar
+                                            dataKey="value"
+                                            shape={(props: any) => <ChartCustomGradientBar {...props} fill={CHART_GRADIENTS.purple.colors[0]} />}
+                                            className="transition-all duration-300 hover:opacity-90"
+                                            radius={[0, 8, 8, 0]}
+                                        >
+                                            <LabelList
+                                                dataKey="name"
+                                                position="right"
+                                                fill="#6b7280"
+                                                fontSize={12}
+                                                fontWeight={500}
+                                                offset={8}
+                                            />
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            </ChartContainer>
+                        </div>
+                    ) : (
+                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                    )}
+                </div>
+            </div>
 
+            {/* Segunda fila: Envíos por Transportista + Envíos por Día */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Shipments by Carrier */}
                 <div className="bg-white rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
@@ -661,10 +903,96 @@ export default function Dashboard() {
                             <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
                             <h2 className="text-lg font-semibold text-gray-900">Envíos por Transportista</h2>
                         </div>
-                        <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                        <div className="flex items-center gap-2">
+                            {/* Toggle Hoy / Total */}
+                            <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-medium">
+                                <button
+                                    onClick={() => setCarrierFilter('total')}
+                                    className={`px-3 py-1.5 transition-colors ${
+                                        carrierFilter === 'total'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    Total
+                                </button>
+                                <button
+                                    onClick={() => setCarrierFilter('today')}
+                                    className={`px-3 py-1.5 transition-colors border-l border-gray-200 ${
+                                        carrierFilter === 'today'
+                                            ? 'bg-indigo-600 text-white'
+                                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    Hoy
+                                </button>
+                            </div>
+                            <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                        </div>
                     </div>
-                    {(stats.shipments_by_carrier || []).length > 0 ? (
-                        <ModernBarChart data={shipmentsByCarrierData} xKey="name" dataKey="value" height={340} gradientType="indigo" />
+
+                    {/* Mostrar aviso si "Hoy" no tiene datos */}
+                    {carrierFilter === 'today' && (stats.shipments_by_carrier_today || []).length === 0 ? (
+                        <p className="text-sm text-gray-500">Sin envíos hoy</p>
+                    ) : shipmentsByCarrierData.length > 0 ? (
+                        <CarrierBarChart data={shipmentsByCarrierData} height={340} />
+                    ) : (
+                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                    )}
+                </div>
+
+                {/* Shipments by Day of Week */}
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                            <CalendarDaysIcon className="w-5 h-5 text-gray-400 mr-2" />
+                            <div>
+                                <h2 className="text-lg font-semibold text-gray-900">Órdenes por Día</h2>
+                                <p className="text-xs text-gray-500 mt-1">
+                                    {weekStartDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} - {new Date(weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => {
+                                    const newDate = new Date(weekStartDate);
+                                    newDate.setDate(newDate.getDate() - 7);
+                                    setWeekStartDate(newDate);
+                                }}
+                                className="px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-600 text-sm"
+                                title="Semana anterior"
+                            >
+                                ←
+                            </button>
+                            <button
+                                onClick={() => {
+                                    const newDate = new Date(weekStartDate);
+                                    newDate.setDate(newDate.getDate() + 7);
+                                    setWeekStartDate(newDate);
+                                }}
+                                className="px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-600 text-sm"
+                                title="Semana siguiente"
+                            >
+                                →
+                            </button>
+                            <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                        </div>
+                    </div>
+
+                    {shipmentsByDayOfWeekData.length > 0 ? (
+                        <ChartContainer config={{}} className="h-full w-full">
+                            <ResponsiveContainer width="100%" height={340}>
+                                <BarChart data={shipmentsByDayOfWeekData} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" strokeOpacity={0.5} vertical={false} />
+                                    <XAxis dataKey="name" tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 12, fill: '#6b7280' }} axisLine={false} tickLine={false} />
+                                    <Tooltip cursor={false} content={<CustomTooltip />} />
+                                    <Bar dataKey="value" shape={(props: any) => <ChartCustomGradientBar {...props} fill={CHART_GRADIENTS.amber.colors[0]} />}
+                                        className="transition-all duration-300 hover:opacity-80" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </ChartContainer>
                     ) : (
                         <p className="text-sm text-gray-500">No hay datos disponibles</p>
                     )}
@@ -690,7 +1018,7 @@ export default function Dashboard() {
 
                 {/* Top Customers - Gráfico de Barras */}
                 {/* Top Customers - Tabla Interactiva */}
-                <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-2">
+                <div className="bg-white rounded-2xl shadow-md p-6 md:col-span-2 lg:col-span-2">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
                             <UserGroupIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -700,21 +1028,6 @@ export default function Dashboard() {
                     </div>
                     {(stats.top_customers || []).length > 0 ? (
                         <TopCustomersTable data={stats.top_customers} />
-                    ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
-                    )}
-                </div>
-
-                {/* Shipments by Status */}
-                <div className="bg-white rounded-2xl shadow-md p-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center">
-                            <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Estado de los Envios</h2>
-                        </div>
-                    </div>
-                    {(stats.shipments_by_status || []).length > 0 ? (
-                        <ModernPieChart data={shipmentsByStatusData} height={300} />
                     ) : (
                         <p className="text-sm text-gray-500">No hay datos disponibles</p>
                     )}
@@ -964,6 +1277,22 @@ export default function Dashboard() {
                     )}
                 </div>
             )}
+
+            {/* Shipments by Status - Estado de Envíos (final) */}
+            <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
+                        <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
+                        <h2 className="text-lg font-semibold text-gray-900">Estado de los Envíos</h2>
+                    </div>
+                    <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                </div>
+                {(stats.shipments_by_status || []).length > 0 ? (
+                    <ModernPieChart data={shipmentsByStatusData} height={300} />
+                ) : (
+                    <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                )}
+            </div>
         </div>
     );
 }

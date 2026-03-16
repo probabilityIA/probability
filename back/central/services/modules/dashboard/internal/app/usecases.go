@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/dashboard/internal/domain"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -9,7 +10,7 @@ import (
 
 // IUseCase define la interfaz del caso de uso
 type IUseCase interface {
-	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint) (*domain.DashboardStats, error)
+	GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint, weekStartDate *time.Time) (*domain.DashboardStats, error)
 }
 
 // UseCase implementa la lógica de negocio para el dashboard
@@ -27,7 +28,7 @@ func New(repo domain.IRepository, logger log.ILogger) IUseCase {
 }
 
 // GetDashboardStats obtiene todas las estadísticas del dashboard
-func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint) (*domain.DashboardStats, error) {
+func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, integrationID *uint, weekStartDate *time.Time) (*domain.DashboardStats, error) {
 	// Obtener total de órdenes
 	totalOrders, err := uc.repo.GetTotalOrders(ctx, businessID, integrationID)
 	if err != nil {
@@ -105,11 +106,35 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 		return nil, err
 	}
 
+	// Obtener envíos por transportista (hoy)
+	shipmentsByCarrierToday, err := uc.repo.GetShipmentsByCarrierToday(ctx, businessID, integrationID)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("Error al obtener envíos por transportista (hoy)")
+		// No es un error fatal: si falla, retornar slice vacío
+		shipmentsByCarrierToday = []domain.ShipmentsByCarrier{}
+	}
+
 	// Obtener envíos por almacén (top 10)
 	shipmentsByWarehouse, err := uc.repo.GetShipmentsByWarehouse(ctx, businessID, integrationID, 10)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener envíos por almacén")
 		return nil, err
+	}
+
+	// Obtener órdenes por día de la semana
+	shipmentsByDayOfWeek, err := uc.repo.GetShipmentsByDayOfWeek(ctx, businessID, integrationID, weekStartDate)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("Error al obtener órdenes por día de la semana")
+		// No es un error fatal: si falla, retornar slice vacío
+		shipmentsByDayOfWeek = []domain.ShipmentsByDayOfWeek{}
+	}
+
+	// Obtener órdenes por departamento (todas, sin límite)
+	ordersByDepartment, err := uc.repo.GetOrdersByDepartment(ctx, businessID, integrationID)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("Error al obtener órdenes por departamento")
+		// No es un error fatal: si falla, retornar slice vacío
+		ordersByDepartment = []domain.OrdersByDepartment{}
 	}
 
 	stats := &domain.DashboardStats{
@@ -124,7 +149,10 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 		ProductsByBrand:         productsByBrand,
 		ShipmentsByStatus:       shipmentsByStatus,
 		ShipmentsByCarrier:      shipmentsByCarrier,
+		ShipmentsByCarrierToday: shipmentsByCarrierToday,
 		ShipmentsByWarehouse:    shipmentsByWarehouse,
+		ShipmentsByDayOfWeek:    shipmentsByDayOfWeek,
+		OrdersByDepartment:      ordersByDepartment,
 	}
 
 	// Obtener estadísticas de businesses solo si NO hay filtro de business aplicado (businessID == nil)

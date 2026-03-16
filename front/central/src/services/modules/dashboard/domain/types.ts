@@ -19,7 +19,10 @@ export interface DashboardStats {
     // Nuevas: Envíos
     shipments_by_status: ShipmentsByStatus[];
     shipments_by_carrier: ShipmentsByCarrier[];
+    shipments_by_carrier_today: ShipmentsByCarrier[];
     shipments_by_warehouse: ShipmentsByWarehouse[];
+    shipments_by_day_of_week: ShipmentsByDayOfWeek[];
+    orders_by_department: OrdersByDepartment[];
 
     // Nuevas: Businesses (solo si es super admin)
     orders_by_business?: OrdersByBusiness[];
@@ -89,6 +92,17 @@ export interface ShipmentsByCarrier {
 export interface ShipmentsByWarehouse {
     warehouse_name: string;
     warehouse_id?: number;
+    count: number;
+}
+
+export interface ShipmentsByDayOfWeek {
+    date: string;       // YYYY-MM-DD
+    day_name: string;   // Lunes, Martes, etc
+    count: number;
+}
+
+export interface OrdersByDepartment {
+    department: string;
     count: number;
 }
 
