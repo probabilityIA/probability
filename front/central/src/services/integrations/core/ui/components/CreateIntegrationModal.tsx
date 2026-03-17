@@ -421,7 +421,7 @@ function WhatsAppActivateForm({
         try {
             const result = await createIntegrationAction({
                 name: 'WhatsApp',
-                code: 'whatsapp',
+                code: `whatsapp_${Date.now()}`,
                 integration_type_id: integrationType.id,
                 category: integrationType.category?.code || integrationType.integration_category?.code || 'messaging',
                 business_id: isSuperAdmin ? selectedBusinessId : null,
