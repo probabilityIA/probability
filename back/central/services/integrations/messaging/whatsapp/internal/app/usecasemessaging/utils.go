@@ -6,6 +6,40 @@ import (
 	"strings"
 )
 
+// NormalizePhoneNumber normaliza un número de teléfono al formato internacional E.164
+// que requiere la API de Meta: solo dígitos, con código de país, sin + ni espacios.
+// Reglas de normalización:
+//   - Remueve espacios, guiones, paréntesis y +
+//   - Números colombianos de 10 dígitos (empiezan con 3): agrega prefijo 57
+//   - Números con prefijo 00: reemplaza por nada (ya tiene código de país)
+//   - Números con prefijo +: remueve el +
+func NormalizePhoneNumber(phone string) string {
+	if phone == "" {
+		return ""
+	}
+
+	// Limpiar espacios
+	clean := strings.TrimSpace(phone)
+
+	// Remover + al inicio
+	clean = strings.TrimPrefix(clean, "+")
+
+	// Remover todos los caracteres no numéricos
+	clean = regexp.MustCompile(`\D`).ReplaceAllString(clean, "")
+
+	// Remover prefijo 00 internacional
+	if strings.HasPrefix(clean, "00") {
+		clean = clean[2:]
+	}
+
+	// Si tiene 10 dígitos y empieza con 3 → número colombiano sin código de país
+	if len(clean) == 10 && strings.HasPrefix(clean, "3") {
+		clean = "57" + clean
+	}
+
+	return clean
+}
+
 // ValidatePhoneNumber valida que el número de teléfono tenga el formato correcto
 // Acepta formatos: +[código_país][número], 00[código_país][número], [código_país][número]
 // Valida que tenga un código de país válido y formato internacional

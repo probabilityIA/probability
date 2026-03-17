@@ -41,7 +41,8 @@ func (u *usecases) SendTemplate(
 		return "", err
 	}
 
-	// 3. Validar número de teléfono
+	// 3. Normalizar y validar número de teléfono
+	phoneNumber = NormalizePhoneNumber(phoneNumber)
 	if err := ValidatePhoneNumber(phoneNumber); err != nil {
 		u.log.Error(ctx).Err(err).
 			Str("phone_number", phoneNumber).
@@ -157,6 +158,9 @@ func (u *usecases) SendTemplateWithConversation(
 	if err := entities.ValidateTemplateVariables(templateName, variables); err != nil {
 		return "", err
 	}
+
+	// Normalizar número de teléfono
+	phoneNumber = NormalizePhoneNumber(phoneNumber)
 
 	// 2. Obtener conversación existente desde cache
 	conversation, err := u.conversationCache.GetByID(ctx, conversationID)

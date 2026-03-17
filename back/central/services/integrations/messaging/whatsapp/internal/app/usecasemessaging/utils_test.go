@@ -180,6 +180,37 @@ func TestGetCountryCodeLength(t *testing.T) {
 	}
 }
 
+func TestNormalizePhoneNumber(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    string
+		expected string
+	}{
+		{"empty", "", ""},
+		{"colombian 10 digits", "3224409631", "573224409631"},
+		{"colombian with spaces", "322 440 9631", "573224409631"},
+		{"colombian with +57", "+573224409631", "573224409631"},
+		{"colombian with 57 no plus", "573224409631", "573224409631"},
+		{"colombian with 0057", "00573224409631", "573224409631"},
+		{"colombian with leading space", " 3224409631", "573224409631"},
+		{"colombian with dashes", "322-440-9631", "573224409631"},
+		{"colombian cell starting with 30", "3046332750", "573046332750"},
+		{"colombian cell starting with 31", "3112489072", "573112489072"},
+		{"US number with plus", "+14155552671", "14155552671"},
+		{"already international 57", "573046332750", "573046332750"},
+		{"number not starting with 3 not normalized", "1234567890", "1234567890"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := NormalizePhoneNumber(tt.input)
+			if got != tt.expected {
+				t.Errorf("NormalizePhoneNumber(%q) = %q, want %q", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
 // containsSubstring es un helper para verificar subcadenas en mensajes de error
 func containsSubstring(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || searchSubstring(s, substr))
