@@ -283,7 +283,7 @@ func (u *usecases) getOrCreateConversation(
 		PhoneNumber:  phoneNumber,
 		OrderNumber:  orderNumber,
 		BusinessID:   businessID,
-		CurrentState: entities.StateStart,
+		CurrentState: entities.StateAwaitingConfirmation,
 		Metadata:     make(map[string]interface{}),
 		CreatedAt:    time.Now(),
 		UpdatedAt:    time.Now(),

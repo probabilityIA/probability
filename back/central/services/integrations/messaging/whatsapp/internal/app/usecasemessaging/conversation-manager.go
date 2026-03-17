@@ -83,16 +83,25 @@ func (u *usecases) TransitionState(
 func (u *usecases) handleStartState(ctx context.Context, conversation *entities.Conversation) *dtos.StateTransitionDTO {
 	// Este estado se usa cuando se crea una conversación nueva
 	// Normalmente se envía la plantilla inicial desde SendTemplate directamente
+	getMetaStr := func(key string) string {
+		if conversation.Metadata == nil {
+			return ""
+		}
+		if v, ok := conversation.Metadata[key].(string); ok {
+			return v
+		}
+		return ""
+	}
+
 	return &dtos.StateTransitionDTO{
 		NextState:    entities.StateAwaitingConfirmation,
 		TemplateName: "confirmacion_pedido_contraentrega",
 		Variables: map[string]string{
-			// Las variables deben venir del contexto de creación
-			"1": conversation.Metadata["nombre"].(string),
-			"2": conversation.Metadata["tienda"].(string),
+			"1": getMetaStr("nombre"),
+			"2": getMetaStr("tienda"),
 			"3": conversation.OrderNumber,
-			"4": conversation.Metadata["direccion"].(string),
-			"5": conversation.Metadata["productos"].(string),
+			"4": getMetaStr("direccion"),
+			"5": getMetaStr("productos"),
 		},
 		PublishEvent: false,
 	}
