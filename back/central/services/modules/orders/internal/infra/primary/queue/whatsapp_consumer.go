@@ -114,13 +114,15 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		return err
 	}
 
+	ctx := context.Background()
+
 	c.log.Info().
 		Str("order_number", event.OrderNumber).
 		Str("phone_number", event.PhoneNumber).
 		Msg("Processing order confirmation from WhatsApp")
 
 	// Buscar orden por order_number
-	order, err := c.repository.GetOrderByOrderNumber(context.Background(), event.OrderNumber)
+	order, err := c.repository.GetOrderByOrderNumber(ctx, event.OrderNumber)
 	if err != nil {
 		c.log.Error().
 			Err(err).
@@ -129,12 +131,26 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		return err
 	}
 
+	// Guardar estado anterior para el evento de cambio
+	previousStatus := "pending"
+	if order.OrderStatus != nil {
+		previousStatus = order.OrderStatus.Code
+	}
+
 	// Actualizar IsConfirmed = true
 	confirmed := true
 	order.IsConfirmed = &confirmed
 
+	// Cambiar estado a "processing" (confirmado = en procesamiento)
+	processingStatusID, err := c.repository.GetOrderStatusIDByCode(ctx, "processing")
+	if err != nil {
+		c.log.Warn().Err(err).Msg("Error getting processing status ID, skipping status change")
+	} else if processingStatusID != nil {
+		order.StatusID = processingStatusID
+	}
+
 	// Guardar cambios
-	if err := c.repository.UpdateOrder(context.Background(), order); err != nil {
+	if err := c.repository.UpdateOrder(ctx, order); err != nil {
 		c.log.Error().
 			Err(err).
 			Str("order_id", order.ID).
@@ -143,10 +159,22 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		return err
 	}
 
+	// Publicar evento al fanout → SSE + otros consumers
+	if c.rabbitPublisher != nil {
+		go func() {
+			bgCtx := context.Background()
+			if err := c.rabbitPublisher.PublishOrderStatusChanged(bgCtx, order, previousStatus, "processing"); err != nil {
+				c.log.Error().Err(err).Msg("Error publishing confirmation event to fanout")
+			}
+		}()
+	}
+
 	c.log.Info().
 		Str("order_id", order.ID).
 		Str("order_number", event.OrderNumber).
-		Msg("Order confirmed successfully")
+		Str("previous_status", previousStatus).
+		Str("new_status", "processing").
+		Msg("Order confirmed successfully via WhatsApp")
 
 	return nil
 }
