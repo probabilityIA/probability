@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-export const dynamic = "force-dynamic";
 import { Inter, Roboto_Mono } from "next/font/google";
 import Script from "next/script";
 import { FooterWrapper } from "./footer-wrapper";
@@ -26,8 +25,7 @@ async function getShopifyConfig() {
   try {
     const baseUrl = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
     const res = await fetch(`${baseUrl}/integrations/shopify/config`, {
-      cache: 'no-store',
-      next: { tags: ['shopify-config'] }
+      next: { revalidate: 3600, tags: ['shopify-config'] }
     });
 
     if (!res.ok) {
