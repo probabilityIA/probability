@@ -3,6 +3,7 @@ package whatsapp_conversation_consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/whatsapp_conversation_consumer/request"
@@ -14,6 +15,10 @@ func (c *ConversationConsumer) Start(ctx context.Context) error {
 	c.logger.Info(ctx).
 		Str("queue", rabbitmq.QueueWhatsAppConversationEvents).
 		Msg("Iniciando consumer de WhatsApp conversation events")
+
+	if err := c.rabbitMQ.DeclareQueue(rabbitmq.QueueWhatsAppConversationEvents, true); err != nil {
+		return fmt.Errorf("failed to declare queue %s: %w", rabbitmq.QueueWhatsAppConversationEvents, err)
+	}
 
 	return c.rabbitMQ.Consume(ctx, rabbitmq.QueueWhatsAppConversationEvents, c.handleMessage)
 }

@@ -3,6 +3,7 @@ package whatsapp_messagelog_consumer
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/whatsapp_messagelog_consumer/request"
@@ -14,6 +15,10 @@ func (c *MessageLogConsumer) Start(ctx context.Context) error {
 	c.logger.Info(ctx).
 		Str("queue", rabbitmq.QueueWhatsAppMessageLogEvents).
 		Msg("Iniciando consumer de WhatsApp message log events")
+
+	if err := c.rabbitMQ.DeclareQueue(rabbitmq.QueueWhatsAppMessageLogEvents, true); err != nil {
+		return fmt.Errorf("failed to declare queue %s: %w", rabbitmq.QueueWhatsAppMessageLogEvents, err)
+	}
 
 	return c.rabbitMQ.Consume(ctx, rabbitmq.QueueWhatsAppMessageLogEvents, c.handleMessage)
 }
