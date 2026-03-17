@@ -121,12 +121,13 @@ func (c *WhatsAppConsumer) handleConfirmed(msg []byte) error {
 		Str("phone_number", event.PhoneNumber).
 		Msg("Processing order confirmation from WhatsApp")
 
-	// Buscar orden por order_number
-	order, err := c.repository.GetOrderByOrderNumber(ctx, event.OrderNumber)
+	// Buscar orden por order_number + business_id (evita actualizar orden de otro negocio)
+	order, err := c.repository.GetOrderByOrderNumberAndBusiness(ctx, event.OrderNumber, event.BusinessID)
 	if err != nil {
 		c.log.Error().
 			Err(err).
 			Str("order_number", event.OrderNumber).
+			Uint("business_id", event.BusinessID).
 			Msg("Error getting order for confirmation")
 		return err
 	}
@@ -192,8 +193,8 @@ func (c *WhatsAppConsumer) handleCancelled(msg []byte) error {
 		Str("reason", event.CancellationReason).
 		Msg("Processing order cancellation from WhatsApp")
 
-	// Buscar orden por order_number
-	order, err := c.repository.GetOrderByOrderNumber(context.Background(), event.OrderNumber)
+	// Buscar orden por order_number + business_id
+	order, err := c.repository.GetOrderByOrderNumberAndBusiness(context.Background(), event.OrderNumber, event.BusinessID)
 	if err != nil {
 		c.log.Error().
 			Err(err).
@@ -254,8 +255,8 @@ func (c *WhatsAppConsumer) handleNovelty(msg []byte) error {
 		Str("novelty_type", event.NoveltyType).
 		Msg("Processing order novelty from WhatsApp")
 
-	// Buscar orden por order_number
-	order, err := c.repository.GetOrderByOrderNumber(context.Background(), event.OrderNumber)
+	// Buscar orden por order_number + business_id
+	order, err := c.repository.GetOrderByOrderNumberAndBusiness(context.Background(), event.OrderNumber, event.BusinessID)
 	if err != nil {
 		c.log.Error().
 			Err(err).

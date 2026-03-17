@@ -45,6 +45,14 @@ func (m *RepositoryMock) GetOrderByOrderNumber(ctx context.Context, orderNumber 
 	return args.Get(0).(*entities.ProbabilityOrder), args.Error(1)
 }
 
+func (m *RepositoryMock) GetOrderByOrderNumberAndBusiness(ctx context.Context, orderNumber string, businessID uint) (*entities.ProbabilityOrder, error) {
+	args := m.Called(ctx, orderNumber, businessID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*entities.ProbabilityOrder), args.Error(1)
+}
+
 func (m *RepositoryMock) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error) {
 	args := m.Called(ctx, page, pageSize, filters)
 	if args.Get(0) == nil {

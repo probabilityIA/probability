@@ -20,6 +20,7 @@ type IRepository interface {
 	GetOrderByID(ctx context.Context, id string) (*entities.ProbabilityOrder, error)
 	GetOrderByInternalNumber(ctx context.Context, internalNumber string) (*entities.ProbabilityOrder, error)
 	GetOrderByOrderNumber(ctx context.Context, orderNumber string) (*entities.ProbabilityOrder, error)
+	GetOrderByOrderNumberAndBusiness(ctx context.Context, orderNumber string, businessID uint) (*entities.ProbabilityOrder, error)
 	ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error)
 	UpdateOrder(ctx context.Context, order *entities.ProbabilityOrder) error
 	DeleteOrder(ctx context.Context, id string) error

@@ -69,6 +69,9 @@ func (m *mockRepository) GetOrderByOrderNumber(ctx context.Context, orderNumber 
 	}
 	return nil, nil
 }
+func (m *mockRepository) GetOrderByOrderNumberAndBusiness(ctx context.Context, orderNumber string, businessID uint) (*entities.ProbabilityOrder, error) {
+	return m.GetOrderByOrderNumber(ctx, orderNumber)
+}
 func (m *mockRepository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error) {
 	if m.ListOrdersFn != nil {
 		return m.ListOrdersFn(ctx, page, pageSize, filters)

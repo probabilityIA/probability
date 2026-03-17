@@ -162,6 +162,35 @@ func (r *Repository) GetOrderByOrderNumber(ctx context.Context, orderNumber stri
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
+// GetOrderByOrderNumberAndBusiness obtiene una orden por order_number + business_id
+func (r *Repository) GetOrderByOrderNumberAndBusiness(ctx context.Context, orderNumber string, businessID uint) (*entities.ProbabilityOrder, error) {
+	var order models.Order
+	err := r.db.Conn(ctx).
+		Preload("Business").
+		Preload("Integration.IntegrationType").
+		Preload("PaymentMethod").
+		Preload("OrderStatus").
+		Preload("PaymentStatus").
+		Preload("FulfillmentStatus").
+		Preload("OrderItems.Product").
+		Preload("ChannelMetadata").
+		Preload("Shipments", func(db *gorm.DB) *gorm.DB {
+			return db.Order("created_at DESC").Limit(1)
+		}).
+		Where("order_number = ? AND business_id = ?", orderNumber, businessID).
+		First(&order).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("order not found")
+		}
+		return nil, err
+	}
+
+	r.resolveOrderStatusByCodeSingle(ctx, &order)
+	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
+}
+
 // ListOrders obtiene una lista paginada de órdenes con filtros
 func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) ([]entities.ProbabilityOrder, int64, error) {
 	var dbOrders []models.Order
