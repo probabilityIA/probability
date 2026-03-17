@@ -127,6 +127,18 @@ func (uc *useCase) SyncByIntegration(ctx context.Context, dto dtos.SyncNotificat
 		return nil, err
 	}
 
+	// 9. Re-cachear configs activas (el invalidate solo borra, no reconstruye)
+	for i := range updated {
+		if updated[i].Enabled {
+			if cacheErr := uc.cacheManager.CacheConfig(ctx, &updated[i]); cacheErr != nil {
+				uc.logger.Warn().
+					Err(cacheErr).
+					Uint("config_id", updated[i].ID).
+					Msg("⚠️ Error re-caching config after sync")
+			}
+		}
+	}
+
 	responseDTOs := mappers.ToResponseDTOList(updated)
 
 	response := &dtos.SyncNotificationConfigsResponseDTO{
