@@ -628,7 +628,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     >
                                         {isSaving ? 'Guardando...' : 'Guardar'}
                                     </button>
-                                    {hasWhatsApp && order.is_confirmed === null && (
+                                    {hasWhatsApp && order.is_confirmed !== true && (
                                         <button
                                             onClick={handleWhatsAppConfirmation}
                                             disabled={isSendingWhatsApp || whatsAppSent}
