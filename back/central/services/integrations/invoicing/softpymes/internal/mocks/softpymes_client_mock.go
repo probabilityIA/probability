@@ -60,8 +60,8 @@ func (m *SoftpymesClientMock) ListDocuments(ctx context.Context, apiKey, apiSecr
 	return nil, nil
 }
 
-func (m *SoftpymesClientMock) SendCashReceiptFromDocument(ctx context.Context, apiKey, apiSecret, referer, baseURL string, fullDocument map[string]interface{}, config map[string]interface{}) error {
-	return nil
+func (m *SoftpymesClientMock) SendCashReceiptFromDocument(ctx context.Context, apiKey, apiSecret, referer, baseURL string, fullDocument map[string]interface{}, config map[string]interface{}) (map[string]interface{}, error) {
+	return nil, nil
 }
 
 func (m *SoftpymesClientMock) ListItems(ctx context.Context, apiKey, apiSecret, referer, baseURL string, page, pageSize int) ([]ports.ListedItem, error) {

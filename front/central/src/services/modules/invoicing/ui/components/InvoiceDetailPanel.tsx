@@ -493,6 +493,35 @@ export function InvoiceDetailModal({
                       </div>
                     )}
 
+                    {/* Recibo de Caja */}
+                    {invoice.provider_response.cash_receipt && (
+                      <div className={`p-3 rounded ${invoice.provider_response.cash_receipt.status === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
+                        <p className={`text-xs uppercase tracking-wide font-medium mb-2 ${invoice.provider_response.cash_receipt.status === 'success' ? 'text-green-600' : 'text-red-600'}`}>
+                          Recibo de Caja {invoice.provider_response.cash_receipt.status === 'success' ? '— Registrado' : '— Error'}
+                        </p>
+                        {invoice.provider_response.cash_receipt.status === 'success' ? (
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div>
+                              <span className="text-gray-500">Medio de pago: </span>
+                              <span className="font-medium text-gray-700">{invoice.provider_response.cash_receipt.payment_type}</span>
+                            </div>
+                            <div>
+                              <span className="text-gray-500">Monto: </span>
+                              <span className="font-medium text-gray-700">${Number(invoice.provider_response.cash_receipt.amount).toLocaleString()}</span>
+                            </div>
+                            {invoice.provider_response.cash_receipt.message && (
+                              <div className="col-span-2">
+                                <span className="text-gray-500">Respuesta: </span>
+                                <span className="font-medium text-gray-700">{invoice.provider_response.cash_receipt.message}</span>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-red-700">{invoice.provider_response.cash_receipt.error}</p>
+                        )}
+                      </div>
+                    )}
+
                     {/* JSON completo (colapsado) */}
                     <details className="mt-3">
                       <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-1">

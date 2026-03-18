@@ -21,11 +21,11 @@ func (c *Client) SendCashReceiptFromDocument(
 	apiKey, apiSecret, referer, baseURL string,
 	fullDocument map[string]interface{},
 	config map[string]interface{},
-) error {
+) (map[string]interface{}, error) {
 	// 1. Authenticate
 	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, baseURL)
 	if err != nil {
-		return fmt.Errorf("cash receipt auth failed: %w", err)
+		return nil, fmt.Errorf("cash receipt auth failed: %w", err)
 	}
 
 	// 2. Extract fields from fullDocument
@@ -66,10 +66,10 @@ func (c *Client) SendCashReceiptFromDocument(
 	}
 
 	if documentNumber == "" {
-		return fmt.Errorf("cash receipt: documentNumber is empty in full document")
+		return nil, fmt.Errorf("cash receipt: documentNumber is empty in full document")
 	}
 	if amount <= 0 {
-		return fmt.Errorf("cash receipt: total is 0 or negative in full document")
+		return nil, fmt.Errorf("cash receipt: total is 0 or negative in full document")
 	}
 
 	// 3. Read payment config
@@ -120,7 +120,7 @@ func (c *Client) SendCashReceiptFromDocument(
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Cash receipt request failed")
-		return fmt.Errorf("cash receipt request failed: %w", err)
+		return nil, fmt.Errorf("cash receipt request failed: %w", err)
 	}
 
 	if resp.IsError() {
@@ -128,7 +128,7 @@ func (c *Client) SendCashReceiptFromDocument(
 			Int("status", resp.StatusCode()).
 			Str("response", string(resp.Body())).
 			Msg("Cash receipt creation failed")
-		return fmt.Errorf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
+		return nil, fmt.Errorf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
 	// Softpymes puede devolver:
@@ -143,7 +143,7 @@ func (c *Client) SendCashReceiptFromDocument(
 			Str("error", errMsg).
 			Str("raw_response", string(respBody)).
 			Msg("Cash receipt API returned error")
-		return fmt.Errorf("cash receipt error: %s", errMsg)
+		return nil, fmt.Errorf("cash receipt error: %s", errMsg)
 	}
 
 	c.log.Info(ctx).
@@ -151,7 +151,19 @@ func (c *Client) SendCashReceiptFromDocument(
 		Str("message", message).
 		Msg("Cash receipt sent successfully - payment registered in Softpymes")
 
-	return nil
+	receiptData := map[string]interface{}{
+		"status":          "success",
+		"message":         message,
+		"payment_type":    paymentType,
+		"amount":          amount,
+		"document_number": docNumber,
+		"prefix":          docPrefix,
+		"customer_nit":    customerNit,
+		"document_date":   documentDate,
+		"raw_response":    string(respBody),
+	}
+
+	return receiptData, nil
 }
 
 // buildPaymentBody construye el objeto de pago según el tipo.

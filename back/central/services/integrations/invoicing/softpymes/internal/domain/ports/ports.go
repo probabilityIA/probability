@@ -46,7 +46,7 @@ type ISoftpymesClient interface {
 	// SendCashReceiptFromDocument envía un recibo de caja usando datos del documento completo
 	// de Softpymes (GetDocumentByNumber) y la configuración de pago de la integración.
 	// Esto registra el pago y mueve la cuenta contable de "cuentas por cobrar" al medio de pago.
-	SendCashReceiptFromDocument(ctx context.Context, apiKey, apiSecret, referer, baseURL string, fullDocument map[string]interface{}, config map[string]interface{}) error
+	SendCashReceiptFromDocument(ctx context.Context, apiKey, apiSecret, referer, baseURL string, fullDocument map[string]interface{}, config map[string]interface{}) (map[string]interface{}, error)
 
 	// ListItems lista todos los ítems del catálogo de Softpymes con paginación.
 	// Endpoint: GET /app/integration/items?page=X&pageSize=Y
