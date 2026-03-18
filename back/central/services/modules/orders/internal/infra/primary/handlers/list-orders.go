@@ -20,6 +20,7 @@ import (
 // @Param        integration_id    query    int     false  "Filtrar por ID de integración"
 // @Param        integration_type  query    string  false  "Filtrar por tipo de integración"
 // @Param        status            query    string  false  "Filtrar por estado"
+// @Param        customer_name     query    string  false  "Filtrar por nombre del cliente"
 // @Param        customer_email    query    string  false  "Filtrar por email del cliente"
 // @Param        customer_phone    query    string  false  "Filtrar por teléfono del cliente"
 // @Param        order_number      query    string  false  "Filtrar por número de orden"
@@ -70,6 +71,10 @@ func (h *Handlers) ListOrders(c *gin.Context) {
 	// Mantener compatibilidad con filtro antiguo por status (string) si se necesita
 	if status := c.Query("status"); status != "" {
 		filters["status"] = status
+	}
+
+	if customerName := c.Query("customer_name"); customerName != "" {
+		filters["customer_name"] = customerName
 	}
 
 	if customerEmail := c.Query("customer_email"); customerEmail != "" {

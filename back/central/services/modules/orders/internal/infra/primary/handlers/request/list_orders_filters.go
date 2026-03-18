@@ -13,7 +13,9 @@ type ListOrdersFilters struct {
 	IntegrationType *string `json:"integration_type" form:"integration_type"`
 	Platform        *string `json:"platform" form:"platform"`
 	Status          *string `json:"status" form:"status"`
+	CustomerName    *string `json:"customer_name" form:"customer_name"`
 	CustomerEmail   *string `json:"customer_email" form:"customer_email"`
+	CustomerPhone   *string `json:"customer_phone" form:"customer_phone"`
 	OrderNumber     *string `json:"order_number" form:"order_number"`
 	ExternalID      *string `json:"external_id" form:"external_id"`
 

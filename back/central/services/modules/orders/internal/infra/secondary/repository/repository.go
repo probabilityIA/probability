@@ -207,6 +207,10 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		query = query.Where("integration_id = ?", integrationID)
 	}
 
+	if customerName, ok := filters["customer_name"].(string); ok && customerName != "" {
+		query = query.Where("customer_name ILIKE ?", "%"+customerName+"%")
+	}
+
 	if customerEmail, ok := filters["customer_email"].(string); ok && customerEmail != "" {
 		query = query.Where("customer_email ILIKE ?", "%"+customerEmail+"%")
 	}

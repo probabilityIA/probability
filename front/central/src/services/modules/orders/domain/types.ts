@@ -201,6 +201,7 @@ export interface GetOrdersParams {
     integration_id?: number;
     integration_type?: string;
     status?: string;
+    customer_name?: string;
     customer_email?: string;
     customer_phone?: string;
     order_number?: string;

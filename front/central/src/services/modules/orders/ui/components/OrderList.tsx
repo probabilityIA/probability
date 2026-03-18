@@ -515,6 +515,24 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             placeholder: 'Buscar por número interno...',
         },
         {
+            key: 'customer_name',
+            label: 'Nombre del cliente',
+            type: 'text',
+            placeholder: 'Buscar por nombre...',
+        },
+        {
+            key: 'customer_email',
+            label: 'Correo del cliente',
+            type: 'text',
+            placeholder: 'Buscar por correo...',
+        },
+        {
+            key: 'customer_phone',
+            label: 'Teléfono del cliente',
+            type: 'text',
+            placeholder: 'Buscar por teléfono...',
+        },
+        {
             key: 'status',
             label: 'Estado',
             type: 'select',
@@ -609,6 +627,32 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             });
         }
 
+        if (filters.customer_name) {
+            active.push({
+                key: 'customer_name',
+                label: 'Nombre del cliente',
+                value: filters.customer_name,
+                type: 'text',
+            });
+        }
+
+        if (filters.customer_email) {
+            active.push({
+                key: 'customer_email',
+                label: 'Correo del cliente',
+                value: filters.customer_email,
+                type: 'text',
+            });
+        }
+
+        if (filters.customer_phone) {
+            active.push({
+                key: 'customer_phone',
+                label: 'Teléfono del cliente',
+                value: filters.customer_phone,
+                type: 'text',
+            });
+        }
 
         if (filters.status) {
             // Buscar el label del estado seleccionado
