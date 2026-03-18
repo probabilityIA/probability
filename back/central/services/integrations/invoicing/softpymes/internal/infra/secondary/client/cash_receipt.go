@@ -54,11 +54,14 @@ func (c *Client) SendCashReceiptFromDocument(
 			branchCode = bc
 		}
 	}
+	// Primero intentar leer de config si no vino del documento
 	if customerBranchCode == "" || customerBranchCode == "000" {
-		// Softpymes cash_receipt no acepta "000" (da 500). Usar "001" como default.
-		// "000" es el valor que Softpymes asigna automáticamente al crear clientes
-		// pero para recibos de caja requiere "001".
-		customerBranchCode = "001"
+		if cb, ok := config["customer_branch_code"].(string); ok && cb != "" && cb != "000" {
+			customerBranchCode = cb
+		} else {
+			// Softpymes cash_receipt no acepta "000" (da 500), default a "001"
+			customerBranchCode = "001"
+		}
 	}
 	if documentDate == "" {
 		loc, _ := time.LoadLocation("America/Bogota")
