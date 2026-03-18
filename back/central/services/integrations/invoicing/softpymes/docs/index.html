@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Softpymes Integration — Arquitectura</title>
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22252f;
+      --border: #2e3140;
+      --text: #e1e4eb;
+      --text-muted: #8b8fa3;
+      --accent: #7c5cfc;
+      --accent-light: #a78bfa;
+      --green: #34d399;
+      --green-dim: #065f46;
+      --orange: #fb923c;
+      --orange-dim: #7c2d12;
+      --red: #f87171;
+      --red-dim: #7f1d1d;
+      --blue: #60a5fa;
+      --blue-dim: #1e3a5f;
+      --cyan: #22d3ee;
+      --yellow: #fbbf24;
+      --pink: #f472b6;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      padding: 2rem;
+    }
+
+    .container { max-width: 1400px; margin: 0 auto; }
+
+    /* Header */
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 2rem;
+      background: linear-gradient(135deg, #1a1d27 0%, #22252f 100%);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--accent-light), var(--cyan));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .header p { color: var(--text-muted); font-size: 0.95rem; }
+    .badge-row { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.25rem 0.75rem; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 600;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .badge .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+    }
+
+    /* Sections */
+    .section {
+      margin-bottom: 2.5rem;
+    }
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-title .icon {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Flow diagram */
+    .flow {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      align-items: center;
+      padding: 1.5rem;
+    }
+    .flow-node {
+      padding: 0.75rem 1.5rem;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: center;
+      min-width: 280px;
+      position: relative;
+    }
+    .flow-arrow {
+      width: 2px;
+      height: 28px;
+      background: var(--border);
+      position: relative;
+    }
+    .flow-arrow::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--border);
+    }
+    .flow-arrow-label {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      text-align: center;
+      padding: 2px 0;
+    }
+    .flow-node.module   { background: var(--blue-dim); border: 1px solid var(--blue); color: var(--blue); }
+    .flow-node.queue    { background: var(--orange-dim); border: 1px solid var(--orange); color: var(--orange); }
+    .flow-node.consumer { background: #1a1a2e; border: 1px solid var(--accent); color: var(--accent-light); }
+    .flow-node.http     { background: var(--green-dim); border: 1px solid var(--green); color: var(--green); }
+    .flow-node.decision { background: var(--surface2); border: 1px solid var(--yellow); color: var(--yellow); transform: rotate(0deg); }
+    .flow-node.error    { background: var(--red-dim); border: 1px solid var(--red); color: var(--red); }
+
+    /* Operation grid */
+    .op-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1rem;
+    }
+    .op-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      transition: border-color 0.2s;
+    }
+    .op-card:hover { border-color: var(--accent); }
+    .op-card .op-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .op-card .op-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.75rem;
+    }
+    .op-card .op-detail {
+      font-size: 0.75rem;
+      padding: 0.35rem 0;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+    .op-card .op-detail .label { color: var(--text-muted); }
+
+    /* Endpoint table */
+    .endpoint-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .endpoint-table th {
+      text-align: left;
+      padding: 0.75rem 1rem;
+      background: var(--surface2);
+      border-bottom: 2px solid var(--border);
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .endpoint-table td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .endpoint-table tr:hover td { background: var(--surface2); }
+    .method {
+      display: inline-block;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      font-family: monospace;
+    }
+    .method.post { background: var(--green-dim); color: var(--green); }
+    .method.get  { background: var(--blue-dim); color: var(--blue); }
+    .endpoint-path {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.8rem;
+      color: var(--cyan);
+    }
+
+    /* Queue diagram */
+    .queue-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 2rem 1rem;
+      flex-wrap: wrap;
+    }
+    .qf-box {
+      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      text-align: center;
+      min-width: 180px;
+    }
+    .qf-box .qf-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+    }
+    .qf-box .qf-name {
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+    .qf-arrow {
+      font-size: 1.5rem;
+      color: var(--text-muted);
+      padding: 0 0.5rem;
+    }
+
+    /* Code block */
+    .code-block {
+      background: #0d0f14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.78rem;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: var(--text-muted);
+    }
+    .code-block .kw { color: var(--accent-light); }
+    .code-block .str { color: var(--green); }
+    .code-block .cmt { color: #4a4e5a; font-style: italic; }
+    .code-block .fn { color: var(--cyan); }
+    .code-block .type { color: var(--yellow); }
+
+    /* Tree */
+    .tree {
+      font-family: 'JetBrains Mono', 'Fira Code', monospace;
+      font-size: 0.78rem;
+      line-height: 1.8;
+      color: var(--text-muted);
+      padding: 1rem 1.25rem;
+      background: #0d0f14;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .tree .dir { color: var(--accent-light); font-weight: 600; }
+    .tree .file { color: var(--text); }
+    .tree .desc { color: #4a4e5a; }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1rem;
+    }
+    .tab {
+      padding: 0.6rem 1.25rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.2s;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active {
+      color: var(--accent-light);
+      border-bottom-color: var(--accent);
+    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Payment types */
+    .payment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 0.75rem;
+    }
+    .payment-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+    .payment-card .pay-code {
+      font-family: monospace;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+    }
+    .payment-card .pay-name {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+    .payment-card .pay-fields {
+      font-size: 0.72rem;
+      color: var(--cyan);
+      font-family: monospace;
+    }
+
+    /* Horizontal flow */
+    .h-flow {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      overflow-x: auto;
+      padding: 1rem 0;
+    }
+    .h-flow-step {
+      flex: 0 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 160px;
+    }
+    .h-flow-step .step-num {
+      width: 28px; height: 28px;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 0.5rem;
+    }
+    .h-flow-step .step-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+    .h-flow-step .step-detail {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+    .h-flow-connector {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      padding: 0 0.25rem;
+      color: var(--border);
+      font-size: 1.2rem;
+    }
+
+    /* Two columns */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+    @media (max-width: 900px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    /* Tag */
+    .tag {
+      display: inline-block;
+      padding: 0.1rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+    }
+    .tag.success { background: var(--green-dim); color: var(--green); }
+    .tag.warning { background: var(--orange-dim); color: var(--orange); }
+    .tag.error   { background: var(--red-dim); color: var(--red); }
+    .tag.info    { background: var(--blue-dim); color: var(--blue); }
+    .tag.purple  { background: #2d1b4e; color: var(--accent-light); }
+
+    /* Notes */
+    .note {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      margin-top: 0.75rem;
+    }
+    .note.info    { background: var(--blue-dim); border-left: 3px solid var(--blue); }
+    .note.warning { background: var(--orange-dim); border-left: 3px solid var(--orange); }
+    .note.success { background: var(--green-dim); border-left: 3px solid var(--green); }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- Header -->
+    <div class="header">
+      <h1>Softpymes Integration</h1>
+      <p>Facturación electrónica — Arquitectura del módulo de integración con Softpymes</p>
+      <div class="badge-row">
+        <span class="badge"><span class="dot" style="background:var(--green)"></span> Go 1.23</span>
+        <span class="badge"><span class="dot" style="background:var(--orange)"></span> RabbitMQ</span>
+        <span class="badge"><span class="dot" style="background:var(--blue)"></span> REST API</span>
+        <span class="badge"><span class="dot" style="background:var(--accent)"></span> Hexagonal</span>
+        <span class="badge"><span class="dot" style="background:var(--cyan)"></span> Async</span>
+      </div>
+    </div>
+
+    <!-- 1. Estructura de archivos -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--accent);">📁</span>
+        Estructura del Módulo
+      </div>
+      <div class="card">
+        <div class="tree">
+<span class="dir">softpymes/</span>
+├── <span class="file">bundle.go</span>                        <span class="desc"># Wiring: ensambla client, consumer, publisher, usecase</span>
+└── <span class="dir">internal/</span>
+    ├── <span class="dir">app/</span>                           <span class="desc"># Capa de aplicación</span>
+    │   ├── <span class="file">constructor.go</span>             <span class="desc"># IInvoiceUseCase: TestConnection, ProcessOrder</span>
+    │   └── <span class="file">test_connection.go</span>         <span class="desc"># Valida credenciales contra Softpymes</span>
+    │
+    ├── <span class="dir">domain/</span>                        <span class="desc"># Capa de dominio (sin dependencias externas)</span>
+    │   ├── <span class="dir">dtos/</span>
+    │   │   └── <span class="file">invoice_types.go</span>       <span class="desc"># CreateInvoiceRequest, CreateInvoiceResult, AuditData</span>
+    │   ├── <span class="dir">entities/</span>
+    │   │   ├── <span class="file">catalog.go</span>             <span class="desc"># Códigos DIAN: CC=13, NIT=31, CE=22, etc.</span>
+    │   │   └── <span class="file">config.go</span>              <span class="desc"># InvoicingConfig entity</span>
+    │   ├── <span class="dir">errors/</span>
+    │   │   └── <span class="file">errors.go</span>              <span class="desc"># Errores tipados del dominio</span>
+    │   └── <span class="dir">ports/</span>
+    │       └── <span class="file">ports.go</span>               <span class="desc"># ISoftpymesClient, IInvoiceUseCase</span>
+    │
+    └── <span class="dir">infra/</span>
+        ├── <span class="dir">primary/</span>
+        │   └── <span class="dir">consumer/</span>              <span class="desc"># Consumidor de cola RabbitMQ</span>
+        │       ├── <span class="file">constructor.go</span>     <span class="desc"># Start(), handleInvoiceRequest() — router</span>
+        │       ├── <span class="file">helpers.go</span>         <span class="desc"># sendCashReceiptIfConfigured(), splitDocNum()</span>
+        │       ├── <span class="file">process_create_invoice.go</span>  <span class="desc"># create / retry</span>
+        │       ├── <span class="file">process_cancel.go</span>         <span class="desc"># cancel</span>
+        │       ├── <span class="file">process_check_status.go</span>   <span class="desc"># check_status</span>
+        │       ├── <span class="file">process_compare.go</span>        <span class="desc"># compare</span>
+        │       └── <span class="file">process_list_items.go</span>     <span class="desc"># list_items</span>
+        │
+        └── <span class="dir">secondary/</span>
+            ├── <span class="dir">client/</span>                <span class="desc"># Cliente HTTP hacia Softpymes API</span>
+            │   ├── <span class="file">client.go</span>          <span class="desc"># Constructor, resolveURL()</span>
+            │   ├── <span class="file">auth.go</span>            <span class="desc"># Authenticate() → accessToken</span>
+            │   ├── <span class="file">token_cache.go</span>     <span class="desc"># Cache en memoria por baseURL</span>
+            │   ├── <span class="file">invoice.go</span>         <span class="desc"># CreateInvoice()</span>
+            │   ├── <span class="file">customer.go</span>        <span class="desc"># ensureCustomerExists(), createCustomer()</span>
+            │   ├── <span class="file">credit_note.go</span>     <span class="desc"># CreateCreditNote()</span>
+            │   ├── <span class="file">cash_receipt.go</span>    <span class="desc"># SendCashReceiptFromDocument()</span>
+            │   ├── <span class="file">get_document.go</span>    <span class="desc"># GetDocumentByNumber()</span>
+            │   ├── <span class="file">list_documents.go</span>  <span class="desc"># ListDocuments()</span>
+            │   └── <span class="file">list_items.go</span>      <span class="desc"># ListItems()</span>
+            │
+            ├── <span class="dir">core/</span>
+            │   └── <span class="file">core.go</span>            <span class="desc"># SoftpymesCore → IIntegrationContract</span>
+            │
+            └── <span class="dir">queue/</span>
+                └── <span class="file">response_publisher.go</span> <span class="desc"># Publica respuestas a invoicing.responses</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Flujo general -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--green);">⚡</span>
+        Flujo General — Colas y Procesamiento
+      </div>
+      <div class="card">
+        <div class="queue-flow">
+          <div class="qf-box" style="background:var(--blue-dim);border:1px solid var(--blue);">
+            <div class="qf-label" style="color:var(--blue);">Módulo Invoicing</div>
+            <div class="qf-name" style="color:var(--blue);">create_invoice.go</div>
+          </div>
+          <div class="qf-arrow">→</div>
+          <div class="qf-box" style="background:var(--orange-dim);border:1px solid var(--orange);">
+            <div class="qf-label" style="color:var(--orange);">Cola RabbitMQ</div>
+            <div class="qf-name" style="color:var(--orange);">invoicing.softpymes.requests</div>
+          </div>
+          <div class="qf-arrow">→</div>
+          <div class="qf-box" style="background:#1a1a2e;border:1px solid var(--accent);">
+            <div class="qf-label" style="color:var(--accent-light);">Consumer Softpymes</div>
+            <div class="qf-name" style="color:var(--accent-light);">handleInvoiceRequest()</div>
+          </div>
+          <div class="qf-arrow">→</div>
+          <div class="qf-box" style="background:var(--green-dim);border:1px solid var(--green);">
+            <div class="qf-label" style="color:var(--green);">HTTP Client</div>
+            <div class="qf-name" style="color:var(--green);">Softpymes API</div>
+          </div>
+          <div class="qf-arrow">→</div>
+          <div class="qf-box" style="background:var(--orange-dim);border:1px solid var(--orange);">
+            <div class="qf-label" style="color:var(--orange);">Cola RabbitMQ</div>
+            <div class="qf-name" style="color:var(--orange);">invoicing.responses</div>
+          </div>
+          <div class="qf-arrow">→</div>
+          <div class="qf-box" style="background:var(--blue-dim);border:1px solid var(--blue);">
+            <div class="qf-label" style="color:var(--blue);">Response Consumer</div>
+            <div class="qf-name" style="color:var(--blue);">handleSuccess()</div>
+          </div>
+        </div>
+        <div class="note info">
+          El módulo Softpymes es <strong>stateless</strong>: no tiene repositorio ni accede a la base de datos. Todo el estado se gestiona en el módulo de Invoicing a través de sync_logs.
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Router de operaciones -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--yellow);">🔀</span>
+        Router de Operaciones
+      </div>
+      <div class="card">
+        <h3>handleInvoiceRequest() — Enrutamiento por campo <code style="color:var(--cyan)">operation</code></h3>
+        <div class="op-grid">
+          <div class="op-card">
+            <div class="op-name"><span style="color:var(--green);">●</span> create</div>
+            <div class="op-desc">Crea una factura electrónica nueva en Softpymes</div>
+            <div class="op-detail"><span class="label">Handler</span> <span>processCreateInvoice()</span></div>
+            <div class="op-detail"><span class="label">Post-acción</span> <span>Cash receipt (si config)</span></div>
+            <div class="op-detail"><span class="label">Response</span> <span class="tag success">InvoiceResponse</span></div>
+          </div>
+          <div class="op-card">
+            <div class="op-name"><span style="color:var(--orange);">●</span> retry</div>
+            <div class="op-desc">Reintento con chequeo de idempotencia (busca factura existente)</div>
+            <div class="op-detail"><span class="label">Handler</span> <span>processCreateInvoice()</span></div>
+            <div class="op-detail"><span class="label">Idempotencia</span> <span>ListDocuments → busca order_id</span></div>
+            <div class="op-detail"><span class="label">Response</span> <span class="tag success">InvoiceResponse</span></div>
+          </div>
+          <div class="op-card">
+            <div class="op-name"><span style="color:var(--blue);">●</span> check_status</div>
+            <div class="op-desc">Consulta estado de factura pendiente de validación DIAN</div>
+            <div class="op-detail"><span class="label">Handler</span> <span>processCheckStatus()</span></div>
+            <div class="op-detail"><span class="label">Búsqueda</span> <span>ListDocuments → comment</span></div>
+            <div class="op-detail"><span class="label">Response</span> <span class="tag info">success | pending</span></div>
+          </div>
+          <div class="op-card">
+            <div class="op-name"><span style="color:var(--red);">●</span> cancel</div>
+            <div class="op-desc">Anula una factura previamente emitida</div>
+            <div class="op-detail"><span class="label">Handler</span> <span>processCancelInvoice()</span></div>
+            <div class="op-detail"><span class="label">Input extra</span> <span>external_id, cancel_reason</span></div>
+            <div class="op-detail"><span class="label">Response</span> <span class="tag success">InvoiceResponse</span></div>
+          </div>
+          <div class="op-card">
+            <div class="op-name"><span style="color:var(--cyan);">●</span> compare</div>
+            <div class="op-desc">Auditoría: lista todas las facturas del proveedor en un rango</div>
+            <div class="op-detail"><span class="label">Handler</span> <span>processCompareRequest()</span></div>
+            <div class="op-detail"><span class="label">Paginación</span> <span>Auto (pageSize: 20)</span></div>
+            <div class="op-detail"><span class="label">Response</span> <span class="tag purple">CompareResponse</span></div>
+          </div>
+          <div class="op-card">
+            <div class="op-name"><span style="color:var(--pink);">●</span> list_items</div>
+            <div class="op-desc">Obtiene catálogo de productos del proveedor</div>
+            <div class="op-detail"><span class="label">Handler</span> <span>processListItemsRequest()</span></div>
+            <div class="op-detail"><span class="label">Paginación</span> <span>Auto (pageSize: 20)</span></div>
+            <div class="op-detail"><span class="label">Response</span> <span class="tag purple">ListItemsResponse</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. Flujo CREATE detallado -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--green);">📄</span>
+        Flujo Detallado — Crear Factura
+      </div>
+      <div class="card">
+        <h3>processCreateInvoice() — Pasos</h3>
+        <div class="h-flow">
+          <div class="h-flow-step">
+            <div class="step-num">1</div>
+            <div class="step-label">Obtener integración</div>
+            <div class="step-detail">Core service:<br>config + credentials</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">2</div>
+            <div class="step-label">Resolver URL</div>
+            <div class="step-detail">isTesting?<br>baseURLTest : baseURL</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">3</div>
+            <div class="step-label">Merge configs</div>
+            <div class="step-detail">integration.config +<br>invoiceData.config</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">4</div>
+            <div class="step-label">Idempotencia</div>
+            <div class="step-detail">Solo retry:<br>ListDocuments → order_id</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">5</div>
+            <div class="step-label">CreateInvoice()</div>
+            <div class="step-detail">POST sales_invoice/<br>Auth + Customer + Items</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">6</div>
+            <div class="step-label">Esperar 3s</div>
+            <div class="step-detail">DIAN procesa<br>el documento</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">7</div>
+            <div class="step-label">GetDocument()</div>
+            <div class="step-detail">Obtener documento<br>completo con detalles</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">8</div>
+            <div class="step-label">Recibo de Caja</div>
+            <div class="step-detail">Si send_cash_receipt<br>POST cash_receipt/</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">9</div>
+            <div class="step-label">Publish Response</div>
+            <div class="step-detail">→ invoicing.responses<br>status: success|error</div>
+          </div>
+        </div>
+
+        <div class="note warning">
+          <strong>Idempotencia (solo retry):</strong> Antes de crear, se busca en ListDocuments un documento cuyo campo <code>comment</code> contenga <code>order:&lt;UUID&gt;</code>. Si existe, se retorna ese documento sin crear uno nuevo.
+        </div>
+        <div class="note success" style="margin-top:0.5rem;">
+          <strong>Recibo de caja:</strong> Es <strong>no-fatal</strong>. Si falla, la factura ya fue creada exitosamente. El pago se puede registrar manualmente después.
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. Endpoints HTTP -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--cyan);">🌐</span>
+        Cliente HTTP — Endpoints de Softpymes API
+      </div>
+      <div class="card" style="overflow-x:auto;">
+        <table class="endpoint-table">
+          <thead>
+            <tr>
+              <th>Método</th>
+              <th>Endpoint</th>
+              <th>Archivo</th>
+              <th>Descripción</th>
+              <th>Headers Especiales</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="method post">POST</span></td>
+              <td><span class="endpoint-path">/oauth/integration/login/</span></td>
+              <td>auth.go</td>
+              <td>Autenticación → accessToken (JWT)</td>
+              <td><code>Referer: &lt;NIT&gt;</code></td>
+            </tr>
+            <tr>
+              <td><span class="method post">POST</span></td>
+              <td><span class="endpoint-path">/app/integration/sales_invoice/</span></td>
+              <td>invoice.go</td>
+              <td>Crear factura electrónica</td>
+              <td><code>Authorization: Bearer</code></td>
+            </tr>
+            <tr>
+              <td><span class="method post">POST</span></td>
+              <td><span class="endpoint-path">/app/integration/sales_invoice/cancel/</span></td>
+              <td>invoice.go</td>
+              <td>Anular factura</td>
+              <td><code>Authorization: Bearer</code></td>
+            </tr>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td><span class="endpoint-path">/app/integration/customer?identification=X</span></td>
+              <td>customer.go</td>
+              <td>Buscar cliente por identificación</td>
+              <td><code>Authorization: Bearer</code></td>
+            </tr>
+            <tr>
+              <td><span class="method post">POST</span></td>
+              <td><span class="endpoint-path">/app/integration/customer</span></td>
+              <td>customer.go</td>
+              <td>Crear cliente (auto si no existe)</td>
+              <td><code>Authorization: Bearer</code></td>
+            </tr>
+            <tr>
+              <td><span class="method post">POST</span></td>
+              <td><span class="endpoint-path">/app/integration/search/documents/</span></td>
+              <td>list_documents.go</td>
+              <td>Buscar documentos por rango de fechas</td>
+              <td><code>Authorization: Bearer</code></td>
+            </tr>
+            <tr>
+              <td><span class="method post">POST</span></td>
+              <td><span class="endpoint-path">/app/integration/cash_receipt/</span></td>
+              <td>cash_receipt.go</td>
+              <td>Registrar pago (recibo de caja)</td>
+              <td><code>Authorization: Bearer</code></td>
+            </tr>
+            <tr>
+              <td><span class="method get">GET</span></td>
+              <td><span class="endpoint-path">/app/integration/items?page=X&pageSize=Y</span></td>
+              <td>list_items.go</td>
+              <td>Listar catálogo de productos</td>
+              <td><code>Authorization: Bearer</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 6. Autenticación y Token Cache -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--yellow);">🔐</span>
+        Autenticación y Cache de Tokens
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3>Flujo de Autenticación</h3>
+          <div class="flow">
+            <div class="flow-node consumer">TokenCache.Get(baseURL)</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-arrow-label">¿Token válido?</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node decision">SI → usar token cacheado</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-arrow-label">NO → autenticar</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node http">POST /oauth/integration/login/</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-arrow-label">Body: { apiKey, apiSecret }</div>
+            <div class="flow-arrow"></div>
+            <div class="flow-node consumer">TokenCache.Set(baseURL, token, TTL)</div>
+          </div>
+        </div>
+        <div class="card">
+          <h3>Detalles del Token</h3>
+          <div class="code-block">
+<span class="cmt">// Request</span>
+{
+  <span class="str">"apiKey"</span>:    <span class="str">"encrypted-in-db"</span>,
+  <span class="str">"apiSecret"</span>: <span class="str">"encrypted-in-db"</span>
+}
+
+<span class="cmt">// Response</span>
+{
+  <span class="str">"accessToken"</span>: <span class="str">"eyJhbG..."</span>,
+  <span class="str">"expiresInMin"</span>: <span class="type">1440</span>,
+  <span class="str">"tokenType"</span>: <span class="str">"Bearer"</span>
+}
+
+<span class="cmt">// Header obligatorio</span>
+Referer: <span class="str">&lt;NIT de la empresa&gt;</span>
+
+<span class="cmt">// Cache: keyed por baseURL</span>
+<span class="cmt">// Permite tokens distintos para</span>
+<span class="cmt">// prod y testing simultáneamente</span>
+<span class="cmt">// TTL: expiresInMin - 5 min (refresh early)</span>
+<span class="cmt">// 401 → Clear cache → re-authenticate</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Recibo de Caja -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--green);">💰</span>
+        Recibo de Caja — Medios de Pago
+      </div>
+      <div class="card">
+        <h3>SendCashReceiptFromDocument() — Tipos de pago soportados</h3>
+        <div class="payment-grid" style="margin-top:1rem;">
+          <div class="payment-card">
+            <div class="pay-code" style="color:var(--green);">EF</div>
+            <div class="pay-name">Efectivo</div>
+            <div class="pay-fields">type + value</div>
+          </div>
+          <div class="payment-card">
+            <div class="pay-code" style="color:var(--blue);">TR</div>
+            <div class="pay-name">Transferencia Bancaria</div>
+            <div class="pay-fields">type + value + bankAccountId</div>
+          </div>
+          <div class="payment-card">
+            <div class="pay-code" style="color:var(--accent-light);">TC</div>
+            <div class="pay-name">Tarjeta de Crédito</div>
+            <div class="pay-fields">type + value + finantialEntityId</div>
+          </div>
+          <div class="payment-card">
+            <div class="pay-code" style="color:var(--cyan);">TD</div>
+            <div class="pay-name">Tarjeta de Débito</div>
+            <div class="pay-fields">type + value + finantialEntityId</div>
+          </div>
+          <div class="payment-card">
+            <div class="pay-code" style="color:var(--orange);">CH</div>
+            <div class="pay-name">Cheque</div>
+            <div class="pay-fields">type + value + accountNumber + bankName</div>
+          </div>
+          <div class="payment-card">
+            <div class="pay-code" style="color:var(--pink);">BN</div>
+            <div class="pay-name">Bonos</div>
+            <div class="pay-fields">type + value + code</div>
+          </div>
+        </div>
+
+        <div class="code-block" style="margin-top:1rem;">
+<span class="cmt">// POST /app/integration/cash_receipt/</span>
+{
+  <span class="str">"documents"</span>: [
+    { <span class="str">"documentNumber"</span>: <span class="str">"26"</span>, <span class="str">"prefix"</span>: <span class="str">"FEV"</span> }
+  ],
+  <span class="str">"documentDate"</span>:       <span class="str">"2026-03-18"</span>,
+  <span class="str">"branchCode"</span>:         <span class="str">"001"</span>,
+  <span class="str">"customerNit"</span>:        <span class="str">"1234567890"</span>,
+  <span class="str">"customerBranchCode"</span>: <span class="str">"001"</span>,
+  <span class="str">"payment"</span>: [
+    {
+      <span class="str">"type"</span>:  <span class="str">"EF"</span>,
+      <span class="str">"value"</span>: <span class="type">119000.00</span>
+    }
+  ]
+}
+        </div>
+      </div>
+    </div>
+
+    <!-- 8. Request de Factura -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--blue);">📋</span>
+        Request de Factura Electrónica
+      </div>
+      <div class="card">
+        <h3>POST /app/integration/sales_invoice/</h3>
+        <div class="two-col">
+          <div>
+            <div class="code-block">
+<span class="cmt">// Request Body</span>
+{
+  <span class="str">"documentDate"</span>:    <span class="str">"2026-03-18"</span>,
+  <span class="str">"currencyCode"</span>:    <span class="str">"P"</span>,  <span class="cmt">// P=COP, D=USD</span>
+  <span class="str">"exchangeRate"</span>:    <span class="type">1.0</span>,
+  <span class="str">"branchCode"</span>:      <span class="str">"001"</span>,
+  <span class="str">"customerBranch"</span>:  <span class="str">"000"</span>,
+  <span class="str">"customerNit"</span>:     <span class="str">"1234567890"</span>,
+  <span class="str">"termDays"</span>:        <span class="type">0</span>,
+  <span class="str">"resolutionId"</span>:    <span class="type">123</span>,
+  <span class="str">"comment"</span>:         <span class="str">"order:uuid | #ORD-001"</span>,
+  <span class="str">"items"</span>: [
+    {
+      <span class="str">"itemCode"</span>:  <span class="str">"SKU001"</span>,
+      <span class="str">"quantity"</span>:  <span class="type">1.0</span>,
+      <span class="str">"unitCode"</span>:  <span class="str">"UNI"</span>,
+      <span class="str">"discount"</span>:  <span class="type">0</span>,
+      <span class="str">"unitValue"</span>: <span class="str">"15000.00"</span> <span class="cmt">// String!</span>
+    }
+  ]
+}
+            </div>
+          </div>
+          <div>
+            <div class="code-block">
+<span class="cmt">// Response (exitosa)</span>
+{
+  <span class="str">"message"</span>: <span class="str">"Se ha creado la factura..."</span>,
+  <span class="str">"info"</span>: {
+    <span class="str">"date"</span>: <span class="str">"2026-03-18T10:39:13Z"</span>,
+    <span class="str">"documentNumber"</span>: <span class="str">"FEV26"</span>,
+    <span class="str">"subtotal"</span>: <span class="type">15000</span>,
+    <span class="str">"discount"</span>: <span class="type">0</span>,
+    <span class="str">"iva"</span>:      <span class="type">2850</span>,
+    <span class="str">"total"</span>:    <span class="type">17850</span>,
+    <span class="str">"docsFe"</span>: {
+      <span class="str">"status"</span>:  <span class="str">"Aceptado"</span>,
+      <span class="str">"message"</span>: <span class="str">"..."</span>
+    }
+  }
+}
+
+<span class="cmt">// Estados DIAN posibles en docsFe.status:</span>
+<span class="cmt">// "Aceptado"  → success</span>
+<span class="cmt">// "Pendiente" → pending_validation</span>
+<span class="cmt">// "Rechazado" → error</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 9. Gestión de Clientes -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--pink);">👤</span>
+        Auto-creación de Clientes
+      </div>
+      <div class="card">
+        <h3>ensureCustomerExists() — Flujo</h3>
+        <div class="flow">
+          <div class="flow-node http">GET /app/integration/customer?identification=DNI</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-arrow-label">¿Existe?</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node decision">SI → continuar con factura</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-arrow-label">NO → crear automáticamente</div>
+          <div class="flow-arrow"></div>
+          <div class="flow-node http">POST /app/integration/customer</div>
+        </div>
+
+        <div class="two-col" style="margin-top:1rem;">
+          <div class="code-block">
+<span class="cmt">// Crear cliente — campos requeridos</span>
+{
+  <span class="str">"identificationNumber"</span>: <span class="str">"1234567890"</span>,
+  <span class="str">"identificationType"</span>:   <span class="str">"13"</span>, <span class="cmt">// DIAN: CC</span>
+  <span class="str">"thirdType"</span>:             <span class="str">"N"</span>,  <span class="cmt">// Natural</span>
+  <span class="str">"firstName"</span>:             <span class="str">"Juan"</span>,
+  <span class="str">"lastName"</span>:              <span class="str">"Pérez"</span>,
+  <span class="str">"maidenName"</span>:            <span class="str">"."</span>,  <span class="cmt">// Requerido</span>
+  <span class="str">"otherName"</span>:             <span class="str">"."</span>,  <span class="cmt">// Requerido</span>
+  <span class="str">"phone"</span>:                 <span class="str">"3001234567"</span>,
+  <span class="str">"email"</span>:                 <span class="str">"noreply@probability.com"</span>,
+  <span class="str">"branchName"</span>:            <span class="str">"PRINCIPAL"</span>,
+  <span class="str">"cityCode"</span>:              <span class="str">"001"</span>,
+  <span class="str">"departmentCode"</span>:        <span class="str">"11"</span>
+}
+          </div>
+          <div>
+            <div class="card" style="border-color:var(--yellow);">
+              <h3 style="color:var(--yellow);">Códigos de Identificación DIAN</h3>
+              <div class="op-detail"><span class="label">13</span> <span>Cédula de Ciudadanía (CC)</span></div>
+              <div class="op-detail"><span class="label">22</span> <span>Cédula de Extranjería (CE)</span></div>
+              <div class="op-detail"><span class="label">31</span> <span>NIT</span></div>
+              <div class="op-detail"><span class="label">12</span> <span>Tarjeta de Identidad (TI)</span></div>
+              <div class="op-detail"><span class="label">91</span> <span>NUIP</span></div>
+            </div>
+            <div class="note warning" style="margin-top:0.5rem;">
+              <strong>splitCustomerName():</strong> Divide el nombre completo en firstName/lastName. 4+ palabras se parten a la mitad. Nombre vacío → "Cliente Probability".
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 10. Check Status -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--blue);">🔄</span>
+        Check Status — Validación DIAN Pendiente
+      </div>
+      <div class="card">
+        <h3>processCheckStatus() — Polling de facturas pendientes</h3>
+        <div class="h-flow">
+          <div class="h-flow-step">
+            <div class="step-num">1</div>
+            <div class="step-label">Extraer order_id</div>
+            <div class="step-detail">Del request<br>message</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">2</div>
+            <div class="step-label">ListDocuments()</div>
+            <div class="step-detail">Últimos 30 días<br>pageSize: 50</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">3</div>
+            <div class="step-label">Buscar por comment</div>
+            <div class="step-detail">comment contiene<br>"order:&lt;UUID&gt;"</div>
+          </div>
+          <div class="h-flow-connector">→</div>
+          <div class="h-flow-step">
+            <div class="step-num">4a</div>
+            <div class="step-label" style="color:var(--green);">Encontrado</div>
+            <div class="step-detail">GetDocument()<br>+ Cash Receipt<br>→ status: success</div>
+          </div>
+        </div>
+        <div style="text-align:center;margin-top:0.5rem;">
+          <span class="tag warning">Si no se encuentra → status: pending_validation (reintenta después)</span>
+        </div>
+        <div class="note info" style="margin-top:0.75rem;">
+          <strong>Backoff del Response Consumer:</strong> 15min → 30min → 1h → 2h → 4h. La DIAN puede tardar horas en validar un documento.
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. Manejo de errores -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--red);">⚠️</span>
+        Manejo de Errores
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <h3>Tipos de Error de Softpymes</h3>
+          <div class="op-detail"><span class="label">HTTP 4xx/5xx</span> <span class="tag error">Error directo</span></div>
+          <div class="op-detail"><span class="label">HTTP 200 + error en body</span> <span class="tag warning">Error embebido</span></div>
+          <div class="op-detail"><span class="label">DIAN Rechazado</span> <span class="tag error">docsFe.status = "Rechazado"</span></div>
+          <div class="op-detail"><span class="label">DIAN Pendiente</span> <span class="tag info">docsFe.status = "Pendiente"</span></div>
+          <div class="op-detail"><span class="label">HTTP 401</span> <span class="tag warning">Token expirado → clear cache</span></div>
+
+          <div class="code-block" style="margin-top:1rem;">
+<span class="cmt">// Error embebido en HTTP 200</span>
+[
+  [
+    { <span class="str">"message"</span>: <span class="str">"error..."</span> }
+  ],
+  <span class="type">400</span>  <span class="cmt">// status code real</span>
+]
+          </div>
+        </div>
+        <div class="card">
+          <h3>Auditoría — Captura Completa</h3>
+          <p style="font-size:0.8rem;color:var(--text-muted);margin-bottom:0.75rem;">
+            Cada llamada HTTP captura datos de auditoría que se guardan en el sync_log:
+          </p>
+          <div class="code-block">
+<span class="kw">type</span> <span class="type">AuditData</span> {
+  <span class="fn">RequestURL</span>     <span class="type">string</span>
+  <span class="fn">RequestPayload</span> <span class="type">interface{}</span>
+  <span class="fn">ResponseStatus</span> <span class="type">int</span>
+  <span class="fn">ResponseBody</span>   <span class="type">string</span>
+}
+
+<span class="cmt">// Se incluye en InvoiceResponseMessage</span>
+<span class="cmt">// → response_consumer.go lo guarda</span>
+<span class="cmt">//   en invoice_sync_logs (JSONB)</span>
+          </div>
+          <div class="note success" style="margin-top:0.75rem;">
+            Permite debugging completo: se puede ver exactamente qué se envió a Softpymes y qué respondió, sin activar debug file logging.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 12. Bundle / Wiring -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--accent);">🔧</span>
+        Bundle — Ensamblaje del Módulo
+      </div>
+      <div class="card">
+        <h3>bundle.go — Inicialización</h3>
+        <div class="code-block">
+<span class="kw">func</span> <span class="fn">New</span>(config, logger, rabbit, coreIntegration) *SoftpymesCore {
+
+    <span class="cmt">// 1. Cliente HTTP (sin URL hardcoded)</span>
+    httpClient := <span class="fn">client.New</span>(logger)
+
+    <span class="cmt">// 2. Publisher de respuestas → invoicing.responses</span>
+    responsePublisher := <span class="fn">queue.New</span>(rabbit, logger)
+
+    <span class="cmt">// 3. Consumer de requests ← invoicing.softpymes.requests</span>
+    invoiceRequestConsumer := <span class="fn">consumer.New</span>(
+        rabbit,
+        coreIntegration,   <span class="cmt">// Para obtener config + credentials</span>
+        httpClient,        <span class="cmt">// Para llamar Softpymes API</span>
+        responsePublisher, <span class="cmt">// Para publicar respuestas</span>
+        logger,
+    )
+    <span class="kw">go</span> invoiceRequestConsumer.<span class="fn">Start</span>(ctx) <span class="cmt">// Goroutine independiente</span>
+
+    <span class="cmt">// 4. Use Case (TestConnection)</span>
+    useCase := <span class="fn">app.New</span>(httpClient, logger)
+
+    <span class="cmt">// 5. Adaptador para sistema de integraciones</span>
+    <span class="kw">return</span> <span class="fn">softpymescore.New</span>(useCase)
+}
+        </div>
+      </div>
+    </div>
+
+    <!-- 13. Decisiones Arquitecturales -->
+    <div class="section">
+      <div class="section-title">
+        <span class="icon" style="background:var(--text-muted);">💡</span>
+        Decisiones Arquitecturales
+      </div>
+      <div class="card">
+        <div class="op-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+          <div class="op-card">
+            <div class="op-name">Stateless</div>
+            <div class="op-desc">Sin repositorio ni acceso a DB. Todo el estado vive en el módulo de Invoicing (sync_logs). Softpymes solo procesa y responde.</div>
+          </div>
+          <div class="op-card">
+            <div class="op-name">URL dinámica</div>
+            <div class="op-desc">No hay URL hardcoded. Se resuelve desde integration_types (baseURL vs baseURLTest) por cada request.</div>
+          </div>
+          <div class="op-card">
+            <div class="op-name">Token cache por URL</div>
+            <div class="op-desc">Prod y testing pueden usar endpoints distintos con tokens diferentes simultáneamente en el mismo proceso.</div>
+          </div>
+          <div class="op-card">
+            <div class="op-name">Cash receipt no-fatal</div>
+            <div class="op-desc">Si el recibo de caja falla, la factura ya está creada. El pago se puede registrar manualmente después.</div>
+          </div>
+          <div class="op-card">
+            <div class="op-name">Idempotencia en retry</div>
+            <div class="op-desc">Solo en retry: busca factura existente por order_id en comment antes de crear. Evita duplicados.</div>
+          </div>
+          <div class="op-card">
+            <div class="op-name">Auditoría completa</div>
+            <div class="op-desc">Cada llamada HTTP captura request/response completo. Se almacena en sync_logs para debugging y compliance.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="text-align:center;padding:2rem;color:var(--text-muted);font-size:0.75rem;">
+      Probability — Softpymes Integration Docs — Generado 2026-03-18
+    </div>
+
+  </div>
+</body>
+</html>

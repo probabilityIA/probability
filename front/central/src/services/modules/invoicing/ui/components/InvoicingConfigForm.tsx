@@ -167,44 +167,25 @@ export function InvoicingConfigForm({
         </div>
       )}
 
-      {/* Habilitar facturación */}
+      {/* Facturación automática */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
-            checked={formData.enabled}
-            onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+            checked={formData.auto_invoice}
+            onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked })}
             disabled={loading}
             className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <div>
-            <span className="text-sm font-medium text-gray-900">Habilitar facturación</span>
-            <p className="text-xs text-gray-500">Permite que esta integración genere facturas electrónicas</p>
+            <span className="text-sm font-medium text-gray-900">Facturación automática</span>
+            <p className="text-xs text-gray-500">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
           </div>
         </label>
       </div>
 
-      {/* Facturación automática */}
-      {formData.enabled && (
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.auto_invoice}
-              onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked })}
-              disabled={loading}
-              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-900">Facturación automática</span>
-              <p className="text-xs text-gray-500">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
-            </div>
-          </label>
-        </div>
-      )}
-
       {/* Filtros de Pago */}
-      {formData.enabled && formData.auto_invoice && (
+      {formData.auto_invoice && (
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <h4 className="text-sm font-medium text-gray-900 mb-3">Filtros de Pago</h4>
           <div>
@@ -225,8 +206,7 @@ export function InvoicingConfigForm({
       )}
 
       {/* Recibo de Caja */}
-      {formData.enabled && (
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
           <label className="flex items-center gap-3 cursor-pointer mb-3">
             <input
               type="checkbox"
@@ -335,7 +315,6 @@ export function InvoicingConfigForm({
             </div>
           )}
         </div>
-      )}
 
       {/* Mapeo de Servicios */}
         <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
