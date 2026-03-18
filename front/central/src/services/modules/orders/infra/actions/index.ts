@@ -92,7 +92,7 @@ export const checkWhatsAppIntegrationAction = async (businessId: number): Promis
         const token = await getAuthToken();
         const { env } = await import('@/shared/config/env');
         const res = await fetch(
-            `${env.API_BASE_URL}/integrations/check?integration_type_code=whatsapp&business_id=${businessId}`,
+            `${env.API_BASE_URL}/integrations/check?integration_type_id=2&business_id=${businessId}`,
             {
                 headers: {
                     'Authorization': `Bearer ${token}`,
