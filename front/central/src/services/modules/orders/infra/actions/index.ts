@@ -89,29 +89,21 @@ export const requestWhatsAppConfirmationAction = async (orderId: string) => {
 
 export const checkWhatsAppIntegrationAction = async (businessId: number): Promise<boolean> => {
     try {
+        const { IntegrationApiRepository } = await import('@/services/integrations/core/infra/repository/api-repository');
         const token = await getAuthToken();
-        const { env } = await import('@/shared/config/env');
-        const url = `${env.API_BASE_URL}/integrations/type/whatsapp?business_id=${businessId}`;
+        const repo = new IntegrationApiRepository(token);
 
-        console.log('[checkWhatsApp] Checking:', url);
+        // Usar endpoint de listado con filtros (no decripta credenciales)
+        const result = await repo.getIntegrations({
+            integration_type_code: 'whatsapp',
+            business_id: businessId,
+            is_active: true,
+            page: 1,
+            page_size: 1,
+        } as any);
 
-        const response = await fetch(url, {
-            headers: {
-                'Authorization': `Bearer ${token}`,
-                'Accept': 'application/json',
-            },
-        });
-
-        if (!response.ok) {
-            console.log('[checkWhatsApp] Response not ok:', response.status);
-            return false;
-        }
-
-        const data = await response.json();
-        console.log('[checkWhatsApp] Result:', JSON.stringify(data));
-        return !!(data && data.data);
-    } catch (error: any) {
-        console.error('[checkWhatsApp] Error:', error.message);
+        return !!(result?.data && result.data.length > 0);
+    } catch {
         return false;
     }
 };

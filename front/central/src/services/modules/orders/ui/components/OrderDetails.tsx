@@ -103,10 +103,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
     // Check if business has WhatsApp integration
     useEffect(() => {
-        console.log('[OrderDetails] business_id:', order?.business_id, 'type:', typeof order?.business_id);
         if (order?.business_id != null && order.business_id > 0) {
             checkWhatsAppIntegrationAction(order.business_id).then((result) => {
-                console.log('[OrderDetails] hasWhatsApp:', result);
                 setHasWhatsApp(result);
             });
         }
