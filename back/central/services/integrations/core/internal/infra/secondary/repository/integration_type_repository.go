@@ -60,6 +60,19 @@ func (r *Repository) GetIntegrationTypeByCode(ctx context.Context, code string) 
 	return &result, nil
 }
 
+// GetIntegrationTypeByCodeInsensitive obtiene un tipo de integración por código (case-insensitive, búsqueda parcial)
+func (r *Repository) GetIntegrationTypeByCodeInsensitive(ctx context.Context, code string) (*domain.IntegrationType, error) {
+	var model models.IntegrationType
+	if err := r.db.Conn(ctx).Preload("Category").Where("LOWER(code) LIKE LOWER(?)", "%"+code+"%").First(&model).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("tipo de integración con código '%s' no encontrado", code)
+		}
+		return nil, fmt.Errorf("error al obtener tipo de integración: %w", err)
+	}
+	result := toIntegrationTypeDomain(model)
+	return &result, nil
+}
+
 // GetIntegrationTypeByName obtiene un tipo de integración por nombre
 func (r *Repository) GetIntegrationTypeByName(ctx context.Context, name string) (*domain.IntegrationType, error) {
 	var model models.IntegrationType

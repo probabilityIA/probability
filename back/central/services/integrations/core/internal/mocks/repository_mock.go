@@ -130,6 +130,14 @@ func (m *RepositoryMock) GetIntegrationTypeByCode(ctx context.Context, code stri
 	return args.Get(0).(*domain.IntegrationType), args.Error(1)
 }
 
+func (m *RepositoryMock) GetIntegrationTypeByCodeInsensitive(ctx context.Context, code string) (*domain.IntegrationType, error) {
+	args := m.Called(ctx, code)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.IntegrationType), args.Error(1)
+}
+
 func (m *RepositoryMock) GetIntegrationTypeByName(ctx context.Context, name string) (*domain.IntegrationType, error) {
 	args := m.Called(ctx, name)
 	if args.Get(0) == nil {
