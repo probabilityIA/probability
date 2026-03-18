@@ -324,20 +324,40 @@ func (r *Repository) GetActiveIntegrationByIntegrationTypeID(ctx context.Context
 	return r.toDomain(&model), nil
 }
 
-// ExistsActiveIntegrationByTypeID verifica si existe una integración activa por tipo y business_id
+// ExistsActiveIntegrationByTypeID verifica si existe una integración activa por tipo y business_id.
+// Si se pasa business_id, busca primero con ese business_id; si no encuentra, busca global (business_id IS NULL).
 func (r *Repository) ExistsActiveIntegrationByTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error) {
 	var count int64
-	query := r.db.Conn(ctx).
-		Model(&models.Integration{}).
-		Where("integration_type_id = ? AND is_active = ?", integrationTypeID, true)
 
 	if businessID != nil {
-		query = query.Where("business_id = ?", *businessID)
-	} else {
-		query = query.Where("business_id IS NULL")
+		// Primero buscar con business_id específico
+		if err := r.db.Conn(ctx).
+			Model(&models.Integration{}).
+			Where("integration_type_id = ? AND is_active = ? AND business_id = ?", integrationTypeID, true, *businessID).
+			Count(&count).Error; err != nil {
+			r.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Error verificando existencia de integración activa")
+			return false, err
+		}
+		if count > 0 {
+			return true, nil
+		}
+
+		// Fallback: buscar integración global (business_id IS NULL)
+		if err := r.db.Conn(ctx).
+			Model(&models.Integration{}).
+			Where("integration_type_id = ? AND is_active = ? AND business_id IS NULL", integrationTypeID, true).
+			Count(&count).Error; err != nil {
+			r.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Error verificando existencia de integración global")
+			return false, err
+		}
+		return count > 0, nil
 	}
 
-	if err := query.Count(&count).Error; err != nil {
+	// Sin business_id → buscar solo global
+	if err := r.db.Conn(ctx).
+		Model(&models.Integration{}).
+		Where("integration_type_id = ? AND is_active = ? AND business_id IS NULL", integrationTypeID, true).
+		Count(&count).Error; err != nil {
 		r.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Error verificando existencia de integración activa")
 		return false, err
 	}
