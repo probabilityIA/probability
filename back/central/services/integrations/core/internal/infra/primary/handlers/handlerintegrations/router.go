@@ -17,6 +17,7 @@ func (h *IntegrationHandler) RegisterRoutes(router *gin.RouterGroup, logger log.
 		integrationsGroup.GET("/simple", middleware.JWT(), h.GetIntegrationsSimpleHandler)
 		integrationsGroup.GET("/:id", middleware.JWT(), h.GetIntegrationByIDHandler) // Devuelve credenciales solo si es super admin
 		integrationsGroup.GET("/type/:type", middleware.JWT(), h.GetIntegrationByTypeHandler)
+		integrationsGroup.GET("/check", middleware.JWT(), h.CheckIntegrationExistsHandler)
 		integrationsGroup.POST("", middleware.JWT(), h.CreateIntegrationHandler)
 		integrationsGroup.PUT("/:id", middleware.JWT(), h.UpdateIntegrationHandler)
 		integrationsGroup.DELETE("/:id", middleware.JWT(), h.DeleteIntegrationHandler)

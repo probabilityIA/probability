@@ -19,6 +19,7 @@ type IRepository interface {
 	ListIntegrationsByIntegrationTypeID(ctx context.Context, integrationTypeID uint) ([]*Integration, error)
 	SetIntegrationAsDefault(ctx context.Context, id uint) error
 	ExistsIntegrationByCode(ctx context.Context, code string, businessID *uint) (bool, error)
+	ExistsActiveIntegrationByTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error)
 	UpdateLastSync(ctx context.Context, id uint, lastSync time.Time) error
 
 	CreateIntegrationType(ctx context.Context, integrationType *IntegrationType) error
@@ -86,6 +87,10 @@ type IIntegrationUseCase interface {
 	DeactivateIntegration(ctx context.Context, id uint) error
 	SetAsDefault(ctx context.Context, id uint) error
 	UpdateLastSync(ctx context.Context, integrationID string) error
+
+	// Check
+	HasActiveIntegration(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error)
+	HasActiveIntegrationByCode(ctx context.Context, integrationTypeCode string, businessID *uint) (bool, error)
 
 	// Test
 	TestIntegration(ctx context.Context, id uint) error

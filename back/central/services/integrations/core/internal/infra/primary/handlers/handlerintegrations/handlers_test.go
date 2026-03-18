@@ -232,6 +232,16 @@ func (m *mockIntegrationUseCase) GetPlatformCredentialByIntegrationID(ctx contex
 	return args.String(0), args.Error(1)
 }
 
+func (m *mockIntegrationUseCase) HasActiveIntegration(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error) {
+	args := m.Called(ctx, integrationTypeID, businessID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *mockIntegrationUseCase) HasActiveIntegrationByCode(ctx context.Context, integrationTypeCode string, businessID *uint) (bool, error) {
+	args := m.Called(ctx, integrationTypeCode, businessID)
+	return args.Bool(0), args.Error(1)
+}
+
 // ============================================
 // Mock de IConfig y ILogger para handlers
 // ============================================

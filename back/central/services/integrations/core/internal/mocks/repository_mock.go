@@ -90,6 +90,11 @@ func (m *RepositoryMock) ExistsIntegrationByCode(ctx context.Context, code strin
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *RepositoryMock) ExistsActiveIntegrationByTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error) {
+	args := m.Called(ctx, integrationTypeID, businessID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *RepositoryMock) UpdateLastSync(ctx context.Context, id uint, lastSync time.Time) error {
 	args := m.Called(ctx, id, lastSync)
 	return args.Error(0)

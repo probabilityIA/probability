@@ -324,6 +324,27 @@ func (r *Repository) GetActiveIntegrationByIntegrationTypeID(ctx context.Context
 	return r.toDomain(&model), nil
 }
 
+// ExistsActiveIntegrationByTypeID verifica si existe una integración activa por tipo y business_id
+func (r *Repository) ExistsActiveIntegrationByTypeID(ctx context.Context, integrationTypeID uint, businessID *uint) (bool, error) {
+	var count int64
+	query := r.db.Conn(ctx).
+		Model(&models.Integration{}).
+		Where("integration_type_id = ? AND is_active = ?", integrationTypeID, true)
+
+	if businessID != nil {
+		query = query.Where("business_id = ?", *businessID)
+	} else {
+		query = query.Where("business_id IS NULL")
+	}
+
+	if err := query.Count(&count).Error; err != nil {
+		r.log.Error(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Error verificando existencia de integración activa")
+		return false, err
+	}
+
+	return count > 0, nil
+}
+
 // ListIntegrationsByBusiness lista integraciones de un business
 func (r *Repository) ListIntegrationsByBusiness(ctx context.Context, businessID uint) ([]*domain.Integration, error) {
 	var integrationModels []models.Integration
