@@ -108,6 +108,8 @@ func (c *Client) SendCashReceiptFromDocument(
 		Str("prefix", docPrefix).
 		Str("payment_type", paymentType).
 		Float64("amount", amount).
+		Interface("payment_body", payment).
+		Interface("request_body", body).
 		Msg("Sending cash receipt to Softpymes")
 
 	requestURL := c.resolveURL(baseURL, "/app/integration/cash_receipt/")
@@ -160,6 +162,7 @@ func (c *Client) SendCashReceiptFromDocument(
 		"prefix":          docPrefix,
 		"customer_nit":    customerNit,
 		"document_date":   documentDate,
+		"request_body":    body,
 		"raw_response":    string(respBody),
 	}
 
