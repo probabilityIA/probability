@@ -16,4 +16,5 @@ export interface IOrderRepository {
     deleteOrder(id: string): Promise<ActionResponse>;
     getOrderRaw(id: string): Promise<SingleResponse<any>>;
     getAIRecommendation(origin: string, destination: string): Promise<any>;
+    requestConfirmation(orderId: string): Promise<ActionResponse>;
 }

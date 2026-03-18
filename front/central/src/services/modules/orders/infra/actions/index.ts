@@ -77,3 +77,24 @@ export const getAIRecommendationAction = async (origin: string, destination: str
         return null;
     }
 };
+
+export const requestWhatsAppConfirmationAction = async (orderId: string) => {
+    try {
+        return await (await getUseCases()).requestConfirmation(orderId);
+    } catch (error: any) {
+        console.error('Request WhatsApp Confirmation Error:', error.message);
+        return { success: false, message: error.message || 'Error al enviar confirmación WhatsApp' };
+    }
+};
+
+export const checkWhatsAppIntegrationAction = async (businessId: number): Promise<boolean> => {
+    try {
+        const token = await getAuthToken();
+        const { IntegrationApiRepository } = await import('@/services/integrations/core/infra/repository/api-repository');
+        const repo = new IntegrationApiRepository(token);
+        const result = await repo.getIntegrationByType('whatsapp', businessId);
+        return !!(result && result.data);
+    } catch {
+        return false;
+    }
+};

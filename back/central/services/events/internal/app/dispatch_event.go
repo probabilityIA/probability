@@ -110,23 +110,45 @@ func (d *EventDispatcher) HandleEvent(ctx context.Context, event entities.Event)
 
 // validateConditions valida si un evento cumple las condiciones de una config
 func (d *EventDispatcher) validateConditions(event entities.Event, config entities.CachedNotificationConfig) bool {
-	// Si hay OrderStatusCodes configurados, verificar que el status actual esté en la lista
+	// Si no hay filtros de estado configurados → aceptar todo
+	if len(config.OrderStatusCodes) == 0 && len(config.OrderStatusIDs) == 0 {
+		return true
+	}
+
+	// 1. Intentar validar por código de estado (current_status string de Changes)
 	if len(config.OrderStatusCodes) > 0 {
-		currentStatus := ""
 		if status, ok := event.Data["current_status"]; ok {
-			if statusStr, ok := status.(string); ok {
-				currentStatus = statusStr
+			if statusStr, ok := status.(string); ok && statusStr != "" {
+				return slices.Contains(config.OrderStatusCodes, statusStr)
 			}
-		}
-
-		if currentStatus == "" {
-			return true // Sin status en el evento → no filtrar
-		}
-
-		if !slices.Contains(config.OrderStatusCodes, currentStatus) {
-			return false
 		}
 	}
 
+	// 2. Fallback: validar por ID de estado (order_status_id del snapshot)
+	//    Esto cubre eventos como order.created donde current_status no está en Changes
+	if len(config.OrderStatusIDs) > 0 {
+		if statusID, ok := event.Data["order_status_id"]; ok {
+			var orderStatusID uint
+			switch v := statusID.(type) {
+			case float64:
+				orderStatusID = uint(v)
+			case uint:
+				orderStatusID = v
+			case int:
+				orderStatusID = uint(v)
+			}
+
+			if orderStatusID > 0 {
+				for _, allowedID := range config.OrderStatusIDs {
+					if orderStatusID == allowedID {
+						return true
+					}
+				}
+				return false
+			}
+		}
+	}
+
+	// Si no hay información de estado en el evento → no filtrar (backward compatible)
 	return true
 }

@@ -35,4 +35,8 @@ export class OrderUseCases {
     async getAIRecommendation(origin: string, destination: string) {
         return this.repository.getAIRecommendation(origin, destination);
     }
+
+    async requestConfirmation(orderId: string) {
+        return this.repository.requestConfirmation(orderId);
+    }
 }

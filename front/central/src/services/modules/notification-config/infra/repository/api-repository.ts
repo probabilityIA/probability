@@ -119,6 +119,7 @@ export class NotificationConfigApiRepository implements INotificationConfigRepos
             headers: {
                 Authorization: `Bearer ${this.token}`,
             },
+            cache: 'no-store',
         });
 
         if (!response.ok) {

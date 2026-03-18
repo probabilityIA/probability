@@ -33,15 +33,19 @@ var Templates = map[string]TemplateDefinition{
 		},
 		Description: "Plantilla inicial de confirmación de pedido contra entrega",
 	},
-	"pedido_confirmado": {
-		Name:     "pedido_confirmado",
+	"pedido_confirmado_v2": {
+		Name:     "pedido_confirmado_v2",
 		Language: "es",
 		Variables: []string{
-			"numero_pedido", // {{1}}
+			"nombre",        // {{1}}
+			"numero_pedido", // {{2}}
+			"tienda",        // {{3}}
+			"direccion",     // {{4}}
+			"productos",     // {{5}}
 		},
 		HasButtons:   false,
 		ButtonLabels: []string{},
-		Description:  "Confirmación de que el pedido ha sido confirmado exitosamente",
+		Description:  "Confirmación de que el pedido ha sido confirmado exitosamente (con resumen e iconos)",
 	},
 	"menu_no_confirmacion": {
 		Name:     "menu_no_confirmacion",

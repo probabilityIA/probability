@@ -29,17 +29,21 @@ type orderEventMessage struct {
 
 // orderSnapshot replica los campos necesarios del OrderSnapshot del módulo orders.
 type orderSnapshot struct {
-	ID             string  `json:"id"`
-	OrderNumber    string  `json:"order_number"`
-	InternalNumber string  `json:"internal_number"`
-	ExternalID     string  `json:"external_id"`
-	TotalAmount    float64 `json:"total_amount"`
-	Currency       string  `json:"currency"`
-	CustomerName   string  `json:"customer_name"`
-	CustomerEmail  string  `json:"customer_email,omitempty"`
-	CustomerPhone  string  `json:"customer_phone,omitempty"`
-	Platform       string  `json:"platform"`
-	IntegrationID  uint    `json:"integration_id"`
+	ID              string  `json:"id"`
+	OrderNumber     string  `json:"order_number"`
+	InternalNumber  string  `json:"internal_number"`
+	ExternalID      string  `json:"external_id"`
+	TotalAmount     float64 `json:"total_amount"`
+	Currency        string  `json:"currency"`
+	CustomerName    string  `json:"customer_name"`
+	CustomerEmail   string  `json:"customer_email,omitempty"`
+	CustomerPhone   string  `json:"customer_phone,omitempty"`
+	Platform        string  `json:"platform"`
+	IntegrationID   uint    `json:"integration_id"`
+	BusinessName    string  `json:"business_name,omitempty"`
+	ItemsSummary    string  `json:"items_summary,omitempty"`
+	ShippingAddress string  `json:"shipping_address,omitempty"`
+	OrderStatusID   *uint   `json:"order_status_id,omitempty"`
 }
 
 // OrderEventConsumer consume eventos de órdenes desde el fanout y los despacha al EventDispatcher
@@ -109,6 +113,14 @@ func (c *OrderEventConsumer) handleMessage(ctx context.Context, body []byte) err
 		data["customer_email"] = msg.Order.CustomerEmail
 		data["customer_phone"] = msg.Order.CustomerPhone
 		data["platform"] = msg.Order.Platform
+		data["business_name"] = msg.Order.BusinessName
+		data["items_summary"] = msg.Order.ItemsSummary
+		data["shipping_address"] = msg.Order.ShippingAddress
+
+		// Extraer order_status_id del snapshot (disponible en todos los eventos)
+		if msg.Order.OrderStatusID != nil {
+			data["order_status_id"] = *msg.Order.OrderStatusID
+		}
 	}
 
 	// Extraer current_status de Changes (disponible en status_changed/updated)

@@ -101,4 +101,10 @@ export class OrderApiRepository implements IOrderRepository {
         const searchParams = new URLSearchParams({ origin, destination });
         return this.fetch<any>(`/ai/recommendation?${searchParams.toString()}`);
     }
+
+    async requestConfirmation(orderId: string): Promise<ActionResponse> {
+        return this.fetch<ActionResponse>(`/orders/${orderId}/request-confirmation`, {
+            method: 'POST',
+        });
+    }
 }

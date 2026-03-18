@@ -197,9 +197,9 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
                   key={status.id}
                   type="button"
                   onClick={() => {
-                    const newIds = isChecked
-                      ? rule.order_status_ids.filter((id) => id !== status.id)
-                      : [...rule.order_status_ids, status.id];
+                    // Solo UN estado configurable: click deselecciona si ya está seleccionado,
+                    // o reemplaza la selección actual con el nuevo estado
+                    const newIds = isChecked ? [] : [status.id];
                     onChange({ ...rule, order_status_ids: newIds });
                   }}
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer ${

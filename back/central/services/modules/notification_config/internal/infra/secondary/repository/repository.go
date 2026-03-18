@@ -66,7 +66,7 @@ func (r *repository) Update(ctx context.Context, config *entities.IntegrationNot
 func (r *repository) GetByID(ctx context.Context, id uint) (*entities.IntegrationNotificationConfig, error) {
 	var model mappers.IntegrationNotificationConfigModel
 
-	if err := r.db.Conn(ctx).First(&model, id).Error; err != nil {
+	if err := r.db.Conn(ctx).Preload("NotificationType").Preload("NotificationEventType").Preload("OrderStatuses").First(&model, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, domainerrors.ErrNotificationConfigNotFound
 		}

@@ -2,7 +2,7 @@
 
 import { Order } from '../../domain/types';
 import MapComponent from '@/shared/ui/MapComponent';
-import { getAIRecommendationAction, getOrderByIdAction, updateOrderAction } from '../../infra/actions';
+import { getAIRecommendationAction, getOrderByIdAction, updateOrderAction, requestWhatsAppConfirmationAction, checkWhatsAppIntegrationAction } from '../../infra/actions';
 import { useState, useEffect } from 'react';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 
@@ -88,6 +88,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const [novelty, setNovelty] = useState('');
     const [isSaving, setIsSaving] = useState(false);
 
+    // WhatsApp Confirmation State
+    const [hasWhatsApp, setHasWhatsApp] = useState(false);
+    const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
+    const [whatsAppSent, setWhatsAppSent] = useState(false);
+
     // Initialize management state
     useEffect(() => {
         if (order) {
@@ -95,6 +100,32 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
             setNovelty(order.novelty || '');
         }
     }, [order]);
+
+    // Check if business has WhatsApp integration
+    useEffect(() => {
+        if (order?.business_id) {
+            checkWhatsAppIntegrationAction(order.business_id).then(setHasWhatsApp);
+        }
+    }, [order?.business_id]);
+
+    const handleWhatsAppConfirmation = async () => {
+        if (!order.id) return;
+        setIsSendingWhatsApp(true);
+        try {
+            const result = await requestWhatsAppConfirmationAction(order.id);
+            if (result.success) {
+                setWhatsAppSent(true);
+                alert('Mensaje de confirmación enviado por WhatsApp');
+            } else {
+                alert(result.message || 'Error al enviar confirmación por WhatsApp');
+            }
+        } catch (error: any) {
+            console.error('Error sending WhatsApp confirmation:', error);
+            alert('Error al enviar confirmación por WhatsApp');
+        } finally {
+            setIsSendingWhatsApp(false);
+        }
+    };
 
     const handleSaveManagement = async () => {
         if (!order.id) return;
@@ -589,13 +620,51 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         onChange={(e) => setNovelty(e.target.value)}
                                     />
                                 </div>
-                                <button
-                                    onClick={handleSaveManagement}
-                                    disabled={isSaving}
-                                    className="inline-flex items-center justify-center px-4 py-2 w-full border border-transparent text-sm font-semibold rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
-                                >
-                                    {isSaving ? 'Guardando...' : 'Guardar'}
-                                </button>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={handleSaveManagement}
+                                        disabled={isSaving}
+                                        className="inline-flex items-center justify-center px-4 py-2 flex-1 border border-transparent text-sm font-semibold rounded-md shadow-sm text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50"
+                                    >
+                                        {isSaving ? 'Guardando...' : 'Guardar'}
+                                    </button>
+                                    {hasWhatsApp && order.is_confirmed === null && (
+                                        <button
+                                            onClick={handleWhatsAppConfirmation}
+                                            disabled={isSendingWhatsApp || whatsAppSent}
+                                            className={`inline-flex items-center justify-center px-4 py-2 border text-sm font-semibold rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 ${
+                                                whatsAppSent
+                                                    ? 'bg-green-100 text-green-700 border-green-300'
+                                                    : 'text-white bg-green-600 hover:bg-green-700 border-transparent'
+                                            }`}
+                                            title={!order.customer_phone ? 'La orden no tiene teléfono de cliente' : 'Enviar confirmación por WhatsApp'}
+                                        >
+                                            {isSendingWhatsApp ? (
+                                                <>
+                                                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                                                    </svg>
+                                                    Enviando...
+                                                </>
+                                            ) : whatsAppSent ? (
+                                                <>
+                                                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                    Enviado
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                                    </svg>
+                                                    Confirmar por WhatsApp
+                                                </>
+                                            )}
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>

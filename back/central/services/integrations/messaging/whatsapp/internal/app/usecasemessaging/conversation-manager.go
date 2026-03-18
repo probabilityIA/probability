@@ -115,11 +115,25 @@ func (u *usecases) handleAwaitingConfirmationState(
 ) *dtos.StateTransitionDTO {
 	switch userResponse {
 	case "Confirmar pedido":
+		getMetaStr := func(key string) string {
+			if conversation.Metadata == nil {
+				return ""
+			}
+			if v, ok := conversation.Metadata[key].(string); ok {
+				return v
+			}
+			return ""
+		}
+
 		return &dtos.StateTransitionDTO{
 			NextState:    entities.StateCompleted,
-			TemplateName: "pedido_confirmado",
+			TemplateName: "pedido_confirmado_v2",
 			Variables: map[string]string{
-				"1": conversation.OrderNumber,
+				"1": getMetaStr("nombre"),
+				"2": conversation.OrderNumber,
+				"3": getMetaStr("tienda"),
+				"4": getMetaStr("direccion"),
+				"5": getMetaStr("productos"),
 			},
 			PublishEvent: true,
 			EventType:    "confirmed",

@@ -271,15 +271,15 @@ Todos los templates están definidos en `internal/domain/entities/template.go` y
 }
 ```
 
-#### pedido_confirmado
+#### pedido_confirmado_v2
 
 ```json
 {
-  "name": "pedido_confirmado",
+  "name": "pedido_confirmado_v2",
   "language": "es",
   "category": "UTILITY",
   "components": [
-    {"type": "BODY", "text": "Tu pedido {{1}} ha sido confirmado exitosamente. Pronto estará en camino. ¡Gracias por tu compra!", "example": {"body_text": [["ORD-001"]]}}
+    {"type": "BODY", "text": "¡Hola {{1}}! 👋\nTu pedido ha sido *confirmado* exitosamente ✅\n\n📋 *Resumen de tu pedido:*\n🛒 *Pedido:* {{2}}\n🏪 *Tienda:* {{3}}\n📍 *Dirección de entrega:* {{4}}\n📦 *Productos:* {{5}}\n\nPronto estará en camino 🚚\n¡Gracias por tu compra! 🙏", "example": {"body_text": [["Juan Pérez", "ORD-001", "Mi Tienda", "Calle 45 #23-67 Bogotá", "1x Camiseta Negra, 2x Pantalón"]]}}
   ]
 }
 ```
@@ -423,7 +423,7 @@ Todos los templates están definidos en `internal/domain/entities/template.go` y
 |----------|-----------|---------|-----|
 | `prueba_conexion` | — | — | Test de conexión |
 | `confirmacion_pedido_contraentrega` | nombre, tienda, orden, dirección, productos | Confirmar / No confirmar | Inicio del flujo |
-| `pedido_confirmado` | #pedido | — | Confirmación exitosa |
+| `pedido_confirmado_v2` | nombre, #pedido, tienda, dirección, productos | — | Confirmación exitosa (con resumen e iconos) |
 | `pedido_cancelado` | #pedido | — | Cancelación completada |
 | `menu_no_confirmacion` | #pedido | Novedad / Cancelar / Asesor | Menú al no confirmar |
 | `confirmar_cancelacion_pedido` | #pedido | Sí cancelar / No volver | Confirmar cancelación |

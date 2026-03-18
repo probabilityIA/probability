@@ -867,6 +867,38 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         },
     });
 
+    // SSE Integration - Actualizar orden cuando cambia estado (ej: confirmación WhatsApp)
+    useSSE({
+        eventTypes: ['order.status_changed'],
+        businessId: isSuperAdmin ? 0 : permissions?.business_id,
+        onMessage: async (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type !== 'order.status_changed') return;
+
+                const orderId = data.data?.order_id || data.metadata?.order_id;
+                if (!orderId) return;
+
+                // Recargar la orden completa para reflejar el nuevo estado
+                const response = await getOrderByIdAction(orderId);
+                if (response.success && response.data) {
+                    const updatedOrder = response.data;
+
+                    setOrders(prev => prev.map(o =>
+                        o.id === orderId ? updatedOrder : o
+                    ));
+
+                    // Notificar si la orden fue confirmada por WhatsApp
+                    if (updatedOrder.is_confirmed === true) {
+                        showToast(`Pedido #${updatedOrder.order_number} confirmado por WhatsApp`, 'success');
+                    }
+                }
+            } catch {
+                // Ignore parse errors
+            }
+        },
+    });
+
     // Función para actualizar solo la tabla (sin mostrar loading inicial)
     const refreshTableOnly = useCallback(async () => {
         setTableLoading(true);
