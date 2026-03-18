@@ -79,7 +79,7 @@ func (c *Client) SendCashReceiptFromDocument(
 	}
 
 	// 4. Build payment body per type
-	payment := buildPaymentBody(paymentType, amount, config)
+	payment := buildPaymentBody(paymentType, amount, config, documentNumber, prefix)
 
 	// 5. Build and send request
 	// Split prefix from documentNumber if it's combined (e.g. "FEV0000000026")
@@ -175,9 +175,9 @@ func (c *Client) SendCashReceiptFromDocument(
 //   - EF (Efectivo): solo type + value
 //   - BN (Bonos): type + value + code
 //   - CH (Cheque): type + value + accountNumber + bankName
-//   - TR (Transferencia): type + value + bankAccountId (int)
+//   - TR (Transferencia): type + value + accountNumber + documentNumber + prefixNumber
 //   - TC/TD (Tarjeta crédito/débito): type + value + finantialEntityId (int)
-func buildPaymentBody(paymentType string, amount float64, config map[string]interface{}) map[string]interface{} {
+func buildPaymentBody(paymentType string, amount float64, config map[string]interface{}, docNumber, docPrefix string) map[string]interface{} {
 	payment := map[string]interface{}{
 		"type":  paymentType,
 		"value": amount,
@@ -196,9 +196,19 @@ func buildPaymentBody(paymentType string, amount float64, config map[string]inte
 			payment["bankName"] = bank
 		}
 	case "TR":
-		if bankAcctID := getConfigInt(config, "payment_bank_account_id"); bankAcctID > 0 {
-			payment["bankAccountId"] = bankAcctID
+		// accountNumber puede venir como string o como float64 (JSON number)
+		switch v := config["payment_bank_account_id"].(type) {
+		case string:
+			if v != "" {
+				payment["accountNumber"] = v
+			}
+		case float64:
+			payment["accountNumber"] = fmt.Sprintf("%.0f", v)
+		case int:
+			payment["accountNumber"] = fmt.Sprintf("%d", v)
 		}
+		payment["documentNumber"] = docNumber
+		payment["prefixNumber"] = docPrefix
 	case "TC", "TD":
 		if entityID := getConfigInt(config, "payment_financial_entity_id"); entityID > 0 {
 			payment["finantialEntityId"] = entityID

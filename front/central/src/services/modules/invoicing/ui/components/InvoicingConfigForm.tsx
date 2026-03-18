@@ -102,7 +102,7 @@ export function InvoicingConfigForm({
       invoiceConfig.send_cash_receipt = true;
       invoiceConfig.payment_type = formData.payment_type || 'EF';
       if (formData.payment_type === 'TR' && formData.payment_bank_account_id)
-        invoiceConfig.payment_bank_account_id = Number(formData.payment_bank_account_id);
+        invoiceConfig.payment_bank_account_id = String(formData.payment_bank_account_id);
       if (formData.payment_type === 'CH') {
         if (formData.payment_account_number) invoiceConfig.payment_account_number = formData.payment_account_number;
         if (formData.payment_bank_name) invoiceConfig.payment_bank_name = formData.payment_bank_name;
@@ -243,15 +243,18 @@ export function InvoicingConfigForm({
               {/* TR: bankAccountId */}
               {formData.payment_type === 'TR' && (
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">ID Cuenta Bancaria (Softpymes)</label>
+                  <label className="block text-sm text-gray-700 mb-1">Numero de cuenta bancaria</label>
                   <input
-                    type="number"
+                    type="text"
                     value={formData.payment_bank_account_id}
                     onChange={(e) => setFormData({ ...formData, payment_bank_account_id: e.target.value })}
-                    placeholder="ID numerico de la cuenta"
+                    placeholder="Ej: 1"
                     disabled={loading}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Numero de cuenta registrada en Softpymes (consultar en Utilidades → Buscar cuentas bancarias)
+                  </p>
                 </div>
               )}
 
