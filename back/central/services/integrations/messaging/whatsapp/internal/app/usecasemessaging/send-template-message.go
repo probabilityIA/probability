@@ -70,6 +70,18 @@ func (u *usecases) SendTemplate(
 		return "", err
 	}
 
+	// 6.5. Guardar variables de la plantilla en metadata de la conversación
+	// para que estén disponibles en futuras transiciones de estado
+	if conversation.Metadata == nil {
+		conversation.Metadata = make(map[string]interface{})
+	}
+	for i, varName := range templateDef.Variables {
+		varKey := string(rune('1' + i))
+		if val, ok := variables[varKey]; ok && val != "" {
+			conversation.Metadata[varName] = val
+		}
+	}
+
 	// 7. Enviar mensaje — usar URL de platform_creds si disponible
 	u.log.Info(ctx).
 		Str("conversation_id", conversation.ID).

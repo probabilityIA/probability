@@ -126,18 +126,19 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 	}
 
 	// 3. Enviar siguiente plantilla
-	_, err = u.SendTemplateWithConversation(
+	var templateSendErr error
+	_, templateSendErr = u.SendTemplateWithConversation(
 		ctx,
 		transition.TemplateName,
 		conversation.PhoneNumber,
 		transition.Variables,
 		conversation.ID,
 	)
-	if err != nil {
-		u.log.Error(ctx).Err(err).
+	if templateSendErr != nil {
+		u.log.Error(ctx).Err(templateSendErr).
 			Str("template", transition.TemplateName).
-			Msg("[WhatsApp Webhook] - error enviando plantilla")
-		return err
+			Msg("[WhatsApp Webhook] - error enviando plantilla (continuando con evento de negocio)")
+		// NO retornamos — el usuario ya respondió, debemos publicar el evento de negocio
 	}
 
 	// 4. Actualizar estado de la conversación en cache
@@ -148,7 +149,7 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 		u.log.Error(ctx).Err(err).
 			Str("conversation_id", conversation.ID).
 			Msg("[WhatsApp Webhook] - error actualizando conversación en cache")
-		return err
+		// No retornamos error — priorizamos publicar evento de negocio
 	}
 
 	// Publicar actualización para persistencia async
@@ -159,7 +160,7 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 		// No retornamos error
 	}
 
-	// 5. Publicar evento de negocio si aplica
+	// 5. Publicar evento de negocio si aplica (PRIORITARIO — no depende del envío de plantilla)
 	if transition.PublishEvent {
 		if err := u.publishBusinessEvent(ctx, transition.EventType, conversation); err != nil {
 			u.log.Error(ctx).Err(err).
@@ -174,9 +175,10 @@ func (u *usecases) processConversationFlow(ctx context.Context, conversation *en
 		Str("new_state", string(transition.NextState)).
 		Str("template_sent", transition.TemplateName).
 		Bool("event_published", transition.PublishEvent).
+		Bool("template_sent_ok", templateSendErr == nil).
 		Msg("[WhatsApp Webhook] - transición de estado completada")
 
-	return nil
+	return templateSendErr
 }
 
 // publishBusinessEvent publica eventos de negocio según el tipo
