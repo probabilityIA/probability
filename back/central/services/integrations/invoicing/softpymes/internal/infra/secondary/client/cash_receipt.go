@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -109,18 +110,12 @@ func (c *Client) SendCashReceiptFromDocument(
 		Float64("amount", amount).
 		Msg("Sending cash receipt to Softpymes")
 
-	var receiptResp struct {
-		Message string `json:"message"`
-		Error   string `json:"error"`
-	}
-
 	requestURL := c.resolveURL(baseURL, "/app/integration/cash_receipt/")
 	resp, err := c.httpClient.R().
 		SetContext(ctx).
 		SetAuthToken(token).
 		SetHeader("Referer", referer).
 		SetBody(body).
-		SetResult(&receiptResp).
 		Post(requestURL)
 
 	if err != nil {
@@ -136,16 +131,24 @@ func (c *Client) SendCashReceiptFromDocument(
 		return fmt.Errorf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
-	if receiptResp.Error != "" {
+	// Softpymes puede devolver:
+	// 1. Objeto: {"message": "...", "error": ""}
+	// 2. Array con error embebido: [[{"message":"..."}], 400]
+	// 3. Array con éxito: [{"message":"..."}, 200]
+	respBody := resp.Body()
+	message, errMsg := parseCashReceiptResponse(respBody)
+
+	if errMsg != "" {
 		c.log.Error(ctx).
-			Str("error", receiptResp.Error).
+			Str("error", errMsg).
+			Str("raw_response", string(respBody)).
 			Msg("Cash receipt API returned error")
-		return fmt.Errorf("cash receipt error: %s", receiptResp.Error)
+		return fmt.Errorf("cash receipt error: %s", errMsg)
 	}
 
 	c.log.Info(ctx).
 		Str("document_number", docNumber).
-		Str("message", receiptResp.Message).
+		Str("message", message).
 		Msg("Cash receipt sent successfully - payment registered in Softpymes")
 
 	return nil
@@ -199,6 +202,75 @@ func getConfigInt(config map[string]interface{}, key string) int {
 		return v
 	}
 	return 0
+}
+
+// parseCashReceiptResponse parsea la respuesta del endpoint cash_receipt de Softpymes.
+// Softpymes puede devolver un objeto simple o un array con status code embebido.
+// Retorna (message, errorMsg). Si errorMsg != "" hubo error.
+func parseCashReceiptResponse(body []byte) (message string, errorMsg string) {
+	if len(body) == 0 {
+		return "", ""
+	}
+
+	// Intentar como objeto simple: {"message": "...", "error": "..."}
+	var obj struct {
+		Message string `json:"message"`
+		Error   string `json:"error"`
+	}
+	if err := json.Unmarshal(body, &obj); err == nil {
+		return obj.Message, obj.Error
+	}
+
+	// Intentar como array: [{...}, statusCode] o [[{...}], statusCode]
+	var arr []json.RawMessage
+	if err := json.Unmarshal(body, &arr); err != nil {
+		return "", ""
+	}
+
+	if len(arr) < 2 {
+		return "", ""
+	}
+
+	// Verificar status code en el último elemento
+	var statusCode int
+	if err := json.Unmarshal(arr[len(arr)-1], &statusCode); err == nil && statusCode >= 400 {
+		// Error embebido — extraer mensaje del primer elemento
+		var errMsg string
+
+		// Intentar como array de errores: [[{"message":"..."}], 400]
+		var errArr []json.RawMessage
+		if json.Unmarshal(arr[0], &errArr) == nil && len(errArr) > 0 {
+			var errObj struct {
+				Message string `json:"message"`
+			}
+			if json.Unmarshal(errArr[0], &errObj) == nil {
+				errMsg = errObj.Message
+			}
+		}
+
+		// Intentar como objeto directo: [{"message":"..."}, 400]
+		if errMsg == "" {
+			var errObj struct {
+				Message string `json:"message"`
+			}
+			if json.Unmarshal(arr[0], &errObj) == nil {
+				errMsg = errObj.Message
+			}
+		}
+
+		if errMsg == "" {
+			errMsg = string(arr[0])
+		}
+		return "", errMsg
+	}
+
+	// Status < 400 o no es un status code → éxito
+	// Extraer message del primer elemento
+	if json.Unmarshal(arr[0], &obj) == nil {
+		return obj.Message, obj.Error
+	}
+
+	return "", ""
 }
 
 // splitDocumentNumber separa el número combinado que retorna Softpymes en creación (ej: "FEV26")
