@@ -19,8 +19,9 @@ const (
 	OperationCancel        = "cancel"
 	OperationCompare       = "compare"
 	OperationCheckStatus   = "check_status"
-	OperationListItems     = "list_items"
-	OperationCreateJournal = "create_journal"
+	OperationListItems        = "list_items"
+	OperationListBankAccounts = "list_bank_accounts"
+	OperationCreateJournal    = "create_journal"
 )
 
 // Providers

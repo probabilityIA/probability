@@ -67,3 +67,7 @@ func (m *SoftpymesClientMock) SendCashReceiptFromDocument(ctx context.Context, a
 func (m *SoftpymesClientMock) ListItems(ctx context.Context, apiKey, apiSecret, referer, baseURL string, page, pageSize int) ([]ports.ListedItem, error) {
 	return nil, nil
 }
+
+func (m *SoftpymesClientMock) ListBankAccounts(ctx context.Context, apiKey, apiSecret, referer, baseURL, branchCode string) ([]ports.BankAccount, error) {
+	return nil, nil
+}

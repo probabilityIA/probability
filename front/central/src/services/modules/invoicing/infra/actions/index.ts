@@ -27,6 +27,7 @@ import type {
   SyncLog,
   CompareResponseData,
   ItemCompareResponseData,
+  BankAccountsResponseData,
 } from '../../domain/types';
 
 const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:3050/api/v1';
@@ -471,6 +472,67 @@ export async function getListItemsResultAction(
 ): Promise<ItemCompareResponseData | null> {
   const params = businessId ? `?business_id=${businessId}` : '';
   const url = `${API_BASE_URL}/invoicing/invoices/items/${correlationId}${params}`;
+
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('session_token')?.value;
+  const businessToken = cookieStore.get('business_token')?.value;
+
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (sessionToken) headers['Authorization'] = `Bearer ${sessionToken}`;
+  if (businessToken) headers['X-Business-Token'] = businessToken;
+
+  const response = await fetch(url, { headers });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorMessage = `Error ${response.status}`;
+    try {
+      const errorBody = JSON.parse(errorText);
+      errorMessage = errorBody.message || errorBody.error || errorMessage;
+    } catch {
+      errorMessage = errorText || errorMessage;
+    }
+    throw new Error(errorMessage);
+  }
+
+  return response.json();
+}
+
+// ============================================
+// CUENTAS BANCARIAS (Softpymes)
+// ============================================
+
+/**
+ * Inicia una consulta asíncrona de cuentas bancarias del proveedor.
+ * El resultado llega via SSE con el evento "invoice.list_bank_accounts_ready".
+ */
+export async function requestListBankAccountsAction(
+  businessId?: number
+): Promise<{ correlation_id: string; message: string }> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/bank-accounts`, {
+    method: 'POST',
+    body: JSON.stringify({
+      ...(businessId ? { business_id: businessId } : {}),
+    }),
+  });
+}
+
+/**
+ * Polls for a bank accounts result by correlation ID.
+ * Returns the data if ready, null if not yet available (404).
+ */
+export async function getListBankAccountsResultAction(
+  correlationId: string,
+  businessId?: number
+): Promise<BankAccountsResponseData | null> {
+  const params = businessId ? `?business_id=${businessId}` : '';
+  const url = `${API_BASE_URL}/invoicing/invoices/bank-accounts/${correlationId}${params}`;
 
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get('session_token')?.value;

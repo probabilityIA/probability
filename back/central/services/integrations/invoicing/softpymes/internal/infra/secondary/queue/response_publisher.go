@@ -75,6 +75,23 @@ type CompareResponseMessage struct {
 	Timestamp         time.Time         `json:"timestamp"`
 }
 
+// BankAccountItem cuenta bancaria del proveedor para list_bank_accounts
+type BankAccountItem struct {
+	AccountNumber string `json:"account_number"`
+	Name          string `json:"name"`
+	NameType      string `json:"name_type"`
+}
+
+// ListBankAccountsResponseMessage mensaje de respuesta de list_bank_accounts publicado a invoicing.responses
+type ListBankAccountsResponseMessage struct {
+	Operation     string            `json:"operation"` // "list_bank_accounts"
+	CorrelationID string            `json:"correlation_id"`
+	BusinessID    uint              `json:"business_id"`
+	Items         []BankAccountItem `json:"items"`
+	Error         string            `json:"error,omitempty"`
+	Timestamp     time.Time         `json:"timestamp"`
+}
+
 // ListItemsItem ítem del catálogo del proveedor para list_items
 type ListItemsItem struct {
 	ItemCode      string  `json:"item_code"`
@@ -223,6 +240,43 @@ func (p *ResponsePublisher) PublishListItemsResponse(ctx context.Context, respon
 		Str("correlation_id", response.CorrelationID).
 		Int("items", len(response.Items)).
 		Msg("📤 List items response published successfully")
+
+	return nil
+}
+
+// PublishListBankAccountsResponse publica el resultado de list_bank_accounts del proveedor
+func (p *ResponsePublisher) PublishListBankAccountsResponse(ctx context.Context, response *ListBankAccountsResponseMessage) error {
+	if response.Timestamp.IsZero() {
+		response.Timestamp = time.Now()
+	}
+
+	data, err := json.Marshal(response)
+	if err != nil {
+		p.log.Error(ctx).Err(err).Msg("Failed to marshal list_bank_accounts response")
+		return fmt.Errorf("failed to marshal list_bank_accounts response: %w", err)
+	}
+
+	if p.queue == nil {
+		p.log.Warn(ctx).
+			Str("correlation_id", response.CorrelationID).
+			Msg("RabbitMQ client is nil, cannot publish list_bank_accounts response")
+		return nil
+	}
+
+	if err := p.queue.Publish(ctx, QueueInvoiceResponses, data); err != nil {
+		p.log.Error(ctx).
+			Err(err).
+			Str("queue", QueueInvoiceResponses).
+			Str("correlation_id", response.CorrelationID).
+			Msg("Failed to publish list_bank_accounts response")
+		return fmt.Errorf("failed to publish list_bank_accounts response: %w", err)
+	}
+
+	p.log.Info(ctx).
+		Str("queue", QueueInvoiceResponses).
+		Str("correlation_id", response.CorrelationID).
+		Int("accounts", len(response.Items)).
+		Msg("📤 List bank accounts response published successfully")
 
 	return nil
 }

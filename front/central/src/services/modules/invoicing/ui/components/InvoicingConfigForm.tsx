@@ -4,10 +4,15 @@ import { useState, useEffect, FormEvent } from 'react';
 import type {
   InvoicingConfig,
   CreateConfigDTO,
+  BankAccountResult,
 } from '@/services/modules/invoicing/domain/types';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import { useInvoicingConfig } from '@/services/modules/invoicing/ui/hooks/useInvoicingConfig';
+import {
+  requestListBankAccountsAction,
+  getListBankAccountsResultAction,
+} from '@/services/modules/invoicing/infra/actions';
 
 interface InvoicingConfigFormProps {
   integrationIds: number[];
@@ -62,6 +67,10 @@ export function InvoicingConfigForm({
 
   const [error, setError] = useState<string | null>(null);
 
+  // Bank accounts state
+  const [loadingBankAccounts, setLoadingBankAccounts] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountResult[] | null>(null);
+
   // Cargar integraciones de origen disponibles del negocio (ecommerce + platform)
   useEffect(() => {
     if (!businessId) return;
@@ -81,6 +90,38 @@ export function InvoicingConfigForm({
     setSelectedIntegrationIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
     );
+  };
+
+  const handleFetchBankAccounts = async () => {
+    setLoadingBankAccounts(true);
+    setBankAccounts(null);
+    try {
+      const result = await requestListBankAccountsAction(businessId);
+      const correlationId = result.correlation_id;
+
+      // Poll every 2 seconds for up to 30 seconds
+      let attempts = 0;
+      const maxAttempts = 15;
+      const poll = setInterval(async () => {
+        attempts++;
+        try {
+          const data = await getListBankAccountsResultAction(correlationId, businessId);
+          if (data !== null) {
+            setBankAccounts(data.results);
+            setLoadingBankAccounts(false);
+            clearInterval(poll);
+          }
+        } catch {
+          // Ignore polling errors
+        }
+        if (attempts >= maxAttempts) {
+          setLoadingBankAccounts(false);
+          clearInterval(poll);
+        }
+      }, 2000);
+    } catch {
+      setLoadingBankAccounts(false);
+    }
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -255,6 +296,35 @@ export function InvoicingConfigForm({
                   <p className="text-xs text-gray-400 mt-1">
                     Numero de cuenta registrada en Softpymes (consultar en Utilidades → Buscar cuentas bancarias)
                   </p>
+                  <button
+                    type="button"
+                    onClick={handleFetchBankAccounts}
+                    disabled={loadingBankAccounts}
+                    className="mt-2 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 disabled:opacity-50"
+                  >
+                    {loadingBankAccounts ? 'Consultando...' : 'Consultar cuentas en Softpymes'}
+                  </button>
+
+                  {bankAccounts && bankAccounts.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {bankAccounts.map((account, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, payment_bank_account_id: account.account_number })}
+                          className={`w-full text-left p-2 rounded text-xs border ${
+                            formData.payment_bank_account_id === account.account_number
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="font-medium">{account.account_number}</span>
+                          <span className="text-gray-500 ml-2">{account.name}</span>
+                          <span className="text-gray-400 ml-1">({account.name_type})</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

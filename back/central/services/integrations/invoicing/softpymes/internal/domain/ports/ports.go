@@ -52,6 +52,18 @@ type ISoftpymesClient interface {
 	// Endpoint: GET /app/integration/items?page=X&pageSize=Y
 	// baseURL: URL base efectiva (producción o testing)
 	ListItems(ctx context.Context, apiKey, apiSecret, referer, baseURL string, page, pageSize int) ([]ListedItem, error)
+
+	// ListBankAccounts lista cuentas bancarias de Softpymes.
+	// Endpoint: GET /app/integration/bank_accounts?branchCode=XXX
+	// baseURL: URL base efectiva (producción o testing)
+	ListBankAccounts(ctx context.Context, apiKey, apiSecret, referer, baseURL, branchCode string) ([]BankAccount, error)
+}
+
+// BankAccount cuenta bancaria de Softpymes
+type BankAccount struct {
+	AccountNumber string
+	Name          string
+	NameType      string
 }
 
 // ListedItem ítem del catálogo de Softpymes

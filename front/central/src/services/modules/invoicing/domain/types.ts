@@ -442,7 +442,8 @@ export type InvoiceSSEEventType =
   | 'bulk_job.progress'
   | 'bulk_job.completed'
   | 'invoice.compare_ready'
-  | 'invoice.list_items_ready';
+  | 'invoice.list_items_ready'
+  | 'invoice.list_bank_accounts_ready';
 
 export interface InvoiceSSEEvent {
   id: string;
@@ -550,4 +551,20 @@ export interface ItemCompareResponseData {
   business_id: number;
   results: ItemCompareResult[];
   summary: ItemCompareSummary;
+}
+
+// ===================================
+// CUENTAS BANCARIAS (Softpymes)
+// ===================================
+
+export interface BankAccountResult {
+  account_number: string;
+  name: string;
+  name_type: string;
+}
+
+export interface BankAccountsResponseData {
+  correlation_id: string;
+  business_id: number;
+  results: BankAccountResult[];
 }

@@ -68,6 +68,10 @@ type IHandler interface {
 	ListItems(c *gin.Context)
 	GetListItemsResult(c *gin.Context)
 
+	// Cuentas bancarias del proveedor
+	ListBankAccounts(c *gin.Context)
+	GetListBankAccountsResult(c *gin.Context)
+
 	// Journals (comprobantes contables)
 	CreateJournal(c *gin.Context)
 }
