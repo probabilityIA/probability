@@ -167,6 +167,17 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		fulfillmentStatus = mapFulfillmentStatusToResponse(dto.FulfillmentStatus)
 	}
 
+	var shipment *response.ShipmentSummary
+	if dto.Shipment != nil {
+		shipment = &response.ShipmentSummary{
+			ID:             dto.Shipment.ID,
+			Carrier:        dto.Shipment.Carrier,
+			TrackingNumber: dto.Shipment.TrackingNumber,
+			GuideURL:       dto.Shipment.GuideURL,
+			Status:         dto.Shipment.Status,
+		}
+	}
+
 	return &response.OrderSummary{
 		ID:                     dto.ID,
 		CreatedAt:              dto.CreatedAt,
@@ -204,6 +215,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		IsConfirmed:            dto.IsConfirmed,
 		Novelty:                dto.Novelty,
 		InvoiceStatus:          dto.InvoiceStatus,
+		Shipment:               shipment,
 	}
 }
 

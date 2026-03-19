@@ -132,6 +132,9 @@ export default function Dashboard() {
         return monday;
     });
 
+    // Estado para la navegación de meses
+    const [selectedMonthOffset, setSelectedMonthOffset] = useState(0); // 0 = mes actual, -1 = mes pasado, etc.
+
     useEffect(() => {
         const userData = TokenStorage.getUser();
         if (userData) {
@@ -796,6 +799,54 @@ export default function Dashboard() {
         return ship ?? 0;
     })();
 
+    // Calcular el mes a mostrar basado en selectedMonthOffset
+    const monthData = (() => {
+        const s: any = stats as any;
+        const ordersByMonth = s.orders_by_month as any[] || [];
+
+        if (ordersByMonth.length === 0) {
+            return {
+                monthName: 'N/A',
+                count: 0,
+                percentage: 0,
+                monthNumber: 0,
+                year: new Date().getFullYear(),
+            };
+        }
+
+        const today = new Date();
+        const targetDate = new Date(today);
+        targetDate.setMonth(today.getMonth() + selectedMonthOffset);
+
+        const targetMonthNumber = targetDate.getMonth() + 1; // 1-12
+        const targetYear = targetDate.getFullYear();
+
+        // Encontrar el mes en los datos
+        let targetMonthData = ordersByMonth.find((m: any) =>
+            m.month_number === targetMonthNumber && m.year === targetYear
+        );
+
+        // Si no hay datos para el mes seleccionado, retornar vacío
+        if (!targetMonthData) {
+            const monthNames = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            return {
+                monthName: monthNames[targetMonthNumber - 1],
+                count: 0,
+                percentage: 0,
+                monthNumber: targetMonthNumber,
+                year: targetYear,
+            };
+        }
+
+        return {
+            monthName: targetMonthData?.month || 'N/A',
+            count: targetMonthData?.count || 0,
+            percentage: targetMonthData?.percentage || 0,
+            monthNumber: targetMonthData?.month_number || 0,
+            year: targetMonthData?.year || targetYear,
+        };
+    })();
+
     return (
         <div className="space-y-6">
             {/* Top revenue header (estilo similar a la imagen) */}
@@ -872,19 +923,38 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-white rounded-lg shadow-md flex items-center justify-between">
-                        <div>
-                            <p className="text-sm text-gray-500">Órdenes Pendientes</p>
-                            <div className="mt-2 flex items-center space-x-4">
-                                <div>
-                                    <p className="text-2xl font-bold text-gray-900">{(pendingOrders || 0).toLocaleString()}</p>
-                                    <p className="text-xs text-gray-400">Ordenes actualmente en estado pendiente</p>
-                                </div>
-                                <div className="w-20 h-10">
-                                    <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-full">
-                                        <path d="M0,30 C15,25 30,20 50,18 70,16 85,14 100,10" fill="none" stroke="#06B6D4" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <div className="p-4 bg-white rounded-lg shadow-md">
+                        <p className="text-sm text-gray-500 mb-3">Órdenes Mensuales</p>
+                        <div className="flex items-center gap-4">
+                            <div className="flex items-center space-x-2">
+                                <button
+                                    onClick={() => setSelectedMonthOffset(selectedMonthOffset - 1)}
+                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                    title="Mes anterior"
+                                >
+                                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
+                                </button>
+                                <div className="text-center min-w-[90px]">
+                                    <p className="text-sm font-semibold text-gray-700">{monthData.monthName}</p>
+                                    <p className="text-xs text-gray-500">{monthData.year}</p>
                                 </div>
+                                <button
+                                    onClick={() => setSelectedMonthOffset(selectedMonthOffset + 1)}
+                                    className="p-1 hover:bg-gray-100 rounded transition-colors"
+                                    title="Próximo mes"
+                                >
+                                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div className="flex-1 text-center">
+                                <p className="text-2xl font-bold text-gray-900">{monthData.count.toLocaleString()}</p>
+                                {monthData.percentage > 0 && (
+                                    <p className="text-xs text-gray-400">{monthData.percentage.toFixed(1)}%</p>
+                                )}
                             </div>
                         </div>
                     </div>

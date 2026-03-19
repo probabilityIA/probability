@@ -181,6 +181,19 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		businessID = *order.BusinessID
 	}
 
+	// Mapear el primer shipment si existe
+	var shipment *dtos.ShipmentSummary
+	if len(order.Shipments) > 0 {
+		s := order.Shipments[0]
+		shipment = &dtos.ShipmentSummary{
+			ID:             s.ID,
+			Carrier:        s.Carrier,
+			TrackingNumber: s.TrackingNumber,
+			GuideURL:       s.GuideURL,
+			Status:         s.Status,
+		}
+	}
+
 	return dtos.OrderSummary{
 		ID:                     order.ID,
 		CreatedAt:              order.CreatedAt,
@@ -220,5 +233,6 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		IsConfirmed:            order.IsConfirmed,
 		Novelty:                order.Novelty,
 		InvoiceStatus:          order.InvoiceStatus,
+		Shipment:               shipment,
 	}
 }

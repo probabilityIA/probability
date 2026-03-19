@@ -47,6 +47,7 @@ type OrderSummary struct {
 	IsConfirmed            *bool
 	Novelty                *string
 	InvoiceStatus          string // "", "pending", "issued", "failed", "cancelled"
+	Shipment               *ShipmentSummary
 }
 
 // OrderRawResponse representa la respuesta con los datos crudos

@@ -44,6 +44,9 @@ type IRepository interface {
 
 	// Businesses (solo super admin, businessID debe ser nil)
 	GetOrdersByBusiness(ctx context.Context, limit int) ([]OrdersByBusiness, error)
+
+	// Órdenes por mes
+	GetOrdersByMonth(ctx context.Context, businessID *uint, integrationID *uint) ([]OrdersByMonth, error)
 }
 
 // IUseCase define la interfaz del caso de uso para obtener estadísticas del dashboard

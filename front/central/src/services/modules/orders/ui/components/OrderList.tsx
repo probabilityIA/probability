@@ -19,6 +19,41 @@ import RawOrderModal from './RawOrderModal';
 import DownloadOrdersModal from '@/shared/ui/modals/download-orders-modal';
 import { getActionError } from '@/shared/utils/action-result';
 
+// Mapeo de carrier (valor raw de BD) a logo URL
+const CARRIER_LOGOS: Record<string, string> = {
+    'SERVIENTREGA': 'https://i.revistapym.com.co/old/2021/09/WhatsApp-Image-2021-09-25-at-1.08.55-PM.jpeg?w=400&r=1_1',
+    'servientrega': 'https://i.revistapym.com.co/old/2021/09/WhatsApp-Image-2021-09-25-at-1.08.55-PM.jpeg?w=400&r=1_1',
+    'COORDINADORA': 'https://olartemoure.com/wp-content/uploads/2023/05/coordinadora-logo.png',
+    'coordinadora': 'https://olartemoure.com/wp-content/uploads/2023/05/coordinadora-logo.png',
+    'DHLEXPRESS': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'dhlexpress': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'DHL': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'dhl': 'https://logodownload.org/wp-content/uploads/2015/12/dhl-logo-2.png',
+    'FEDEX': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
+    'fedex': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/FedEx_Express.svg/960px-FedEx_Express.svg.png',
+    'INTERRAPIDISIMO': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+    'interrapidisimo': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+    'interrapidísimo': 'https://interrapidisimo.com/wp-content/uploads/Logo-Inter-Rapidisimo-Vv-400x431-1.png',
+    '472LOGISTICA': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
+    '472logistica': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTnDF0ozRHf3s5BPqLsr7Vg-X8JRzECvFvwBQ&s',
+    'SPEED': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'speed': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'SPEEDCARGO': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'speedcargo': 'https://speedcargopa.com/wp-content/uploads/2021/03/Logo-mejorado-transparencia.png',
+    'ENVIA': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
+    'envia': 'https://images.seeklogo.com/logo-png/31/1/envia-mensajeria-logo-png_seeklogo-311137.png',
+    'PIBOX': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
+    'pibox': 'https://play-lh.googleusercontent.com/r_zPLkaHZK4Odu1yp6dqIdUnVAmIiLc3s18F9gUFqcz8IyHqCb_aGHP4iJSesXxnUyU',
+    'TCC': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    'tcc': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    'TRANSPORTADORADECARACOLOMBIA': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    'transportadoradecaracolombia': 'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a8/Logo_TCC.svg/1280px-Logo_TCC.svg.png',
+    '99MINUTOS': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
+    '99minutos': 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Logo-99minutos.svg/3840px-Logo-99minutos.svg.png',
+    'DEPRISA': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
+    'deprisa': 'https://www.specialcolombia.com/wp-content/uploads/2023/05/Logo_azul_concepto_azul-deprisa.png',
+};
+
 // Componente memoizado para las filas de la tabla
 const OrderRow = memo(({
     order,
@@ -247,6 +282,27 @@ const OrderRow = memo(({
                     </div>
                 </td>
             )}
+            <td className="px-3 sm:px-6 py-4 text-center hidden md:table-cell">
+                {order.shipment?.carrier ? (
+                    <div className="flex items-center justify-center">
+                        {CARRIER_LOGOS[order.shipment.carrier] ? (
+                            <img
+                                src={CARRIER_LOGOS[order.shipment.carrier]}
+                                alt={order.shipment.carrier}
+                                className="h-8 w-12 object-contain"
+                                loading="lazy"
+                                title={order.shipment.carrier}
+                            />
+                        ) : (
+                            <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                                {order.shipment.carrier.substring(0, 6)}
+                            </span>
+                        )}
+                    </div>
+                ) : (
+                    <span className="text-xs text-gray-400 text-center block">Sin envío</span>
+                )}
+            </td>
             <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                 <div className="flex flex-row justify-end gap-2">
                     {/* Botón de Recomendación Inteligente (Robot) */}
@@ -1317,6 +1373,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         Business
                                     </th>
                                 )}
+                                <th className="px-3 sm:px-6 py-3 text-center text-xs font-bold text-white uppercase tracking-widest hidden md:table-cell" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)' }}>
+                                    Transportadora
+                                </th>
                                 <th className="px-3 sm:px-6 py-3 text-right text-xs font-bold text-white uppercase tracking-widest" style={{ paddingTop: '10px', paddingBottom: '10px', fontSize: '0.75rem', fontWeight: 800, letterSpacing: '0.06em', boxShadow: '0 10px 25px rgba(124, 58, 237, 0.18)', borderTopRightRadius: '14px', borderBottomRightRadius: '14px' }}>
                                     Acciones
                                 </th>

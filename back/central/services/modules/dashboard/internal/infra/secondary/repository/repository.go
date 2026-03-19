@@ -558,6 +558,7 @@ func (r *Repository) GetShipmentsByStatusFiltered(ctx context.Context, businessI
 }
 
 // GetShipmentsByCarrier obtiene envíos agrupados por transportista
+// Solo cuenta el shipment más reciente por orden para evitar duplicados
 func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByCarrier, error) {
 	type Result struct {
 		Carrier string `gorm:"column:carrier"`
@@ -565,22 +566,40 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 	}
 
 	var results []Result
-	query := r.db.Conn(ctx).
-		Model(&models.Shipment{}).
-		Select("TRIM(LOWER(shipments.carrier)) as carrier, COUNT(*) as count").
-		Joins("JOIN orders ON orders.id = shipments.order_id").
-		Where("shipments.carrier IS NOT NULL AND shipments.carrier != ''").
-		Group("TRIM(LOWER(shipments.carrier))").
-		Order("count DESC")
 
-	// Aplicar filtro por business_id si está especificado y no es super user
-	if businessID != nil && *businessID > 0 {
-		query = query.Where("orders.business_id = ?", *businessID)
-	}
+	baseSQLPart := `
+		SELECT TRIM(LOWER(s.carrier)) as carrier, COUNT(*) as count
+		FROM (
+			SELECT DISTINCT ON (order_id) id, order_id, carrier
+			FROM shipments
+			ORDER BY order_id, created_at DESC
+		) s
+		JOIN orders o ON o.id = s.order_id
+		WHERE s.carrier IS NOT NULL AND s.carrier != ''
+	`
+	orderBySQLPart := `
+		GROUP BY TRIM(LOWER(s.carrier))
+		ORDER BY count DESC
+	`
 
-	// Aplicar filtro por integration_id si está especificado
-	if integrationID != nil && *integrationID > 0 {
-		query = query.Where("orders.integration_id = ?", *integrationID)
+	var query *gorm.DB
+	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
+			*businessID, *integrationID,
+		)
+	} else if businessID != nil && *businessID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
+			*businessID,
+		)
+	} else if integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
+			*integrationID,
+		)
+	} else {
+		query = r.db.Conn(ctx).Raw(baseSQLPart + orderBySQLPart)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -600,6 +619,7 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 }
 
 // GetShipmentsByCarrierToday obtiene envíos agrupados por transportista del día actual
+// Solo cuenta el shipment más reciente por orden para evitar duplicados
 func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByCarrier, error) {
 	type Result struct {
 		Carrier string `gorm:"column:carrier"`
@@ -607,23 +627,41 @@ func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID 
 	}
 
 	var results []Result
-	query := r.db.Conn(ctx).
-		Model(&models.Shipment{}).
-		Select("TRIM(LOWER(shipments.carrier)) as carrier, COUNT(*) as count").
-		Joins("JOIN orders ON orders.id = shipments.order_id").
-		Where("DATE(shipments.created_at AT TIME ZONE 'America/Bogota') = DATE(NOW() AT TIME ZONE 'America/Bogota')").
-		Where("shipments.carrier IS NOT NULL AND shipments.carrier != ''").
-		Group("TRIM(LOWER(shipments.carrier))").
-		Order("count DESC")
 
-	// Aplicar filtro por business_id si está especificado y no es super user
-	if businessID != nil && *businessID > 0 {
-		query = query.Where("orders.business_id = ?", *businessID)
-	}
+	baseSQLPart := `
+		SELECT TRIM(LOWER(s.carrier)) as carrier, COUNT(*) as count
+		FROM (
+			SELECT DISTINCT ON (order_id) id, order_id, carrier
+			FROM shipments
+			WHERE DATE(created_at AT TIME ZONE 'America/Bogota') = DATE(NOW() AT TIME ZONE 'America/Bogota')
+			ORDER BY order_id, created_at DESC
+		) s
+		JOIN orders o ON o.id = s.order_id
+		WHERE s.carrier IS NOT NULL AND s.carrier != ''
+	`
+	orderBySQLPart := `
+		GROUP BY TRIM(LOWER(s.carrier))
+		ORDER BY count DESC
+	`
 
-	// Aplicar filtro por integration_id si está especificado
-	if integrationID != nil && *integrationID > 0 {
-		query = query.Where("orders.integration_id = ?", *integrationID)
+	var query *gorm.DB
+	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
+			*businessID, *integrationID,
+		)
+	} else if businessID != nil && *businessID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
+			*businessID,
+		)
+	} else if integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
+			*integrationID,
+		)
+	} else {
+		query = r.db.Conn(ctx).Raw(baseSQLPart + orderBySQLPart)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -643,6 +681,7 @@ func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID 
 }
 
 // GetShipmentsByWarehouse obtiene envíos agrupados por almacén
+// Solo cuenta el shipment más reciente por orden para evitar duplicados
 func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]domain.ShipmentsByWarehouse, error) {
 	type Result struct {
 		WarehouseName string `gorm:"column:warehouse_name"`
@@ -651,18 +690,41 @@ func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *ui
 	}
 
 	var results []Result
-	query := r.db.Conn(ctx).
-		Model(&models.Shipment{}).
-		Select("shipments.warehouse_name, shipments.warehouse_id, COUNT(*) as count").
-		Joins("JOIN orders ON orders.id = shipments.order_id").
-		Where("shipments.warehouse_name != '' AND shipments.warehouse_id IS NOT NULL").
-		Group("shipments.warehouse_id, shipments.warehouse_name").
-		Order("count DESC").
-		Limit(limit)
 
-	// Aplicar filtro por business_id si está especificado y no es super user
-	if businessID != nil && *businessID > 0 {
-		query = query.Where("orders.business_id = ?", *businessID)
+	baseSQLPart := `
+		SELECT s.warehouse_name, s.warehouse_id, COUNT(*) as count
+		FROM (
+			SELECT DISTINCT ON (order_id) id, order_id, warehouse_name, warehouse_id
+			FROM shipments
+			ORDER BY order_id, created_at DESC
+		) s
+		JOIN orders o ON o.id = s.order_id
+		WHERE s.warehouse_name != '' AND s.warehouse_id IS NOT NULL
+	`
+	orderBySQLPart := `
+		GROUP BY s.warehouse_id, s.warehouse_name
+		ORDER BY count DESC
+		LIMIT ?
+	`
+
+	var query *gorm.DB
+	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
+			*businessID, *integrationID, limit,
+		)
+	} else if businessID != nil && *businessID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
+			*businessID, limit,
+		)
+	} else if integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
+			*integrationID, limit,
+		)
+	} else {
+		query = r.db.Conn(ctx).Raw(baseSQLPart + orderBySQLPart, limit)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {
@@ -868,4 +930,78 @@ func (r *Repository) GetOrdersByBusiness(ctx context.Context, limit int) ([]doma
 	}
 
 	return resultsList, nil
+}
+
+// GetOrdersByMonth obtiene órdenes agrupadas por mes del año actual
+func (r *Repository) GetOrdersByMonth(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.OrdersByMonth, error) {
+	type Result struct {
+		Month       int   `gorm:"column:month"`
+		Year        int   `gorm:"column:year"`
+		Count       int64 `gorm:"column:count"`
+		TotalCount  int64 `gorm:"column:total_count"` // Para calcular porcentaje
+	}
+
+	var results []Result
+
+	baseSQLPart := `
+		SELECT
+			EXTRACT(MONTH FROM orders.created_at)::int as month,
+			EXTRACT(YEAR FROM orders.created_at)::int as year,
+			COUNT(*) as count,
+			SUM(COUNT(*)) OVER (PARTITION BY EXTRACT(YEAR FROM orders.created_at)) as total_count
+		FROM orders
+		WHERE EXTRACT(YEAR FROM orders.created_at) = EXTRACT(YEAR FROM NOW())
+	`
+	groupByPart := `
+		GROUP BY EXTRACT(MONTH FROM orders.created_at), EXTRACT(YEAR FROM orders.created_at)
+		ORDER BY year ASC, month ASC
+	`
+
+	var query *gorm.DB
+
+	// Construcción del query con filtros opcionales
+	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND orders.business_id = ? AND orders.integration_id = ? `+groupByPart,
+			*businessID, *integrationID,
+		)
+	} else if businessID != nil && *businessID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND orders.business_id = ? `+groupByPart,
+			*businessID,
+		)
+	} else if integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND orders.integration_id = ? `+groupByPart,
+			*integrationID,
+		)
+	} else {
+		query = r.db.Conn(ctx).Raw(baseSQLPart + groupByPart)
+	}
+
+	if err := query.Scan(&results).Error; err != nil {
+		return nil, err
+	}
+
+	// Mapear resultados a DashboardStats.OrdersByMonth
+	monthNames := []string{"Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"}
+	ordersByMonth := make([]domain.OrdersByMonth, len(results))
+
+	for i, result := range results {
+		monthName := monthNames[result.Month-1]
+		percentage := float64(0)
+		if result.TotalCount > 0 {
+			percentage = (float64(result.Count) / float64(result.TotalCount)) * 100
+		}
+
+		ordersByMonth[i] = domain.OrdersByMonth{
+			Month:       monthName,
+			MonthNumber: int(result.Month),
+			Year:        result.Year,
+			Count:       result.Count,
+			Percentage:  percentage,
+		}
+	}
+
+	return ordersByMonth, nil
 }

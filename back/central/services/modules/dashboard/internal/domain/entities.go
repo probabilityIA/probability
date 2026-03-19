@@ -28,6 +28,9 @@ type DashboardStats struct {
 
 	// Nuevas: Businesses (solo si es super admin)
 	OrdersByBusiness []OrdersByBusiness `json:"orders_by_business,omitempty"`
+
+	// Nuevas: Órdenes mensuales
+	OrdersByMonth []OrdersByMonth `json:"orders_by_month"`
 }
 
 // OrderCountByIntegrationType representa el conteo de órdenes por tipo de integración
@@ -123,4 +126,13 @@ type ShipmentsByDayOfWeek struct {
 type OrdersByDepartment struct {
 	Department string `json:"department"`
 	Count      int64  `json:"count"`
+}
+
+// OrdersByMonth representa órdenes del mes actual
+type OrdersByMonth struct {
+	Month       string `json:"month"`       // Nombre del mes (ej: "Marzo 2026")
+	MonthNumber int    `json:"month_number"` // Número del mes (1-12)
+	Year        int    `json:"year"`         // Año
+	Count       int64  `json:"count"`        // Número de órdenes
+	Percentage  float64 `json:"percentage"` // Porcentaje respecto a total anual
 }

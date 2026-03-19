@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
@@ -330,10 +331,7 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 
 	query = query.Order(fmt.Sprintf("%s %s", sortBy, sortOrder))
 
-	// Aplicar paginación
-	offset := (page - 1) * pageSize
-	query = query.Offset(offset).Limit(pageSize)
-	// Precargar relaciones
+	// Precargar relaciones ANTES de paginación
 	query = query.Preload("Business").
 		Preload("Integration.IntegrationType"). // Precargar Integration con IntegrationType para obtener el logo
 		Preload("PaymentMethod").
@@ -341,12 +339,10 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		Preload("PaymentStatus").     // Precargar PaymentStatus
 		Preload("FulfillmentStatus"). // Precargar FulfillmentStatus
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
-		Preload("Shipments", func(db *gorm.DB) *gorm.DB { // Precargar shipment más reciente con carrier
-			return db.Order("created_at DESC").Limit(1)
-		})
+		Preload("Shipments") // Cargar TODOS los shipments, luego filteramos en código
 
 	// Paginación
-	offset = (page - 1) * pageSize
+	offset := (page - 1) * pageSize
 	if err := query.Offset(offset).Limit(pageSize).Find(&dbOrders).Error; err != nil {
 		return nil, 0, err
 	}
@@ -354,6 +350,17 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 	// Resolver OrderStatus por código para órdenes sin status_id
 	// Esto cubre órdenes existentes creadas antes del fallback directo
 	r.resolveOrderStatusByCode(ctx, dbOrders)
+
+	// Filtrar shipments: mantener solo el más reciente por orden
+	for i := range dbOrders {
+		if len(dbOrders[i].Shipments) > 1 {
+			// Ordenar por created_at descendente y mantener solo el primero
+			sort.Slice(dbOrders[i].Shipments, func(a, b int) bool {
+				return dbOrders[i].Shipments[a].CreatedAt.After(dbOrders[i].Shipments[b].CreatedAt)
+			})
+			dbOrders[i].Shipments = dbOrders[i].Shipments[:1]
+		}
+	}
 
 	// Mapear a dominio
 	orders := make([]entities.ProbabilityOrder, len(dbOrders))
