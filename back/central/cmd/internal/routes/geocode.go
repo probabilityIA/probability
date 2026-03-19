@@ -135,23 +135,21 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 		)
 		detResp, err := http.Get(detailsURL)
 		if err == nil {
-			defer detResp.Body.Close()
-			detBody, err := io.ReadAll(detResp.Body)
-			if err == nil {
-				var details struct {
-					Result struct {
-						Geometry struct {
-							Location struct {
-								Lat float64 `json:"lat"`
-								Lng float64 `json:"lng"`
-							} `json:"location"`
-						} `json:"geometry"`
-					} `json:"result"`
-				}
-				if json.Unmarshal(detBody, &details) == nil {
-					result.Lat = details.Result.Geometry.Location.Lat
-					result.Lon = details.Result.Geometry.Location.Lng
-				}
+			detBody, _ := io.ReadAll(detResp.Body)
+			detResp.Body.Close()
+			var details struct {
+				Result struct {
+					Geometry struct {
+						Location struct {
+							Lat float64 `json:"lat"`
+							Lng float64 `json:"lng"`
+						} `json:"location"`
+					} `json:"geometry"`
+				} `json:"result"`
+			}
+			if json.Unmarshal(detBody, &details) == nil {
+				result.Lat = details.Result.Geometry.Location.Lat
+				result.Lon = details.Result.Geometry.Location.Lng
 			}
 		}
 
