@@ -53,3 +53,26 @@ type ItemCompareResponseData struct {
 	Results       []ItemCompareResult `json:"results"`
 	Summary       ItemCompareSummary  `json:"summary"`
 }
+
+// ═══════════════════════════════════════════════════════════════
+// BANK ACCOUNTS
+// ═══════════════════════════════════════════════════════════════
+
+// ListBankAccountsRequestDTO datos para solicitar cuentas bancarias del proveedor
+type ListBankAccountsRequestDTO struct {
+	BusinessID uint
+}
+
+// BankAccountResult cuenta bancaria del proveedor
+type BankAccountResult struct {
+	AccountNumber string `json:"account_number"`
+	Name          string `json:"name"`
+	NameType      string `json:"name_type"`
+}
+
+// BankAccountsResponseData datos completos de las cuentas bancarias (almacenado en Redis)
+type BankAccountsResponseData struct {
+	CorrelationID string              `json:"correlation_id"`
+	BusinessID    uint                `json:"business_id"`
+	Results       []BankAccountResult `json:"results"`
+}

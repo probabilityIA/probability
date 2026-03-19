@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -20,11 +21,11 @@ func (c *Client) SendCashReceiptFromDocument(
 	apiKey, apiSecret, referer, baseURL string,
 	fullDocument map[string]interface{},
 	config map[string]interface{},
-) error {
+) (map[string]interface{}, error) {
 	// 1. Authenticate
 	token, err := c.authenticate(ctx, apiKey, apiSecret, referer, baseURL)
 	if err != nil {
-		return fmt.Errorf("cash receipt auth failed: %w", err)
+		return nil, fmt.Errorf("cash receipt auth failed: %w", err)
 	}
 
 	// 2. Extract fields from fullDocument
@@ -53,10 +54,13 @@ func (c *Client) SendCashReceiptFromDocument(
 			branchCode = bc
 		}
 	}
-	if customerBranchCode == "" {
-		customerBranchCode = "001"
-		if cb, ok := config["customer_branch_code"].(string); ok && cb != "" {
+	// Primero intentar leer de config si no vino del documento
+	if customerBranchCode == "" || customerBranchCode == "000" {
+		if cb, ok := config["customer_branch_code"].(string); ok && cb != "" && cb != "000" {
 			customerBranchCode = cb
+		} else {
+			// Softpymes cash_receipt no acepta "000" (da 500), default a "001"
+			customerBranchCode = "001"
 		}
 	}
 	if documentDate == "" {
@@ -65,10 +69,10 @@ func (c *Client) SendCashReceiptFromDocument(
 	}
 
 	if documentNumber == "" {
-		return fmt.Errorf("cash receipt: documentNumber is empty in full document")
+		return nil, fmt.Errorf("cash receipt: documentNumber is empty in full document")
 	}
 	if amount <= 0 {
-		return fmt.Errorf("cash receipt: total is 0 or negative in full document")
+		return nil, fmt.Errorf("cash receipt: total is 0 or negative in full document")
 	}
 
 	// 3. Read payment config
@@ -78,7 +82,7 @@ func (c *Client) SendCashReceiptFromDocument(
 	}
 
 	// 4. Build payment body per type
-	payment := buildPaymentBody(paymentType, amount, config)
+	payment := buildPaymentBody(paymentType, amount, config, documentNumber, prefix)
 
 	// 5. Build and send request
 	// Split prefix from documentNumber if it's combined (e.g. "FEV0000000026")
@@ -107,12 +111,9 @@ func (c *Client) SendCashReceiptFromDocument(
 		Str("prefix", docPrefix).
 		Str("payment_type", paymentType).
 		Float64("amount", amount).
+		Interface("payment_body", payment).
+		Interface("request_body", body).
 		Msg("Sending cash receipt to Softpymes")
-
-	var receiptResp struct {
-		Message string `json:"message"`
-		Error   string `json:"error"`
-	}
 
 	requestURL := c.resolveURL(baseURL, "/app/integration/cash_receipt/")
 	resp, err := c.httpClient.R().
@@ -120,12 +121,11 @@ func (c *Client) SendCashReceiptFromDocument(
 		SetAuthToken(token).
 		SetHeader("Referer", referer).
 		SetBody(body).
-		SetResult(&receiptResp).
 		Post(requestURL)
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("Cash receipt request failed")
-		return fmt.Errorf("cash receipt request failed: %w", err)
+		return nil, fmt.Errorf("cash receipt request failed: %w", err)
 	}
 
 	if resp.IsError() {
@@ -133,22 +133,43 @@ func (c *Client) SendCashReceiptFromDocument(
 			Int("status", resp.StatusCode()).
 			Str("response", string(resp.Body())).
 			Msg("Cash receipt creation failed")
-		return fmt.Errorf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
+		return nil, fmt.Errorf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
-	if receiptResp.Error != "" {
+	// Softpymes puede devolver:
+	// 1. Objeto: {"message": "...", "error": ""}
+	// 2. Array con error embebido: [[{"message":"..."}], 400]
+	// 3. Array con éxito: [{"message":"..."}, 200]
+	respBody := resp.Body()
+	message, errMsg := parseCashReceiptResponse(respBody)
+
+	if errMsg != "" {
 		c.log.Error(ctx).
-			Str("error", receiptResp.Error).
+			Str("error", errMsg).
+			Str("raw_response", string(respBody)).
 			Msg("Cash receipt API returned error")
-		return fmt.Errorf("cash receipt error: %s", receiptResp.Error)
+		return nil, fmt.Errorf("cash receipt error: %s", errMsg)
 	}
 
 	c.log.Info(ctx).
 		Str("document_number", docNumber).
-		Str("message", receiptResp.Message).
+		Str("message", message).
 		Msg("Cash receipt sent successfully - payment registered in Softpymes")
 
-	return nil
+	receiptData := map[string]interface{}{
+		"status":          "success",
+		"message":         message,
+		"payment_type":    paymentType,
+		"amount":          amount,
+		"document_number": docNumber,
+		"prefix":          docPrefix,
+		"customer_nit":    customerNit,
+		"document_date":   documentDate,
+		"request_body":    body,
+		"raw_response":    string(respBody),
+	}
+
+	return receiptData, nil
 }
 
 // buildPaymentBody construye el objeto de pago según el tipo.
@@ -157,9 +178,9 @@ func (c *Client) SendCashReceiptFromDocument(
 //   - EF (Efectivo): solo type + value
 //   - BN (Bonos): type + value + code
 //   - CH (Cheque): type + value + accountNumber + bankName
-//   - TR (Transferencia): type + value + bankAccountId (int)
+//   - TR (Transferencia): type + value + accountNumber + documentNumber + prefixNumber
 //   - TC/TD (Tarjeta crédito/débito): type + value + finantialEntityId (int)
-func buildPaymentBody(paymentType string, amount float64, config map[string]interface{}) map[string]interface{} {
+func buildPaymentBody(paymentType string, amount float64, config map[string]interface{}, docNumber, docPrefix string) map[string]interface{} {
 	payment := map[string]interface{}{
 		"type":  paymentType,
 		"value": amount,
@@ -178,9 +199,19 @@ func buildPaymentBody(paymentType string, amount float64, config map[string]inte
 			payment["bankName"] = bank
 		}
 	case "TR":
-		if bankAcctID := getConfigInt(config, "payment_bank_account_id"); bankAcctID > 0 {
-			payment["bankAccountId"] = bankAcctID
+		// accountNumber puede venir como string o como float64 (JSON number)
+		switch v := config["payment_bank_account_id"].(type) {
+		case string:
+			if v != "" {
+				payment["accountNumber"] = v
+			}
+		case float64:
+			payment["accountNumber"] = fmt.Sprintf("%.0f", v)
+		case int:
+			payment["accountNumber"] = fmt.Sprintf("%d", v)
 		}
+		payment["documentNumber"] = docNumber
+		payment["prefixNumber"] = docPrefix
 	case "TC", "TD":
 		if entityID := getConfigInt(config, "payment_financial_entity_id"); entityID > 0 {
 			payment["finantialEntityId"] = entityID
@@ -199,6 +230,75 @@ func getConfigInt(config map[string]interface{}, key string) int {
 		return v
 	}
 	return 0
+}
+
+// parseCashReceiptResponse parsea la respuesta del endpoint cash_receipt de Softpymes.
+// Softpymes puede devolver un objeto simple o un array con status code embebido.
+// Retorna (message, errorMsg). Si errorMsg != "" hubo error.
+func parseCashReceiptResponse(body []byte) (message string, errorMsg string) {
+	if len(body) == 0 {
+		return "", ""
+	}
+
+	// Intentar como objeto simple: {"message": "...", "error": "..."}
+	var obj struct {
+		Message string `json:"message"`
+		Error   string `json:"error"`
+	}
+	if err := json.Unmarshal(body, &obj); err == nil {
+		return obj.Message, obj.Error
+	}
+
+	// Intentar como array: [{...}, statusCode] o [[{...}], statusCode]
+	var arr []json.RawMessage
+	if err := json.Unmarshal(body, &arr); err != nil {
+		return "", ""
+	}
+
+	if len(arr) < 2 {
+		return "", ""
+	}
+
+	// Verificar status code en el último elemento
+	var statusCode int
+	if err := json.Unmarshal(arr[len(arr)-1], &statusCode); err == nil && statusCode >= 400 {
+		// Error embebido — extraer mensaje del primer elemento
+		var errMsg string
+
+		// Intentar como array de errores: [[{"message":"..."}], 400]
+		var errArr []json.RawMessage
+		if json.Unmarshal(arr[0], &errArr) == nil && len(errArr) > 0 {
+			var errObj struct {
+				Message string `json:"message"`
+			}
+			if json.Unmarshal(errArr[0], &errObj) == nil {
+				errMsg = errObj.Message
+			}
+		}
+
+		// Intentar como objeto directo: [{"message":"..."}, 400]
+		if errMsg == "" {
+			var errObj struct {
+				Message string `json:"message"`
+			}
+			if json.Unmarshal(arr[0], &errObj) == nil {
+				errMsg = errObj.Message
+			}
+		}
+
+		if errMsg == "" {
+			errMsg = string(arr[0])
+		}
+		return "", errMsg
+	}
+
+	// Status < 400 o no es un status code → éxito
+	// Extraer message del primer elemento
+	if json.Unmarshal(arr[0], &obj) == nil {
+		return obj.Message, obj.Error
+	}
+
+	return "", ""
 }
 
 // splitDocumentNumber separa el número combinado que retorna Softpymes en creación (ej: "FEV26")

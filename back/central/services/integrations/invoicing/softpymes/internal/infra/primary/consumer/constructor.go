@@ -168,6 +168,11 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		return c.processListItemsRequest(ctx, &request)
 	}
 
+	// Operación "list_bank_accounts": flujo propio (publica ListBankAccountsResponseMessage)
+	if request.Operation == "list_bank_accounts" {
+		return c.processListBankAccountsRequest(ctx, &request)
+	}
+
 	// Procesar según operación (create/retry/cancel/check_status → InvoiceResponseMessage)
 	var response *queue.InvoiceResponseMessage
 	switch request.Operation {

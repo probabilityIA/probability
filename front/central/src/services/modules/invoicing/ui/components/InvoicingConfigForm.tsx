@@ -4,10 +4,15 @@ import { useState, useEffect, FormEvent } from 'react';
 import type {
   InvoicingConfig,
   CreateConfigDTO,
+  BankAccountResult,
 } from '@/services/modules/invoicing/domain/types';
 import type { Integration } from '@/services/integrations/core/domain/types';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import { useInvoicingConfig } from '@/services/modules/invoicing/ui/hooks/useInvoicingConfig';
+import {
+  requestListBankAccountsAction,
+  getListBankAccountsResultAction,
+} from '@/services/modules/invoicing/infra/actions';
 
 interface InvoicingConfigFormProps {
   integrationIds: number[];
@@ -62,6 +67,10 @@ export function InvoicingConfigForm({
 
   const [error, setError] = useState<string | null>(null);
 
+  // Bank accounts state
+  const [loadingBankAccounts, setLoadingBankAccounts] = useState(false);
+  const [bankAccounts, setBankAccounts] = useState<BankAccountResult[] | null>(null);
+
   // Cargar integraciones de origen disponibles del negocio (ecommerce + platform)
   useEffect(() => {
     if (!businessId) return;
@@ -83,6 +92,38 @@ export function InvoicingConfigForm({
     );
   };
 
+  const handleFetchBankAccounts = async () => {
+    setLoadingBankAccounts(true);
+    setBankAccounts(null);
+    try {
+      const result = await requestListBankAccountsAction(businessId);
+      const correlationId = result.correlation_id;
+
+      // Poll every 2 seconds for up to 30 seconds
+      let attempts = 0;
+      const maxAttempts = 15;
+      const poll = setInterval(async () => {
+        attempts++;
+        try {
+          const data = await getListBankAccountsResultAction(correlationId, businessId);
+          if (data !== null) {
+            setBankAccounts(data.results);
+            setLoadingBankAccounts(false);
+            clearInterval(poll);
+          }
+        } catch {
+          // Ignore polling errors
+        }
+        if (attempts >= maxAttempts) {
+          setLoadingBankAccounts(false);
+          clearInterval(poll);
+        }
+      }, 2000);
+    } catch {
+      setLoadingBankAccounts(false);
+    }
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -102,7 +143,7 @@ export function InvoicingConfigForm({
       invoiceConfig.send_cash_receipt = true;
       invoiceConfig.payment_type = formData.payment_type || 'EF';
       if (formData.payment_type === 'TR' && formData.payment_bank_account_id)
-        invoiceConfig.payment_bank_account_id = Number(formData.payment_bank_account_id);
+        invoiceConfig.payment_bank_account_id = String(formData.payment_bank_account_id);
       if (formData.payment_type === 'CH') {
         if (formData.payment_account_number) invoiceConfig.payment_account_number = formData.payment_account_number;
         if (formData.payment_bank_name) invoiceConfig.payment_bank_name = formData.payment_bank_name;
@@ -167,44 +208,25 @@ export function InvoicingConfigForm({
         </div>
       )}
 
-      {/* Habilitar facturación */}
+      {/* Facturación automática */}
       <div className="bg-white p-4 rounded-lg border border-gray-200">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
-            checked={formData.enabled}
-            onChange={(e) => setFormData({ ...formData, enabled: e.target.checked })}
+            checked={formData.auto_invoice}
+            onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked })}
             disabled={loading}
             className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <div>
-            <span className="text-sm font-medium text-gray-900">Habilitar facturación</span>
-            <p className="text-xs text-gray-500">Permite que esta integración genere facturas electrónicas</p>
+            <span className="text-sm font-medium text-gray-900">Facturación automática</span>
+            <p className="text-xs text-gray-500">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
           </div>
         </label>
       </div>
 
-      {/* Facturación automática */}
-      {formData.enabled && (
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={formData.auto_invoice}
-              onChange={(e) => setFormData({ ...formData, auto_invoice: e.target.checked })}
-              disabled={loading}
-              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-900">Facturación automática</span>
-              <p className="text-xs text-gray-500">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
-            </div>
-          </label>
-        </div>
-      )}
-
       {/* Filtros de Pago */}
-      {formData.enabled && formData.auto_invoice && (
+      {formData.auto_invoice && (
         <div className="bg-white p-4 rounded-lg border border-gray-200">
           <h4 className="text-sm font-medium text-gray-900 mb-3">Filtros de Pago</h4>
           <div>
@@ -225,8 +247,7 @@ export function InvoicingConfigForm({
       )}
 
       {/* Recibo de Caja */}
-      {formData.enabled && (
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white p-4 rounded-lg border border-gray-200">
           <label className="flex items-center gap-3 cursor-pointer mb-3">
             <input
               type="checkbox"
@@ -263,15 +284,47 @@ export function InvoicingConfigForm({
               {/* TR: bankAccountId */}
               {formData.payment_type === 'TR' && (
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">ID Cuenta Bancaria (Softpymes)</label>
+                  <label className="block text-sm text-gray-700 mb-1">Numero de cuenta bancaria</label>
                   <input
-                    type="number"
+                    type="text"
                     value={formData.payment_bank_account_id}
                     onChange={(e) => setFormData({ ...formData, payment_bank_account_id: e.target.value })}
-                    placeholder="ID numerico de la cuenta"
+                    placeholder="Ej: 1"
                     disabled={loading}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
                   />
+                  <p className="text-xs text-gray-400 mt-1">
+                    Numero de cuenta registrada en Softpymes (consultar en Utilidades → Buscar cuentas bancarias)
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleFetchBankAccounts}
+                    disabled={loadingBankAccounts}
+                    className="mt-2 px-3 py-1.5 text-xs font-medium text-green-700 bg-green-50 border border-green-200 rounded-md hover:bg-green-100 disabled:opacity-50"
+                  >
+                    {loadingBankAccounts ? 'Consultando...' : 'Consultar cuentas en Softpymes'}
+                  </button>
+
+                  {bankAccounts && bankAccounts.length > 0 && (
+                    <div className="mt-2 space-y-1">
+                      {bankAccounts.map((account, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, payment_bank_account_id: account.account_number })}
+                          className={`w-full text-left p-2 rounded text-xs border ${
+                            formData.payment_bank_account_id === account.account_number
+                              ? 'border-green-500 bg-green-50'
+                              : 'border-gray-200 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className="font-medium">{account.account_number}</span>
+                          <span className="text-gray-500 ml-2">{account.name}</span>
+                          <span className="text-gray-400 ml-1">({account.name_type})</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -335,7 +388,6 @@ export function InvoicingConfigForm({
             </div>
           )}
         </div>
-      )}
 
       {/* Mapeo de Servicios */}
         <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">

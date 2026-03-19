@@ -103,6 +103,31 @@ func (r *Repository) GetShipmentBusinessIDByID(ctx context.Context, shipmentID u
 	return result.BusinessID, nil
 }
 
+// GetOrderIntegrationID retrieves the integration_id for an order by its UUID.
+// Replicated query — module isolation rule.
+func (r *Repository) GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error) {
+	var result struct {
+		IntegrationID uint `gorm:"column:integration_id"`
+	}
+
+	err := r.db.Conn(ctx).
+		Table("orders").
+		Select("integration_id").
+		Where("id = ?", orderUUID).
+		Where("deleted_at IS NULL").
+		Limit(1).
+		Scan(&result).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return 0, fmt.Errorf("orden %s no encontrada", orderUUID)
+		}
+		return 0, err
+	}
+
+	return result.IntegrationID, nil
+}
+
 // UpdateOrderGuideLink updates guide_link, tracking_number, and carrier on the orders table
 // after a guide is generated. Replicated write — orders table is owned by the orders
 // module but we update it directly to avoid inter-module repository sharing.

@@ -131,6 +131,11 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		return c.handleListItemsResponse(ctx, message)
 	}
 
+	// Route list_bank_accounts responses to dedicated handler
+	if disc.Operation == dtos.OperationListBankAccounts {
+		return c.handleListBankAccountsResponse(ctx, message)
+	}
+
 	// Deserializar response normal de factura
 	var response dtos.InvoiceResponseMessage
 	if err := json.Unmarshal(message, &response); err != nil {
@@ -1111,6 +1116,108 @@ func (c *ResponseConsumer) handleListItemsResponse(ctx context.Context, message 
 
 	go c.publishListItemsEvent(ctx, responseData)
 	return c.ssePublisher.PublishListItemsReady(ctx, responseData)
+}
+
+// ─── Bank Accounts response types (local, no compartidos entre módulos) ───
+
+// listBankAccountsResponseMessage mensaje de respuesta de list_bank_accounts del proveedor
+type listBankAccountsResponseMessage struct {
+	Operation     string `json:"operation"`
+	CorrelationID string `json:"correlation_id"`
+	BusinessID    uint   `json:"business_id"`
+	Items         []struct {
+		AccountNumber string `json:"account_number"`
+		Name          string `json:"name"`
+		NameType      string `json:"name_type"`
+	} `json:"items"`
+	Error     string    `json:"error,omitempty"`
+	Timestamp time.Time `json:"timestamp"`
+}
+
+// handleListBankAccountsResponse procesa la respuesta de list_bank_accounts del proveedor.
+func (c *ResponseConsumer) handleListBankAccountsResponse(ctx context.Context, message []byte) error {
+	var msg listBankAccountsResponseMessage
+	if err := json.Unmarshal(message, &msg); err != nil {
+		c.log.Error(ctx).Err(err).Msg("Failed to unmarshal list_bank_accounts response")
+		return fmt.Errorf("failed to unmarshal list_bank_accounts response: %w", err)
+	}
+
+	c.log.Info(ctx).
+		Str("correlation_id", msg.CorrelationID).
+		Uint("business_id", msg.BusinessID).
+		Int("accounts", len(msg.Items)).
+		Msg("🏦 Processing list_bank_accounts response")
+
+	// Si el proveedor reportó error, publicar SSE con resultado vacío
+	if msg.Error != "" {
+		c.log.Warn(ctx).Str("error", msg.Error).Msg("Provider returned error in list_bank_accounts response")
+		data := &dtos.BankAccountsResponseData{
+			CorrelationID: msg.CorrelationID,
+			BusinessID:    msg.BusinessID,
+			Results:       []dtos.BankAccountResult{},
+		}
+		if err := c.compareCache.StoreBankAccountsResult(ctx, msg.CorrelationID, data); err != nil {
+			c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store bank accounts error result in Redis (non-fatal)")
+		}
+		_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+			Type:       "invoice.list_bank_accounts_ready",
+			Category:   "invoice",
+			BusinessID: msg.BusinessID,
+			Data: map[string]interface{}{
+				"correlation_id": msg.CorrelationID,
+				"results":        []map[string]interface{}{},
+				"error":          msg.Error,
+			},
+		})
+		return nil
+	}
+
+	results := make([]dtos.BankAccountResult, 0, len(msg.Items))
+	for _, item := range msg.Items {
+		results = append(results, dtos.BankAccountResult{
+			AccountNumber: item.AccountNumber,
+			Name:          item.Name,
+			NameType:      item.NameType,
+		})
+	}
+
+	responseData := &dtos.BankAccountsResponseData{
+		CorrelationID: msg.CorrelationID,
+		BusinessID:    msg.BusinessID,
+		Results:       results,
+	}
+
+	// Store in Redis
+	if err := c.compareCache.StoreBankAccountsResult(ctx, msg.CorrelationID, responseData); err != nil {
+		c.log.Warn(ctx).Err(err).Str("correlation_id", msg.CorrelationID).Msg("Failed to store bank accounts result in Redis (non-fatal)")
+	}
+
+	// Publish SSE via RabbitMQ
+	resultsData := make([]map[string]interface{}, 0, len(results))
+	for _, r := range results {
+		resultsData = append(resultsData, map[string]interface{}{
+			"account_number": r.AccountNumber,
+			"name":           r.Name,
+			"name_type":      r.NameType,
+		})
+	}
+
+	_ = rabbitmq.PublishEvent(ctx, c.queue, rabbitmq.EventEnvelope{
+		Type:       "invoice.list_bank_accounts_ready",
+		Category:   "invoice",
+		BusinessID: msg.BusinessID,
+		Data: map[string]interface{}{
+			"correlation_id": msg.CorrelationID,
+			"results":        resultsData,
+		},
+	})
+
+	c.log.Info(ctx).
+		Str("correlation_id", msg.CorrelationID).
+		Int("accounts", len(results)).
+		Msg("🏦 Bank accounts response processed successfully")
+
+	return nil
 }
 
 // publishListItemsEvent publica el evento invoice.list_items_ready al exchange de eventos (RabbitMQ)

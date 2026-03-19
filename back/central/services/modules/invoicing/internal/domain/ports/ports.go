@@ -223,6 +223,9 @@ type ICompareCache interface {
 	// Ítems/productos
 	StoreItemCompareResult(ctx context.Context, correlationID string, data *dtos.ItemCompareResponseData) error
 	GetItemCompareResult(ctx context.Context, correlationID string) (*dtos.ItemCompareResponseData, error)
+	// Cuentas bancarias
+	StoreBankAccountsResult(ctx context.Context, correlationID string, data *dtos.BankAccountsResponseData) error
+	GetBankAccountsResult(ctx context.Context, correlationID string) (*dtos.BankAccountsResponseData, error)
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -334,4 +337,12 @@ type IUseCase interface {
 	// GetListItemsResult recupera el resultado de una comparación de ítems almacenado en Redis.
 	// Retorna nil si no existe (aún no listo o expirado).
 	GetListItemsResult(ctx context.Context, correlationID string) (*dtos.ItemCompareResponseData, error)
+
+	// Cuentas bancarias del proveedor (sin persistencia)
+	// Retorna un correlationID; el resultado llega por SSE con evento "invoice.list_bank_accounts_ready"
+	RequestListBankAccounts(ctx context.Context, dto *dtos.ListBankAccountsRequestDTO) (string, error)
+
+	// GetListBankAccountsResult recupera el resultado de cuentas bancarias almacenado en Redis.
+	// Retorna nil si no existe (aún no listo o expirado).
+	GetListBankAccountsResult(ctx context.Context, correlationID string) (*dtos.BankAccountsResponseData, error)
 }

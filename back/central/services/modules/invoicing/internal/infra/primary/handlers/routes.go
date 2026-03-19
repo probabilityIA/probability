@@ -33,6 +33,8 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.GET("/compare/:correlationId", middleware.JWT(), h.GetCompareResult)            // Obtener resultado de comparación
 			invoices.POST("/items", middleware.JWT(), h.ListItems)                                   // Comparar ítems del proveedor vs productos del sistema
 			invoices.GET("/items/:correlationId", middleware.JWT(), h.GetListItemsResult)             // Obtener resultado de comparación de ítems
+			invoices.POST("/bank-accounts", middleware.JWT(), h.ListBankAccounts)                     // Listar cuentas bancarias del proveedor
+			invoices.GET("/bank-accounts/:correlationId", middleware.JWT(), h.GetListBankAccountsResult) // Obtener resultado de cuentas bancarias
 		}
 
 		// Journals (comprobantes contables Siigo)

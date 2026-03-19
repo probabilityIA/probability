@@ -39,14 +39,25 @@ func (p *SSEPublisher) PublishQuoteFailed(ctx context.Context, businessID uint, 
 }
 
 // PublishGuideGenerated publica evento de guía generada exitosamente
-func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string) {
-	p.publish(ctx, "shipment.guide_generated", businessID, map[string]interface{}{
+func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string, notification *domain.GuideNotificationData) {
+	data := map[string]interface{}{
 		"shipment_id":     shipmentID,
 		"correlation_id":  correlationID,
 		"tracking_number": trackingNumber,
 		"label_url":       labelURL,
 		"carrier":         carrier,
-	})
+	}
+
+	// Enrich with notification data for WhatsApp routing
+	if notification != nil {
+		data["customer_name"] = notification.CustomerName
+		data["customer_phone"] = notification.CustomerPhone
+		data["order_number"] = notification.OrderNumber
+		data["business_name"] = notification.BusinessName
+		data["integration_id"] = notification.IntegrationID
+	}
+
+	p.publish(ctx, "shipment.guide_generated", businessID, data)
 }
 
 // PublishGuideFailed publica evento de generación de guía fallida
@@ -92,12 +103,26 @@ func (p *SSEPublisher) PublishCancelFailed(ctx context.Context, businessID uint,
 
 // publish publica un evento al dispatcher central de forma no-bloqueante
 func (p *SSEPublisher) publish(ctx context.Context, eventType string, businessID uint, data map[string]interface{}) {
+	// Extract integration_id from data if present (enriched by response_consumer)
+	var integrationID uint
+	if rawID, ok := data["integration_id"]; ok {
+		switch v := rawID.(type) {
+		case uint:
+			integrationID = v
+		case float64:
+			integrationID = uint(v)
+		case int:
+			integrationID = uint(v)
+		}
+	}
+
 	go func() {
 		if err := rabbitmq.PublishEvent(context.Background(), p.queue, rabbitmq.EventEnvelope{
-			Type:       eventType,
-			Category:   "shipment",
-			BusinessID: businessID,
-			Data:       data,
+			Type:          eventType,
+			Category:      "shipment",
+			BusinessID:    businessID,
+			IntegrationID: integrationID,
+			Data:          data,
 		}); err != nil {
 			p.logger.Error(ctx).
 				Err(err).
@@ -119,7 +144,7 @@ func NewNoopSSEPublisher() domain.IShipmentSSEPublisher {
 func (n *noopSSEPublisher) PublishQuoteReceived(_ context.Context, _ uint, _ string, _ map[string]interface{}) {
 }
 func (n *noopSSEPublisher) PublishQuoteFailed(_ context.Context, _ uint, _ string, _ string) {}
-func (n *noopSSEPublisher) PublishGuideGenerated(_ context.Context, _ uint, _ uint, _ string, _ string, _ string, _ string) {
+func (n *noopSSEPublisher) PublishGuideGenerated(_ context.Context, _ uint, _ uint, _ string, _ string, _ string, _ string, _ *domain.GuideNotificationData) {
 }
 func (n *noopSSEPublisher) PublishGuideFailed(_ context.Context, _ uint, _ uint, _ string, _ string) {
 }

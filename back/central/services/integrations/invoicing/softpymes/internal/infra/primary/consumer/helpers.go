@@ -93,14 +93,22 @@ func (c *InvoiceRequestConsumer) sendCashReceiptIfConfigured(
 		Uint("invoice_id", invoiceID).
 		Msg("Sending cash receipt (configured in integration)")
 
-	if err := c.softpymesClient.SendCashReceiptFromDocument(ctx, apiKey, apiSecret, referer, baseURL, fullDocument, config); err != nil {
+	receiptData, err := c.softpymesClient.SendCashReceiptFromDocument(ctx, apiKey, apiSecret, referer, baseURL, fullDocument, config)
+	if err != nil {
 		c.log.Error(ctx).Err(err).
 			Uint("invoice_id", invoiceID).
 			Msg("Cash receipt failed — invoice created but payment not registered in Softpymes")
+		fullDocument["cash_receipt"] = map[string]interface{}{
+			"status": "failed",
+			"error":  err.Error(),
+		}
 	} else {
 		c.log.Info(ctx).
 			Uint("invoice_id", invoiceID).
 			Msg("Cash receipt sent successfully")
+		if receiptData != nil {
+			fullDocument["cash_receipt"] = receiptData
+		}
 	}
 }
 

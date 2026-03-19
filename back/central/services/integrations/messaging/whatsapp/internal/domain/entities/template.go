@@ -155,6 +155,20 @@ var Templates = map[string]TemplateDefinition{
 		ButtonLabels: []string{},
 		Description:  "Alerta de monitoreo del servidor para el administrador",
 	},
+	"guia_envio_generada": {
+		Name:     "guia_envio_generada",
+		Language: "es",
+		Variables: []string{
+			"nombre",        // {{1}} Nombre del cliente
+			"tienda",        // {{2}} Nombre del negocio
+			"numero_pedido", // {{3}} Número de pedido
+			"numero_guia",   // {{4}} Número de guía / tracking
+			"transportadora", // {{5}} Nombre de la transportadora
+		},
+		HasButtons:   false,
+		ButtonLabels: []string{},
+		Description:  "Notificación de guía de envío generada con datos de tracking",
+	},
 }
 
 // GetTemplateDefinition retorna la definición de una plantilla por su nombre

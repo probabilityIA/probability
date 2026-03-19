@@ -13,6 +13,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumeralert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/cache"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/queue"
@@ -107,6 +108,14 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		go func() {
 			if err := alertConsumer.Start(context.Background()); err != nil {
 				logger.Error().Err(err).Msg("Error starting monitoring alert consumer")
+			}
+		}()
+
+		// Inicializar consumidor de notificaciones de guía de envío
+		shipmentConsumer := consumershipment.New(rabbit, useCase, logger)
+		go func() {
+			if err := shipmentConsumer.Start(context.Background()); err != nil {
+				logger.Error().Err(err).Msg("Error starting shipment guide notification consumer")
 			}
 		}()
 	}

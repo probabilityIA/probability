@@ -199,6 +199,9 @@ type Config struct {
 
 	// Softpymes (Facturación Electrónica)
 	SoftpymesAPIURL string `env:"SOFTPYMES_API_URL"`
+
+	// Google Geocoding API
+	GoogleMapsAPIKey string `env:"GOOGLE_MAPS_API_KEY"`
 }
 
 func splitTag(tag string) []string {

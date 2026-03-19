@@ -8,6 +8,7 @@ import type {
   InvoiceSSEEventType,
   CompareResponseData,
   ItemCompareResponseData,
+  BankAccountsResponseData,
 } from '../../domain/types';
 
 const INVOICE_EVENT_TYPES: InvoiceSSEEventType[] = [
@@ -20,6 +21,7 @@ const INVOICE_EVENT_TYPES: InvoiceSSEEventType[] = [
   'bulk_job.completed',
   'invoice.compare_ready',
   'invoice.list_items_ready',
+  'invoice.list_bank_accounts_ready',
 ];
 
 interface UseInvoiceSSEOptions {
@@ -33,6 +35,7 @@ interface UseInvoiceSSEOptions {
   onBulkJobCompleted?: (data: InvoiceSSEEventData) => void;
   onCompareReady?: (data: CompareResponseData) => void;
   onListItemsReady?: (data: ItemCompareResponseData) => void;
+  onListBankAccountsReady?: (data: BankAccountsResponseData) => void;
 }
 
 export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
@@ -47,6 +50,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
     onBulkJobCompleted,
     onCompareReady,
     onListItemsReady,
+    onListBankAccountsReady,
   } = options;
 
   // Use refs for callbacks to avoid reconnecting when they change
@@ -60,6 +64,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
     onBulkJobCompleted,
     onCompareReady,
     onListItemsReady,
+    onListBankAccountsReady,
   });
 
   useEffect(() => {
@@ -73,6 +78,7 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
       onBulkJobCompleted,
       onCompareReady,
       onListItemsReady,
+      onListBankAccountsReady,
     };
   });
 
@@ -111,6 +117,9 @@ export function useInvoiceSSE(options: UseInvoiceSSEOptions) {
           break;
         case 'invoice.list_items_ready':
           callbacksRef.current.onListItemsReady?.(data as unknown as ItemCompareResponseData);
+          break;
+        case 'invoice.list_bank_accounts_ready':
+          callbacksRef.current.onListBankAccountsReady?.(data as unknown as BankAccountsResponseData);
           break;
       }
     } catch {

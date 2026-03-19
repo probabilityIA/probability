@@ -177,6 +177,7 @@ func ConfigToResponse(config *entities.InvoicingConfig, baseURL string, bucket s
 		Enabled:             config.Enabled,
 		AutoInvoice:         config.AutoInvoice,
 		Filters:             config.Filters,
+		Config:              config.InvoiceConfig,
 	}
 
 	// Incluir nombres de relaciones si están disponibles

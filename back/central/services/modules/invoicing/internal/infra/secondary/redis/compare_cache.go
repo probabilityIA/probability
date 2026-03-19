@@ -170,6 +170,74 @@ func (c *CompareCache) GetItemCompareResult(ctx context.Context, correlationID s
 	return &result, nil
 }
 
+// ═══════════════════════════════════════════════════════════════
+// CUENTAS BANCARIAS
+// ═══════════════════════════════════════════════════════════════
+
+const (
+	bankAccountsCachePrefix = "invoicing:bank_accounts"
+)
+
+// StoreBankAccountsResult almacena el resultado de cuentas bancarias en Redis con TTL de 5 minutos
+func (c *CompareCache) StoreBankAccountsResult(ctx context.Context, correlationID string, data *dtos.BankAccountsResponseData) error {
+	if c.redis == nil || data == nil {
+		return nil
+	}
+
+	key := fmt.Sprintf("%s:%s", bankAccountsCachePrefix, correlationID)
+
+	jsonData, err := json.Marshal(data)
+	if err != nil {
+		c.logger.Error(ctx).
+			Err(err).
+			Str("correlation_id", correlationID).
+			Msg("Failed to marshal bank accounts result for cache")
+		return err
+	}
+
+	if err := c.redis.Set(ctx, key, string(jsonData), compareCacheTTL); err != nil {
+		c.logger.Warn(ctx).
+			Err(err).
+			Str("key", key).
+			Msg("Failed to store bank accounts result in Redis")
+		return err
+	}
+
+	c.logger.Info(ctx).
+		Str("correlation_id", correlationID).
+		Str("key", key).
+		Dur("ttl", compareCacheTTL).
+		Msg("Bank accounts result stored in Redis")
+
+	return nil
+}
+
+// GetBankAccountsResult recupera el resultado de cuentas bancarias de Redis.
+// Retorna nil, nil si no existe (aún no listo o expirado).
+func (c *CompareCache) GetBankAccountsResult(ctx context.Context, correlationID string) (*dtos.BankAccountsResponseData, error) {
+	if c.redis == nil {
+		return nil, nil
+	}
+
+	key := fmt.Sprintf("%s:%s", bankAccountsCachePrefix, correlationID)
+
+	data, err := c.redis.Get(ctx, key)
+	if err != nil {
+		return nil, nil
+	}
+
+	var result dtos.BankAccountsResponseData
+	if err := json.Unmarshal([]byte(data), &result); err != nil {
+		c.logger.Error(ctx).
+			Err(err).
+			Str("correlation_id", correlationID).
+			Msg("Failed to unmarshal bank accounts result from cache")
+		return nil, nil
+	}
+
+	return &result, nil
+}
+
 // noopCompareCache es una implementación no-op para cuando Redis no está disponible
 type noopCompareCache struct{}
 
@@ -191,6 +259,14 @@ func (n *noopCompareCache) StoreItemCompareResult(_ context.Context, _ string, _
 }
 
 func (n *noopCompareCache) GetItemCompareResult(_ context.Context, _ string) (*dtos.ItemCompareResponseData, error) {
+	return nil, nil
+}
+
+func (n *noopCompareCache) StoreBankAccountsResult(_ context.Context, _ string, _ *dtos.BankAccountsResponseData) error {
+	return nil
+}
+
+func (n *noopCompareCache) GetBankAccountsResult(_ context.Context, _ string) (*dtos.BankAccountsResponseData, error) {
 	return nil, nil
 }
 
