@@ -100,8 +100,8 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 		return nil, err
 	}
 
-	// Obtener envíos por estado
-	shipmentsByStatus, err := uc.repo.GetShipmentsByStatus(ctx, businessID, integrationID)
+	// Obtener envíos por estado (filtrado: solo pending, in_transit, delivered)
+	shipmentsByStatus, err := uc.repo.GetShipmentsByStatusFiltered(ctx, businessID, integrationID)
 	if err != nil {
 		uc.logger.Error().Err(err).Msg("Error al obtener envíos por estado")
 		return nil, err

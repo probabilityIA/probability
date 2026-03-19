@@ -35,6 +35,7 @@ type IRepository interface {
 
 	// Envíos
 	GetShipmentsByStatus(ctx context.Context, businessID *uint, integrationID *uint) ([]ShipmentsByStatus, error)
+	GetShipmentsByStatusFiltered(ctx context.Context, businessID *uint, integrationID *uint) ([]ShipmentsByStatus, error)
 	GetShipmentsByCarrier(ctx context.Context, businessID *uint, integrationID *uint) ([]ShipmentsByCarrier, error)
 	GetShipmentsByCarrierToday(ctx context.Context, businessID *uint, integrationID *uint) ([]ShipmentsByCarrier, error)
 	GetShipmentsByWarehouse(ctx context.Context, businessID *uint, integrationID *uint, limit int) ([]ShipmentsByWarehouse, error)

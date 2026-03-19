@@ -485,6 +485,57 @@ func (r *Repository) GetShipmentsByStatus(ctx context.Context, businessID *uint,
 	return statuses, nil
 }
 
+// GetShipmentsByStatusFiltered obtiene envíos agrupados por estado (solo: pending, in_transit, delivered)
+// Solo cuenta el shipment más reciente por orden para evitar duplicados
+func (r *Repository) GetShipmentsByStatusFiltered(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByStatus, error) {
+	type Result struct {
+		Status string `gorm:"column:status"`
+		Count  int64  `gorm:"column:count"`
+	}
+
+	var results []Result
+
+	// Subquery para obtener el shipment más reciente por orden (evitar históricos)
+	latestShipmentsSubquery := r.db.Conn(ctx).
+		Model(&models.Shipment{}).
+		Select("DISTINCT ON (order_id) id, order_id, status, created_at").
+		Order("order_id, created_at DESC")
+
+	query := r.db.Conn(ctx).
+		Table("(?) AS latest_shipments", latestShipmentsSubquery).
+		Select("latest_shipments.status, COUNT(*) as count").
+		Joins("JOIN orders ON orders.id = latest_shipments.order_id").
+		Where("latest_shipments.status IN ?", []string{"pending", "in_transit", "delivered"}).
+		Where("orders.deleted_at IS NULL").
+		Group("latest_shipments.status").
+		Order("CASE WHEN latest_shipments.status = 'pending' THEN 1 WHEN latest_shipments.status = 'in_transit' THEN 2 WHEN latest_shipments.status = 'delivered' THEN 3 ELSE 4 END")
+
+	// Aplicar filtro por business_id si está especificado y no es super user
+	if businessID != nil && *businessID > 0 {
+		query = query.Where("orders.business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("orders.integration_id = ?", *integrationID)
+	}
+
+	if err := query.Scan(&results).Error; err != nil {
+		return nil, err
+	}
+
+	// Mapear resultados
+	statuses := make([]domain.ShipmentsByStatus, len(results))
+	for i, result := range results {
+		statuses[i] = domain.ShipmentsByStatus{
+			Status: result.Status,
+			Count:  result.Count,
+		}
+	}
+
+	return statuses, nil
+}
+
 // GetShipmentsByCarrier obtiene envíos agrupados por transportista
 func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.ShipmentsByCarrier, error) {
 	type Result struct {
@@ -495,10 +546,10 @@ func (r *Repository) GetShipmentsByCarrier(ctx context.Context, businessID *uint
 	var results []Result
 	query := r.db.Conn(ctx).
 		Model(&models.Shipment{}).
-		Select("shipments.carrier, COUNT(*) as count").
+		Select("TRIM(LOWER(shipments.carrier)) as carrier, COUNT(*) as count").
 		Joins("JOIN orders ON orders.id = shipments.order_id").
 		Where("shipments.carrier IS NOT NULL AND shipments.carrier != ''").
-		Group("shipments.carrier").
+		Group("TRIM(LOWER(shipments.carrier))").
 		Order("count DESC")
 
 	// Aplicar filtro por business_id si está especificado y no es super user
@@ -537,11 +588,11 @@ func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID 
 	var results []Result
 	query := r.db.Conn(ctx).
 		Model(&models.Shipment{}).
-		Select("shipments.carrier, COUNT(*) as count").
+		Select("TRIM(LOWER(shipments.carrier)) as carrier, COUNT(*) as count").
 		Joins("JOIN orders ON orders.id = shipments.order_id").
 		Where("DATE(shipments.created_at AT TIME ZONE 'America/Bogota') = DATE(NOW() AT TIME ZONE 'America/Bogota')").
 		Where("shipments.carrier IS NOT NULL AND shipments.carrier != ''").
-		Group("shipments.carrier").
+		Group("TRIM(LOWER(shipments.carrier))").
 		Order("count DESC")
 
 	// Aplicar filtro por business_id si está especificado y no es super user
