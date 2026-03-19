@@ -34,10 +34,13 @@ export default function AddressAutocomplete({
     const [loading, setLoading] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    // After selecting, suppress further searches until the user clears and types fresh
+    const selectedRef = useRef(false);
 
     const searchAddress = useCallback(async (query: string) => {
         if (query.length < 4) {
             setSuggestions([]);
+            setShowDropdown(false);
             return;
         }
 
@@ -63,6 +66,15 @@ export default function AddressAutocomplete({
         const val = e.target.value;
         onChange(val);
 
+        // If user selected an address and is now just appending (house number etc), don't re-search
+        if (selectedRef.current) {
+            // Only re-enable search if user cleared most of the text (restarting)
+            if (val.length < 4) {
+                selectedRef.current = false;
+            }
+            return;
+        }
+
         if (debounceRef.current) clearTimeout(debounceRef.current);
         debounceRef.current = setTimeout(() => searchAddress(val), 400);
     };
@@ -74,6 +86,7 @@ export default function AddressAutocomplete({
         onChange(street || suggestion.display_name.split(',')[0]);
         setShowDropdown(false);
         setSuggestions([]);
+        selectedRef.current = true;
         onSelect(suggestion);
     };
 
@@ -95,7 +108,11 @@ export default function AddressAutocomplete({
                     type="text"
                     value={value}
                     onChange={handleChange}
-                    onFocus={() => suggestions.length > 0 && setShowDropdown(true)}
+                    onFocus={() => {
+                        if (!selectedRef.current && suggestions.length > 0) {
+                            setShowDropdown(true);
+                        }
+                    }}
                     placeholder={placeholder}
                     className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black"
                 />
