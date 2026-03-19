@@ -19,38 +19,46 @@ type GeocodingResult struct {
 	Fallback bool    `json:"fallback"` // true si se usó solo la ciudad como fallback
 }
 
-// handleGeocode es un proxy server-side hacia Nominatim.
-// El frontend no puede llamar a Nominatim directamente por restricciones de CORS/User-Agent,
+// handleGeocode es un proxy server-side hacia Mapbox Geocoding API.
+// El frontend no puede llamar a APIs externas directamente por restricciones de CORS,
 // pero el backend sí puede. Este endpoint actúa como intermediario.
 //
 // GET /geocode?address=Calle 98 62-37&city=Bogotá
-func handleGeocode(c *gin.Context) {
-	address := c.Query("address")
-	city := c.Query("city")
+func handleGeocode(cfg env.IConfig) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		address := c.Query("address")
+		city := c.Query("city")
 
-	if city == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "el campo 'city' es requerido"})
-		return
-	}
-
-	// Intento 1: dirección completa
-	if address != "" {
-		query := fmt.Sprintf("%s, %s, Colombia", address, city)
-		lat, lon, ok := nominatimSearch(query)
-		if ok {
-			c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: false})
+		if city == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "el campo 'city' es requerido"})
 			return
 		}
-	}
 
-	// Intento 2 (fallback): solo ciudad
-	lat, lon, ok := nominatimSearch(fmt.Sprintf("%s, Colombia", city))
-	if ok {
-		c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: true})
-		return
-	}
+		token := cfg.Get("MAPBOX_ACCESS_TOKEN")
+		if token == "" {
+			c.JSON(http.StatusOK, GeocodingResult{Found: false})
+			return
+		}
 
-	c.JSON(http.StatusOK, GeocodingResult{Found: false})
+		// Intento 1: dirección completa
+		if address != "" {
+			query := fmt.Sprintf("%s, %s, Colombia", address, city)
+			lat, lon, ok := mapboxGeocode(query, token)
+			if ok {
+				c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: false})
+				return
+			}
+		}
+
+		// Intento 2 (fallback): solo ciudad
+		lat, lon, ok := mapboxGeocode(fmt.Sprintf("%s, Colombia", city), token)
+		if ok {
+			c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: true})
+			return
+		}
+
+		c.JSON(http.StatusOK, GeocodingResult{Found: false})
+	}
 }
 
 // AddressSearchResult representa una sugerencia de dirección.
@@ -65,7 +73,7 @@ type AddressSearchResult struct {
 	Postcode      string  `json:"postcode"`
 }
 
-// handleAddressSearch retorna un handler que usa Google Places Autocomplete como proxy.
+// handleAddressSearch retorna un handler que usa Mapbox Geocoding como proxy.
 // La API key se lee del config (cargada desde .env), nunca se expone al browser.
 //
 // GET /address-search?q=avenida+calle+145+128-40+bogota&country=co
@@ -79,136 +87,113 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 
 		country := c.DefaultQuery("country", "co")
 		city := c.Query("city")
-		apiKey := cfg.Get("GOOGLE_MAPS_API_KEY")
-		if apiKey == "" {
+		token := cfg.Get("MAPBOX_ACCESS_TOKEN")
+		if token == "" {
 			c.JSON(http.StatusOK, []AddressSearchResult{})
 			return
 		}
 
-	// Step 1: Google Places Autocomplete
-	// If city is provided, append it to the query for better filtering
-	searchInput := q
-	if city != "" {
-		searchInput = q + ", " + city
-	}
-	autocompleteURL := fmt.Sprintf(
-		"https://maps.googleapis.com/maps/api/place/autocomplete/json?input=%s&components=country:%s&language=es&types=address&key=%s",
-		url.QueryEscape(searchInput),
-		url.QueryEscape(country),
-		apiKey,
-	)
-
-	resp, err := http.Get(autocompleteURL)
-	if err != nil {
-		c.JSON(http.StatusOK, []AddressSearchResult{})
-		return
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		c.JSON(http.StatusOK, []AddressSearchResult{})
-		return
-	}
-
-	var autocompleteResp struct {
-		Status      string `json:"status"`
-		Predictions []struct {
-			Description string `json:"description"`
-			PlaceID     string `json:"place_id"`
-		} `json:"predictions"`
-	}
-
-	if err := json.Unmarshal(body, &autocompleteResp); err != nil || autocompleteResp.Status != "OK" {
-		c.JSON(http.StatusOK, []AddressSearchResult{})
-		return
-	}
-
-	// Step 2: For each prediction, get coordinates via Place Details (only first 5)
-	results := make([]AddressSearchResult, 0, len(autocompleteResp.Predictions))
-	limit := len(autocompleteResp.Predictions)
-	if limit > 5 {
-		limit = 5
-	}
-
-	for _, pred := range autocompleteResp.Predictions[:limit] {
-		result := AddressSearchResult{
-			DisplayName: pred.Description,
-			PlaceID:     pred.PlaceID,
+		// Si hay ciudad, la usamos como proximity y la añadimos al query
+		searchInput := q
+		if city != "" {
+			searchInput = q + ", " + city
 		}
 
-		// Get coordinates + address components from Place Details
-		detailsURL := fmt.Sprintf(
-			"https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=geometry,address_component&key=%s",
-			url.QueryEscape(pred.PlaceID),
-			apiKey,
+		// Mapbox Geocoding v5 - search endpoint
+		geocodeURL := fmt.Sprintf(
+			"https://api.mapbox.com/geocoding/v5/mapbox.places/%s.json?access_token=%s&country=%s&language=es&types=address&limit=5",
+			url.PathEscape(searchInput),
+			token,
+			url.QueryEscape(country),
 		)
-		detResp, err := http.Get(detailsURL)
-		if err == nil {
-			detBody, _ := io.ReadAll(detResp.Body)
-			detResp.Body.Close()
-			var details struct {
-				Result struct {
-					Geometry struct {
-						Location struct {
-							Lat float64 `json:"lat"`
-							Lng float64 `json:"lng"`
-						} `json:"location"`
-					} `json:"geometry"`
-					AddressComponents []struct {
-						LongName  string   `json:"long_name"`
-						ShortName string   `json:"short_name"`
-						Types     []string `json:"types"`
-					} `json:"address_components"`
-				} `json:"result"`
-			}
-			if json.Unmarshal(detBody, &details) == nil {
-				result.Lat = details.Result.Geometry.Location.Lat
-				result.Lon = details.Result.Geometry.Location.Lng
 
-				for _, comp := range details.Result.AddressComponents {
-					for _, t := range comp.Types {
-						switch t {
-						case "locality":
-							result.City = comp.LongName
-						case "administrative_area_level_1":
-							result.State = comp.LongName
-						case "neighborhood", "sublocality_level_1", "sublocality":
-							if result.Neighbourhood == "" {
-								result.Neighbourhood = comp.LongName
-							}
-						case "postal_code":
-							result.Postcode = comp.LongName
-						}
+		resp, err := http.Get(geocodeURL)
+		if err != nil {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+
+		var mapboxResp mapboxFeatureCollection
+		if err := json.Unmarshal(body, &mapboxResp); err != nil {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+
+		results := make([]AddressSearchResult, 0, len(mapboxResp.Features))
+		for _, feat := range mapboxResp.Features {
+			result := AddressSearchResult{
+				DisplayName: feat.PlaceName,
+				PlaceID:     feat.ID,
+			}
+
+			// Mapbox coordinates are [longitude, latitude]
+			if len(feat.Center) == 2 {
+				result.Lon = feat.Center[0]
+				result.Lat = feat.Center[1]
+			}
+
+			// Extract address components from context
+			for _, ctx := range feat.Context {
+				switch {
+				case containsType(ctx.ID, "place"):
+					result.City = ctx.Text
+				case containsType(ctx.ID, "region"):
+					result.State = ctx.Text
+				case containsType(ctx.ID, "neighborhood") || containsType(ctx.ID, "locality"):
+					if result.Neighbourhood == "" {
+						result.Neighbourhood = ctx.Text
 					}
+				case containsType(ctx.ID, "postcode"):
+					result.Postcode = ctx.Text
 				}
 			}
+
+			results = append(results, result)
 		}
 
-		results = append(results, result)
-	}
-
-	c.JSON(http.StatusOK, results)
+		c.JSON(http.StatusOK, results)
 	}
 }
 
-// nominatimSearch realiza la búsqueda en Nominatim y retorna lat, lon y si encontró resultados.
-func nominatimSearch(query string) (float64, float64, bool) {
+// mapboxFeatureCollection represents the Mapbox Geocoding API response.
+type mapboxFeatureCollection struct {
+	Features []mapboxFeature `json:"features"`
+}
+
+type mapboxFeature struct {
+	ID        string          `json:"id"`
+	PlaceName string          `json:"place_name"`
+	Center    []float64       `json:"center"` // [lon, lat]
+	Context   []mapboxContext `json:"context"`
+}
+
+type mapboxContext struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
+}
+
+// containsType checks if a Mapbox context ID contains a specific type prefix.
+// Mapbox context IDs are formatted as "type.id" (e.g., "place.12345", "region.67890").
+func containsType(id, typeName string) bool {
+	return len(id) > len(typeName) && id[:len(typeName)+1] == typeName+"."
+}
+
+// mapboxGeocode performs a forward geocoding search using the Mapbox API.
+func mapboxGeocode(query, token string) (float64, float64, bool) {
 	endpoint := fmt.Sprintf(
-		"https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=%s",
-		url.QueryEscape(query),
+		"https://api.mapbox.com/geocoding/v5/mapbox.places/%s.json?access_token=%s&limit=1&language=es",
+		url.PathEscape(query),
+		token,
 	)
 
-	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
-	if err != nil {
-		return 0, 0, false
-	}
-	// Nominatim requiere un User-Agent válido con app/contacto
-	req.Header.Set("User-Agent", "ProbabilityApp/1.0 (contact@probability.com.co)")
-	req.Header.Set("Accept-Language", "es")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := http.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		return 0, 0, false
 	}
@@ -219,16 +204,16 @@ func nominatimSearch(query string) (float64, float64, bool) {
 		return 0, 0, false
 	}
 
-	var results []struct {
-		Lat string `json:"lat"`
-		Lon string `json:"lon"`
-	}
-	if err := json.Unmarshal(body, &results); err != nil || len(results) == 0 {
+	var result mapboxFeatureCollection
+	if err := json.Unmarshal(body, &result); err != nil || len(result.Features) == 0 {
 		return 0, 0, false
 	}
 
-	var lat, lon float64
-	fmt.Sscanf(results[0].Lat, "%f", &lat)
-	fmt.Sscanf(results[0].Lon, "%f", &lon)
-	return lat, lon, true
+	center := result.Features[0].Center
+	if len(center) != 2 {
+		return 0, 0, false
+	}
+
+	// center = [longitude, latitude]
+	return center[1], center[0], true
 }

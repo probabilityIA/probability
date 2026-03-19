@@ -53,13 +53,13 @@ func BuildRouter(ctx context.Context, logger log.ILogger, environment env.IConfi
 		c.JSON(http.StatusOK, gin.H{"message": "test"})
 	})
 
-	// Geocoding proxy: evita restricciones CORS/User-Agent del browser al llamar Nominatim directamente
+	// Geocoding proxy: evita restricciones CORS del browser al llamar APIs externas directamente
 	// GET /geocode?address=Calle 98 62-37&city=Bogotá
 	// Registrado en ambas rutas: /geocode (directo) y /api/v1/geocode (para proxy Nginx en producción)
-	r.GET("/geocode", handleGeocode)
-	r.GET("/api/v1/geocode", handleGeocode)
+	r.GET("/geocode", handleGeocode(environment))
+	r.GET("/api/v1/geocode", handleGeocode(environment))
 
-	// Address search proxy: sugerencias de autocompletado via Google Places
+	// Address search proxy: sugerencias de autocompletado via Mapbox Geocoding
 	// GET /api/v1/address-search?q=avenida+calle+80&country=co
 	r.GET("/api/v1/address-search", handleAddressSearch(environment))
 
