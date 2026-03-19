@@ -229,7 +229,7 @@ func (c *ResponseConsumer) handleQuoteResponse(ctx context.Context, response *Tr
 		Msg("✅ Quote response received")
 
 	// Apply platform markup to the flete of the quotes
-	c.applyServiceFeeToQuoteData(response.Data)
+	c.applyServiceFeeToQuoteData(ctx, response.Data, response.Provider)
 
 	c.storeQuoteResult(ctx, response.CorrelationID, response.Data, "")
 	c.ssePublisher.PublishQuoteReceived(ctx, businessID, response.CorrelationID, response.Data)
@@ -355,10 +355,11 @@ func getKeys(data map[string]interface{}) []string {
 
 // applyServiceFeeToQuoteData aplica el serviceFeeAmount a todas las tarifas de las cotizaciones
 // en el payload de respuesta de la transportadora.
-func (c *ResponseConsumer) applyServiceFeeToQuoteData(data map[string]interface{}) {
+func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data map[string]interface{}, provider string) {
 	if data == nil {
 		return
 	}
+
 	innerData, ok := data["data"].(map[string]interface{})
 	if !ok {
 		return
@@ -378,14 +379,30 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(data map[string]interface{
 		if !ok {
 			continue
 		}
+
+		carrierName, _ := rate["carrier"].(string)
+
 		for _, field := range priceFields {
 			if val, exists := rate[field]; exists {
+				var oldVal float64
 				switch v := val.(type) {
 				case float64:
-					rate[field] = v + serviceFeeAmount
+					oldVal = v
 				case int:
-					rate[field] = float64(v) + serviceFeeAmount
+					oldVal = float64(v)
+				default:
+					continue
 				}
+
+				newVal := oldVal + serviceFeeAmount
+				rate[field] = newVal
+
+				c.log.Info(ctx).
+					Str("provider", provider).
+					Str("carrier", carrierName).
+					Float64("original_flete", oldVal).
+					Float64("final_flete", newVal).
+					Msg("💰 Service fee added to quote")
 			}
 		}
 	}
