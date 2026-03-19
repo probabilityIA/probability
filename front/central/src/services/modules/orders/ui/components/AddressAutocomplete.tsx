@@ -4,12 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 export interface AddressSuggestion {
     display_name: string;
-    street: string;
-    house_number: string;
-    neighbourhood: string;
-    city: string;
-    state: string;
-    postcode: string;
+    place_id: string;
     lat: number;
     lon: number;
 }
@@ -34,7 +29,6 @@ export default function AddressAutocomplete({
     const [loading, setLoading] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-    // After selecting, suppress further searches until the user clears and types fresh
     const selectedRef = useRef(false);
 
     const searchAddress = useCallback(async (query: string) => {
@@ -66,7 +60,6 @@ export default function AddressAutocomplete({
         const val = e.target.value;
         onChange(val);
 
-        // If user selected an address and is now just appending (house number etc), don't re-search
         if (selectedRef.current) {
             if (val.length < 4) {
                 selectedRef.current = false;
@@ -79,12 +72,11 @@ export default function AddressAutocomplete({
     };
 
     const handleSelect = (suggestion: AddressSuggestion) => {
-        // Only replace field value if the user hasn't typed a more specific address (with #)
-        // Colombian format: "Calle 145 #128-40" — the # part is the cross-street, not a house number
-        if (!value.includes('#')) {
-            onChange(suggestion.street || suggestion.display_name.split(',')[0]);
-        }
-        // If user already typed the full address with #, keep their input — just auto-fill barrio/city/etc.
+        // Set the full address from Google (e.g. "Avenida Calle 145 #128-40, Bogotá, Colombia")
+        // Remove the country suffix for cleaner display
+        const parts = suggestion.display_name.split(', ');
+        const cleanAddress = parts.length > 2 ? parts.slice(0, -1).join(', ') : suggestion.display_name;
+        onChange(cleanAddress);
         setShowDropdown(false);
         setSuggestions([]);
         selectedRef.current = true;
@@ -128,7 +120,7 @@ export default function AddressAutocomplete({
                 <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                     {suggestions.map((s, i) => (
                         <button
-                            key={i}
+                            key={s.place_id || i}
                             type="button"
                             onClick={() => handleSelect(s)}
                             className="w-full text-left px-3 py-2.5 hover:bg-purple-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
@@ -138,15 +130,7 @@ export default function AddressAutocomplete({
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                 </svg>
-                                <div className="min-w-0 flex-1">
-                                    <p className="text-sm text-gray-800 font-medium">
-                                        {s.street || s.display_name.split(',')[0]}
-                                        {s.neighbourhood ? `, ${s.neighbourhood}` : ''}
-                                    </p>
-                                    <p className="text-xs text-gray-500 line-clamp-2">
-                                        {s.display_name}
-                                    </p>
-                                </div>
+                                <p className="text-sm text-gray-800">{s.display_name}</p>
                             </div>
                         </button>
                     ))}

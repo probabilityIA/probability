@@ -13,6 +13,10 @@ import danes from '@/app/(auth)/shipments/generate/resources/municipios_dane_ext
 import { useClientSearch } from '../hooks/useClientSearch';
 import { useWarehouses } from '../hooks/useWarehouses';
 import ClientAutocomplete from './ClientAutocomplete';
+import AddressAutocomplete, { AddressSuggestion } from './AddressAutocomplete';
+import dynamic from 'next/dynamic';
+
+const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), { ssr: false });
 import { CustomerInfo } from '../../../customers/domain/types';
 import { getActionError } from '@/shared/utils/action-result';
 
@@ -149,6 +153,9 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
     // Casa y Barrio states
     const [house, setHouse] = useState('');
     const [barrio, setBarrio] = useState('');
+
+    // Address map coordinates (set when user selects a suggestion)
+    const [addressCoords, setAddressCoords] = useState<{ lat: number; lon: number } | null>(null);
 
 
     // Client autocomplete (triggered from DNI, name, or email fields)
@@ -546,11 +553,12 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
                                     Dirección
                                 </label>
-                                <Input
-                                    type="text"
+                                <AddressAutocomplete
                                     value={formData.shipping_street}
-                                    onChange={(e) => setFormData({ ...formData, shipping_street: e.target.value })}
-                                    placeholder="Calle/Carrera número"
+                                    onChange={(val) => setFormData({ ...formData, shipping_street: val })}
+                                    onSelect={(s: AddressSuggestion) => {
+                                        if (s.lat && s.lon) setAddressCoords({ lat: s.lat, lon: s.lon });
+                                    }}
                                 />
                             </div>
 
@@ -634,6 +642,18 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                         </div>
 
+                        {/* Mini map preview */}
+                        {addressCoords && (
+                            <div className="mt-4">
+                                <MapComponent
+                                    address={formData.shipping_street}
+                                    city={formData.shipping_city}
+                                    latitude={addressCoords.lat}
+                                    longitude={addressCoords.lon}
+                                    height="180px"
+                                />
+                            </div>
+                        )}
                     </div>
                 </div>
 

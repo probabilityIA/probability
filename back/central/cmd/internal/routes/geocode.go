@@ -6,7 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strings"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -53,23 +53,18 @@ func handleGeocode(c *gin.Context) {
 	c.JSON(http.StatusOK, GeocodingResult{Found: false})
 }
 
-// AddressSearchResult representa una sugerencia de dirección de Nominatim.
+// AddressSearchResult representa una sugerencia de dirección.
 type AddressSearchResult struct {
-	DisplayName   string `json:"display_name"`
-	Street        string `json:"street"`
-	HouseNumber   string `json:"house_number"`
-	Neighbourhood string `json:"neighbourhood"`
-	City          string `json:"city"`
-	State         string `json:"state"`
-	Postcode      string `json:"postcode"`
-	Lat           float64 `json:"lat"`
-	Lon           float64 `json:"lon"`
+	DisplayName string  `json:"display_name"`
+	PlaceID     string  `json:"place_id"`
+	Lat         float64 `json:"lat"`
+	Lon         float64 `json:"lon"`
 }
 
-// handleAddressSearch es un proxy server-side hacia Nominatim para búsqueda de direcciones.
-// Devuelve múltiples sugerencias con datos de dirección desglosados.
+// handleAddressSearch es un proxy server-side hacia Google Places Autocomplete.
+// La API key se queda en el backend, nunca se expone al browser.
 //
-// GET /address-search?q=avenida+calle+80&country=co
+// GET /address-search?q=avenida+calle+145+128-40+bogota&country=co
 func handleAddressSearch(c *gin.Context) {
 	q := c.Query("q")
 	if q == "" || len(q) < 4 {
@@ -78,38 +73,22 @@ func handleAddressSearch(c *gin.Context) {
 	}
 
 	country := c.DefaultQuery("country", "co")
-
-	// Colombian addresses use # for house number (e.g. "Calle 145 # 128 40")
-	// Nominatim can't parse this — strip everything after # to search by street name only
-	searchQuery := q
-	if idx := strings.Index(searchQuery, "#"); idx > 0 {
-		searchQuery = strings.TrimSpace(searchQuery[:idx])
-	}
-	// Also strip "No." or "No" patterns (another Colombian house number format)
-	if idx := strings.Index(strings.ToLower(searchQuery), " no."); idx > 0 {
-		searchQuery = strings.TrimSpace(searchQuery[:idx])
-	}
-	if idx := strings.Index(strings.ToLower(searchQuery), " no "); idx > 0 {
-		searchQuery = strings.TrimSpace(searchQuery[:idx])
-	}
-
-	endpoint := fmt.Sprintf(
-		"https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=%s&q=%s",
-		url.QueryEscape(country),
-		url.QueryEscape(searchQuery),
-	)
-
-	req, err := http.NewRequest(http.MethodGet, endpoint, nil)
-	if err != nil {
+	apiKey := os.Getenv("GOOGLE_MAPS_API_KEY")
+	if apiKey == "" {
 		c.JSON(http.StatusOK, []AddressSearchResult{})
 		return
 	}
-	req.Header.Set("User-Agent", "ProbabilityApp/1.0 (contact@probability.com.co)")
-	req.Header.Set("Accept-Language", "es")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil || resp.StatusCode != http.StatusOK {
+	// Step 1: Google Places Autocomplete
+	autocompleteURL := fmt.Sprintf(
+		"https://maps.googleapis.com/maps/api/place/autocomplete/json?input=%s&components=country:%s&language=es&types=address&key=%s",
+		url.QueryEscape(q),
+		url.QueryEscape(country),
+		apiKey,
+	)
+
+	resp, err := http.Get(autocompleteURL)
+	if err != nil {
 		c.JSON(http.StatusOK, []AddressSearchResult{})
 		return
 	}
@@ -121,58 +100,61 @@ func handleAddressSearch(c *gin.Context) {
 		return
 	}
 
-	var nominatimResults []struct {
-		DisplayName string `json:"display_name"`
-		Lat         string `json:"lat"`
-		Lon         string `json:"lon"`
-		Address     struct {
-			Road          string `json:"road"`
-			HouseNumber   string `json:"house_number"`
-			Neighbourhood string `json:"neighbourhood"`
-			Suburb        string `json:"suburb"`
-			City          string `json:"city"`
-			Town          string `json:"town"`
-			Village       string `json:"village"`
-			State         string `json:"state"`
-			Postcode      string `json:"postcode"`
-		} `json:"address"`
+	var autocompleteResp struct {
+		Status      string `json:"status"`
+		Predictions []struct {
+			Description string `json:"description"`
+			PlaceID     string `json:"place_id"`
+		} `json:"predictions"`
 	}
 
-	if err := json.Unmarshal(body, &nominatimResults); err != nil {
+	if err := json.Unmarshal(body, &autocompleteResp); err != nil || autocompleteResp.Status != "OK" {
 		c.JSON(http.StatusOK, []AddressSearchResult{})
 		return
 	}
 
-	results := make([]AddressSearchResult, 0, len(nominatimResults))
-	for _, r := range nominatimResults {
-		var lat, lon float64
-		fmt.Sscanf(r.Lat, "%f", &lat)
-		fmt.Sscanf(r.Lon, "%f", &lon)
+	// Step 2: For each prediction, get coordinates via Place Details (only first 5)
+	results := make([]AddressSearchResult, 0, len(autocompleteResp.Predictions))
+	limit := len(autocompleteResp.Predictions)
+	if limit > 5 {
+		limit = 5
+	}
 
-		city := r.Address.City
-		if city == "" {
-			city = r.Address.Town
-		}
-		if city == "" {
-			city = r.Address.Village
-		}
-
-		neighbourhood := r.Address.Neighbourhood
-		if neighbourhood == "" {
-			neighbourhood = r.Address.Suburb
+	for _, pred := range autocompleteResp.Predictions[:limit] {
+		result := AddressSearchResult{
+			DisplayName: pred.Description,
+			PlaceID:     pred.PlaceID,
 		}
 
-		results = append(results, AddressSearchResult{
-			DisplayName:   r.DisplayName,
-			Street:        r.Address.Road,
-			HouseNumber:   r.Address.HouseNumber,
-			Neighbourhood: neighbourhood,
-			City:          city,
-			State:         r.Address.State,
-			Postcode:      r.Address.Postcode,
-			Lat:           lat,
-			Lon:           lon,
-		})
+		// Get coordinates from Place Details
+		detailsURL := fmt.Sprintf(
+			"https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=geometry&key=%s",
+			url.QueryEscape(pred.PlaceID),
+			apiKey,
+		)
+		detResp, err := http.Get(detailsURL)
+		if err == nil {
+			defer detResp.Body.Close()
+			detBody, err := io.ReadAll(detResp.Body)
+			if err == nil {
+				var details struct {
+					Result struct {
+						Geometry struct {
+							Location struct {
+								Lat float64 `json:"lat"`
+								Lng float64 `json:"lng"`
+							} `json:"location"`
+						} `json:"geometry"`
+					} `json:"result"`
+				}
+				if json.Unmarshal(detBody, &details) == nil {
+					result.Lat = details.Result.Geometry.Location.Lat
+					result.Lon = details.Result.Geometry.Location.Lng
+				}
+			}
+		}
+
+		results = append(results, result)
 	}
 
 	c.JSON(http.StatusOK, results)
