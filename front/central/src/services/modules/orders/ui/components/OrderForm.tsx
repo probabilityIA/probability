@@ -558,6 +558,19 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                     onChange={(val) => setFormData({ ...formData, shipping_street: val })}
                                     onSelect={(s: AddressSuggestion) => {
                                         if (s.lat && s.lon) setAddressCoords({ lat: s.lat, lon: s.lon });
+                                        if (s.neighbourhood) setBarrio(s.neighbourhood);
+                                        if (s.postcode) setFormData(prev => ({ ...prev, shipping_postal_code: s.postcode }));
+                                        if (s.city) {
+                                            const match = daneOptions.find(
+                                                (opt) => opt.ciudad.toLowerCase() === s.city.toLowerCase()
+                                            ) || daneOptions.find(
+                                                (opt) => opt.label.toLowerCase().includes(s.city.toLowerCase())
+                                            );
+                                            if (match) {
+                                                handleCitySelect(match);
+                                                setCitySearch(match.label);
+                                            }
+                                        }
                                     }}
                                 />
                             </div>

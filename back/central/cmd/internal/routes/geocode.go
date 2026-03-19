@@ -55,10 +55,14 @@ func handleGeocode(c *gin.Context) {
 
 // AddressSearchResult representa una sugerencia de dirección.
 type AddressSearchResult struct {
-	DisplayName string  `json:"display_name"`
-	PlaceID     string  `json:"place_id"`
-	Lat         float64 `json:"lat"`
-	Lon         float64 `json:"lon"`
+	DisplayName   string  `json:"display_name"`
+	PlaceID       string  `json:"place_id"`
+	Lat           float64 `json:"lat"`
+	Lon           float64 `json:"lon"`
+	City          string  `json:"city"`
+	State         string  `json:"state"`
+	Neighbourhood string  `json:"neighbourhood"`
+	Postcode      string  `json:"postcode"`
 }
 
 // handleAddressSearch retorna un handler que usa Google Places Autocomplete como proxy.
@@ -127,9 +131,9 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 			PlaceID:     pred.PlaceID,
 		}
 
-		// Get coordinates from Place Details
+		// Get coordinates + address components from Place Details
 		detailsURL := fmt.Sprintf(
-			"https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=geometry&key=%s",
+			"https://maps.googleapis.com/maps/api/place/details/json?place_id=%s&fields=geometry,address_component&key=%s",
 			url.QueryEscape(pred.PlaceID),
 			apiKey,
 		)
@@ -145,11 +149,33 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 							Lng float64 `json:"lng"`
 						} `json:"location"`
 					} `json:"geometry"`
+					AddressComponents []struct {
+						LongName  string   `json:"long_name"`
+						ShortName string   `json:"short_name"`
+						Types     []string `json:"types"`
+					} `json:"address_components"`
 				} `json:"result"`
 			}
 			if json.Unmarshal(detBody, &details) == nil {
 				result.Lat = details.Result.Geometry.Location.Lat
 				result.Lon = details.Result.Geometry.Location.Lng
+
+				for _, comp := range details.Result.AddressComponents {
+					for _, t := range comp.Types {
+						switch t {
+						case "locality":
+							result.City = comp.LongName
+						case "administrative_area_level_1":
+							result.State = comp.LongName
+						case "neighborhood", "sublocality_level_1", "sublocality":
+							if result.Neighbourhood == "" {
+								result.Neighbourhood = comp.LongName
+							}
+						case "postal_code":
+							result.Postcode = comp.LongName
+						}
+					}
+				}
 			}
 		}
 

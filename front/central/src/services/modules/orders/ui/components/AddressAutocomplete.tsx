@@ -7,6 +7,10 @@ export interface AddressSuggestion {
     place_id: string;
     lat: number;
     lon: number;
+    city: string;
+    state: string;
+    neighbourhood: string;
+    postcode: string;
 }
 
 interface AddressAutocompleteProps {
