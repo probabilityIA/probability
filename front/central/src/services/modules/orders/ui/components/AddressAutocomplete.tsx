@@ -32,7 +32,7 @@ export default function AddressAutocomplete({
     const selectedRef = useRef(false);
 
     const searchAddress = useCallback(async (query: string) => {
-        if (query.length < 4) {
+        if (query.length < 8) {
             setSuggestions([]);
             setShowDropdown(false);
             return;
@@ -68,7 +68,7 @@ export default function AddressAutocomplete({
         }
 
         if (debounceRef.current) clearTimeout(debounceRef.current);
-        debounceRef.current = setTimeout(() => searchAddress(val), 400);
+        debounceRef.current = setTimeout(() => searchAddress(val), 1000);
     };
 
     const handleSelect = (suggestion: AddressSuggestion) => {

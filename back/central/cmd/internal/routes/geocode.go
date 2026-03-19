@@ -68,7 +68,7 @@ type AddressSearchResult struct {
 func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		q := c.Query("q")
-		if q == "" || len(q) < 4 {
+		if q == "" || len(q) < 8 {
 			c.JSON(http.StatusOK, []AddressSearchResult{})
 			return
 		}
