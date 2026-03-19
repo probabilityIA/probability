@@ -162,6 +162,9 @@ export interface InvoicingSettings {
     tip?: string;          // Código del artículo de propina en el facturador
   };
 
+  // Cliente por defecto
+  force_default_customer?: boolean;         // true = siempre facturar a CONSUMIDOR FINAL (usa default_customer_nit)
+
   // Recibo de caja (cash receipt)
   send_cash_receipt?: boolean;              // true = enviar recibo de caja al facturar
   payment_type?: string;                    // EF, TR, TC, TD, CH, BN
