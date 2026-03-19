@@ -312,6 +312,33 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 		Str("correlation_id", response.CorrelationID).
 		Msg("✅ Tracking response received")
 
+	// Update shipment status based on tracking data from carrier
+	if response.ShipmentID != nil && response.Data != nil {
+		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
+		if err == nil && shipment != nil {
+			// Extract status from carrier response (from Envioclik, etc.)
+			if status, ok := response.Data["status"].(string); ok && status != "" {
+				oldStatus := shipment.Status
+				shipment.Status = status // Update to: in_transit, delivered, failed, etc.
+
+				if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
+					c.log.Error(ctx).
+						Err(err).
+						Str("shipment_id", fmt.Sprintf("%d", *response.ShipmentID)).
+						Str("old_status", oldStatus).
+						Str("new_status", status).
+						Msg("Failed to update shipment status from tracking")
+				} else {
+					c.log.Info(ctx).
+						Str("shipment_id", fmt.Sprintf("%d", *response.ShipmentID)).
+						Str("old_status", oldStatus).
+						Str("new_status", status).
+						Msg("✅ Shipment status updated from tracking response")
+				}
+			}
+		}
+	}
+
 	c.ssePublisher.PublishTrackingUpdated(ctx, businessID, response.CorrelationID, response.Data)
 }
 
