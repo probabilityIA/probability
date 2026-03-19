@@ -1282,7 +1282,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                             </Button>
                         </div>
 
-                        {/* Desktop: Full pagination */}
+                        {/* Desktop: Full pagination with page numbers */}
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
                             <div className="flex items-center gap-3">
                                 <p className="text-xs sm:text-sm text-gray-700">
@@ -1311,22 +1311,80 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                             </div>
                             <div className="flex items-center gap-1">
                                 <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                                    {/* First page */}
+                                    <button
+                                        onClick={() => setFilters({ ...filters, page: 1 })}
+                                        disabled={page === 1}
+                                        className="relative inline-flex items-center px-2.5 py-2 rounded-l-md border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        title="Primera página"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
+                                    </button>
+                                    {/* Previous */}
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-l-md border-2 border-purple-200 bg-white text-xs sm:text-sm font-medium text-purple-700 hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 transition-all"
+                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        title="Anterior"
                                     >
-                                        Anterior
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border-2 border-purple-200 bg-purple-50 text-xs sm:text-sm font-semibold text-purple-900">
-                                        Página {page} de {totalPages}
-                                    </span>
+                                    {/* Page numbers */}
+                                    {(() => {
+                                        const pages: (number | string)[] = [];
+                                        const maxVisible = 7;
+
+                                        if (totalPages <= maxVisible) {
+                                            for (let i = 1; i <= totalPages; i++) pages.push(i);
+                                        } else {
+                                            pages.push(1);
+                                            if (page > 3) pages.push('...');
+
+                                            const start = Math.max(2, page - 1);
+                                            const end = Math.min(totalPages - 1, page + 1);
+                                            for (let i = start; i <= end; i++) pages.push(i);
+
+                                            if (page < totalPages - 2) pages.push('...');
+                                            pages.push(totalPages);
+                                        }
+
+                                        return pages.map((p, idx) =>
+                                            typeof p === 'string' ? (
+                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-3 py-2 border border-purple-200 bg-white text-xs text-gray-500">
+                                                    ...
+                                                </span>
+                                            ) : (
+                                                <button
+                                                    key={p}
+                                                    onClick={() => setFilters({ ...filters, page: p })}
+                                                    className={`relative inline-flex items-center px-3.5 py-2 border text-sm font-medium transition-all ${
+                                                        p === page
+                                                            ? 'z-10 bg-purple-600 border-purple-600 text-white'
+                                                            : 'border-purple-200 bg-white text-purple-700 hover:bg-purple-50'
+                                                    }`}
+                                                >
+                                                    {p}
+                                                </button>
+                                            )
+                                        );
+                                    })()}
+                                    {/* Next */}
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-3 sm:px-4 py-2 rounded-r-md border-2 border-purple-200 bg-white text-xs sm:text-sm font-medium text-purple-700 hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 transition-all"
+                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        title="Siguiente"
                                     >
-                                        Siguiente
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+                                    {/* Last page */}
+                                    <button
+                                        onClick={() => setFilters({ ...filters, page: totalPages })}
+                                        disabled={page === totalPages}
+                                        className="relative inline-flex items-center px-2.5 py-2 rounded-r-md border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        title="Última página"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
                                     </button>
                                 </nav>
                             </div>
