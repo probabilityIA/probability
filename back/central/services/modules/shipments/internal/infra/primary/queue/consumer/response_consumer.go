@@ -205,6 +205,12 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 		}
 
+		// Use shipment's existing carrier as fallback when provider response has empty carrier
+		effectiveCarrier := carrier
+		if effectiveCarrier == "" && shipment != nil && shipment.Carrier != nil && *shipment.Carrier != "" {
+			effectiveCarrier = *shipment.Carrier
+		}
+
 		// Enrich with customer/business/integration data for WhatsApp notifications
 		var notification *domain.GuideNotificationData
 		if shipment != nil {
@@ -229,7 +235,7 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 		}
 
-		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL, carrier, notification)
+		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL, effectiveCarrier, notification)
 	}
 }
 
