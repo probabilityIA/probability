@@ -59,6 +59,10 @@ func BuildRouter(ctx context.Context, logger log.ILogger, environment env.IConfi
 	r.GET("/geocode", handleGeocode)
 	r.GET("/api/v1/geocode", handleGeocode)
 
+	// Address search proxy: sugerencias de autocompletado de dirección via Nominatim
+	// GET /api/v1/address-search?q=avenida+calle+80&country=co
+	r.GET("/api/v1/address-search", handleAddressSearch)
+
 	// 404 JSON explícito + log WARN
 	r.NoRoute(func(c *gin.Context) {
 		logger.Warn(ctx).

@@ -2,25 +2,6 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-interface NominatimResult {
-    place_id: number;
-    display_name: string;
-    lat: string;
-    lon: string;
-    address?: {
-        road?: string;
-        house_number?: string;
-        neighbourhood?: string;
-        suburb?: string;
-        city?: string;
-        town?: string;
-        village?: string;
-        state?: string;
-        postcode?: string;
-        country?: string;
-    };
-}
-
 export interface AddressSuggestion {
     display_name: string;
     street: string;
@@ -62,41 +43,15 @@ export default function AddressAutocomplete({
 
         setLoading(true);
         try {
-            const params = new URLSearchParams({
-                q: query,
-                format: 'json',
-                addressdetails: '1',
-                limit: '6',
-                countrycodes: country,
-            });
-
-            const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?${params}`,
-                {
-                    headers: {
-                        'Accept-Language': 'es',
-                        'User-Agent': 'ProbabilityApp/1.0',
-                    },
-                }
-            );
+            const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
+            const params = new URLSearchParams({ q: query, country });
+            const response = await fetch(`${apiBase}/address-search?${params}`);
 
             if (!response.ok) return;
 
-            const data: NominatimResult[] = await response.json();
-            const mapped: AddressSuggestion[] = data.map((item) => ({
-                display_name: item.display_name,
-                street: item.address?.road || '',
-                house_number: item.address?.house_number || '',
-                neighbourhood: item.address?.neighbourhood || item.address?.suburb || '',
-                city: item.address?.city || item.address?.town || item.address?.village || '',
-                state: item.address?.state || '',
-                postcode: item.address?.postcode || '',
-                lat: parseFloat(item.lat),
-                lon: parseFloat(item.lon),
-            }));
-
-            setSuggestions(mapped);
-            setShowDropdown(mapped.length > 0);
+            const data: AddressSuggestion[] = await response.json();
+            setSuggestions(data);
+            setShowDropdown(data.length > 0);
         } catch {
             setSuggestions([]);
         } finally {
