@@ -123,6 +123,8 @@ services:
       SOFTPYMES_API_URL:  "${SOFTPYMES_API_URL:-https://api-integracion.softpymes.com.co}"
       # Monitoreo - Alertas Grafana
       GRAFANA_WEBHOOK_SECRET: "${GRAFANA_WEBHOOK_SECRET}"
+      # Google Maps / Places API
+      GOOGLE_MAPS_API_KEY: "${GOOGLE_MAPS_API_KEY}"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3050/health"]
