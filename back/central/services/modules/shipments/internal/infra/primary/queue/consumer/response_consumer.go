@@ -205,7 +205,31 @@ func (c *ResponseConsumer) handleGenerateResponse(ctx context.Context, response 
 			}
 		}
 
-		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL, carrier)
+		// Enrich with customer/business/integration data for WhatsApp notifications
+		var notification *domain.GuideNotificationData
+		if shipment != nil {
+			notification = &domain.GuideNotificationData{
+				CustomerName:  shipment.CustomerName,
+				CustomerPhone: shipment.CustomerPhone,
+				OrderNumber:   shipment.OrderNumber,
+			}
+
+			// Fetch business name
+			if businessID != 0 {
+				if bName, err := c.repo.GetBusinessName(ctx, businessID); err == nil {
+					notification.BusinessName = bName
+				}
+			}
+
+			// Fetch integration_id from the order
+			if shipment.OrderID != nil && *shipment.OrderID != "" {
+				if intID, err := c.repo.GetOrderIntegrationID(ctx, *shipment.OrderID); err == nil {
+					notification.IntegrationID = intID
+				}
+			}
+		}
+
+		c.ssePublisher.PublishGuideGenerated(ctx, businessID, *response.ShipmentID, response.CorrelationID, trackingNumber, labelURL, carrier, notification)
 	}
 }
 

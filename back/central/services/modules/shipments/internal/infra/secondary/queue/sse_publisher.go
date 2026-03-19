@@ -39,14 +39,25 @@ func (p *SSEPublisher) PublishQuoteFailed(ctx context.Context, businessID uint, 
 }
 
 // PublishGuideGenerated publica evento de guía generada exitosamente
-func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string) {
-	p.publish(ctx, "shipment.guide_generated", businessID, map[string]interface{}{
+func (p *SSEPublisher) PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string, notification *domain.GuideNotificationData) {
+	data := map[string]interface{}{
 		"shipment_id":     shipmentID,
 		"correlation_id":  correlationID,
 		"tracking_number": trackingNumber,
 		"label_url":       labelURL,
 		"carrier":         carrier,
-	})
+	}
+
+	// Enrich with notification data for WhatsApp routing
+	if notification != nil {
+		data["customer_name"] = notification.CustomerName
+		data["customer_phone"] = notification.CustomerPhone
+		data["order_number"] = notification.OrderNumber
+		data["business_name"] = notification.BusinessName
+		data["integration_id"] = notification.IntegrationID
+	}
+
+	p.publish(ctx, "shipment.guide_generated", businessID, data)
 }
 
 // PublishGuideFailed publica evento de generación de guía fallida
@@ -119,7 +130,7 @@ func NewNoopSSEPublisher() domain.IShipmentSSEPublisher {
 func (n *noopSSEPublisher) PublishQuoteReceived(_ context.Context, _ uint, _ string, _ map[string]interface{}) {
 }
 func (n *noopSSEPublisher) PublishQuoteFailed(_ context.Context, _ uint, _ string, _ string) {}
-func (n *noopSSEPublisher) PublishGuideGenerated(_ context.Context, _ uint, _ uint, _ string, _ string, _ string, _ string) {
+func (n *noopSSEPublisher) PublishGuideGenerated(_ context.Context, _ uint, _ uint, _ string, _ string, _ string, _ string, _ *domain.GuideNotificationData) {
 }
 func (n *noopSSEPublisher) PublishGuideFailed(_ context.Context, _ uint, _ uint, _ string, _ string) {
 }

@@ -235,6 +235,15 @@ const (
 	QueueMonitoringAlerts = "monitoring.alerts"
 )
 
+// ─── Queues: Shipments WhatsApp ──────────────────────────────────
+
+const (
+	// QueueShipmentsWhatsAppGuideNotification recibe eventos de guía generada para notificación WhatsApp.
+	// Publisher: events/channel_publisher (PublishToWhatsApp cuando category="shipment")
+	// Consumer: integrations/messaging/whatsapp/consumershipment
+	QueueShipmentsWhatsAppGuideNotification = "shipments.whatsapp.guide_notification"
+)
+
 // ─── Queues: WhatsApp ────────────────────────────────────────────
 
 const (

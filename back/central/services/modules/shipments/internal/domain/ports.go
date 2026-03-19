@@ -40,6 +40,9 @@ type IRepository interface {
 	// Updates guide_link, tracking_number, and carrier on the orders table after guide generation.
 	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error
 
+	// GetOrderIntegrationID retrieves the integration_id for an order (replicated query — module isolation)
+	GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error)
+
 	// Origin Addresses
 	CreateOriginAddress(ctx context.Context, address *OriginAddress) error
 	GetOriginAddressByID(ctx context.Context, id uint) (*OriginAddress, error)
@@ -104,11 +107,20 @@ type ITransportRequestPublisher interface {
 //
 // ───────────────────────────────────────────
 
+// GuideNotificationData holds enriched data for guide_generated events (used for WhatsApp notifications)
+type GuideNotificationData struct {
+	CustomerName  string
+	CustomerPhone string
+	OrderNumber   string
+	BusinessName  string
+	IntegrationID uint
+}
+
 // IShipmentSSEPublisher defines the contract for publishing shipment SSE events via Redis
 type IShipmentSSEPublisher interface {
 	PublishQuoteReceived(ctx context.Context, businessID uint, correlationID string, data map[string]interface{})
 	PublishQuoteFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)
-	PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string)
+	PublishGuideGenerated(ctx context.Context, businessID uint, shipmentID uint, correlationID string, trackingNumber string, labelURL string, carrier string, notification *GuideNotificationData)
 	PublishGuideFailed(ctx context.Context, businessID uint, shipmentID uint, correlationID string, errorMsg string)
 	PublishTrackingUpdated(ctx context.Context, businessID uint, correlationID string, data map[string]interface{})
 	PublishTrackingFailed(ctx context.Context, businessID uint, correlationID string, errorMsg string)

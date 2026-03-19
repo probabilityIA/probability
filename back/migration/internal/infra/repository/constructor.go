@@ -173,6 +173,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to seed tienda web integration type: %w", err)
 	}
 
+	// Seed notification event type: shipment.guide_generated for WhatsApp (id=13)
+	if err := r.seedShipmentGuideNotificationEventType(ctx); err != nil {
+		return fmt.Errorf("failed to seed shipment guide notification event type: %w", err)
+	}
+
 	return nil
 }
 
@@ -341,152 +346,24 @@ func (r *Repository) createDefaultUserIfNotExists(ctx context.Context) error {
 	return nil
 }
 
-// seedNotificationTypesAndEvents inserta los datos iniciales de notification_types y notification_event_types
-func (r *Repository) seedNotificationTypesAndEvents(ctx context.Context) error {
+// seedShipmentGuideNotificationEventType inserta el notification_event_type para shipment.guide_generated (WhatsApp)
+func (r *Repository) seedShipmentGuideNotificationEventType(ctx context.Context) error {
 	db := r.db.Conn(ctx)
 
-	// 1. Insertar notification_types si no existen
-	notificationTypes := []models.NotificationType{
-		{
-			Model:       gorm.Model{ID: 1},
-			Name:        "SSE",
-			Code:        "sse",
-			Description: "Server-Sent Events para notificaciones en tiempo real",
-			IsActive:    true,
-		},
-		{
-			Model:       gorm.Model{ID: 2},
-			Name:        "WhatsApp",
-			Code:        "whatsapp",
-			Description: "Mensajes de WhatsApp Business",
-			IsActive:    true,
-		},
-		{
-			Model:       gorm.Model{ID: 3},
-			Name:        "Email",
-			Code:        "email",
-			Description: "Notificaciones por correo electrónico",
-			IsActive:    true,
-		},
-		{
-			Model:       gorm.Model{ID: 4},
-			Name:        "SMS",
-			Code:        "sms",
-			Description: "Mensajes de texto SMS",
-			IsActive:    false,
-		},
+	net := models.NotificationEventType{
+		Model:              gorm.Model{ID: 13},
+		NotificationTypeID: 2,
+		EventCode:          "shipment.guide_generated",
+		EventName:          "Guía de Envío Generada",
+		Description:        "Envia un mensaje de WhatsApp al cliente con el numero de guia y transportadora cuando se genera la guia de envio.",
+		IsActive:           true,
 	}
 
-	for _, nt := range notificationTypes {
-		var existing models.NotificationType
-		err := db.Where("id = ?", nt.ID).First(&existing).Error
-		if err == gorm.ErrRecordNotFound {
-			// No existe, crear
-			if err := db.Create(&nt).Error; err != nil {
-				return fmt.Errorf("failed to create notification_type %s: %w", nt.Code, err)
-			}
-		}
-	}
-
-	// 2. Insertar notification_event_types si no existen
-	notificationEventTypes := []models.NotificationEventType{
-		// Eventos para SSE
-		{
-			Model:              gorm.Model{ID: 1},
-			NotificationTypeID: 1,
-			EventCode:          "order.created",
-			EventName:          "Nueva Orden",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 2},
-			NotificationTypeID: 1,
-			EventCode:          "order.status_changed",
-			EventName:          "Cambio de Estado",
-			IsActive:           true,
-		},
-		// Eventos para WhatsApp
-		{
-			Model:              gorm.Model{ID: 3},
-			NotificationTypeID: 2,
-			EventCode:          "order.created",
-			EventName:          "Confirmación de Pedido",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 4},
-			NotificationTypeID: 2,
-			EventCode:          "order.shipped",
-			EventName:          "Pedido Enviado",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 5},
-			NotificationTypeID: 2,
-			EventCode:          "order.delivered",
-			EventName:          "Pedido Entregado",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 6},
-			NotificationTypeID: 2,
-			EventCode:          "order.canceled",
-			EventName:          "Pedido Cancelado",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 7},
-			NotificationTypeID: 2,
-			EventCode:          "invoice.created",
-			EventName:          "Factura Generada",
-			IsActive:           true,
-		},
-		// Eventos para Email
-		{
-			Model:              gorm.Model{ID: 8},
-			NotificationTypeID: 3,
-			EventCode:          "order.created",
-			EventName:          "Confirmación de Pedido",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 9},
-			NotificationTypeID: 3,
-			EventCode:          "order.shipped",
-			EventName:          "Pedido Enviado",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 10},
-			NotificationTypeID: 3,
-			EventCode:          "order.delivered",
-			EventName:          "Pedido Entregado",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 11},
-			NotificationTypeID: 3,
-			EventCode:          "order.canceled",
-			EventName:          "Pedido Cancelado",
-			IsActive:           true,
-		},
-		{
-			Model:              gorm.Model{ID: 12},
-			NotificationTypeID: 3,
-			EventCode:          "invoice.created",
-			EventName:          "Factura Generada",
-			IsActive:           true,
-		},
-	}
-
-	for _, net := range notificationEventTypes {
-		var existing models.NotificationEventType
-		err := db.Where("id = ?", net.ID).First(&existing).Error
-		if err == gorm.ErrRecordNotFound {
-			// No existe, crear
-			if err := db.Create(&net).Error; err != nil {
-				return fmt.Errorf("failed to create notification_event_type %s: %w", net.EventCode, err)
-			}
+	var existing models.NotificationEventType
+	err := db.Where("id = ?", net.ID).First(&existing).Error
+	if err == gorm.ErrRecordNotFound {
+		if err := db.Create(&net).Error; err != nil {
+			return fmt.Errorf("failed to create notification_event_type shipment.guide_generated: %w", err)
 		}
 	}
 
