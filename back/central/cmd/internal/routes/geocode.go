@@ -6,9 +6,9 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/secamc93/probability/back/central/shared/env"
 )
 
 // GeocodingResult representa el resultado estandarizado de geocodificación.
@@ -61,23 +61,24 @@ type AddressSearchResult struct {
 	Lon         float64 `json:"lon"`
 }
 
-// handleAddressSearch es un proxy server-side hacia Google Places Autocomplete.
-// La API key se queda en el backend, nunca se expone al browser.
+// handleAddressSearch retorna un handler que usa Google Places Autocomplete como proxy.
+// La API key se lee del config (cargada desde .env), nunca se expone al browser.
 //
 // GET /address-search?q=avenida+calle+145+128-40+bogota&country=co
-func handleAddressSearch(c *gin.Context) {
-	q := c.Query("q")
-	if q == "" || len(q) < 4 {
-		c.JSON(http.StatusOK, []AddressSearchResult{})
-		return
-	}
+func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		q := c.Query("q")
+		if q == "" || len(q) < 4 {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
 
-	country := c.DefaultQuery("country", "co")
-	apiKey := os.Getenv("GOOGLE_MAPS_API_KEY")
-	if apiKey == "" {
-		c.JSON(http.StatusOK, []AddressSearchResult{})
-		return
-	}
+		country := c.DefaultQuery("country", "co")
+		apiKey := cfg.Get("GOOGLE_MAPS_API_KEY")
+		if apiKey == "" {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
 
 	// Step 1: Google Places Autocomplete
 	autocompleteURL := fmt.Sprintf(
@@ -158,6 +159,7 @@ func handleAddressSearch(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, results)
+	}
 }
 
 // nominatimSearch realiza la búsqueda en Nominatim y retorna lat, lon y si encontró resultados.
