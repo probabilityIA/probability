@@ -20,7 +20,7 @@ type GeocodingResult struct {
 	Fallback bool    `json:"fallback"` // true si se usó solo la ciudad como fallback
 }
 
-// handleGeocode es un proxy server-side hacia Mapbox Geocoding API.
+// handleGeocode es un proxy server-side hacia Google Geocoding API.
 // El frontend no puede llamar a APIs externas directamente por restricciones de CORS,
 // pero el backend sí puede. Este endpoint actúa como intermediario.
 //
@@ -35,8 +35,8 @@ func handleGeocode(cfg env.IConfig) gin.HandlerFunc {
 			return
 		}
 
-		token := cfg.Get("MAPBOX_ACCESS_TOKEN")
-		if token == "" {
+		apiKey := cfg.Get("GOOGLE_MAPS_API_KEY")
+		if apiKey == "" {
 			c.JSON(http.StatusOK, GeocodingResult{Found: false})
 			return
 		}
@@ -44,7 +44,7 @@ func handleGeocode(cfg env.IConfig) gin.HandlerFunc {
 		// Intento 1: dirección completa
 		if address != "" {
 			query := fmt.Sprintf("%s, %s, Colombia", address, city)
-			lat, lon, ok := mapboxGeocode(query, token)
+			lat, lon, ok := googleGeocode(query, apiKey)
 			if ok {
 				c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: false})
 				return
@@ -52,7 +52,7 @@ func handleGeocode(cfg env.IConfig) gin.HandlerFunc {
 		}
 
 		// Intento 2 (fallback): solo ciudad
-		lat, lon, ok := mapboxGeocode(fmt.Sprintf("%s, Colombia", city), token)
+		lat, lon, ok := googleGeocode(fmt.Sprintf("%s, Colombia", city), apiKey)
 		if ok {
 			c.JSON(http.StatusOK, GeocodingResult{Lat: lat, Lon: lon, Found: true, Fallback: true})
 			return
@@ -74,7 +74,8 @@ type AddressSearchResult struct {
 	Postcode      string  `json:"postcode"`
 }
 
-// handleAddressSearch retorna un handler que usa Mapbox Geocoding como proxy.
+// handleAddressSearch retorna un handler que usa Google Geocoding API como proxy.
+// Una sola llamada HTTP por búsqueda (más eficiente que Places Autocomplete + Details).
 // La API key se lee del config (cargada desde .env), nunca se expone al browser.
 //
 // GET /address-search?q=avenida+calle+145+128-40+bogota&country=co
@@ -88,23 +89,23 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 
 		country := c.DefaultQuery("country", "co")
 		city := c.Query("city")
-		token := cfg.Get("MAPBOX_ACCESS_TOKEN")
-		if token == "" {
+		apiKey := cfg.Get("GOOGLE_MAPS_API_KEY")
+		if apiKey == "" {
 			c.JSON(http.StatusOK, []AddressSearchResult{})
 			return
 		}
 
-		// Si hay ciudad, la usamos como proximity y la añadimos al query
+		// Si hay ciudad, la añadimos al query para mejor contexto
 		searchInput := q
 		if city != "" {
 			searchInput = q + ", " + city
 		}
 
-		// Mapbox Geocoding v5 - search endpoint
+		// Google Geocoding API - una sola llamada, devuelve coordenadas + componentes
 		geocodeURL := fmt.Sprintf(
-			"https://api.mapbox.com/geocoding/v5/mapbox.places/%s.json?access_token=%s&country=%s&language=es&types=address&limit=5",
-			url.PathEscape(searchInput),
-			token,
+			"https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s&language=es&components=country:%s",
+			url.QueryEscape(searchInput),
+			apiKey,
 			url.QueryEscape(country),
 		)
 
@@ -121,38 +122,40 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 			return
 		}
 
-		var mapboxResp mapboxFeatureCollection
-		if err := json.Unmarshal(body, &mapboxResp); err != nil {
+		var geoResp googleGeocodeResponse
+		if err := json.Unmarshal(body, &geoResp); err != nil || geoResp.Status != "OK" {
 			c.JSON(http.StatusOK, []AddressSearchResult{})
 			return
 		}
 
-		results := make([]AddressSearchResult, 0, len(mapboxResp.Features))
-		for _, feat := range mapboxResp.Features {
+		results := make([]AddressSearchResult, 0, len(geoResp.Results))
+		limit := len(geoResp.Results)
+		if limit > 5 {
+			limit = 5
+		}
+
+		for _, res := range geoResp.Results[:limit] {
 			result := AddressSearchResult{
-				DisplayName: feat.PlaceName,
-				PlaceID:     feat.ID,
+				DisplayName: res.FormattedAddress,
+				PlaceID:     res.PlaceID,
+				Lat:         res.Geometry.Location.Lat,
+				Lon:         res.Geometry.Location.Lng,
 			}
 
-			// Mapbox coordinates are [longitude, latitude]
-			if len(feat.Center) == 2 {
-				result.Lon = feat.Center[0]
-				result.Lat = feat.Center[1]
-			}
-
-			// Extract address components from context
-			for _, ctx := range feat.Context {
-				switch {
-				case containsType(ctx.ID, "place"):
-					result.City = ctx.Text
-				case containsType(ctx.ID, "region"):
-					result.State = ctx.Text
-				case containsType(ctx.ID, "neighborhood") || containsType(ctx.ID, "locality"):
-					if result.Neighbourhood == "" {
-						result.Neighbourhood = ctx.Text
+			for _, comp := range res.AddressComponents {
+				for _, t := range comp.Types {
+					switch t {
+					case "locality":
+						result.City = comp.LongName
+					case "administrative_area_level_1":
+						result.State = comp.LongName
+					case "neighborhood", "sublocality_level_1", "sublocality":
+						if result.Neighbourhood == "" {
+							result.Neighbourhood = comp.LongName
+						}
+					case "postal_code":
+						result.Postcode = comp.LongName
 					}
-				case containsType(ctx.ID, "postcode"):
-					result.Postcode = ctx.Text
 				}
 			}
 
@@ -163,35 +166,34 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 	}
 }
 
-// mapboxFeatureCollection represents the Mapbox Geocoding API response.
-type mapboxFeatureCollection struct {
-	Features []mapboxFeature `json:"features"`
+// googleGeocodeResponse represents the Google Geocoding API response.
+type googleGeocodeResponse struct {
+	Status  string              `json:"status"`
+	Results []googleGeocodeResult `json:"results"`
 }
 
-type mapboxFeature struct {
-	ID        string          `json:"id"`
-	PlaceName string          `json:"place_name"`
-	Center    []float64       `json:"center"` // [lon, lat]
-	Context   []mapboxContext `json:"context"`
+type googleGeocodeResult struct {
+	FormattedAddress  string `json:"formatted_address"`
+	PlaceID           string `json:"place_id"`
+	Geometry          struct {
+		Location struct {
+			Lat float64 `json:"lat"`
+			Lng float64 `json:"lng"`
+		} `json:"location"`
+	} `json:"geometry"`
+	AddressComponents []struct {
+		LongName  string   `json:"long_name"`
+		ShortName string   `json:"short_name"`
+		Types     []string `json:"types"`
+	} `json:"address_components"`
 }
 
-type mapboxContext struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-}
-
-// containsType checks if a Mapbox context ID contains a specific type prefix.
-// Mapbox context IDs are formatted as "type.id" (e.g., "place.12345", "region.67890").
-func containsType(id, typeName string) bool {
-	return len(id) > len(typeName) && id[:len(typeName)+1] == typeName+"."
-}
-
-// mapboxGeocode performs a forward geocoding search using the Mapbox API.
-func mapboxGeocode(query, token string) (float64, float64, bool) {
+// googleGeocode performs a forward geocoding search using the Google Geocoding API.
+func googleGeocode(query, apiKey string) (float64, float64, bool) {
 	endpoint := fmt.Sprintf(
-		"https://api.mapbox.com/geocoding/v5/mapbox.places/%s.json?access_token=%s&limit=1&language=es",
-		url.PathEscape(query),
-		token,
+		"https://maps.googleapis.com/maps/api/geocode/json?address=%s&key=%s&language=es",
+		url.QueryEscape(query),
+		apiKey,
 	)
 
 	resp, err := http.Get(endpoint)
@@ -205,16 +207,11 @@ func mapboxGeocode(query, token string) (float64, float64, bool) {
 		return 0, 0, false
 	}
 
-	var result mapboxFeatureCollection
-	if err := json.Unmarshal(body, &result); err != nil || len(result.Features) == 0 {
+	var result googleGeocodeResponse
+	if err := json.Unmarshal(body, &result); err != nil || result.Status != "OK" || len(result.Results) == 0 {
 		return 0, 0, false
 	}
 
-	center := result.Features[0].Center
-	if len(center) != 2 {
-		return 0, 0, false
-	}
-
-	// center = [longitude, latitude]
-	return center[1], center[0], true
+	loc := result.Results[0].Geometry.Location
+	return loc.Lat, loc.Lng, true
 }
