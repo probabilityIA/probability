@@ -1,3 +1,4 @@
+// Package routes defines HTTP route handlers for geocoding and address search.
 package routes
 
 import (
