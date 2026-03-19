@@ -78,6 +78,7 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 		}
 
 		country := c.DefaultQuery("country", "co")
+		city := c.Query("city")
 		apiKey := cfg.Get("GOOGLE_MAPS_API_KEY")
 		if apiKey == "" {
 			c.JSON(http.StatusOK, []AddressSearchResult{})
@@ -85,9 +86,14 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 		}
 
 	// Step 1: Google Places Autocomplete
+	// If city is provided, append it to the query for better filtering
+	searchInput := q
+	if city != "" {
+		searchInput = q + ", " + city
+	}
 	autocompleteURL := fmt.Sprintf(
 		"https://maps.googleapis.com/maps/api/place/autocomplete/json?input=%s&components=country:%s&language=es&types=address&key=%s",
-		url.QueryEscape(q),
+		url.QueryEscape(searchInput),
 		url.QueryEscape(country),
 		apiKey,
 	)

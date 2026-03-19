@@ -556,6 +556,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 <AddressAutocomplete
                                     value={formData.shipping_street}
                                     onChange={(val) => setFormData({ ...formData, shipping_street: val })}
+                                    city={formData.shipping_city}
                                     onSelect={(s: AddressSuggestion) => {
                                         if (s.lat && s.lon) setAddressCoords({ lat: s.lat, lon: s.lon });
                                         if (s.neighbourhood) setBarrio(s.neighbourhood);

@@ -19,6 +19,7 @@ interface AddressAutocompleteProps {
     onSelect: (suggestion: AddressSuggestion) => void;
     placeholder?: string;
     country?: string;
+    city?: string;
 }
 
 export default function AddressAutocomplete({
@@ -27,6 +28,7 @@ export default function AddressAutocomplete({
     onSelect,
     placeholder = 'Calle/Carrera número',
     country = 'co',
+    city = '',
 }: AddressAutocompleteProps) {
     const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
     const [showDropdown, setShowDropdown] = useState(false);
@@ -46,6 +48,7 @@ export default function AddressAutocomplete({
         try {
             const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
             const params = new URLSearchParams({ q: query, country });
+            if (city) params.set('city', city);
             const response = await fetch(`${apiBase}/address-search?${params}`);
 
             if (!response.ok) return;
@@ -58,7 +61,7 @@ export default function AddressAutocomplete({
         } finally {
             setLoading(false);
         }
-    }, [country]);
+    }, [country, city]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value;
