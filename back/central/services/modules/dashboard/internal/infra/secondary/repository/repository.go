@@ -495,29 +495,50 @@ func (r *Repository) GetShipmentsByStatusFiltered(ctx context.Context, businessI
 
 	var results []Result
 
-	// Subquery para obtener el shipment más reciente por orden (evitar históricos)
-	latestShipmentsSubquery := r.db.Conn(ctx).
-		Model(&models.Shipment{}).
-		Select("DISTINCT ON (order_id) id, order_id, status, created_at").
-		Order("order_id, created_at DESC")
+	// Build the appropriate Raw SQL query based on filters
+	var query *gorm.DB
+	baseSQLPart := `
+		SELECT s.status, COUNT(*) as count
+		FROM (
+			SELECT DISTINCT ON (order_id) id, order_id, status
+			FROM shipments
+			ORDER BY order_id, created_at DESC
+		) s
+		JOIN orders o ON o.id = s.order_id
+		WHERE s.status IN (?, ?, ?)
+		AND o.deleted_at IS NULL
+	`
+	orderBySQLPart := `
+		GROUP BY s.status
+		ORDER BY CASE
+			WHEN s.status = 'pending' THEN 1
+			WHEN s.status = 'in_transit' THEN 2
+			WHEN s.status = 'delivered' THEN 3
+			ELSE 4
+		END
+	`
 
-	query := r.db.Conn(ctx).
-		Table("(?) AS latest_shipments", latestShipmentsSubquery).
-		Select("latest_shipments.status, COUNT(*) as count").
-		Joins("JOIN orders ON orders.id = latest_shipments.order_id").
-		Where("latest_shipments.status IN ?", []string{"pending", "in_transit", "delivered"}).
-		Where("orders.deleted_at IS NULL").
-		Group("latest_shipments.status").
-		Order("CASE WHEN latest_shipments.status = 'pending' THEN 1 WHEN latest_shipments.status = 'in_transit' THEN 2 WHEN latest_shipments.status = 'delivered' THEN 3 ELSE 4 END")
-
-	// Aplicar filtro por business_id si está especificado y no es super user
-	if businessID != nil && *businessID > 0 {
-		query = query.Where("orders.business_id = ?", *businessID)
-	}
-
-	// Aplicar filtro por integration_id si está especificado
-	if integrationID != nil && *integrationID > 0 {
-		query = query.Where("orders.integration_id = ?", *integrationID)
+	// Handle both business_id and integration_id filters
+	if businessID != nil && *businessID > 0 && integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ? AND o.integration_id = ?`+orderBySQLPart,
+			"pending", "in_transit", "delivered", *businessID, *integrationID,
+		)
+	} else if businessID != nil && *businessID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.business_id = ?`+orderBySQLPart,
+			"pending", "in_transit", "delivered", *businessID,
+		)
+	} else if integrationID != nil && *integrationID > 0 {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+`AND o.integration_id = ?`+orderBySQLPart,
+			"pending", "in_transit", "delivered", *integrationID,
+		)
+	} else {
+		query = r.db.Conn(ctx).Raw(
+			baseSQLPart+orderBySQLPart,
+			"pending", "in_transit", "delivered",
+		)
 	}
 
 	if err := query.Scan(&results).Error; err != nil {

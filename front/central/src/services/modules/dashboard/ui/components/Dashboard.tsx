@@ -649,14 +649,22 @@ export default function Dashboard() {
         ? (stats.shipments_by_carrier_today || [])
         : (stats.shipments_by_carrier || []);
 
-    const shipmentsByCarrierData = rawCarrierData.map((item) => ({
-        name: item.carrier,
-        fullName: item.carrier,
-        value: item.count,
+    // Agrupar y sumar por transportista (evitar duplicados)
+    const carrierMap = new Map<string, number>();
+    (rawCarrierData || []).forEach((item: any) => {
+        const carrierName = item.carrier || 'Sin transportista';
+        const currentCount = carrierMap.get(carrierName) || 0;
+        carrierMap.set(carrierName, currentCount + (item.count || 0));
+    });
+
+    const shipmentsByCarrierData = Array.from(carrierMap).map(([carrierName, count]) => ({
+        name: carrierName,
+        fullName: carrierName,
+        value: count,
         unit: 'envíos',
-        logoUrl: CARRIER_LOGOS[item.carrier.toLowerCase()],
-        initials: getCarrierInitials(item.carrier),
-        color: getCarrierColor(item.carrier),
+        logoUrl: CARRIER_LOGOS[carrierName.toLowerCase()],
+        initials: getCarrierInitials(carrierName),
+        color: getCarrierColor(carrierName),
     }));
 
     const shipmentsByWarehouseData = (stats.shipments_by_warehouse || []).map((item) => ({
