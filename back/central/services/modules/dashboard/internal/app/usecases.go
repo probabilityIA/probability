@@ -36,6 +36,14 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 		return nil, err
 	}
 
+	// Obtener órdenes creadas hoy
+	ordersToday, err := uc.repo.GetOrdersToday(ctx, businessID, integrationID)
+	if err != nil {
+		uc.logger.Error().Err(err).Msg("Error al obtener órdenes de hoy")
+		// No es un error fatal: si falla, usar 0
+		ordersToday = 0
+	}
+
 	// Obtener órdenes por tipo de integración
 	ordersByIntegrationType, err := uc.repo.GetOrdersByIntegrationType(ctx, businessID, integrationID)
 	if err != nil {
@@ -139,6 +147,7 @@ func (uc *UseCase) GetDashboardStats(ctx context.Context, businessID *uint, inte
 
 	stats := &domain.DashboardStats{
 		TotalOrders:             totalOrders,
+		OrdersToday:             ordersToday,
 		OrdersByIntegrationType: ordersByIntegrationType,
 		TopCustomers:            topCustomers,
 		OrdersByLocation:        ordersByLocation,

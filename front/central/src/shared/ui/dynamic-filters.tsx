@@ -29,6 +29,8 @@ interface DynamicFiltersProps {
     createButtonText?: string; // Texto del botón crear (opcional, default: "+ Crear Orden")
     createButtonIconOnly?: boolean; // Si true, solo muestra el ícono +
     onTestGuide?: () => void;
+    onDownload?: () => void; // Callback para descargar
+    downloadButtonText?: string; // Texto del botón descargar
     sortBy?: string;
     sortOrder?: 'asc' | 'desc';
     onSortChange?: (sortBy: string, sortOrder: 'asc' | 'desc') => void;
@@ -45,6 +47,8 @@ export function DynamicFilters({
     createButtonText = '+ Crear Orden',
     createButtonIconOnly = false,
     onTestGuide,
+    onDownload,
+    downloadButtonText = '↓ Descargar Ordenes',
     sortBy = 'created_at',
     sortOrder = 'desc',
     onSortChange,
@@ -213,6 +217,23 @@ export function DynamicFilters({
                                     ) : (
                                         createButtonText
                                     )}
+                                </button>
+                            )}
+
+                            {onDownload && (
+                                <button
+                                    style={{ background: '#10b981' }}
+                                    onClick={() => {
+                                        onDownload();
+                                        // close dropdown state
+                                        setIsDropdownOpen(false);
+                                        setSelectedFilterKey(null);
+                                        setTempValue('');
+                                    }}
+                                    className="flex items-center gap-2 px-4 py-2 text-sm font-semibold text-white rounded-lg hover:shadow-lg hover:scale-105 transition-all"
+                                    title="Descargar órdenes en Excel"
+                                >
+                                    {downloadButtonText}
                                 </button>
                             )}
                         </div>

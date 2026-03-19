@@ -164,8 +164,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <div className="flex items-center gap-1.5">
                                 <Truck size={13} className="text-gray-400" />
                                 <p className="text-sm font-semibold text-gray-900">
-                                    {shipment.carrier}
-                                    {shipment.carrier_code && <span className="text-xs text-gray-400 ml-1">({shipment.carrier_code})</span>}
+                                    {shipment.carrier.split('(')[0].trim()}
                                 </p>
                             </div>
                         </div>

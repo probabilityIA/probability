@@ -4,6 +4,7 @@ package domain
 type DashboardStats struct {
 	// Existentes
 	TotalOrders             int64                         `json:"total_orders"`
+	OrdersToday             int64                         `json:"orders_today"`
 	OrdersByIntegrationType []OrderCountByIntegrationType `json:"orders_by_integration_type"`
 	TopCustomers            []TopCustomer                 `json:"top_customers"`
 	OrdersByLocation        []OrderCountByLocation        `json:"orders_by_location"`

@@ -12,6 +12,9 @@ type IRepository interface {
 	// Si businessID > 0, filtra por ese negocio
 	GetTotalOrders(ctx context.Context, businessID *uint, integrationID *uint) (int64, error)
 
+	// GetOrdersToday obtiene el total de órdenes creadas hoy
+	GetOrdersToday(ctx context.Context, businessID *uint, integrationID *uint) (int64, error)
+
 	// GetOrdersByIntegrationType obtiene el conteo de órdenes agrupado por tipo de integración
 	GetOrdersByIntegrationType(ctx context.Context, businessID *uint, integrationID *uint) ([]OrderCountByIntegrationType, error)
 

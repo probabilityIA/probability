@@ -52,14 +52,28 @@ const DEPARTMENT_COORDS: Record<string, [number, number]> = {
     'VICHADA': [5.6698, -68.1193],
 };
 
-export default function MapGLComponent({ data, height = 500 }: MapGLComponentProps) {
+interface MapGLComponentWithMetricsProps extends MapGLComponentProps {
+    onDepartmentMapChange?: (map: Map<string, { count: number; percentage: number }>) => void;
+}
+
+export default function MapGLComponent({ data, height = 500, onDepartmentMapChange }: MapGLComponentWithMetricsProps) {
     const { departmentMap, totalOrders } = useMemo(() => {
         const total = data.reduce((sum, item) => sum + item.value, 0);
         const map = new Map<string, { count: number; percentage: number }>();
 
+        // Normalizar variaciones de Bogotá
+        const normalizeDepartment = (dept: string): string => {
+            const normalized = dept.toUpperCase().trim();
+            if (normalized.includes('D.C') || normalized.includes('D.D') || normalized.includes('S.C') ||
+                normalized === 'BOGOTÁ' || normalized === 'BOGOTA' || normalized === 'DC' || normalized === 'DD' || normalized === 'SC') {
+                return 'BOGOTÁ';
+            }
+            return normalized;
+        };
+
         data.forEach(item => {
-            const state = item.fullName.split(', ')[1] || item.fullName;
-            const upperState = state.toUpperCase();
+            let state = item.fullName.split(', ')[1] || item.fullName;
+            let upperState = normalizeDepartment(state);
 
             if (map.has(upperState)) {
                 const current = map.get(upperState)!;
@@ -73,8 +87,12 @@ export default function MapGLComponent({ data, height = 500 }: MapGLComponentPro
             }
         });
 
+        if (onDepartmentMapChange) {
+            onDepartmentMapChange(map);
+        }
+
         return { departmentMap: map, totalOrders: total };
-    }, [data]);
+    }, [data, onDepartmentMapChange]);
 
     const getColorForPercentage = (percentage: number): string => {
         if (percentage >= 80) return '#6B2FA1'; // Muy oscuro
@@ -85,11 +103,11 @@ export default function MapGLComponent({ data, height = 500 }: MapGLComponentPro
     };
 
     return (
-        <div style={{ height }} className="relative w-full">
+        <div style={{ height, position: 'relative', zIndex: 0 }} className="relative w-full overflow-hidden">
             <MapContainer
                 center={[4.5709, -74.2973]}
                 zoom={5}
-                style={{ width: '100%', height: '100%' }}
+                style={{ width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }}
                 className="rounded-lg"
             >
                 <TileLayer
@@ -138,48 +156,6 @@ export default function MapGLComponent({ data, height = 500 }: MapGLComponentPro
                 })}
             </MapContainer>
 
-            {/* Leyenda */}
-            <div className="absolute bottom-4 left-4 bg-white p-3 rounded-lg shadow border border-gray-200 z-10">
-                <p className="text-xs font-semibold mb-2 text-gray-700">Escala de Órdenes</p>
-                <div className="space-y-1 text-xs">
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#6B2FA1' }}></div>
-                        <span>80-100%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#8A5CB6' }}></div>
-                        <span>60-80%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#A987CB' }}></div>
-                        <span>40-60%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#C9B2E0' }}></div>
-                        <span>20-40%</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: '#E8DDF5' }}></div>
-                        <span>0-20%</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* Info summary */}
-            <div className="absolute top-4 right-4 bg-white p-3 rounded-lg shadow border border-gray-200 z-10 max-w-xs">
-                <p className="text-xs font-semibold text-gray-700 mb-2">Top Departamentos</p>
-                <div className="text-xs text-gray-600 space-y-1 max-h-32 overflow-y-auto">
-                    {Array.from(departmentMap.entries())
-                        .sort((a, b) => b[1].count - a[1].count)
-                        .slice(0, 5)
-                        .map(([dept, stats]) => (
-                            <div key={dept} className="flex justify-between">
-                                <span>{dept}</span>
-                                <span className="font-medium">{stats.percentage.toFixed(1)}%</span>
-                            </div>
-                        ))}
-                </div>
-            </div>
         </div>
     );
 }

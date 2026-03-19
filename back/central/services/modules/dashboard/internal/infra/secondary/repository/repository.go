@@ -48,6 +48,29 @@ func (r *Repository) GetTotalOrders(ctx context.Context, businessID *uint, integ
 	return count, nil
 }
 
+// GetOrdersToday obtiene el total de órdenes creadas hoy
+func (r *Repository) GetOrdersToday(ctx context.Context, businessID *uint, integrationID *uint) (int64, error) {
+	var count int64
+	query := r.db.Conn(ctx).Model(&models.Order{}).
+		Where("DATE(created_at AT TIME ZONE 'America/Bogota') = DATE(NOW() AT TIME ZONE 'America/Bogota')")
+
+	// Aplicar filtro por business_id si está especificado
+	if businessID != nil && *businessID > 0 {
+		query = query.Where("business_id = ?", *businessID)
+	}
+
+	// Aplicar filtro por integration_id si está especificado
+	if integrationID != nil && *integrationID > 0 {
+		query = query.Where("integration_id = ?", *integrationID)
+	}
+
+	if err := query.Count(&count).Error; err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 // GetOrdersByIntegrationType obtiene el conteo de órdenes agrupado por tipo de integración
 func (r *Repository) GetOrdersByIntegrationType(ctx context.Context, businessID *uint, integrationID *uint) ([]domain.OrderCountByIntegrationType, error) {
 	type Result struct {
@@ -516,7 +539,7 @@ func (r *Repository) GetShipmentsByCarrierToday(ctx context.Context, businessID 
 		Model(&models.Shipment{}).
 		Select("shipments.carrier, COUNT(*) as count").
 		Joins("JOIN orders ON orders.id = shipments.order_id").
-		Where("DATE(shipments.created_at AT TIME ZONE 'UTC') = DATE(NOW() AT TIME ZONE 'UTC')").
+		Where("DATE(shipments.created_at AT TIME ZONE 'America/Bogota') = DATE(NOW() AT TIME ZONE 'America/Bogota')").
 		Where("shipments.carrier IS NOT NULL AND shipments.carrier != ''").
 		Group("shipments.carrier").
 		Order("count DESC")
@@ -589,9 +612,10 @@ func (r *Repository) GetShipmentsByWarehouse(ctx context.Context, businessID *ui
 
 // GetShipmentsByDayOfWeek obtiene órdenes agrupadas por día para una semana específica (lunes a domingo)
 func (r *Repository) GetShipmentsByDayOfWeek(ctx context.Context, businessID *uint, integrationID *uint, startDate *time.Time) ([]domain.ShipmentsByDayOfWeek, error) {
-	// Si no se proporciona startDate, usar el lunes de la semana actual
+	// Si no se proporciona startDate, usar el lunes de la semana actual (en zona horaria America/Bogota)
 	if startDate == nil {
-		now := time.Now()
+		loc, _ := time.LoadLocation("America/Bogota")
+		now := time.Now().In(loc)
 		// Calcular el lunes de la semana actual
 		daysToMonday := int(now.Weekday()) - 1
 		if daysToMonday < 0 {
@@ -628,11 +652,12 @@ func (r *Repository) GetShipmentsByDayOfWeek(ctx context.Context, businessID *ui
 		return nil, err
 	}
 
-	// Agrupar órdenes por fecha en el código Go
+	// Agrupar órdenes por fecha en el código Go (convertir a zona horaria America/Bogota)
+	loc, _ := time.LoadLocation("America/Bogota")
 	countMap := make(map[string]int64)
 	for _, order := range orders {
-		// Convertir created_at a fecha YYYY-MM-DD
-		dateStr := order.CreatedAt.Format("2006-01-02")
+		// Convertir created_at a fecha YYYY-MM-DD en zona horaria America/Bogota
+		dateStr := order.CreatedAt.In(loc).Format("2006-01-02")
 		countMap[dateStr]++
 	}
 

@@ -3,6 +3,7 @@
 export interface DashboardStats {
     // Existentes
     total_orders: number;
+    orders_today: number;
     orders_by_integration_type: OrderCountByIntegrationType[];
     top_customers: TopCustomer[];
     orders_by_location: OrderCountByLocation[];

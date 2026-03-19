@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
+import * as XLSX from 'xlsx';
 import { getOrdersAction, deleteOrderAction, getOrderByIdAction } from '../../infra/actions';
 import { getIntegrationsAction } from '@/services/integrations/core/infra/actions';
 import { getOrderStatusesAction } from '@/services/modules/orderstatus/infra/actions';
@@ -15,6 +16,7 @@ import { useToast } from '@/shared/providers/toast-provider';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { playNotificationSound } from '@/shared/utils';
 import RawOrderModal from './RawOrderModal';
+import DownloadOrdersModal from '@/shared/ui/modals/download-orders-modal';
 import { getActionError } from '@/shared/utils/action-result';
 
 // Componente memoizado para las filas de la tabla
@@ -368,6 +370,9 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     const [selectedOrderLogo, setSelectedOrderLogo] = useState<string | undefined>(undefined);
     const [selectedOrderPlatform, setSelectedOrderPlatform] = useState<string | undefined>(undefined);
     const [isRawModalOpen, setIsRawModalOpen] = useState(false);
+
+    // Download Orders Modal
+    const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
     // Integrations for filter
     const [integrationsList, setIntegrationsList] = useState<{ value: string; label: string }[]>([]);
@@ -995,6 +1000,99 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
         }
     }, [filters, isSuperAdmin, selectedBusinessId]);
 
+    // Función asincrónica para descargar órdenes en Excel
+    const handleDownloadOrders = useCallback(async (startDate: string, endDate: string) => {
+        try {
+            let ordersToDownload: Order[] = [];
+            let page = 1;
+            let hasMore = true;
+
+            // Obtener todas las órdenes con paginación (sin filtros adicionales)
+            while (hasMore) {
+                const params: GetOrdersParams = {
+                    page,
+                    page_size: 50000, // Máximo permitido
+                    start_date: startDate,
+                    end_date: endDate,
+                    // NO incluir otros filtros - obtener TODAS las órdenes en el rango de fechas
+                };
+
+                if (isSuperAdmin && selectedBusinessId !== null) {
+                    params.business_id = selectedBusinessId;
+                }
+
+                const response = await getOrdersAction(params);
+
+                if (!response.success || !response.data) {
+                    throw new Error(response.message || 'Error al obtener órdenes');
+                }
+
+                ordersToDownload = [...ordersToDownload, ...response.data];
+
+                // Verificar si hay más páginas
+                const currentPage = response.page || 1;
+                const totalPages = response.total_pages || 1;
+                hasMore = currentPage < totalPages;
+                page++;
+            }
+
+            // Preparar datos para Excel
+            const excelData = ordersToDownload.map((order: Order) => ({
+                'ID Orden': order.order_number || order.external_id || order.id,
+                'Cliente': order.customer_name || '',
+                'Email': order.customer_email || '',
+                'Teléfono': order.customer_phone || '',
+                'Plataforma': order.platform || '',
+                'Estado': order.status || '',
+                'Total': order.total_amount || 0,
+                'Moneda': order.currency || '',
+                'Pagado': order.is_paid ? 'Sí' : 'No',
+                'Contra Entrega COD': order.cod_total || 0,
+                'Dirección': order.shipping_street || '',
+                'Ciudad': order.shipping_city || '',
+                'Departamento': order.shipping_state || '',
+                'Valor Envío': order.shipping_cost || 0,
+                'Guía': order.guide_link || '',
+                'Fecha Creación': order.created_at ? new Date(order.created_at).toLocaleString('es-CO') : '',
+            }));
+
+            // Crear workbook
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, 'Órdenes');
+
+            // Ajustar ancho de columnas
+            const colWidths = [
+                { wch: 15 }, // ID Orden
+                { wch: 20 }, // Cliente
+                { wch: 25 }, // Email
+                { wch: 15 }, // Teléfono
+                { wch: 12 }, // Plataforma
+                { wch: 15 }, // Estado
+                { wch: 12 }, // Total
+                { wch: 10 }, // Moneda
+                { wch: 10 }, // Pagado
+                { wch: 15 }, // Contra Entrega
+                { wch: 30 }, // Dirección
+                { wch: 15 }, // Ciudad
+                { wch: 15 }, // Departamento
+                { wch: 12 }, // Valor Envío
+                { wch: 30 }, // Guía
+                { wch: 20 }, // Fecha Creación
+            ];
+            ws['!cols'] = colWidths;
+
+            // Descargar archivo
+            const fileName = `ordenes_${startDate}_a_${endDate}.xlsx`;
+            XLSX.writeFile(wb, fileName);
+
+            showToast(`Se descargaron ${excelData.length} órdenes correctamente`, 'success');
+        } catch (error) {
+            console.error('Error al descargar órdenes:', error);
+            throw error;
+        }
+    }, [filters, isSuperAdmin, selectedBusinessId, showToast]);
+
     // Reset a página 1 cuando el super admin cambia el negocio seleccionado
     useEffect(() => {
         if (isSuperAdmin) {
@@ -1140,24 +1238,24 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
     return (
         <div>
             {/* Dynamic Filters */}
-            <div className="flex items-start justify-between gap-4 mb-4">
-                <div className="flex-1">
-                    <DynamicFilters
-                        availableFilters={availableFilters}
-                        activeFilters={activeFilters}
-                        onAddFilter={handleAddFilter}
-                        onRemoveFilter={handleRemoveFilter}
-                        sortBy={filters.sort_by || 'created_at'}
-                        sortOrder={filters.sort_order || 'desc'}
-                        onSortChange={handleSortChange}
-                        sortOptions={[
-                            { value: 'created_at', label: 'Ordenar por fecha' },
-                            { value: 'updated_at', label: 'Ordenar por actualización' },
-                            { value: 'total_amount', label: 'Ordenar por monto' },
-                            { value: 'order_number', label: 'Ordenar por ID' },
-                        ]}
-                    />
-                </div>
+            <div className="mb-4">
+                <DynamicFilters
+                    availableFilters={availableFilters}
+                    activeFilters={activeFilters}
+                    onAddFilter={handleAddFilter}
+                    onRemoveFilter={handleRemoveFilter}
+                    sortBy={filters.sort_by || 'created_at'}
+                    sortOrder={filters.sort_order || 'desc'}
+                    onSortChange={handleSortChange}
+                    sortOptions={[
+                        { value: 'created_at', label: 'Ordenar por fecha' },
+                        { value: 'updated_at', label: 'Ordenar por actualización' },
+                        { value: 'total_amount', label: 'Ordenar por monto' },
+                        { value: 'order_number', label: 'Ordenar por ID' },
+                    ]}
+                    onDownload={() => setIsDownloadModalOpen(true)}
+                    downloadButtonText="↓ Descargar Ordenes"
+                />
             </div>
 
             {/* Table */}
@@ -1525,6 +1623,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     </div>
                 </div>
             )}
+
+            {/* Download Orders Modal */}
+            <DownloadOrdersModal
+                isOpen={isDownloadModalOpen}
+                onClose={() => setIsDownloadModalOpen(false)}
+                onDownload={handleDownloadOrders}
+            />
         </div>
     );
 }

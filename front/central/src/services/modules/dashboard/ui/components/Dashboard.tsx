@@ -184,6 +184,30 @@ export default function Dashboard() {
         fetchStats();
     }, [fetchStats]);
 
+    // Auto-refresh cuando cambia el día (medianoche)
+    useEffect(() => {
+        const checkAndRefreshOnNewDay = () => {
+            const now = new Date();
+            // Calcular tiempo hasta medianoche
+            const tomorrow = new Date(now);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0);
+
+            const msUntilMidnight = tomorrow.getTime() - now.getTime();
+
+            // Establecer timeout para refrescar a medianoche
+            const timeoutId = setTimeout(() => {
+                fetchStats();
+                // Reiniciar el check después de refrescar
+                checkAndRefreshOnNewDay();
+            }, msUntilMidnight + 1000); // +1s para asegurar que sea después de medianoche
+
+            return () => clearTimeout(timeoutId);
+        };
+
+        return checkAndRefreshOnNewDay();
+    }, [fetchStats]);
+
     // Custom tooltip para mostrar el nombre completo
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
@@ -651,10 +675,40 @@ export default function Dashboard() {
         };
     });
 
-    const ordersByDepartmentData = (stats.orders_by_department || []).map((item) => ({
-        name: item.department,
-        value: item.count,
-    }));
+    // Agrupar y sumar por departamento (evitar duplicados y combinaciones ciudad+departamento)
+    const ordersByDepartmentData = (() => {
+        const departmentMap = new Map<string, number>();
+
+        // Normalizar variaciones de Bogotá
+        const normalizeDepartment = (dept: string): string => {
+            const normalized = dept.toUpperCase().trim();
+            // Si contiene D.C, D.D, S.C o es Bogotá, devolver solo BOGOTÁ
+            if (normalized.includes('D.C') || normalized.includes('D.D') || normalized.includes('S.C') ||
+                normalized === 'BOGOTÁ' || normalized === 'BOGOTA' || normalized === 'DC' || normalized === 'DD' || normalized === 'SC') {
+                return 'BOGOTÁ';
+            }
+            return normalized;
+        };
+
+        (stats.orders_by_department || []).forEach((item: any) => {
+            // Usar solo el departamento (última parte después de la coma si existe)
+            const dept = item.department || item.name || '';
+            const parts = dept.split(',').map((p: string) => p.trim());
+            let departmentName = parts[parts.length - 1]; // Tomar el último elemento (departamento)
+
+            departmentName = normalizeDepartment(departmentName);
+
+            if (departmentName) {
+                const current = departmentMap.get(departmentName) || 0;
+                departmentMap.set(departmentName, current + (item.count || 0));
+            }
+        });
+
+        // Convertir a array y ordenar por valor descendente
+        return Array.from(departmentMap.entries())
+            .map(([name, value]) => ({ name, value }))
+            .sort((a, b) => b.value - a.value);
+    })();
 
     // Preparar datos para businesses (solo super admin)
     const businessesData = (stats.orders_by_business || []).map((item) => ({
@@ -685,22 +739,32 @@ export default function Dashboard() {
             ? Math.round(((totalOrders - totalOrdersLastWeek) / (totalOrdersLastWeek || 1)) * 100)
             : null;
 
-    // New orders today: try multiple possible fields or derive from a daily series
+    // New orders today: obtener del último elemento de shipments_by_day_of_week (hoy)
     const newOrdersToday = (() => {
         const s: any = stats as any;
+
+        // Primera opción: campos direc tos
         if (typeof s.orders_today === 'number') return s.orders_today;
         if (typeof s.today_orders === 'number') return s.today_orders;
-        // Obtener ordenes de hoy desde shipments_by_day_of_week (el último día, que es hoy o domingo)
+
+        // Segunda opción: obtener del último día en shipments_by_day_of_week (que debería ser hoy)
         if (Array.isArray(s.shipments_by_day_of_week) && s.shipments_by_day_of_week.length > 0) {
-            const today = new Date();
-            const todayStr = today.toISOString().split('T')[0];
-            const todayData = s.shipments_by_day_of_week.find((d: any) => d.date === todayStr);
-            if (todayData) return todayData.count ?? 0;
+            // Tomar el último elemento como "hoy"
+            const lastDay = s.shipments_by_day_of_week[s.shipments_by_day_of_week.length - 1];
+            if (lastDay && typeof lastDay.count === 'number') {
+                return lastDay.count;
+            }
+            if (lastDay && typeof lastDay.order_count === 'number') {
+                return lastDay.order_count;
+            }
         }
+
+        // Tercera opción: orders_by_date (último elemento)
         if (Array.isArray(s.orders_by_date) && s.orders_by_date.length > 0) {
             const last = s.orders_by_date[s.orders_by_date.length - 1];
             return last.count ?? last.order_count ?? last.value ?? 0;
         }
+
         return 0;
     })();
 
@@ -827,9 +891,9 @@ export default function Dashboard() {
 
 
             {/* Primera fila: Mapa de Órdenes + Estado de Envíos */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-0">
                 {/* Orders by Location - Mapa de Colombia */}
-                <div className="bg-white rounded-2xl shadow-md p-6 md:col-span-2">
+                <div className="bg-white rounded-2xl shadow-md p-6 md:col-span-2 relative z-0" style={{ overflow: 'hidden' }}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <MapPinIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -997,9 +1061,11 @@ export default function Dashboard() {
                         <p className="text-sm text-gray-500">No hay datos disponibles</p>
                     )}
                 </div>
+            </div>
 
-
-                {/* Orders by Integration Type - Gráfico de Pastel 
+            {/* Tercera fila: 3 columnas - Mejores Clientes, Productos Más Vendidos, Estado de Envíos */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {/* Orders by Integration Type - Gráfico de Pastel
                 <div className="bg-white rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
@@ -1013,12 +1079,12 @@ export default function Dashboard() {
                     ) : (
                         <p className="text-sm text-gray-500">No hay datos disponibles</p>
                     )}
-                </div>  
+                </div>
                 */}
 
                 {/* Top Customers - Gráfico de Barras */}
                 {/* Top Customers - Tabla Interactiva */}
-                <div className="bg-white rounded-2xl shadow-md p-6 md:col-span-2 lg:col-span-2">
+                <div className="bg-white rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
                             <UserGroupIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1109,7 +1175,7 @@ export default function Dashboard() {
 
                 {/* Top Products as Table */}
                 {/* Top Products - Tabla Interactiva */}
-                <div className="bg-white rounded-2xl shadow-md p-6 lg:col-span-2">
+                <div className="bg-white rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
                             <CubeIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1241,6 +1307,22 @@ export default function Dashboard() {
                         <p className="text-sm text-gray-500">No hay datos disponibles</p>
                     )}
                 </div> */}
+
+                {/* Shipments by Status - Estado de Envíos */}
+                <div className="bg-white rounded-2xl shadow-md p-6">
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center">
+                            <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
+                            <h2 className="text-lg font-semibold text-gray-900">Estado de los Envíos</h2>
+                        </div>
+                        <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
+                    </div>
+                    {(stats.shipments_by_status || []).length > 0 ? (
+                        <ModernPieChart data={shipmentsByStatusData} height={300} />
+                    ) : (
+                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                    )}
+                </div>
             </div>
 
             {/* Businesses (solo super admin, solo cuando NO hay filtro aplicado) */}
@@ -1277,22 +1359,6 @@ export default function Dashboard() {
                     )}
                 </div>
             )}
-
-            {/* Shipments by Status - Estado de Envíos (final) */}
-            <div className="bg-white rounded-2xl shadow-md p-6">
-                <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                        <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
-                        <h2 className="text-lg font-semibold text-gray-900">Estado de los Envíos</h2>
-                    </div>
-                    <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
-                </div>
-                {(stats.shipments_by_status || []).length > 0 ? (
-                    <ModernPieChart data={shipmentsByStatusData} height={300} />
-                ) : (
-                    <p className="text-sm text-gray-500">No hay datos disponibles</p>
-                )}
-            </div>
         </div>
     );
 }
