@@ -70,26 +70,29 @@ func mapEnvioClickError(originalErr string) string {
 	lowerErr := strings.ToLower(originalErr)
 
 	if (strings.Contains(lowerErr, "destination") || strings.Contains(lowerErr, "destino")) && strings.Contains(lowerErr, "dane") {
-		return "error: el codigo dane del destino no existe o no es valido"
+		return "Error: El código DANE de destino no es válido para esta transportadora"
 	}
 	if (strings.Contains(lowerErr, "origin") || strings.Contains(lowerErr, "origen")) && strings.Contains(lowerErr, "dane") {
-		return "error: el codigo dane de origen no existe o no es valido"
+		return "Error: El código DANE de origen no es válido para esta transportadora"
 	}
-	if strings.Contains(lowerErr, "contentvalue") || strings.Contains(lowerErr, "declared value") {
-		return "El valor declarado es inválido o está fuera de rango"
+	if strings.Contains(lowerErr, "contentvalue") || strings.Contains(lowerErr, "declared value") || strings.Contains(lowerErr, "valor") {
+		return "Error: El valor declarado de la mercancía no es válido o es insuficiente para el seguro (" + originalErr + ")"
 	}
 	if strings.Contains(lowerErr, "weight") || strings.Contains(lowerErr, "peso") {
-		return "El peso del paquete es inválido"
+		return "Error: El peso indicado no es válido o excede los límites (" + originalErr + ")"
 	}
 	if strings.Contains(lowerErr, "dimensions") || strings.Contains(lowerErr, "height") || strings.Contains(lowerErr, "width") || strings.Contains(lowerErr, "length") {
-		return "Las dimensiones del paquete son inválidas"
+		return "Error: Dimensiones del paquete inválidas (" + originalErr + ")"
 	}
-	if strings.Contains(lowerErr, "missing") || strings.Contains(lowerErr, "falta") || strings.Contains(lowerErr, "unprocessed entity") {
-		return "Error de validación: Faltan datos obligatorios o hay datos inválidos en la solicitud"
+	if strings.Contains(lowerErr, "phone") || strings.Contains(lowerErr, "teléfono") || strings.Contains(lowerErr, "celular") {
+		return "Error: Formato de teléfono incorrecto (debe tener 10 dígitos)"
 	}
-	if strings.Contains(lowerErr, "phone") || strings.Contains(lowerErr, "telefóno") {
-		return "error: el número de teléfono es inválido o tiene formato incorrecto"
+	if strings.Contains(lowerErr, "unprocessed entity") || strings.Contains(lowerErr, "unprocessable") {
+		return "Error de Validación (422): El carrier rechazó la solicitud - Revisa cobertura o saldo (" + originalErr + ")"
+	}
+	if strings.Contains(lowerErr, "missing") || strings.Contains(lowerErr, "requerido") || strings.Contains(lowerErr, "falta") {
+		return "Error: Faltan datos obligatorios en la solicitud (" + originalErr + ")"
 	}
 
-	return originalErr
+	return "Error de EnvioClick: " + originalErr
 }
