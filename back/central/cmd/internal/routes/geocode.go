@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -78,10 +79,24 @@ func handleAddressSearch(c *gin.Context) {
 
 	country := c.DefaultQuery("country", "co")
 
+	// Colombian addresses use # for house number (e.g. "Calle 145 # 128 40")
+	// Nominatim can't parse this — strip everything after # to search by street name only
+	searchQuery := q
+	if idx := strings.Index(searchQuery, "#"); idx > 0 {
+		searchQuery = strings.TrimSpace(searchQuery[:idx])
+	}
+	// Also strip "No." or "No" patterns (another Colombian house number format)
+	if idx := strings.Index(strings.ToLower(searchQuery), " no."); idx > 0 {
+		searchQuery = strings.TrimSpace(searchQuery[:idx])
+	}
+	if idx := strings.Index(strings.ToLower(searchQuery), " no "); idx > 0 {
+		searchQuery = strings.TrimSpace(searchQuery[:idx])
+	}
+
 	endpoint := fmt.Sprintf(
 		"https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=6&countrycodes=%s&q=%s",
 		url.QueryEscape(country),
-		url.QueryEscape(q),
+		url.QueryEscape(searchQuery),
 	)
 
 	req, err := http.NewRequest(http.MethodGet, endpoint, nil)

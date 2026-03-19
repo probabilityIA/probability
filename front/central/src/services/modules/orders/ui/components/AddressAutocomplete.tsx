@@ -68,7 +68,6 @@ export default function AddressAutocomplete({
 
         // If user selected an address and is now just appending (house number etc), don't re-search
         if (selectedRef.current) {
-            // Only re-enable search if user cleared most of the text (restarting)
             if (val.length < 4) {
                 selectedRef.current = false;
             }
@@ -80,10 +79,12 @@ export default function AddressAutocomplete({
     };
 
     const handleSelect = (suggestion: AddressSuggestion) => {
-        const street = suggestion.house_number
-            ? `${suggestion.street} ${suggestion.house_number}`
-            : suggestion.street;
-        onChange(street || suggestion.display_name.split(',')[0]);
+        // Only replace field value if the user hasn't typed a more specific address (with #)
+        // Colombian format: "Calle 145 #128-40" — the # part is the cross-street, not a house number
+        if (!value.includes('#')) {
+            onChange(suggestion.street || suggestion.display_name.split(',')[0]);
+        }
+        // If user already typed the full address with #, keep their input — just auto-fill barrio/city/etc.
         setShowDropdown(false);
         setSuggestions([]);
         selectedRef.current = true;
