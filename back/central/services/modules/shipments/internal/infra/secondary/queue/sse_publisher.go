@@ -103,12 +103,26 @@ func (p *SSEPublisher) PublishCancelFailed(ctx context.Context, businessID uint,
 
 // publish publica un evento al dispatcher central de forma no-bloqueante
 func (p *SSEPublisher) publish(ctx context.Context, eventType string, businessID uint, data map[string]interface{}) {
+	// Extract integration_id from data if present (enriched by response_consumer)
+	var integrationID uint
+	if rawID, ok := data["integration_id"]; ok {
+		switch v := rawID.(type) {
+		case uint:
+			integrationID = v
+		case float64:
+			integrationID = uint(v)
+		case int:
+			integrationID = uint(v)
+		}
+	}
+
 	go func() {
 		if err := rabbitmq.PublishEvent(context.Background(), p.queue, rabbitmq.EventEnvelope{
-			Type:       eventType,
-			Category:   "shipment",
-			BusinessID: businessID,
-			Data:       data,
+			Type:          eventType,
+			Category:      "shipment",
+			BusinessID:    businessID,
+			IntegrationID: integrationID,
+			Data:          data,
 		}); err != nil {
 			p.logger.Error(ctx).
 				Err(err).

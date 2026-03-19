@@ -92,10 +92,11 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
 
   const selectedEvent = eventTypes.find((e) => e.id === rule.notification_event_type_id);
   const allowedStatusIds = selectedEvent?.allowed_order_status_ids;
-  const filteredStatuses =
-    allowedStatusIds && allowedStatusIds.length > 0
-      ? orderStatuses.filter((s) => allowedStatusIds.includes(s.id))
-      : orderStatuses;
+  // Si el evento tiene estados permitidos configurados, filtrar; si no tiene ninguno, no mostrar estados
+  const hasStatusFilter = allowedStatusIds && allowedStatusIds.length > 0;
+  const filteredStatuses = hasStatusFilter
+    ? orderStatuses.filter((s) => allowedStatusIds.includes(s.id))
+    : [];
 
   if (rule._deleted) return null;
 
@@ -218,7 +219,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
             })}
           </div>
         ) : (
-          <span className="text-[10px] text-gray-300 italic">Sin estados disponibles</span>
+          <span className="text-[10px] text-gray-400 italic">Sin filtro de estado</span>
         )}
       </td>
 
