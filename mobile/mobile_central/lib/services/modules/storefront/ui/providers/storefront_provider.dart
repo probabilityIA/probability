@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/storefront_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class StorefrontProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -55,7 +56,7 @@ class StorefrontProvider extends ChangeNotifier {
       _catalogProducts = response.data;
       _catalogPagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -70,7 +71,7 @@ class StorefrontProvider extends ChangeNotifier {
     try {
       _selectedProduct = await _useCases.getProduct(id, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -84,7 +85,7 @@ class StorefrontProvider extends ChangeNotifier {
     try {
       return await _useCases.createOrder(data, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -105,7 +106,7 @@ class StorefrontProvider extends ChangeNotifier {
       _orders = response.data;
       _ordersPagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -120,7 +121,7 @@ class StorefrontProvider extends ChangeNotifier {
     try {
       _selectedOrder = await _useCases.getOrder(id, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -131,7 +132,7 @@ class StorefrontProvider extends ChangeNotifier {
     try {
       return await _useCases.register(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }

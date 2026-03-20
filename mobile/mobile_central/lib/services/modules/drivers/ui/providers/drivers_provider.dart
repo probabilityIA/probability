@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/drivers_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class DriverProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -46,7 +47,7 @@ class DriverProvider extends ChangeNotifier {
       _drivers = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -57,7 +58,7 @@ class DriverProvider extends ChangeNotifier {
     try {
       return await _useCases.getDriverById(id, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -68,7 +69,7 @@ class DriverProvider extends ChangeNotifier {
       final driver = await _useCases.createDriver(data, businessId: businessId);
       return driver;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -79,7 +80,7 @@ class DriverProvider extends ChangeNotifier {
       await _useCases.updateDriver(id, data, businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -90,7 +91,7 @@ class DriverProvider extends ChangeNotifier {
       await _useCases.deleteDriver(id, businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import '../../../../../core/errors/error_parser.dart';
 import '../../../../../core/network/api_client.dart';
 import '../../../../../core/storage/token_storage.dart';
 import '../../app/use_cases.dart';
@@ -43,17 +44,27 @@ class LoginProvider extends ChangeNotifier {
       final response = await _useCases.login(email, password);
       final data = response.data;
 
-      await _tokenStorage.saveToken(data.token);
+      final token = data.token.trim();
+      debugPrint('[LOGIN] Token recibido (${token.length} chars): ${token.substring(0, token.length > 30 ? 30 : token.length)}...');
+      debugPrint('[LOGIN] Token segments: ${token.split('.').length}');
+
+      await _tokenStorage.saveToken(token);
       await _tokenStorage.saveUserData(jsonEncode({
         'id': data.user.id,
         'name': data.user.name,
         'email': data.user.email,
+        'avatar_url': data.user.avatarUrl,
       }));
 
-      _apiClient.setToken(data.token);
+      _apiClient.setToken(token);
       _user = data.user;
       _isSuperAdmin = data.isSuperAdmin;
       _businesses = data.businesses;
+      debugPrint('[LOGIN] User avatar_url: ${data.user.avatarUrl}');
+      debugPrint('[LOGIN] Businesses count: ${data.businesses.length}');
+      for (final b in data.businesses) {
+        debugPrint('[LOGIN] Business "${b.name}" logo: ${b.logoUrl}');
+      }
 
       await _fetchRolesPermissions();
 
@@ -61,7 +72,7 @@ class LoginProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       _isLoading = false;
       notifyListeners();
       return false;
@@ -87,7 +98,7 @@ class LoginProvider extends ChangeNotifier {
       notifyListeners();
       return response;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       _isLoading = false;
       notifyListeners();
       return null;
@@ -111,6 +122,7 @@ class LoginProvider extends ChangeNotifier {
           id: json['id'],
           name: json['name'],
           email: json['email'],
+          avatarUrl: json['avatar_url'],
           isActive: true,
         );
       }

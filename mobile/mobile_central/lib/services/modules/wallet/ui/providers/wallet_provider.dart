@@ -3,6 +3,7 @@ import '../../../../../core/network/api_client.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/wallet_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class WalletProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -38,7 +39,7 @@ class WalletProvider extends ChangeNotifier {
     try {
       _wallets = await _useCases.getWallets();
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -53,7 +54,7 @@ class WalletProvider extends ChangeNotifier {
     try {
       _wallet = await _useCases.getWalletBalance(businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -65,7 +66,7 @@ class WalletProvider extends ChangeNotifier {
       await _useCases.rechargeWallet(amount: amount, businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -79,7 +80,7 @@ class WalletProvider extends ChangeNotifier {
     try {
       _history = await _useCases.getWalletHistory(businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -94,7 +95,7 @@ class WalletProvider extends ChangeNotifier {
     try {
       _pendingRequests = await _useCases.getPendingRequests();
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -109,7 +110,7 @@ class WalletProvider extends ChangeNotifier {
     try {
       _processedRequests = await _useCases.getProcessedRequests();
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -121,7 +122,7 @@ class WalletProvider extends ChangeNotifier {
       await _useCases.processRequest(id: id, action: action);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -132,7 +133,7 @@ class WalletProvider extends ChangeNotifier {
       await _useCases.manualDebit(businessId: businessId, amount: amount, reference: reference);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -143,7 +144,7 @@ class WalletProvider extends ChangeNotifier {
       await _useCases.adminAdjustBalance(businessId: businessId, amount: amount, reference: reference);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -154,7 +155,7 @@ class WalletProvider extends ChangeNotifier {
       await _useCases.clearRechargeHistory(businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -165,7 +166,7 @@ class WalletProvider extends ChangeNotifier {
       await _useCases.debitForGuide(amount: amount, trackingNumber: trackingNumber, businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -179,7 +180,7 @@ class WalletProvider extends ChangeNotifier {
     try {
       _subscription = await _useCases.getMySubscription(businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -203,7 +204,7 @@ class WalletProvider extends ChangeNotifier {
       );
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -214,7 +215,7 @@ class WalletProvider extends ChangeNotifier {
       await _useCases.disableSubscription(businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

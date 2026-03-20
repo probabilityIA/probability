@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/order_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class OrderProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -48,7 +49,7 @@ class OrderProvider extends ChangeNotifier {
       _orders = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -59,7 +60,7 @@ class OrderProvider extends ChangeNotifier {
     try {
       return await _useCases.getOrderById(id);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -70,7 +71,7 @@ class OrderProvider extends ChangeNotifier {
       final order = await _useCases.createOrder(data);
       return order;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -81,7 +82,7 @@ class OrderProvider extends ChangeNotifier {
       await _useCases.updateOrder(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -92,7 +93,7 @@ class OrderProvider extends ChangeNotifier {
       await _useCases.deleteOrder(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

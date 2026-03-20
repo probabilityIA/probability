@@ -1,4 +1,4 @@
-.PHONY: help migrate run-backend run-frontend run-mock build test clean docker-up docker-down check-docker
+.PHONY: help migrate run-backend run-frontend run-mock build test clean docker-up docker-down check-docker run-mobile-web test-mobile
 
 # Variables
 BACKEND_DIR = back/central
@@ -6,6 +6,7 @@ FRONTEND_DIR = front/central
 MIGRATION_DIR = back/migration
 TESTING_DIR = back/testing
 FRONTEND_TESTING_DIR = front/testing
+MOBILE_DIR = mobile/mobile_central
 DOCKER_LOCAL = infra/compose-local
 DOCKER_PROD = infra/compose-prod
 
@@ -104,6 +105,34 @@ build-frontend-testing: ## Compilar frontend de testing (producción)
 install-frontend-testing: ## Instalar dependencias del frontend testing
 	@echo "📦 Instalando dependencias del frontend testing..."
 	cd $(FRONTEND_TESTING_DIR) && pnpm install
+
+# ======================
+# Mobile (Flutter)
+# ======================
+
+run-mobile-web: ## Iniciar app mobile en web (apunta a backend local localhost:3050, con credenciales dev)
+	@echo "🚀 Iniciando Flutter mobile en web (backend: http://localhost:3050)..."
+	cd $(MOBILE_DIR) && flutter run -d chrome \
+		--dart-define=APP_ENV=development \
+		--dart-define=API_BASE_URL=http://localhost:3050/api/v1 \
+		--dart-define=DEV_EMAIL=$$(grep DEV_EMAIL .env.dev 2>/dev/null | cut -d= -f2) \
+		--dart-define=DEV_PASSWORD=$$(grep DEV_PASSWORD .env.dev 2>/dev/null | cut -d= -f2)
+
+run-mobile-web-prod: ## Iniciar app mobile en web (apunta a producción)
+	@echo "🚀 Iniciando Flutter mobile en web (backend: producción)..."
+	cd $(MOBILE_DIR) && flutter run -d chrome
+
+build-mobile-web: ## Compilar app mobile para web
+	@echo "🔨 Compilando Flutter mobile para web..."
+	cd $(MOBILE_DIR) && flutter build web
+
+test-mobile: ## Ejecutar tests del mobile
+	@echo "🧪 Ejecutando tests del mobile..."
+	cd $(MOBILE_DIR) && flutter test
+
+install-mobile: ## Instalar dependencias del mobile
+	@echo "📦 Instalando dependencias del mobile..."
+	cd $(MOBILE_DIR) && flutter pub get
 
 # ======================
 # Testing (Simuladores + API)

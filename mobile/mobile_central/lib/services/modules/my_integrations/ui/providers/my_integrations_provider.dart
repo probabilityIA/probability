@@ -4,9 +4,11 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/my_integrations_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class MyIntegrationsProvider extends ChangeNotifier {
   final ApiClient _apiClient;
+  final MyIntegrationsUseCases? _injectedUseCases;
 
   List<MyIntegration> _integrations = [];
   MyIntegration? _selectedIntegration;
@@ -18,7 +20,9 @@ class MyIntegrationsProvider extends ChangeNotifier {
   String _categoryFilter = '';
   bool? _activeFilter;
 
-  MyIntegrationsProvider({required ApiClient apiClient}) : _apiClient = apiClient;
+  MyIntegrationsProvider({required ApiClient apiClient, MyIntegrationsUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases;
 
   List<MyIntegration> get integrations => _integrations;
   MyIntegration? get selectedIntegration => _selectedIntegration;
@@ -28,7 +32,7 @@ class MyIntegrationsProvider extends ChangeNotifier {
   int get page => _page;
 
   MyIntegrationsUseCases get _useCases =>
-      MyIntegrationsUseCases(MyIntegrationsApiRepository(_apiClient));
+      _injectedUseCases ?? MyIntegrationsUseCases(MyIntegrationsApiRepository(_apiClient));
 
   Future<void> fetchIntegrations({int? businessId}) async {
     _isLoading = true;
@@ -47,7 +51,7 @@ class MyIntegrationsProvider extends ChangeNotifier {
       _integrations = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -62,7 +66,7 @@ class MyIntegrationsProvider extends ChangeNotifier {
     try {
       _selectedIntegration = await _useCases.getIntegrationById(id, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;

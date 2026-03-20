@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/action_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class ActionProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -33,7 +34,7 @@ class ActionProvider extends ChangeNotifier {
       _actions = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -44,7 +45,7 @@ class ActionProvider extends ChangeNotifier {
     try {
       return await _useCases.createAction(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -55,7 +56,7 @@ class ActionProvider extends ChangeNotifier {
       await _useCases.updateAction(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -66,7 +67,7 @@ class ActionProvider extends ChangeNotifier {
       await _useCases.deleteAction(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/role_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class RoleProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -37,7 +38,7 @@ class RoleProvider extends ChangeNotifier {
       _roles = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -48,7 +49,7 @@ class RoleProvider extends ChangeNotifier {
     try {
       return await _useCases.createRole(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -59,7 +60,7 @@ class RoleProvider extends ChangeNotifier {
       await _useCases.updateRole(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -70,7 +71,7 @@ class RoleProvider extends ChangeNotifier {
       await _useCases.deleteRole(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -80,7 +81,7 @@ class RoleProvider extends ChangeNotifier {
     try {
       return await _useCases.getRolePermissions(roleId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -92,7 +93,7 @@ class RoleProvider extends ChangeNotifier {
       await _useCases.assignPermissions(roleId, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

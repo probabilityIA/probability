@@ -11,7 +11,10 @@ class ApiClient {
           baseUrl: Environment.apiBaseUrl,
           connectTimeout: const Duration(seconds: 30),
           receiveTimeout: const Duration(seconds: 30),
-          headers: {'Content-Type': 'application/json'},
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Client-Type': 'mobile',
+          },
         ));
 
   void setToken(String? token) {

@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/customer_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class CustomerProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -42,7 +43,7 @@ class CustomerProvider extends ChangeNotifier {
       _customers = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -53,7 +54,7 @@ class CustomerProvider extends ChangeNotifier {
     try {
       return await _useCases.createCustomer(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -64,7 +65,7 @@ class CustomerProvider extends ChangeNotifier {
       await _useCases.updateCustomer(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -75,7 +76,7 @@ class CustomerProvider extends ChangeNotifier {
       await _useCases.deleteCustomer(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

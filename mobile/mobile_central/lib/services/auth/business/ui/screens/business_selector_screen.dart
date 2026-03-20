@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/widgets/network_avatar.dart';
 import '../../domain/entities.dart';
 import '../providers/business_provider.dart';
 
@@ -50,13 +51,12 @@ class _BusinessSelectorScreenState extends State<BusinessSelectorScreen> {
               final business = provider.businessesSimple[index];
               return Card(
                 child: ListTile(
-                  leading: business.logoUrl != null
-                      ? CircleAvatar(
-                          backgroundImage: NetworkImage(business.logoUrl!),
-                        )
-                      : CircleAvatar(
-                          child: Text(business.name[0].toUpperCase()),
-                        ),
+                  leading: NetworkAvatar(
+                    imageUrl: business.logoUrl,
+                    fallbackText: business.name,
+                    fallbackIcon: Icons.business,
+                    radius: 20,
+                  ),
                   title: Text(business.name),
                   subtitle: Text('ID: ${business.id}'),
                   trailing: const Icon(Icons.arrow_forward_ios, size: 16),

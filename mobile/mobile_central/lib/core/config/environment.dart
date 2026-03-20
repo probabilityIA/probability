@@ -42,4 +42,9 @@ class Environment {
   static bool get isDevelopment => current == AppEnvironment.development;
   static bool get isStaging => current == AppEnvironment.staging;
   static bool get isProduction => current == AppEnvironment.production;
+
+  /// Credenciales de desarrollo (solo disponibles con --dart-define)
+  static const String devEmail = String.fromEnvironment('DEV_EMAIL', defaultValue: '');
+  static const String devPassword = String.fromEnvironment('DEV_PASSWORD', defaultValue: '');
+  static bool get hasDevCredentials => devEmail.isNotEmpty && devPassword.isNotEmpty;
 }

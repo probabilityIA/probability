@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/resource_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class ResourceProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -33,7 +34,7 @@ class ResourceProvider extends ChangeNotifier {
       _resources = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -44,7 +45,7 @@ class ResourceProvider extends ChangeNotifier {
     try {
       return await _useCases.createResource(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -55,7 +56,7 @@ class ResourceProvider extends ChangeNotifier {
       await _useCases.updateResource(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -66,7 +67,7 @@ class ResourceProvider extends ChangeNotifier {
       await _useCases.deleteResource(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

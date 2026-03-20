@@ -3,6 +3,7 @@ import '../../../../../core/network/api_client.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/website_config_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class WebsiteConfigProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -28,7 +29,7 @@ class WebsiteConfigProvider extends ChangeNotifier {
     try {
       _config = await _useCases.getConfig(businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -46,7 +47,7 @@ class WebsiteConfigProvider extends ChangeNotifier {
       notifyListeners();
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       _isLoading = false;
       notifyListeners();
       return false;

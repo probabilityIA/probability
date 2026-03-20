@@ -81,27 +81,35 @@ func (h *AuthHandler) LoginHandler(c *gin.Context) {
 	// Convertir respuesta de dominio a response
 	loginResponse := mapper.ToLoginResponse(domainResponse)
 
-	// Setear cookie HttpOnly con Partitioned para soporte de iframes
-	// Partitioned permite cookies third-party en iframes (Shopify, etc.)
-	cookieValue := fmt.Sprintf(
-		"%s=%s; Max-Age=%d; Path=%s; Domain=%s; Secure; HttpOnly; SameSite=None; Partitioned",
-		"session_token",
-		domainResponse.Token,
-		7*24*60*60,
-		"/",
-		".probabilityia.com.co",
-	)
-	c.Header("Set-Cookie", cookieValue)
+	// Determinar si el cliente es mobile/API (necesita token en body)
+	// o web (usa cookie HttpOnly)
+	clientType := c.GetHeader("X-Client-Type")
+	isMobileClient := clientType == "mobile" || clientType == "api"
 
-	// No retornar token en JSON por seguridad (solo en cookie HttpOnly)
-	loginResponse.Token = ""
+	if !isMobileClient {
+		// Setear cookie HttpOnly con Partitioned para soporte de iframes
+		// Partitioned permite cookies third-party en iframes (Shopify, etc.)
+		cookieValue := fmt.Sprintf(
+			"%s=%s; Max-Age=%d; Path=%s; Domain=%s; Secure; HttpOnly; SameSite=None; Partitioned",
+			"session_token",
+			domainResponse.Token,
+			7*24*60*60,
+			"/",
+			".probabilityia.com.co",
+		)
+		c.Header("Set-Cookie", cookieValue)
+
+		// No retornar token en JSON por seguridad (solo en cookie HttpOnly)
+		loginResponse.Token = ""
+	}
 
 	h.logger.Info(ctx).
 		Str("email", loginRequest.Email).
 		Uint("user_id", domainResponse.User.ID).
 		Str("scope", domainResponse.Scope).
 		Bool("is_super_admin", domainResponse.IsSuperAdmin).
-		Msg("Login exitoso - Cookie Partitioned seteada")
+		Str("client_type", clientType).
+		Msg("Login exitoso")
 
 	c.JSON(http.StatusOK, response.LoginSuccessResponse{
 		Success: true,

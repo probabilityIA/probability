@@ -3,22 +3,26 @@ import '../../../../../core/network/api_client.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/notification_config_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class NotificationConfigProvider extends ChangeNotifier {
   final ApiClient _apiClient;
+  final NotificationConfigUseCases? _injectedUseCases;
 
   List<NotificationConfig> _configs = [];
   bool _isLoading = false;
   String? _error;
 
-  NotificationConfigProvider({required ApiClient apiClient}) : _apiClient = apiClient;
+  NotificationConfigProvider({required ApiClient apiClient, NotificationConfigUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases;
 
   List<NotificationConfig> get configs => _configs;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
   NotificationConfigUseCases get _useCases =>
-      NotificationConfigUseCases(NotificationConfigApiRepository(_apiClient));
+      _injectedUseCases ?? NotificationConfigUseCases(NotificationConfigApiRepository(_apiClient));
 
   Future<void> fetchConfigs({ConfigFilter? filter}) async {
     _isLoading = true;
@@ -28,7 +32,7 @@ class NotificationConfigProvider extends ChangeNotifier {
     try {
       _configs = await _useCases.list(filter: filter);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -39,7 +43,7 @@ class NotificationConfigProvider extends ChangeNotifier {
     try {
       return await _useCases.getById(id, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -50,7 +54,7 @@ class NotificationConfigProvider extends ChangeNotifier {
       final config = await _useCases.create(dto, businessId: businessId);
       return config;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -61,7 +65,7 @@ class NotificationConfigProvider extends ChangeNotifier {
       final config = await _useCases.update(id, dto, businessId: businessId);
       return config;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -72,7 +76,7 @@ class NotificationConfigProvider extends ChangeNotifier {
       await _useCases.delete(id, businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -82,7 +86,7 @@ class NotificationConfigProvider extends ChangeNotifier {
     try {
       return await _useCases.syncByIntegration(dto, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }

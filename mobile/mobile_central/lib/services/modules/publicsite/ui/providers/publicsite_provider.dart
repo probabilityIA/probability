@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/publicsite_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class PublicSiteProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -40,7 +41,7 @@ class PublicSiteProvider extends ChangeNotifier {
     try {
       _business = await _useCases.getBusinessPage(slug);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -63,7 +64,7 @@ class PublicSiteProvider extends ChangeNotifier {
       _catalogProducts = response.data;
       _catalogPagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -78,7 +79,7 @@ class PublicSiteProvider extends ChangeNotifier {
     try {
       _selectedProduct = await _useCases.getProduct(slug, productId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -89,7 +90,7 @@ class PublicSiteProvider extends ChangeNotifier {
     try {
       return await _useCases.submitContact(slug, data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }

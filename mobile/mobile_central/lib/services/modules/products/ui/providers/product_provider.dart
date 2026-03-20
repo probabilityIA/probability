@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/product_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class ProductProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -44,7 +45,7 @@ class ProductProvider extends ChangeNotifier {
       _products = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -55,7 +56,7 @@ class ProductProvider extends ChangeNotifier {
     try {
       return await _useCases.createProduct(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -66,7 +67,7 @@ class ProductProvider extends ChangeNotifier {
       await _useCases.updateProduct(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -77,7 +78,7 @@ class ProductProvider extends ChangeNotifier {
       await _useCases.deleteProduct(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
