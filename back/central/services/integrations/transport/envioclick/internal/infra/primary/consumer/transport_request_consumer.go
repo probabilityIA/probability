@@ -185,7 +185,7 @@ func (c *TransportRequestConsumer) resolveAPIKey(ctx context.Context, request *T
 			if err != nil {
 				return "", fmt.Errorf("use_platform_token está activo pero no hay credenciales de plataforma configuradas para la integración %d: %w", request.IntegrationID, err)
 			}
-			c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform EnvioClick token")
+			c.log.Info(ctx).Uint("integration_id", request.IntegrationID).Msg("Using platform transport token")
 			return apiKey, nil
 		}
 	}

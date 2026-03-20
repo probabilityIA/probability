@@ -33,7 +33,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick generate request failed - network error")
-		return nil, fmt.Errorf("error de red al conectar con EnvioClick: %w", err)
+		return nil, fmt.Errorf("error de red al conectar con el servicio de transporte: %w", err)
 	}
 
 	if resp.IsError() {
@@ -56,7 +56,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 
 	if err := json.Unmarshal(resp.Body(), &raw); err != nil {
 		c.log.Error(ctx).Err(err).Str("body", string(resp.Body())).Msg("❌ Error parsing EnvioClick response")
-		return nil, fmt.Errorf("error parseando respuesta de EnvioClick: %w", err)
+		return nil, fmt.Errorf("error parseando respuesta del servicio de transporte: %w", err)
 	}
 
 	// Convertir tracker a string sin importar si viene como string o número
