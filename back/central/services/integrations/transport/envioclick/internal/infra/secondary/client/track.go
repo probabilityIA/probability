@@ -34,7 +34,7 @@ func (c *Client) Track(baseURL, apiKey string, trackingNumber string) (*domain.T
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick track request failed - network error")
-		return nil, fmt.Errorf("error de red al conectar con EnvioClick: %w", err)
+		return nil, fmt.Errorf("error de red al conectar con el servicio de transporte: %w", err)
 	}
 
 	if resp.IsError() {

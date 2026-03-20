@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/shipment_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class ShipmentProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -34,7 +35,7 @@ class ShipmentProvider extends ChangeNotifier {
       final response = await _useCases.getShipments(params);
       _shipments = response.data;
       _pagination = response.pagination;
-    } catch (e) { _error = e.toString(); }
+    } catch (e) { _error = parseError(e); }
     _isLoading = false; notifyListeners();
   }
 
@@ -42,19 +43,19 @@ class ShipmentProvider extends ChangeNotifier {
     try {
       _originAddresses = await _useCases.getOriginAddresses(businessId: businessId);
       notifyListeners();
-    } catch (e) { _error = e.toString(); notifyListeners(); }
+    } catch (e) { _error = parseError(e); notifyListeners(); }
   }
 
   Future<Map<String, dynamic>?> quoteShipment(EnvioClickQuoteRequest req) async {
-    try { return await _useCases.quoteShipment(req); } catch (e) { _error = e.toString(); notifyListeners(); return null; }
+    try { return await _useCases.quoteShipment(req); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }
 
   Future<Map<String, dynamic>?> generateGuide(EnvioClickQuoteRequest req) async {
-    try { return await _useCases.generateGuide(req); } catch (e) { _error = e.toString(); notifyListeners(); return null; }
+    try { return await _useCases.generateGuide(req); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }
 
   Future<Map<String, dynamic>?> trackShipment(String trackingNumber) async {
-    try { return await _useCases.trackShipment(trackingNumber); } catch (e) { _error = e.toString(); notifyListeners(); return null; }
+    try { return await _useCases.trackShipment(trackingNumber); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }
 
   void setPage(int page) { _page = page; }

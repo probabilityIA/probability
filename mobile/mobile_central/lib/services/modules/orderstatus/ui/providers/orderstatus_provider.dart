@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/orderstatus_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class OrderStatusProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -32,7 +33,7 @@ class OrderStatusProvider extends ChangeNotifier {
       final response = await _useCases.getMappings(params);
       _mappings = response.data;
       _pagination = response.pagination;
-    } catch (e) { _error = e.toString(); }
+    } catch (e) { _error = parseError(e); }
     _isLoading = false; notifyListeners();
   }
 
@@ -40,7 +41,7 @@ class OrderStatusProvider extends ChangeNotifier {
     try {
       _statuses = await _useCases.getStatuses(isActive: isActive);
       notifyListeners();
-    } catch (e) { _error = e.toString(); notifyListeners(); }
+    } catch (e) { _error = parseError(e); notifyListeners(); }
   }
 
   void setPage(int page) { _page = page; }

@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/permission_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class PermissionProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -38,7 +39,7 @@ class PermissionProvider extends ChangeNotifier {
       _permissions = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -49,7 +50,7 @@ class PermissionProvider extends ChangeNotifier {
     try {
       return await _useCases.createPermission(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -60,7 +61,7 @@ class PermissionProvider extends ChangeNotifier {
       await _useCases.updatePermission(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -71,7 +72,7 @@ class PermissionProvider extends ChangeNotifier {
       await _useCases.deletePermission(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

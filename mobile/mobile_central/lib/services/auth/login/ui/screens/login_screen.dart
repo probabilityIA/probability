@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../core/config/environment.dart';
 import '../providers/login_provider.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -11,8 +12,12 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _emailController = TextEditingController(
+    text: Environment.devEmail,
+  );
+  final _passwordController = TextEditingController(
+    text: Environment.devPassword,
+  );
   bool _obscurePassword = true;
 
   @override

@@ -91,17 +91,35 @@ func (c *Client) CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceReque
 	}
 
 	// Determinar customerNit
-	customerNit := req.Customer.DNI
-	if customerNit == "" {
+	// Si force_default_customer está habilitado, siempre usar default_customer_nit
+	// ignorando el DNI real del cliente (ej: facturar siempre a "CONSUMIDOR FINAL")
+	forceDefault, _ := req.Config["force_default_customer"].(bool)
+	customerNit := ""
+	if forceDefault {
 		if defaultNit, ok := req.Config["default_customer_nit"].(string); ok && defaultNit != "" {
 			customerNit = defaultNit
 			c.log.Info(ctx).
 				Str("default_nit", defaultNit).
-				Msg("Using default customer NIT from config")
+				Str("original_dni", req.Customer.DNI).
+				Msg("Using forced default customer NIT (force_default_customer=true)")
 		} else {
 			c.log.Error(ctx).
-				Msg("customerNit is required but not provided. Configure default_customer_nit in integration config or ensure customers have DNI")
-			return result, fmt.Errorf("customerNit is required: customer has no DNI and no default_customer_nit configured")
+				Msg("force_default_customer is true but default_customer_nit is not configured")
+			return result, fmt.Errorf("force_default_customer is true but default_customer_nit is not configured")
+		}
+	} else {
+		customerNit = req.Customer.DNI
+		if customerNit == "" {
+			if defaultNit, ok := req.Config["default_customer_nit"].(string); ok && defaultNit != "" {
+				customerNit = defaultNit
+				c.log.Info(ctx).
+					Str("default_nit", defaultNit).
+					Msg("Using default customer NIT from config (customer has no DNI)")
+			} else {
+				c.log.Error(ctx).
+					Msg("customerNit is required but not provided. Configure default_customer_nit in integration config or ensure customers have DNI")
+				return result, fmt.Errorf("customerNit is required: customer has no DNI and no default_customer_nit configured")
+			}
 		}
 	}
 

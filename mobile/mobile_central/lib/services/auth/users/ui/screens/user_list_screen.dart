@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../../../shared/widgets/network_avatar.dart';
 import '../providers/user_provider.dart';
 
 class UserListScreen extends StatefulWidget {
@@ -72,13 +73,11 @@ class _UserListScreenState extends State<UserListScreen> {
                 final user = provider.users[index];
                 return Card(
                   child: ListTile(
-                    leading: user.avatarUrl != null
-                        ? CircleAvatar(
-                            backgroundImage: NetworkImage(user.avatarUrl!),
-                          )
-                        : CircleAvatar(
-                            child: Text(user.name[0].toUpperCase()),
-                          ),
+                    leading: NetworkAvatar(
+                      imageUrl: user.avatarUrl,
+                      fallbackText: user.name,
+                      radius: 20,
+                    ),
                     title: Text(user.name),
                     subtitle: Text(user.email),
                     trailing: Row(

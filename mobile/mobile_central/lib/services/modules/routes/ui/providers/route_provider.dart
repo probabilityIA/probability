@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/route_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class RouteProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -37,7 +38,7 @@ class RouteProvider extends ChangeNotifier {
       final params = GetRoutesParams(page: _page, pageSize: _pageSize, businessId: businessId, status: status, driverId: driverId);
       final response = await _useCases.getRoutes(params);
       _routes = response.data; _pagination = response.pagination;
-    } catch (e) { _error = e.toString(); }
+    } catch (e) { _error = parseError(e); }
     _isLoading = false; notifyListeners();
   }
 
@@ -45,28 +46,28 @@ class RouteProvider extends ChangeNotifier {
     _isLoading = true; _error = null; notifyListeners();
     try {
       _selectedRoute = await _useCases.getRouteById(id, businessId: businessId);
-    } catch (e) { _error = e.toString(); }
+    } catch (e) { _error = parseError(e); }
     _isLoading = false; notifyListeners();
   }
 
   Future<RouteInfo?> createRoute(CreateRouteDTO data, {int? businessId}) async {
-    try { return await _useCases.createRoute(data, businessId: businessId); } catch (e) { _error = e.toString(); notifyListeners(); return null; }
+    try { return await _useCases.createRoute(data, businessId: businessId); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }
 
   Future<RouteInfo?> updateRoute(int id, UpdateRouteDTO data, {int? businessId}) async {
-    try { return await _useCases.updateRoute(id, data, businessId: businessId); } catch (e) { _error = e.toString(); notifyListeners(); return null; }
+    try { return await _useCases.updateRoute(id, data, businessId: businessId); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }
 
   Future<bool> deleteRoute(int id, {int? businessId}) async {
-    try { await _useCases.deleteRoute(id, businessId: businessId); return true; } catch (e) { _error = e.toString(); notifyListeners(); return false; }
+    try { await _useCases.deleteRoute(id, businessId: businessId); return true; } catch (e) { _error = parseError(e); notifyListeners(); return false; }
   }
 
   Future<RouteDetail?> startRoute(int id, {int? businessId}) async {
-    try { return await _useCases.startRoute(id, businessId: businessId); } catch (e) { _error = e.toString(); notifyListeners(); return null; }
+    try { return await _useCases.startRoute(id, businessId: businessId); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }
 
   Future<RouteDetail?> completeRoute(int id, {int? businessId}) async {
-    try { return await _useCases.completeRoute(id, businessId: businessId); } catch (e) { _error = e.toString(); notifyListeners(); return null; }
+    try { return await _useCases.completeRoute(id, businessId: businessId); } catch (e) { _error = parseError(e); notifyListeners(); return null; }
   }
 
   Future<void> fetchFormOptions({int? businessId}) async {
@@ -80,7 +81,7 @@ class RouteProvider extends ChangeNotifier {
       _availableVehicles = results[1] as List<VehicleOption>;
       _assignableOrders = results[2] as List<AssignableOrder>;
       notifyListeners();
-    } catch (e) { _error = e.toString(); notifyListeners(); }
+    } catch (e) { _error = parseError(e); notifyListeners(); }
   }
 
   void setPage(int page) { _page = page; }

@@ -4,9 +4,11 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/invoicing_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class InvoicingProvider extends ChangeNotifier {
   final ApiClient _apiClient;
+  final InvoicingUseCases? _injectedUseCases;
 
   List<Invoice> _invoices = [];
   List<InvoicingConfig> _configs = [];
@@ -18,7 +20,9 @@ class InvoicingProvider extends ChangeNotifier {
   String? _statusFilter;
   int? _businessIdFilter;
 
-  InvoicingProvider({required ApiClient apiClient}) : _apiClient = apiClient;
+  InvoicingProvider({required ApiClient apiClient, InvoicingUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases;
 
   List<Invoice> get invoices => _invoices;
   List<InvoicingConfig> get configs => _configs;
@@ -27,7 +31,7 @@ class InvoicingProvider extends ChangeNotifier {
   String? get error => _error;
   int get page => _page;
 
-  InvoicingUseCases get _useCases => InvoicingUseCases(InvoicingApiRepository(_apiClient));
+  InvoicingUseCases get _useCases => _injectedUseCases ?? InvoicingUseCases(InvoicingApiRepository(_apiClient));
 
   Future<void> fetchInvoices({int? businessId}) async {
     _isLoading = true;
@@ -45,7 +49,7 @@ class InvoicingProvider extends ChangeNotifier {
       _invoices = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -62,7 +66,7 @@ class InvoicingProvider extends ChangeNotifier {
       final response = await _useCases.getConfigs(filters);
       _configs = response.data;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -73,7 +77,7 @@ class InvoicingProvider extends ChangeNotifier {
     try {
       return await _useCases.createInvoice(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -84,7 +88,7 @@ class InvoicingProvider extends ChangeNotifier {
       await _useCases.cancelInvoice(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -95,7 +99,7 @@ class InvoicingProvider extends ChangeNotifier {
       await _useCases.retryInvoice(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -106,7 +110,7 @@ class InvoicingProvider extends ChangeNotifier {
       await _useCases.bulkCreateInvoices(data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

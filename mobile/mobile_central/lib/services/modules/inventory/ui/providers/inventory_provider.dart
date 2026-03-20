@@ -4,9 +4,11 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/inventory_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class InventoryProvider extends ChangeNotifier {
   final ApiClient _apiClient;
+  final InventoryUseCases? _injectedUseCases;
 
   List<InventoryLevel> _inventoryLevels = [];
   List<StockMovement> _movements = [];
@@ -20,7 +22,9 @@ class InventoryProvider extends ChangeNotifier {
   String _searchFilter = '';
   bool? _lowStockFilter;
 
-  InventoryProvider({required ApiClient apiClient}) : _apiClient = apiClient;
+  InventoryProvider({required ApiClient apiClient, InventoryUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases;
 
   List<InventoryLevel> get inventoryLevels => _inventoryLevels;
   List<StockMovement> get movements => _movements;
@@ -33,7 +37,7 @@ class InventoryProvider extends ChangeNotifier {
   int get pageSize => _pageSize;
 
   InventoryUseCases get _useCases =>
-      InventoryUseCases(InventoryApiRepository(_apiClient));
+      _injectedUseCases ?? InventoryUseCases(InventoryApiRepository(_apiClient));
 
   Future<void> fetchWarehouseInventory(int warehouseId, {int? businessId}) async {
     _isLoading = true;
@@ -52,7 +56,7 @@ class InventoryProvider extends ChangeNotifier {
       _inventoryLevels = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -63,7 +67,7 @@ class InventoryProvider extends ChangeNotifier {
     try {
       return await _useCases.getProductInventory(productId, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return [];
     }
@@ -74,7 +78,7 @@ class InventoryProvider extends ChangeNotifier {
       final movement = await _useCases.adjustStock(data, businessId: businessId);
       return movement;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -85,7 +89,7 @@ class InventoryProvider extends ChangeNotifier {
       await _useCases.transferStock(data, businessId: businessId);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -101,7 +105,7 @@ class InventoryProvider extends ChangeNotifier {
       _movements = response.data;
       _movementsPagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -113,7 +117,7 @@ class InventoryProvider extends ChangeNotifier {
       final response = await _useCases.getMovementTypes(params);
       _movementTypes = response.data;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
     }
   }

@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/integration_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class IntegrationProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -70,7 +71,7 @@ class IntegrationProvider extends ChangeNotifier {
       _integrations = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -81,7 +82,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       return await _useCases.getIntegrationById(id);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -93,7 +94,7 @@ class IntegrationProvider extends ChangeNotifier {
       return await _useCases.getIntegrationByType(type,
           businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -104,7 +105,7 @@ class IntegrationProvider extends ChangeNotifier {
       final integration = await _useCases.createIntegration(data);
       return integration;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -116,7 +117,7 @@ class IntegrationProvider extends ChangeNotifier {
       final integration = await _useCases.updateIntegration(id, data);
       return integration;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -127,7 +128,7 @@ class IntegrationProvider extends ChangeNotifier {
       await _useCases.deleteIntegration(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -137,7 +138,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       return await _useCases.testConnection(id);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -148,7 +149,7 @@ class IntegrationProvider extends ChangeNotifier {
       await _useCases.activateIntegration(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -159,7 +160,7 @@ class IntegrationProvider extends ChangeNotifier {
       await _useCases.deactivateIntegration(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -169,7 +170,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       return await _useCases.setAsDefault(id);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -180,7 +181,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       return await _useCases.syncOrders(id, params: params);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -191,7 +192,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       return await _useCases.getSyncStatus(id, businessId: businessId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -204,7 +205,7 @@ class IntegrationProvider extends ChangeNotifier {
       return await _useCases.testConnectionRaw(
           typeCode, config, credentials);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -222,7 +223,7 @@ class IntegrationProvider extends ChangeNotifier {
       _integrationTypes =
           await _useCases.getIntegrationTypes(categoryId: categoryId);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoadingTypes = false;
@@ -236,7 +237,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       _integrationTypes = await _useCases.getActiveIntegrationTypes();
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoadingTypes = false;
@@ -247,7 +248,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       return await _useCases.getIntegrationTypeById(id);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -257,7 +258,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       return await _useCases.getIntegrationTypeByCode(code);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -274,7 +275,7 @@ class IntegrationProvider extends ChangeNotifier {
     try {
       _integrationCategories = await _useCases.getIntegrationCategories();
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoadingCategories = false;

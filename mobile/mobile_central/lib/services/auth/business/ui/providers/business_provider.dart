@@ -4,9 +4,11 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/business_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class BusinessProvider extends ChangeNotifier {
   final ApiClient _apiClient;
+  final BusinessUseCases? _injectedUseCases;
 
   List<Business> _businesses = [];
   List<BusinessSimple> _businessesSimple = [];
@@ -16,7 +18,9 @@ class BusinessProvider extends ChangeNotifier {
   String? _error;
   int? _selectedBusinessId;
 
-  BusinessProvider({required ApiClient apiClient}) : _apiClient = apiClient;
+  BusinessProvider({required ApiClient apiClient, BusinessUseCases? useCases})
+      : _apiClient = apiClient,
+        _injectedUseCases = useCases;
 
   List<Business> get businesses => _businesses;
   List<BusinessSimple> get businessesSimple => _businessesSimple;
@@ -27,7 +31,7 @@ class BusinessProvider extends ChangeNotifier {
   int? get selectedBusinessId => _selectedBusinessId;
 
   BusinessUseCases get _useCases =>
-      BusinessUseCases(BusinessApiRepository(_apiClient));
+      _injectedUseCases ?? BusinessUseCases(BusinessApiRepository(_apiClient));
 
   void setSelectedBusinessId(int? id) {
     _selectedBusinessId = id;
@@ -44,7 +48,7 @@ class BusinessProvider extends ChangeNotifier {
       _businesses = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -52,13 +56,18 @@ class BusinessProvider extends ChangeNotifier {
   }
 
   Future<void> fetchBusinessesSimple() async {
+    _isLoading = true;
+    _error = null;
+    notifyListeners();
+
     try {
       _businessesSimple = await _useCases.getBusinessesSimple();
-      notifyListeners();
     } catch (e) {
-      _error = e.toString();
-      notifyListeners();
+      _error = parseError(e);
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
 
   Future<void> fetchBusinessTypes() async {
@@ -66,7 +75,7 @@ class BusinessProvider extends ChangeNotifier {
       _businessTypes = await _useCases.getBusinessTypes();
       notifyListeners();
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
     }
   }
@@ -75,7 +84,7 @@ class BusinessProvider extends ChangeNotifier {
     try {
       return await _useCases.createBusiness(data);
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -86,7 +95,7 @@ class BusinessProvider extends ChangeNotifier {
       await _useCases.updateBusiness(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -97,7 +106,7 @@ class BusinessProvider extends ChangeNotifier {
       await _useCases.deleteBusiness(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -108,7 +117,7 @@ class BusinessProvider extends ChangeNotifier {
       await _useCases.activateBusiness(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -119,7 +128,7 @@ class BusinessProvider extends ChangeNotifier {
       await _useCases.deactivateBusiness(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

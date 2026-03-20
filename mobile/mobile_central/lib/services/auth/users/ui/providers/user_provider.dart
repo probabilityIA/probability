@@ -4,6 +4,7 @@ import '../../../../../shared/types/paginated_response.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/user_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class UserProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -46,7 +47,7 @@ class UserProvider extends ChangeNotifier {
       _users = response.data;
       _pagination = response.pagination;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
@@ -74,7 +75,7 @@ class UserProvider extends ChangeNotifier {
       final user = await _useCases.createUser(data);
       return user;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return null;
     }
@@ -85,7 +86,7 @@ class UserProvider extends ChangeNotifier {
       await _useCases.updateUser(id, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -96,7 +97,7 @@ class UserProvider extends ChangeNotifier {
       await _useCases.deleteUser(id);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }
@@ -107,7 +108,7 @@ class UserProvider extends ChangeNotifier {
       await _useCases.assignRoles(userId, data);
       return true;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
       notifyListeners();
       return false;
     }

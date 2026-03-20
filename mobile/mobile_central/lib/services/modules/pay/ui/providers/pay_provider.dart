@@ -3,6 +3,7 @@ import '../../../../../core/network/api_client.dart';
 import '../../app/use_cases.dart';
 import '../../domain/entities.dart';
 import '../../infra/repository/pay_repository.dart';
+import '../../../../../core/errors/error_parser.dart';
 
 class PayProvider extends ChangeNotifier {
   final ApiClient _apiClient;
@@ -29,7 +30,7 @@ class PayProvider extends ChangeNotifier {
       final response = await _useCases.listPaymentGatewayTypes();
       _paymentGatewayTypes = response.data;
     } catch (e) {
-      _error = e.toString();
+      _error = parseError(e);
     }
 
     _isLoading = false;
