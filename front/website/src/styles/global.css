@@ -69,3 +69,253 @@ h1, h2, h3, h4, h5, h6 {
 	transform: scale(1.15) translateY(-4px);
 	box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
 }
+
+/* Tracking Progress Bar Styles */
+.tracking-container {
+	background: white;
+	border-radius: 16px;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+	overflow: hidden;
+}
+
+.tracking-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 24px;
+	padding: 28px 32px 0;
+}
+
+.tracking-title {
+	font-size: 22px;
+	font-weight: 700;
+	color: #1e293b;
+	margin: 0;
+}
+
+.tracking-subtitle {
+	font-size: 13px;
+	color: #64748b;
+	margin: 4px 0 0 0;
+}
+
+.tracking-badge {
+	background: #3b82f6;
+	color: white;
+	padding: 6px 14px;
+	border-radius: 20px;
+	font-size: 12px;
+	font-weight: 600;
+	white-space: nowrap;
+}
+
+.tracking-progress-section {
+	padding: 24px 32px;
+}
+
+.tracking-progress-track {
+	position: relative;
+	height: 110px;
+	margin-bottom: 12px;
+}
+
+.tracking-line {
+	position: absolute;
+	height: 4px;
+	top: 26px;
+	background: #e5e7eb;
+	transition: all 0.3s ease;
+}
+
+.tracking-line.completed {
+	background: #22c55e;
+}
+
+.tracking-line.active {
+	background: #e5e7eb;
+}
+
+.tracking-node {
+	position: absolute;
+	width: 40px;
+	height: 40px;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 18px;
+	top: 8px;
+	transition: all 0.3s ease;
+}
+
+.tracking-node.completed {
+	background: #22c55e;
+	color: white;
+}
+
+.tracking-node.active {
+	background: #3b82f6;
+	color: white;
+	width: 54px;
+	height: 54px;
+	top: 1px;
+	box-shadow: 0 0 0 3px #dbeafe;
+}
+
+.tracking-node.pending {
+	background: #e5e7eb;
+	color: #9ca3af;
+}
+
+.tracking-label {
+	position: absolute;
+	top: 68px;
+	font-size: 11px;
+	font-weight: 600;
+	color: #9ca3af;
+	text-align: center;
+	white-space: nowrap;
+	transform: translateX(-50%);
+}
+
+.tracking-label.completed {
+	color: #22c55e;
+}
+
+.tracking-label.active {
+	color: #3b82f6;
+}
+
+.tracking-status-card {
+	background: #eff6ff;
+	border: 1px solid #bfdbfe;
+	border-left: 4px solid #3b82f6;
+	border-radius: 10px;
+	padding: 16px 20px;
+	margin-top: 24px;
+	display: flex;
+	gap: 14px;
+	align-items: flex-start;
+}
+
+.tracking-status-icon {
+	flex-shrink: 0;
+	font-size: 18px;
+	color: #ef4444;
+}
+
+.tracking-status-text h4 {
+	font-size: 14px;
+	font-weight: 700;
+	color: #1e293b;
+	margin: 0;
+}
+
+.tracking-status-text p {
+	font-size: 12px;
+	color: #64748b;
+	margin: 4px 0 0 0;
+}
+
+.tracking-divider {
+	height: 1px;
+	background: #f1f5f9;
+	margin: 24px 32px;
+}
+
+.tracking-client-row {
+	display: flex;
+	gap: 14px;
+	align-items: center;
+	padding: 0 32px;
+	margin-bottom: 24px;
+}
+
+.tracking-avatar {
+	width: 44px;
+	height: 44px;
+	border-radius: 50%;
+	background: #cbd5e1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #64748b;
+	font-size: 22px;
+	flex-shrink: 0;
+}
+
+.tracking-client-name {
+	font-size: 15px;
+	font-weight: 600;
+	color: #1e293b;
+	margin: 0;
+}
+
+.tracking-bottom-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 16px;
+	padding: 0 32px 32px;
+}
+
+.tracking-info-card {
+	background: white;
+	border: 1px solid #f1f5f9;
+	border-radius: 10px;
+	padding: 16px 18px;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+	transition: all 0.2s ease;
+}
+
+.tracking-info-card:hover {
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.tracking-info-header {
+	display: flex;
+	gap: 8px;
+	align-items: center;
+	margin-bottom: 6px;
+}
+
+.tracking-info-icon {
+	font-size: 14px;
+	color: #64748b;
+}
+
+.tracking-info-label {
+	font-size: 10px;
+	font-weight: 600;
+	color: #9ca3af;
+	letter-spacing: 1px;
+	text-transform: uppercase;
+}
+
+.tracking-info-value {
+	font-size: 16px;
+	font-weight: 700;
+	color: #1e293b;
+	margin: 6px 0;
+}
+
+.tracking-info-subtext {
+	font-size: 11px;
+	color: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+	.tracking-bottom-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.tracking-header {
+		flex-direction: column;
+		align-items: flex-start;
+	}
+
+	.tracking-badge {
+		width: 100%;
+		text-align: center;
+	}
+}
