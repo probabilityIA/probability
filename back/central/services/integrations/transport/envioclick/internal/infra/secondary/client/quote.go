@@ -35,7 +35,7 @@ func (c *Client) Quote(baseURL, apiKey string, req domain.QuoteRequest) (*domain
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick quote request failed - network error")
-		return nil, fmt.Errorf("error de red al conectar con EnvioClick: %w", err)
+		return nil, fmt.Errorf("error de red al conectar con el servicio de transporte: %w", err)
 	}
 
 	if resp.IsError() {

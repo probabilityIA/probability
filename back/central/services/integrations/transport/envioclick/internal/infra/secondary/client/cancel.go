@@ -31,7 +31,7 @@ func (c *Client) Cancel(baseURL, apiKey string, idShipment string) (*domain.Canc
 
 	if err != nil {
 		c.log.Error(ctx).Err(err).Msg("❌ EnvioClick cancel request failed - network error")
-		return nil, fmt.Errorf("error de red al conectar con EnvioClick: %w", err)
+		return nil, fmt.Errorf("error de red al conectar con el servicio de transporte: %w", err)
 	}
 
 	if resp.IsError() {

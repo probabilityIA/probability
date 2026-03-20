@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/shipments/internal/domain"
@@ -316,7 +317,7 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 	if response.ShipmentID != nil && response.Data != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err == nil && shipment != nil {
-			// Extract status from carrier response (from Envioclik, etc.)
+			// Extract status from carrier response (from provider, etc.)
 			if status, ok := response.Data["status"].(string); ok && status != "" {
 				oldStatus := shipment.Status
 				shipment.Status = status // Update to: in_transit, delivered, failed, etc.
@@ -397,7 +398,7 @@ func (c *ResponseConsumer) resolveBusinessID(ctx context.Context, response *Tran
 // Este valor se añade de forma transparente en la asincronía antes de enviar al frontend o a Redis.
 const serviceFeeAmount = 2290.0
 
-// priceFields son los campos de precio que se ajustan en cada cotización de EnvioClick.
+// priceFields son los campos de precio que se ajustan en cada cotización.
 // Solo modificamos "flete", dejando seguros intactos.
 var priceFields = []string{"flete"}
 
@@ -438,6 +439,25 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 		}
 
 		carrierName, _ := rate["carrier"].(string)
+		lowerCarrier := strings.ToLower(carrierName)
+
+		// [MOD] Especial para Interrapidisimo y Coordinadora:
+		// Se captura el valor del seguro obligatorio (minimumInsurance) y se suma a nuestra ganancia.
+		// Fórmula: flete + seguro_obligatorio + (cuota_nuestra + seguro_obligatorio)
+		// Como serviceFeeAmount es nuestra cuota base, añadimos el seguro obligatorio adicionalmente al flete.
+		extraInsuranceProfit := 0.0
+		if strings.Contains(lowerCarrier, "interrapidisimo") || strings.Contains(lowerCarrier, "coordinadora") {
+			if insVal, ok := rate["minimumInsurance"]; ok {
+				switch v := insVal.(type) {
+				case float64:
+					extraInsuranceProfit = v
+				case int:
+					extraInsuranceProfit = float64(v)
+				case float32:
+					extraInsuranceProfit = float64(v)
+				}
+			}
+		}
 
 		for _, field := range priceFields {
 			if val, exists := rate[field]; exists {
@@ -451,15 +471,16 @@ func (c *ResponseConsumer) applyServiceFeeToQuoteData(ctx context.Context, data 
 					continue
 				}
 
-				newVal := oldVal + serviceFeeAmount
+				newVal := oldVal + serviceFeeAmount + extraInsuranceProfit
 				rate[field] = newVal
 
 				c.log.Info(ctx).
 					Str("provider", provider).
 					Str("carrier", carrierName).
 					Float64("original_flete", oldVal).
+					Float64("extra_insurance_profit", extraInsuranceProfit).
 					Float64("final_flete", newVal).
-					Msg("💰 Service fee added to quote")
+					Msg("💰 Service fee and insurance profit added to quote")
 			}
 		}
 	}
