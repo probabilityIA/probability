@@ -141,7 +141,7 @@ func (h *Handlers) QuoteShipment(c *gin.Context) {
 }
 
 // getRatesFromData extracts the rates array from the transport provider response data.
-// EnvioClick response format: { "status": "success", "data": { "rates": [...] } }
+// Transport response format: { "status": "success", "data": { "rates": [...] } }
 func getRatesFromData(data map[string]interface{}) interface{} {
 	if data == nil {
 		return nil
