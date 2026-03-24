@@ -88,12 +88,12 @@ export default function WhatsAppTypeCredentialsForm({
 
     return (
         <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">
                 Credenciales de WhatsApp (se encriptan)
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         WhatsApp API URL *
                     </label>
                     <Input
@@ -103,22 +103,22 @@ export default function WhatsAppTypeCredentialsForm({
                         placeholder="https://graph.facebook.com/v22.0"
                         className="font-mono"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         URL base de la API de WhatsApp Cloud (Meta Graph API)
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Webhook URL
                     </label>
                     <div className="flex gap-2">
-                        <div className="flex-1 px-3 py-2 bg-white border border-gray-300 rounded-md font-mono text-sm text-gray-700 dark:text-gray-200 select-all break-all">
+                        <div className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-mono text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 select-all break-all">
                             {webhookUrl}
                         </div>
                         <button
                             type="button"
                             onClick={handleCopyWebhook}
-                            className="px-3 py-2 border border-gray-300 rounded-md hover:bg-gray-100 transition-colors flex items-center gap-1 text-sm shrink-0"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-100 dark:bg-gray-700 transition-colors flex items-center gap-1 text-sm shrink-0"
                             title="Copiar URL"
                         >
                             {copied ? (
@@ -128,18 +128,18 @@ export default function WhatsAppTypeCredentialsForm({
                                 </>
                             ) : (
                                 <>
-                                    <ClipboardDocumentIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+                                    <ClipboardDocumentIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 dark:text-gray-400" />
                                     <span>Copiar</span>
                                 </>
                             )}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         Copia esta URL en Meta &rarr; WhatsApp &rarr; Configuration &rarr; Webhook
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Phone Number ID *
                     </label>
                     <Input
@@ -151,12 +151,12 @@ export default function WhatsAppTypeCredentialsForm({
                         placeholder="123456789012345"
                         className="font-mono"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         ID del numero de telefono en Meta Business Manager
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Access Token *
                     </label>
                     <div className="relative">
@@ -172,17 +172,17 @@ export default function WhatsAppTypeCredentialsForm({
                         <button
                             type="button"
                             onClick={() => setShowAccessToken((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 transition-colors"
                         >
                             {showAccessToken ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         Token de acceso permanente de la app en Meta
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Verify Token (Webhook)
                     </label>
                     <div className="relative">
@@ -198,17 +198,17 @@ export default function WhatsAppTypeCredentialsForm({
                         <button
                             type="button"
                             onClick={() => setShowVerifyToken((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 transition-colors"
                         >
                             {showVerifyToken ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         Token de verificacion para el webhook (Meta &rarr; Configuration)
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Webhook Secret (App Secret)
                     </label>
                     <div className="relative">
@@ -224,19 +224,19 @@ export default function WhatsAppTypeCredentialsForm({
                         <button
                             type="button"
                             onClick={() => setShowWebhookSecret((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 transition-colors"
                         >
                             {showWebhookSecret ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         App Secret de Meta (Developers &rarr; App &rarr; Settings &rarr; Basic)
                     </p>
                 </div>
 
                 {/* Test connection - full width */}
-                <div className="md:col-span-2 border-t border-gray-300 pt-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                <div className="md:col-span-2 border-t border-gray-300 dark:border-gray-600 pt-4">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Numero de pruebas
                     </label>
                     <div className="flex gap-2">
@@ -257,14 +257,14 @@ export default function WhatsAppTypeCredentialsForm({
                             {testing ? 'Enviando...' : 'Probar conexion'}
                         </Button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         Se enviara un mensaje de prueba (hello_world) a este numero para verificar las credenciales
                     </p>
                 </div>
 
             </div>
             {isEditing && (
-                <p className="text-xs text-gray-500 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                     Deja los campos vacios para no modificar los valores actuales.
                 </p>
             )}
@@ -287,7 +287,7 @@ export default function WhatsAppTypeCredentialsForm({
                         <h3 className={`text-lg font-semibold mb-2 ${testResult.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
                             {testResult.type === 'success' ? 'Conexion exitosa' : 'Error de conexion'}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-6">
                             {testResult.message}
                         </p>
                         <Button

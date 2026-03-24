@@ -120,7 +120,7 @@ export default function ShopifyOAuthForm({
                 </Alert>
             )}
 
-            <div className="p-6 rounded-lg border border-gray-200 bg-white">
+            <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
                 <div className="space-y-4">
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                         <div className="flex items-start gap-3">
@@ -140,7 +140,7 @@ export default function ShopifyOAuthForm({
 
                     {/* Nombre de la Integración */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Nombre de la Integración *
                         </label>
                         <Input
@@ -151,14 +151,14 @@ export default function ShopifyOAuthForm({
                             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                             className="w-full"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1">
                             Un nombre descriptivo para identificar esta integración
                         </p>
                     </div>
 
                     {/* Store Domain */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Dominio de la Tienda *
                         </label>
                         <Input
@@ -174,7 +174,7 @@ export default function ShopifyOAuthForm({
                     {/* Access Token - Solo en modo edición, read-only */}
                     {isEdit && accessToken && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                                 Access Token (OAuth)
                             </label>
                             <div className="relative">
@@ -182,19 +182,19 @@ export default function ShopifyOAuthForm({
                                     type={showSecrets ? 'text' : 'password'}
                                     value={accessToken}
                                     readOnly
-                                    className="w-full bg-gray-50 pr-10"
+                                    className="w-full bg-gray-50 dark:bg-gray-700 pr-10"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowSecrets(!showSecrets)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300"
                                 >
                                     {showSecrets
                                         ? <EyeSlashIcon className="w-5 h-5" />
                                         : <EyeIcon className="w-5 h-5" />}
                                 </button>
                             </div>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1">
                                 Obtenido automáticamente durante el flujo OAuth (solo lectura)
                             </p>
                         </div>
@@ -202,7 +202,7 @@ export default function ShopifyOAuthForm({
 
                     {/* Client ID */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Client ID (API Key) {!isEdit && '*'}
                         </label>
                         <Input
@@ -218,7 +218,7 @@ export default function ShopifyOAuthForm({
 
                     {/* Client Secret */}
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Client Secret {!isEdit && '*'}
                         </label>
                         <div className="relative">
@@ -234,7 +234,7 @@ export default function ShopifyOAuthForm({
                             <button
                                 type="button"
                                 onClick={() => setShowSecrets(!showSecrets)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300"
                             >
                                 {showSecrets
                                     ? <EyeSlashIcon className="w-5 h-5" />
@@ -247,8 +247,8 @@ export default function ShopifyOAuthForm({
 
             {/* Webhook Management - Solo en modo edición */}
             {isEdit && integrationId && (
-                <div className="p-6 rounded-lg border border-gray-200 bg-white">
-                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 pb-3 border-b border-gray-200">
+                <div className="p-6 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-4 pb-3 border-b border-gray-200 dark:border-gray-700">
                         Webhooks
                     </h3>
                     <ShopifyWebhookManager integrationId={integrationId} />
@@ -264,10 +264,10 @@ export default function ShopifyOAuthForm({
                             Modo de Pruebas
                         </h3>
                     </div>
-                    <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                    <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-orange-200">
                         <div className="flex-1">
                             <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Activar modo testing</p>
-                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                            <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-0.5">
                                 Las peticiones a Shopify se redirigirán a la URL de pruebas configurada.
                             </p>
                         </div>
@@ -276,7 +276,7 @@ export default function ShopifyOAuthForm({
                             onClick={() => setIsTesting(!isTesting)}
                             className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ml-4 flex-shrink-0 ${isTesting ? 'bg-orange-500' : 'bg-gray-200'}`}
                         >
-                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
+                            <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-800 transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
                         </button>
                     </div>
                     {isTesting && (

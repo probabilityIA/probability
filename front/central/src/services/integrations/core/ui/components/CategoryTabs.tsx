@@ -25,7 +25,7 @@ export function CategoryTabs({
         .sort((a, b) => a.display_order - b.display_order);
 
     return (
-        <div className="border-b border-gray-200 mb-6">
+        <div className="border-b border-gray-200 dark:border-gray-700 mb-6">
             <nav className="-mb-px flex space-x-8">
                 {/* Tabs por categoría - solo nombre */}
                 {sortedCategories.map((category) => (
@@ -36,7 +36,7 @@ export function CategoryTabs({
                             py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                             ${activeCategory === category.code && activeTab === 'integrations'
                                 ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300'}
+                                : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 hover:border-gray-300 dark:border-gray-600'}
                         `}
                     >
                         {category.name}
@@ -51,7 +51,7 @@ export function CategoryTabs({
                             py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                             ${activeTab === 'types'
                                 ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300'}
+                                : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 hover:border-gray-300 dark:border-gray-600'}
                         `}
                     >
                         Tipos de Integración

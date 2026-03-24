@@ -93,7 +93,7 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
                 <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
                     {category.name}
                 </h2>
-                <p className="text-gray-600 dark:text-gray-300">
+                <p className="text-gray-600 dark:text-gray-300 dark:text-gray-300">
                     Selecciona el proveedor que deseas integrar
                 </p>
             </div>
@@ -109,8 +109,8 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
                             disabled={isDev}
                             className={`p-6 border-2 rounded-lg transition-all text-left group relative ${
                                 isDev
-                                    ? 'border-gray-200 opacity-60 grayscale cursor-not-allowed'
-                                    : 'border-gray-200 hover:border-blue-500 hover:shadow-md'
+                                    ? 'border-gray-200 dark:border-gray-700 opacity-60 grayscale cursor-not-allowed'
+                                    : 'border-gray-200 dark:border-gray-700 hover:border-blue-500 hover:shadow-md'
                             }`}
                         >
                             {/* Coming Soon Badge */}
@@ -141,7 +141,7 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
                             {/* Provider Name */}
                             <h3 className={`text-lg font-semibold mb-2 text-center ${
                                 isDev
-                                    ? 'text-gray-500 dark:text-gray-400'
+                                    ? 'text-gray-500 dark:text-gray-400 dark:text-gray-400'
                                     : 'text-gray-900 dark:text-white group-hover:text-blue-600'
                             }`}>
                                 {provider.name}
@@ -149,7 +149,7 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
 
                             {/* Description */}
                             {provider.description && (
-                                <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
+                                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 text-center">
                                     {provider.description}
                                 </p>
                             )}
@@ -159,7 +159,7 @@ export function ProviderSelector({ category, onSelect, onBack }: ProviderSelecto
             </div>
 
             {providers.length === 0 && (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400 dark:text-gray-400">
                     No hay proveedores disponibles para esta categoría
                 </div>
             )}

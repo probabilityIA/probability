@@ -948,18 +948,18 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     <img
                         src={integration.integration_type.image_url}
                         alt={integration.integration_type.name || integration.name}
-                        className="w-12 h-12 object-contain border border-gray-200 rounded-lg p-1 bg-white"
+                        className="w-12 h-12 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-white dark:bg-gray-800"
                         onError={(e) => {
                             // Si la imagen falla al cargar, mostrar un placeholder
                             (e.target as HTMLImageElement).style.display = 'none';
                             const parent = (e.target as HTMLImageElement).parentElement;
                             if (parent) {
-                                parent.innerHTML = '<div class="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-xs">Sin logo</div>';
+                                parent.innerHTML = '<div class="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-xs">Sin logo</div>';
                             }
                         }}
                     />
                 ) : (
-                    <div className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-xs">
+                    <div className="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-xs">
                         {integration.name.charAt(0).toUpperCase()}
                     </div>
                 )}
@@ -969,12 +969,12 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             <div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white">{integration.name}</div>
                 {integration.description && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{integration.description}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">{integration.description}</div>
                 )}
             </div>
         ),
         type: (
-            <div className="text-sm text-gray-700 dark:text-gray-200">
+            <div className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">
                 {integration.integration_type?.name || (
                     <span className="text-gray-400 text-xs">—</span>
                 )}
@@ -989,7 +989,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
             </span>
         ),
         business: (
-            <div className="text-sm text-gray-700 dark:text-gray-200">
+            <div className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">
                 {integration.business_name || (
                     <span className="text-gray-400 text-xs">Sin empresa</span>
                 )}
@@ -1039,7 +1039,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     onClick={() => toggleActive(integration.id, integration.is_active)}
                     className={`p-2 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2 ${integration.is_active
                         ? 'bg-orange-500 hover:bg-orange-600 text-white focus:ring-orange-500'
-                        : 'bg-gray-500 hover:bg-gray-600 text-white focus:ring-gray-500'
+                        : 'bg-gray-50 dark:bg-gray-7000 hover:bg-gray-600 text-white focus:ring-gray-500'
                         }`}
                     title={integration.is_active ? 'Desactivar integración' : 'Activar integración'}
                     aria-label={integration.is_active ? 'Desactivar integración' : 'Activar integración'}
@@ -1082,7 +1082,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                 </Alert>
             )}
 
-            <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                 <Table
                     columns={columns}
                     data={integrations.map(renderRow)}
@@ -1100,7 +1100,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                     >
                         Anterior
                     </Button>
-                    <span className="text-sm text-gray-700 dark:text-gray-200">
+                    <span className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">
                         Página {page} de {totalPages}
                     </span>
                     <Button
@@ -1132,16 +1132,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
 
                 return (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className={`bg-white rounded-lg shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ${isShowingProgress ? 'w-full max-w-5xl overflow-hidden' : 'w-full max-w-3xl overflow-visible'}`}>
+                    <div className={`bg-white dark:bg-gray-800 rounded-lg shadow-xl flex flex-col max-h-[90vh] transition-all duration-300 ${isShowingProgress ? 'w-full max-w-5xl overflow-hidden' : 'w-full max-w-3xl overflow-visible'}`}>
                         {/* Header */}
-                        <div className="px-6 py-4 border-b border-gray-200 flex-shrink-0">
+                        <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div>
                                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                                             Sincronizar Órdenes
                                         </h3>
-                                        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                                        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-0.5">
                                             {syncModal.name}
                                         </p>
                                     </div>
@@ -1155,7 +1155,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                 {!syncing && (
                                     <button
                                         onClick={handleSyncCancel}
-                                        className="text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
+                                        className="text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 transition-colors"
                                         aria-label="Cerrar modal"
                                     >
                                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1173,7 +1173,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                 <div className="px-6 py-4 space-y-4">
                                     <div className="space-y-4">
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Rango de Fechas</label>
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Rango de Fechas</label>
                                             <DateRangePicker
                                                 startDate={syncFilters.created_at_min}
                                                 endDate={syncFilters.created_at_max}
@@ -1203,8 +1203,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                 {/* Batch progress bar */}
                                                 <div>
                                                     <div className="flex justify-between items-center mb-2">
-                                                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Progreso por Lotes</h4>
-                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                        <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 dark:text-gray-200">Progreso por Lotes</h4>
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                                                             {batchSync.completedBatches + batchSync.failedBatches} / {batchSync.totalBatches}
                                                             {' '}({batchSync.totalBatches > 0 ? Math.round(((batchSync.completedBatches + batchSync.failedBatches) / batchSync.totalBatches) * 100) : 0}%)
                                                         </span>
@@ -1237,16 +1237,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                 <div className="w-2 h-2 rounded-full bg-red-500" /> {batchSync.failedBatches} fallidos
                                                             </span>
                                                         )}
-                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 text-gray-600 dark:text-gray-300 rounded-full">
+                                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 dark:text-gray-300 rounded-full">
                                                             <div className="w-2 h-2 rounded-full bg-gray-400" /> {batchSync.totalBatches - batchSync.completedBatches - batchSync.failedBatches} pendientes
                                                         </span>
                                                     </div>
                                                 </div>
 
                                                 {/* Batch history */}
-                                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                                    <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">Historial de Lotes</p>
+                                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                                    <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+                                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 dark:text-gray-200">Historial de Lotes</p>
                                                     </div>
                                                     <div className="max-h-[50vh] overflow-y-auto divide-y divide-gray-100">
                                                         {batchSync.batches.map((batch) => (
@@ -1254,9 +1254,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                 key={batch.batchIndex}
                                                                 className={`p-3 text-xs transition-colors ${
                                                                     batch.status === 'processing' ? 'bg-blue-50 border-l-2 border-l-blue-500' :
-                                                                    batch.status === 'completed' ? 'bg-white hover:bg-gray-50' :
+                                                                    batch.status === 'completed' ? 'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:bg-gray-700' :
                                                                     batch.status === 'failed' ? 'bg-red-50 hover:bg-red-100' :
-                                                                    'bg-gray-50'
+                                                                    'bg-gray-50 dark:bg-gray-700'
                                                                 }`}
                                                             >
                                                                 <div className="flex items-center justify-between">
@@ -1276,7 +1276,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                             <Spinner size="sm" />
                                                                         )}
                                                                         {batch.status === 'pending' && (
-                                                                            <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
+                                                                            <div className="w-4 h-4 rounded-full border-2 border-gray-300 dark:border-gray-600" />
                                                                         )}
                                                                         <span className="font-medium text-gray-800 dark:text-gray-100">Lote {batch.batchIndex + 1}</span>
                                                                     </div>
@@ -1288,7 +1288,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                             batch.status === 'completed' ? 'bg-green-100 text-green-700' :
                                                                             batch.status === 'failed' ? 'bg-red-100 text-red-700' :
                                                                             batch.status === 'processing' ? 'bg-blue-100 text-blue-700' :
-                                                                            'bg-gray-100 text-gray-500 dark:text-gray-400'
+                                                                            'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 dark:text-gray-400'
                                                                         }`}>
                                                                             {batch.status === 'completed' ? 'Completado' :
                                                                              batch.status === 'failed' ? 'Fallido' :
@@ -1297,7 +1297,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                         </span>
                                                                     </div>
                                                                 </div>
-                                                                <div className="mt-1 ml-6 text-gray-500 dark:text-gray-400">
+                                                                <div className="mt-1 ml-6 text-gray-500 dark:text-gray-400 dark:text-gray-400">
                                                                     {formatShortDate(batch.dateFrom)} → {formatShortDate(batch.dateTo)}
                                                                     {batch.orderCount > 0 && <span> · {batch.orderCount} {batch.orderCount === 1 ? 'orden' : 'órdenes'}</span>}
                                                                     {batch.orderCount === 0 && batch.status === 'completed' && <span> · Sin órdenes</span>}
@@ -1328,22 +1328,22 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                     <div className="flex gap-3 text-xs flex-wrap">
                                                         <div className="flex items-center gap-1">
                                                             <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                                                            <span className="text-gray-600 dark:text-gray-300">Creadas: <strong>{syncProgress.created}</strong></span>
+                                                            <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Creadas: <strong>{syncProgress.created}</strong></span>
                                                         </div>
                                                         <div className="flex items-center gap-1">
                                                             <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-                                                            <span className="text-gray-600 dark:text-gray-300">Actualizadas: <strong>{syncProgress.updated}</strong></span>
+                                                            <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Actualizadas: <strong>{syncProgress.updated}</strong></span>
                                                         </div>
                                                         <div className="flex items-center gap-1">
                                                             <div className="w-2.5 h-2.5 rounded-full bg-red-500" />
-                                                            <span className="text-gray-600 dark:text-gray-300">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
+                                                            <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
                                                         </div>
                                                     </div>
                                                 )}
                                                 {/* Orders feed */}
-                                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                                    <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
-                                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">Órdenes Procesadas</p>
+                                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                                    <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-10">
+                                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 dark:text-gray-200">Órdenes Procesadas</p>
                                                     </div>
                                                     <div className="max-h-[60vh] overflow-y-auto divide-y divide-gray-100">
                                                         {syncProgress && syncProgress.orders.length > 0 ? (
@@ -1370,7 +1370,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                                 </span>
                                                                             )}
                                                                             {order.orderStatus && (
-                                                                                <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 dark:text-gray-300 rounded text-[10px] flex-shrink-0">
+                                                                                <span className="px-1.5 py-0.5 bg-gray-200 text-gray-600 dark:text-gray-300 dark:text-gray-300 rounded text-[10px] flex-shrink-0">
                                                                                     {order.orderStatus}
                                                                                 </span>
                                                                             )}
@@ -1392,7 +1392,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                             </div>
                                                         )}
                                                         {syncProgress && syncProgress.orders.length > 100 && (
-                                                            <div className="p-2 bg-gray-50 text-xs text-gray-500 dark:text-gray-400 text-center">
+                                                            <div className="p-2 bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 text-center">
                                                                 Y {syncProgress.orders.length - 100} órdenes más...
                                                             </div>
                                                         )}
@@ -1411,7 +1411,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                             )}
                                             {/* Empty result message */}
                                             {syncProgress && syncProgress.totalFetched === 0 && !syncing && (
-                                                <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400">
+                                                <div className="flex flex-col items-center justify-center py-12 text-gray-500 dark:text-gray-400 dark:text-gray-400">
                                                     <svg className="w-16 h-16 mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                                     </svg>
@@ -1427,9 +1427,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                             <>
                                             <div>
                                                 <div className="flex justify-between items-center mb-2">
-                                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200">Progreso de Sincronización</h4>
+                                                    <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 dark:text-gray-200">Progreso de Sincronización</h4>
                                                     {syncProgress && (
-                                                        <span className="text-xs text-gray-500 dark:text-gray-400">
+                                                        <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                                                             {(() => {
                                                                 const processed = syncProgress.created + syncProgress.updated + syncProgress.rejected;
                                                                 if (allFinished && processed > 0) return `${processed} procesadas`;
@@ -1472,16 +1472,16 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                     <div className="flex gap-4 mt-3 text-xs">
                                                         <div className="flex items-center gap-1">
                                                             <div className="w-3 h-3 rounded-full bg-green-500" />
-                                                            <span className="text-gray-600 dark:text-gray-300">Creadas: <strong>{syncProgress.created}</strong></span>
+                                                            <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Creadas: <strong>{syncProgress.created}</strong></span>
                                                         </div>
                                                         <div className="flex items-center gap-1">
                                                             <div className="w-3 h-3 rounded-full bg-red-500" />
-                                                            <span className="text-gray-600 dark:text-gray-300">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
+                                                            <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Rechazadas: <strong>{syncProgress.rejected}</strong></span>
                                                         </div>
                                                         {syncProgress.updated > 0 && (
                                                             <div className="flex items-center gap-1">
                                                                 <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                                                                <span className="text-gray-600 dark:text-gray-300">Actualizadas: <strong>{syncProgress.updated}</strong></span>
+                                                                <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Actualizadas: <strong>{syncProgress.updated}</strong></span>
                                                             </div>
                                                         )}
                                                     </div>
@@ -1489,9 +1489,9 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                             </div>
                                             {/* Orders list */}
                                             {syncProgress && syncProgress.orders.length > 0 && (
-                                                <div className="border border-gray-200 rounded-lg overflow-hidden">
-                                                    <div className="p-2 bg-gray-50 border-b border-gray-200 sticky top-0">
-                                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">Órdenes Procesadas</p>
+                                                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                                                    <div className="p-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-700 sticky top-0">
+                                                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-200 dark:text-gray-200">Órdenes Procesadas</p>
                                                     </div>
                                                     <div className="max-h-64 overflow-y-auto divide-y divide-gray-100">
                                                         {syncProgress.orders.slice(0, 50).map((order, index) => (
@@ -1505,11 +1505,11 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                                             <div className={`w-2 h-2 rounded-full flex-shrink-0 ${order.status === 'created' ? 'bg-green-500' : order.status === 'updated' ? 'bg-blue-500' : 'bg-red-500'}`} />
                                                                             <span className="font-medium text-gray-800 dark:text-gray-100">#{order.orderNumber}</span>
                                                                             {order.orderStatus && (
-                                                                                <span className="px-2 py-0.5 bg-gray-200 text-gray-700 dark:text-gray-200 rounded text-xs font-medium">{order.orderStatus}</span>
+                                                                                <span className="px-2 py-0.5 bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 rounded text-xs font-medium">{order.orderStatus}</span>
                                                                             )}
                                                                         </div>
                                                                         {order.createdAt && (
-                                                                            <div className="text-gray-600 dark:text-gray-300 text-xs ml-4">
+                                                                            <div className="text-gray-600 dark:text-gray-300 dark:text-gray-300 text-xs ml-4">
                                                                                 Creada: {(() => {
                                                                                     try {
                                                                                         const date = new Date(order.createdAt);
@@ -1528,7 +1528,7 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                                                         ))}
                                                     </div>
                                                     {syncProgress.orders.length > 50 && (
-                                                        <div className="p-2 bg-gray-50 text-xs text-gray-500 dark:text-gray-400 text-center">
+                                                        <div className="p-2 bg-gray-50 dark:bg-gray-700 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 text-center">
                                                             Y {syncProgress.orders.length - 50} órdenes más...
                                                         </div>
                                                     )}
@@ -1543,8 +1543,8 @@ export default function IntegrationList({ onEdit, filterCategory: propFilterCate
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between flex-shrink-0 bg-white">
-                            <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between flex-shrink-0 bg-white dark:bg-gray-800">
+                            <div className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                                 {syncing && isBatchMode && batchSync && (
                                     <span className="flex items-center gap-2">
                                         <Spinner size="sm" />

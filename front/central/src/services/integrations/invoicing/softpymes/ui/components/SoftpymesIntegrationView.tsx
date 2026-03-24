@@ -20,7 +20,7 @@ export function SoftpymesIntegrationView({
     const config = integration.config as any;
 
     return (
-        <div className="bg-white border rounded-lg p-6 hover:shadow-md transition-shadow">
+        <div className="bg-white dark:bg-gray-800 border rounded-lg p-6 hover:shadow-md transition-shadow">
             {/* Header */}
             <div className="flex items-start justify-between mb-4">
                 <div className="flex items-center gap-3">
@@ -31,7 +31,7 @@ export function SoftpymesIntegrationView({
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {integration.name}
                         </h3>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
                             Softpymes - Facturación Electrónica
                         </p>
                     </div>
@@ -55,19 +55,19 @@ export function SoftpymesIntegrationView({
             {/* Configuration Info */}
             <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-300">Empresa:</span>
+                    <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Empresa:</span>
                     <span className="font-medium text-gray-900 dark:text-white">
                         {config?.company_name || 'No configurado'}
                     </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-300">NIT:</span>
+                    <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">NIT:</span>
                     <span className="font-medium text-gray-900 dark:text-white">
                         {config?.company_nit || 'No configurado'}
                     </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600 dark:text-gray-300">Modo:</span>
+                    <span className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Modo:</span>
                     <span className="font-medium text-gray-900 dark:text-white">
                         {config?.test_mode ? (
                             <Badge type="warning">Pruebas</Badge>

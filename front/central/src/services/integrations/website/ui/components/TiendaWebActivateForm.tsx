@@ -62,7 +62,7 @@ export function TiendaWebActivateForm({ integrationType, onSuccess, onBack }: Ti
                     <GlobeAltIcon className="w-8 h-8 text-emerald-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activar Sitio Web</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-2">
                     Crea un sitio web público para tu negocio.
                     La configuración de secciones se gestiona desde Sitio Web.
                 </p>
@@ -79,7 +79,7 @@ export function TiendaWebActivateForm({ integrationType, onSuccess, onBack }: Ti
                         <select
                             value={selectedBusinessId?.toString() ?? ''}
                             onChange={(e) => setSelectedBusinessId(e.target.value ? Number(e.target.value) : null)}
-                            className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="">— Selecciona un negocio —</option>
                             {businesses.map(b => (

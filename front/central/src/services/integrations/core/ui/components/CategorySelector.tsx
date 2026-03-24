@@ -37,7 +37,7 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
     return (
         <div className="p-6">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Seleccionar Categoría</h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-6">
+            <p className="text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-6">
                 Elige el tipo de integración que deseas configurar
             </p>
 
@@ -46,7 +46,7 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
                     <button
                         key={category.code}
                         onClick={() => onSelect(category)}
-                        className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left group"
+                        className="p-6 border-2 border-gray-200 dark:border-gray-700 rounded-lg hover:border-blue-500 hover:shadow-md transition-all text-left group"
                         style={{
                             borderColor: category.color ? `${category.color}20` : undefined,
                         }}
@@ -71,7 +71,7 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
 
                                 {/* Description */}
                                 {category.description && (
-                                    <p className="text-sm text-gray-600 dark:text-gray-300">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">
                                         {category.description}
                                     </p>
                                 )}
@@ -82,7 +82,7 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
             </div>
 
             {sortedCategories.length === 0 && (
-                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400 dark:text-gray-400">
                     No hay categorías disponibles
                 </div>
             )}

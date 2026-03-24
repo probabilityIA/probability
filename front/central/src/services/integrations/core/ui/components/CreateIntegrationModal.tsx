@@ -450,7 +450,7 @@ function WhatsAppActivateForm({
                     <ChatBubbleLeftRightIcon className="w-8 h-8 text-green-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activar WhatsApp</h3>
-                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-2">
                     La integración de WhatsApp usa la configuración global del tipo de integración.
                     Las notificaciones se configuran desde el módulo de Notificaciones.
                 </p>
@@ -468,7 +468,7 @@ function WhatsAppActivateForm({
                         <select
                             value={selectedBusinessId?.toString() ?? ''}
                             onChange={(e) => setSelectedBusinessId(e.target.value ? Number(e.target.value) : null)}
-                            className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            className="w-full px-3 py-2 border border-blue-300 rounded-lg text-sm bg-white dark:bg-gray-800 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         >
                             <option value="">— Selecciona un negocio —</option>
                             {businesses.map(b => (
@@ -480,16 +480,16 @@ function WhatsAppActivateForm({
             )}
 
             {/* Usar credenciales del tipo de integración */}
-            <label className="flex items-start gap-3 cursor-pointer p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <label className="flex items-start gap-3 cursor-pointer p-4 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:bg-gray-700 transition-colors">
                 <input
                     type="checkbox"
                     checked={usePlatformToken}
                     onChange={(e) => setUsePlatformToken(e.target.checked)}
-                    className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    className="mt-0.5 h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">Usar credenciales del tipo de integración</span>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1">
                         Usa las credenciales globales configuradas en el tipo de integración WhatsApp (access_token, phone_number_id).
                         Desactiva esta opción si este negocio tiene sus propias credenciales de Meta.
                     </p>

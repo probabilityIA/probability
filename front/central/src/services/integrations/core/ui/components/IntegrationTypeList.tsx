@@ -68,17 +68,17 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                     <img
                         src={type.image_url}
                         alt={type.name}
-                        className="w-12 h-12 object-contain border border-gray-200 rounded-lg p-1 bg-white"
+                        className="w-12 h-12 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-white dark:bg-gray-800"
                         onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
                             const parent = (e.target as HTMLImageElement).parentElement;
                             if (parent) {
-                                parent.innerHTML = '<div class="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-xs">Sin logo</div>';
+                                parent.innerHTML = '<div class="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-xs">Sin logo</div>';
                             }
                         }}
                     />
                 ) : (
-                    <div className="w-12 h-12 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-xs">
+                    <div className="w-12 h-12 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-xs">
                         Sin logo
                     </div>
                 )}
@@ -88,7 +88,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
             <div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white">{type.name}</div>
                 {type.description && (
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{type.description}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">{type.description}</div>
                 )}
             </div>
         ),
@@ -165,7 +165,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         selectedCategoryId === undefined
                             ? 'bg-gray-900 text-white'
-                            : 'bg-gray-100 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                            : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 dark:text-gray-300 hover:bg-gray-200'
                     }`}
                 >
                     Todas
@@ -177,7 +177,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             selectedCategoryId === cat.id
                                 ? 'text-white'
-                                : 'text-gray-600 dark:text-gray-300 hover:opacity-80'
+                                : 'text-gray-600 dark:text-gray-300 dark:text-gray-300 hover:opacity-80'
                         }`}
                         style={{
                             backgroundColor: selectedCategoryId === cat.id

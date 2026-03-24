@@ -222,7 +222,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             {/* Basic Info - 2 columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Nombre *
                     </label>
                     <Input
@@ -242,7 +242,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Categoría *
                     </label>
                     <Select
@@ -256,7 +256,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
 
             {/* Image Upload Section */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                     Logo del Tipo de Integración
                 </label>
                 <div className="space-y-4">
@@ -266,10 +266,10 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                             <img
                                 src={imagePreview}
                                 alt="Preview"
-                                className="w-24 h-24 object-contain border border-gray-300 rounded-lg p-2 bg-gray-50"
+                                className="w-24 h-24 object-contain border border-gray-300 dark:border-gray-600 rounded-lg p-2 bg-gray-50 dark:bg-gray-700"
                             />
                             <div className="flex-1">
-                                <p className="text-sm text-gray-600 dark:text-gray-300">
+                                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">
                                     {imageFile ? 'Nueva imagen seleccionada' : 'Imagen actual'}
                                 </p>
                             </div>
@@ -300,9 +300,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                                             setImagePreview(integrationType.image_url || null);
                                         }
                                     }}
-                                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                    className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
                                 />
-                                <span className="text-sm text-gray-700 dark:text-gray-200">Eliminar imagen actual</span>
+                                <span className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">Eliminar imagen actual</span>
                             </label>
                         </div>
                     )}
@@ -311,14 +311,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
 
             {/* Description - Full width */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                     Descripción
                 </label>
                 <textarea
                     value={formData.description}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     rows={2}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
                 />
             </div>
 
@@ -326,7 +326,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Config Schema JSON Editor */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Config Schema (JSON)
                     </label>
                     <textarea
@@ -337,14 +337,14 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         placeholder='{"type": "object", "properties": {...}}'
                         spellCheck={false}
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         Campos de configuración (no sensibles)
                     </p>
                 </div>
 
                 {/* Credentials Schema JSON Editor */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         Credentials Schema (JSON)
                     </label>
                     <textarea
@@ -355,7 +355,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         placeholder='{"type": "object", "properties": {...}}'
                         spellCheck={false}
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         Campos de credenciales (tokens, keys, etc.)
                     </p>
                 </div>
@@ -364,7 +364,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
             {/* URLs de la API - 2 columns */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         URL de Producción
                     </label>
                     <Input
@@ -374,12 +374,12 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         placeholder="https://api.ejemplo.com/v1"
                         className="font-mono text-sm"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         URL base del API en producción
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                         URL de Pruebas (Sandbox)
                     </label>
                     <Input
@@ -389,7 +389,7 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         placeholder="https://sandbox.ejemplo.com/v1"
                         className="font-mono text-sm"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         URL del entorno sandbox para modo de pruebas
                     </p>
                 </div>
@@ -397,17 +397,17 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
 
             {/* Setup Instructions - Full width */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                     Instrucciones de Configuración
                 </label>
                 <textarea
                     value={formData.setup_instructions}
                     onChange={(e) => setFormData({ ...formData, setup_instructions: e.target.value })}
                     rows={6}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white"
                     placeholder="Pasos para configurar esta integración:&#10;&#10;1. Ve a...&#10;2. Configura...&#10;3. Copia..."
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                     Instrucciones paso a paso para el usuario
                 </p>
             </div>
@@ -423,13 +423,13 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 /* Editor JSON genérico para otros tipos */
                 <div>
                     <div className="flex items-center justify-between mb-1">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">
                             Credenciales de Plataforma (JSON)
                         </label>
                         <button
                             type="button"
                             onClick={() => setShowPlatformCredentials((v) => !v)}
-                            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200"
+                            className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200"
                         >
                             {showPlatformCredentials ? (
                                 <>
@@ -456,11 +456,11 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         }}
                         readOnly={!showPlatformCredentials}
                         rows={6}
-                        className={`w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs ${showPlatformCredentials ? 'text-green-400' : 'text-gray-500 dark:text-gray-400 cursor-default'}`}
+                        className={`w-full px-3 py-2 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent font-mono text-xs ${showPlatformCredentials ? 'text-green-400' : 'text-gray-500 dark:text-gray-400 dark:text-gray-400 cursor-default'}`}
                         placeholder={showPlatformCredentials ? '{\n  "api_key": "tu-api-key-aqui"\n}' : ''}
                         spellCheck={false}
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
                         Credenciales globales del proveedor (se encriptarán). Deja <code>{'{}'}</code> para no cambiarlas.
                     </p>
                 </div>
@@ -473,9 +473,9 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         type="checkbox"
                         checked={formData.is_active}
                         onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
-                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 dark:border-gray-600 rounded"
                     />
-                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Activo</span>
+                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">Activo</span>
                 </label>
             </div>
 

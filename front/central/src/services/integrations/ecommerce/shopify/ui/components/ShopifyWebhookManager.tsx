@@ -85,7 +85,7 @@ export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookM
         return (
             <div className="flex items-center justify-center py-8">
                 <Spinner />
-                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">Cargando webhooks...</span>
+                <span className="ml-2 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">Cargando webhooks...</span>
             </div>
         );
     }
@@ -99,7 +99,7 @@ export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookM
             )}
 
             <div className="flex items-center justify-between">
-                <p className="text-sm text-gray-500 dark:text-gray-400">
+                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
                     {webhooks.length === 0
                         ? 'No hay webhooks configurados. Crea los webhooks para recibir eventos de Shopify.'
                         : `${webhooks.length} webhook${webhooks.length !== 1 ? 's' : ''} activo${webhooks.length !== 1 ? 's' : ''}`}
@@ -116,26 +116,26 @@ export default function ShopifyWebhookManager({ integrationId }: ShopifyWebhookM
             </div>
 
             {webhooks.length > 0 && (
-                <div className="overflow-x-auto border border-gray-200 rounded-lg">
+                <div className="overflow-x-auto border border-gray-200 dark:border-gray-700 rounded-lg">
                     <table className="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead className="bg-gray-50">
+                        <thead className="bg-gray-50 dark:bg-gray-700">
                             <tr>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Topic</th>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">URL</th>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Formato</th>
-                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300">Fecha</th>
-                                <th className="px-4 py-2 text-right font-medium text-gray-600 dark:text-gray-300">Acciones</th>
+                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Topic</th>
+                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">URL</th>
+                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Formato</th>
+                                <th className="px-4 py-2 text-left font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Fecha</th>
+                                <th className="px-4 py-2 text-right font-medium text-gray-600 dark:text-gray-300 dark:text-gray-300">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-gray-100 bg-white">
+                        <tbody className="divide-y divide-gray-100 bg-white dark:bg-gray-800">
                             {webhooks.map((wh) => (
-                                <tr key={wh.id} className="hover:bg-gray-50">
+                                <tr key={wh.id} className="hover:bg-gray-50 dark:bg-gray-700">
                                     <td className="px-4 py-2 font-mono text-xs">{wh.topic}</td>
-                                    <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 max-w-[300px] truncate" title={wh.address}>
+                                    <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 max-w-[300px] truncate" title={wh.address}>
                                         {wh.address}
                                     </td>
                                     <td className="px-4 py-2 text-xs uppercase">{wh.format}</td>
-                                    <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400">{formatDate(wh.created_at)}</td>
+                                    <td className="px-4 py-2 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">{formatDate(wh.created_at)}</td>
                                     <td className="px-4 py-2 text-right">
                                         <Button
                                             onClick={() => handleDelete(wh.id, wh.topic)}

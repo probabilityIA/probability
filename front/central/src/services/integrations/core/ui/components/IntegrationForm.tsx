@@ -646,8 +646,8 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
         <div className="space-y-6 w-full max-w-full overflow-x-hidden">
             {/* Type Selector - Show when no type is selected */}
             {!selectedType && integrationTypes.length > 0 && (
-                <div className="bg-white p-4 rounded-lg w-full">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg w-full">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Selecciona el tipo de integración *
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full max-w-full overflow-x-hidden">
@@ -656,7 +656,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                 key={type.id}
                                 type="button"
                                 onClick={() => handleTypeChange(type.id)}
-                                className="p-4 border-2 rounded-lg text-center transition-all hover:border-blue-300 hover:shadow-lg border-gray-200 w-full h-full flex flex-col justify-center items-center min-h-[140px] shadow-md"
+                                className="p-4 border-2 rounded-lg text-center transition-all hover:border-blue-300 hover:shadow-lg border-gray-200 dark:border-gray-700 w-full h-full flex flex-col justify-center items-center min-h-[140px] shadow-md"
                             >
                                 {/* Logo centrado */}
                                 <div className="flex items-center justify-center mb-4">
@@ -696,7 +696,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                                     />
                                                 )}
                                                 {type.id !== INTEGRATION_TYPE_IDS.SHOPIFY && type.id !== INTEGRATION_TYPE_IDS.WHATSAPP && (
-                                                    <div className="w-14 h-14 flex items-center justify-center bg-gray-100 rounded-lg text-gray-400 text-base font-semibold shadow-md">
+                                                    <div className="w-14 h-14 flex items-center justify-center bg-gray-100 dark:bg-gray-700 rounded-lg text-gray-400 text-base font-semibold shadow-md">
                                                         {type.name.charAt(0).toUpperCase()}
                                                     </div>
                                                 )}
@@ -708,7 +708,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                 {/* Contenido de texto - Nombre y código centrados */}
                                 <div className="flex-1 flex flex-col justify-center items-center">
                                     <h4 className="font-semibold text-gray-900 dark:text-white text-base break-words mb-1">{type.name}</h4>
-                                    <p className="text-sm text-gray-500 dark:text-gray-400 break-words">{type.code}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 break-words">{type.code}</p>
                                 </div>
                             </button>
                         ))}
@@ -719,7 +719,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             {/* Show message if no types available */}
             {!selectedType && integrationTypes.length === 0 && (
                 <div className="text-center py-8">
-                    <p className="text-gray-600 dark:text-gray-300">No hay tipos de integración disponibles.</p>
+                    <p className="text-gray-600 dark:text-gray-300 dark:text-gray-300">No hay tipos de integración disponibles.</p>
                 </div>
             )}
 
@@ -742,12 +742,12 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                 ) : (
                                     <img src="/integrations/whatsapp.png" alt="WhatsApp" className="w-14 h-14 object-contain rounded-lg shadow-md mb-3" />
                                 )}
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
                                     Crea una integración de WhatsApp para este negocio. Las notificaciones se configuran desde el módulo de Notificaciones.
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                                     Nombre de la integración *
                                 </label>
                                 <input
@@ -755,7 +755,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                     value={whatsappName}
                                     onChange={(e) => setWhatsappName(e.target.value)}
                                     placeholder="Ej: WhatsApp - Mi Negocio"
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500"
                                     disabled={creatingWhatsapp}
                                 />
                             </div>

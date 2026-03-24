@@ -191,7 +191,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
     return (
         <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
             {/* Header */}
-            <div className="border-b border-gray-200 pb-6">
+            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 bg-blue-50 rounded-lg">
                         <CheckBadgeIcon className="w-6 h-6 text-blue-600" />
@@ -200,7 +200,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         Softpymes Facturación
                     </h2>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 ml-14">
+                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 ml-14">
                     Conecta tu cuenta de Softpymes para gestionar facturación electrónica automáticamente desde Probability.
                 </p>
             </div>
@@ -212,16 +212,16 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
             )}
 
             {/* Configuración General */}
-            <div className="bg-gray-50 rounded-xl p-6 space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200 dark:text-gray-200" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Configuración General
                     </h3>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Nombre de la Integración <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -230,9 +230,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Ej: Softpymes Facturación Principal"
                         required
-                        className="bg-white"
+                        className="bg-white dark:bg-gray-800"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
@@ -241,16 +241,16 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                 {/* Business Selector - Only for Super Admins */}
                 {isSuperAdmin && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Negocio <span className="text-red-500">*</span>
                         </label>
                         {loadingBusinesses ? (
-                            <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                            <div className="flex items-center gap-2 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                                 <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">Cargando negocios...</span>
                             </div>
                         ) : (
                             <Select
@@ -264,10 +264,10 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                                     })),
                                 ]}
                                 required
-                                className="bg-white"
+                                className="bg-white dark:bg-gray-800"
                             />
                         )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>Selecciona el negocio al que pertenecerá esta integración</span>
                         </p>
@@ -276,20 +276,20 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
             </div>
 
             {/* Información de la Empresa */}
-            <div className="bg-gray-50 rounded-xl p-6 space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <BuildingOfficeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <BuildingOfficeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200 dark:text-gray-200" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Información de la Empresa
                     </h3>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 -mt-2 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 -mt-2 mb-4">
                     Datos de tu empresa registrados en Softpymes
                 </p>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             NIT de la Empresa <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -298,15 +298,15 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                             onChange={(e) => setFormData({ ...formData, company_nit: e.target.value })}
                             placeholder="900123456-7"
                             required
-                            className="bg-white"
+                            className="bg-white dark:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
                             Incluye el dígito de verificación
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Razón Social <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -315,9 +315,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                             onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                             placeholder="Mi Empresa SAS"
                             required
-                            className="bg-white"
+                            className="bg-white dark:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
                             Nombre registrado en Softpymes
                         </p>
                     </div>
@@ -325,7 +325,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
 
                 {/* Referer - Identificación de instancia */}
                 <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Referer / Identificación de Instancia <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -334,9 +334,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         onChange={(e) => setFormData({ ...formData, referer: e.target.value })}
                         placeholder="probability-empresa-123"
                         required
-                        className="bg-white"
+                        className="bg-white dark:bg-gray-800"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>
                             Identificador único de tu instancia en Softpymes (requerido por la API para el header Referer)
@@ -346,7 +346,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
 
                 {/* NIT por defecto para clientes sin DNI */}
                 <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         NIT por Defecto para Clientes sin DNI
                     </label>
                     <Input
@@ -354,9 +354,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         value={formData.default_customer_nit}
                         onChange={(e) => setFormData({ ...formData, default_customer_nit: e.target.value })}
                         placeholder="222222222222"
-                        className="bg-white"
+                        className="bg-white dark:bg-gray-800"
                     />
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>
                             NIT que se usará cuando un cliente no tenga DNI. En Colombia, el consumidor final es <strong>222222222222</strong>
@@ -379,7 +379,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Resolution ID <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -389,9 +389,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                             placeholder="1"
                             min="1"
                             required
-                            className="bg-white"
+                            className="bg-white dark:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>
                                 ID de la resolución de facturación DIAN. Se obtiene desde el panel de Softpymes o consultando el endpoint <strong>/resolutions</strong>
@@ -400,7 +400,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Código de Sucursal
                         </label>
                         <Input
@@ -408,9 +408,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                             value={formData.branch_code}
                             onChange={(e) => setFormData({ ...formData, branch_code: e.target.value })}
                             placeholder="001"
-                            className="bg-white"
+                            className="bg-white dark:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
                             Código de sucursal en Softpymes (por defecto: 001)
                         </p>
                     </div>
@@ -418,7 +418,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             Código Sucursal del Cliente
                         </label>
                         <Input
@@ -426,15 +426,15 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                             value={formData.customer_branch_code}
                             onChange={(e) => setFormData({ ...formData, customer_branch_code: e.target.value })}
                             placeholder="001"
-                            className="bg-white"
+                            className="bg-white dark:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5">
                             Softpymes asigna &quot;000&quot; por defecto al crear clientes. Solo cambiar si tus clientes tienen otra sucursal.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             NIT del Vendedor
                         </label>
                         <Input
@@ -442,9 +442,9 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                             value={formData.seller_nit}
                             onChange={(e) => setFormData({ ...formData, seller_nit: e.target.value })}
                             placeholder="Dejar vac&iacute;o si no hay vendedores"
-                            className="bg-white"
+                            className="bg-white dark:bg-gray-800"
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>
                                 Solo si tienes vendedores registrados en Softpymes. Si no tienes, <strong>d&eacute;jalo vac&iacute;o</strong> para evitar errores.
@@ -472,7 +472,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             API Key <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -483,12 +483,12 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                             required
                             autoComplete="off"
                             data-1p-ignore
-                            className="bg-white font-mono text-sm"
+                            className="bg-white dark:bg-gray-800 font-mono text-sm"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                             API Secret <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -500,12 +500,12 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                                 required
                                 autoComplete="new-password"
                                 data-1p-ignore
-                                className="bg-white font-mono text-sm pr-10"
+                                className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
                             />
                             <button
                                 type="button"
                                 onClick={() => setShowApiSecret(!showApiSecret)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 focus:outline-none"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
                                 tabIndex={-1}
                             >
                                 {showApiSecret ? (
@@ -522,7 +522,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         <Button
                             type="button"
                             variant="outline"
-                            className="w-full bg-white hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
+                            className="w-full bg-white dark:bg-gray-800 hover:bg-blue-50 border-blue-200 text-blue-700 font-semibold"
                             onClick={handleTestConnection}
                             disabled={testingConnection || loading || !formData.api_key || !formData.api_secret}
                         >
@@ -568,10 +568,10 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         Modo de Pruebas
                     </h3>
                 </div>
-                <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
+                <div className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border border-orange-200">
                     <div className="flex-1">
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Activar modo testing</p>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-0.5">
                             Las facturas generadas quedarán marcadas como TEST y usarán la URL de pruebas de Softpymes.
                         </p>
                     </div>
@@ -580,7 +580,7 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
                         onClick={() => setIsTesting(!isTesting)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ml-4 flex-shrink-0 ${isTesting ? 'bg-orange-500' : 'bg-gray-200'}`}
                     >
-                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
+                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-800 transition-transform ${isTesting ? 'translate-x-6' : 'translate-x-1'}`} />
                     </button>
                 </div>
                 {isTesting && (
@@ -596,13 +596,13 @@ export function SoftpymesConfigForm({ onSuccess, onCancel, integrationTypeBaseUR
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-between items-center gap-3 pt-6 border-t border-gray-200">
+            <div className="flex justify-between items-center gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 {onCancel && (
                     <Button
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 border border-gray-300"
+                        className="min-w-[140px] bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 border border-gray-300 dark:border-gray-600"
                     >
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar

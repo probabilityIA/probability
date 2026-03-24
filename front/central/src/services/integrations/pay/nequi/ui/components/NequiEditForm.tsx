@@ -118,14 +118,14 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
     return (
         <form onSubmit={handleSubmit} className="space-y-8" autoComplete="off">
             {/* Header */}
-            <div className="border-b border-gray-200 pb-6">
+            <div className="border-b border-gray-200 dark:border-gray-700 pb-6">
                 <div className="flex items-center gap-3 mb-2">
                     <div className="p-2 bg-purple-50 rounded-lg">
                         <CreditCardIcon className="w-6 h-6 text-purple-600" />
                     </div>
                     <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Editar Nequi Pagos</h2>
                 </div>
-                <p className="text-sm text-gray-600 dark:text-gray-300 ml-14">
+                <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 ml-14">
                     Actualiza la configuración de tu integración con Nequi.
                 </p>
             </div>
@@ -133,14 +133,14 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
             {error && <Alert type="error">{error}</Alert>}
 
             {/* Configuración General */}
-            <div className="bg-gray-50 rounded-xl p-6 space-y-4">
+            <div className="bg-gray-50 dark:bg-gray-700 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200 dark:text-gray-200" />
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Configuración General</h3>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Nombre de la Integración <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -149,20 +149,20 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                         placeholder="Ej: Nequi Principal"
                         required
-                        className="bg-white"
+                        className="bg-white dark:bg-gray-800"
                     />
                 </div>
 
                 {isSuperAdmin && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Negocio</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">Negocio</label>
                         {loadingBusinesses ? (
-                            <div className="flex items-center gap-2 p-3 bg-gray-100 rounded-lg">
+                            <div className="flex items-center gap-2 p-3 bg-gray-100 dark:bg-gray-700 rounded-lg">
                                 <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300">Cargando negocios...</span>
                             </div>
                         ) : (
                             <Select
@@ -173,10 +173,10 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
                                     ...businesses.map((b) => ({ value: b.id.toString(), label: b.name })),
                                 ]}
                                 disabled={true}
-                                className="bg-white"
+                                className="bg-white dark:bg-gray-800"
                             />
                         )}
-                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>El negocio no puede ser modificado después de la creación</span>
                         </p>
@@ -184,7 +184,7 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
                 )}
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Código Telefónico por Defecto
                     </label>
                     <Input
@@ -192,7 +192,7 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
                         value={formData.phone_code}
                         onChange={(e) => setFormData({ ...formData, phone_code: e.target.value })}
                         placeholder="+57"
-                        className="bg-white"
+                        className="bg-white dark:bg-gray-800"
                     />
                 </div>
             </div>
@@ -209,7 +209,7 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
                 </p>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Ambiente</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">Ambiente</label>
                     <Select
                         value={formData.environment}
                         onChange={(e) => setFormData({ ...formData, environment: e.target.value as 'sandbox' | 'production' })}
@@ -217,12 +217,12 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
                             { value: 'sandbox', label: 'Sandbox (Pruebas)' },
                             { value: 'production', label: 'Producción' },
                         ]}
-                        className="bg-white"
+                        className="bg-white dark:bg-gray-800"
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">API Key</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">API Key</label>
                     <div className="relative">
                         <Input
                             type={showApiKey ? 'text' : 'password'}
@@ -231,12 +231,12 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
                             placeholder="Dejar vacío para mantener la actual"
                             autoComplete="new-password"
                             data-1p-ignore
-                            className="bg-white font-mono text-sm pr-10"
+                            className="bg-white dark:bg-gray-800 font-mono text-sm pr-10"
                         />
                         <button
                             type="button"
                             onClick={() => setShowApiKey(!showApiKey)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 focus:outline-none"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 focus:outline-none"
                             tabIndex={-1}
                         >
                             {showApiKey ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
@@ -246,13 +246,13 @@ export function NequiEditForm({ integrationId, initialData, onSuccess, onCancel 
             </div>
 
             {/* Buttons */}
-            <div className="flex justify-between items-center gap-3 pt-6 border-t border-gray-200">
+            <div className="flex justify-between items-center gap-3 pt-6 border-t border-gray-200 dark:border-gray-700">
                 {onCancel && (
                     <Button
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 border border-gray-300"
+                        className="min-w-[140px] bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 border border-gray-300 dark:border-gray-600"
                     >
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar
