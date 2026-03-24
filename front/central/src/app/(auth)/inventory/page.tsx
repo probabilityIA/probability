@@ -100,7 +100,7 @@ export default function InventoryStockPage() {
     }, [setActionButtons, showActionButtons]);
 
     return (
-        <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+        <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="space-y-4">
                 <div>
                     <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Stock</h1>
@@ -118,7 +118,7 @@ export default function InventoryStockPage() {
                     </div>
                 ) : (
                     <>
-                        <div className="bg-white border border-gray-200 rounded-lg p-4">
+                        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Bodega</label>
                             {loadingWarehouses ? (
                                 <div className="flex items-center gap-2">
@@ -131,7 +131,7 @@ export default function InventoryStockPage() {
                                 <select
                                     value={selectedWarehouseId?.toString() ?? ''}
                                     onChange={(e) => setSelectedWarehouseId(e.target.value ? Number(e.target.value) : null)}
-                                    className="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    className="w-full max-w-sm px-3 py-2 bg-white dark:bg-gray-800 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                                 >
                                     {warehouses.map((w) => (
                                         <option key={w.id} value={w.id}>
