@@ -83,7 +83,7 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
 
         return {
             date: (
-                <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                     {new Date(movement.created_at).toLocaleDateString('es-CO', {
                         day: '2-digit',
                         month: 'short',
@@ -97,7 +97,7 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
                 <div>
                     <span className="font-medium text-gray-900 dark:text-white">{movement.product_name || movement.product_id}</span>
                     {movement.product_sku && (
-                        <span className="block text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 font-mono">{movement.product_sku}</span>
+                        <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{movement.product_sku}</span>
                     )}
                 </div>
             ),
@@ -109,18 +109,18 @@ export default function StockMovementList({ warehouseId, selectedBusinessId, onR
                 </div>
             ),
             quantity: (
-                <span className={`text-sm font-semibold ${direction === 'in' ? 'text-green-700' : direction === 'out' ? 'text-red-700' : 'text-gray-700 dark:text-gray-200 dark:text-gray-200'}`}>
+                <span className={`text-sm font-semibold ${direction === 'in' ? 'text-green-700' : direction === 'out' ? 'text-red-700' : 'text-gray-700 dark:text-gray-200'}`}>
                     {style.prefix}{Math.abs(movement.quantity)}
                 </span>
             ),
             before_after: (
-                <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                     {movement.previous_qty} &rarr; {movement.new_qty}
                 </span>
             ),
             reason: (
                 <div>
-                    <span className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200">{movement.reason}</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-200">{movement.reason}</span>
                     {movement.notes && (
                         <span className="block text-xs text-gray-400 dark:text-gray-500 truncate max-w-[200px]">{movement.notes}</span>
                     )}

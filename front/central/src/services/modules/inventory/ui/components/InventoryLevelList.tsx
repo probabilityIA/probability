@@ -96,7 +96,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
             <div>
                 <span className="font-medium text-gray-900 dark:text-white">{level.product_name || level.product_id}</span>
                 {level.product_sku && (
-                    <span className="block text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 font-mono">{level.product_sku}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{level.product_sku}</span>
                 )}
             </div>
         ),
@@ -112,18 +112,18 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
             <span className="text-sm font-semibold text-gray-900 dark:text-white">{level.available_qty}</span>
         ),
         limits: (
-            <span className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
                 {level.min_stock != null ? level.min_stock : '—'} / {level.max_stock != null ? level.max_stock : '—'}
             </span>
         ),
         status: (
             <div className="flex justify-center">
                 {isLowStock(level) ? (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200">
                         Stock bajo
                     </span>
                 ) : (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
                         OK
                     </span>
                 )}
@@ -134,7 +134,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                 <div className="flex justify-center">
                     <button
                         onClick={() => onAdjust(level.product_id)}
-                        className="p-1.5 text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                         title="Ajustar stock"
                     >
                         <AdjustmentsHorizontalIcon className="w-4 h-4" />
@@ -173,7 +173,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                         <button
                             type="button"
                             onClick={handleClearSearch}
-                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 dark:bg-gray-600 transition-colors"
+                            className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 dark:bg-gray-600 transition-colors"
                         >
                             Limpiar
                         </button>

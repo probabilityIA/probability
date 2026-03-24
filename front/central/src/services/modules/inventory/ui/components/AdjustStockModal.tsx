@@ -72,7 +72,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             ID del producto <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -87,7 +87,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Cantidad <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -97,13 +97,13 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                             placeholder="Positivo para agregar, negativo para quitar"
                             required
                         />
-                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Use valores positivos para agregar stock y negativos para quitar.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Razón <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -116,7 +116,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Notas</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Notas</label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
