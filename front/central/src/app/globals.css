@@ -398,7 +398,7 @@
 .pagination-info {
   @apply px-4 py-2 text-sm font-medium rounded;
   color: var(--gray-700);
-  background: var(--gray-100);
+  background: white;
   border: 1px solid var(--gray-300);
 }
 
@@ -413,7 +413,7 @@
 /* Paginación alternativa más visible */
 .pagination-alt {
   @apply flex justify-between items-center mt-6 p-4 rounded-lg;
-  background: var(--gray-50);
+  background: white;
   border: 1px solid var(--gray-200);
 }
 
