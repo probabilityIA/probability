@@ -180,7 +180,7 @@ const ProductList = forwardRef(function ProductList(
                                 </tr>
                             ) : (
                                 products.map((product) => (
-                                    <tr key={product.id}>
+                                    <tr key={product.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                                         <td className="px-3 sm:px-6 py-4">
                                             <div className="flex items-center">
                                                 {product.image_url ? (
@@ -216,8 +216,8 @@ const ProductList = forwardRef(function ProductList(
                                                 onClick={() => handleToggleActive(product)}
                                                 className={`inline-flex px-3 py-1 text-xs font-semibold rounded-full transition-colors duration-200 cursor-pointer ${
                                                     product.is_active
-                                                        ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                                                        : 'bg-red-100 text-red-700 hover:bg-red-200'
+                                                        ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800'
+                                                        : 'bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800'
                                                 }`}
                                                 title={product.is_active ? 'Click para desactivar' : 'Click para activar'}
                                             >

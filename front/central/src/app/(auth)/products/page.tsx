@@ -61,45 +61,45 @@ export default function ProductsPage() {
             <div className="flex items-start gap-6">
                 {/* Título y Descripción */}
                 <div className="flex-shrink-0 min-w-fit">
-                    <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent mb-2">
+                    <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-2">
                         Productos
                     </h1>
-                    <p className="text-slate-600 text-base">
+                    <p className="text-slate-600 dark:text-slate-300 text-base">
                         Gestiona el catálogo de productos de tu negocio
                     </p>
                 </div>
 
                 {/* Filtros y Botones (solo cuando no requiere selección de negocio) */}
                 {!requiresBusinessSelection && (
-                    <div className="bg-gradient-to-br from-[#7c3aed]/8 to-[#6d28d9]/8 px-6 py-4 rounded-xl shadow-lg hover:shadow-xl border-2 border-[#7c3aed]/40 transition-all duration-300 backdrop-blur-sm flex-1">
+                    <div className="bg-white dark:bg-gray-800 px-6 py-4 rounded-xl shadow-lg hover:shadow-xl border-2 border-[#7c3aed]/40 dark:border-[#7c3aed]/60 transition-all duration-300 backdrop-blur-sm flex-1">
                         <div className="flex justify-between items-end gap-4">
                             <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-2.5">Nombre</label>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2.5">Nombre</label>
                                     <input
                                         type="text"
                                         placeholder="Ej: Camiseta..."
                                         value={searchName}
                                         onChange={(e) => setSearchName(e.target.value)}
-                                        className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-700 transition-all duration-300 hover:border-slate-300 dark:hover:border-gray-500 text-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-2.5">SKU</label>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2.5">SKU</label>
                                     <input
                                         type="text"
                                         placeholder="Ej: PROD-001..."
                                         value={searchSku}
                                         onChange={(e) => setSearchSku(e.target.value)}
-                                        className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 placeholder:text-slate-400 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-gray-500 bg-white dark:bg-gray-700 transition-all duration-300 hover:border-slate-300 dark:hover:border-gray-500 text-sm"
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-xs font-bold text-slate-700 mb-2.5">Integraciones</label>
+                                    <label className="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-2.5">Integraciones</label>
                                     <select
                                         value={searchIntegration}
                                         onChange={(e) => setSearchIntegration(e.target.value)}
-                                        className="w-full px-5 py-3 border-2 border-slate-200 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 bg-white transition-all duration-300 hover:border-slate-300 text-sm"
+                                        className="w-full px-5 py-3 border-2 border-slate-200 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] focus:shadow-lg focus:shadow-[#7c3aed]/20 text-slate-900 dark:text-white bg-white dark:bg-gray-700 transition-all duration-300 hover:border-slate-300 dark:hover:border-gray-500 text-sm"
                                     >
                                         <option value="">Todas las integraciones</option>
                                         <option value="shopify">Shopify</option>
@@ -111,7 +111,7 @@ export default function ProductsPage() {
                             <div className="flex gap-3 flex-shrink-0">
                                 <button
                                     onClick={handleRefresh}
-                                    className="group px-6 py-3 bg-gradient-to-r from-[#a855f7]/10 to-[#9333ea]/10 border-2 border-[#7c3aed]/40 hover:border-[#7c3aed] hover:from-[#7c3aed]/20 hover:to-[#6d28d9]/20 text-[#7c3aed] font-bold rounded-lg transition-all duration-300 text-sm shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
+                                    className="group px-6 py-3 bg-white dark:bg-gray-700 border-2 border-[#7c3aed]/40 hover:border-[#7c3aed] text-[#7c3aed] dark:text-[#a855f7] font-bold rounded-lg transition-all duration-300 text-sm shadow-sm hover:shadow-md transform hover:scale-105 flex items-center gap-2 whitespace-nowrap"
                                 >
                                     <span className="inline-block transition-transform duration-500 group-hover:rotate-180">↻</span>
                                     Actualizar
