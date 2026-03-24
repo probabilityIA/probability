@@ -29,10 +29,10 @@ const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; border: string }> = {
-    delivered: { label: 'Entregado', color: 'bg-emerald-100 text-emerald-700 border-emerald-200', icon: <CheckCircle2 size={12} />, border: 'border-emerald-400' },
-    in_transit: { label: 'En tránsito', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: <Truck size={12} />, border: 'border-blue-400' },
-    pending: { label: 'Pendiente', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: <Clock size={12} />, border: 'border-amber-300' },
-    failed: { label: 'Fallido', color: 'bg-red-100 text-red-700 border-red-200', icon: <XCircle size={12} />, border: 'border-red-400' },
+    delivered: { label: 'Entregado', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <CheckCircle2 size={12} />, border: 'border-purple-400' },
+    in_transit: { label: 'En tránsito', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <Truck size={12} />, border: 'border-purple-400' },
+    pending: { label: 'Pendiente', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <Clock size={12} />, border: 'border-purple-400' },
+    failed: { label: 'Fallido', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <XCircle size={12} />, border: 'border-purple-400' },
 };
 
 const CHIP_STATUS_OPTIONS = [
@@ -251,7 +251,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             href={shipment.tracking_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs font-semibold transition-colors"
+                            className="flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-purple-600 hover:bg-purple-700 text-white border border-purple-600 text-xs font-semibold transition-colors dark:bg-purple-700 dark:hover:bg-purple-800"
                         >
                             <Navigation size={13} />
                             Rastrear
@@ -260,7 +260,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                     <button
                         onClick={() => onCancel(canelId)}
                         disabled={cancelingId === canelId}
-                        className="flex items-center justify-center gap-1 py-2 px-3 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold transition-colors disabled:opacity-50"
+                        className="flex items-center justify-center gap-1 py-2 px-3 rounded-lg bg-red-600 hover:bg-red-700 text-white border border-red-600 text-xs font-semibold transition-colors disabled:opacity-50 dark:bg-red-700 dark:hover:bg-red-800"
                         title="Cancelar envío"
                     >
                         {cancelingId === canelId
@@ -566,7 +566,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 {/* Chip "Todos" */}
                 <button
                     onClick={() => updateFilters({ status: undefined })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${!filters.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-200'
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${!filters.status ? 'bg-purple-600 text-white dark:bg-purple-700' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:bg-gray-600'
                         }`}
                 >
                     Todos <span className="opacity-70">{total}</span>
@@ -579,7 +579,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         <button
                             key={value}
                             onClick={() => updateFilters({ status: isActive ? undefined : value })}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${isActive ? activeClass : 'bg-gray-100 text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:bg-gray-200'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${isActive ? activeClass : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-600 dark:hover:bg-gray-600'
                                 }`}
                         >
                             <Icon size={11} />
@@ -660,8 +660,8 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                     <button
                                         key={shipment.id}
                                         onClick={() => setSelectedShipment(isSelected ? null : shipment)}
-                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-blue-50/60 ${isSelected
-                                                ? 'bg-blue-50 border-l-[3px] border-blue-500'
+                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-gray-700 dark:hover:bg-gray-700 ${isSelected
+                                                ? 'bg-purple-100 dark:bg-purple-900/30 border-l-[3px] border-purple-500'
                                                 : `border-l-[3px] ${statusCfg.border}`
                                             }`}
                                     >
@@ -729,14 +729,14 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                 <button
                                     onClick={() => updateFilters({ page: page - 1 })}
                                     disabled={page === 1}
-                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronLeft size={15} />
                                 </button>
                                 <button
                                     onClick={() => updateFilters({ page: page + 1 })}
                                     disabled={page === totalPages}
-                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronRight size={15} />
                                 </button>
