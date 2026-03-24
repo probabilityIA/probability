@@ -258,19 +258,7 @@ func (uc *UseCaseOrder) UpdateOrder(ctx context.Context, id string, req *dtos.Up
 		return nil, fmt.Errorf("error updating order: %w", err)
 	}
 
-	// Recalcular score (Esto actualiza la orden en BD otra vez con el nuevo score)
-	// No bloqueamos si falla, solo logueamos (o podríamos retornar error)
-	if uc.scoreUseCase != nil {
-		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
-			fmt.Printf("Error recalculating score for order %s: %v\n", order.ID, err)
-		} else {
-			// Si el cálculo fue exitoso, recargar la orden para devolver el score actualizado y los factores actualizados
-			// Esto es crucial para que el frontend vea reflejado el cambio inmediato (ej: desaparece el warning de dirección)
-			if refreshedOrder, err := uc.repo.GetOrderByID(ctx, id); err == nil {
-				order = refreshedOrder
-			}
-		}
-	}
+	// Score recalculation handled by probability module via QueueOrdersToScore
 
 	// Publicar evento de actualización a RabbitMQ
 	if uc.rabbitEventPublisher != nil {

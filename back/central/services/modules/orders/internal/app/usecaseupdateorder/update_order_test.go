@@ -298,26 +298,6 @@ func (m *mockIntegrationEventPublisher) PublishSyncOrderRejected(ctx context.Con
 	}
 }
 
-// ─── Mock: IOrderScoreUseCase ────────────────────────────────────────────────
-
-type mockScoreUseCase struct {
-	CalculateOrderScoreFn          func(order *entities.ProbabilityOrder) (float64, []string)
-	CalculateAndUpdateOrderScoreFn func(ctx context.Context, orderID string) error
-}
-
-func (m *mockScoreUseCase) CalculateOrderScore(order *entities.ProbabilityOrder) (float64, []string) {
-	if m.CalculateOrderScoreFn != nil {
-		return m.CalculateOrderScoreFn(order)
-	}
-	return 0.0, nil
-}
-func (m *mockScoreUseCase) CalculateAndUpdateOrderScore(ctx context.Context, orderID string) error {
-	if m.CalculateAndUpdateOrderScoreFn != nil {
-		return m.CalculateAndUpdateOrderScoreFn(ctx, orderID)
-	}
-	return nil
-}
-
 // ─── Mock: log.ILogger ──────────────────────────────────────────────────────
 
 type mockLogger struct{}
@@ -360,12 +340,10 @@ func newTestUpdateUseCase(
 	repo *mockRepository,
 	rabbitPublisher *mockRabbitPublisher,
 	integrationEventPublisher *mockIntegrationEventPublisher,
-	scoreUseCase *mockScoreUseCase,
 ) *UseCaseUpdateOrder {
 	uc := &UseCaseUpdateOrder{
-		repo:         repo,
-		logger:       &mockLogger{},
-		scoreUseCase: scoreUseCase,
+		repo:   repo,
+		logger: &mockLogger{},
 	}
 	if rabbitPublisher != nil {
 		uc.rabbitEventPublisher = rabbitPublisher
@@ -395,7 +373,7 @@ func TestUpdateOrder_SinCambios_RetornaSinActualizar(t *testing.T) {
 			return nil
 		},
 	}
-	uc := newTestUpdateUseCase(repo, nil, nil, &mockScoreUseCase{})
+	uc := newTestUpdateUseCase(repo, nil, nil)
 
 	// DTO con los mismos valores que la orden existente (sin cambios)
 	dto := &dtos.ProbabilityOrderDTO{
@@ -439,7 +417,7 @@ func TestUpdateOrder_CambioDeEstado_ActualizaYPublicaEvento(t *testing.T) {
 			return nil
 		},
 	}
-	uc := newTestUpdateUseCase(repo, nil, nil, &mockScoreUseCase{})
+	uc := newTestUpdateUseCase(repo, nil, nil)
 
 	dto := &dtos.ProbabilityOrderDTO{
 		Status: "completed", // Cambio de estado
@@ -477,7 +455,7 @@ func TestUpdateOrder_ErrorEnRepositorio_RetornaError(t *testing.T) {
 			return expectedErr
 		},
 	}
-	uc := newTestUpdateUseCase(repo, nil, nil, &mockScoreUseCase{})
+	uc := newTestUpdateUseCase(repo, nil, nil)
 
 	dto := &dtos.ProbabilityOrderDTO{
 		Status: "shipped", // Hay un cambio para que se intente actualizar
@@ -511,7 +489,7 @@ func TestUpdateOrder_CambioInformacionFinanciera_ActualizaCampos(t *testing.T) {
 			return nil
 		},
 	}
-	uc := newTestUpdateUseCase(repo, nil, nil, &mockScoreUseCase{})
+	uc := newTestUpdateUseCase(repo, nil, nil)
 
 	dto := &dtos.ProbabilityOrderDTO{
 		TotalAmount: 200.0, // Valor diferente al existente
@@ -551,7 +529,7 @@ func TestUpdateOrder_CambioInformacionCliente_ActualizaCampos(t *testing.T) {
 			return nil
 		},
 	}
-	uc := newTestUpdateUseCase(repo, nil, nil, &mockScoreUseCase{})
+	uc := newTestUpdateUseCase(repo, nil, nil)
 
 	dto := &dtos.ProbabilityOrderDTO{
 		CustomerName:  "Juan Carlos Perez",

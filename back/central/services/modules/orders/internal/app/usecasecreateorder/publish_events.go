@@ -12,7 +12,6 @@ import (
 // Orquesta la publicación a todos los canales necesarios:
 //   - Integration sync (notifica al módulo de integraciones)
 //   - RabbitMQ fanout (invoicing, inventory, score, whatsapp, events consumers)
-//   - Score (cálculo directo)
 func (uc *UseCaseCreateOrder) publishOrderEvents(ctx context.Context, order *entities.ProbabilityOrder, isManualOrder bool) {
 	// 1. Notificar sincronización exitosa a integraciones (solo órdenes de integración)
 	if !isManualOrder {
@@ -23,8 +22,7 @@ func (uc *UseCaseCreateOrder) publishOrderEvents(ctx context.Context, order *ent
 	// (invoicing, inventory, score, whatsapp, events consumers)
 	uc.publishOrderCreatedEvent(ctx, order)
 
-	// 3. Calcular score directamente
-	uc.calculateOrderScore(ctx, order)
+	// Score calculation handled by probability module via QueueOrdersToScore
 }
 
 // ───────────────────────────────────────────
@@ -94,61 +92,4 @@ func (uc *UseCaseCreateOrder) publishOrderCreatedEvent(_ context.Context, order 
 	}()
 }
 
-// ───────────────────────────────────────────
-//
-//	SCORE
-//
-// ───────────────────────────────────────────
-
-// calculateOrderScore calcula el score de la orden en background (goroutine).
-// Después de calcularlo publica un evento al fanout para que el módulo de
-// eventos dispare SSE y el frontend reciba el score actualizado.
-func (uc *UseCaseCreateOrder) calculateOrderScore(_ context.Context, order *entities.ProbabilityOrder) {
-	orderID := order.ID
-	orderNumber := order.OrderNumber
-	businessID := order.BusinessID
-	integrationID := order.IntegrationID
-
-	go func() {
-		bgCtx := context.Background()
-
-		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(bgCtx, orderID); err != nil {
-			uc.logger.Error(bgCtx).
-				Err(err).
-				Str("order_id", orderID).
-				Msg("Error al calcular score de la orden")
-			return
-		}
-
-		uc.logger.Info(bgCtx).
-			Str("order_id", orderID).
-			Str("order_number", orderNumber).
-			Msg("Score calculado exitosamente para la orden")
-
-		// Publicar evento para que el frontend reciba el score actualizado vía SSE
-		if uc.rabbitEventPublisher != nil {
-			eventData := entities.OrderEventData{
-				OrderNumber: orderNumber,
-				Platform:    order.Platform,
-			}
-			event := entities.NewOrderEvent(entities.OrderEventTypeScoreCalculated, orderID, eventData)
-			event.BusinessID = businessID
-			if integrationID > 0 {
-				event.IntegrationID = &integrationID
-			}
-
-			if err := uc.rabbitEventPublisher.PublishOrderEvent(bgCtx, event, order); err != nil {
-				uc.logger.Error(bgCtx).
-					Err(err).
-					Str("order_id", orderID).
-					Msg("Error publicando evento order.score_calculated al fanout")
-			} else {
-				uc.logger.Info(bgCtx).
-					Str("order_id", orderID).
-					Str("order_number", orderNumber).
-					Msg("Evento order.score_calculated publicado al fanout")
-			}
-		}
-	}()
-}
 

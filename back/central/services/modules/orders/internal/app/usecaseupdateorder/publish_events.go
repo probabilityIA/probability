@@ -13,7 +13,6 @@ import (
 //   - Integration sync (notifica al módulo de integraciones)
 //   - RabbitMQ fanout (invoicing, inventory, score, whatsapp, events consumers)
 //   - Status changed (si cambió el estado)
-//   - Score (recálculo directo)
 func (uc *UseCaseUpdateOrder) publishUpdateEvents(ctx context.Context, order *entities.ProbabilityOrder, previousStatus string, isManualOrder bool) {
 	// 1. Notificar sincronización exitosa a integraciones (solo órdenes de integración)
 	if !isManualOrder && order.IntegrationID > 0 {
@@ -29,8 +28,7 @@ func (uc *UseCaseUpdateOrder) publishUpdateEvents(ctx context.Context, order *en
 		uc.publishOrderStatusChangedEvent(ctx, order, previousStatus)
 	}
 
-	// 4. Recalcular score directamente
-	uc.recalculateOrderScore(ctx, order)
+	// Score recalculation handled by probability module via QueueOrdersToScore
 }
 
 // ───────────────────────────────────────────
@@ -135,26 +133,4 @@ func (uc *UseCaseUpdateOrder) publishOrderStatusChangedEvent(_ context.Context, 
 	}()
 }
 
-// ───────────────────────────────────────────
-//
-//	SCORE
-//
-// ───────────────────────────────────────────
-
-// recalculateOrderScore recalcula el score de la orden en background
-func (uc *UseCaseUpdateOrder) recalculateOrderScore(ctx context.Context, order *entities.ProbabilityOrder) {
-	go func() {
-		if err := uc.scoreUseCase.CalculateAndUpdateOrderScore(ctx, order.ID); err != nil {
-			uc.logger.Error(ctx).
-				Err(err).
-				Str("order_id", order.ID).
-				Msg("Error al recalcular score de la orden")
-		} else {
-			uc.logger.Info(ctx).
-				Str("order_id", order.ID).
-				Str("order_number", order.OrderNumber).
-				Msg("Score recalculado exitosamente para la orden actualizada")
-		}
-	}()
-}
 

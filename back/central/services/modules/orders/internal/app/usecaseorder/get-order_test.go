@@ -16,9 +16,7 @@ func TestGetOrderByID_Success(t *testing.T) {
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
-	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
-
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -72,9 +70,7 @@ func TestGetOrderByID_EmptyID(t *testing.T) {
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
-	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
-
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
 
 	ctx := context.Background()
 
@@ -95,9 +91,7 @@ func TestGetOrderByID_NotFound(t *testing.T) {
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
-	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
-
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
 
 	ctx := context.Background()
 	orderID := "non-existent-uuid"
@@ -123,9 +117,7 @@ func TestGetOrderByID_DatabaseError(t *testing.T) {
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
-	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
-
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-123"
@@ -151,9 +143,7 @@ func TestGetOrderByID_WithCompleteData(t *testing.T) {
 	mockRepo := new(mocks.RepositoryMock)
 	mockRabbitPublisher := new(mocks.RabbitPublisherMock)
 	mockLogger := new(mocks.LoggerMock)
-	mockScoreUseCase := new(mocks.ScoreUseCaseMock)
-
-	useCase := New(mockRepo, mockRabbitPublisher, mockLogger, mockScoreUseCase)
+	useCase := New(mockRepo, mockRabbitPublisher, mockLogger)
 
 	ctx := context.Background()
 	orderID := "order-uuid-complete"

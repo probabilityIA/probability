@@ -1,4 +1,4 @@
-package usecaseorderscore
+package app
 
 import (
 	"encoding/json"
@@ -6,13 +6,13 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
+	"github.com/secamc93/probability/back/central/services/modules/probability/internal/domain/entities"
 	"golang.org/x/text/transform"
 	"golang.org/x/text/unicode/norm"
 )
 
 // CalculateOrderScore calcula el score de una orden y sus factores negativos
-func (uc *UseCaseOrderScore) CalculateOrderScore(order *entities.ProbabilityOrder) (float64, []string) {
+func (uc *UseCaseScore) CalculateOrderScore(order *entities.ScoreOrder) (float64, []string) {
 	// Start with 100
 	score := 100.0
 
@@ -61,7 +61,7 @@ func (uc *UseCaseOrderScore) CalculateOrderScore(order *entities.ProbabilityOrde
 }
 
 // GetStaticNegativeFactors obtiene la lista de factores negativos estáticos
-func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *entities.ProbabilityOrder) []string {
+func (uc *UseCaseScore) GetStaticNegativeFactors(order *entities.ScoreOrder) []string {
 	var factors []string
 
 	// 1. Validación de correo
@@ -137,7 +137,7 @@ func (uc *UseCaseOrderScore) GetStaticNegativeFactors(order *entities.Probabilit
 	return factors
 }
 
-func (uc *UseCaseOrderScore) isValidEmail(email string) bool {
+func (uc *UseCaseScore) isValidEmail(email string) bool {
 	if email == "" {
 		return false
 	}
@@ -147,7 +147,7 @@ func (uc *UseCaseOrderScore) isValidEmail(email string) bool {
 }
 
 // IsCODPayment verifica si el pago es contra entrega (COD)
-func (uc *UseCaseOrderScore) IsCODPayment(order *entities.ProbabilityOrder) bool {
+func (uc *UseCaseScore) IsCODPayment(order *entities.ScoreOrder) bool {
 	// 1. Check PaymentMethodID if we have a mapping (Placeholder)
 	// 2. Check Financial Details (Shopify)
 
@@ -221,7 +221,7 @@ func (uc *UseCaseOrderScore) IsCODPayment(order *entities.ProbabilityOrder) bool
 }
 
 // RemoveAccents normaliza el texto eliminando acentos
-func (uc *UseCaseOrderScore) RemoveAccents(s string) string {
+func (uc *UseCaseScore) RemoveAccents(s string) string {
 	t := transform.Chain(norm.NFD, transform.RemoveFunc(isMn), norm.NFC)
 	result, _, _ := transform.String(t, s)
 	return result

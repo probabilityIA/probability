@@ -1,7 +1,6 @@
 package usecaseupdateorder
 
 import (
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorderscore"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
@@ -11,7 +10,6 @@ type UseCaseUpdateOrder struct {
 	logger                    log.ILogger
 	rabbitEventPublisher      ports.IOrderRabbitPublisher
 	integrationEventPublisher ports.IIntegrationEventPublisher
-	scoreUseCase              ports.IOrderScoreUseCase
 }
 
 func New(
@@ -25,6 +23,5 @@ func New(
 		logger:                    logger,
 		rabbitEventPublisher:      rabbitPublisher,
 		integrationEventPublisher: integrationEventPub,
-		scoreUseCase:              usecaseorderscore.New(repo),
 	}
 }
