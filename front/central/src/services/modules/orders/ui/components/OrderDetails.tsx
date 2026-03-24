@@ -253,7 +253,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 </button>
                                             </div>
 
-                                            <div className="bg-white dark:bg-gray-800/80 p-5 rounded-lg border border-blue-100 text-gray-700 text-sm leading-relaxed shadow-sm">
+                                            <div className="bg-white dark:bg-gray-800/80 p-5 rounded-lg border border-blue-100 text-gray-700 dark:text-gray-200 text-sm leading-relaxed shadow-sm">
                                                 <p className="font-semibold text-blue-900 mb-1">Análisis:</p>
                                                 {aiRecommendation.reasoning}
                                             </div>
@@ -274,22 +274,22 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 }`}>
                                                                 {isRecommended && <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">RECOMENDADO</div>}
                                                                 <div>
-                                                                    <p className={`font-bold text-lg ${isRecommended ? 'text-blue-900' : 'text-gray-700'}`}>
+                                                                    <p className={`font-bold text-lg ${isRecommended ? 'text-blue-900' : 'text-gray-700 dark:text-gray-200'}`}>
                                                                         {quote.carrier}
                                                                     </p>
-                                                                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                                                                    <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
                                                                         <span>⏱️</span> {quote.estimated_delivery_days} días hábiles
                                                                     </p>
                                                                 </div>
                                                                 <div className="mt-4 pt-3 border-t border-gray-100">
-                                                                    <p className="text-gray-500 text-xs uppercase mb-0.5">Costo Estimado</p>
+                                                                    <p className="text-gray-500 dark:text-gray-400 text-xs uppercase mb-0.5">Costo Estimado</p>
                                                                     <div className="flex justify-between items-end">
-                                                                        <p className={`font-bold text-xl ${isRecommended ? 'text-purple-600' : 'text-gray-600'}`}>
+                                                                        <p className={`font-bold text-xl ${isRecommended ? 'text-purple-600' : 'text-gray-600 dark:text-gray-300'}`}>
                                                                             {formatCurrency(quote.estimated_cost, 'COP')}
                                                                         </p>
                                                                         <button
                                                                             onClick={() => setShowGuideModal(true)}
-                                                                            className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded"
+                                                                            className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-200 px-2 py-1 rounded"
                                                                         >
                                                                             Elegir
                                                                         </button>
@@ -303,7 +303,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="text-sm text-gray-500 italic bg-gray-50 p-3 rounded border border-gray-100">
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 p-3 rounded border border-gray-100">
                                         No hay recomendación disponible. Verifique que la orden tenga dirección completa (Ciudad y Departamento).
                                     </div>
                                 )}
@@ -336,21 +336,21 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: 'auto auto auto' }}>
                         {/* ROW 1, COL 1: Información General - LARGER */}
                         <div className="bg-gray-50 rounded-lg p-4">
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">Información General</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Información General</h3>
                             {loadingDetails ? (
-                                <div className="py-4 text-center text-sm text-gray-500">Cargando información...</div>
+                                <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">Cargando información...</div>
                             ) : (
                                 <div className="space-y-3">
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Nº Orden</p>
-                                        <p className="text-sm font-bold text-gray-900 mt-0.5">{order.order_number || '-'}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Nº Orden</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">{order.order_number || '-'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Número Interno</p>
-                                        <p className="text-sm font-medium text-gray-900 break-all mt-0.5">{order.internal_number || '-'}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Número Interno</p>
+                                        <p className="text-sm font-medium text-gray-900 dark:text-white break-all mt-0.5">{order.internal_number || '-'}</p>
                                     </div>
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Plataforma</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Plataforma</p>
                                         {order.integration_logo_url ? (
                                             <img
                                                 src={order.integration_logo_url}
@@ -359,11 +359,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 title={order.platform}
                                             />
                                         ) : (
-                                            <p className="text-sm font-medium text-gray-900 capitalize mt-1">{order.platform || '-'}</p>
+                                            <p className="text-sm font-medium text-gray-900 dark:text-white capitalize mt-1">{order.platform || '-'}</p>
                                         )}
                                     </div>
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Estado (Probability)</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Estado (Probability)</p>
                                         {order.order_status?.color ? (
                                             <span
                                                 className="inline-block px-3 py-1 text-sm font-semibold rounded-full mt-1"
@@ -382,15 +382,15 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     </div>
                                     {order.original_status && (
                                         <div>
-                                            <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Estado Original (Shopify)</p>
-                                            <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800 mt-1">
+                                            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Estado Original (Shopify)</p>
+                                            <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-gray-100 text-gray-800 dark:text-gray-100 mt-1">
                                                 {order.original_status}
                                             </span>
                                         </div>
                                     )}
                                     <div>
-                                        <p className="text-xs text-gray-500 uppercase tracking-wide font-semibold">Fecha</p>
-                                        <p className="text-sm font-bold text-gray-900 mt-0.5">{formatDate(order.occurred_at || order.created_at)}</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Fecha</p>
+                                        <p className="text-sm font-bold text-gray-900 dark:text-white mt-0.5">{formatDate(order.occurred_at || order.created_at)}</p>
                                     </div>
                                 </div>
                             )}
@@ -400,11 +400,11 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         <div className="space-y-3">
                             {/* Resumen Financiero */}
                             <div className="bg-gray-50 rounded-lg p-4">
-                                <h3 className="text-lg font-bold text-gray-900 mb-3">Resumen Financiero</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Resumen Financiero</h3>
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
-                                        <span className="text-sm text-gray-600 font-medium">Subtotal</span>
-                                        <span className="text-sm font-semibold text-gray-900">
+                                        <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Subtotal</span>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
                                             {formatCurrency(order.subtotal, order.currency, order.subtotal_presentment, order.currency_presentment)}
                                         </span>
                                     </div>
@@ -425,21 +425,21 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         </div>
                                     )}
                                     <div className="flex justify-between">
-                                        <span className="text-sm text-gray-600 font-medium">Envío</span>
-                                        <span className="text-sm font-semibold text-gray-900">
+                                        <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Envío</span>
+                                        <span className="text-sm font-semibold text-gray-900 dark:text-white">
                                             {formatCurrency(order.shipping_cost, order.currency, order.shipping_cost_presentment, order.currency_presentment)}
                                         </span>
                                     </div>
                                     {((order.shipping_discount && order.shipping_discount > 0) || (order.shipping_discount_presentment && order.shipping_discount_presentment > 0)) && (
                                         <div className="flex justify-between">
-                                            <span className="text-sm text-gray-600 font-medium">Desc. Envío</span>
+                                            <span className="text-sm text-gray-600 dark:text-gray-300 font-medium">Desc. Envío</span>
                                             <span className="text-sm font-semibold text-green-600">
                                                 -{formatCurrency(order.shipping_discount || 0, order.currency, order.shipping_discount_presentment, order.currency_presentment)}
                                             </span>
                                         </div>
                                     )}
                                     <div className="flex justify-between pt-2 border-t border-gray-300 mt-2">
-                                        <span className="text-base font-bold text-gray-900">Total</span>
+                                        <span className="text-base font-bold text-gray-900 dark:text-white">Total</span>
                                         <span className="text-base font-bold text-purple-600">
                                             {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
                                         </span>
@@ -449,29 +449,29 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                             {/* Productos del Pedido */}
                             <div className="bg-gray-50 rounded-lg p-4">
-                                <h3 className="text-lg font-bold text-gray-900 mb-3">Productos del Pedido</h3>
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Productos del Pedido</h3>
                                 {loadingDetails ? (
-                                    <div className="py-4 text-center text-sm text-gray-500">Cargando productos...</div>
+                                    <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">Cargando productos...</div>
                                 ) : (order.order_items || items).length > 0 ? (
                                     <div className="overflow-x-auto">
                                         <table className="w-full divide-y divide-gray-200 text-sm">
                                             <thead className="bg-gray-100">
                                                 <tr>
-                                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 uppercase">Producto</th>
-                                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 uppercase">SKU</th>
-                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Cant</th>
-                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Precio</th>
-                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Desc.</th>
-                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Total</th>
+                                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Producto</th>
+                                                    <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">SKU</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Cant</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Precio</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Desc.</th>
+                                                    <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Total</th>
                                                 </tr>
                                             </thead>
                                             <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                                                 {(order.order_items || items).map((item: any, idx: number) => (
                                                     <tr key={idx} className="hover:bg-gray-50">
-                                                        <td className="px-2 py-2 text-xs text-gray-900">{item.product_name || item.name || item.title || '-'}</td>
-                                                        <td className="px-2 py-2 text-xs text-gray-600">{item.product_sku || item.sku || '-'}</td>
-                                                        <td className="px-2 py-2 text-xs text-gray-900 text-right">{item.quantity || 0}</td>
-                                                        <td className="px-2 py-2 text-xs text-gray-900 text-right">{formatCurrency(item.unit_price || item.price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white">{item.product_name || item.name || item.title || '-'}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-600 dark:text-gray-300">{item.product_sku || item.sku || '-'}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white text-right">{item.quantity || 0}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white text-right">{formatCurrency(item.unit_price || item.price, order.currency, item.unit_price_presentment, order.currency_presentment)}</td>
                                                         <td className="px-2 py-2 text-xs text-right">
                                                             {(item.discount > 0 || (item.discount_presentment && item.discount_presentment > 0)) ? (
                                                                 <span className="text-green-600 font-semibold">-{formatCurrency(item.discount, order.currency, item.discount_presentment, order.currency_presentment)}</span>
@@ -479,38 +479,38 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                 <span className="text-gray-400">-</span>
                                                             )}
                                                         </td>
-                                                        <td className="px-2 py-2 text-xs text-gray-900 text-right font-semibold">{formatCurrency(item.total_price || (parseFloat(item.unit_price || item.price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
+                                                        <td className="px-2 py-2 text-xs text-gray-900 dark:text-white text-right font-semibold">{formatCurrency(item.total_price || (parseFloat(item.unit_price || item.price || 0) * (item.quantity || 0)), order.currency, item.total_price_presentment, order.currency_presentment)}</td>
                                                     </tr>
                                                 ))}
                                             </tbody>
                                         </table>
                                     </div>
                                 ) : (
-                                    <p className="text-sm text-gray-500 text-center py-2">No hay información de productos.</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-2">No hay información de productos.</p>
                                 )}
                             </div>
                         </div>
 
                         {/* ROW 1, COL 3: Cronología y Pago */}
                         <div className="bg-gray-50 rounded-lg p-4">
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">Cronología y Pago</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Cronología y Pago</h3>
                             <div className="space-y-4">
                                 {/* Cronología */}
                                 <div>
-                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wide mb-2">Cronología</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wide mb-2">Cronología</p>
                                     <div className="space-y-2 border-b border-gray-200 dark:border-gray-700 pb-3">
                                         <div>
-                                            <p className="text-xs text-gray-600 font-medium">Creado (DB)</p>
-                                            <p className="text-sm font-semibold text-gray-900">{formatDate(order.created_at)}</p>
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Creado (DB)</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.created_at)}</p>
                                         </div>
                                         <div>
-                                            <p className="text-xs text-gray-600 font-medium">Importado</p>
-                                            <p className="text-sm font-semibold text-gray-900">{formatDate(order.imported_at)}</p>
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Importado</p>
+                                            <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.imported_at)}</p>
                                         </div>
                                         {order.updated_at && (
                                             <div>
-                                                <p className="text-xs text-gray-600 font-medium">Actualizado</p>
-                                                <p className="text-sm font-semibold text-gray-900">{formatDate(order.updated_at)}</p>
+                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Actualizado</p>
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.updated_at)}</p>
                                             </div>
                                         )}
                                     </div>
@@ -518,10 +518,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                                 {/* Detalles de Pago */}
                                 <div>
-                                    <p className="text-xs text-gray-500 uppercase font-bold tracking-wide mb-2">Estado de Pago</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold tracking-wide mb-2">Estado de Pago</p>
                                     <div className="space-y-2">
                                         <div>
-                                            <p className="text-xs text-gray-600 font-medium">Estado</p>
+                                            <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Estado</p>
                                             <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${(order.payment_details?.financial_status === 'paid' || order.is_paid) ? 'bg-green-100 text-green-800' :
                                                 (order.payment_details?.financial_status === 'refunded') ? 'bg-red-100 text-red-800' :
                                                     'bg-yellow-100 text-yellow-800'
@@ -531,8 +531,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         </div>
                                         {order.paid_at && (
                                             <div>
-                                                <p className="text-xs text-gray-600 font-medium">Fecha</p>
-                                                <p className="text-sm font-semibold text-gray-900">{formatDate(order.paid_at)}</p>
+                                                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Fecha</p>
+                                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(order.paid_at)}</p>
                                             </div>
                                         )}
                                     </div>
@@ -542,46 +542,46 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                         {/* ROW 2, COL 1-3: Cliente y Dirección */}
                         <div className="bg-gray-50 rounded-lg p-4" style={{ gridColumn: '1 / 4' }}>
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">Cliente y Dirección</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Cliente y Dirección</h3>
                             {loadingDetails ? (
-                                <div className="py-2 text-center text-xs text-gray-500">Cargando...</div>
+                                <div className="py-2 text-center text-xs text-gray-500 dark:text-gray-400">Cargando...</div>
                             ) : (
                                 <div className="grid grid-cols-4 gap-4">
                                     {/* Col 1: Nombre */}
                                     <div>
-                                        <p className="text-gray-500 uppercase font-semibold text-xs mb-1">Nombre</p>
-                                        <p className="font-bold text-gray-900 text-sm">{order.customer_name || '-'}</p>
+                                        <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Nombre</p>
+                                        <p className="font-bold text-gray-900 dark:text-white text-sm">{order.customer_name || '-'}</p>
                                     </div>
 
                                     {/* Col 2: Email */}
                                     <div>
-                                        <p className="text-gray-500 uppercase font-semibold text-xs mb-1">Email</p>
-                                        <p className="font-medium text-gray-900 break-all text-sm">{order.customer_email || '-'}</p>
+                                        <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Email</p>
+                                        <p className="font-medium text-gray-900 dark:text-white break-all text-sm">{order.customer_email || '-'}</p>
                                     </div>
 
                                     {/* Col 3: Teléfono + DNI */}
                                     <div>
                                         <div>
-                                            <p className="text-gray-500 uppercase font-semibold text-xs mb-1">Teléfono</p>
-                                            <p className="font-medium text-gray-900 text-sm">{order.customer_phone || '-'}</p>
+                                            <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Teléfono</p>
+                                            <p className="font-medium text-gray-900 dark:text-white text-sm">{order.customer_phone || '-'}</p>
                                         </div>
                                         {order.customer_dni && (
                                             <div className="mt-2">
-                                                <p className="text-gray-500 uppercase font-semibold text-xs mb-1">DNI</p>
-                                                <p className="font-medium text-gray-900 text-sm">{order.customer_dni}</p>
+                                                <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">DNI</p>
+                                                <p className="font-medium text-gray-900 dark:text-white text-sm">{order.customer_dni}</p>
                                             </div>
                                         )}
                                     </div>
 
                                     {/* Col 4: Dirección */}
                                     <div>
-                                        <p className="text-gray-500 uppercase font-semibold text-xs mb-1">Dirección</p>
+                                        <p className="text-gray-500 dark:text-gray-400 uppercase font-semibold text-xs mb-1">Dirección</p>
                                         <div className="space-y-1">
-                                            <p className="font-medium text-gray-900 text-sm">{order.shipping_street || '-'}</p>
-                                            <p className="text-gray-700 text-sm">
+                                            <p className="font-medium text-gray-900 dark:text-white text-sm">{order.shipping_street || '-'}</p>
+                                            <p className="text-gray-700 dark:text-gray-200 text-sm">
                                                 {order.shipping_city || ''}{order.shipping_state && ', ' + order.shipping_state}{order.shipping_postal_code && ' ' + order.shipping_postal_code}
                                             </p>
-                                            <p className="uppercase text-gray-700 text-sm">{order.shipping_country || '-'}</p>
+                                            <p className="uppercase text-gray-700 dark:text-gray-200 text-sm">{order.shipping_country || '-'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -590,10 +590,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
 
                         {/* ROW 3, COL 1-3: Gestión y Novedades */}
                         <div className="bg-gray-50 rounded-lg p-4" style={{ gridColumn: '1 / 4' }}>
-                            <h3 className="text-lg font-bold text-gray-900 mb-3">Gestión y Novedades</h3>
+                            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Gestión y Novedades</h3>
                             <div className="space-y-3">
                                 <div className="flex flex-col">
-                                    <label className="text-sm font-semibold text-gray-700 mb-2">Confirmación de Pedido</label>
+                                    <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Confirmación de Pedido</label>
                                     <select
                                         className={`block w-full pl-3 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isConfirmed === true
                                             ? 'bg-green-50 text-green-700 border-green-500 font-semibold'
@@ -613,10 +613,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     </select>
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-700 mb-2">Novedades / Notas</label>
+                                    <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Novedades / Notas</label>
                                     <textarea
                                         rows={3}
-                                        className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full text-sm border-gray-300 rounded-md p-2 border text-gray-900"
+                                        className="shadow-sm focus:ring-purple-500 focus:border-purple-500 block w-full text-sm border-gray-300 rounded-md p-2 border text-gray-900 dark:text-white"
                                         placeholder="Escribe aquí novedades (ej: cambio de dirección, cliente contactado, etc.)"
                                         value={novelty}
                                         onChange={(e) => setNovelty(e.target.value)}

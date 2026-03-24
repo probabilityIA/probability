@@ -131,7 +131,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* SKU */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         SKU <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -144,7 +144,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
                 {/* Name */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Nombre <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -157,7 +157,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
                 {/* Price */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Precio <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -172,7 +172,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
                 {/* Currency */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Moneda
                     </label>
                     <Select
@@ -188,7 +188,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
                 {/* Stock */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Stock
                     </label>
                     <Input
@@ -201,7 +201,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
                 {/* Status */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Estado
                     </label>
                     <Select
@@ -219,7 +219,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
             {/* Imagen del producto (solo en modo edicion) */}
             {product && (
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Imagen del producto
                     </label>
                     <div className="flex items-start gap-4">
@@ -252,7 +252,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                             >
                                 {uploadingImage ? 'Subiendo...' : 'Cambiar imagen'}
                             </Button>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 JPG, PNG, GIF o WebP. Max 10MB.
                             </p>
                         </div>
@@ -262,7 +262,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
 
             {/* Description */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Descripción
                 </label>
                 <textarea

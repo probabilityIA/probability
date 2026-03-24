@@ -28,13 +28,13 @@ export function PublicNav({ business }: PublicNavProps) {
 
                     {/* Desktop nav */}
                     <div className="hidden md:flex items-center gap-6">
-                        <Link href={`/tienda/${slug}`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                        <Link href={`/tienda/${slug}`} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white text-sm font-medium">
                             Inicio
                         </Link>
-                        <Link href={`/tienda/${slug}/productos`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                        <Link href={`/tienda/${slug}/productos`} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white text-sm font-medium">
                             Productos
                         </Link>
-                        <Link href={`/tienda/${slug}/contacto`} className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+                        <Link href={`/tienda/${slug}/contacto`} className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white text-sm font-medium">
                             Contacto
                         </Link>
                         <Link
@@ -61,13 +61,13 @@ export function PublicNav({ business }: PublicNavProps) {
                 {/* Mobile menu */}
                 {mobileOpen && (
                     <div className="md:hidden py-4 border-t border-gray-100 space-y-2">
-                        <Link href={`/tienda/${slug}`} className="block px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>
+                        <Link href={`/tienda/${slug}`} className="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>
                             Inicio
                         </Link>
-                        <Link href={`/tienda/${slug}/productos`} className="block px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>
+                        <Link href={`/tienda/${slug}/productos`} className="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>
                             Productos
                         </Link>
-                        <Link href={`/tienda/${slug}/contacto`} className="block px-4 py-2 text-gray-600 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>
+                        <Link href={`/tienda/${slug}/contacto`} className="block px-4 py-2 text-gray-600 dark:text-gray-300 hover:bg-gray-50 rounded-lg" onClick={() => setMobileOpen(false)}>
                             Contacto
                         </Link>
                         <Link

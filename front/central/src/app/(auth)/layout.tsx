@@ -121,7 +121,7 @@ export default function AuthLayout({
         <div className="text-center">
           <Spinner size="xl" color="primary" text={isShopifyEmbedded ? "Conectando con Shopify..." : "Cargando..."} />
           {isShopifyEmbedded && (
-            <p className="mt-4 text-sm text-gray-600">
+            <p className="mt-4 text-sm text-gray-600 dark:text-gray-300">
               🛍️ Inicializando integración de Shopify
             </p>
           )}

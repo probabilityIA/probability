@@ -148,7 +148,7 @@ export default function MapGLComponent({ data, height = 500, onDepartmentMapChan
                                 <div className="text-center">
                                     <p className="font-semibold">{dept}</p>
                                     <p className="text-sm">{stats.count} órdenes</p>
-                                    <p className="text-sm text-gray-600">{stats.percentage.toFixed(1)}%</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">{stats.percentage.toFixed(1)}%</p>
                                 </div>
                             </Popup>
                         </Marker>

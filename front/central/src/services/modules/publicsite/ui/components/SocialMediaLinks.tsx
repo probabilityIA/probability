@@ -17,7 +17,7 @@ export function SocialMediaLinks({ content }: SocialMediaLinksProps) {
     return (
         <section className="py-8 px-4">
             <div className="max-w-7xl mx-auto text-center">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4">Síguenos</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Síguenos</h3>
                 <div className="flex justify-center gap-4">
                     {links.map((link) => (
                         <a
@@ -25,7 +25,7 @@ export function SocialMediaLinks({ content }: SocialMediaLinksProps) {
                             href={link.url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 hover:bg-gray-200 transition-colors"
+                            className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-600 dark:text-gray-300 hover:bg-gray-200 transition-colors"
                             title={link.label}
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">

@@ -200,7 +200,7 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
               <button
                 type="button"
                 onClick={() => setShowChangePassword(false)}
-                className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 transition-colors"
+                className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-400 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-200 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -245,11 +245,11 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
                       <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                     </svg>
                   ) : (
-                    <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-5 h-5 text-gray-600 dark:text-gray-300 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M21.752 15.002A9.718 9.718 0 0118 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 003 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 009.002-5.998z" />
                     </svg>
                   )}
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200 flex-1 text-left">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-200 flex-1 text-left">
                     Tema Oscuro
                   </span>
                   <div className={`relative w-10 h-5 rounded-full transition-colors ${isDark ? 'bg-purple-600' : 'bg-gray-300'}`}>

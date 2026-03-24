@@ -52,8 +52,8 @@ export default function DriverManager({ selectedBusinessId = null }: DriverManag
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900">Conductores</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Conductores</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Gestiona los conductores de tu negocio
                     </p>
                 </div>
@@ -71,7 +71,7 @@ export default function DriverManager({ selectedBusinessId = null }: DriverManag
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
                     </svg>
-                    <p className="text-gray-500 text-sm">Selecciona un negocio para ver y gestionar sus conductores</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver y gestionar sus conductores</p>
                 </div>
             ) : (
                 <DriverList
@@ -86,12 +86,12 @@ export default function DriverManager({ selectedBusinessId = null }: DriverManag
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {modalMode === 'create' ? 'Nuevo conductor' : 'Editar conductor'}
                             </h2>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none"
                             >
                                 &times;
                             </button>

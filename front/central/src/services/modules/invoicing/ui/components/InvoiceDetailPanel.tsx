@@ -60,7 +60,7 @@ export function InvoiceDetailModal({
     return (
       <button
         onClick={() => copyToClipboard(text, fieldId)}
-        className="inline-flex items-center p-0.5 text-gray-400 hover:text-gray-600 transition-colors"
+        className="inline-flex items-center p-0.5 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
         title="Copiar"
       >
         {isCopied ? (
@@ -295,7 +295,7 @@ export function InvoiceDetailModal({
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-gray-600 dark:text-gray-300"
             >
               <XMarkIcon className="w-6 h-6" />
             </button>
@@ -306,18 +306,18 @@ export function InvoiceDetailModal({
             {/* Info de la factura */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Orden</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Orden</p>
                 <p className="font-mono text-sm mt-1 flex items-center gap-1">
                   {invoice.order_id}
                   <CopyButton text={invoice.order_id} fieldId="order_id" />
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Cliente</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Cliente</p>
                 <p className="font-medium text-sm mt-1">{invoice.customer_name || '-'}</p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Total</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Total</p>
                 <p className="font-semibold text-sm mt-1">
                   {new Intl.NumberFormat('es-CO', {
                     style: 'currency',
@@ -326,7 +326,7 @@ export function InvoiceDetailModal({
                 </p>
               </div>
               <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Creada</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide">Creada</p>
                 <p className="text-sm mt-1">{formatDate(invoice.created_at)}</p>
               </div>
             </div>
@@ -338,8 +338,8 @@ export function InvoiceDetailModal({
                 <div className="space-y-2">
                   {invoice.cufe && (
                     <div className="flex items-start gap-2">
-                      <span className="text-xs text-gray-500 w-12 shrink-0 pt-0.5">CUFE</span>
-                      <span className="text-xs font-mono text-gray-700 break-all flex-1">{invoice.cufe}</span>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 w-12 shrink-0 pt-0.5">CUFE</span>
+                      <span className="text-xs font-mono text-gray-700 dark:text-gray-200 break-all flex-1">{invoice.cufe}</span>
                       <CopyButton text={invoice.cufe} fieldId="cufe" />
                     </div>
                   )}
@@ -374,7 +374,7 @@ export function InvoiceDetailModal({
                   Vista Previa de Factura
                 </p>
                 <details className="group" open>
-                  <summary className="text-xs text-gray-700 cursor-pointer hover:text-blue-600 font-medium flex items-center gap-2">
+                  <summary className="text-xs text-gray-700 dark:text-gray-200 cursor-pointer hover:text-blue-600 font-medium flex items-center gap-2">
                     <span>Detalles del documento</span>
                     <span className="text-gray-400 group-open:rotate-180 transition-transform">▼</span>
                   </summary>
@@ -383,32 +383,32 @@ export function InvoiceDetailModal({
                     <div className="grid grid-cols-2 gap-3">
                       {invoice.provider_response.documentNumber && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Número de Documento</p>
-                          <p className="text-xs font-mono font-medium text-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Número de Documento</p>
+                          <p className="text-xs font-mono font-medium text-gray-700 dark:text-gray-200">
                             {invoice.provider_response.documentNumber}
                           </p>
                         </div>
                       )}
                       {invoice.provider_response.documentDate && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Fecha</p>
-                          <p className="text-xs font-medium text-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Fecha</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
                             {invoice.provider_response.documentDate}
                           </p>
                         </div>
                       )}
                       {invoice.provider_response.customerName && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Cliente</p>
-                          <p className="text-xs font-medium text-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Cliente</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
                             {invoice.provider_response.customerName}
                           </p>
                         </div>
                       )}
                       {invoice.provider_response.customerIdentification && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Identificación</p>
-                          <p className="text-xs font-mono font-medium text-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Identificación</p>
+                          <p className="text-xs font-mono font-medium text-gray-700 dark:text-gray-200">
                             {invoice.provider_response.customerIdentification}
                           </p>
                         </div>
@@ -419,32 +419,32 @@ export function InvoiceDetailModal({
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white dark:bg-gray-800/60 rounded">
                       {invoice.provider_response.total && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Total</p>
-                          <p className="text-xs font-semibold text-gray-900">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Total</p>
+                          <p className="text-xs font-semibold text-gray-900 dark:text-white">
                             ${invoice.provider_response.total}
                           </p>
                         </div>
                       )}
                       {invoice.provider_response.totalIva && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">IVA</p>
-                          <p className="text-xs font-medium text-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">IVA</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
                             ${invoice.provider_response.totalIva}
                           </p>
                         </div>
                       )}
                       {invoice.provider_response.totalDiscount && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Descuento</p>
-                          <p className="text-xs font-medium text-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Descuento</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
                             ${invoice.provider_response.totalDiscount}
                           </p>
                         </div>
                       )}
                       {invoice.provider_response.totalWithholdingTax && (
                         <div>
-                          <p className="text-xs text-gray-500 mb-0.5">Retención</p>
-                          <p className="text-xs font-medium text-gray-700">
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5">Retención</p>
+                          <p className="text-xs font-medium text-gray-700 dark:text-gray-200">
                             ${invoice.provider_response.totalWithholdingTax}
                           </p>
                         </div>
@@ -454,15 +454,15 @@ export function InvoiceDetailModal({
                     {/* Items del documento */}
                     {invoice.provider_response.details && invoice.provider_response.details.length > 0 && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-2">Items ({invoice.provider_response.details.length})</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Items ({invoice.provider_response.details.length})</p>
                         <div className="space-y-2">
                           {invoice.provider_response.details.map((detail: any, idx: number) => (
                             <div key={idx} className="p-2 bg-white dark:bg-gray-800/80 rounded text-xs border border-gray-200 dark:border-gray-700">
                               <div className="flex justify-between items-start mb-1">
-                                <span className="font-medium text-gray-900">{detail.itemName || detail.itemCode}</span>
-                                <span className="font-semibold text-gray-900">${detail.value}</span>
+                                <span className="font-medium text-gray-900 dark:text-white">{detail.itemName || detail.itemCode}</span>
+                                <span className="font-semibold text-gray-900 dark:text-white">${detail.value}</span>
                               </div>
-                              <div className="flex gap-3 text-gray-600">
+                              <div className="flex gap-3 text-gray-600 dark:text-gray-300">
                                 <span>Cant: {detail.quantity}</span>
                                 {detail.iva && <span>IVA: ${detail.iva}</span>}
                                 {detail.discount && detail.discount !== '0' && detail.discount !== '0.00' && (
@@ -478,8 +478,8 @@ export function InvoiceDetailModal({
                     {/* Información de envío */}
                     {invoice.provider_response.shipInformation && (
                       <div className="p-3 bg-white dark:bg-gray-800/60 rounded">
-                        <p className="text-xs text-gray-500 mb-2 font-medium">Información de Envío</p>
-                        <div className="space-y-1 text-xs text-gray-700">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-2 font-medium">Información de Envío</p>
+                        <div className="space-y-1 text-xs text-gray-700 dark:text-gray-200">
                           {invoice.provider_response.shipInformation.shipAddress && (
                             <p>📍 {invoice.provider_response.shipInformation.shipAddress}</p>
                           )}
@@ -502,17 +502,17 @@ export function InvoiceDetailModal({
                         {invoice.provider_response.cash_receipt.status === 'success' ? (
                           <div className="grid grid-cols-2 gap-2 text-xs">
                             <div>
-                              <span className="text-gray-500">Medio de pago: </span>
-                              <span className="font-medium text-gray-700">{invoice.provider_response.cash_receipt.payment_type}</span>
+                              <span className="text-gray-500 dark:text-gray-400">Medio de pago: </span>
+                              <span className="font-medium text-gray-700 dark:text-gray-200">{invoice.provider_response.cash_receipt.payment_type}</span>
                             </div>
                             <div>
-                              <span className="text-gray-500">Monto: </span>
-                              <span className="font-medium text-gray-700">${Number(invoice.provider_response.cash_receipt.amount).toLocaleString()}</span>
+                              <span className="text-gray-500 dark:text-gray-400">Monto: </span>
+                              <span className="font-medium text-gray-700 dark:text-gray-200">${Number(invoice.provider_response.cash_receipt.amount).toLocaleString()}</span>
                             </div>
                             {invoice.provider_response.cash_receipt.message && (
                               <div className="col-span-2">
-                                <span className="text-gray-500">Respuesta: </span>
-                                <span className="font-medium text-gray-700">{invoice.provider_response.cash_receipt.message}</span>
+                                <span className="text-gray-500 dark:text-gray-400">Respuesta: </span>
+                                <span className="font-medium text-gray-700 dark:text-gray-200">{invoice.provider_response.cash_receipt.message}</span>
                               </div>
                             )}
                           </div>
@@ -524,14 +524,14 @@ export function InvoiceDetailModal({
 
                     {/* JSON completo (colapsado) */}
                     <details className="mt-3">
-                      <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700 flex items-center gap-1">
+                      <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:text-gray-200 flex items-center gap-1">
                         <span>Ver JSON completo</span>
                         <CopyButton
                           text={JSON.stringify(invoice.provider_response, null, 2)}
                           fieldId="full-document-json"
                         />
                       </summary>
-                      <pre className="mt-2 text-xs bg-white dark:bg-gray-800/80 rounded p-3 overflow-x-auto max-h-64 border border-gray-200 dark:border-gray-700 font-mono text-gray-700">
+                      <pre className="mt-2 text-xs bg-white dark:bg-gray-800/80 rounded p-3 overflow-x-auto max-h-64 border border-gray-200 dark:border-gray-700 font-mono text-gray-700 dark:text-gray-200">
                         {JSON.stringify(invoice.provider_response, null, 2)}
                       </pre>
                     </details>
@@ -552,7 +552,7 @@ export function InvoiceDetailModal({
             {(retrying || retryResult) && (
               <div className="mb-6 p-4 bg-gray-50 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                     {retryResult === 'success'
                       ? 'Factura emitida exitosamente'
                       : retryResult === 'failed'
@@ -561,7 +561,7 @@ export function InvoiceDetailModal({
                           ? 'DIAN aún validando — se consultará de nuevo automáticamente'
                           : (invoice.status === 'pending' ? 'Consultando estado DIAN...' : 'Reintentando emisión...')}
                   </span>
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-500 dark:text-gray-400">
                     {Math.round(retryProgress)}%
                   </span>
                 </div>
@@ -642,7 +642,7 @@ export function InvoiceDetailModal({
 
             {/* Historial de sincronización */}
             <div>
-              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+              <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
                 Historial de Sincronización
               </h4>
 
@@ -651,7 +651,7 @@ export function InvoiceDetailModal({
                   <Spinner />
                 </div>
               ) : syncLogs.length === 0 ? (
-                <p className="text-sm text-gray-500 py-4 text-center">
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-4 text-center">
                   Sin registros de sincronización
                 </p>
               ) : (
@@ -672,7 +672,7 @@ export function InvoiceDetailModal({
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
                           {getSyncStatusBadge(log.status)}
-                          <span className="text-xs text-gray-500">
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
                             {getTriggerLabel(log.triggered_by)}
                           </span>
                           {log.duration_ms && (
@@ -681,13 +681,13 @@ export function InvoiceDetailModal({
                             </span>
                           )}
                         </div>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400">
                           {formatDate(log.created_at)}
                         </span>
                       </div>
 
                       {/* Info de reintentos */}
-                      <div className="flex items-center gap-4 text-xs text-gray-600">
+                      <div className="flex items-center gap-4 text-xs text-gray-600 dark:text-gray-300">
                         <span>Intento {log.retry_count + 1} de {log.max_retries}</span>
                         {log.next_retry_at && (log.status === 'failed' || log.status === 'pending') && (
                           <span className="text-orange-600">
@@ -706,23 +706,23 @@ export function InvoiceDetailModal({
                       {/* Request/Response audit data */}
                       {(log.request_payload || log.response_body) && (
                         <details className="mt-2">
-                          <summary className="text-xs text-gray-500 cursor-pointer hover:text-gray-700">
+                          <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:text-gray-200">
                             Ver request/response
                           </summary>
                           <div className="mt-1 space-y-1">
                             {log.request_url && (
-                              <div className="text-xs font-mono text-gray-600">
+                              <div className="text-xs font-mono text-gray-600 dark:text-gray-300">
                                 URL: {log.request_url}
                               </div>
                             )}
                             {log.response_status != null && log.response_status > 0 && (
-                              <div className="text-xs font-mono text-gray-600">
+                              <div className="text-xs font-mono text-gray-600 dark:text-gray-300">
                                 Status: {log.response_status}
                               </div>
                             )}
                             {log.request_payload && (
                               <div>
-                                <p className="text-xs text-gray-500 mb-0.5 flex items-center gap-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 flex items-center gap-1">
                                   Request:
                                   <CopyButton
                                     text={JSON.stringify(log.request_payload, null, 2)}
@@ -736,7 +736,7 @@ export function InvoiceDetailModal({
                             )}
                             {log.response_body && (
                               <div>
-                                <p className="text-xs text-gray-500 mb-0.5 flex items-center gap-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 flex items-center gap-1">
                                   Response:
                                   <CopyButton
                                     text={JSON.stringify(log.response_body, null, 2)}

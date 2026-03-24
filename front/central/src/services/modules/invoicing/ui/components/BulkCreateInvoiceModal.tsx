@@ -217,9 +217,9 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       partially_fulfilled:   { label: 'Parcialmente completado', color: 'bg-orange-100 text-orange-800' },
       cancelled:             { label: 'Cancelado',           color: 'bg-red-100 text-red-800' },
       refunded:              { label: 'Reembolsado',         color: 'bg-red-100 text-red-800' },
-      new:                   { label: 'Nuevo',               color: 'bg-gray-100 text-gray-700' },
+      new:                   { label: 'Nuevo',               color: 'bg-gray-100 text-gray-700 dark:text-gray-200' },
     };
-    return map[status?.toLowerCase()] ?? { label: status || '—', color: 'bg-gray-100 text-gray-600' };
+    return map[status?.toLowerCase()] ?? { label: status || '—', color: 'bg-gray-100 text-gray-600 dark:text-gray-300' };
   };
 
   // Filtrar órdenes por búsqueda
@@ -348,7 +348,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
             {/* Filtro de Business (solo Super Admin) - siempre visible arriba */}
             {isSuperAdmin && (
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                   Seleccionar Negocio <span className="text-red-500">*</span>
                 </label>
                 <select
@@ -371,7 +371,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   ))}
                 </select>
                 {loadingBusinesses && (
-                  <p className="text-xs text-gray-500 mt-1">Cargando negocios...</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Cargando negocios...</p>
                 )}
                 {superAdminNeedsBusiness && (
                   <div className="mt-3 flex items-start gap-2 p-3 bg-amber-50 border border-amber-300 rounded-lg">
@@ -388,19 +388,19 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
             {superAdminNeedsBusiness ? (
               <div className="py-8 text-center text-gray-400">
                 <ExclamationTriangleIcon className="w-12 h-12 mx-auto mb-3 text-amber-300" />
-                <p className="text-gray-500">Selecciona un negocio para ver las ordenes facturables</p>
+                <p className="text-gray-500 dark:text-gray-400">Selecciona un negocio para ver las ordenes facturables</p>
               </div>
             ) : loading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-                <p className="mt-4 text-gray-600">Cargando órdenes facturables...</p>
+                <p className="mt-4 text-gray-600 dark:text-gray-300">Cargando órdenes facturables...</p>
               </div>
             ) : error ? (
               <div className="py-8 text-center">
                 <p className="text-red-600 mb-4 font-medium">{error}</p>
                 {error.includes('authentication') || error.includes('login') ? (
                   <div className="space-y-3">
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-gray-600 dark:text-gray-300">
                       Tu sesión ha expirado. Por favor, inicia sesión nuevamente.
                     </p>
                     <button
@@ -422,7 +422,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 )}
               </div>
             ) : orders.length === 0 ? (
-              <div className="py-8 text-center text-gray-500">
+              <div className="py-8 text-center text-gray-500 dark:text-gray-400">
                 <p className="mb-2">No hay órdenes facturables disponibles</p>
                 <p className="text-sm">
                   Las órdenes deben estar marcadas como facturables y no tener
@@ -431,7 +431,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
               </div>
             ) : (
               <div className="flex-1 flex flex-col min-h-0">
-                <p className="text-sm text-gray-600 mb-4">
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                   Selecciona las órdenes para las cuales deseas crear facturas
                   electrónicas. Cada orden se procesará individualmente.
                 </p>
@@ -519,20 +519,20 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-1">
                               <div className="flex items-center gap-2">
-                                <span className="font-medium text-gray-900">
+                                <span className="font-medium text-gray-900 dark:text-white">
                                   {order.order_number}
                                 </span>
                                 <StatusIcon />
                               </div>
-                              <span className="font-semibold text-gray-900">
+                              <span className="font-semibold text-gray-900 dark:text-white">
                                 {formatCurrency(order.total_amount, order.currency)}
                               </span>
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
                               {order.customer_name}
                             </p>
                             <div className="flex items-center gap-2 mt-1 flex-wrap">
-                              <p className="text-xs text-gray-500">
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
                                 {new Date(order.created_at).toLocaleDateString('es-CO', {
                                   year: 'numeric',
                                   month: 'short',
@@ -622,7 +622,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   })}
                 </div>
 
-                <div className="mt-4 text-sm text-gray-600 flex-shrink-0">
+                <div className="mt-4 text-sm text-gray-600 dark:text-gray-300 flex-shrink-0">
                   {selectedOrderIds.length === 0
                     ? 'Ninguna orden seleccionada'
                     : `${selectedOrderIds.length} orden(es) seleccionada(s)`}
@@ -635,10 +635,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           {(submitting || bulkCompleted) && bulkProgress && (
             <div className="px-6 py-4 border-t bg-gray-50">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   {bulkCompleted ? 'Procesamiento completado' : 'Procesando facturas...'}
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-sm text-gray-500 dark:text-gray-400">
                   {bulkProgress.processed ?? 0}/{bulkProgress.total_orders ?? 0}
                 </span>
               </div>
@@ -682,7 +682,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                   />
                 )}
               </div>
-              <div className="flex gap-4 mt-2 text-xs text-gray-500">
+              <div className="flex gap-4 mt-2 text-xs text-gray-500 dark:text-gray-400">
                 {(() => {
                   const pendingValidationCount = Object.values(orderStatuses).filter(s => s.status === 'pending_validation').length;
                   const successCount = (bulkProgress.successful ?? 0) - pendingValidationCount;
@@ -720,7 +720,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 <button
                   onClick={onClose}
                   disabled={submitting}
-                  className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-100 disabled:opacity-50 transition-all duration-200"
+                  className="px-6 py-2.5 border-2 border-gray-300 text-gray-700 dark:text-gray-200 font-semibold rounded-full hover:bg-gray-100 disabled:opacity-50 transition-all duration-200"
                 >
                   Cancelar
                 </button>
@@ -749,10 +749,10 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
               <h3 className="text-lg font-bold text-white">Negocio requerido</h3>
             </div>
             <div className="p-6">
-              <p className="text-gray-700">
+              <p className="text-gray-700 dark:text-gray-200">
                 Como super administrador, debes seleccionar un <strong>negocio</strong> antes de poder seleccionar ordenes y crear facturas.
               </p>
-              <p className="text-sm text-gray-500 mt-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 Cada factura se asocia a un negocio especifico. Selecciona uno del listado para continuar.
               </p>
             </div>

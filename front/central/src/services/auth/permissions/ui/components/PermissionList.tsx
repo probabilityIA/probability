@@ -160,7 +160,7 @@ export const PermissionList: React.FC = () => {
         {
             key: 'name',
             label: 'Nombre',
-            render: (_, row) => <span className="font-medium text-gray-900">{row.name}</span>,
+            render: (_, row) => <span className="font-medium text-gray-900 dark:text-white">{row.name}</span>,
         },
         {
             key: 'resource',
@@ -206,7 +206,7 @@ export const PermissionList: React.FC = () => {
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Permisos</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Permisos</h1>
                 <Button
                     variant="secondary"
                     size="sm"

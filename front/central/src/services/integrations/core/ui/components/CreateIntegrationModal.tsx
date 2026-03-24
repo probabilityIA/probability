@@ -449,8 +449,8 @@ function WhatsAppActivateForm({
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                     <ChatBubbleLeftRightIcon className="w-8 h-8 text-green-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Activar WhatsApp</h3>
-                <p className="text-sm text-gray-500 mt-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activar WhatsApp</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     La integración de WhatsApp usa la configuración global del tipo de integración.
                     Las notificaciones se configuran desde el módulo de Notificaciones.
                 </p>
@@ -488,8 +488,8 @@ function WhatsAppActivateForm({
                     className="mt-0.5 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                 />
                 <div>
-                    <span className="text-sm font-medium text-gray-900">Usar credenciales del tipo de integración</span>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">Usar credenciales del tipo de integración</span>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Usa las credenciales globales configuradas en el tipo de integración WhatsApp (access_token, phone_number_id).
                         Desactiva esta opción si este negocio tiene sus propias credenciales de Meta.
                     </p>

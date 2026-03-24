@@ -36,7 +36,7 @@ export function CategoryTabs({
                             py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                             ${activeCategory === category.code && activeTab === 'integrations'
                                 ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300'}
                         `}
                     >
                         {category.name}
@@ -51,7 +51,7 @@ export function CategoryTabs({
                             py-4 px-1 border-b-2 font-medium text-sm whitespace-nowrap
                             ${activeTab === 'types'
                                 ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}
+                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300'}
                         `}
                     >
                         Tipos de Integración

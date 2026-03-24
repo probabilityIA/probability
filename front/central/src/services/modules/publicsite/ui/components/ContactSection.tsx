@@ -41,34 +41,34 @@ export function ContactSection({ slug, content }: ContactSectionProps) {
     return (
         <section className="py-16 px-4 bg-gray-50">
             <div className="max-w-3xl mx-auto">
-                <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Contacto</h2>
+                <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Contacto</h2>
 
                 {content?.contacts && content.contacts.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                         {content.contacts.map((contact, i) => (
                             <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
-                                <p className="font-medium text-gray-900">{contact.name}</p>
-                                <p className="text-sm text-gray-500">{contact.role}</p>
-                                <p className="text-sm text-gray-600 mt-1">{contact.phone}</p>
+                                <p className="font-medium text-gray-900 dark:text-white">{contact.name}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">{contact.role}</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">{contact.phone}</p>
                             </div>
                         ))}
                     </div>
                 )}
 
                 {content?.email && (
-                    <p className="text-center text-gray-600 mb-4">
+                    <p className="text-center text-gray-600 dark:text-gray-300 mb-4">
                         Email: <a href={`mailto:${content.email}`} className="text-blue-600 hover:underline">{content.email}</a>
                     </p>
                 )}
                 {content?.phone && (
-                    <p className="text-center text-gray-600 mb-8">
+                    <p className="text-center text-gray-600 dark:text-gray-300 mb-8">
                         Teléfono: <a href={`tel:${content.phone}`} className="text-blue-600 hover:underline">{content.phone}</a>
                     </p>
                 )}
 
                 <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nombre *</label>
                         <input
                             type="text"
                             value={name}
@@ -79,7 +79,7 @@ export function ContactSection({ slug, content }: ContactSectionProps) {
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
                             <input
                                 type="email"
                                 value={email}
@@ -88,7 +88,7 @@ export function ContactSection({ slug, content }: ContactSectionProps) {
                             />
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Teléfono</label>
                             <input
                                 type="tel"
                                 value={phone}
@@ -98,7 +98,7 @@ export function ContactSection({ slug, content }: ContactSectionProps) {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Mensaje *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Mensaje *</label>
                         <textarea
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}

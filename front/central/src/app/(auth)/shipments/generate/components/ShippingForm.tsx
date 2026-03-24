@@ -340,10 +340,10 @@ export const ShippingForm = () => {
 
     return (
         <div className="p-6 bg-white rounded-lg shadow-md max-w-4xl mx-auto">
-            <h2 className="text-2xl font-bold mb-6 text-gray-800">Generar Guía Envioclick</h2>
+            <h2 className="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">Generar Guía Envioclick</h2>
 
             <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Seleccionar Orden</label>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Seleccionar Orden</label>
                 <select
                     className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 border"
                     onChange={handleOrderSelect}
@@ -375,16 +375,16 @@ export const ShippingForm = () => {
                             <h3 className="text-xl font-bold text-white">Saldo Insuficiente</h3>
                         </div>
                         <div className="p-8 text-center">
-                            <p className="text-gray-600 mb-6">
+                            <p className="text-gray-600 dark:text-gray-300 mb-6">
                                 No cuentas con saldo suficiente en tu billetera local para generar esta guía.
                             </p>
                             <div className="bg-gray-50 rounded-xl p-4 mb-8 grid grid-cols-2 gap-4">
                                 <div className="text-left">
-                                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Tu Saldo</p>
-                                    <p className="text-lg font-bold text-gray-900">${walletBalance?.toLocaleString()}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Tu Saldo</p>
+                                    <p className="text-lg font-bold text-gray-900 dark:text-white">${walletBalance?.toLocaleString()}</p>
                                 </div>
                                 <div className="text-left border-l pl-4">
-                                    <p className="text-xs text-gray-500 uppercase font-bold mb-1">Costo Guía</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400 uppercase font-bold mb-1">Costo Guía</p>
                                     <p className="text-lg font-bold text-red-600">${insufficientBalanceInfo.cost.toLocaleString()}</p>
                                 </div>
                             </div>
@@ -418,7 +418,7 @@ export const ShippingForm = () => {
             <form onSubmit={handleSubmit(hasQuoted ? handleGenerate : handleQuote)} className="space-y-8">
                 {/* Origin Section */}
                 <section>
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Origen</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200 border-b pb-2">Origen</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input label="Empresa" {...register("origin.company")} error={errors.origin?.company?.message} />
                         <Input label="Nombre" {...register("origin.firstName")} error={errors.origin?.firstName?.message} />
@@ -429,7 +429,7 @@ export const ShippingForm = () => {
                         <Input label="Barrio" {...register("origin.suburb")} error={errors.origin?.suburb?.message} />
                         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="relative" ref={originRef}>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Ciudad (Buscable)</label>
                                 <input
                                     type="text"
                                     value={originSearch}
@@ -475,7 +475,7 @@ export const ShippingForm = () => {
 
                 {/* Destination Section */}
                 <section>
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Destino</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200 border-b pb-2">Destino</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input label="Empresa" {...register("destination.company")} error={errors.destination?.company?.message} />
                         <Input label="Nombre" {...register("destination.firstName")} error={errors.destination?.firstName?.message} />
@@ -486,7 +486,7 @@ export const ShippingForm = () => {
                         <Input label="Barrio" {...register("destination.suburb")} error={errors.destination?.suburb?.message} />
                         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="relative" ref={destRef}>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad (Buscable)</label>
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Ciudad (Buscable)</label>
                                 <input
                                     type="text"
                                     value={destSearch}
@@ -532,10 +532,10 @@ export const ShippingForm = () => {
 
                 {/* Package Section */}
                 <section>
-                    <h3 className="text-xl font-semibold mb-4 text-gray-700 border-b pb-2">Paquete y Detalles</h3>
+                    <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200 border-b pb-2">Paquete y Detalles</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="col-span-2">
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Tamaño del Paquete</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Tamaño del Paquete</label>
                             <select
                                 {...register("packageSize")}
                                 className="w-full border-gray-300 rounded-md shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2 border"
@@ -561,7 +561,7 @@ export const ShippingForm = () => {
                         <Input label="Valor Declarado" type="number" {...register("contentValue", { valueAsNumber: true })} error={errors.contentValue?.message} />
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-1">Método de Pago COD</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Método de Pago COD</label>
                             <select {...register("codPaymentMethod")} className="w-full border-gray-300 rounded-md shadow-sm p-2 border">
                                 <option value="cash">Efectivo (cash)</option>
                                 <option value="data_phone">Datáfono</option>
@@ -571,7 +571,7 @@ export const ShippingForm = () => {
 
                         {/* Opciones de Envío */}
                         <div className="col-span-2 border-t pt-4 mt-4">
-                            <h4 className="text-sm font-semibold text-gray-700 mb-4">Opciones de Envío</h4>
+                            <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-4">Opciones de Envío</h4>
                             <div className="flex items-center gap-6">
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
@@ -579,7 +579,7 @@ export const ShippingForm = () => {
                                         {...register("requestPickup")}
                                         className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                                     />
-                                    <span className="text-sm text-gray-700">Solicitar recolección</span>
+                                    <span className="text-sm text-gray-700 dark:text-gray-200">Solicitar recolección</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input
@@ -587,7 +587,7 @@ export const ShippingForm = () => {
                                         {...register("insurance")}
                                         className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                                     />
-                                    <span className="text-sm text-gray-700">Asegurar envío</span>
+                                    <span className="text-sm text-gray-700 dark:text-gray-200">Asegurar envío</span>
                                 </label>
                             </div>
                         </div>
@@ -614,7 +614,7 @@ export const ShippingForm = () => {
                             </div>
                         )}
 
-                        <h3 className="text-xl font-semibold mb-4 text-gray-700">Cotizaciones Disponibles</h3>
+                        <h3 className="text-xl font-semibold mb-4 text-gray-700 dark:text-gray-200">Cotizaciones Disponibles</h3>
                         <div className="space-y-2 max-h-60 overflow-y-auto">
                             {rates.map((rate) => {
                                 const isRecommended = rate.carrier.toLowerCase() === aiAnalysis?.recommended_carrier.toLowerCase();
@@ -626,10 +626,10 @@ export const ShippingForm = () => {
                                     >
                                         <div>
                                             <div className="flex items-center gap-2">
-                                                <p className="font-bold text-gray-800">{rate.carrier} - {rate.product}</p>
+                                                <p className="font-bold text-gray-800 dark:text-gray-100">{rate.carrier} - {rate.product}</p>
                                                 {isRecommended && <span className="text-[10px] bg-green-500 text-white px-2 py-0.5 rounded-full">Recomendado</span>}
                                             </div>
-                                            <p className="text-sm text-gray-600">{rate.deliveryDays} días de entrega</p>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">{rate.deliveryDays} días de entrega</p>
                                         </div>
                                         <div className="text-right">
                                             <p className="font-bold text-lg text-indigo-600">${rate.flete.toLocaleString()}</p>

@@ -20,7 +20,7 @@ export default async function ProductoDetailPage({ params }: PageProps) {
         <div className="py-8 px-4 max-w-7xl mx-auto">
             <Link
                 href={`/tienda/${slug}/productos`}
-                className="text-sm text-gray-500 hover:text-gray-700 mb-6 inline-flex items-center gap-1"
+                className="text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 mb-6 inline-flex items-center gap-1"
             >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -49,9 +49,9 @@ export default async function ProductoDetailPage({ params }: PageProps) {
                 {/* Product Info */}
                 <div>
                     {product.brand && (
-                        <p className="text-sm text-gray-500 uppercase tracking-wide mb-1">{product.brand}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{product.brand}</p>
                     )}
-                    <h1 className="text-3xl font-bold text-gray-900 mb-4">{product.name}</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">{product.name}</h1>
 
                     <div className="flex items-baseline gap-3 mb-6">
                         <span className="text-3xl font-bold" style={{ color: 'var(--brand-secondary)' }}>
@@ -65,14 +65,14 @@ export default async function ProductoDetailPage({ params }: PageProps) {
                     </div>
 
                     {product.category && (
-                        <p className="text-sm text-gray-500 mb-4">
-                            Categoría: <span className="font-medium text-gray-700">{product.category}</span>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+                            Categoría: <span className="font-medium text-gray-700 dark:text-gray-200">{product.category}</span>
                         </p>
                     )}
 
                     {product.description && (
                         <div className="prose prose-gray max-w-none mb-8">
-                            <p className="text-gray-600 whitespace-pre-line">{product.description}</p>
+                            <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">{product.description}</p>
                         </div>
                     )}
 

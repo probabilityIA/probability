@@ -19,7 +19,7 @@ export function FlowConverge({ count }: { count: number }) {
                 height={height}
                 viewBox={`0 0 ${width} ${height}`}
                 fill="none"
-                className="text-gray-400 dark:text-gray-500 max-w-full"
+                className="text-gray-400 dark:text-gray-500 dark:text-gray-400 max-w-full"
                 preserveAspectRatio="xMidYMid meet"
             >
                 {Array.from({ length: count }).map((_, i) => {
@@ -66,7 +66,7 @@ export function FlowDiverge({ count }: { count: number }) {
                 height={height}
                 viewBox={`0 0 ${width} ${height}`}
                 fill="none"
-                className="text-gray-400 dark:text-gray-500 max-w-full"
+                className="text-gray-400 dark:text-gray-500 dark:text-gray-400 max-w-full"
                 preserveAspectRatio="xMidYMid meet"
             >
                 {Array.from({ length: count }).map((_, i) => {

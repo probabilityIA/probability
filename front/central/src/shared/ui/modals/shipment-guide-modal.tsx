@@ -806,7 +806,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         <h2 className="text-2xl font-bold text-purple-700">Generar Guía de Envío</h2>
                         <button
                             onClick={onClose}
-                            className="text-gray-500 hover:text-gray-700 text-2xl"
+                            className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 text-2xl"
                         >
                             ×
                         </button>
@@ -868,7 +868,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             </div>
 
                                             <div ref={originRef} className="relative">
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                                                     Ciudad remitente *
                                                 </label>
                                                 <input
@@ -919,7 +919,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <h3 className="font-semibold text-lg text-purple-700">Destino</h3>
 
                                             <div ref={destRef} className="relative">
-                                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                                                     Ciudad destinatario *
                                                 </label>
                                                 <input
@@ -968,7 +968,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                     {/* Package Details */}
                                     <div className="border-t pt-2">
-                                        <h3 className="font-semibold text-lg text-gray-700 mb-2">Características del paquete</h3>
+                                        <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">Características del paquete</h3>
                                         <div className="grid grid-cols-4 gap-2">
                                             <Input
                                                 compact
@@ -1042,7 +1042,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             </label>
                                         </div>
                                         <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                                                 Método de pago COD
                                             </label>
                                             <select
@@ -1068,10 +1068,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {currentStep === 2 && (
                         <div className="flex flex-col h-full overflow-y-auto">
                             <div className="pb-2">
-                                <h3 className="font-semibold text-lg text-gray-700 mb-2">
+                                <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                                     Filtra por servicio / Transportadora
                                 </h3>
-                                <p className="text-sm text-gray-600 mb-2">Todos los precios incluyen IVA</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Todos los precios incluyen IVA</p>
                             </div>
 
                             <div className="overflow-y-auto border border-purple-200 rounded-lg p-3 bg-purple-50" style={{ maxHeight: 'calc(85vh - 350px)' }}>
@@ -1109,7 +1109,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                             </div>
                                                             <div className="text-center">
                                                                 <div className="font-semibold text-sm">{rate.carrier}</div>
-                                                                <div className="text-xs text-gray-600">{rate.product}</div>
+                                                                <div className="text-xs text-gray-600 dark:text-gray-300">{rate.product}</div>
                                                             </div>
                                                         </div>
 
@@ -1118,21 +1118,21 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 <div className="text-xl font-bold text-purple-600">
                                                                     ${totalCost.toLocaleString()}
                                                                 </div>
-                                                                <div className="text-xs text-gray-500">COP</div>
+                                                                <div className="text-xs text-gray-500 dark:text-gray-400">COP</div>
                                                                 {step1Data?.insurance ? (
-                                                                    <div className="mt-1 text-[10px] text-gray-500 leading-tight">
+                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
                                                                         Guía: ${rate.flete.toLocaleString()}<br />
                                                                         Seguro: ${insuranceCost.toLocaleString()}
                                                                     </div>
                                                                 ) : (
-                                                                    <div className="mt-1 text-[10px] text-gray-500 leading-tight">
+                                                                    <div className="mt-1 text-[10px] text-gray-500 dark:text-gray-400 leading-tight">
                                                                         Guía: ${rate.flete.toLocaleString()}<br />
                                                                         Seguro: No asegurado
                                                                     </div>
                                                                 )}
                                                             </div>
                                                             <div className="text-center">
-                                                                <div className="text-xs text-gray-700 font-medium">
+                                                                <div className="text-xs text-gray-700 dark:text-gray-200 dark:text-gray-200 font-medium">
                                                                     {rate.deliveryDays} días
                                                                 </div>
                                                             </div>
@@ -1159,7 +1159,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                 <div className="grid grid-cols-2 gap-1 p-1">
                                     {/* Origin Details - Columna 1 */}
                                     <div>
-                                        <h3 className="font-semibold text-sm text-gray-700 mb-1">Dirección - Remitente</h3>
+                                        <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Dirección - Remitente</h3>
                                         <div className="grid grid-cols-3 gap-1">
                                             <Input
                                                 compact
@@ -1184,7 +1184,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             />
                                         </div>
 
-                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
+                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
                                         <Input
                                             compact
                                             label="Empresa"
@@ -1193,7 +1193,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             placeholder="ProbabilityIA"
                                         />
 
-                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
+                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
                                         <div className="grid grid-cols-2 gap-1">
                                             <Input
                                                 compact
@@ -1229,7 +1229,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                     {/* Destination Details - Columna 2 */}
                                     <div>
-                                        <h3 className="font-semibold text-sm text-gray-700 mb-1">Destinatario</h3>
+                                        <h3 className="font-semibold text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Destinatario</h3>
                                         <div className="grid grid-cols-3 gap-1">
                                             <Input
                                                 compact
@@ -1254,7 +1254,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             />
                                         </div>
 
-                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
+                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Referencias - Empresa</h4>
                                         <Input
                                             compact
                                             label="Empresa"
@@ -1263,7 +1263,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             placeholder="Empresa = nombre (opcional)"
                                         />
 
-                                        <h4 className="font-medium text-gray-700 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
+                                        <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 text-xs mt-0.5 mb-0.5">Datos de contacto</h4>
                                         <div className="grid grid-cols-2 gap-2">
                                             <Input
                                                 compact
@@ -1335,7 +1335,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                         <div className="flex flex-col h-full w-full overflow-hidden gap-3">
                             {/* Resumen de Envío - No Scrolleable */}
                             <div className="flex-shrink-0 space-y-3">
-                                <h3 className="font-semibold text-lg text-gray-700">Resumen de tu envío</h3>
+                                <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200">Resumen de tu envío</h3>
 
                                 <div className="bg-gray-50 p-2 rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
@@ -1346,16 +1346,16 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             <span className="font-medium">1 Envíos</span>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-sm text-gray-600">TOTAL:</div>
+                                            <div className="text-sm text-gray-600 dark:text-gray-300">TOTAL:</div>
                                             <div className="text-2xl font-bold text-purple-600">
                                                 ${(selectedRate.flete + (step1Data?.insurance ? ((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)) : 0)).toLocaleString()}
                                             </div>
                                             {step1Data?.insurance ? (
-                                                <div className="text-xs text-gray-500 mt-1">
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                     Guía: ${selectedRate.flete.toLocaleString()} | Seguro: ${((selectedRate.minimumInsurance ?? 0) + (selectedRate.extraInsurance ?? 0)).toLocaleString()}
                                                 </div>
                                             ) : (
-                                                <div className="text-xs text-gray-500 mt-1">
+                                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                                     Guía: ${selectedRate.flete.toLocaleString()} | Seguro: No asegurado
                                                 </div>
                                             )}
@@ -1370,8 +1370,8 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                         <div>
-                                            <div className="font-medium text-gray-800">{selectedRate.carrier}</div>
-                                            <div className="text-sm text-gray-500">{selectedRate.product}</div>
+                                            <div className="font-medium text-gray-800 dark:text-gray-100 dark:text-gray-100">{selectedRate.carrier}</div>
+                                            <div className="text-sm text-gray-500 dark:text-gray-400">{selectedRate.product}</div>
                                             {selectedRate.deliveryDays > 0 && (
                                                 <div className="text-xs text-gray-400 mt-1">{selectedRate.deliveryDays} día{selectedRate.deliveryDays !== 1 ? 's' : ''} hábil{selectedRate.deliveryDays !== 1 ? 'es' : ''}</div>
                                             )}
@@ -1383,7 +1383,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             {/* Información de Pago - Con Scroll */}
                             <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden space-y-3 pr-3" style={{ maxHeight: 'calc(85vh - 280px)' }}>
                                 <div>
-                                    <h4 className="font-medium text-gray-700 mb-3">Selecciona tu método de pago</h4>
+                                    <h4 className="font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-3">Selecciona tu método de pago</h4>
                                     <div className={`grid gap-2 ${generatedPdfUrl ? 'grid-cols-2' : 'grid-cols-1'}`}>
                                         <div className="border-2 border-purple-500 rounded-lg p-2 bg-purple-50">
                                             <div className="flex items-center justify-center mb-2">
@@ -1392,7 +1392,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 </svg>
                                             </div>
                                             <div className="text-center font-semibold">Monedero</div>
-                                            <div className="text-center text-sm text-gray-600">
+                                            <div className="text-center text-sm text-gray-600 dark:text-gray-300">
                                                 ${walletBalance?.toLocaleString() || 0}
                                             </div>
                                         </div>
@@ -1438,7 +1438,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     <a
                                                         href={generatedPdfUrl}
                                                         download
-                                                        className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors text-xs"
+                                                        className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 font-semibold rounded-lg transition-colors text-xs"
                                                     >
                                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1508,7 +1508,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                     {/* Step 2: NO "Siguiente" Button - User selects a rate to advance */}
                     {currentStep === 2 && (
-                        <div className="text-sm text-gray-600 italic">
+                        <div className="text-sm text-gray-600 dark:text-gray-300 italic">
                             📌 Selecciona una transportadora para continuar
                         </div>
                     )}

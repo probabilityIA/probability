@@ -259,7 +259,7 @@ export function ProviderForm({ isOpen, onClose, onSuccess, provider, businessId 
               checked={formData.is_active}
               onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
             />
-            <span className="text-sm text-gray-700">Activo</span>
+            <span className="text-sm text-gray-700 dark:text-gray-200">Activo</span>
           </label>
 
           <label className="flex items-center gap-2">
@@ -268,7 +268,7 @@ export function ProviderForm({ isOpen, onClose, onSuccess, provider, businessId 
               checked={formData.is_default}
               onChange={(e) => setFormData({ ...formData, is_default: e.target.checked })}
             />
-            <span className="text-sm text-gray-700">Proveedor por defecto</span>
+            <span className="text-sm text-gray-700 dark:text-gray-200">Proveedor por defecto</span>
           </label>
         </div>
 
@@ -295,7 +295,7 @@ export function ProviderForm({ isOpen, onClose, onSuccess, provider, businessId 
           <button
             type="button"
             onClick={onClose}
-            className="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400"
+            className="px-4 py-2 bg-gray-300 text-gray-700 dark:text-gray-200 rounded hover:bg-gray-400"
           >
             Cancelar
           </button>

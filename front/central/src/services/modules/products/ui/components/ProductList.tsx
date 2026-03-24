@@ -174,7 +174,7 @@ const ProductList = forwardRef(function ProductList(
                         <tbody>
                             {products.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                         No hay productos disponibles
                                     </td>
                                 </tr>
@@ -189,25 +189,25 @@ const ProductList = forwardRef(function ProductList(
                                                     <div className="h-10 w-10 rounded-full mr-3 bg-gray-100 flex items-center justify-center text-gray-400 text-xs">N/A</div>
                                                 )}
                                                 <div>
-                                                    <div className="text-sm font-medium text-gray-900">
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">
                                                         {product.name}
                                                     </div>
-                                                    <div className="text-xs text-gray-500 sm:hidden">
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">
                                                         {product.sku}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
-                                            <div className="text-sm text-gray-900">{product.sku}</div>
+                                            <div className="text-sm text-gray-900 dark:text-white">{product.sku}</div>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm font-semibold text-gray-900">
+                                            <div className="text-sm font-semibold text-gray-900 dark:text-white">
                                                 {formatCurrency(product.price, product.currency)}
                                             </div>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
-                                            <div className="text-sm text-gray-900">
+                                            <div className="text-sm text-gray-900 dark:text-white">
                                                 {product.manage_stock ? product.stock : '∞'}
                                             </div>
                                         </td>
@@ -224,7 +224,7 @@ const ProductList = forwardRef(function ProductList(
                                                 {product.is_active ? 'Activo' : 'Inactivo'}
                                             </button>
                                         </td>
-                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 hidden md:table-cell">
+                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400 hidden md:table-cell">
                                             {formatDate(product.created_at)}
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -295,13 +295,13 @@ const ProductList = forwardRef(function ProductList(
                         {/* Desktop: Full pagination */}
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
                             <div className="flex items-center gap-3">
-                                <p className="text-xs sm:text-sm text-gray-700">
+                                <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200">
                                     Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
                                     <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
                                     <span className="font-medium">{total}</span> resultados
                                 </p>
                                 <div className="flex items-center gap-2">
-                                    <label className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">
+                                    <label className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                         Mostrar:
                                     </label>
                                     <select
@@ -310,7 +310,7 @@ const ProductList = forwardRef(function ProductList(
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                         }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
+                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -324,17 +324,17 @@ const ProductList = forwardRef(function ProductList(
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-700">
+                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
                                         Página {page} de {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Siguiente
                                     </button>
@@ -345,7 +345,7 @@ const ProductList = forwardRef(function ProductList(
                         {/* Mobile: Page size selector */}
                         <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200 dark:border-gray-700">
                             <div className="flex items-center gap-2">
-                                <label className="text-xs text-gray-700 whitespace-nowrap">
+                                <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                     Mostrar:
                                 </label>
                                 <select
@@ -354,7 +354,7 @@ const ProductList = forwardRef(function ProductList(
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                     }}
-                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
+                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                                 >
                                     <option value="10">10</option>
                                     <option value="20">20</option>
@@ -362,7 +362,7 @@ const ProductList = forwardRef(function ProductList(
                                     <option value="100">100</option>
                                 </select>
                             </div>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Página {page} de {totalPages}
                             </p>
                         </div>

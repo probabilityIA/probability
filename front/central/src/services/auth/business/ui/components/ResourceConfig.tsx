@@ -56,7 +56,7 @@ export const ResourceConfig: React.FC<ResourceConfigProps> = ({ businessId }) =>
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h2 className="text-xl font-semibold">Configured Resources</h2>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 dark:text-gray-400">
                     Total: {config.total} | Active: {config.active} | Inactive: {config.inactive}
                 </div>
             </div>

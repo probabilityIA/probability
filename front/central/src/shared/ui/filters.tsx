@@ -81,7 +81,7 @@ export function Filters({
       case 'number':
         return (
           <div key={`${field.key}-${index}`}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
               {field.icon}
               {field.label}
             </label>
@@ -100,7 +100,7 @@ export function Filters({
       case 'select':
         return (
           <div key={`${field.key}-${index}`}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
               {field.icon}
               {field.label}
             </label>
@@ -121,7 +121,7 @@ export function Filters({
       case 'boolean':
         return (
           <div key={`${field.key}-${index}`}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
               {field.icon}
               {field.label}
             </label>

@@ -112,7 +112,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Tipo */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Tipo <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -129,7 +129,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Placa */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Placa <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -144,7 +144,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Marca */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Marca
                     </label>
                     <Input
@@ -158,7 +158,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Modelo */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Modelo
                     </label>
                     <Input
@@ -172,7 +172,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Ano */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Ano
                     </label>
                     <Input
@@ -187,7 +187,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Color */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Color
                     </label>
                     <Input
@@ -202,7 +202,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
                 {/* Estado (solo en edicion) */}
                 {vehicle && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Estado
                         </label>
                         <select
@@ -219,7 +219,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Capacidad de peso */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Capacidad de peso (kg)
                     </label>
                     <Input
@@ -234,7 +234,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Capacidad de volumen */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Capacidad de volumen (m3)
                     </label>
                     <Input
@@ -249,7 +249,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Vencimiento seguro */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Vencimiento del seguro
                     </label>
                     <Input
@@ -261,7 +261,7 @@ export default function VehicleForm({ vehicle, onSuccess, onCancel, businessId }
 
                 {/* Vencimiento registro */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Vencimiento del registro
                     </label>
                     <Input

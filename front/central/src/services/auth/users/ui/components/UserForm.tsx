@@ -78,7 +78,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ options, selectedValues, onCh
                 disabled={disabled}
                 className={`w-full input text-left flex items-center justify-between ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
             >
-                <span className={selectedLabels ? 'text-gray-900' : 'text-gray-400'}>
+                <span className={selectedLabels ? 'text-gray-900 dark:text-white' : 'text-gray-400'}>
                     {selectedLabels || placeholder || 'Seleccionar...'}
                 </span>
                 <svg 
@@ -94,7 +94,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ options, selectedValues, onCh
             {isOpen && !disabled && (
                 <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
                     {options.length === 0 ? (
-                        <div className="px-4 py-2 text-sm text-gray-500">No hay opciones disponibles</div>
+                        <div className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">No hay opciones disponibles</div>
                     ) : (
                         options.map((option) => (
                             <label
@@ -107,7 +107,7 @@ const MultiSelect: React.FC<MultiSelectProps> = ({ options, selectedValues, onCh
                                     onChange={() => handleToggle(option.value)}
                                     className="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                 />
-                                <span className="text-sm text-gray-900">{option.label}</span>
+                                <span className="text-sm text-gray-900 dark:text-white">{option.label}</span>
                             </label>
                         ))
                     )}
@@ -308,7 +308,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
                         onChange={handleScopeChange}
                         options={SCOPE_OPTIONS}
                     />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         {selectedScope === '1' 
                             ? 'Super administrador con acceso completo a la plataforma.' 
                             : 'Usuario que pertenece a uno o más negocios.'}
@@ -319,11 +319,11 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
             {/* Mostrar scope actual en edición (no editable) */}
             {!isCreating && initialData?.scope_code && (
                 <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-md">
-                    <p className="text-sm text-gray-700">
+                    <p className="text-sm text-gray-700 dark:text-gray-200">
                         <span className="font-medium">Tipo de Usuario:</span>{' '}
                         {initialData.scope_code === 'platform' ? 'Platform (Super Admin)' : 'Business (Usuario de Negocio)'}
                     </p>
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         El tipo de usuario no puede ser modificado después de la creación.
                     </p>
                 </div>
@@ -332,13 +332,13 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
             {/* Selector de Negocios - Solo para super admins al crear con scope business */}
             {showBusinessSelector && (
                 <div className="mt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Negocios *
                     </label>
                     {loadingBusinesses ? (
                         <div className="flex items-center gap-2 py-2">
                             <Spinner size="sm" />
-                            <span className="text-sm text-gray-500">Cargando negocios...</span>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">Cargando negocios...</span>
                         </div>
                     ) : (
                         <MultiSelect
@@ -348,7 +348,7 @@ export const UserForm: React.FC<UserFormProps> = ({ initialData, onSuccess, onCa
                             placeholder="Seleccionar negocios..."
                         />
                     )}
-                    <p className="text-xs text-gray-500 mt-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                         Seleccione uno o más negocios para asignar al usuario.
                     </p>
                 </div>

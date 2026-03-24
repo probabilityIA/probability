@@ -29,8 +29,8 @@ function CollapsibleSection({ title, description, defaultOpen = false, children 
                 className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors rounded-lg"
             >
                 <div>
-                    <span className="text-sm font-medium text-gray-900">{title}</span>
-                    {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">{title}</span>
+                    {description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{description}</p>}
                 </div>
                 {open
                     ? <ChevronDownIcon className="w-4 h-4 text-gray-400" />
@@ -163,10 +163,10 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
 
             {/* Información básica */}
             <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Información básica</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Información básica</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Nombre <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -180,7 +180,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Código <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -198,10 +198,10 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
 
             {/* Dirección general */}
             <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Dirección</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Dirección</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Dirección</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Dirección</label>
                         <Input
                             type="text"
                             value={formData.address}
@@ -211,7 +211,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Ciudad</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Ciudad</label>
                         <Input
                             type="text"
                             value={formData.city}
@@ -221,7 +221,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Departamento / Estado</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Departamento / Estado</label>
                         <Input
                             type="text"
                             value={formData.state}
@@ -231,7 +231,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">País</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">País</label>
                         <Input
                             type="text"
                             value={formData.country}
@@ -241,7 +241,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Código postal</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Código postal</label>
                         <Input
                             type="text"
                             value={formData.zip_code}
@@ -255,10 +255,10 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
 
             {/* Contacto */}
             <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-3">Contacto</h3>
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-3">Contacto</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Teléfono</label>
                         <Input
                             type="tel"
                             value={formData.phone}
@@ -268,7 +268,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre contacto</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nombre contacto</label>
                         <Input
                             type="text"
                             value={formData.contact_name}
@@ -278,7 +278,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email contacto</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email contacto</label>
                         <Input
                             type="email"
                             value={formData.contact_email}
@@ -298,7 +298,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Empresa</label>
                         <Input
                             type="text"
                             value={formData.company}
@@ -308,7 +308,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Email</label>
                         <Input
                             type="email"
                             value={formData.email}
@@ -318,7 +318,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Nombre</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Nombre</label>
                         <Input
                             type="text"
                             value={formData.first_name}
@@ -328,7 +328,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Apellido</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Apellido</label>
                         <Input
                             type="text"
                             value={formData.last_name}
@@ -338,7 +338,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Calle</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Calle</label>
                         <Input
                             type="text"
                             value={formData.street}
@@ -348,7 +348,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Barrio / Suburb</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Barrio / Suburb</label>
                         <Input
                             type="text"
                             value={formData.suburb}
@@ -358,7 +358,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Código DANE ciudad</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Código DANE ciudad</label>
                         <Input
                             type="text"
                             value={formData.city_dane_code}
@@ -368,7 +368,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Código postal (carrier)</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Código postal (carrier)</label>
                         <Input
                             type="text"
                             value={formData.postal_code}
@@ -388,7 +388,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
             >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Latitud</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Latitud</label>
                         <Input
                             type="number"
                             step="any"
@@ -398,7 +398,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Longitud</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Longitud</label>
                         <Input
                             type="number"
                             step="any"
@@ -419,7 +419,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         onChange={(e) => handleChange('is_default', e.target.checked)}
                         className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                     />
-                    <span className="text-sm text-gray-700">Bodega principal (por defecto para nuevas órdenes)</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-200">Bodega principal (por defecto para nuevas órdenes)</span>
                 </label>
 
                 <label className="flex items-center gap-3 cursor-pointer">
@@ -429,7 +429,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                         onChange={(e) => handleChange('is_fulfillment', e.target.checked)}
                         className="w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500"
                     />
-                    <span className="text-sm text-gray-700">Bodega de fulfillment (despacho de pedidos)</span>
+                    <span className="text-sm text-gray-700 dark:text-gray-200">Bodega de fulfillment (despacho de pedidos)</span>
                 </label>
 
                 {warehouse && (
@@ -440,7 +440,7 @@ export default function WarehouseForm({ warehouse, onSuccess, onCancel, business
                             onChange={(e) => handleChange('is_active', e.target.checked)}
                             className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500"
                         />
-                        <span className="text-sm text-gray-700">Bodega activa</span>
+                        <span className="text-sm text-gray-700 dark:text-gray-200">Bodega activa</span>
                     </label>
                 )}
             </div>

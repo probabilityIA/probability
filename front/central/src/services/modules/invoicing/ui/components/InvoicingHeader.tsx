@@ -34,7 +34,7 @@ export function InvoicingHeader({ title, description, children }: InvoicingHeade
             {title}
           </h1>
           {description && (
-            <p className="text-gray-600 mt-3 text-base">{description}</p>
+            <p className="text-gray-600 dark:text-gray-300 mt-3 text-base">{description}</p>
           )}
         </div>
 

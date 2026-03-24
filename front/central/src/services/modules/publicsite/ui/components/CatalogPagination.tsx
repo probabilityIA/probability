@@ -28,7 +28,7 @@ export function CatalogPagination({ currentPage, totalPages, total, basePath }: 
             >
                 Anterior
             </button>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-300">
                 Página {currentPage} de {totalPages} ({total} productos)
             </span>
             <button

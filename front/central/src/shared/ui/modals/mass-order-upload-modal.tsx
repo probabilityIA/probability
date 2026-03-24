@@ -104,10 +104,10 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] flex flex-col">
                 <div className="flex justify-between items-center mb-6 flex-shrink-0">
-                    <h2 className="text-2xl font-bold text-gray-800">Carga Masiva de Órdenes</h2>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 dark:text-gray-100">Carga Masiva de Órdenes</h2>
                     <button
                         onClick={handleClose}
-                        className="text-gray-500 hover:text-gray-700 text-2xl"
+                        className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 text-2xl"
                     >
                         ×
                     </button>
@@ -137,7 +137,7 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                     {/* File Input */}
                     {!success && !uploadStats && (
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                                 Seleccionar archivo
                             </label>
                             <input
@@ -152,7 +152,7 @@ export default function MassOrderUploadModal({ isOpen, onClose, onUploadComplete
                                     hover:file:bg-orange-100"
                             />
                             {file && (
-                                <p className="mt-2 text-sm text-gray-600">
+                                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                                     Archivo seleccionado: <strong>{file.name}</strong>
                                 </p>
                             )}

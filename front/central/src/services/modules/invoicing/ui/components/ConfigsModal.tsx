@@ -58,7 +58,7 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
           </h2>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -67,7 +67,7 @@ export function ConfigsModal({ isOpen, onClose, selectedBusinessId }: ConfigsMod
         {/* Body */}
         <div className="flex-1 overflow-y-auto">
           {loading ? (
-            <div className="flex items-center justify-center h-48 text-gray-500">
+            <div className="flex items-center justify-center h-48 text-gray-500 dark:text-gray-400">
               Cargando configuraciones...
             </div>
           ) : (

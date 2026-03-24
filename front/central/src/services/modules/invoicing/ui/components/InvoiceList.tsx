@@ -499,7 +499,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
       render: (_: unknown, invoice: Invoice) => (
         <div>
           <div className="font-medium">{invoice.invoice_number || 'Sin número'}</div>
-          <div className="text-xs text-gray-500">ID: {invoice.id}</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">ID: {invoice.id}</div>
         </div>
       ),
     },
@@ -508,7 +508,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
       label: 'Orden',
       render: (_: unknown, invoice: Invoice) => (
         <div>
-          <div className="text-sm font-medium text-gray-700">
+          <div className="text-sm font-medium text-gray-700 dark:text-gray-200">
             {invoice.order_number || '—'}
           </div>
           <div className="text-xs text-gray-400 font-mono">
@@ -524,7 +524,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         <div>
           <div className="font-medium">{invoice.customer_name || '-'}</div>
           {invoice.customer_email && (
-            <div className="text-xs text-gray-500">{invoice.customer_email}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{invoice.customer_email}</div>
           )}
         </div>
       ),
@@ -578,7 +578,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
       key: 'created_at',
       label: 'Fecha',
       render: (_: unknown, invoice: Invoice) => (
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
           {new Date(invoice.created_at).toLocaleString('es-CO', {
             day: '2-digit',
             month: 'short',

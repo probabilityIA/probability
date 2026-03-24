@@ -54,11 +54,11 @@ function SuspendedWall() {
                     🔒
                 </div>
 
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white dark:text-white mb-3">
                     Cuenta suspendida
                 </h1>
 
-                <p className="text-gray-600 dark:text-gray-400 mb-6 leading-relaxed">
+                <p className="text-gray-600 dark:text-gray-300 dark:text-gray-400 mb-6 leading-relaxed">
                     No puedes usar las funciones de la plataforma hasta que no te pongas al día con tu pago.
                     Ingresa al módulo de <strong>Suscripción</strong> para ver los detalles y la información de pago.
                 </p>

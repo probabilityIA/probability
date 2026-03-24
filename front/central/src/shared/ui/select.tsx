@@ -40,7 +40,7 @@ export function Select({
       {label && (
         <label
           htmlFor={selectId}
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200"
         >
           {label}
           {props.required && <span className="text-red-500 ml-1">*</span>}
@@ -89,7 +89,7 @@ export function Select({
       )}
 
       {!error && helperText && (
-        <p className="text-sm text-gray-500">{helperText}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
       )}
     </div>
   );

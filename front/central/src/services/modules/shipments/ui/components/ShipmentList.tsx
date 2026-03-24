@@ -43,7 +43,7 @@ const CHIP_STATUS_OPTIONS = [
 ];
 
 function StatusBadge({ status }: { status: string }) {
-    const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-600 border-gray-200 dark:border-gray-700', icon: null };
+    const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700', icon: null };
     return (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.color}`}>
             {cfg.icon}
@@ -121,11 +121,11 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
             <div className="flex items-start justify-between p-5 border-b border-gray-100">
                 <div className="flex-1 min-w-0">
                     <p className="text-xs text-gray-400 font-medium uppercase tracking-wider mb-1">Detalle de Envío</p>
-                    <h3 className="text-base font-bold text-gray-900 truncate">
+                    <h3 className="text-base font-bold text-gray-900 dark:text-white truncate">
                         {shipment.customer_name || shipment.client_name || 'Cliente desconocido'}
                     </h3>
                     {shipment.destination_address && (
-                        <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500">
+                        <div className="flex items-center gap-1 mt-0.5 text-xs text-gray-500 dark:text-gray-400">
                             <MapPin size={11} className="flex-shrink-0" />
                             <span className="truncate">{shipment.destination_address}</span>
                         </div>
@@ -133,7 +133,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                 </div>
                 <button
                     onClick={onClose}
-                    className="ml-3 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                    className="ml-3 p-1.5 rounded-full hover:bg-gray-100 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors flex-shrink-0"
                 >
                     <X size={16} />
                 </button>
@@ -145,7 +145,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                 <div className="grid grid-cols-2 gap-3 p-4 border-b border-gray-50">
                     <div className="bg-gray-50 rounded-lg p-3">
                         <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Tracking</p>
-                        <p className="text-sm font-mono font-semibold text-gray-900 break-all">
+                        <p className="text-sm font-mono font-semibold text-gray-900 dark:text-white break-all">
                             {shipment.tracking_number || 'Sin tracking'}
                         </p>
                     </div>
@@ -163,7 +163,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Transportista</p>
                             <div className="flex items-center gap-1.5">
                                 <Truck size={13} className="text-gray-400" />
-                                <p className="text-sm font-semibold text-gray-900">
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                     {shipment.carrier.split('(')[0].trim()}
                                 </p>
                             </div>
@@ -174,7 +174,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Enviado</p>
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={13} className="text-gray-400" />
-                                <p className="text-sm font-semibold text-gray-900">{formatDate(shipment.shipped_at)}</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(shipment.shipped_at)}</p>
                             </div>
                         </div>
                     )}
@@ -201,7 +201,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">Creado</p>
                             <div className="flex items-center gap-1.5">
                                 <Calendar size={13} className="text-gray-400" />
-                                <p className="text-sm font-semibold text-gray-900">{formatDate(shipment.created_at)}</p>
+                                <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatDate(shipment.created_at)}</p>
                             </div>
                         </div>
                     )}
@@ -210,7 +210,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                             <p className="text-[10px] text-gray-400 uppercase font-bold tracking-wider mb-1">ID Orden</p>
                             <div className="flex items-center gap-1.5">
                                 <Hash size={13} className="text-gray-400 flex-shrink-0" />
-                                <p className="text-xs font-mono text-gray-700 break-all">{shipment.order_id}</p>
+                                <p className="text-xs font-mono text-gray-700 dark:text-gray-200 break-all">{shipment.order_id}</p>
                             </div>
                         </div>
                     )}
@@ -275,19 +275,19 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                     <div className="px-4 py-3 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-2">
                             <DollarSign size={12} className="text-gray-400" />
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Costos</p>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Costos</p>
                         </div>
                         <div className="grid grid-cols-3 gap-2">
                             {shipment.shipping_cost != null && (
                                 <div className="bg-gray-50 rounded-lg p-2.5">
                                     <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Envío</p>
-                                    <p className="text-sm font-semibold text-gray-900">{formatMoney(shipment.shipping_cost)}</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(shipment.shipping_cost)}</p>
                                 </div>
                             )}
                             {shipment.insurance_cost != null && (
                                 <div className="bg-gray-50 rounded-lg p-2.5">
                                     <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Seguro</p>
-                                    <p className="text-sm font-semibold text-gray-900">{formatMoney(shipment.insurance_cost)}</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{formatMoney(shipment.insurance_cost)}</p>
                                 </div>
                             )}
                             {shipment.total_cost != null && (
@@ -305,19 +305,19 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                     <div className="px-4 py-3 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-2">
                             <Box size={12} className="text-gray-400" />
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Paquete</p>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Paquete</p>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {shipment.weight != null && (
                                 <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
                                     <p className="text-[10px] text-gray-400 uppercase font-bold">Peso</p>
-                                    <p className="text-sm font-semibold text-gray-900">{shipment.weight} kg</p>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">{shipment.weight} kg</p>
                                 </div>
                             )}
                             {(shipment.length != null || shipment.width != null || shipment.height != null) && (
                                 <div className="flex items-center gap-2 bg-gray-50 rounded-lg px-3 py-2">
                                     <p className="text-[10px] text-gray-400 uppercase font-bold">Dim.</p>
-                                    <p className="text-sm font-semibold text-gray-900">
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                         {shipment.length ?? '?'} × {shipment.width ?? '?'} × {shipment.height ?? '?'} cm
                                     </p>
                                 </div>
@@ -331,7 +331,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                     <div className="px-4 py-3 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-2">
                             <Building2 size={12} className="text-gray-400" />
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Logística</p>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Logística</p>
                         </div>
                         <div className="grid grid-cols-2 gap-2">
                             {shipment.warehouse_name && (
@@ -339,7 +339,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                                     <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Almacén</p>
                                     <div className="flex items-center gap-1.5">
                                         <Building2 size={12} className="text-gray-400 flex-shrink-0" />
-                                        <p className="text-sm font-semibold text-gray-900">{shipment.warehouse_name}</p>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{shipment.warehouse_name}</p>
                                     </div>
                                 </div>
                             )}
@@ -348,7 +348,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                                     <p className="text-[10px] text-gray-400 uppercase font-bold mb-1">Conductor</p>
                                     <div className="flex items-center gap-1.5">
                                         <User size={12} className="text-gray-400 flex-shrink-0" />
-                                        <p className="text-sm font-semibold text-gray-900">{shipment.driver_name}</p>
+                                        <p className="text-sm font-semibold text-gray-900 dark:text-white">{shipment.driver_name}</p>
                                     </div>
                                 </div>
                             )}
@@ -367,9 +367,9 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                     <div className="px-4 py-3 border-t border-gray-50">
                         <div className="flex items-center gap-1.5 mb-2">
                             <StickyNote size={12} className="text-gray-400" />
-                            <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Notas de Entrega</p>
+                            <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Notas de Entrega</p>
                         </div>
-                        <p className="text-sm text-gray-700 bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed">
+                        <p className="text-sm text-gray-700 dark:text-gray-200 bg-amber-50 border border-amber-100 rounded-lg p-3 leading-relaxed">
                             {shipment.delivery_notes}
                         </p>
                     </div>
@@ -377,7 +377,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
 
                 {/* Tracking Timeline */}
                 <div className="px-4 py-3">
-                    <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Historial de rastreo</p>
+                    <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Historial de rastreo</p>
                     {tracking.loading ? (
                         <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
                             <RefreshCw size={16} className="animate-spin" />
@@ -397,10 +397,10 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                                         <div className={`absolute -left-5 top-0.5 w-3 h-3 rounded-full ring-2 ring-white ${idx === 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />
                                         <div>
                                             <div className="flex items-baseline justify-between gap-2">
-                                                <p className={`text-sm font-semibold ${idx === 0 ? 'text-blue-700' : 'text-gray-800'}`}>{event.status}</p>
+                                                <p className={`text-sm font-semibold ${idx === 0 ? 'text-blue-700' : 'text-gray-800 dark:text-gray-100'}`}>{event.status}</p>
                                                 <p className="text-[10px] text-gray-400 flex-shrink-0">{event.date}</p>
                                             </div>
-                                            {event.description && <p className="text-xs text-gray-500 mt-0.5">{event.description}</p>}
+                                            {event.description && <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{event.description}</p>}
                                             {event.location && (
                                                 <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-400">
                                                     <MapPin size={9} />
@@ -422,7 +422,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                 {/* Reference Map */}
                 {destination && (
                     <div className="px-4 pb-5">
-                        <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mapa de referencia</p>
+                        <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">Mapa de referencia</p>
                         <div style={{ height: '200px' }} className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                             <MapComponent
                                 address={destination}
@@ -549,7 +549,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-2xl font-bold text-gray-900">Envíos</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Envíos</h2>
                             {total > 0 && (
                                 <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-600 border border-blue-100">
                                     {total}
@@ -566,7 +566,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 {/* Chip "Todos" */}
                 <button
                     onClick={() => updateFilters({ status: undefined })}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${!filters.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${!filters.status ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-500 dark:text-gray-400 hover:bg-gray-200'
                         }`}
                 >
                     Todos <span className="opacity-70">{total}</span>
@@ -579,7 +579,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         <button
                             key={value}
                             onClick={() => updateFilters({ status: isActive ? undefined : value })}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${isActive ? activeClass : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${isActive ? activeClass : 'bg-gray-100 text-gray-500 dark:text-gray-400 hover:bg-gray-200'
                                 }`}
                         >
                             <Icon size={11} />
@@ -599,14 +599,14 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         <input
                             type="text"
                             placeholder="Buscar por nombre del cliente..."
-                            className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 text-gray-900 placeholder:text-gray-400 transition-colors"
+                            className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 text-gray-900 dark:text-white placeholder:text-gray-400 transition-colors"
                             value={filters.customer_name || ''}
                             onChange={(e) => updateFilters({ customer_name: e.target.value || undefined })}
                         />
                     </div>
                     {/* Select estado */}
                     <select
-                        className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-blue-500/20 min-w-[140px] transition-colors"
+                        className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-gray-50 focus:ring-2 focus:ring-blue-500/20 min-w-[140px] transition-colors"
                         value={filters.status || ''}
                         onChange={(e) => updateFilters({ status: e.target.value || undefined })}
                     >
@@ -618,7 +618,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     </select>
                     {/* Select entorno */}
                     <select
-                        className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-orange-500/20 min-w-[140px] transition-colors"
+                        className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 dark:text-gray-300 bg-gray-50 focus:ring-2 focus:ring-orange-500/20 min-w-[140px] transition-colors"
                         value={filters.is_test === undefined ? '' : filters.is_test ? 'test' : 'production'}
                         onChange={(e) => {
                             const val = e.target.value;
@@ -654,7 +654,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                 const isSelected = selectedShipment?.id === shipment.id;
                                 const city = extractCity(shipment.destination_address);
                                 const clientName = (shipment.customer_name || shipment.client_name)?.trim() || null;
-                                const statusCfg = STATUS_CONFIG[shipment.status] || { label: shipment.status, color: 'bg-gray-100 text-gray-600 border-gray-200 dark:border-gray-700', icon: null, border: 'border-gray-300' };
+                                const statusCfg = STATUS_CONFIG[shipment.status] || { label: shipment.status, color: 'bg-gray-100 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-gray-700', icon: null, border: 'border-gray-300' };
 
                                 return (
                                     <button
@@ -669,13 +669,13 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                         <div className="flex items-center justify-between gap-2 mb-1.5">
                                             <div className="flex items-center gap-1.5 min-w-0">
                                                 {!clientName && <Package size={11} className="text-gray-300 flex-shrink-0" />}
-                                                <p className={`text-sm font-semibold truncate ${clientName ? 'text-gray-900' : 'text-gray-400 italic'}`}>
+                                                <p className={`text-sm font-semibold truncate ${clientName ? 'text-gray-900 dark:text-white' : 'text-gray-400 italic'}`}>
                                                     {clientName || 'Sin destinatario'}
                                                 </p>
                                             </div>
                                             <div className="flex items-center gap-1 flex-shrink-0">
                                                 {city && (
-                                                    <span className="flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                                                    <span className="flex items-center gap-0.5 text-[10px] text-gray-500 dark:text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">
                                                         <MapPin size={8} />{city}
                                                     </span>
                                                 )}
@@ -722,21 +722,21 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     {/* Pagination */}
                     {totalPages > 1 && (
                         <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 bg-gray-50/50 flex-shrink-0">
-                            <p className="text-xs text-gray-500">
-                                Pág. <span className="font-semibold text-gray-700">{page}</span> de {totalPages}
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
+                                Pág. <span className="font-semibold text-gray-700 dark:text-gray-200">{page}</span> de {totalPages}
                             </p>
                             <div className="flex items-center gap-1">
                                 <button
                                     onClick={() => updateFilters({ page: page - 1 })}
                                     disabled={page === 1}
-                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronLeft size={15} />
                                 </button>
                                 <button
                                     onClick={() => updateFilters({ page: page + 1 })}
                                     disabled={page === totalPages}
-                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                                    className="p-1.5 rounded-lg hover:bg-gray-200 text-gray-600 dark:text-gray-300 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                 >
                                     <ChevronRight size={15} />
                                 </button>
@@ -760,7 +760,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                 <Package size={36} strokeWidth={1.2} className="text-gray-300" />
                             </div>
                             <div className="text-center">
-                                <p className="text-sm font-medium text-gray-500">Selecciona un envío</p>
+                                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Selecciona un envío</p>
                                 <p className="text-xs text-gray-400 mt-1">para ver su información de rastreo</p>
                             </div>
                             <div className="flex items-center gap-1 text-xs text-gray-300">

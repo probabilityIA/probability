@@ -15,7 +15,7 @@ interface DriverListProps {
 
 const statusConfig: Record<string, { label: string; className: string }> = {
     active: { label: 'Activo', className: 'bg-green-100 text-green-800' },
-    inactive: { label: 'Inactivo', className: 'bg-gray-100 text-gray-800' },
+    inactive: { label: 'Inactivo', className: 'bg-gray-100 text-gray-800 dark:text-gray-100' },
     on_route: { label: 'En ruta', className: 'bg-blue-100 text-blue-800' },
 };
 
@@ -99,21 +99,21 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
     ];
 
     const renderRow = (driver: DriverInfo) => {
-        const status = statusConfig[driver.status] || { label: driver.status, className: 'bg-gray-100 text-gray-800' };
+        const status = statusConfig[driver.status] || { label: driver.status, className: 'bg-gray-100 text-gray-800 dark:text-gray-100' };
 
         return {
             name: (
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-gray-900 dark:text-white">
                     {driver.first_name} {driver.last_name}
                 </span>
             ),
             identification: (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                     {driver.identification || <span className="text-gray-300">&mdash;</span>}
                 </span>
             ),
             phone: (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                     {driver.phone || <span className="text-gray-300">&mdash;</span>}
                 </span>
             ),
@@ -123,7 +123,7 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
                 </span>
             ),
             license_type: (
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 dark:text-gray-300">
                     {driver.license_type || <span className="text-gray-300">&mdash;</span>}
                 </span>
             ),
@@ -179,7 +179,7 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
                     <button
                         type="button"
                         onClick={handleClearSearch}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                     >
                         Limpiar
                     </button>

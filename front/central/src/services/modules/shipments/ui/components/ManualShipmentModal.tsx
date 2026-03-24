@@ -68,7 +68,7 @@ export const ManualShipmentModal: React.FC<ManualShipmentModalProps> = ({ isOpen
                 </div>
 
                 <div className="border-t pt-4">
-                    <p className="text-xs text-gray-500 font-semibold mb-3">💬 Opción 2: Completa manualmente (si no usas orden)</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold mb-3">💬 Opción 2: Completa manualmente (si no usas orden)</p>
                     <div className="space-y-4">
                         <Input
                             id="client_name"
@@ -94,7 +94,7 @@ export const ManualShipmentModal: React.FC<ManualShipmentModalProps> = ({ isOpen
                 </div>
 
                 <div className="border-t pt-4 space-y-4">
-                    <p className="text-xs text-gray-500 font-semibold">📦 Detalles del Envío</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 font-semibold">📦 Detalles del Envío</p>
                     <Input
                         id="tracking_number"
                         name="tracking_number"

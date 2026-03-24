@@ -94,14 +94,14 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
     const renderRow = (level: InventoryLevel) => ({
         product: (
             <div>
-                <span className="font-medium text-gray-900">{level.product_name || level.product_id}</span>
+                <span className="font-medium text-gray-900 dark:text-white">{level.product_name || level.product_id}</span>
                 {level.product_sku && (
-                    <span className="block text-xs text-gray-500 font-mono">{level.product_sku}</span>
+                    <span className="block text-xs text-gray-500 dark:text-gray-400 font-mono">{level.product_sku}</span>
                 )}
             </div>
         ),
         quantity: (
-            <span className="text-sm font-medium text-gray-900">{level.quantity}</span>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">{level.quantity}</span>
         ),
         reserved: (
             <span className={`text-sm ${level.reserved_qty > 0 ? 'text-orange-600 font-medium' : 'text-gray-400'}`}>
@@ -109,10 +109,10 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
             </span>
         ),
         available: (
-            <span className="text-sm font-semibold text-gray-900">{level.available_qty}</span>
+            <span className="text-sm font-semibold text-gray-900 dark:text-white">{level.available_qty}</span>
         ),
         limits: (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
                 {level.min_stock != null ? level.min_stock : '—'} / {level.max_stock != null ? level.max_stock : '—'}
             </span>
         ),
@@ -134,7 +134,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                 <div className="flex justify-center">
                     <button
                         onClick={() => onAdjust(level.product_id)}
-                        className="p-1.5 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                        className="p-1.5 text-gray-500 dark:text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
                         title="Ajustar stock"
                     >
                         <AdjustmentsHorizontalIcon className="w-4 h-4" />
@@ -173,13 +173,13 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                         <button
                             type="button"
                             onClick={handleClearSearch}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                            className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                         >
                             Limpiar
                         </button>
                     )}
                 </form>
-                <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
+                <label className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 cursor-pointer">
                     <input
                         type="checkbox"
                         checked={lowStockOnly}

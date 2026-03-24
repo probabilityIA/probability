@@ -28,7 +28,7 @@ export function CategoryCard({ category, integrations, onToggle, onEdit, togglin
 
             <div className="p-2 space-y-1 bg-white dark:bg-gray-800 min-h-[60px]">
                 {integrations.length === 0 ? (
-                    <p className="text-xs text-gray-400 dark:text-gray-500 italic text-center py-4">Sin configurar</p>
+                    <p className="text-xs text-gray-400 dark:text-gray-500 dark:text-gray-400 italic text-center py-4">Sin configurar</p>
                 ) : (
                     integrations.map(integration => (
                         <IntegrationToggle

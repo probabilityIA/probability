@@ -95,19 +95,19 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
 
     const renderRow = (customer: CustomerInfo) => ({
         name: (
-            <span className="font-medium text-gray-900">{customer.name}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{customer.name}</span>
         ),
         email: (
-            <span className="text-sm text-gray-600">{customer.email || <span className="text-gray-300">—</span>}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.email || <span className="text-gray-300">—</span>}</span>
         ),
         phone: (
-            <span className="text-sm text-gray-600">{customer.phone || <span className="text-gray-300">—</span>}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.phone || <span className="text-gray-300">—</span>}</span>
         ),
         dni: (
-            <span className="text-sm text-gray-600">{customer.dni || <span className="text-gray-300">—</span>}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{customer.dni || <span className="text-gray-300">—</span>}</span>
         ),
         created_at: (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
                 {new Date(customer.created_at).toLocaleDateString('es-CO')}
             </span>
         ),
@@ -171,7 +171,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
                     <button
                         type="button"
                         onClick={handleClearSearch}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                     >
                         Limpiar
                     </button>

@@ -116,7 +116,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
       {/* Header */}
       <div className="p-4 border-b flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="flex items-center gap-2">
-          <h3 className="text-sm font-medium text-gray-900">Auditoria de Mensajes</h3>
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">Auditoria de Mensajes</h3>
         </div>
         <div className="flex items-center gap-2 ml-auto">
           <input
@@ -166,12 +166,12 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2 px-2 font-medium text-gray-500">Fecha</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-500">Destino</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-500">Orden</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-500">Plantilla</th>
-                <th className="text-center py-2 px-2 font-medium text-gray-500">Estado</th>
-                <th className="text-center py-2 px-2 font-medium text-gray-500">Direccion</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Fecha</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Destino</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Orden</th>
+                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Plantilla</th>
+                <th className="text-center py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Estado</th>
+                <th className="text-center py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Direccion</th>
               </tr>
             </thead>
             <tbody>
@@ -196,7 +196,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                   const badge = statusBadge[log.status] || statusBadge.sent;
                   return (
                     <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-2 text-gray-600 whitespace-nowrap">
+                      <td className="py-2 px-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">
                         {new Date(log.created_at).toLocaleDateString('es-CO', {
                           day: '2-digit',
                           month: 'short',
@@ -204,13 +204,13 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                           minute: '2-digit',
                         })}
                       </td>
-                      <td className="py-2 px-2 text-gray-700 font-mono">
+                      <td className="py-2 px-2 text-gray-700 dark:text-gray-200 font-mono">
                         {maskPhone(log.phone_number)}
                       </td>
-                      <td className="py-2 px-2 text-gray-600">
+                      <td className="py-2 px-2 text-gray-600 dark:text-gray-300">
                         {log.order_number || '-'}
                       </td>
-                      <td className="py-2 px-2 text-gray-600 max-w-[120px] truncate">
+                      <td className="py-2 px-2 text-gray-600 dark:text-gray-300 max-w-[120px] truncate">
                         {log.template_name || '-'}
                       </td>
                       <td className="py-2 px-2 text-center">
@@ -218,7 +218,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                           {badge.label}
                         </span>
                       </td>
-                      <td className="py-2 px-2 text-center text-gray-500">
+                      <td className="py-2 px-2 text-center text-gray-500 dark:text-gray-400">
                         {directionLabel[log.direction] || log.direction}
                       </td>
                     </tr>
@@ -232,7 +232,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
         {/* Pagination */}
         {totalPages > 1 && (
           <div className="flex items-center justify-between pt-2">
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Pagina {page} de {totalPages} ({total} registros)
             </p>
             <div className="flex gap-1">

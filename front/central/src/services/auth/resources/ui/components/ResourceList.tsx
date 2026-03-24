@@ -109,7 +109,7 @@ export const ResourceList: React.FC = () => {
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Recursos</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Recursos</h1>
             </div>
 
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
@@ -147,19 +147,19 @@ export const ResourceList: React.FC = () => {
                         <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Nombre
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Descripción
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Tipo de Negocio
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                         Acciones
                                     </th>
                                 </tr>
@@ -167,29 +167,29 @@ export const ResourceList: React.FC = () => {
                             <tbody className="bg-white divide-y divide-gray-200">
                                 {loading ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                                        <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                             Cargando recursos...
                                         </td>
                                     </tr>
                                 ) : resources.length === 0 ? (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                                        <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                             No hay recursos disponibles
                                         </td>
                                     </tr>
                                 ) : (
                                     resources.map((resource) => (
                                         <tr key={resource.id} className="hover:bg-gray-50">
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {resource.id}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                                 {resource.name}
                                             </td>
-                                            <td className="px-6 py-4 text-sm text-gray-500 max-w-xs truncate">
+                                            <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs truncate">
                                                 {resource.description || '-'}
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                                 {resource.business_type_name || '-'}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -230,7 +230,7 @@ export const ResourceList: React.FC = () => {
                                 {/* Desktop: Full pagination */}
                                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                                     <div>
-                                        <p className="text-sm text-gray-700">
+                                        <p className="text-sm text-gray-700 dark:text-gray-200">
                                             Mostrando{' '}
                                             <span className="font-medium">
                                                 {(page - 1) * pageSize + 1}
@@ -246,17 +246,17 @@ export const ResourceList: React.FC = () => {
                                         <button
                                             onClick={() => setPage(page - 1)}
                                             disabled={page === 1}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                         >
                                             Anterior
                                         </button>
-                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
                                             Página {page} de {totalPages}
                                         </span>
                                         <button
                                             onClick={() => setPage(page + 1)}
                                             disabled={page === totalPages}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                         >
                                             Siguiente
                                         </button>
@@ -266,7 +266,7 @@ export const ResourceList: React.FC = () => {
                                 {/* Mobile: Page size selector */}
                                 <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
                                     <div className="flex items-center gap-2">
-                                        <label className="text-xs text-gray-700 whitespace-nowrap">
+                                        <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                             Mostrar:
                                         </label>
                                         <select
@@ -276,7 +276,7 @@ export const ResourceList: React.FC = () => {
                                                 setPageSize(newPageSize);
                                                 setPage(1);
                                             }}
-                                            className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                            className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white"
                                         >
                                             <option value="10">10</option>
                                             <option value="20">20</option>
@@ -284,7 +284,7 @@ export const ResourceList: React.FC = () => {
                                             <option value="100">100</option>
                                         </select>
                                     </div>
-                                    <p className="text-xs text-gray-500">
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
                                         Página {page} de {totalPages}
                                     </p>
                                 </div>

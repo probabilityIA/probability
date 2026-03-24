@@ -27,7 +27,7 @@ const ROUTE_STATUS_LABELS: Record<string, string> = {
 };
 
 const ROUTE_STATUS_COLORS: Record<string, string> = {
-    planned: 'bg-gray-100 text-gray-700',
+    planned: 'bg-gray-100 text-gray-700 dark:text-gray-200',
     in_progress: 'bg-blue-100 text-blue-700',
     completed: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
@@ -42,11 +42,11 @@ const STOP_STATUS_LABELS: Record<string, string> = {
 };
 
 const STOP_STATUS_COLORS: Record<string, string> = {
-    pending: 'bg-gray-100 text-gray-700',
+    pending: 'bg-gray-100 text-gray-700 dark:text-gray-200',
     arrived: 'bg-yellow-100 text-yellow-700',
     delivered: 'bg-green-100 text-green-700',
     failed: 'bg-red-100 text-red-700',
-    skipped: 'bg-gray-100 text-gray-500',
+    skipped: 'bg-gray-100 text-gray-500 dark:text-gray-400',
 };
 
 export default function RouteDetail({ routeId, businessId, onBack, onRefreshList }: RouteDetailProps) {
@@ -193,14 +193,14 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Ruta del {formatDate(route.date)}
                             </h2>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ROUTE_STATUS_COLORS[route.status] || 'bg-gray-100 text-gray-700'}`}>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ROUTE_STATUS_COLORS[route.status] || 'bg-gray-100 text-gray-700 dark:text-gray-200'}`}>
                                 {ROUTE_STATUS_LABELS[route.status] || route.status}
                             </span>
                         </div>
-                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
+                        <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600 dark:text-gray-300">
                             {route.driver_name && (
                                 <span>Conductor: <strong>{route.driver_name}</strong></span>
                             )}
@@ -212,7 +212,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                             )}
                         </div>
                         {route.notes && (
-                            <p className="text-sm text-gray-500 italic">{route.notes}</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 italic">{route.notes}</p>
                         )}
                     </div>
 
@@ -242,7 +242,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
 
                 {/* Progress bar */}
                 <div className="mt-4">
-                    <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
+                    <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-300 mb-1">
                         <span>Progreso</span>
                         <span>{route.completed_stops}/{route.total_stops} paradas ({progressPercent}%)</span>
                     </div>
@@ -258,7 +258,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                 </div>
 
                 {/* Time info */}
-                <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 mt-3">
+                <div className="flex flex-wrap gap-x-6 gap-y-1 text-xs text-gray-500 dark:text-gray-400 mt-3">
                     {route.actual_start_time && (
                         <span>Inicio real: {formatTime(route.actual_start_time)}</span>
                     )}
@@ -277,7 +277,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             {/* Stops list */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
                 <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-                    <h3 className="text-base font-semibold text-gray-900">
+                    <h3 className="text-base font-semibold text-gray-900 dark:text-white">
                         Paradas ({sortedStops.length})
                     </h3>
                 </div>
@@ -291,21 +291,21 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                         {sortedStops.map((stop) => (
                             <div key={stop.id} className="px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3">
                                 {/* Sequence number */}
-                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-600">
+                                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-sm font-semibold text-gray-600 dark:text-gray-300">
                                     {stop.sequence}
                                 </div>
 
                                 {/* Stop info */}
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2 mb-0.5">
-                                        <span className="font-medium text-gray-900 text-sm truncate">
+                                        <span className="font-medium text-gray-900 dark:text-white text-sm truncate">
                                             {stop.customer_name}
                                         </span>
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STOP_STATUS_COLORS[stop.status] || 'bg-gray-100 text-gray-700'}`}>
+                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${STOP_STATUS_COLORS[stop.status] || 'bg-gray-100 text-gray-700 dark:text-gray-200'}`}>
                                             {STOP_STATUS_LABELS[stop.status] || stop.status}
                                         </span>
                                     </div>
-                                    <p className="text-sm text-gray-500 truncate">{stop.address}</p>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 truncate">{stop.address}</p>
                                     <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-gray-400 mt-0.5">
                                         {stop.order_id && (
                                             <span>Orden: {stop.order_id.substring(0, 8)}...</span>
@@ -359,7 +359,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
                         <div className="px-6 py-4 border-b">
-                            <h3 className="text-lg font-semibold text-gray-900">Motivo del fallo</h3>
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Motivo del fallo</h3>
                         </div>
                         <div className="p-6 space-y-4">
                             <textarea

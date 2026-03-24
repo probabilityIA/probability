@@ -81,10 +81,10 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
     return (
         <div className="w-full">
             <div className="mb-8 sm:mb-10">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">
+                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
                     Cambiar Contraseña
                 </h2>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                     Ingresa tu contraseña actual y la nueva contraseña que deseas usar.
                 </p>
             </div>
@@ -102,7 +102,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                             type={showCurrentPassword ? "text" : "password"}
                             autoComplete="current-password"
                             required
-                            className="block w-full px-4 py-3 pr-12 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                            className="block w-full px-4 py-3 pr-12 bg-white border border-gray-200 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
                             placeholder="Tu contraseña actual"
                             value={currentPassword}
                             onChange={(e) => setCurrentPassword(e.target.value)}
@@ -111,7 +111,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                         <button
                             type="button"
                             onClick={() => setShowCurrentPassword(!showCurrentPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 focus:outline-none transition-colors"
                             tabIndex={-1}
                         >
                             {showCurrentPassword ? (
@@ -141,7 +141,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                             autoComplete="new-password"
                             required
                             minLength={8}
-                            className="block w-full px-4 py-3 pr-12 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                            className="block w-full px-4 py-3 pr-12 bg-white border border-gray-200 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
                             placeholder="Mínimo 8 caracteres"
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
@@ -150,7 +150,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                         <button
                             type="button"
                             onClick={() => setShowNewPassword(!showNewPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 focus:outline-none transition-colors"
                             tabIndex={-1}
                         >
                             {showNewPassword ? (
@@ -183,7 +183,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                             autoComplete="new-password"
                             required
                             minLength={8}
-                            className="block w-full px-4 py-3 pr-12 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
+                            className="block w-full px-4 py-3 pr-12 bg-white border border-gray-200 rounded-lg text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition-all"
                             placeholder="Confirma tu nueva contraseña"
                             value={confirmPassword}
                             onChange={(e) => setConfirmPassword(e.target.value)}
@@ -192,7 +192,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                         <button
                             type="button"
                             onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none transition-colors"
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 focus:outline-none transition-colors"
                             tabIndex={-1}
                         >
                             {showConfirmPassword ? (
@@ -224,7 +224,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                             type="button"
                             onClick={onCancel}
                             disabled={isPending}
-                            className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-base font-bold text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="flex-1 py-3 px-4 border border-gray-300 rounded-lg text-base font-bold text-gray-700 dark:text-gray-200 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             Cancelar
                         </button>
@@ -261,7 +261,7 @@ export const ChangePasswordForm = ({ onSuccess, onCancel }: ChangePasswordFormPr
                             </svg>
                         </div>
                         <div className="flex-1">
-                            <p className="text-gray-700">
+                            <p className="text-gray-700 dark:text-gray-200">
                                 {success}
                             </p>
                         </div>

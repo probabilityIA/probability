@@ -95,7 +95,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Nombre */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Nombre <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -111,7 +111,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
 
                 {/* Apellido */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Apellido <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -127,7 +127,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
 
                 {/* Identificacion */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Identificacion <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -142,7 +142,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
 
                 {/* Telefono */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Telefono <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -157,7 +157,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
 
                 {/* Email */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Email
                     </label>
                     <Input
@@ -171,7 +171,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
 
                 {/* Tipo de licencia */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Tipo de licencia
                     </label>
                     <select
@@ -188,7 +188,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
 
                 {/* Fecha de vencimiento de licencia */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Vencimiento de licencia
                     </label>
                     <Input
@@ -201,7 +201,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
                 {/* Estado (solo en edicion) */}
                 {driver && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Estado
                         </label>
                         <select
@@ -217,7 +217,7 @@ export default function DriverForm({ driver, onSuccess, onCancel, businessId }: 
 
                 {/* Notas */}
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Notas
                     </label>
                     <textarea

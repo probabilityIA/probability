@@ -167,8 +167,8 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <div>
-                    <h2 className="text-2xl font-bold text-gray-800">Direcciones de Origen</h2>
-                    <p className="text-gray-500 text-sm">Gestiona los lugares desde donde envías tus productos.</p>
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100">Direcciones de Origen</h2>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Gestiona los lugares desde donde envías tus productos.</p>
                 </div>
                 {!isFormOpen && canCreate && (
                     <Button onClick={() => setIsFormOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>
@@ -181,10 +181,10 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                 <div className="bg-white dark:bg-gray-800 border-2 border-orange-100 rounded-xl overflow-hidden shadow-sm transition-all duration-300">
                     <div className="bg-orange-50 px-6 py-4 flex justify-between items-center border-b border-orange-100">
                         <div>
-                            <h3 className="font-bold text-gray-800">{editingAddress ? 'Editar Dirección' : 'Nueva Dirección de Origen'}</h3>
+                            <h3 className="font-bold text-gray-800 dark:text-gray-100">{editingAddress ? 'Editar Dirección' : 'Nueva Dirección de Origen'}</h3>
                             <p className="text-xs text-orange-700">Esta dirección podrá ser seleccionada al generar guías.</p>
                         </div>
-                        <button onClick={() => setIsFormOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+                        <button onClick={() => setIsFormOpen(false)} className="text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors">
                             <X className="w-5 h-5" />
                         </button>
                     </div>
@@ -278,8 +278,8 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                                                 className="p-3 hover:bg-orange-50 cursor-pointer text-sm border-b last:border-0"
                                                 onClick={() => selectCity(s)}
                                             >
-                                                <div className="font-semibold text-gray-800">{s.ciudad}</div>
-                                                <div className="text-xs text-gray-500">{s.departamento} - {s.code}</div>
+                                                <div className="font-semibold text-gray-800 dark:text-gray-100">{s.ciudad}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">{s.departamento} - {s.code}</div>
                                             </div>
                                         ))}
                                     </div>
@@ -307,14 +307,14 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                         <div className="flex justify-between items-start mb-4">
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2">
-                                    <h3 className="font-bold text-lg text-gray-800">{address.alias}</h3>
+                                    <h3 className="font-bold text-lg text-gray-800 dark:text-gray-100">{address.alias}</h3>
                                     {address.is_default && (
                                         <span className="bg-orange-600 text-white text-[9px] px-2 py-0.5 rounded-full font-bold tracking-wider uppercase">
                                             PRINCIPAL
                                         </span>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-1.5 text-xs text-gray-500 font-medium">
+                                <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-medium">
                                     <Building className="w-3.5 h-3.5" /> {address.company}
                                 </div>
                             </div>
@@ -346,22 +346,22 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                                     <MapPin className="w-4 h-4 text-gray-400" />
                                 </div>
                                 <div className="text-sm">
-                                    <p className="font-semibold text-gray-800 leading-tight">{address.street}</p>
-                                    <p className="text-gray-500">{address.city}, {address.state}</p>
+                                    <p className="font-semibold text-gray-800 dark:text-gray-100 leading-tight">{address.street}</p>
+                                    <p className="text-gray-500 dark:text-gray-400">{address.city}, {address.state}</p>
                                     {address.suburb && <p className="text-xs text-gray-400 mt-0.5">{address.suburb}</p>}
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 gap-2 border-t border-gray-50 pt-3">
-                                <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
                                     <Phone className="w-3.5 h-3.5 text-gray-400" />
                                     {address.phone}
                                 </div>
-                                <div className="flex items-center gap-2.5 text-sm text-gray-600">
+                                <div className="flex items-center gap-2.5 text-sm text-gray-600 dark:text-gray-300">
                                     <Mail className="w-3.5 h-3.5 text-gray-400" />
                                     <span className="truncate" title={address.email}>{address.email}</span>
                                 </div>
-                                <div className="flex items-center gap-2.5 text-[13px] text-gray-700 font-medium">
+                                <div className="flex items-center gap-2.5 text-[13px] text-gray-700 dark:text-gray-200 font-medium">
                                     <CheckCircle className="w-3.5 h-3.5 text-gray-400" />
                                     {address.first_name} {address.last_name}
                                 </div>
@@ -371,7 +371,7 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                         {canUpdate && !address.is_default && (
                             <button
                                 onClick={() => handleSetDefault(address.id)}
-                                className="w-full mt-5 py-2 text-[11px] font-bold border border-gray-200 dark:border-gray-700 rounded-lg text-gray-500 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all uppercase tracking-wide"
+                                className="w-full mt-5 py-2 text-[11px] font-bold border border-gray-200 dark:border-gray-700 rounded-lg text-gray-500 dark:text-gray-400 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all uppercase tracking-wide"
                             >
                                 Establecer como principal
                             </button>
@@ -384,8 +384,8 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                         <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-sm mb-4">
                             <MapPin className="w-10 h-10 text-gray-300" />
                         </div>
-                        <h4 className="text-gray-900 font-bold mb-1">Sin direcciones guardadas</h4>
-                        <p className="text-gray-500 text-sm max-w-xs mb-6">Configura tus bodegas o domicilios para generar guías con un solo clic.</p>
+                        <h4 className="text-gray-900 dark:text-white font-bold mb-1">Sin direcciones guardadas</h4>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm max-w-xs mb-6">Configura tus bodegas o domicilios para generar guías con un solo clic.</p>
                         {canCreate && (
                             <Button onClick={() => setIsFormOpen(true)} leftIcon={<Plus className="w-4 h-4" />}>
                                 Agregar mi primera dirección

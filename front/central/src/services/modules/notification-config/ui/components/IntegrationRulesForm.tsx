@@ -171,20 +171,20 @@ export function IntegrationRulesForm({
           />
         ) : (
           <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center">
-            <span className="text-xs font-bold text-gray-500">
+            <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
               {integration.type?.charAt(0).toUpperCase() || "?"}
             </span>
           </div>
         )}
         <div>
-          <h3 className="font-medium text-gray-900">{integration.name}</h3>
-          <p className="text-xs text-gray-500">{integration.category_name || integration.type}</p>
+          <h3 className="font-medium text-gray-900 dark:text-white">{integration.name}</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">{integration.category_name || integration.type}</p>
         </div>
       </div>
 
       {/* Loading state */}
       {loadingExisting ? (
-        <div className="text-center py-8 text-gray-500">Cargando reglas...</div>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando reglas...</div>
       ) : (
         <>
           {/* Rules table */}
@@ -197,12 +197,12 @@ export function IntegrationRulesForm({
               <table className="w-full">
                 <thead>
                   <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-center w-10">#</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-left w-[120px]">Canal</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-left w-[160px]">Evento</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-left">Estados</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-center w-[70px]">Activo</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 uppercase text-center w-[50px]"></th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-center w-10">#</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-left w-[120px]">Canal</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-left w-[160px]">Evento</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-left">Estados</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-center w-[70px]">Activo</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-center w-[50px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -241,7 +241,7 @@ export function IntegrationRulesForm({
 
       {/* Footer actions */}
       <div className="flex items-center justify-between pt-4 border-t">
-        <span className="text-sm text-gray-500">
+        <span className="text-sm text-gray-500 dark:text-gray-400">
           {activeRulesCount} regla(s) activa(s)
         </span>
         <div className="flex gap-2">
@@ -249,7 +249,7 @@ export function IntegrationRulesForm({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40"
+            className="p-2 rounded-lg bg-gray-100 text-gray-500 dark:text-gray-400 hover:bg-gray-200 transition-colors disabled:opacity-40"
             title="Cancelar"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

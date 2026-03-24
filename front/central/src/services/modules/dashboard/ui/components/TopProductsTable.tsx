@@ -34,7 +34,7 @@ export const columns: ColumnDef<TopProductRow>[] = [
         header: ({ column }) => {
             return (
                 <button
-                    className="flex items-center hover:text-gray-900 transition-colors"
+                    className="flex items-center hover:text-gray-900 dark:text-white transition-colors"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
                     Producto
@@ -44,8 +44,8 @@ export const columns: ColumnDef<TopProductRow>[] = [
         },
         cell: ({ row }) => (
             <div>
-                <div className="font-medium text-gray-900">{row.getValue('name')}</div>
-                <div className="text-xs text-gray-500">{row.original.sku}</div>
+                <div className="font-medium text-gray-900 dark:text-white">{row.getValue('name')}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{row.original.sku}</div>
             </div>
         ),
     },
@@ -54,7 +54,7 @@ export const columns: ColumnDef<TopProductRow>[] = [
         header: ({ column }) => (
             <div className="text-right">
                 <button
-                    className="inline-flex items-center hover:text-gray-900 transition-colors"
+                    className="inline-flex items-center hover:text-gray-900 dark:text-white transition-colors"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
                     Unidades
@@ -62,14 +62,14 @@ export const columns: ColumnDef<TopProductRow>[] = [
                 </button>
             </div>
         ),
-        cell: ({ row }) => <div className="text-right font-medium text-gray-700">{row.getValue<number>('units').toLocaleString()}</div>,
+        cell: ({ row }) => <div className="text-right font-medium text-gray-700 dark:text-gray-200">{row.getValue<number>('units').toLocaleString()}</div>,
     },
     {
         accessorKey: 'price',
         header: ({ column }) => (
             <div className="text-right">
                 <button
-                    className="inline-flex items-center hover:text-gray-900 transition-colors"
+                    className="inline-flex items-center hover:text-gray-900 dark:text-white transition-colors"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
                     Precio Unitario
@@ -82,7 +82,7 @@ export const columns: ColumnDef<TopProductRow>[] = [
             const formatted = price != null
                 ? new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(price)
                 : '-';
-            return <div className="text-right font-medium text-gray-900">{formatted}</div>;
+            return <div className="text-right font-medium text-gray-900 dark:text-white">{formatted}</div>;
         },
     },
 ];
@@ -121,7 +121,7 @@ export function TopProductsTable({ data }: { data: TopProductRow[] }) {
                                 <tr key={headerGroup.id} className="border-b transition-colors data-[state=selected]:bg-gray-100/50">
                                     {headerGroup.headers.map((header) => {
                                         return (
-                                            <th key={header.id} className="h-8 px-2 text-left align-middle font-medium text-gray-500 text-xs [&:has([role=checkbox])]:pr-0">
+                                            <th key={header.id} className="h-8 px-2 text-left align-middle font-medium text-gray-500 dark:text-gray-400 text-xs [&:has([role=checkbox])]:pr-0">
                                                 {header.isPlaceholder
                                                     ? null
                                                     : flexRender(
@@ -156,7 +156,7 @@ export function TopProductsTable({ data }: { data: TopProductRow[] }) {
                                 <tr>
                                     <td
                                         colSpan={columns.length}
-                                        className="h-24 text-center text-gray-500"
+                                        className="h-24 text-center text-gray-500 dark:text-gray-400"
                                     >
                                         No se encontraron resultados.
                                     </td>

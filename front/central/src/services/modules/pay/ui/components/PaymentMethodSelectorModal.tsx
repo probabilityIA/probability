@@ -55,12 +55,12 @@ export function PaymentMethodSelectorModal({
             <div className="p-4 space-y-4">
                 {amount && (
                     <div className="text-center">
-                        <p className="text-sm text-gray-500">Monto a recargar</p>
-                        <p className="text-2xl font-bold text-gray-900">{formatCurrency(amount)}</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Monto a recargar</p>
+                        <p className="text-2xl font-bold text-gray-900 dark:text-white">{formatCurrency(amount)}</p>
                     </div>
                 )}
 
-                <p className="text-sm text-gray-600 text-center">
+                <p className="text-sm text-gray-600 dark:text-gray-300 text-center">
                     Selecciona tu método de pago preferido
                 </p>
 

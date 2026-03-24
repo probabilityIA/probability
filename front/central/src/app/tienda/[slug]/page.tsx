@@ -47,7 +47,7 @@ export default async function TiendaPage({ params }: PageProps) {
 
             {show('show_featured_products') && business.featured_products?.length > 0 && (
                 <section className="py-16 px-4 max-w-7xl mx-auto">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Productos Destacados</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Productos Destacados</h2>
                     <template.FeaturedProducts products={business.featured_products} slug={slug} />
                     <div className="text-center mt-8">
                         <Link

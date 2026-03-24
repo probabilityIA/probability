@@ -28,10 +28,10 @@ export function SoftpymesIntegrationView({
                         <span className="text-2xl">📄</span>
                     </div>
                     <div>
-                        <h3 className="text-lg font-semibold text-gray-900">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                             {integration.name}
                         </h3>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                             Softpymes - Facturación Electrónica
                         </p>
                     </div>
@@ -55,20 +55,20 @@ export function SoftpymesIntegrationView({
             {/* Configuration Info */}
             <div className="space-y-2 mb-4">
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Empresa:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-300">Empresa:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                         {config?.company_name || 'No configurado'}
                     </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">NIT:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-300">NIT:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                         {config?.company_nit || 'No configurado'}
                     </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Modo:</span>
-                    <span className="font-medium text-gray-900">
+                    <span className="text-gray-600 dark:text-gray-300">Modo:</span>
+                    <span className="font-medium text-gray-900 dark:text-white">
                         {config?.test_mode ? (
                             <Badge type="warning">Pruebas</Badge>
                         ) : (

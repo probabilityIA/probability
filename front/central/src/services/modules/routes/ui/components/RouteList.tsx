@@ -22,7 +22,7 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-    planned: 'bg-gray-100 text-gray-700',
+    planned: 'bg-gray-100 text-gray-700 dark:text-gray-200',
     in_progress: 'bg-blue-100 text-blue-700',
     completed: 'bg-green-100 text-green-700',
     cancelled: 'bg-red-100 text-red-700',
@@ -122,18 +122,18 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
 
     const renderRow = (route: RouteInfo) => ({
         date: (
-            <span className="font-medium text-gray-900">{formatDate(route.date)}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{formatDate(route.date)}</span>
         ),
         status: (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[route.status] || 'bg-gray-100 text-gray-700'}`}>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_COLORS[route.status] || 'bg-gray-100 text-gray-700 dark:text-gray-200'}`}>
                 {STATUS_LABELS[route.status] || route.status}
             </span>
         ),
         driver_name: (
-            <span className="text-sm text-gray-600">{route.driver_name || <span className="text-gray-300">&mdash;</span>}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{route.driver_name || <span className="text-gray-300">&mdash;</span>}</span>
         ),
         vehicle_plate: (
-            <span className="text-sm text-gray-600">{route.vehicle_plate || <span className="text-gray-300">&mdash;</span>}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300">{route.vehicle_plate || <span className="text-gray-300">&mdash;</span>}</span>
         ),
         progress: (
             <div className="flex items-center gap-2">
@@ -143,7 +143,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
                         style={{ width: route.total_stops > 0 ? `${(route.completed_stops / route.total_stops) * 100}%` : '0%' }}
                     />
                 </div>
-                <span className="text-xs text-gray-500 whitespace-nowrap">
+                <span className="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">
                     {route.completed_stops}/{route.total_stops}
                 </span>
             </div>
@@ -209,7 +209,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
                         <button
                             type="button"
                             onClick={handleClearSearch}
-                            className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                            className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                         >
                             Limpiar
                         </button>

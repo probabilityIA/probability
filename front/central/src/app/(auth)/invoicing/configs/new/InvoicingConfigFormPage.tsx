@@ -81,10 +81,10 @@ export function InvoicingConfigFormPage() {
           Volver a Configuraciones
         </Button>
 
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
           Nueva Configuración de Facturación
         </h1>
-        <p className="text-gray-600 mt-2">
+        <p className="text-gray-600 dark:text-gray-300 mt-2">
           Configura la facturación automática para una integración específica
         </p>
       </div>
@@ -97,7 +97,7 @@ export function InvoicingConfigFormPage() {
           </h2>
 
           {businesses.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <p>No hay negocios disponibles.</p>
             </div>
           ) : (
@@ -115,10 +115,10 @@ export function InvoicingConfigFormPage() {
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
                         {business.name}
                       </h3>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         ID: {business.id}
                       </p>
                     </div>
@@ -138,7 +138,7 @@ export function InvoicingConfigFormPage() {
               <h2 className="text-lg font-semibold">
                 {isSuperAdmin ? 'Paso 2' : 'Paso 1'}: Selecciona un proveedor de facturación
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 Selecciona el proveedor que emitirá las facturas electrónicas
               </p>
             </div>
@@ -161,7 +161,7 @@ export function InvoicingConfigFormPage() {
               <Spinner />
             </div>
           ) : integrations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <p>No hay proveedores de facturación disponibles para este negocio.</p>
               <p className="text-sm mt-1">
                 Primero debes conectar un proveedor de facturación electrónica (Softpymes, Factus, etc.)
@@ -195,10 +195,10 @@ export function InvoicingConfigFormPage() {
                       />
                     )}
                     <div>
-                      <h3 className="font-semibold text-gray-900">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
                         {integration.name}
                       </h3>
-                      <p className="text-xs text-gray-500">
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
                         {integration.integration_type?.name || integration.type}
                       </p>
                     </div>
@@ -218,7 +218,7 @@ export function InvoicingConfigFormPage() {
               <h2 className="text-lg font-semibold">
                 {isSuperAdmin ? 'Paso 3' : 'Paso 2'}: Selecciona origen de órdenes
               </h2>
-              <p className="text-sm text-gray-600 mt-1">
+              <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
                 Selecciona una o más fuentes de órdenes cuyas órdenes se facturarán automáticamente
               </p>
             </div>
@@ -240,7 +240,7 @@ export function InvoicingConfigFormPage() {
               <Spinner />
             </div>
           ) : integrations.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
               <p>No hay fuentes de órdenes disponibles para este negocio.</p>
               <p className="text-sm mt-1">
                 Primero debes conectar una tienda (Shopify, MercadoLibre, etc.)
@@ -296,10 +296,10 @@ export function InvoicingConfigFormPage() {
                           </div>
                         )}
                         <div>
-                          <h3 className="font-semibold text-gray-900">
+                          <h3 className="font-semibold text-gray-900 dark:text-white">
                             {integration.name}
                           </h3>
-                          <p className="text-xs text-gray-500">
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
                             {integration.integration_type?.name || integration.type}
                           </p>
                         </div>
@@ -343,10 +343,10 @@ export function InvoicingConfigFormPage() {
             <div className="mb-4">
               <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
                 <p className="text-xs text-green-600 font-medium mb-1">PROVEEDOR DE FACTURACIÓN</p>
-                <p className="font-semibold text-gray-900">
+                <p className="font-semibold text-gray-900 dark:text-white">
                   {integrations.find((i) => i.id === selectedInvoicingIntegrationId)?.name}
                 </p>
-                <p className="text-xs text-gray-600 mt-1">
+                <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
                   Emitirá las facturas electrónicas
                 </p>
               </div>
@@ -361,13 +361,13 @@ export function InvoicingConfigFormPage() {
                     return (
                       <div key={id} className="flex items-center gap-2 text-sm">
                         <span className="w-2 h-2 bg-blue-600 rounded-full"></span>
-                        <span className="font-medium text-gray-900">{integration?.name}</span>
-                        <span className="text-gray-500">({integration?.integration_type?.name})</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{integration?.name}</span>
+                        <span className="text-gray-500 dark:text-gray-400">({integration?.integration_type?.name})</span>
                       </div>
                     );
                   })}
                 </div>
-                <p className="text-xs text-gray-600 mt-2">
+                <p className="text-xs text-gray-600 dark:text-gray-300 mt-2">
                   Las órdenes de estas tiendas se facturarán automáticamente
                 </p>
               </div>

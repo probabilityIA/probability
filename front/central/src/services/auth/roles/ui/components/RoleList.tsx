@@ -246,7 +246,7 @@ export const RoleList: React.FC = () => {
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Roles</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Roles</h1>
             </div>
 
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
@@ -284,22 +284,22 @@ export const RoleList: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     ID
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Nombre
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Nivel
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Sistema
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Scope
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Acciones
                                 </th>
                             </tr>
@@ -307,26 +307,26 @@ export const RoleList: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         Cargando roles...
                                     </td>
                                 </tr>
                             ) : roles.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={6} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         No hay roles disponibles
                                     </td>
                                 </tr>
                             ) : (
                                 roles.map((role) => (
                                     <tr key={role.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                             {role.id}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                             {role.name}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {role.level}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -334,13 +334,13 @@ export const RoleList: React.FC = () => {
                                                 className={`px-2 py-1 text-xs font-medium rounded-full ${
                                                     role.is_system
                                                         ? 'bg-blue-100 text-blue-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                        : 'bg-gray-100 text-gray-800 dark:text-gray-100'
                                                 }`}
                                             >
                                                 {role.is_system ? 'Sí' : 'No'}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                                             {role.scope_name || '-'}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -394,7 +394,7 @@ export const RoleList: React.FC = () => {
                             {/* Desktop: Full pagination */}
                             <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-700">
+                                    <p className="text-sm text-gray-700 dark:text-gray-200">
                                         Mostrando{' '}
                                         <span className="font-medium">
                                             {(page - 1) * pageSize + 1}
@@ -410,17 +410,17 @@ export const RoleList: React.FC = () => {
                                     <button
                                         onClick={() => setPage(page - 1)}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
                                         Página {page} de {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setPage(page + 1)}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Siguiente
                                     </button>
@@ -430,7 +430,7 @@ export const RoleList: React.FC = () => {
                             {/* Mobile: Page size selector */}
                             <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
                                 <div className="flex items-center gap-2">
-                                    <label className="text-xs text-gray-700 whitespace-nowrap">
+                                    <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                         Mostrar:
                                     </label>
                                     <select
@@ -440,7 +440,7 @@ export const RoleList: React.FC = () => {
                                             setPageSize(newPageSize);
                                             setPage(1);
                                         }}
-                                        className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                        className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -448,7 +448,7 @@ export const RoleList: React.FC = () => {
                                         <option value="100">100</option>
                                     </select>
                                 </div>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                     Página {page} de {totalPages}
                                 </p>
                             </div>
@@ -482,23 +482,23 @@ export const RoleList: React.FC = () => {
                 {loadingPermissions ? (
                     <div className="flex justify-center items-center py-8">
                         <Spinner size="lg" />
-                        <span className="ml-2 text-gray-600">Cargando permisos...</span>
+                        <span className="ml-2 text-gray-600 dark:text-gray-300">Cargando permisos...</span>
                     </div>
                 ) : (
                     <div className="space-y-4">
                         {/* Info del rol */}
                         <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
                                 <span className="font-medium">Scope:</span> {selectedRole?.scope_name || '-'}
                             </p>
-                            <p className="text-sm text-gray-500 mt-1">
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                 Solo se muestran permisos del mismo scope que el rol.
                             </p>
                         </div>
 
                         {/* Lista de permisos */}
                         {allPermissions.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                 No hay permisos disponibles para este scope.
                             </div>
                         ) : (
@@ -506,16 +506,16 @@ export const RoleList: React.FC = () => {
                                 <table className="min-w-full divide-y divide-gray-200">
                                     <thead className="bg-gray-50 sticky top-0">
                                         <tr>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                                 Seleccionar
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                                 Permiso
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                                 Recurso
                                             </th>
-                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">
+                                            <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
                                                 Acción
                                             </th>
                                         </tr>
@@ -538,13 +538,13 @@ export const RoleList: React.FC = () => {
                                                         onClick={(e) => e.stopPropagation()}
                                                     />
                                                 </td>
-                                                <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                                                <td className="px-4 py-2 text-sm font-medium text-gray-900 dark:text-white">
                                                     {permission.name}
                                                 </td>
-                                                <td className="px-4 py-2 text-sm text-gray-500">
+                                                <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
                                                     {permission.resource || '-'}
                                                 </td>
-                                                <td className="px-4 py-2 text-sm text-gray-500">
+                                                <td className="px-4 py-2 text-sm text-gray-500 dark:text-gray-400">
                                                     {permission.action || '-'}
                                                 </td>
                                             </tr>
@@ -555,7 +555,7 @@ export const RoleList: React.FC = () => {
                         )}
 
                         {/* Contador de seleccionados */}
-                        <div className="flex justify-between items-center text-sm text-gray-600">
+                        <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-300">
                             <span>{rolePermissionIds.length} permiso(s) seleccionado(s)</span>
                         </div>
 

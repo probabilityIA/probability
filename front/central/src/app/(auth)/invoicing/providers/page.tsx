@@ -72,7 +72,7 @@ export default function InvoicingProvidersPage() {
         <div>
           <div className="font-medium">{provider.name}</div>
           {provider.description && (
-            <div className="text-xs text-gray-500">{provider.description}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{provider.description}</div>
           )}
         </div>
       ),
@@ -109,7 +109,7 @@ export default function InvoicingProvidersPage() {
       key: 'created_at',
       label: 'Creado',
       render: (_: unknown, provider: Integration) => (
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
           {new Date(provider.created_at).toLocaleDateString('es-CO')}
         </div>
       ),

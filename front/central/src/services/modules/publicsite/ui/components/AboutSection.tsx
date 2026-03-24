@@ -7,20 +7,20 @@ interface AboutSectionProps {
 export function AboutSection({ content }: AboutSectionProps) {
     return (
         <section className="py-16 px-4 max-w-7xl mx-auto">
-            <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">Sobre Nosotros</h2>
+            <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Sobre Nosotros</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
                 <div>
-                    {content.text && <p className="text-gray-600 text-lg leading-relaxed mb-6">{content.text}</p>}
+                    {content.text && <p className="text-gray-600 dark:text-gray-300 text-lg leading-relaxed mb-6">{content.text}</p>}
                     {content.mission && (
                         <div className="mb-4">
-                            <h3 className="font-semibold text-gray-900 mb-2">Misión</h3>
-                            <p className="text-gray-600">{content.mission}</p>
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Misión</h3>
+                            <p className="text-gray-600 dark:text-gray-300">{content.mission}</p>
                         </div>
                     )}
                     {content.vision && (
                         <div>
-                            <h3 className="font-semibold text-gray-900 mb-2">Visión</h3>
-                            <p className="text-gray-600">{content.vision}</p>
+                            <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Visión</h3>
+                            <p className="text-gray-600 dark:text-gray-300">{content.vision}</p>
                         </div>
                     )}
                 </div>

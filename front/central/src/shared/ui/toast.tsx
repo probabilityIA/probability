@@ -30,10 +30,10 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, duration = 6000
     }, [id, duration, onClose]);
 
     const bgColors = {
-        success: 'bg-white dark:bg-gray-800 border-l-4 border-green-500 text-gray-800 dark:text-gray-100',
-        info: 'bg-white dark:bg-gray-800 border-l-4 border-blue-500 text-gray-800 dark:text-gray-100',
-        warning: 'bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-gray-100',
-        error: 'bg-white dark:bg-gray-800 border-l-4 border-red-500 text-gray-800 dark:text-gray-100',
+        success: 'bg-white dark:bg-gray-800 border-l-4 border-green-500 text-gray-800 dark:text-gray-100 dark:text-gray-100 dark:text-gray-100',
+        info: 'bg-white dark:bg-gray-800 border-l-4 border-blue-500 text-gray-800 dark:text-gray-100 dark:text-gray-100 dark:text-gray-100',
+        warning: 'bg-white dark:bg-gray-800 border-l-4 border-yellow-500 text-gray-800 dark:text-gray-100 dark:text-gray-100 dark:text-gray-100',
+        error: 'bg-white dark:bg-gray-800 border-l-4 border-red-500 text-gray-800 dark:text-gray-100 dark:text-gray-100 dark:text-gray-100',
     };
 
     const icons = {
@@ -79,16 +79,16 @@ export const Toast: React.FC<ToastProps> = ({ id, message, type, duration = 6000
                 {icons[type]}
             </div>
             <div className="ml-3 flex-1">
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                <p className="text-sm font-medium text-gray-900 dark:text-white dark:text-white dark:text-gray-100">
                     Notificación
                 </p>
-                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                <p className="mt-1 text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
                     {message}
                 </p>
             </div>
             <button
                 type="button"
-                className={`ml-4 -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex h-8 w-8 text-gray-400 dark:text-gray-500 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-gray-300 dark:focus:ring-gray-600`}
+                className={`ml-4 -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex h-8 w-8 text-gray-400 dark:text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 focus:ring-gray-300 dark:focus:ring-gray-600`}
                 onClick={() => onClose(id)}
                 aria-label="Close"
             >

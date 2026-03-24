@@ -21,7 +21,7 @@ export function PaymentMethodGrid({ gateways, loading, onSelect }: PaymentMethod
 
     if (gateways.length === 0) {
         return (
-            <p className="text-center text-gray-500 text-sm py-6">
+            <p className="text-center text-gray-500 dark:text-gray-400 text-sm py-6">
                 No hay métodos de pago disponibles.
             </p>
         );
@@ -56,20 +56,20 @@ export function PaymentMethodGrid({ gateways, loading, onSelect }: PaymentMethod
                             />
                         ) : (
                             <div className="h-10 w-10 bg-gray-200 rounded-lg flex items-center justify-center">
-                                <span className="text-gray-500 text-xs font-bold">
+                                <span className="text-gray-500 dark:text-gray-400 text-xs font-bold">
                                     {gateway.name.slice(0, 2).toUpperCase()}
                                 </span>
                             </div>
                         )}
 
-                        <span className="text-xs font-semibold text-gray-800 text-center leading-tight">
+                        <span className="text-xs font-semibold text-gray-800 dark:text-gray-100 text-center leading-tight">
                             {gateway.name}
                         </span>
 
                         <span className={`
                             text-[10px] font-medium px-2 py-0.5 rounded-full
                             ${disabled
-                                ? 'bg-gray-100 text-gray-500'
+                                ? 'bg-gray-100 text-gray-500 dark:text-gray-400'
                                 : 'bg-green-100 text-green-700'
                             }
                         `}>

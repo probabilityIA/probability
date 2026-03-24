@@ -130,8 +130,8 @@ export default function WhatsAppIntegrationView({
                         <ChatBubbleLeftRightIcon className="w-8 h-8 text-green-600" />
                     )}
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">{integration.name}</h3>
-                <p className="text-sm text-gray-500 font-mono">{integration.code}</p>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{integration.name}</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{integration.code}</p>
             </div>
 
             {/* Estado actual - clickeable para activar/desactivar */}
@@ -184,23 +184,23 @@ export default function WhatsAppIntegrationView({
             {/* Fechas */}
             <div className="grid grid-cols-2 gap-4 text-center text-sm">
                 <div>
-                    <p className="text-gray-500">Creada</p>
-                    <p className="text-gray-900 font-medium">{new Date(integration.created_at).toLocaleDateString()}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Creada</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{new Date(integration.created_at).toLocaleDateString()}</p>
                 </div>
                 <div>
-                    <p className="text-gray-500">Actualizada</p>
-                    <p className="text-gray-900 font-medium">{new Date(integration.updated_at).toLocaleDateString()}</p>
+                    <p className="text-gray-500 dark:text-gray-400">Actualizada</p>
+                    <p className="text-gray-900 dark:text-white font-medium">{new Date(integration.updated_at).toLocaleDateString()}</p>
                 </div>
             </div>
 
             {/* Numero de telefono de prueba */}
             {isActive && (onUpdateConfig || onTestConnection) && (
                 <div className="border border-gray-200 rounded-lg p-4 space-y-3">
-                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
                         <PhoneIcon className="w-4 h-4" />
                         Numero de telefono para pruebas
                     </div>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                         Ingresa un numero con codigo de pais (ej: 573001234567) para enviar un mensaje de prueba y verificar que la integracion funciona.
                     </p>
                     <div className="flex gap-2">

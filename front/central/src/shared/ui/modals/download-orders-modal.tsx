@@ -53,11 +53,11 @@ export default function DownloadOrdersModal({ isOpen, onClose, onDownload }: Dow
     return (
         <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Descargar Órdenes</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white dark:text-white mb-4">Descargar Órdenes</h2>
 
                 <div className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                             Fecha de Inicio
                         </label>
                         <input
@@ -70,7 +70,7 @@ export default function DownloadOrdersModal({ isOpen, onClose, onDownload }: Dow
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                             Fecha de Fin
                         </label>
                         <input
@@ -88,7 +88,7 @@ export default function DownloadOrdersModal({ isOpen, onClose, onDownload }: Dow
                         </div>
                     )}
 
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                         Máximo 1 año entre fechas
                     </p>
                 </div>
@@ -97,7 +97,7 @@ export default function DownloadOrdersModal({ isOpen, onClose, onDownload }: Dow
                     <button
                         onClick={onClose}
                         disabled={isLoading}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 dark:text-gray-200 dark:text-gray-200 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                         Cancelar
                     </button>

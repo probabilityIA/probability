@@ -99,7 +99,7 @@ export default function OrderStatusCatalogModal({ isOpen, onClose }: OrderStatus
                         {view !== 'list' && (
                             <button
                                 onClick={() => { setView('list'); setEditingStatus(null); }}
-                                className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                                className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
                                 aria-label="Volver"
                             >
                                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,9 +108,9 @@ export default function OrderStatusCatalogModal({ isOpen, onClose }: OrderStatus
                             </button>
                         )}
                         <div>
-                            <h2 className="text-xl font-semibold text-gray-900">{title}</h2>
+                            <h2 className="text-xl font-semibold text-gray-900 dark:text-white">{title}</h2>
                             {view === 'list' && (
-                                <p className="text-sm text-gray-500 mt-0.5">
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                                     Catálogo de estados internos — ordenados por prioridad de ciclo de vida
                                 </p>
                             )}
@@ -130,7 +130,7 @@ export default function OrderStatusCatalogModal({ isOpen, onClose }: OrderStatus
                         )}
                         <button
                             onClick={onClose}
-                            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
                             aria-label="Cerrar"
                         >
                             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -209,12 +209,12 @@ export default function OrderStatusCatalogModal({ isOpen, onClose }: OrderStatus
             {deleteConfirm && (
                 <div className="absolute inset-0 z-60 flex items-center justify-center">
                     <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar estado</h3>
-                        <p className="text-sm text-gray-600 mb-1">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Eliminar estado</h3>
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
                             ¿Estás seguro de que deseas eliminar el estado{' '}
                             <span className="font-semibold">{deleteConfirm.name}</span>?
                         </p>
-                        <p className="text-xs text-gray-500 mb-4">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mb-4">
                             Esta acción es permanente. Si existen mapeos que dependan de este estado, no podrá eliminarse.
                         </p>
 
@@ -228,7 +228,7 @@ export default function OrderStatusCatalogModal({ isOpen, onClose }: OrderStatus
                             <button
                                 onClick={() => { setDeleteConfirm(null); setDeleteError(null); }}
                                 disabled={deleteLoading}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                             >
                                 Cancelar
                             </button>
@@ -265,7 +265,7 @@ function StatusRow({
 
             {/* Prioridad */}
             <td className="py-3 pr-4">
-                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-600">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 text-xs font-bold text-gray-600 dark:text-gray-300">
                     {status.priority ?? 0}
                 </span>
             </td>
@@ -285,17 +285,17 @@ function StatusRow({
             </td>
 
             {/* Código */}
-            <td className="py-3 pr-4 text-sm font-mono text-gray-600">{status.code}</td>
+            <td className="py-3 pr-4 text-sm font-mono text-gray-600 dark:text-gray-300">{status.code}</td>
 
             {/* Categoría */}
             <td className="py-3 pr-4">
-                <span className="text-xs text-gray-500 bg-gray-100 px-2 py-0.5 rounded font-medium">
+                <span className="text-xs text-gray-500 dark:text-gray-400 bg-gray-100 px-2 py-0.5 rounded font-medium">
                     {status.category || '—'}
                 </span>
             </td>
 
             {/* Descripción */}
-            <td className="py-3 pr-4 text-sm text-gray-500 max-w-xs">
+            <td className="py-3 pr-4 text-sm text-gray-500 dark:text-gray-400 max-w-xs">
                 {status.description || <span className="text-gray-300">—</span>}
             </td>
 

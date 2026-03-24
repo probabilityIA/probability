@@ -137,7 +137,7 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
     if (loadingData) {
         return (
             <div className="text-center py-8">
-                <div className="text-gray-500">Cargando datos del formulario...</div>
+                <div className="text-gray-500 dark:text-gray-400">Cargando datos del formulario...</div>
             </div>
         );
     }
@@ -159,7 +159,7 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Integration Type */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Tipo de Integración <span className="text-red-500">*</span>
                     </label>
                     <Select
@@ -177,7 +177,7 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
 
                 {/* Original Status */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Estado Original (de la Integración) <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -187,14 +187,14 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                         placeholder="ej: pending, fulfilled, paid, etc."
                         required
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         El estado tal como lo usa la integración externa
                     </p>
                 </div>
 
                 {/* Order Status (Mapeado) */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Estado de Probability <span className="text-red-500">*</span>
                     </label>
                     <Select
@@ -207,7 +207,7 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
                             label: status.label
                         }))}
                     />
-                    <p className="mt-1 text-xs text-gray-500">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         El estado unificado de Probability al que se mapea
                     </p>
                 </div>
@@ -216,7 +216,7 @@ export default function OrderStatusMappingForm({ mapping, onSuccess, onCancel }:
 
             {/* Description */}
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                     Descripción
                 </label>
                 <textarea

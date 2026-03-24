@@ -33,7 +33,7 @@ export function Spinner({ size = 'md', color = 'primary', text }: SpinnerProps) 
         style={colorStyle}
       />
       {text && (
-        <p className="text-sm text-gray-600 animate-pulse">{text}</p>
+        <p className="text-sm text-gray-600 dark:text-gray-300 animate-pulse">{text}</p>
       )}
     </div>
   );

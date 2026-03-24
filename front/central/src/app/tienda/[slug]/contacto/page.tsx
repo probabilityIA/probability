@@ -16,7 +16,7 @@ export default async function ContactoPage({ params }: PageProps) {
 
     return (
         <div className="py-8 px-4 max-w-3xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center">Contáctanos</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8 text-center">Contáctanos</h1>
             <Contact slug={slug} content={business.website_config?.contact_content || null} />
         </div>
     );

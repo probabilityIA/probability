@@ -85,7 +85,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
 
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium text-gray-700">{label}</label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">{label}</label>
             <div className="relative" ref={popoverRef}>
                 <button
                     type="button"
@@ -96,7 +96,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
                         className="w-8 h-8 rounded-md border border-gray-300 shadow-inner"
                         style={{ backgroundColor: value }}
                     />
-                    <span className="text-sm text-gray-600 font-mono uppercase">{value}</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-300 font-mono uppercase">{value}</span>
                 </button>
 
                 {isOpen && (
@@ -108,7 +108,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
 
                         {/* Input hexadecimal */}
                         <div className="mt-3 flex items-center gap-2">
-                            <span className="text-xs text-gray-500 font-medium">HEX:</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">HEX:</span>
                             <HexColorInput
                                 color={value}
                                 onChange={onChange}
@@ -119,7 +119,7 @@ const ColorPicker: React.FC<ColorPickerProps> = ({ label, value, onChange }) => 
 
                         {/* Colores rápidos */}
                         <div className="mt-3 pt-3 border-t">
-                            <span className="text-xs text-gray-500 font-medium">Colores rápidos:</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Colores rápidos:</span>
                             <div className="grid grid-cols-6 gap-1.5 mt-2">
                                 {PRESET_COLORS.map((color) => (
                                     <button
@@ -247,7 +247,7 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Columna izquierda: Información básica */}
                 <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide border-b pb-2">
                         Información del Negocio
                     </h3>
 
@@ -309,13 +309,13 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
 
                 {/* Columna derecha: Colores */}
                 <div className="space-y-4">
-                    <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide border-b pb-2">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wide border-b pb-2">
                         Paleta de Colores
                     </h3>
 
                     {/* Paletas predefinidas */}
                     <div>
-                        <span className="text-xs text-gray-500 font-medium">Combinaciones sugeridas:</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Combinaciones sugeridas:</span>
                         <div className="grid grid-cols-5 gap-2 mt-2">
                             {COLOR_PALETTES.map((palette) => (
                                 <button
@@ -336,7 +336,7 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
                                         <div className="flex-1" style={{ backgroundColor: palette.colors.tertiary }} />
                                         <div className="flex-1" style={{ backgroundColor: palette.colors.quaternary }} />
                                     </div>
-                                    <span className="text-[10px] text-gray-500 mt-1 group-hover:text-blue-600 truncate w-full text-center">
+                                    <span className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 group-hover:text-blue-600 truncate w-full text-center">
                                         {palette.name}
                                     </span>
                                 </button>
@@ -346,7 +346,7 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
 
                     {/* Personalización individual */}
                     <div className="pt-2">
-                        <span className="text-xs text-gray-500 font-medium">Personalizar colores:</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Personalizar colores:</span>
                         <div className="grid grid-cols-2 gap-3 mt-2">
                             <ColorPicker
                                 label="Primario"
@@ -373,7 +373,7 @@ export const BusinessForm: React.FC<BusinessFormProps> = ({ initialData, onSucce
 
                     {/* Preview de colores */}
                     <div className="p-3 border rounded-lg bg-gray-50">
-                        <span className="text-xs text-gray-500 font-medium">Tu paleta actual:</span>
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Tu paleta actual:</span>
                         <div className="flex gap-1 mt-2 h-8 rounded overflow-hidden shadow-sm">
                             <div
                                 className="flex-1 flex items-center justify-center"

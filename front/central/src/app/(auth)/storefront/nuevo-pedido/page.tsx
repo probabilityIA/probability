@@ -6,7 +6,7 @@ export default async function NuevoPedidoPage() {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Nuevo Pedido</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white mb-6">Nuevo Pedido</h1>
             <NewOrderForm businessId={businessId} />
         </div>
     );

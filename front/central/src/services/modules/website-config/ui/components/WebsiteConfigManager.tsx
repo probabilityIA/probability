@@ -114,7 +114,7 @@ export function WebsiteConfigManager() {
                             setSelectedBusinessId(val);
                             setConfig(null);
                         }}
-                        className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-gray-900"
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         disabled={loadingBusinesses}
                     >
                         <option value="">-- Selecciona un negocio --</option>
@@ -126,25 +126,25 @@ export function WebsiteConfigManager() {
             )}
 
             {requiresBusinessSelection ? (
-                <div className="text-center py-16 text-gray-500">
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
                     Selecciona un negocio para configurar su sitio web
                 </div>
             ) : loading ? (
-                <div className="text-center py-16 text-gray-500">Cargando configuracion...</div>
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">Cargando configuracion...</div>
             ) : config ? (
                 <>
                     <PreviewLink businessCode={businessCode} />
 
                     {/* Template selector */}
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-2">Plantilla del sitio</h2>
-                        <p className="text-sm text-gray-500 mb-4">
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">Plantilla del sitio</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
                             Selecciona el diseno visual de tu sitio web
                         </p>
                         <select
                             value={config.template || 'default'}
                             onChange={(e) => setConfig({ ...config, template: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 text-gray-900"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                         >
                             {getAvailableTemplates().map(t => (
                                 <option key={t.id} value={t.id}>{t.name} — {t.description}</option>
@@ -153,7 +153,7 @@ export function WebsiteConfigManager() {
                     </div>
 
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
-                        <h2 className="text-lg font-semibold text-gray-900 mb-4">Secciones de la pagina</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Secciones de la pagina</h2>
 
                         <SectionToggle
                             label="Hero / Banner Principal"
@@ -228,7 +228,7 @@ export function WebsiteConfigManager() {
                     </div>
                 </>
             ) : (
-                <div className="text-center py-16 text-gray-500">No se pudo cargar la configuracion</div>
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">No se pudo cargar la configuracion</div>
             )}
         </div>
     );

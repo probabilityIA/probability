@@ -255,7 +255,7 @@ export function DynamicFilters({
                                         if (filter.type === 'text') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <input
@@ -263,7 +263,7 @@ export function DynamicFilters({
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
                                                         placeholder={filter.placeholder}
-                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700"
                                                         autoFocus
                                                         onKeyDown={(e) => {
                                                             if (e.key === 'Enter') {
@@ -300,13 +300,13 @@ export function DynamicFilters({
                                         if (filter.type === 'select') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <select
                                                         value={tempValue}
                                                         onChange={(e) => setTempValue(e.target.value)}
-                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700"
+                                                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700"
                                                         autoFocus
                                                     >
                                                         <option value="">Seleccionar...</option>
@@ -345,7 +345,7 @@ export function DynamicFilters({
                                         if (filter.type === 'date-range') {
                                             return (
                                                 <div className="space-y-3">
-                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">
                                                         {filter.label}
                                                     </label>
                                                     <DateRangePicker
@@ -388,7 +388,7 @@ export function DynamicFilters({
                                     // Mostrar lista de filtros disponibles
                                     <div className="space-y-1">
                                         {availableFilterOptions.length === 0 ? (
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 p-2">
+                                            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 p-2">
                                                 Todos los filtros están aplicados
                                             </p>
                                         ) : (
@@ -396,7 +396,7 @@ export function DynamicFilters({
                                                 <button
                                                     key={filter.key}
                                                     onClick={() => handleFilterSelect(filter.key)}
-                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
+                                                    className="w-full text-left px-3 py-2 text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                                                 >
                                                     {filter.label}
                                                 </button>
@@ -434,7 +434,7 @@ export function DynamicFilters({
                         <select
                             value={sortBy}
                             onChange={(e) => onSortChange(e.target.value, sortOrder)}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
                         >
                             {sortOptions.map((opt) => (
                                 <option key={opt.value} value={opt.value}>
@@ -445,7 +445,7 @@ export function DynamicFilters({
                         <select
                             value={sortOrder}
                             onChange={(e) => onSortChange(sortBy, e.target.value as 'asc' | 'desc')}
-                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
+                            className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white dark:text-white dark:text-gray-100 bg-white dark:bg-gray-700 text-sm"
                         >
                             <option value="desc">Descendente</option>
                             <option value="asc">Ascendente</option>

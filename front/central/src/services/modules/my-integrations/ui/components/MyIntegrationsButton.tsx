@@ -21,7 +21,7 @@ export function MyIntegrationsButton({ businessId }: MyIntegrationsButtonProps) 
                 disabled={disabled}
                 className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium rounded-lg transition-colors whitespace-nowrap ${
                     disabled
-                        ? 'text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 cursor-not-allowed'
+                        ? 'text-gray-400 dark:text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-gray-700 cursor-not-allowed'
                         : 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/20 hover:bg-purple-100 dark:hover:bg-purple-900/40'
                 }`}
                 title={disabled ? 'Selecciona un negocio primero' : 'Ver tus integraciones'}

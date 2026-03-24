@@ -131,7 +131,7 @@ export function NotificationTypeForm({
               placeholder="ej: whatsapp, sse, email"
               required
             />
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
               Identificador único (solo letras minúsculas, números y guiones)
             </p>
           </div>
@@ -159,7 +159,7 @@ export function NotificationTypeForm({
             onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
             placeholder="ej: message-circle, bell, mail"
           />
-          <p className="text-xs text-gray-500">
+          <p className="text-xs text-gray-500 dark:text-gray-400">
             Nombre del ícono (Heroicons o similar)
           </p>
         </div>
@@ -187,7 +187,7 @@ export function NotificationTypeForm({
           type="button"
           onClick={onCancel}
           disabled={loading}
-          className="p-2 rounded-lg bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors disabled:opacity-40"
+          className="p-2 rounded-lg bg-gray-100 text-gray-500 dark:text-gray-400 hover:bg-gray-200 transition-colors disabled:opacity-40"
           title="Cancelar"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

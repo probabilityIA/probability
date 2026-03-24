@@ -159,7 +159,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Fecha */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Fecha <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -172,7 +172,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
 
                 {/* Conductor */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Conductor
                     </label>
                     <select
@@ -192,7 +192,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
 
                 {/* Vehiculo */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Vehiculo
                     </label>
                     <select
@@ -212,7 +212,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
 
                 {/* Direccion de origen */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Direccion de origen
                     </label>
                     <Input
@@ -225,7 +225,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
 
                 {/* Notas */}
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Notas
                     </label>
                     <textarea
@@ -242,7 +242,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
             {!isEditing && (
                 <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-gray-700">
+                        <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
                             Ordenes en procesamiento
                             {assignableOrders.length > 0 && (
                                 <span className="ml-2 text-xs font-normal text-gray-400">
@@ -298,7 +298,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                                         {/* Order info */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2">
-                                                <span className="text-sm font-medium text-gray-900">
+                                                <span className="text-sm font-medium text-gray-900 dark:text-white">
                                                     #{order.order_number}
                                                 </span>
                                                 <span className="text-xs text-gray-400">
@@ -308,7 +308,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                                                     {formatCurrency(order.total_amount)}
                                                 </span>
                                             </div>
-                                            <div className="text-xs text-gray-500 truncate">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
                                                 {order.customer_name}
                                                 {order.address ? ` — ${order.address}` : ''}
                                                 {order.city ? `, ${order.city}` : ''}

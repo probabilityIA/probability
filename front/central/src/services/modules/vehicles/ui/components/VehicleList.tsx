@@ -22,7 +22,7 @@ const VEHICLE_TYPE_ICONS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
     active: 'bg-green-100 text-green-800',
-    inactive: 'bg-gray-100 text-gray-800',
+    inactive: 'bg-gray-100 text-gray-800 dark:text-gray-100',
     in_maintenance: 'bg-yellow-100 text-yellow-800',
 };
 
@@ -112,16 +112,16 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
 
     const renderRow = (vehicle: VehicleInfo) => ({
         type: (
-            <span className="text-sm text-gray-900">
+            <span className="text-sm text-gray-900 dark:text-white">
                 <span className="mr-1">{VEHICLE_TYPE_ICONS[vehicle.type] || vehicle.type}</span>
                 {vehicle.type}
             </span>
         ),
         license_plate: (
-            <span className="font-medium text-gray-900">{vehicle.license_plate}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{vehicle.license_plate}</span>
         ),
         brand_model: (
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-300">
                 {vehicle.brand || vehicle.model
                     ? `${vehicle.brand || ''}${vehicle.brand && vehicle.model ? ' ' : ''}${vehicle.model || ''}`
                     : <span className="text-gray-300">&mdash;</span>
@@ -129,7 +129,7 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
             </span>
         ),
         status: (
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[vehicle.status] || 'bg-gray-100 text-gray-800'}`}>
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${STATUS_STYLES[vehicle.status] || 'bg-gray-100 text-gray-800 dark:text-gray-100'}`}>
                 {STATUS_LABELS[vehicle.status] || vehicle.status}
             </span>
         ),
@@ -184,7 +184,7 @@ export default function VehicleList({ onEdit, onRefreshRef, selectedBusinessId }
                     <button
                         type="button"
                         onClick={handleClearSearch}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                     >
                         Limpiar
                     </button>

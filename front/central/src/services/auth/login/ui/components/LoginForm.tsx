@@ -119,16 +119,16 @@ export const LoginForm = () => {
     };
 
     return (
-        <div className="mb-10 mt-1 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start text-gray-900 dark:text-white">
+        <div className="mb-10 mt-1 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start text-gray-900 dark:text-white dark:text-white">
             <div className="mt-[1vh] w-full max-w-full flex-col items-center md:pl-4 lg:pl-0 xl:max-w-[420px]">
-                <h1 className="mb-2.5 text-5xl font-bold text-navy-700 dark:text-black">¡Bienvenido!</h1>
-                <p className="mb-9 ml-1 text-base text-gray-600">Inicia sesión con tu correo electrónico y contraseña.</p>
+                <h1 className="mb-2.5 text-5xl font-bold text-navy-700 dark:text-black dark:text-white">¡Bienvenido!</h1>
+                <p className="mb-9 ml-1 text-base text-gray-600 dark:text-gray-300">Inicia sesión con tu correo electrónico y contraseña.</p>
 
 
 
                 <form onSubmit={handleSubmit} className="w-full">
                     <div className="mb-5">
-                        <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-600">Correo</label>
+                        <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-300">Correo</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <EnvelopeIcon className="w-5 h-5 text-gray-400" />
@@ -141,13 +141,13 @@ export const LoginForm = () => {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full rounded-lg border border-gray-200 pl-10 px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[rgba(124,58,237,0.12)] focus:border-[#7c3aed]"
+                                className="w-full rounded-lg border border-gray-200 pl-10 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[rgba(124,58,237,0.12)] focus:border-[#7c3aed]"
                             />
                         </div>
                     </div>
 
                     <div className="mb-2">
-                        <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-600">Contraseña</label>
+                        <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-300">Contraseña</label>
                         <div className="relative">
                             <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
                                 <LockClosedIcon className="w-5 h-5 text-gray-400" />
@@ -172,7 +172,7 @@ export const LoginForm = () => {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="w-full rounded-lg border border-gray-200 pl-10 pr-10 px-4 py-3 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[rgba(124,58,237,0.12)] focus:border-[#7c3aed]"
+                                className="w-full rounded-lg border border-gray-200 pl-10 pr-10 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[rgba(124,58,237,0.12)] focus:border-[#7c3aed]"
                             />
                         </div>
                     </div>

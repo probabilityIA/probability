@@ -206,7 +206,7 @@ export default function ProductIntegrationsModal({
 
                 {/* Agregar nueva integración */}
                 <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">Agregar Integración</h3>
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">Agregar Integración</h3>
                     <div className="space-y-3">
                         <Select
                             label="Integración"
@@ -225,7 +225,7 @@ export default function ProductIntegrationsModal({
                             disabled={loading || loadingIntegrations || availableIntegrations.length === 0}
                         />
                         {availableIntegrations.length === 0 && !loadingIntegrations && (
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Todas las integraciones activas ya están asignadas a este producto
                             </p>
                         )}
@@ -248,16 +248,16 @@ export default function ProductIntegrationsModal({
 
                 {/* Lista de integraciones actuales */}
                 <div>
-                    <h3 className="text-sm font-semibold text-gray-700 mb-3">
+                    <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-3">
                         Integraciones Asignadas ({integrations.length})
                     </h3>
                     {loading && integrations.length === 0 ? (
                         <div className="text-center py-8">
                             <Spinner size="sm" />
-                            <p className="text-sm text-gray-500 mt-2">Cargando integraciones...</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Cargando integraciones...</p>
                         </div>
                     ) : integrations.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                             <p className="text-sm">No hay integraciones asignadas a este producto</p>
                         </div>
                     ) : (
@@ -269,14 +269,14 @@ export default function ProductIntegrationsModal({
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                            <span className="text-sm font-medium text-gray-900">
+                                            <span className="text-sm font-medium text-gray-900 dark:text-white">
                                                 {getIntegrationName(integration)}
                                             </span>
                                             <Badge type="secondary" className="text-xs">
                                                 {getIntegrationType(integration)}
                                             </Badge>
                                         </div>
-                                        <div className="text-xs text-gray-500">
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">
                                             ID Externo: <span className="font-mono">{integration.external_product_id}</span>
                                         </div>
                                         <div className="text-xs text-gray-400 mt-1">

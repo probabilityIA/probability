@@ -86,9 +86,9 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
         ),
         name: (
             <div>
-                <div className="text-sm font-medium text-gray-900">{type.name}</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">{type.name}</div>
                 {type.description && (
-                    <div className="text-sm text-gray-500">{type.description}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{type.description}</div>
                 )}
             </div>
         ),
@@ -165,7 +165,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                     className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                         selectedCategoryId === undefined
                             ? 'bg-gray-900 text-white'
-                            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                            : 'bg-gray-100 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                     }`}
                 >
                     Todas
@@ -177,7 +177,7 @@ export default function IntegrationTypeList({ onEdit }: IntegrationTypeListProps
                         className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                             selectedCategoryId === cat.id
                                 ? 'text-white'
-                                : 'text-gray-600 hover:opacity-80'
+                                : 'text-gray-600 dark:text-gray-300 hover:opacity-80'
                         }`}
                         style={{
                             backgroundColor: selectedCategoryId === cat.id

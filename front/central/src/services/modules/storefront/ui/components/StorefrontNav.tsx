@@ -37,7 +37,7 @@ export function StorefrontNav() {
                                 className={`flex items-center gap-2 text-sm font-medium transition-colors ${
                                     isActive
                                         ? 'text-indigo-600 dark:text-indigo-400'
-                                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                                        : 'text-gray-600 dark:text-gray-300 dark:text-gray-400 hover:text-gray-900 dark:text-white dark:hover:text-white'
                                 }`}
                             >
                                 <Icon className="w-5 h-5" />
@@ -48,7 +48,7 @@ export function StorefrontNav() {
 
                     <button
                         onClick={handleLogout}
-                        className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-600 transition-colors"
+                        className="flex items-center gap-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-red-600 transition-colors"
                     >
                         <ArrowRightOnRectangleIcon className="w-5 h-5" />
                         <span className="hidden sm:inline">Salir</span>

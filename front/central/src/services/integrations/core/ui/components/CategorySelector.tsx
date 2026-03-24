@@ -36,8 +36,8 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
 
     return (
         <div className="p-6">
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Seleccionar Categoría</h2>
-            <p className="text-gray-600 mb-6">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Seleccionar Categoría</h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
                 Elige el tipo de integración que deseas configurar
             </p>
 
@@ -65,13 +65,13 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
 
                             <div className="flex-1">
                                 {/* Category Name */}
-                                <h3 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 mb-1">
+                                <h3 className="text-lg font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 mb-1">
                                     {category.name}
                                 </h3>
 
                                 {/* Description */}
                                 {category.description && (
-                                    <p className="text-sm text-gray-600">
+                                    <p className="text-sm text-gray-600 dark:text-gray-300">
                                         {category.description}
                                     </p>
                                 )}
@@ -82,7 +82,7 @@ export function CategorySelector({ categories, onSelect }: CategorySelectorProps
             </div>
 
             {sortedCategories.length === 0 && (
-                <div className="text-center py-12 text-gray-500">
+                <div className="text-center py-12 text-gray-500 dark:text-gray-400">
                     No hay categorías disponibles
                 </div>
             )}

@@ -134,7 +134,7 @@ export default function ProductsPage() {
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    <p className="text-gray-500 text-sm">Selecciona un negocio para ver y gestionar sus productos</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver y gestionar sus productos</p>
                 </div>
             ) : (
                 <ProductList
@@ -163,32 +163,32 @@ export default function ProductsPage() {
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500">Nombre</label>
-                                    <p className="text-gray-900">{selectedProduct.name}</p>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Nombre</label>
+                                    <p className="text-gray-900 dark:text-white">{selectedProduct.name}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500">SKU</label>
-                                    <p className="text-gray-900">{selectedProduct.sku}</p>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">SKU</label>
+                                    <p className="text-gray-900 dark:text-white">{selectedProduct.sku}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500">Precio</label>
-                                    <p className="text-gray-900">
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Precio</label>
+                                    <p className="text-gray-900 dark:text-white">
                                         {new Intl.NumberFormat('es-CO', { style: 'currency', currency: selectedProduct.currency }).format(selectedProduct.price)}
                                     </p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500">Stock</label>
-                                    <p className="text-gray-900">{selectedProduct.manage_stock ? selectedProduct.stock : '∞'}</p>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Stock</label>
+                                    <p className="text-gray-900 dark:text-white">{selectedProduct.manage_stock ? selectedProduct.stock : '∞'}</p>
                                 </div>
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500">Estado</label>
-                                    <p className="text-gray-900">{selectedProduct.status}</p>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Estado</label>
+                                    <p className="text-gray-900 dark:text-white">{selectedProduct.status}</p>
                                 </div>
                             </div>
                             {selectedProduct.description && (
                                 <div>
-                                    <label className="text-sm font-medium text-gray-500">Descripción</label>
-                                    <p className="text-gray-900 whitespace-pre-wrap">{selectedProduct.description}</p>
+                                    <label className="text-sm font-medium text-gray-500 dark:text-gray-400">Descripción</label>
+                                    <p className="text-gray-900 dark:text-white whitespace-pre-wrap">{selectedProduct.description}</p>
                                 </div>
                             )}
                         </div>

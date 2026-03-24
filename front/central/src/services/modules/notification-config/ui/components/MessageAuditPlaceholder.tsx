@@ -5,7 +5,7 @@ export function MessageAuditPlaceholder() {
     <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b flex items-center gap-2">
-        <h3 className="text-sm font-medium text-gray-900">Auditoría de Mensajes</h3>
+        <h3 className="text-sm font-medium text-gray-900 dark:text-white">Auditoría de Mensajes</h3>
         <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-purple-100 text-purple-700 rounded">
           Beta
         </span>
@@ -16,15 +16,15 @@ export function MessageAuditPlaceholder() {
         {/* Stat cards */}
         <div className="grid grid-cols-3 gap-3">
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-            <p className="text-xs text-gray-500">Enviados</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Enviados</p>
             <p className="text-xl font-bold text-gray-300 mt-1">--</p>
           </div>
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-            <p className="text-xs text-gray-500">Fallidos</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Fallidos</p>
             <p className="text-xl font-bold text-gray-300 mt-1">--</p>
           </div>
           <div className="rounded-lg border border-gray-200 dark:border-gray-700 p-3 text-center">
-            <p className="text-xs text-gray-500">Tasa de Éxito</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Tasa de Éxito</p>
             <p className="text-xl font-bold text-gray-300 mt-1">--</p>
           </div>
         </div>
@@ -61,7 +61,7 @@ export function MessageAuditPlaceholder() {
           <svg className="w-10 h-10 mx-auto text-gray-400 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p className="text-sm font-semibold text-gray-600">Próximamente</p>
+          <p className="text-sm font-semibold text-gray-600 dark:text-gray-300">Próximamente</p>
           <p className="text-xs text-gray-400 mt-0.5">Auditoría de mensajes enviados</p>
         </div>
       </div>

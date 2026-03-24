@@ -105,7 +105,7 @@ export function MyIntegrationsModal({ isOpen, onClose, businessId }: MyIntegrati
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600" />
                 </div>
             ) : categories.length === 0 ? (
-                <p className="text-center text-gray-500 dark:text-gray-400 py-12">No hay categorías disponibles</p>
+                <p className="text-center text-gray-500 dark:text-gray-400 dark:text-gray-400 py-12">No hay categorías disponibles</p>
             ) : (
                 <div className="flex flex-col items-center">
                     {/* Canales de venta (paralelos) */}

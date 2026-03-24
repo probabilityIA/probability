@@ -41,14 +41,14 @@ export function ProductCard({ product, onAddToCart }: ProductCardProps) {
             </div>
 
             <div className="p-4">
-                <h3 className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2 mb-1">
+                <h3 className="text-sm font-medium text-gray-900 dark:text-white dark:text-white line-clamp-2 mb-1">
                     {product.name}
                 </h3>
                 {product.category && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">{product.category}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 mb-2">{product.category}</p>
                 )}
                 <div className="flex items-center gap-2 mb-3">
-                    <span className="text-lg font-bold text-gray-900 dark:text-white">
+                    <span className="text-lg font-bold text-gray-900 dark:text-white dark:text-white">
                         {formatPrice(product.price, product.currency)}
                     </span>
                     {product.compare_at_price && product.compare_at_price > product.price && (

@@ -45,37 +45,37 @@ export default function StorefrontRegistroPage() {
         <div className="min-h-screen flex items-center justify-center px-4">
             <div className="w-full max-w-md">
                 <div className="text-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Crear Cuenta</h1>
-                    <p className="mt-2 text-gray-600 dark:text-gray-400">Registrate para hacer pedidos</p>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white dark:text-white">Crear Cuenta</h1>
+                    <p className="mt-2 text-gray-600 dark:text-gray-300 dark:text-gray-400">Registrate para hacer pedidos</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nombre completo *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300 mb-1">Nombre completo *</label>
                         <input
                             name="name"
                             value={form.name}
                             onChange={handleChange}
                             required
                             minLength={2}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Correo electronico *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300 mb-1">Correo electronico *</label>
                         <input
                             name="email"
                             type="email"
                             value={form.email}
                             onChange={handleChange}
                             required
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Contrasena *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300 mb-1">Contrasena *</label>
                         <input
                             name="password"
                             type="password"
@@ -83,41 +83,41 @@ export default function StorefrontRegistroPage() {
                             onChange={handleChange}
                             required
                             minLength={6}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Telefono</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300 mb-1">Telefono</label>
                         <input
                             name="phone"
                             value={form.phone}
                             onChange={handleChange}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">DNI / Identificacion</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300 mb-1">DNI / Identificacion</label>
                         <input
                             name="dni"
                             value={form.dni}
                             onChange={handleChange}
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Codigo del negocio *</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-300 mb-1">Codigo del negocio *</label>
                         <input
                             name="business_code"
                             value={form.business_code}
                             onChange={handleChange}
                             required
                             placeholder="Ej: mi-tienda"
-                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-4 py-2.5 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1">Codigo proporcionado por el negocio donde quieres comprar</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Codigo proporcionado por el negocio donde quieres comprar</p>
                     </div>
 
                     {error && (
@@ -135,7 +135,7 @@ export default function StorefrontRegistroPage() {
                     </button>
                 </form>
 
-                <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-400">
+                <p className="mt-4 text-center text-sm text-gray-600 dark:text-gray-300 dark:text-gray-400">
                     Ya tienes cuenta?{' '}
                     <Link href="/login" className="text-indigo-600 hover:text-indigo-700 font-medium">
                         Iniciar Sesion

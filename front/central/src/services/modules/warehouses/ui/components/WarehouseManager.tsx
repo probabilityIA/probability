@@ -62,8 +62,8 @@ export default function WarehouseManager() {
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900">Bodegas</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Bodegas</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Gestiona las bodegas y ubicaciones de tu negocio
                     </p>
                 </div>
@@ -81,7 +81,7 @@ export default function WarehouseManager() {
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.25 21h19.5m-18-18v18m10.5-18v18m6-13.5V21M6.75 6.75h.75m-.75 3h.75m-.75 3h.75m3-6h.75m-.75 3h.75m-.75 3h.75M6.75 21v-3.375c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21M3 3h12m-.75 4.5H21m-3.75 7.5h.008v.008h-.008v-.008zm0 3h.008v.008h-.008v-.008z" />
                     </svg>
-                    <p className="text-gray-500 text-sm">Selecciona un negocio para ver y gestionar sus bodegas</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver y gestionar sus bodegas</p>
                 </div>
             ) : (
                 <WarehouseList
@@ -97,12 +97,12 @@ export default function WarehouseManager() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {modalMode === 'create' ? 'Nueva bodega' : 'Editar bodega'}
                             </h2>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none"
                             >
                                 &times;
                             </button>
@@ -124,12 +124,12 @@ export default function WarehouseManager() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-4xl max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 Detalle de bodega
                             </h2>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none"
                             >
                                 &times;
                             </button>

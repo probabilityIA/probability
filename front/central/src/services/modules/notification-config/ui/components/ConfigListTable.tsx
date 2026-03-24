@@ -138,8 +138,8 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
       {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-medium text-gray-900">Reglas por Integración</h3>
-          <p className="text-xs text-gray-500 mt-0.5">
+          <h3 className="text-sm font-medium text-gray-900 dark:text-white">Reglas por Integración</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
             {groups.length} integración(es) con reglas configuradas
           </p>
         </div>
@@ -181,7 +181,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
 
       {/* Content */}
       {isLoading ? (
-        <div className="text-center py-12 text-gray-500">Cargando...</div>
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">Cargando...</div>
       ) : groups.length === 0 ? (
         <div className="text-center py-12">
           <div className="text-gray-400 mb-2">
@@ -189,7 +189,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
           </div>
-          <p className="text-gray-500 text-sm">No hay reglas de notificación configuradas</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No hay reglas de notificación configuradas</p>
           <p className="text-gray-400 text-xs mt-1">Haz clic en &quot;Agregar Integración&quot; para empezar</p>
         </div>
       ) : (
@@ -215,10 +215,10 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                   </div>
                 )}
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-900 truncate">
+                  <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
                     {group.integration.name}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
                     {group.integration.category_name || group.integration.type}
                   </p>
                 </div>
@@ -253,7 +253,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
 
               {/* Count summary */}
               <div className="text-right shrink-0 pt-0.5">
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {group.activeCount}/{group.configs.length} activas
                 </p>
               </div>

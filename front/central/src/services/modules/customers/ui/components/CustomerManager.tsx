@@ -58,8 +58,8 @@ export default function CustomerManager({ selectedBusinessId = null }: CustomerM
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900">Clientes</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Clientes</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Gestiona los clientes de tu negocio
                     </p>
                 </div>
@@ -77,7 +77,7 @@ export default function CustomerManager({ selectedBusinessId = null }: CustomerM
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                     </svg>
-                    <p className="text-gray-500 text-sm">Selecciona un negocio para ver y gestionar sus clientes</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver y gestionar sus clientes</p>
                 </div>
             ) : (
                 <CustomerList
@@ -93,12 +93,12 @@ export default function CustomerManager({ selectedBusinessId = null }: CustomerM
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {modalMode === 'create' ? 'Nuevo cliente' : 'Editar cliente'}
                             </h2>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none"
                             >
                                 ×
                             </button>
@@ -121,10 +121,10 @@ export default function CustomerManager({ selectedBusinessId = null }: CustomerM
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                     {selectedCustomer.name}
                                 </h2>
-                                <p className="text-sm text-gray-500">ID #{selectedCustomer.id}</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">ID #{selectedCustomer.id}</p>
                             </div>
                             <div className="flex gap-2">
                                 <button
@@ -135,7 +135,7 @@ export default function CustomerManager({ selectedBusinessId = null }: CustomerM
                                 </button>
                                 <button
                                     onClick={closeModal}
-                                    className="text-gray-400 hover:text-gray-600 text-xl leading-none ml-3"
+                                    className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none ml-3"
                                 >
                                     ×
                                 </button>

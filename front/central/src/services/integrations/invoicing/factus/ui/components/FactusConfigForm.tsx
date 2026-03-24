@@ -177,11 +177,11 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                     <div className="p-2 bg-green-50 rounded-lg">
                         <CheckBadgeIcon className="w-6 h-6 text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         Factus Facturación Electrónica
                     </h2>
                 </div>
-                <p className="text-sm text-gray-600 ml-14">
+                <p className="text-sm text-gray-600 dark:text-gray-300 ml-14">
                     Conecta tu cuenta de Factus para gestionar facturación electrónica automáticamente desde Probability.
                 </p>
             </div>
@@ -189,14 +189,14 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
             {/* Configuración General */}
             <div className="bg-gray-50 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Configuración General
                     </h3>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Nombre de la Integración <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -207,7 +207,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                         required
                         className="bg-white"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>Nombre descriptivo para identificar esta integración en el sistema</span>
                     </p>
@@ -216,7 +216,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                 {/* Business Selector - Only for Super Admins */}
                 {isSuperAdmin && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Negocio <span className="text-red-500">*</span>
                         </label>
                         {loadingBusinesses ? (
@@ -225,7 +225,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span className="text-sm text-gray-600">Cargando negocios...</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
                             </div>
                         ) : (
                             <Select
@@ -242,7 +242,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                                 className="bg-white"
                             />
                         )}
-                        <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>Selecciona el negocio al que pertenecerá esta integración</span>
                         </p>
@@ -254,7 +254,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 space-y-4 border border-green-100">
                 <div className="flex items-center gap-2 mb-4">
                     <KeyIcon className="w-5 h-5 text-green-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Credenciales de Acceso
                     </h3>
                 </div>
@@ -268,7 +268,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Client ID <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -284,7 +284,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Client Secret <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -301,7 +301,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             <button
                                 type="button"
                                 onClick={() => setShowClientSecret(!showClientSecret)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 focus:outline-none"
                                 tabIndex={-1}
                             >
                                 {showClientSecret ? (
@@ -316,7 +316,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Usuario (Email) <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -329,13 +329,13 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             data-1p-ignore
                             className="bg-white text-sm"
                         />
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Email con el que accedes a Factus
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Contraseña <span className="text-red-500">*</span>
                         </label>
                         <div className="relative">
@@ -352,7 +352,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 focus:outline-none"
                                 tabIndex={-1}
                             >
                                 {showPassword ? (
@@ -367,7 +367,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
 
                 {/* URL de la API */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         URL de la API
                     </label>
                     <Input
@@ -378,7 +378,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                         autoComplete="off"
                         className="bg-white font-mono text-sm"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>Dejar vacío para usar la URL de producción de Factus. Útil para entornos sandbox.</span>
                     </p>
@@ -428,7 +428,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
             <div className="bg-blue-50 rounded-xl p-6 space-y-4 border border-blue-100">
                 <div className="flex items-center gap-2 mb-4">
                     <Cog6ToothIcon className="w-5 h-5 text-blue-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Configuración de Facturación
                     </h3>
                 </div>
@@ -437,7 +437,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                 </p>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         ID Rango de Numeración <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -449,7 +449,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                         required
                         className="bg-white"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>
                             ID del rango de numeración habilitado en Factus. Lo encuentras en
@@ -460,7 +460,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Tasa de IVA por Defecto
                         </label>
                         <Input
@@ -470,13 +470,13 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             placeholder="19.00"
                             className="bg-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Porcentaje de IVA (por defecto: 19.00)
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Forma de Pago
                         </label>
                         <Select
@@ -488,7 +488,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             ]}
                             className="bg-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Forma de pago por defecto en facturas
                         </p>
                     </div>
@@ -496,7 +496,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Método de Pago
                         </label>
                         <Select
@@ -511,13 +511,13 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             ]}
                             className="bg-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Método de pago por defecto en facturas
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Organización Legal del Cliente
                         </label>
                         <Select
@@ -529,7 +529,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             ]}
                             className="bg-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Tipo de organización legal del cliente por defecto
                         </p>
                     </div>
@@ -537,7 +537,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Régimen Tributario (Tribute ID)
                         </label>
                         <Input
@@ -547,13 +547,13 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             placeholder="21"
                             className="bg-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Régimen tributario DIAN del cliente (21 = No responsable de IVA)
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Tipo de Documento del Cliente
                         </label>
                         <Select
@@ -569,14 +569,14 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                             ]}
                             className="bg-white"
                         />
-                        <p className="text-xs text-gray-500 mt-1.5">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
                             Tipo de documento de identificación por defecto
                         </p>
                     </div>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         ID Municipio del Cliente
                     </label>
                     <Input
@@ -586,7 +586,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                         placeholder="Dejar vacío para usar el municipio del cliente"
                         className="bg-white"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>
                             ID del municipio en Factus. Solo si quieres forzar un municipio fijo. Dejar vacío para usarlo del pedido.
@@ -602,7 +602,7 @@ export function FactusConfigForm({ onSuccess, onCancel }: FactusConfigFormProps)
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 border border-gray-300"
                     >
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar

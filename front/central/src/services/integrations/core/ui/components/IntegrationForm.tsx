@@ -647,7 +647,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             {/* Type Selector - Show when no type is selected */}
             {!selectedType && integrationTypes.length > 0 && (
                 <div className="bg-white p-4 rounded-lg w-full">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Selecciona el tipo de integración *
                     </label>
                     <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 w-full max-w-full overflow-x-hidden">
@@ -707,8 +707,8 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
 
                                 {/* Contenido de texto - Nombre y código centrados */}
                                 <div className="flex-1 flex flex-col justify-center items-center">
-                                    <h4 className="font-semibold text-gray-900 text-base break-words mb-1">{type.name}</h4>
-                                    <p className="text-sm text-gray-500 break-words">{type.code}</p>
+                                    <h4 className="font-semibold text-gray-900 dark:text-white text-base break-words mb-1">{type.name}</h4>
+                                    <p className="text-sm text-gray-500 dark:text-gray-400 break-words">{type.code}</p>
                                 </div>
                             </button>
                         ))}
@@ -719,7 +719,7 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
             {/* Show message if no types available */}
             {!selectedType && integrationTypes.length === 0 && (
                 <div className="text-center py-8">
-                    <p className="text-gray-600">No hay tipos de integración disponibles.</p>
+                    <p className="text-gray-600 dark:text-gray-300">No hay tipos de integración disponibles.</p>
                 </div>
             )}
 
@@ -742,12 +742,12 @@ export default function IntegrationForm({ integration, onSuccess, onCancel, onTy
                                 ) : (
                                     <img src="/integrations/whatsapp.png" alt="WhatsApp" className="w-14 h-14 object-contain rounded-lg shadow-md mb-3" />
                                 )}
-                                <p className="text-sm text-gray-500">
+                                <p className="text-sm text-gray-500 dark:text-gray-400">
                                     Crea una integración de WhatsApp para este negocio. Las notificaciones se configuran desde el módulo de Notificaciones.
                                 </p>
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1">
+                                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                                     Nombre de la integración *
                                 </label>
                                 <input

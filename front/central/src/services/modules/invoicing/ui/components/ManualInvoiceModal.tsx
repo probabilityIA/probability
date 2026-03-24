@@ -201,7 +201,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
               <div className="flex flex-col items-center py-6">
                 <CheckCircleIcon className="w-16 h-16 text-green-500 mb-3" />
                 <p className="text-lg font-semibold text-green-700">Factura registrada exitosamente</p>
-                <p className="text-sm text-gray-500 mt-1">La orden ya no aparecera como facturable</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">La orden ya no aparecera como facturable</p>
               </div>
             )}
 
@@ -210,7 +210,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
                 {/* Selector de negocio (super admin) */}
                 {isSuperAdmin && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                       Negocio <span className="text-red-500">*</span>
                     </label>
                     <select
@@ -231,7 +231,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
 
                 {/* Número de factura */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                     Numero de factura <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -246,24 +246,24 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
 
                 {/* Selector de orden con buscador */}
                 <div ref={dropdownRef}>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                     Orden a asociar <span className="text-red-500">*</span>
                   </label>
 
                   {selectedOrder ? (
                     <div className="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
                       <div>
-                        <span className="font-medium text-gray-900">{selectedOrder.order_number}</span>
-                        <span className="text-gray-500 mx-2">-</span>
-                        <span className="text-sm text-gray-600">{selectedOrder.customer_name}</span>
+                        <span className="font-medium text-gray-900 dark:text-white">{selectedOrder.order_number}</span>
+                        <span className="text-gray-500 dark:text-gray-400 mx-2">-</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-300">{selectedOrder.customer_name}</span>
                         <span className="text-gray-400 mx-2">|</span>
-                        <span className="text-sm font-medium text-gray-700">
+                        <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                           {formatCurrency(selectedOrder.total_amount, selectedOrder.currency)}
                         </span>
                       </div>
                       <button
                         onClick={() => setSelectedOrder(null)}
-                        className="text-gray-400 hover:text-gray-600 p-1"
+                        className="text-gray-400 hover:text-gray-600 dark:text-gray-300 p-1"
                         title="Cambiar orden"
                       >
                         <XMarkIcon className="w-4 h-4" />
@@ -298,12 +298,12 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
                       {showDropdown && !superAdminNeedsBusiness && (
                         <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                           {loading ? (
-                            <div className="p-4 text-center text-gray-500 text-sm">
+                            <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600 mx-auto mb-2" />
                               Cargando ordenes...
                             </div>
                           ) : filteredOrders.length === 0 ? (
-                            <div className="p-4 text-center text-gray-500 text-sm">
+                            <div className="p-4 text-center text-gray-500 dark:text-gray-400 text-sm">
                               {orders.length === 0
                                 ? 'No hay ordenes facturables disponibles'
                                 : 'No se encontraron resultados'}
@@ -317,11 +317,11 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
                               >
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <span className="font-medium text-gray-900">{order.order_number}</span>
+                                    <span className="font-medium text-gray-900 dark:text-white">{order.order_number}</span>
                                     <span className="text-gray-400 mx-1.5">-</span>
-                                    <span className="text-sm text-gray-600">{order.customer_name}</span>
+                                    <span className="text-sm text-gray-600 dark:text-gray-300">{order.customer_name}</span>
                                   </div>
-                                  <span className="text-sm font-medium text-gray-700">
+                                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
                                     {formatCurrency(order.total_amount, order.currency)}
                                   </span>
                                 </div>
@@ -356,7 +356,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
               <button
                 onClick={onClose}
                 disabled={submitting}
-                className="px-5 py-2.5 border-2 border-gray-300 text-gray-700 font-semibold rounded-full hover:bg-gray-100 disabled:opacity-50 transition-all duration-200"
+                className="px-5 py-2.5 border-2 border-gray-300 text-gray-700 dark:text-gray-200 font-semibold rounded-full hover:bg-gray-100 disabled:opacity-50 transition-all duration-200"
               >
                 Cancelar
               </button>

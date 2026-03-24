@@ -369,7 +369,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         <div className="space-y-4">
                             {/* DNI — with autocomplete */}
                             <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     DNI / Cédula
                                 </label>
                                 <div className="relative">
@@ -407,7 +407,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             {/* Nombre — with autocomplete */}
                             <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Nombre *
                                 </label>
                                 <div className="relative">
@@ -446,7 +446,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             {/* Apellido — with autocomplete */}
                             <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Apellido *
                                 </label>
                                 <div className="relative">
@@ -485,7 +485,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
                             {/* Email — with autocomplete */}
                             <div className="relative">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Email
                                 </label>
                                 <div className="relative">
@@ -522,7 +522,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Teléfono *
                                 </label>
                                 <div className="flex items-center w-full">
@@ -550,7 +550,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Dirección de Envío</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Dirección
                                 </label>
                                 <AddressAutocomplete
@@ -578,7 +578,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
 
                             {/* City with autocomplete */}
                             <div ref={cityRef} className="relative md:col-span-2">
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Ciudad y Departamento
                                 </label>
                                 <input
@@ -589,7 +589,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         setShowCityResults(true);
                                     }}
                                     onFocus={() => setShowCityResults(true)}
-                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black"
+                                    className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-black dark:text-white"
                                     placeholder="Buscar ciudad..."
                                 />
                                 {showCityResults && filteredCityOptions.length > 0 && (
@@ -598,7 +598,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                             <div
                                                 key={opt.value}
                                                 onClick={() => handleCitySelect(opt)}
-                                                className="px-3 py-2 hover:bg-purple-100 cursor-pointer text-black"
+                                                className="px-3 py-2 hover:bg-purple-100 cursor-pointer text-black dark:text-white"
                                             >
                                                 {opt.label}
                                             </div>
@@ -608,7 +608,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Casa
                                 </label>
                                 <Input
@@ -620,7 +620,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Barrio
                                 </label>
                                 <Input
@@ -632,18 +632,18 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                             </div>
 
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     País
                                 </label>
                                 <Input
                                     type="text"
                                     value={formData.shipping_country}
                                     disabled
-                                    className="bg-gray-100 cursor-not-allowed text-gray-600"
+                                    className="bg-gray-100 cursor-not-allowed text-gray-600 dark:text-gray-300"
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Código Postal
                                 </label>
                                 <Input
@@ -678,7 +678,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Información Financiera</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Total *
                                 </label>
                                 <div className="flex items-center w-full">
@@ -716,17 +716,17 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         onChange={(e) => setFormData({ ...formData, is_paid: e.target.checked })}
                                         className="mr-2"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">Orden Pagada</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Orden Pagada</span>
                                 </label>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Estado
                                 </label>
                                 <select
                                     value={formData.status}
                                     onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
                                 >
                                     <option value="pending">Pendiente</option>
                                     <option value="processing">Procesando</option>
@@ -743,11 +743,11 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         onChange={(e) => setFormData({ ...formData, invoiceable: e.target.checked })}
                                         className="mr-2"
                                     />
-                                    <span className="text-sm font-medium text-gray-700">Facturable</span>
+                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Facturable</span>
                                 </label>
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Confirmación
                                 </label>
                                 <select
@@ -756,7 +756,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                         const v = e.target.value;
                                         setFormData({ ...formData, is_confirmed: v === 'yes' ? true : v === 'no' ? false : null });
                                     }}
-                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800"
+                                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
                                 >
                                     <option value="pending">Pendiente</option>
                                     <option value="yes">Confirmado</option>
@@ -801,7 +801,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                         <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Logística</h3>
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Número de Guía
                                 </label>
                                 <Input
@@ -812,7 +812,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     ID Guía
                                 </label>
                                 <Input
@@ -822,7 +822,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 />
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Bodega
                                 </label>
                                 {warehouses.length > 0 ? (
@@ -833,7 +833,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                             const w = warehouses.find(w => w.id === id);
                                             setFormData({ ...formData, warehouse_id: id || 0, warehouse_name: w?.name || '' });
                                         }}
-                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800"
+                                        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600 focus:border-transparent bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100"
                                     >
                                         <option value="">Seleccionar bodega...</option>
                                         {warehouses.map(w => (
@@ -852,7 +852,7 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                                 )}
                             </div>
                             <div>
-                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">
                                     Transportadora
                                 </label>
                                 <Input

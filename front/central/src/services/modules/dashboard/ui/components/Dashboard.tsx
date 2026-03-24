@@ -216,13 +216,13 @@ export default function Dashboard() {
         if (active && payload && payload.length) {
             return (
                 <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
-                    <p className="font-semibold text-gray-900">
+                    <p className="font-semibold text-gray-900 dark:text-white">
                         {payload[0].payload.fullName || payload[0].payload.name}
                     </p>
                     {payload[0].payload.email && (
-                        <p className="text-xs text-gray-500 mt-1">{payload[0].payload.email}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{payload[0].payload.email}</p>
                     )}
-                    <p className="text-sm text-gray-700 mt-1">
+                    <p className="text-sm text-gray-700 dark:text-gray-200 mt-1">
                         <span className="font-bold">{payload[0].value.toLocaleString()}</span> {payload[0].payload.unit || 'órdenes'}
                     </p>
                 </div>
@@ -245,7 +245,7 @@ export default function Dashboard() {
         }, []);
         return (
             <div className="relative" ref={ref}>
-                <button onClick={() => setOpen(v => !v)} className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">⋯</button>
+                <button onClick={() => setOpen(v => !v)} className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 dark:text-gray-400">⋯</button>
                 {open && (
                     <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded shadow-md z-50">
                         {items.map((it, i) => (
@@ -852,7 +852,7 @@ export default function Dashboard() {
             {/* Top revenue header (estilo similar a la imagen) */}
             <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-semibold text-gray-700">¡Hola, {userName}! 👋  <br /> ¿Cómo va tu día? </h1>
+                    <h1 className="text-2xl font-semibold text-gray-700 dark:text-gray-200">¡Hola, {userName}! 👋  <br /> ¿Cómo va tu día? </h1>
                     <p className="mt-2 text-4xl font-extrabold bg-gradient-to-r from-purple-500 via-pink-500 to-yellow-400 bg-clip-text text-transparent capitalize">
                         Dashboard
                     </p>
@@ -885,10 +885,10 @@ export default function Dashboard() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-500">Órdenes Totales</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Órdenes Totales</p>
                             <div className="mt-2 flex items-center space-x-4">
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900">{totalOrders.toLocaleString()}</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{totalOrders.toLocaleString()}</p>
                                     {computedTotalOrdersChange !== null ? (
                                         <p className={`text-xs ${computedTotalOrdersChange >= 0 ? 'text-green-600' : 'text-amber-500'}`}>
                                             {computedTotalOrdersChange >= 0 ? '↑' : '↓'} {Math.abs(computedTotalOrdersChange)}% compared to last week
@@ -908,10 +908,10 @@ export default function Dashboard() {
 
                     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-gray-500">Órdenes del día</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Órdenes del día</p>
                             <div className="mt-2 flex items-center space-x-4">
                                 <div>
-                                    <p className="text-2xl font-bold text-gray-900">{newOrdersToday.toLocaleString()}</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-white">{newOrdersToday.toLocaleString()}</p>
                                     <p className="text-xs text-gray-400">Actuales</p>
                                 </div>
                                 <div className="w-20 h-10">
@@ -924,7 +924,7 @@ export default function Dashboard() {
                     </div>
 
                     <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
-                        <p className="text-sm text-gray-500 mb-3">Órdenes Mensuales</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Órdenes Mensuales</p>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center space-x-2">
                                 <button
@@ -932,26 +932,26 @@ export default function Dashboard() {
                                     className="p-1 hover:bg-gray-100 rounded transition-colors"
                                     title="Mes anterior"
                                 >
-                                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                                     </svg>
                                 </button>
                                 <div className="text-center min-w-[90px]">
-                                    <p className="text-sm font-semibold text-gray-700">{monthData.monthName}</p>
-                                    <p className="text-xs text-gray-500">{monthData.year}</p>
+                                    <p className="text-sm font-semibold text-gray-700 dark:text-gray-200">{monthData.monthName}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">{monthData.year}</p>
                                 </div>
                                 <button
                                     onClick={() => setSelectedMonthOffset(selectedMonthOffset + 1)}
                                     className="p-1 hover:bg-gray-100 rounded transition-colors"
                                     title="Próximo mes"
                                 >
-                                    <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                                     </svg>
                                 </button>
                             </div>
                             <div className="flex-1 text-center">
-                                <p className="text-2xl font-bold text-gray-900">{monthData.count.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-gray-900 dark:text-white">{monthData.count.toLocaleString()}</p>
                                 {monthData.percentage > 0 && (
                                     <p className="text-xs text-gray-400">{monthData.percentage.toFixed(1)}%</p>
                                 )}
@@ -975,14 +975,14 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <MapPinIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Órdenes por Ubicación</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Órdenes por Ubicación</h2>
                         </div>
                         <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
                     </div>
                     {(locationData || []).length > 0 ? (
                         <ColombiaMap data={locationData} height={420} />
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
 
@@ -992,8 +992,8 @@ export default function Dashboard() {
                         <div className="flex items-center">
                             <MapPinIcon className="w-6 h-6 text-purple-500 mr-3" />
                             <div>
-                                <h2 className="text-xl font-bold text-gray-900">Órdenes por Departamento</h2>
-                                <p className="text-xs text-gray-500 mt-1">Total de órdenes agrupadas por región</p>
+                                <h2 className="text-xl font-bold text-gray-900 dark:text-white">Órdenes por Departamento</h2>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Total de órdenes agrupadas por región</p>
                             </div>
                         </div>
                         <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
@@ -1031,7 +1031,7 @@ export default function Dashboard() {
                             </ChartContainer>
                         </div>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
             </div>
@@ -1043,7 +1043,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Envíos por Transportista</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Envíos por Transportista</h2>
                         </div>
                         <div className="flex items-center gap-2">
                             {/* Toggle Hoy / Total */}
@@ -1053,7 +1053,7 @@ export default function Dashboard() {
                                     className={`px-3 py-1.5 transition-colors ${
                                         carrierFilter === 'total'
                                             ? 'bg-indigo-600 text-white'
-                                            : 'bg-white dark:bg-gray-800 text-gray-600 hover:bg-gray-50'
+                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
                                     }`}
                                 >
                                     Total
@@ -1063,7 +1063,7 @@ export default function Dashboard() {
                                     className={`px-3 py-1.5 transition-colors border-l border-gray-200 dark:border-gray-700 ${
                                         carrierFilter === 'today'
                                             ? 'bg-indigo-600 text-white'
-                                            : 'bg-white dark:bg-gray-800 text-gray-600 hover:bg-gray-50'
+                                            : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50'
                                     }`}
                                 >
                                     Hoy
@@ -1075,11 +1075,11 @@ export default function Dashboard() {
 
                     {/* Mostrar aviso si "Hoy" no tiene datos */}
                     {carrierFilter === 'today' && (stats.shipments_by_carrier_today || []).length === 0 ? (
-                        <p className="text-sm text-gray-500">Sin envíos hoy</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">Sin envíos hoy</p>
                     ) : shipmentsByCarrierData.length > 0 ? (
                         <CarrierBarChart data={shipmentsByCarrierData} height={340} />
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
 
@@ -1089,8 +1089,8 @@ export default function Dashboard() {
                         <div className="flex items-center">
                             <CalendarDaysIcon className="w-5 h-5 text-gray-400 mr-2" />
                             <div>
-                                <h2 className="text-lg font-semibold text-gray-900">Órdenes por Día</h2>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Órdenes por Día</h2>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                     {weekStartDate.toLocaleDateString('es-CO', { day: 'numeric', month: 'short' })} - {new Date(weekStartDate.getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString('es-CO', { day: 'numeric', month: 'short', year: 'numeric' })}
                                 </p>
                             </div>
@@ -1102,7 +1102,7 @@ export default function Dashboard() {
                                     newDate.setDate(newDate.getDate() - 7);
                                     setWeekStartDate(newDate);
                                 }}
-                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 text-sm"
+                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 dark:text-gray-300 text-sm"
                                 title="Semana anterior"
                             >
                                 ←
@@ -1113,7 +1113,7 @@ export default function Dashboard() {
                                     newDate.setDate(newDate.getDate() + 7);
                                     setWeekStartDate(newDate);
                                 }}
-                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 text-sm"
+                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 dark:text-gray-300 text-sm"
                                 title="Semana siguiente"
                             >
                                 →
@@ -1136,7 +1136,7 @@ export default function Dashboard() {
                             </ResponsiveContainer>
                         </ChartContainer>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
             </div>
@@ -1148,14 +1148,14 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ChartBarIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Órdenes por Tipo de Integración</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Órdenes por Tipo de Integración</h2>
                         </div>
                         <CardMenu items={["Ver detalles","Exportar","Refrescar"]} />
                     </div>
                     {(integrationData || []).length > 0 ? (
                         <ModernPieChart data={integrationData} height={300} />
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
                 */}
@@ -1166,14 +1166,14 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
                             <UserGroupIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Mejores Clientes</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Mejores Clientes</h2>
                         </div>
                         <CardMenu items={["Exportar", "Refrescar"]} />
                     </div>
                     {(stats.top_customers || []).length > 0 ? (
                         <TopCustomersTable data={stats.top_customers} />
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
 
@@ -1182,7 +1182,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <TruckIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Top Transportadores</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Top Transportadores</h2>
                         </div>
                         <CardMenu items={["Ver detalles","Exportar","Refrescar"]} />
                     </div>
@@ -1209,7 +1209,7 @@ export default function Dashboard() {
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>  */}
 
@@ -1218,7 +1218,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <TruckIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Transportadores por Ubicación</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Transportadores por Ubicación</h2>
                         </div>
                         <CardMenu items={["Ver detalles","Exportar","Refrescar"]} />
                     </div>
@@ -1247,7 +1247,7 @@ export default function Dashboard() {
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div> */}
 
@@ -1257,14 +1257,14 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
                             <CubeIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Productos Más Vendidos</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Productos Más Vendidos</h2>
                         </div>
                         <CardMenu items={["Exportar", "Refrescar"]} />
                     </div>
                     {productsTableData.length > 0 ? (
                         <TopProductsTable data={productsTableData} />
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
 
@@ -1273,7 +1273,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <CubeIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Productos por Categoría</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Productos por Categoría</h2>
                         </div>
                         <CardMenu items={["Ver detalles","Exportar","Refrescar"]} />
                     </div>
@@ -1303,7 +1303,7 @@ export default function Dashboard() {
                             </PieChart>
                         </ResponsiveContainer>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div> */}
 
@@ -1312,7 +1312,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <CubeIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Productos por Marca</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Productos por Marca</h2>
                         </div>
                         <CardMenu items={["Ver detalles","Exportar","Refrescar"]} />
                     </div>
@@ -1341,7 +1341,7 @@ export default function Dashboard() {
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div> */}
 
@@ -1353,7 +1353,7 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Envíos por Almacén</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Envíos por Almacén</h2>
                         </div>
                         <CardMenu items={["Ver detalles","Exportar","Refrescar"]} />
                     </div>
@@ -1382,7 +1382,7 @@ export default function Dashboard() {
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div> */}
 
@@ -1391,14 +1391,14 @@ export default function Dashboard() {
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
-                            <h2 className="text-lg font-semibold text-gray-900">Estado de los Envíos</h2>
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Estado de los Envíos</h2>
                         </div>
                         <CardMenu items={["Ver detalles", "Exportar", "Refrescar"]} />
                     </div>
                     {(stats.shipments_by_status || []).length > 0 ? (
                         <ModernPieChart data={shipmentsByStatusData} height={300} />
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
             </div>
@@ -1408,7 +1408,7 @@ export default function Dashboard() {
                 <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div className="flex items-center mb-4">
                         <BuildingOfficeIcon className="w-5 h-5 text-gray-400 mr-2" />
-                        <h2 className="text-lg font-semibold text-gray-900">Órdenes por Business</h2>
+                        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Órdenes por Business</h2>
                     </div>
                     {businessesData.length > 0 ? (
                         <ResponsiveContainer width="100%" height={400}>
@@ -1433,7 +1433,7 @@ export default function Dashboard() {
                             </BarChart>
                         </ResponsiveContainer>
                     ) : (
-                        <p className="text-sm text-gray-500">No hay datos disponibles</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">No hay datos disponibles</p>
                     )}
                 </div>
             )}

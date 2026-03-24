@@ -136,7 +136,7 @@ export function AvatarUpload({
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-200 to-gray-300">
-              <CameraIcon className={`${iconSizes[size]} text-gray-500`} />
+              <CameraIcon className={`${iconSizes[size]} text-gray-500 dark:text-gray-400`} />
             </div>
           )}
         </div>
@@ -179,7 +179,7 @@ export function AvatarUpload({
       />
 
       {!disableClick && (
-        <p className="text-xs text-gray-500 text-center">
+        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">
           Haz clic para cambiar
         </p>
       )}

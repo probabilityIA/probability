@@ -23,12 +23,12 @@ export default async function CatalogoPage({ searchParams }: PageProps) {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Catalogo</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white mb-6">Catalogo</h1>
             <CatalogSearch initialSearch={search} />
 
             {data.data.length === 0 ? (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 dark:text-gray-400 text-lg">No se encontraron productos</p>
+                    <p className="text-gray-500 dark:text-gray-400 dark:text-gray-400 text-lg">No se encontraron productos</p>
                 </div>
             ) : (
                 <>

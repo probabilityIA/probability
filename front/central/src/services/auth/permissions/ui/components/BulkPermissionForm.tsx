@@ -123,7 +123,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
         const successCount = results.filter(r => r.success).length;
         return (
             <div className="space-y-4">
-                <p className="text-sm font-medium text-gray-700">{resultMessage}</p>
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-200">{resultMessage}</p>
                 <div className="divide-y divide-gray-200 border rounded-lg overflow-hidden max-h-80 overflow-y-auto">
                     {results.map((r, i) => (
                         <div key={i} className="flex items-center gap-3 px-4 py-3">
@@ -141,7 +141,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                                 </span>
                             )}
                             <div className="flex-1 min-w-0">
-                                <p className="text-sm font-medium text-gray-900 truncate">{r.name}</p>
+                                <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{r.name}</p>
                                 {!r.success && <p className="text-xs text-red-600 truncate">{r.error}</p>}
                             </div>
                         </div>
@@ -170,7 +170,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
             {/* Recurso + Scope */}
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Recurso *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Recurso *</label>
                     <select
                         value={selectedResourceId}
                         onChange={e => handleResourceChange(e.target.value)}
@@ -183,7 +183,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                     </select>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Scope *</label>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Scope *</label>
                     <select
                         value={selectedScopeId}
                         onChange={e => setSelectedScopeId(e.target.value)}
@@ -200,7 +200,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
             {actionRows.length > 0 ? (
                 <div>
                     <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-medium text-gray-700">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                             Acciones — selecciona y edita el nombre del permiso
                         </label>
                         <button
@@ -220,7 +220,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                                     onChange={() => handleToggleAction(i)}
                                     className="h-4 w-4 text-blue-600 rounded border-gray-300"
                                 />
-                                <span className="w-20 text-xs font-medium text-gray-500 shrink-0">{row.action.name}</span>
+                                <span className="w-20 text-xs font-medium text-gray-500 dark:text-gray-400 shrink-0">{row.action.name}</span>
                                 <input
                                     type="text"
                                     value={row.name}
@@ -231,7 +231,7 @@ export const BulkPermissionForm: React.FC<BulkPermissionFormProps> = ({ onSucces
                             </div>
                         ))}
                     </div>
-                    <p className="mt-1 text-xs text-gray-500">{selectedCount} acción(es) seleccionada(s)</p>
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{selectedCount} acción(es) seleccionada(s)</p>
                 </div>
             ) : (
                 <p className="text-sm text-gray-400 text-center py-4">

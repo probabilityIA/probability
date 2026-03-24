@@ -158,12 +158,12 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
       label: 'Negocio',
       render: (_: unknown, config: InvoicingConfig) => {
         if (!isSuperAdmin) {
-          return <span className="text-sm font-medium text-gray-700">Mi Negocio</span>;
+          return <span className="text-sm font-medium text-gray-700 dark:text-gray-200">Mi Negocio</span>;
         }
 
         const business = businesses?.find(b => b.id === config.business_id);
         return (
-          <div className="text-sm text-gray-700">
+          <div className="text-sm text-gray-700 dark:text-gray-200">
             {business ? (
               <span className="font-medium">{business.name}</span>
             ) : (
@@ -186,7 +186,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
                 : '—'}
           </div>
           {config.description && (
-            <div className="text-xs text-gray-500">{config.description}</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">{config.description}</div>
           )}
         </div>
       ),
@@ -239,7 +239,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
       key: 'created_at',
       label: 'Creado',
       render: (_: unknown, config: InvoicingConfig) => (
-        <div className="text-sm text-gray-600">
+        <div className="text-sm text-gray-600 dark:text-gray-300">
           {new Date(config.created_at).toLocaleDateString('es-CO')}
         </div>
       ),
@@ -323,10 +323,10 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
             />
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <h3 className="mt-2 text-sm font-medium text-gray-900">
+          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">
             No hay configuraciones
           </h3>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
             Las configuraciones se crean automáticamente cuando se conecta una integración.
             <br />
             Ve a <strong>Integraciones</strong> para conectar Shopify, MercadoLibre, etc.
@@ -342,7 +342,7 @@ export function ConfigsClient({ initialConfigs, businesses, isSuperAdmin, select
       ) : (
         <div className="configsTable">
           <div className="mb-4">
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
               <strong>Tip:</strong> Haz clic en los badges para activar/desactivar rápidamente
             </p>
           </div>

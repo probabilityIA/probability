@@ -218,7 +218,7 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
                             (e.target as HTMLImageElement).style.display = 'none';
                             const parent = (e.target as HTMLImageElement).parentElement;
                             if (parent) {
-                                parent.innerHTML = `<span class="text-xs font-medium text-gray-600 uppercase">${(mapping.integration_type?.name || `ID: ${mapping.integration_type_id}`).charAt(0)}</span>`;
+                                parent.innerHTML = `<span class="text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">${(mapping.integration_type?.name || `ID: ${mapping.integration_type_id}`).charAt(0)}</span>`;
                             }
                         }}
                     />
@@ -230,7 +230,7 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
             </div>
         ),
         original_status: (
-            <span className="text-sm text-gray-900 font-mono">
+            <span className="text-sm text-gray-900 dark:text-white font-mono">
                 {mapping.original_status}
             </span>
         ),
@@ -241,12 +241,12 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
             />
         ),
         description: (
-            <span className="text-sm text-gray-500">
+            <span className="text-sm text-gray-500 dark:text-gray-400">
                 {mapping.description || <span className="text-gray-300">—</span>}
             </span>
         ),
         priority: (
-            <span className="text-sm text-gray-900">
+            <span className="text-sm text-gray-900 dark:text-white">
                 {mapping.order_status?.priority ?? '—'}
             </span>
         ),

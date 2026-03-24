@@ -109,12 +109,12 @@ export function NotificationDashboard() {
     <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Centro de Notificaciones</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Centro de Notificaciones</h1>
       </div>
 
       {/* Gate: require business selection */}
       {requiresBusinessSelection ? (
-        <div className="text-center py-16 text-gray-500">
+        <div className="text-center py-16 text-gray-500 dark:text-gray-400">
           Selecciona un negocio para ver las configuraciones de notificación
         </div>
       ) : (

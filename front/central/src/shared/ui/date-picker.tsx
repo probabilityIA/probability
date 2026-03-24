@@ -112,7 +112,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                 value={value ? formatDisplayDate(value) : ''}
                 placeholder={placeholder}
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 placeholder:text-gray-500 bg-white cursor-pointer"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:text-white placeholder:text-gray-500 dark:text-gray-400 bg-white cursor-pointer"
             />
             
             {isOpen && (
@@ -124,11 +124,11 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                             className="p-1 hover:bg-gray-100 rounded transition-colors"
                             type="button"
                         >
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        <h3 className="text-sm font-semibold text-gray-900">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
                             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                         </h3>
                         <button
@@ -136,7 +136,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                             className="p-1 hover:bg-gray-100 rounded transition-colors"
                             type="button"
                         >
-                            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                             </svg>
                         </button>
@@ -145,7 +145,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                     {/* Días de la semana */}
                     <div className="grid grid-cols-7 gap-1 mb-2">
                         {weekDays.map((day) => (
-                            <div key={day} className="text-center text-xs font-medium text-gray-500 py-1">
+                            <div key={day} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-1">
                                 {day}
                             </div>
                         ))}
@@ -171,7 +171,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                                             ? 'bg-blue-500 text-white font-semibold'
                                             : dayIsToday
                                             ? 'bg-blue-100 text-blue-700 font-semibold'
-                                            : 'text-gray-700 hover:bg-gray-100'
+                                            : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 hover:bg-gray-100'
                                         }
                                     `}
                                     type="button"
@@ -190,7 +190,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                                     onChange('');
                                     setIsOpen(false);
                                 }}
-                                className="w-full px-3 py-1.5 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded transition-colors"
+                                className="w-full px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white dark:text-white hover:bg-gray-50 rounded transition-colors"
                                 type="button"
                             >
                                 Limpiar

@@ -95,20 +95,20 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
 
     const renderRow = (warehouse: Warehouse) => ({
         name: (
-            <span className="font-medium text-gray-900">{warehouse.name}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{warehouse.name}</span>
         ),
         code: (
-            <span className="text-sm text-gray-600 font-mono">{warehouse.code}</span>
+            <span className="text-sm text-gray-600 dark:text-gray-300 font-mono">{warehouse.code}</span>
         ),
         location: (
             <div className="text-sm">
                 {warehouse.address ? (
-                    <p className="text-gray-900 truncate max-w-[200px]" title={warehouse.address}>{warehouse.address}</p>
+                    <p className="text-gray-900 dark:text-white truncate max-w-[200px]" title={warehouse.address}>{warehouse.address}</p>
                 ) : (
                     <p className="text-gray-300">&mdash;</p>
                 )}
                 {(warehouse.city || warehouse.state) && (
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
                         {[warehouse.city, warehouse.state].filter(Boolean).join(', ')}
                     </p>
                 )}
@@ -117,10 +117,10 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
         contact: (
             <div className="text-sm">
                 {warehouse.contact_name ? (
-                    <p className="text-gray-900 truncate max-w-[180px]">{warehouse.contact_name}</p>
+                    <p className="text-gray-900 dark:text-white truncate max-w-[180px]">{warehouse.contact_name}</p>
                 ) : null}
                 {warehouse.phone ? (
-                    <p className="text-xs text-gray-500">{warehouse.phone}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">{warehouse.phone}</p>
                 ) : null}
                 {!warehouse.contact_name && !warehouse.phone && (
                     <span className="text-gray-300">&mdash;</span>
@@ -143,7 +143,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
         ),
         status: (
             <div className="flex justify-center">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${warehouse.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${warehouse.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600 dark:text-gray-300'}`}>
                     {warehouse.is_active ? 'Activa' : 'Inactiva'}
                 </span>
             </div>
@@ -207,7 +207,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
                     <button
                         type="button"
                         onClick={handleClearSearch}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
                     >
                         Limpiar
                     </button>

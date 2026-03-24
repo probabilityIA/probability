@@ -150,11 +150,11 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                     <div className="p-2 bg-green-50 rounded-lg">
                         <TruckIcon className="w-6 h-6 text-green-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         Editar EnvioClick - Logistica
                     </h2>
                 </div>
-                <p className="text-sm text-gray-600 ml-14">
+                <p className="text-sm text-gray-600 dark:text-gray-300 ml-14">
                     Actualiza la configuracion de tu integracion con EnvioClick.
                 </p>
             </div>
@@ -168,14 +168,14 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
             {/* Configuracion General */}
             <div className="bg-gray-50 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Configuracion General
                     </h3>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Nombre de la Integracion <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -186,7 +186,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                         required
                         className="bg-white"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>Nombre descriptivo para identificar esta integracion en el sistema</span>
                     </p>
@@ -195,7 +195,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                 {/* Business Selector - Only for Super Admins (disabled in edit) */}
                 {isSuperAdmin && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Negocio <span className="text-red-500">*</span>
                         </label>
                         {loadingBusinesses ? (
@@ -204,7 +204,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span className="text-sm text-gray-600">Cargando negocios...</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
                             </div>
                         ) : (
                             <Select
@@ -222,7 +222,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                                 disabled={true}
                             />
                         )}
-                        <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>El negocio no puede ser modificado despues de la creacion</span>
                         </p>
@@ -234,7 +234,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
             <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 space-y-4 border border-green-100">
                 <div className="flex items-center gap-2 mb-4">
                     <KeyIcon className="w-5 h-5 text-green-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Credenciales de API
                     </h3>
                 </div>
@@ -242,8 +242,8 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                 {/* Toggle: usar token de la plataforma */}
                 <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-green-200">
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800">Usar token de la plataforma</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Usar token de la plataforma</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             Activa esto si no tienes una cuenta propia de EnvioClick. Se usará la cuenta compartida de la plataforma.
                         </p>
                     </div>
@@ -266,7 +266,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                             </span>
                         </p>
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                                 API Key <span className="text-red-500">*</span>
                             </label>
                             <div className="relative">
@@ -283,7 +283,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                                 <button
                                     type="button"
                                     onClick={() => setShowApiKey(!showApiKey)}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 focus:outline-none"
                                     tabIndex={-1}
                                 >
                                     {showApiKey ? (
@@ -328,13 +328,13 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
             <div className="bg-orange-50 rounded-xl p-6 space-y-4 border border-orange-200">
                 <div className="flex items-center gap-2 mb-2">
                     <BeakerIcon className="w-5 h-5 text-orange-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Modo de Pruebas</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Modo de Pruebas</h3>
                 </div>
 
                 <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
                     <div>
-                        <p className="text-sm font-medium text-gray-900">Activar modo de pruebas</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">Activar modo de pruebas</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             Los envios usaran la URL sandbox y quedaran marcados como TEST
                         </p>
                     </div>
@@ -374,7 +374,7 @@ export function EnvioClickEditForm({ integrationId, initialData, onSuccess, onCa
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 border border-gray-300"
                     >
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar

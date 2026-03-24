@@ -30,10 +30,10 @@ function IntegrationButton({ integration, onSelect }: { integration: Integration
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-900 truncate group-hover:text-blue-700">
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-700">
           {integration.name}
         </p>
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-gray-500 dark:text-gray-400">
           {integration.category_name || integration.type}
         </p>
       </div>
@@ -60,15 +60,15 @@ export function IntegrationPicker({ businessId, onSelect, onCancel }: Integratio
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600">
+      <p className="text-sm text-gray-600 dark:text-gray-300">
         Selecciona la integración de origen para configurar sus reglas de notificación.
       </p>
 
       {loading ? (
-        <div className="text-center py-8 text-gray-500">Cargando integraciones...</div>
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">Cargando integraciones...</div>
       ) : !hasAny ? (
         <div className="text-center py-8">
-          <p className="text-gray-500 text-sm">No hay integraciones disponibles</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">No hay integraciones disponibles</p>
           <p className="text-gray-400 text-xs mt-1">Crea una integración primero desde el módulo de Integraciones</p>
         </div>
       ) : (
@@ -100,7 +100,7 @@ export function IntegrationPicker({ businessId, onSelect, onCancel }: Integratio
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm text-gray-600 hover:text-gray-900 transition-colors"
+          className="px-4 py-2 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white transition-colors"
         >
           Cancelar
         </button>

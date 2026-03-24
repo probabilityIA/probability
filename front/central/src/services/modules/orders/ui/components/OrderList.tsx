@@ -103,7 +103,7 @@ const OrderRow = memo(({
                                 loading="lazy"
                             />
                         ) : (
-                            <span className="text-xs font-medium text-gray-600 uppercase">
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-300 uppercase">
                                 {order.platform.charAt(0)}
                             </span>
                         )}
@@ -126,14 +126,14 @@ const OrderRow = memo(({
                 </div>
             </td>
             <td className="px-2 sm:px-3 py-2">
-                <div className="text-xs font-medium text-gray-900">
+                <div className="text-xs font-medium text-gray-900 dark:text-white">
                     {order.order_number || order.external_id || order.id}
                 </div>
-                <div className="text-xs text-gray-500 sm:hidden">
+                <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">
                     {order.customer_name}
                 </div>
                 {order.internal_number && (
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
                         Interno: {order.internal_number}
                     </div>
                 )}
@@ -144,8 +144,8 @@ const OrderRow = memo(({
                 )}
             </td>
             <td className="px-3 sm:px-6 py-4 hidden sm:table-cell">
-                <div className="text-sm text-gray-900">{order.customer_name}</div>
-                <div className="text-xs text-gray-500">{order.customer_email}</div>
+                <div className="text-sm text-gray-900 dark:text-white">{order.customer_name}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400">{order.customer_email}</div>
             </td>
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
                 <div className="flex items-center gap-1.5">
@@ -157,7 +157,7 @@ const OrderRow = memo(({
                         }`}>
                         {order.currency_presentment || order.currency || 'USD'}
                     </span>
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-white">
                         {formatCurrency(order.total_amount, order.currency, order.total_amount_presentment, order.currency_presentment)}
                     </span>
                 </div>
@@ -193,11 +193,11 @@ const OrderRow = memo(({
                             Factura fallida
                         </span>
                     ) : order.invoice_status === 'cancelled' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600 dark:text-gray-300">
                             Factura cancelada
                         </span>
                     ) : order.invoice_status === 'none' ? (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500 dark:text-gray-400">
                             Sin factura
                         </span>
                     ) : null}
@@ -213,7 +213,7 @@ const OrderRow = memo(({
                                 title={`Probabilidad de entrega: ${order.delivery_probability.toFixed(1)}%`}
                             ></div>
                         </div>
-                        <span className="text-xs font-semibold text-gray-700 min-w-[40px] text-right">
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 min-w-[40px] text-right">
                             {order.delivery_probability.toFixed(0)}%
                         </span>
                         {order.negative_factors && order.negative_factors.length > 0 && (
@@ -264,15 +264,15 @@ const OrderRow = memo(({
                 </div>
             </td>
 
-            <td className="px-3 sm:px-6 py-4 text-xs text-gray-500 hidden md:table-cell">
+            <td className="px-3 sm:px-6 py-4 text-xs text-gray-500 dark:text-gray-400 hidden md:table-cell">
                 <div className="leading-tight">
-                    <div className="text-gray-900">{formatDate(order.created_at).date}</div>
-                    <div className="text-gray-500">{formatDate(order.created_at).time}</div>
+                    <div className="text-gray-900 dark:text-white">{formatDate(order.created_at).date}</div>
+                    <div className="text-gray-500 dark:text-gray-400">{formatDate(order.created_at).time}</div>
                 </div>
             </td>
             {isSuperAdmin && (
                 <td className="px-3 sm:px-6 py-4 hidden lg:table-cell">
-                    <div className="text-sm text-gray-900">
+                    <div className="text-sm text-gray-900 dark:text-white">
                         {order.business_id && businessesMap.get(order.business_id)
                             ? businessesMap.get(order.business_id)
                             : order.business_id
@@ -294,7 +294,7 @@ const OrderRow = memo(({
                                 title={order.shipment.carrier}
                             />
                         ) : (
-                            <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                            <span className="text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 px-2 py-1 rounded">
                                 {order.shipment.carrier.substring(0, 6)}
                             </span>
                         )}
@@ -311,7 +311,7 @@ const OrderRow = memo(({
                             onClick={() => onViewRecommendation(order)}
                             disabled={!!order.guide_link}
                             className={`p-2 rounded-md transition-all duration-200 flex items-center justify-center shadow-sm ${order.guide_link
-                                    ? 'bg-gray-400 text-gray-600 cursor-not-allowed opacity-60'
+                                    ? 'bg-gray-400 text-gray-600 dark:text-gray-300 cursor-not-allowed opacity-60'
                                     : 'bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white focus:ring-2 focus:ring-purple-500 focus:ring-offset-2'
                                 }`}
                             title={order.guide_link ? 'Guía ya validada' : 'Recomendación Inteligente IA'}
@@ -1260,7 +1260,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             cancelled: 'bg-red-100 text-red-800',
         };
 
-        const colorClass = statusColors[status.toLowerCase()] || 'bg-gray-100 text-gray-800';
+        const colorClass = statusColors[status.toLowerCase()] || 'bg-gray-100 text-gray-800 dark:text-gray-100';
 
         return (
             <span className={`px-2 py-1 text-xs font-medium rounded-full ${colorClass}`}>
@@ -1321,7 +1321,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     <div className="absolute inset-0 bg-white dark:bg-gray-800/80 backdrop-blur-sm z-10 flex items-center justify-center transition-opacity duration-200">
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
-                            <p className="text-sm text-gray-600">Actualizando...</p>
+                            <p className="text-sm text-gray-600 dark:text-gray-300">Actualizando...</p>
                         </div>
                     </div>
                 )}
@@ -1384,7 +1384,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         <tbody>
                             {orders.length === 0 ? (
                                 <tr>
-                                    <td colSpan={isSuperAdmin ? 10 : 9} className="px-4 sm:px-6 py-8 text-center text-gray-500">
+                                    <td colSpan={isSuperAdmin ? 10 : 9} className="px-4 sm:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                         No hay órdenes disponibles
                                     </td>
                                 </tr>
@@ -1442,13 +1442,13 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         {/* Desktop: Full pagination with page numbers */}
                         <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between w-full">
                             <div className="flex items-center gap-3">
-                                <p className="text-xs sm:text-sm text-gray-700">
+                                <p className="text-xs sm:text-sm text-gray-700 dark:text-gray-200">
                                     Mostrando <span className="font-medium">{(page - 1) * (filters.page_size || 20) + 1}</span> a{' '}
                                     <span className="font-medium">{Math.min(page * (filters.page_size || 20), total)}</span> de{' '}
                                     <span className="font-medium">{total}</span> resultados
                                 </p>
                                 <div className="flex items-center gap-1">
-                                    <label className="text-xs sm:text-sm text-gray-700 whitespace-nowrap">
+                                    <label className="text-xs sm:text-sm text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                         Mostrar:
                                     </label>
                                     <select
@@ -1457,7 +1457,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                         }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
+                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -1507,7 +1507,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                                         return pages.map((p, idx) =>
                                             typeof p === 'string' ? (
-                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-3 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs text-gray-500">
+                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-3 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs text-gray-500 dark:text-gray-400">
                                                     ...
                                                 </span>
                                             ) : (
@@ -1550,7 +1550,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                         {/* Mobile: Page size selector */}
                         <div className="flex items-center justify-between w-full sm:hidden pt-2">
                             <div className="flex items-center gap-1">
-                                <label className="text-xs text-gray-700 whitespace-nowrap">
+                                <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                     Mostrar:
                                 </label>
                                 <select
@@ -1559,7 +1559,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                     }}
-                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
+                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-800"
                                 >
                                     <option value="10">10</option>
                                     <option value="20">20</option>
@@ -1567,7 +1567,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <option value="100">100</option>
                                 </select>
                             </div>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 dark:text-gray-400">
                                 Página {page} de {totalPages}
                             </p>
                         </div>
@@ -1685,7 +1685,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     >
                         {/* Header */}
                         <div className="flex items-center justify-between px-5 py-4 border-b bg-gray-50">
-                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800">
+                            <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
                                 <svg className="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                 </svg>
@@ -1710,8 +1710,8 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 </svg>
                             </div>
                             <div className="text-center">
-                                <p className="font-semibold text-gray-800 text-lg">Guía de Envío lista</p>
-                                <p className="text-sm text-gray-500 mt-1">El PDF está disponible para ver o descargar</p>
+                                <p className="font-semibold text-gray-800 dark:text-gray-100 text-lg">Guía de Envío lista</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">El PDF está disponible para ver o descargar</p>
                             </div>
                             <div className="flex flex-col gap-3 w-full">
                                 <a
@@ -1728,7 +1728,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                 <a
                                     href={guideUrl}
                                     download
-                                    className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-colors"
+                                    className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 font-semibold rounded-xl transition-colors"
                                 >
                                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />

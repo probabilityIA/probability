@@ -22,7 +22,7 @@ export function InvoicingProviderSelector({
 
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-2">
+      <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
         Proveedor de Facturación <span className="text-red-500">*</span>
       </label>
 
@@ -64,25 +64,25 @@ export function InvoicingProviderSelector({
 
                 <div className="flex-1">
                   {/* Nombre del proveedor */}
-                  <h3 className="font-semibold text-gray-900">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">
                     {provider.name}
                   </h3>
 
                   {/* Tipo de proveedor */}
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {provider.provider_type_code}
                   </p>
 
                   {/* Descripción */}
                   {provider.description && (
-                    <p className="text-sm text-gray-600 mt-2">
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mt-2">
                       {provider.description}
                     </p>
                   )}
 
                   {/* Estado */}
                   {!provider.is_active && (
-                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-gray-200 text-gray-600 rounded">
+                    <span className="inline-block mt-2 px-2 py-1 text-xs bg-gray-200 text-gray-600 dark:text-gray-300 rounded">
                       No disponible
                     </span>
                   )}
@@ -96,20 +96,20 @@ export function InvoicingProviderSelector({
       {/* Información del proveedor seleccionado */}
       {selectedProvider && (
         <div className="mt-4 p-4 bg-gray-50 border border-gray-200 dark:border-gray-700 rounded-lg">
-          <h4 className="text-sm font-medium text-gray-900 mb-2">
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
             Información del proveedor
           </h4>
           <dl className="space-y-1 text-sm">
             <div className="flex justify-between">
-              <dt className="text-gray-600">Tipo:</dt>
-              <dd className="text-gray-900 font-mono">
+              <dt className="text-gray-600 dark:text-gray-300">Tipo:</dt>
+              <dd className="text-gray-900 dark:text-white font-mono">
                 {selectedProvider.provider_type_code}
               </dd>
             </div>
             {selectedProvider.description && (
               <div className="mt-2">
-                <dt className="text-gray-600">Descripción:</dt>
-                <dd className="text-gray-900">{selectedProvider.description}</dd>
+                <dt className="text-gray-600 dark:text-gray-300">Descripción:</dt>
+                <dd className="text-gray-900 dark:text-white">{selectedProvider.description}</dd>
               </div>
             )}
           </dl>
@@ -117,7 +117,7 @@ export function InvoicingProviderSelector({
       )}
 
       {providers.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
+        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <p>No hay proveedores de facturación disponibles.</p>
           <p className="text-sm mt-1">
             Contacte con el administrador para configurar proveedores.

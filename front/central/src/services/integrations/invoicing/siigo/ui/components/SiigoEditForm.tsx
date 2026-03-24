@@ -158,11 +158,11 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                     <div className="p-2 bg-blue-50 rounded-lg">
                         <CheckBadgeIcon className="w-6 h-6 text-blue-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         Editar Siigo Facturacion
                     </h2>
                 </div>
-                <p className="text-sm text-gray-600 ml-14">
+                <p className="text-sm text-gray-600 dark:text-gray-300 ml-14">
                     Actualiza la configuracion de tu integracion con Siigo.
                 </p>
             </div>
@@ -170,14 +170,14 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
             {/* Configuracion General */}
             <div className="bg-gray-50 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Configuracion General
                     </h3>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Nombre de la Integracion <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -193,7 +193,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                 {/* Business info - Read only for super admins */}
                 {isSuperAdmin && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Negocio
                         </label>
                         {loadingBusinesses ? (
@@ -202,7 +202,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span className="text-sm text-gray-600">Cargando negocios...</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
                             </div>
                         ) : (
                             <Select
@@ -219,7 +219,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                                 disabled={true}
                             />
                         )}
-                        <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>El negocio no puede ser modificado despues de la creacion</span>
                         </p>
@@ -231,7 +231,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
             <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 space-y-4 border border-blue-100">
                 <div className="flex items-center gap-2 mb-4">
                     <KeyIcon className="w-5 h-5 text-blue-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Credenciales de Acceso
                     </h3>
                 </div>
@@ -245,7 +245,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Usuario API
                         </label>
                         <Input
@@ -260,7 +260,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Clave de Acceso (Access Key)
                         </label>
                         <div className="relative">
@@ -276,7 +276,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                             <button
                                 type="button"
                                 onClick={() => setShowAccessKey(!showAccessKey)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 focus:outline-none"
                                 tabIndex={-1}
                             >
                                 {showAccessKey ? (
@@ -291,7 +291,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Account ID
                         </label>
                         <Input
@@ -306,7 +306,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Partner ID
                         </label>
                         <Input
@@ -323,7 +323,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
 
                 {/* URL de la API */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         URL de la API
                     </label>
                     <Input
@@ -334,7 +334,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         autoComplete="off"
                         className="bg-white font-mono text-sm"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>Dejar vacio para usar la URL de produccion de Siigo.</span>
                     </p>
@@ -371,14 +371,14 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
             <div className="bg-orange-50 rounded-xl p-6 space-y-4 border border-orange-200">
                 <div className="flex items-center gap-2 mb-2">
                     <BeakerIcon className="w-5 h-5 text-orange-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Modo de Pruebas
                     </h3>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-white rounded-lg border border-orange-200">
                     <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-800">Activar modo testing</p>
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-sm font-medium text-gray-800 dark:text-gray-100">Activar modo testing</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                             Las facturas generadas quedaran marcadas como TEST y usaran la URL de pruebas de Siigo.
                         </p>
                     </div>
@@ -409,7 +409,7 @@ export function SiigoEditForm({ integrationId, initialData, onSuccess, onCancel 
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 border border-gray-300"
                     >
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar

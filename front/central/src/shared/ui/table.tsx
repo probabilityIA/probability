@@ -115,7 +115,7 @@ export function Table<T = Record<string, unknown>>({
           {/* Selector de elementos por página */}
           {showItemsPerPageSelector && onItemsPerPageChange && (
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mostrar:</label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">Mostrar:</label>
               <select
                 value={itemsPerPage}
                 onChange={(e) => {
@@ -131,7 +131,7 @@ export function Table<T = Record<string, unknown>>({
                   </option>
                 ))}
               </select>
-              <span className="text-sm text-gray-700 dark:text-gray-300">por página</span>
+              <span className="text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300">por página</span>
             </div>
           )}
         </div>
@@ -187,7 +187,7 @@ export function Table<T = Record<string, unknown>>({
             <tbody>
               {loading ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <div className="flex justify-center items-center gap-3">
                       <div className="spinner"></div>
                       <span>Cargando...</span>
@@ -196,7 +196,7 @@ export function Table<T = Record<string, unknown>>({
                 </tr>
               ) : data.length === 0 ? (
                 <tr>
-                  <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500">
+                  <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     {emptyMessage}
                   </td>
                 </tr>

@@ -103,8 +103,8 @@ export default function InventoryStockPage() {
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="space-y-4">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900">Stock</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Stock</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Niveles de inventario por bodega
                     </p>
                 </div>
@@ -114,19 +114,19 @@ export default function InventoryStockPage() {
                         <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                         </svg>
-                        <p className="text-gray-500 text-sm">Selecciona un negocio para ver el inventario</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver el inventario</p>
                     </div>
                 ) : (
                     <>
                         <div className="bg-white border border-gray-200 rounded-lg p-4">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Bodega</label>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Bodega</label>
                             {loadingWarehouses ? (
                                 <div className="flex items-center gap-2">
                                     <Spinner size="sm" />
-                                    <span className="text-sm text-gray-500">Cargando bodegas...</span>
+                                    <span className="text-sm text-gray-500 dark:text-gray-400">Cargando bodegas...</span>
                                 </div>
                             ) : warehouses.length === 0 ? (
-                                <p className="text-sm text-gray-500">No hay bodegas activas. Crea una en el módulo de Bodegas.</p>
+                                <p className="text-sm text-gray-500 dark:text-gray-400">No hay bodegas activas. Crea una en el módulo de Bodegas.</p>
                             ) : (
                                 <select
                                     value={selectedWarehouseId?.toString() ?? ''}

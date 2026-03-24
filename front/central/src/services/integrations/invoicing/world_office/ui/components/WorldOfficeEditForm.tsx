@@ -150,11 +150,11 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                     <div className="p-2 bg-orange-50 rounded-lg">
                         <CheckBadgeIcon className="w-6 h-6 text-orange-600" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
                         Editar World Office Facturacion
                     </h2>
                 </div>
-                <p className="text-sm text-gray-600 ml-14">
+                <p className="text-sm text-gray-600 dark:text-gray-300 ml-14">
                     Actualiza la configuracion de tu integracion con World Office.
                 </p>
             </div>
@@ -162,14 +162,14 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
             {/* Configuracion General */}
             <div className="bg-gray-50 rounded-xl p-6 space-y-4">
                 <div className="flex items-center gap-2 mb-4">
-                    <Cog6ToothIcon className="w-5 h-5 text-gray-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <Cog6ToothIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Configuracion General
                     </h3>
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Nombre de la Integracion <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -185,7 +185,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                 {/* Business info - Read only for super admins */}
                 {isSuperAdmin && (
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Negocio
                         </label>
                         {loadingBusinesses ? (
@@ -194,7 +194,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                                 </svg>
-                                <span className="text-sm text-gray-600">Cargando negocios...</span>
+                                <span className="text-sm text-gray-600 dark:text-gray-300">Cargando negocios...</span>
                             </div>
                         ) : (
                             <Select
@@ -211,7 +211,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                                 disabled={true}
                             />
                         )}
-                        <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                             <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                             <span>El negocio no puede ser modificado despues de la creacion</span>
                         </p>
@@ -223,7 +223,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
             <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-6 space-y-4 border border-orange-100">
                 <div className="flex items-center gap-2 mb-4">
                     <KeyIcon className="w-5 h-5 text-orange-700" />
-                    <h3 className="text-lg font-semibold text-gray-900">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Credenciales de Acceso
                     </h3>
                 </div>
@@ -237,7 +237,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Usuario
                         </label>
                         <Input
@@ -252,7 +252,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                             Contrasena
                         </label>
                         <div className="relative">
@@ -268,7 +268,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                             <button
                                 type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 focus:outline-none"
+                                className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 focus:outline-none"
                                 tabIndex={-1}
                             >
                                 {showPassword ? (
@@ -282,7 +282,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         Codigo de Empresa
                     </label>
                     <Input
@@ -298,7 +298,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
 
                 {/* URL de la API */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
                         URL de la API
                     </label>
                     <Input
@@ -309,7 +309,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                         autoComplete="off"
                         className="bg-white font-mono text-sm"
                     />
-                    <p className="text-xs text-gray-500 mt-1.5 flex items-start gap-1">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5 flex items-start gap-1">
                         <InformationCircleIcon className="w-4 h-4 mt-0.5 flex-shrink-0" />
                         <span>Dejar vacio para usar la URL de produccion de World Office.</span>
                     </p>
@@ -349,7 +349,7 @@ export function WorldOfficeEditForm({ integrationId, initialData, onSuccess, onC
                         type="button"
                         onClick={onCancel}
                         disabled={loading}
-                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300"
+                        className="min-w-[140px] bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 border border-gray-300"
                     >
                         <ArrowLeftIcon className="w-4 h-4 mr-2" />
                         Cancelar

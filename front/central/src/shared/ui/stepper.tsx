@@ -32,7 +32,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                                         "w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors",
                                         isCompleted && "bg-purple-700 text-white",
                                         isActive && "bg-purple-700 text-white",
-                                        !isActive && !isCompleted && "bg-gray-200 text-gray-500"
+                                        !isActive && !isCompleted && "bg-gray-200 text-gray-500 dark:text-gray-400"
                                     )}
                                 >
                                     {isCompleted ? (
@@ -59,7 +59,7 @@ export function Stepper({ steps, currentStep, className }: StepperProps) {
                                         "mt-2 text-sm font-medium text-center",
                                         isActive && "text-purple-700",
                                         isCompleted && "text-purple-700",
-                                        !isActive && !isCompleted && "text-gray-500"
+                                        !isActive && !isCompleted && "text-gray-500 dark:text-gray-400"
                                     )}
                                 >
                                     {step.label}

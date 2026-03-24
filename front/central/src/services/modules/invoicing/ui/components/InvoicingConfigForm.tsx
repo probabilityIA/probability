@@ -224,8 +224,8 @@ export function InvoicingConfigForm({
             className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <div>
-            <span className="text-sm font-medium text-gray-900">Facturación automática</span>
-            <p className="text-xs text-gray-500">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Facturación automática</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Las órdenes que cumplan los filtros se facturarán automáticamente</p>
           </div>
         </label>
       </div>
@@ -233,9 +233,9 @@ export function InvoicingConfigForm({
       {/* Filtros de Pago */}
       {formData.auto_invoice && (
         <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Filtros de Pago</h4>
+          <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-3">Filtros de Pago</h4>
           <div>
-            <label className="block text-sm text-gray-700 mb-1">Estado de pago</label>
+            <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Estado de pago</label>
             <select
               value={formData.payment_status}
               onChange={(e) => setFormData({ ...formData, payment_status: e.target.value })}
@@ -262,8 +262,8 @@ export function InvoicingConfigForm({
             className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
           />
           <div>
-            <span className="text-sm font-medium text-gray-900">Facturar como Consumidor Final</span>
-            <p className="text-xs text-gray-500">Todas las facturas se generan a nombre de CONSUMIDOR FINAL (222222222222), sin importar los datos del cliente</p>
+            <span className="text-sm font-medium text-gray-900 dark:text-white">Facturar como Consumidor Final</span>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Todas las facturas se generan a nombre de CONSUMIDOR FINAL (222222222222), sin importar los datos del cliente</p>
           </div>
         </label>
       </div>
@@ -279,15 +279,15 @@ export function InvoicingConfigForm({
               className="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 disabled:opacity-50"
             />
             <div>
-              <span className="text-sm font-medium text-gray-900">Enviar recibo de caja</span>
-              <p className="text-xs text-gray-500">Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)</p>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Enviar recibo de caja</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400">Registra el pago en Softpymes al crear la factura (mueve cuentas por cobrar al medio de pago)</p>
             </div>
           </label>
 
           {formData.send_cash_receipt && (
             <div className="space-y-3 pl-8">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Medio de pago</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Medio de pago</label>
                 <select
                   value={formData.payment_type}
                   onChange={(e) => setFormData({ ...formData, payment_type: e.target.value })}
@@ -306,7 +306,7 @@ export function InvoicingConfigForm({
               {/* TR: bankAccountId */}
               {formData.payment_type === 'TR' && (
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">Numero de cuenta bancaria</label>
+                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta bancaria</label>
                   <input
                     type="text"
                     value={formData.payment_bank_account_id}
@@ -341,7 +341,7 @@ export function InvoicingConfigForm({
                           }`}
                         >
                           <span className="font-medium">{account.account_number}</span>
-                          <span className="text-gray-500 ml-2">{account.name}</span>
+                          <span className="text-gray-500 dark:text-gray-400 ml-2">{account.name}</span>
                           <span className="text-gray-400 ml-1">({account.name_type})</span>
                         </button>
                       ))}
@@ -354,7 +354,7 @@ export function InvoicingConfigForm({
               {formData.payment_type === 'CH' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm text-gray-700 mb-1">Numero de cuenta</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Numero de cuenta</label>
                     <input
                       type="text"
                       value={formData.payment_account_number}
@@ -365,7 +365,7 @@ export function InvoicingConfigForm({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-700 mb-1">Nombre del banco</label>
+                    <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Nombre del banco</label>
                     <input
                       type="text"
                       value={formData.payment_bank_name}
@@ -381,7 +381,7 @@ export function InvoicingConfigForm({
               {/* TC/TD: finantialEntityId */}
               {(formData.payment_type === 'TC' || formData.payment_type === 'TD') && (
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">ID Entidad Financiera (Softpymes)</label>
+                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">ID Entidad Financiera (Softpymes)</label>
                   <input
                     type="number"
                     value={formData.payment_financial_entity_id}
@@ -396,7 +396,7 @@ export function InvoicingConfigForm({
               {/* BN: code */}
               {formData.payment_type === 'BN' && (
                 <div>
-                  <label className="block text-sm text-gray-700 mb-1">Codigo del bono</label>
+                  <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Codigo del bono</label>
                   <input
                     type="text"
                     value={formData.payment_bonus_code}
@@ -415,8 +415,8 @@ export function InvoicingConfigForm({
         <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-medium text-gray-900">Mapeo de servicios</span>
-              <p className="text-xs text-gray-500 mt-0.5">
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Mapeo de servicios</span>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
                 Probability traduce internamente conceptos como envío, membresía y propina. Aquí defines con qué código se facturan.
               </p>
             </div>
@@ -432,7 +432,7 @@ export function InvoicingConfigForm({
           {showItemMappings && (
             <div className="space-y-3 mt-4">
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Servicio de Envío</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Servicio de Envío</label>
                 <input
                   type="text"
                   value={formData.item_mappings_shipping}
@@ -444,7 +444,7 @@ export function InvoicingConfigForm({
                 <p className="text-xs text-gray-400 mt-1">Código con el que se factura el costo de envío</p>
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Servicio de Membresía</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Servicio de Membresía</label>
                 <input
                   type="text"
                   value={formData.item_mappings_membership}
@@ -456,7 +456,7 @@ export function InvoicingConfigForm({
                 <p className="text-xs text-gray-400 mt-1">Código con el que se facturan las membresías</p>
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Servicio de Propina</label>
+                <label className="block text-sm text-gray-700 dark:text-gray-200 mb-1">Servicio de Propina</label>
                 <input
                   type="text"
                   value={formData.item_mappings_tip}
@@ -473,10 +473,10 @@ export function InvoicingConfigForm({
 
       {/* Integraciones de origen de órdenes */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="text-sm font-medium text-gray-900 mb-1">
+        <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-1">
           Fuentes de órdenes
         </h4>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
           Selecciona las integraciones desde las cuales se facturarán las órdenes
         </p>
 
@@ -506,7 +506,7 @@ export function InvoicingConfigForm({
                       className="w-5 h-5 object-contain flex-shrink-0"
                     />
                   )}
-                  <span className="text-sm text-gray-800 truncate">{integration.name}</span>
+                  <span className="text-sm text-gray-800 dark:text-gray-100 truncate">{integration.name}</span>
                   {integration.type && (
                     <span className="text-xs text-gray-400 flex-shrink-0">({integration.type})</span>
                   )}
@@ -524,7 +524,7 @@ export function InvoicingConfigForm({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
           >
             Cancelar
           </button>

@@ -30,8 +30,8 @@ export default function NotificationEventTypesPage() {
     <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <div className="space-y-6">
         <div>
-          <h1 className="text-xl font-semibold text-gray-900">Tipos de Eventos</h1>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Tipos de Eventos</h1>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
             Gestiona los tipos de eventos de notificación
           </p>
         </div>

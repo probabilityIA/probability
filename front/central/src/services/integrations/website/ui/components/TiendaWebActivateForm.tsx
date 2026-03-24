@@ -61,8 +61,8 @@ export function TiendaWebActivateForm({ integrationType, onSuccess, onBack }: Ti
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
                     <GlobeAltIcon className="w-8 h-8 text-emerald-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Activar Sitio Web</h3>
-                <p className="text-sm text-gray-500 mt-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activar Sitio Web</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     Crea un sitio web público para tu negocio.
                     La configuración de secciones se gestiona desde Sitio Web.
                 </p>

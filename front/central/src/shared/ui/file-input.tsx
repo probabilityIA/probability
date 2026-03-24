@@ -42,7 +42,7 @@ export function FileInput({
   return (
     <div className="space-y-2">
       {label && (
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">
           {label}
         </label>
       )}
@@ -69,14 +69,14 @@ export function FileInput({
         </Button>
         
         {fileName && (
-          <span className="text-sm text-gray-600 truncate max-w-xs">
+          <span className="text-sm text-gray-600 dark:text-gray-300 truncate max-w-xs">
             {fileName}
           </span>
         )}
       </div>
       
       {helperText && (
-        <p className="text-sm text-gray-500">{helperText}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-400">{helperText}</p>
       )}
       
       {error && (

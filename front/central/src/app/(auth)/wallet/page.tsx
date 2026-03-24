@@ -38,7 +38,7 @@ export default function WalletPage() {
     return (
         <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Billetera</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">Billetera</h1>
 
                 {/* Business selector - solo para super admin */}
                 {isSuperAdmin && businesses.length > 0 && (
@@ -122,7 +122,7 @@ function AdminWalletView() {
             key: 'BusinessID',
             label: 'Negocio',
             render: (_val, row) => (
-                <span className="font-medium text-gray-900">
+                <span className="font-medium text-gray-900 dark:text-white">
                     {businesses[row.BusinessID] || `ID: ${row.BusinessID}`}
                 </span>
             )
@@ -148,7 +148,7 @@ function AdminWalletView() {
         <div className="space-y-8">
             {/* Wallets Section */}
             <div>
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">Saldos de Negocios</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Saldos de Negocios</h2>
                 <Table
                     columns={[
                         ...walletColumns,
@@ -323,7 +323,7 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
             </Button>
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Confirmar Eliminación">
                 <div className="space-y-4 p-4">
-                    <p className="text-gray-600">
+                    <p className="text-gray-600 dark:text-gray-300">
                         ¿Estás seguro de que deseas borrar <strong>todo el historial de recargas</strong> de <strong>{businessName}</strong>?
                     </p>
                     <Alert type="warning">
@@ -462,7 +462,7 @@ function RequestsTableView({
         {
             key: 'CreatedAt',
             label: 'Fecha',
-            render: (val) => <span className="text-gray-600 font-mono text-sm">{formatDate(val as string)}</span>
+            render: (val) => <span className="text-gray-600 dark:text-gray-300 font-mono text-sm">{formatDate(val as string)}</span>
         },
         {
             key: 'WalletID',
@@ -471,15 +471,15 @@ function RequestsTableView({
                 const wallet = allWallets.find(w => w.ID === val);
                 if (wallet) {
                     const name = businesses[wallet.BusinessID];
-                    return <span className="font-medium text-gray-900">{name || `ID: ${wallet.BusinessID}`}</span>;
+                    return <span className="font-medium text-gray-900 dark:text-white">{name || `ID: ${wallet.BusinessID}`}</span>;
                 }
-                return <span className="text-gray-500">...</span>;
+                return <span className="text-gray-500 dark:text-gray-400">...</span>;
             }
         },
         {
             key: 'Amount',
             label: 'Monto',
-            render: (val) => <span className="font-bold text-gray-900">{formatCurrency(val as number)}</span>
+            render: (val) => <span className="font-bold text-gray-900 dark:text-white">{formatCurrency(val as number)}</span>
         },
     ];
 
@@ -520,8 +520,8 @@ function RequestsTableView({
 
     return (
         <div className={`${compact ? 'p-2' : 'pt-4 border-t border-gray-100 mt-8'}`}>
-            {!compact && <h2 className="text-lg font-semibold text-gray-900 mb-4">{title}</h2>}
-            {compact && <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 font-bold text-gray-700 text-sm uppercase tracking-wider">{title}</div>}
+            {!compact && <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{title}</h2>}
+            {compact && <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 font-bold text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wider">{title}</div>}
             <Table
                 columns={requestColumns}
                 data={paginatedData}
@@ -677,7 +677,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
 
                 {/* Recharge Section */}
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 lg:p-8">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                         {isSuperAdminView ? `Recargar Saldo — ${displayName}` : 'Recargar Saldo'}
                     </h2>
 
@@ -689,7 +689,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                             value={rechargeAmount}
                             onChange={(e) => setRechargeAmount(e.target.value)}
                             helperText="El monto mínimo es de $15.000"
-                            leftIcon={<span className="text-gray-500 font-bold"> </span>}
+                            leftIcon={<span className="text-gray-500 dark:text-gray-400 font-bold"> </span>}
                         />
 
                         {/* Quick Amounts Chips */}
@@ -700,7 +700,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                                     onClick={() => setRechargeAmount(String(amt))}
                                     className={`px-2 py-2 text-xs font-medium rounded-lg border transition-all ${Number(rechargeAmount) === amt
                                         ? 'bg-[#7c3aed] text-white border-[#7c3aed] shadow-md transform scale-105'
-                                        : 'bg-white text-gray-700 border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                                        : 'bg-white text-gray-700 dark:text-gray-200 border-gray-200 hover:border-purple-300 hover:bg-purple-50'
                                         }`}
                                 >
                                     $ {amt / 1000}k
@@ -758,10 +758,10 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         <img src="/QR.png" alt="Nequi QR" className="w-full h-auto object-contain mix-blend-multiply" />
                     </div>
 
-                    <h3 className="text-xl font-bold text-gray-900 mb-1">
+                    <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                         {rechargeAmount ? formatCurrency(Number(rechargeAmount)) : '$ --'}
                     </h3>
-                    <p className="text-gray-500 mb-4 text-xs">
+                    <p className="text-gray-500 dark:text-gray-400 mb-4 text-xs">
                         Total a pagar vía Nequi/Bancolombia
                     </p>
 
@@ -821,10 +821,10 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         <span className="text-3xl">🚀</span>
                     </div>
                     <div>
-                        <p className="font-semibold text-gray-900 mb-1">
+                        <p className="font-semibold text-gray-900 dark:text-white mb-1">
                             {comingSoonGatewayName} estará disponible próximamente
                         </p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
                             Por ahora puedes usar Nequi para recargar tu billetera.
                         </p>
                     </div>
@@ -857,11 +857,11 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         </svg>
                     </div>
 
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">
+                    <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
                         ¡Pago Reportado!
                     </h3>
 
-                    <p className="text-gray-600 mb-6 text-base leading-relaxed">
+                    <p className="text-gray-600 dark:text-gray-300 mb-6 text-base leading-relaxed">
                         Revisaremos su pago y será acreditado en unos minutos.
                     </p>
 
@@ -881,7 +881,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
             {/* Business Transaction History */}
             <div className="mt-12 space-y-8">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                    <h2 className="text-2xl font-bold text-gray-900">Historial de Transacciones</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Historial de Transacciones</h2>
                 </div>
 
                 <div className="space-y-8">
@@ -909,12 +909,12 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
         {
             key: 'CreatedAt',
             label: 'Fecha',
-            render: (val) => <span className="text-gray-600 font-mono text-sm">{formatDate(val as string)}</span>
+            render: (val) => <span className="text-gray-600 dark:text-gray-300 font-mono text-sm">{formatDate(val as string)}</span>
         },
         {
             key: 'Reference',
             label: 'Referencia',
-            render: (val) => <span className="text-gray-500 text-sm">{(val as string) || '---'}</span>
+            render: (val) => <span className="text-gray-500 dark:text-gray-400 text-sm">{(val as string) || '---'}</span>
         },
         {
             key: 'Amount',
@@ -955,7 +955,7 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
     return (
         <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
             <div className="p-4 border-b border-gray-50 bg-gray-50/50">
-                <h3 className="font-semibold text-gray-900">{title}</h3>
+                <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
             </div>
             <Table
                 columns={columns}

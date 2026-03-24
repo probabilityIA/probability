@@ -37,7 +37,7 @@ export const PermissionForm: React.FC<PermissionFormProps> = ({ initialData, onS
         return (
             <div className="flex justify-center items-center py-8">
                 <Spinner size="lg" />
-                <span className="ml-2 text-gray-600">Cargando datos...</span>
+                <span className="ml-2 text-gray-600 dark:text-gray-300">Cargando datos...</span>
             </div>
         );
     }

@@ -43,8 +43,8 @@ export default function OrderStatusPage() {
         <div className="w-full px-6 py-8">
             <div className="flex justify-between items-center mb-6">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-900">Order Status Mappings</h1>
-                    <p className="text-gray-600 mt-1">
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Order Status Mappings</h1>
+                    <p className="text-gray-600 dark:text-gray-300 mt-1">
                         Gestiona los mapeos de estados de órdenes desde diferentes integraciones
                     </p>
                 </div>

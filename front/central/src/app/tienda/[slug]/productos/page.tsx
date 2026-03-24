@@ -32,12 +32,12 @@ export default async function ProductosPage({ params, searchParams }: PageProps)
 
     return (
         <div className="py-8 px-4 max-w-7xl mx-auto">
-            <h1 className="text-3xl font-bold text-gray-900 mb-8">Catálogo de Productos</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Catálogo de Productos</h1>
 
             <CatalogSearch basePath={`/tienda/${slug}/productos`} initialSearch={search} />
 
             {catalog.data.length === 0 ? (
-                <div className="text-center py-16 text-gray-500">
+                <div className="text-center py-16 text-gray-500 dark:text-gray-400">
                     <p className="text-lg">No se encontraron productos</p>
                     {search && <p className="mt-2">Intenta con otro término de búsqueda</p>}
                 </div>

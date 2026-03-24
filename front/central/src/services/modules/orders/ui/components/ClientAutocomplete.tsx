@@ -63,7 +63,7 @@ export default function ClientAutocomplete({
             {loading && (
                 <div className="px-3 py-3 flex items-center gap-2.5">
                     <div className="w-4 h-4 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                    <span className="text-sm text-gray-500">Buscando cliente...</span>
+                    <span className="text-sm text-gray-500 dark:text-gray-400">Buscando cliente...</span>
                 </div>
             )}
 
@@ -73,7 +73,7 @@ export default function ClientAutocomplete({
                     <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-sm text-gray-500">
+                    <span className="text-sm text-gray-500 dark:text-gray-400">
                         Cliente no encontrado — se creará uno nuevo al guardar la orden
                     </span>
                 </div>
@@ -88,16 +88,16 @@ export default function ClientAutocomplete({
                     className="w-full text-left px-3 py-2.5 hover:bg-purple-50 cursor-pointer border-b border-gray-100 last:border-b-0 transition-colors"
                 >
                     <div className="flex items-center justify-between">
-                        <span className="font-medium text-sm text-gray-800">{client.name}</span>
+                        <span className="font-medium text-sm text-gray-800 dark:text-gray-100">{client.name}</span>
                         {client.dni && (
-                            <span className="text-xs font-mono bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">
+                            <span className="text-xs font-mono bg-gray-100 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
                                 {highlightMatch(client.dni, searchTerm)}
                             </span>
                         )}
                     </div>
                     <div className="flex items-center gap-3 mt-0.5">
                         {client.email && (
-                            <span className="text-xs text-gray-500">{client.email}</span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">{client.email}</span>
                         )}
                         {client.phone && (
                             <span className="text-xs text-gray-400">{client.phone}</span>

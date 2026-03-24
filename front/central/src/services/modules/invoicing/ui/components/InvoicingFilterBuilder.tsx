@@ -26,7 +26,7 @@ export function InvoicingFilterBuilder({
 
   return (
     <div className="space-y-6 border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-gray-50">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">
+      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
         Filtros de Facturación Automática
       </h3>
 
@@ -34,11 +34,11 @@ export function InvoicingFilterBuilder({
       {/* SECCIÓN: MONTO */}
       {/* ============================================ */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="font-medium text-gray-900 mb-3">Filtros de Monto</h4>
+        <h4 className="font-medium text-gray-900 dark:text-white mb-3">Filtros de Monto</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Monto mínimo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Monto mínimo (COP)
             </label>
             <input
@@ -51,14 +51,14 @@ export function InvoicingFilterBuilder({
               disabled={disabled}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Solo facturar órdenes con este monto mínimo
             </p>
           </div>
 
           {/* Monto máximo */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Monto máximo (COP)
             </label>
             <input
@@ -71,7 +71,7 @@ export function InvoicingFilterBuilder({
               disabled={disabled}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Solo facturar órdenes hasta este monto
             </p>
           </div>
@@ -82,11 +82,11 @@ export function InvoicingFilterBuilder({
       {/* SECCIÓN: PAGO */}
       {/* ============================================ */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="font-medium text-gray-900 mb-3">Filtros de Pago</h4>
+        <h4 className="font-medium text-gray-900 dark:text-white mb-3">Filtros de Pago</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Estado de pago */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Estado de pago
             </label>
             <select
@@ -113,11 +113,11 @@ export function InvoicingFilterBuilder({
       {/* SECCIÓN: ORDEN */}
       {/* ============================================ */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="font-medium text-gray-900 mb-3">Filtros de Orden</h4>
+        <h4 className="font-medium text-gray-900 dark:text-white mb-3">Filtros de Orden</h4>
         <div className="space-y-4">
           {/* Tipos de orden */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Tipos de orden permitidos
             </label>
             <MultiSelect
@@ -132,14 +132,14 @@ export function InvoicingFilterBuilder({
               placeholder="Todos los tipos"
               disabled={disabled}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Dejar vacío para permitir todos los tipos
             </p>
           </div>
 
           {/* Estados excluidos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               Excluir estados
             </label>
             <MultiSelect
@@ -156,7 +156,7 @@ export function InvoicingFilterBuilder({
               placeholder="No excluir ninguno"
               disabled={disabled}
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Órdenes con estos estados NO se facturarán
             </p>
           </div>
@@ -167,11 +167,11 @@ export function InvoicingFilterBuilder({
       {/* SECCIÓN: PRODUCTOS */}
       {/* ============================================ */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="font-medium text-gray-900 mb-3">Filtros de Productos</h4>
+        <h4 className="font-medium text-gray-900 dark:text-white mb-3">Filtros de Productos</h4>
         <div className="space-y-4">
           {/* Productos excluidos */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               SKUs excluidos
             </label>
             <input
@@ -190,7 +190,7 @@ export function InvoicingFilterBuilder({
               disabled={disabled}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Separar múltiples SKUs con comas. Órdenes que contengan estos
               productos NO se facturarán
             </p>
@@ -198,7 +198,7 @@ export function InvoicingFilterBuilder({
 
           {/* Productos incluidos únicamente */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
               SKUs permitidos (exclusivo)
             </label>
             <input
@@ -217,7 +217,7 @@ export function InvoicingFilterBuilder({
               disabled={disabled}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
             />
-            <p className="text-xs text-gray-500 mt-1">
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Solo facturar órdenes que contengan ÚNICAMENTE estos productos
             </p>
           </div>
@@ -225,7 +225,7 @@ export function InvoicingFilterBuilder({
           {/* Cantidad de ítems */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Mínimo ítems
               </label>
               <input
@@ -245,7 +245,7 @@ export function InvoicingFilterBuilder({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                 Máximo ítems
               </label>
               <input
@@ -271,9 +271,9 @@ export function InvoicingFilterBuilder({
       {/* SECCIÓN: UBICACIÓN */}
       {/* ============================================ */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <h4 className="font-medium text-gray-900 mb-3">Filtros de Ubicación</h4>
+        <h4 className="font-medium text-gray-900 dark:text-white mb-3">Filtros de Ubicación</h4>
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
             Regiones de envío permitidas
           </label>
           <MultiSelect
@@ -294,7 +294,7 @@ export function InvoicingFilterBuilder({
             placeholder="Todas las regiones"
             disabled={disabled}
           />
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
             Solo facturar envíos a estas regiones
           </p>
         </div>

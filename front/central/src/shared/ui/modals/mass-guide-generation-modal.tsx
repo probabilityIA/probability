@@ -334,8 +334,8 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6">
                 <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-gray-800">Generación Masiva de Guías</h2>
-                    <button onClick={handleClose} className="text-gray-500 hover:text-gray-700 text-2xl">
+                    <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-100 dark:text-gray-100">Generación Masiva de Guías</h2>
+                    <button onClick={handleClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 text-2xl">
                         ×
                     </button>
                 </div>
@@ -372,7 +372,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         </div>
 
                         <div className="flex justify-between items-center">
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-300">
                                 Selecciona las órdenes para generar guías ({selectedOrderIds.size} seleccionadas)
                             </p>
                             <div className="space-x-2">
@@ -388,7 +388,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                         {loading ? (
                             <div className="text-center py-8">Cargando órdenes...</div>
                         ) : orders.length === 0 ? (
-                            <div className="text-center py-8 text-gray-500">
+                            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                                 No hay órdenes sin guía de envío
                             </div>
                         ) : (
@@ -407,13 +407,13 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                         />
                                         <div className="flex-1">
                                             <div className="font-semibold">{order.order_number}</div>
-                                            <div className="text-sm text-gray-600">
+                                            <div className="text-sm text-gray-600 dark:text-gray-300">
                                                 {order.customer_name} - {order.shipping_city || <span className="text-red-500 text-xs font-semibold">Sin ciudad (Edita para continuar)</span>}
                                             </div>
                                         </div>
                                         <div className="text-right mr-4">
                                             <div className="font-semibold">${order.total_amount?.toLocaleString()}</div>
-                                            <div className="text-xs text-gray-500">
+                                            <div className="text-xs text-gray-500 dark:text-gray-400">
                                                 {order.weight || 1}kg
                                             </div>
                                         </div>
@@ -448,14 +448,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 {/* Step 2: Quoting Progress */}
                 {step === 'quote' && (
                     <div className="space-y-4">
-                        <p className="text-center text-gray-600">Cotizando envíos...</p>
+                        <p className="text-center text-gray-600 dark:text-gray-300">Cotizando envíos...</p>
                         <div className="w-full bg-gray-200 rounded-full h-4">
                             <div
                                 className="bg-orange-500 h-4 rounded-full transition-all duration-300"
                                 style={{ width: `${quotingProgress}%` }}
                             />
                         </div>
-                        <p className="text-center text-sm text-gray-500">
+                        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                             {Math.round(quotingProgress)}% completado
                         </p>
                     </div>
@@ -502,14 +502,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                             <td className="p-3 font-medium">{order.order_number}</td>
                                             <td className="p-3">
                                                 <div>{order.customer_name}</div>
-                                                <div className="text-xs text-gray-500">{order.shipping_city}</div>
+                                                <div className="text-xs text-gray-500 dark:text-gray-400">{order.shipping_city}</div>
                                             </td>
                                             <td className="p-3">
                                                 {order.quote ? (
                                                     <div>
                                                         <div className="font-medium">{order.quote.carrier}</div>
-                                                        <div className="text-xs text-gray-500">{order.quote.product}</div>
-                                                        <div className="text-xs text-gray-500">{order.quote.deliveryDays} días</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">{order.quote.product}</div>
+                                                        <div className="text-xs text-gray-500 dark:text-gray-400">{order.quote.deliveryDays} días</div>
                                                     </div>
                                                 ) : (
                                                     <span className="text-red-600 text-xs">-</span>
@@ -538,7 +538,7 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                                             <td className="p-3 text-center">
                                                 <button
                                                     onClick={() => setSelectedOrderForDetails(order)}
-                                                    className="text-gray-400 hover:text-gray-600"
+                                                    className="text-gray-400 hover:text-gray-600 dark:text-gray-300"
                                                 >
                                                     ⋮
                                                 </button>
@@ -572,14 +572,14 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                 {/* Step 4: Generating Progress */}
                 {step === 'generate' && (
                     <div className="space-y-4">
-                        <p className="text-center text-gray-600">Generando guías...</p>
+                        <p className="text-center text-gray-600 dark:text-gray-300">Generando guías...</p>
                         <div className="w-full bg-gray-200 rounded-full h-4">
                             <div
                                 className="bg-green-500 h-4 rounded-full transition-all duration-300"
                                 style={{ width: `${generatingProgress}%` }}
                             />
                         </div>
-                        <p className="text-center text-sm text-gray-500">
+                        <p className="text-center text-sm text-gray-500 dark:text-gray-400">
                             {Math.round(generatingProgress)}% completado
                         </p>
                         <div className="text-center text-sm">
@@ -632,27 +632,27 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4">
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-bold">Detalles de Cotización - {selectedOrderForDetails.order_number}</h3>
-                            <button onClick={() => setSelectedOrderForDetails(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+                            <button onClick={() => setSelectedOrderForDetails(null)} className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl">&times;</button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="space-y-1">
-                                <p className="font-bold text-gray-500 uppercase text-[10px]">Origen</p>
+                                <p className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Origen</p>
                                 <p>{selectedWarehouse ? `${selectedWarehouse.city}, ${selectedWarehouse.state}` : 'Sin bodega seleccionada'}</p>
-                                <p className="text-xs text-gray-500">{selectedWarehouse?.street || selectedWarehouse?.address || 'Sin dirección'}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedWarehouse?.street || selectedWarehouse?.address || 'Sin dirección'}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="font-bold text-gray-500 uppercase text-[10px]">Destino</p>
+                                <p className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Destino</p>
                                 <p>{selectedOrderForDetails.shipping_city}</p>
-                                <p className="text-xs text-gray-500">{selectedOrderForDetails.shipping_street}</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedOrderForDetails.shipping_street}</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="font-bold text-gray-500 uppercase text-[10px]">Paquete</p>
+                                <p className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Paquete</p>
                                 <p>{selectedOrderForDetails.weight}kg</p>
-                                <p className="text-xs text-gray-500">{selectedOrderForDetails.height}x{selectedOrderForDetails.width}x{selectedOrderForDetails.length} cm</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">{selectedOrderForDetails.height}x{selectedOrderForDetails.width}x{selectedOrderForDetails.length} cm</p>
                             </div>
                             <div className="space-y-1">
-                                <p className="font-bold text-gray-500 uppercase text-[10px]">Valor Declarado</p>
+                                <p className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Valor Declarado</p>
                                 <p>${selectedOrderForDetails.total_amount?.toLocaleString()}</p>
                             </div>
                         </div>
@@ -690,40 +690,40 @@ export default function MassGuideGenerationModal({ isOpen, onClose, onComplete }
                     <div className="bg-white rounded-lg shadow-2xl max-w-lg w-full p-6 space-y-4">
                         <div className="flex justify-between items-center">
                             <h3 className="text-lg font-bold">Editar Orden - {selectedOrderForEdit.order_number}</h3>
-                            <button onClick={() => setSelectedOrderForEdit(null)} className="text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+                            <button onClick={() => setSelectedOrderForEdit(null)} className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl">&times;</button>
                         </div>
 
                         <div className="grid grid-cols-2 gap-4 text-sm">
                             <div className="space-y-1 col-span-2">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Ciudad Destino</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Ciudad Destino</label>
                                 <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_city || ''} onChange={e => setEditForm({ ...editForm, shipping_city: e.target.value })} placeholder="Ej. Bogota" />
                             </div>
                             <div className="space-y-1 col-span-2">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Departamento</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Departamento</label>
                                 <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_state || ''} onChange={e => setEditForm({ ...editForm, shipping_state: e.target.value })} placeholder="Ej. Cundinamarca" />
                             </div>
                             <div className="space-y-1 col-span-2">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Dirección</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Dirección</label>
                                 <input type="text" className="w-full border p-2 rounded" value={editForm.shipping_street || ''} onChange={e => setEditForm({ ...editForm, shipping_street: e.target.value })} />
                             </div>
                             <div className="space-y-1 col-span-2">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Teléfono Cliente</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Teléfono Cliente</label>
                                 <input type="text" className="w-full border p-2 rounded" value={editForm.customer_phone || ''} onChange={e => setEditForm({ ...editForm, customer_phone: e.target.value })} />
                             </div>
                             <div className="space-y-1">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Peso (kg)</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Peso (kg)</label>
                                 <input type="number" className="w-full border p-2 rounded" value={editForm.weight || 1} onChange={e => setEditForm({ ...editForm, weight: Number(e.target.value) })} />
                             </div>
                             <div className="space-y-1">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Largo (cm)</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Largo (cm)</label>
                                 <input type="number" className="w-full border p-2 rounded" value={editForm.length || 10} onChange={e => setEditForm({ ...editForm, length: Number(e.target.value) })} />
                             </div>
                             <div className="space-y-1">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Ancho (cm)</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Ancho (cm)</label>
                                 <input type="number" className="w-full border p-2 rounded" value={editForm.width || 10} onChange={e => setEditForm({ ...editForm, width: Number(e.target.value) })} />
                             </div>
                             <div className="space-y-1">
-                                <label className="font-bold text-gray-500 uppercase text-[10px]">Alto (cm)</label>
+                                <label className="font-bold text-gray-500 dark:text-gray-400 uppercase text-[10px]">Alto (cm)</label>
                                 <input type="number" className="w-full border p-2 rounded" value={editForm.height || 10} onChange={e => setEditForm({ ...editForm, height: Number(e.target.value) })} />
                             </div>
                         </div>

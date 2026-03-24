@@ -107,7 +107,7 @@ export default function ProductSelector({
                 {showResults && (searchTerm || loading) && (
                     <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-64 overflow-auto">
                         {loading ? (
-                            <div className="p-4 text-center text-gray-500">Buscando productos...</div>
+                            <div className="p-4 text-center text-gray-500 dark:text-gray-400">Buscando productos...</div>
                         ) : products.length > 0 ? (
                             <ul className="py-1">
                                 {products.map((product) => (
@@ -126,8 +126,8 @@ export default function ProductSelector({
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                                    <div className="text-xs text-gray-500">SKU: {product.sku}</div>
+                                                    <div className="text-sm font-medium text-gray-900 dark:text-white">{product.name}</div>
+                                                    <div className="text-xs text-gray-500 dark:text-gray-400">SKU: {product.sku}</div>
                                                 </div>
                                             </div>
                                             <div className="text-sm font-semibold text-blue-600">
@@ -138,7 +138,7 @@ export default function ProductSelector({
                                 ))}
                             </ul>
                         ) : (
-                            <div className="p-4 text-center text-gray-500">
+                            <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                                 No se encontraron productos.
                                 <button
                                     type="button"
@@ -159,9 +159,9 @@ export default function ProductSelector({
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Producto</th>
-                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Precio</th>
-                                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Producto</th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Precio</th>
+                                <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
                         <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
@@ -169,11 +169,11 @@ export default function ProductSelector({
                                 <tr key={product.id}>
                                     <td className="px-4 py-2 whitespace-nowrap">
                                         <div className="flex items-center">
-                                            <div className="text-sm font-medium text-gray-900">{product.name}</div>
-                                            <div className="ml-2 text-xs text-gray-500">({product.sku})</div>
+                                            <div className="text-sm font-medium text-gray-900 dark:text-white">{product.name}</div>
+                                            <div className="ml-2 text-xs text-gray-500 dark:text-gray-400">({product.sku})</div>
                                         </div>
                                     </td>
-                                    <td className="px-4 py-2 whitespace-nowrap text-right text-sm text-gray-900">
+                                    <td className="px-4 py-2 whitespace-nowrap text-right text-sm text-gray-900 dark:text-white">
                                         {product.currency} {product.price.toLocaleString()}
                                     </td>
                                     <td className="px-4 py-2 whitespace-nowrap text-center">

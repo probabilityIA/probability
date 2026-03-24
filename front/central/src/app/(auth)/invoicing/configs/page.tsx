@@ -43,7 +43,7 @@ export default function InvoicingConfigsPage() {
   if (requiresBusinessSelection) {
     return (
       <div className="p-8">
-        <div className="bg-white rounded-lg shadow p-16 text-center text-gray-500">
+        <div className="bg-white rounded-lg shadow p-16 text-center text-gray-500 dark:text-gray-400">
           Selecciona un negocio para ver las configuraciones de facturación
         </div>
       </div>
@@ -53,7 +53,7 @@ export default function InvoicingConfigsPage() {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="bg-white rounded-lg shadow p-16 text-center text-gray-500">
+        <div className="bg-white rounded-lg shadow p-16 text-center text-gray-500 dark:text-gray-400">
           Cargando configuraciones...
         </div>
       </div>

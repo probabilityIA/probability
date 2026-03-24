@@ -54,8 +54,8 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between px-6 py-4 border-b">
-                    <h2 className="text-lg font-semibold text-gray-900">Ajustar stock</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Ajustar stock</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none">
                         &times;
                     </button>
                 </div>
@@ -72,7 +72,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             ID del producto <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -87,7 +87,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Cantidad <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -97,13 +97,13 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                             placeholder="Positivo para agregar, negativo para quitar"
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                             Use valores positivos para agregar stock y negativos para quitar.
                         </p>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Razón <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -116,7 +116,7 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Notas</label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}

@@ -14,8 +14,8 @@ interface CustomerDetailProps {
 function StatCard({ label, value }: { label: string; value: string }) {
     return (
         <div className="bg-gray-50 rounded-lg p-4 text-center">
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{label}</p>
-            <p className="text-lg font-semibold text-gray-900">{value}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+            <p className="text-lg font-semibold text-gray-900 dark:text-white">{value}</p>
         </div>
     );
 }
@@ -23,8 +23,8 @@ function StatCard({ label, value }: { label: string; value: string }) {
 function Field({ label, value }: { label: string; value?: string | null }) {
     return (
         <div>
-            <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">{label}</p>
-            <p className="text-sm text-gray-900">{value || <span className="text-gray-300">—</span>}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-1">{label}</p>
+            <p className="text-sm text-gray-900 dark:text-white">{value || <span className="text-gray-300">—</span>}</p>
         </div>
     );
 }
@@ -93,7 +93,7 @@ export default function CustomerDetailView({ customerId, businessId }: CustomerD
 
             {/* Datos del cliente */}
             <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4">
-                <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide border-b pb-2">
+                <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200 uppercase tracking-wide border-b pb-2">
                     Información de contacto
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

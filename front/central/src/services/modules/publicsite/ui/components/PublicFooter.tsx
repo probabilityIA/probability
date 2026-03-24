@@ -38,7 +38,7 @@ export function PublicFooter({ business }: PublicFooterProps) {
                         </ul>
                     </div>
                 </div>
-                <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500">
+                <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-500 dark:text-gray-400">
                     <p>&copy; {new Date().getFullYear()} {business.name}. Powered by Probability.</p>
                 </div>
             </div>

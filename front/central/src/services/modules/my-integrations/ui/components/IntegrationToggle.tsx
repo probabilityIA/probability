@@ -34,11 +34,11 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
             {/* Nombre del tipo + nombre de la integración */}
             <div className="flex flex-col min-w-0 flex-1">
                 {typeName && (
-                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-200 truncate leading-tight">
+                    <span className="text-xs font-semibold text-gray-800 dark:text-gray-100 dark:text-gray-200 truncate leading-tight">
                         {typeName}
                     </span>
                 )}
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate leading-tight">
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 dark:text-gray-400 truncate leading-tight">
                     {integration.name}
                 </span>
             </div>

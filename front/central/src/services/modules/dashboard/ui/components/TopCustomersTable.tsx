@@ -39,7 +39,7 @@ export const columns: ColumnDef<TopCustomer>[] = [
         header: ({ column }) => {
             return (
                 <button
-                    className="flex w-full items-center hover:text-gray-900 transition-colors"
+                    className="flex w-full items-center hover:text-gray-900 dark:text-white transition-colors"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
                     Cliente
@@ -49,8 +49,8 @@ export const columns: ColumnDef<TopCustomer>[] = [
         },
         cell: ({ row }) => (
             <div>
-                <div className="font-medium text-gray-900">{row.original.customer_name}</div>
-                <div className="text-xs text-gray-500 lowercase">{row.original.customer_email}</div>
+                <div className="font-medium text-gray-900 dark:text-white">{row.original.customer_name}</div>
+                <div className="text-xs text-gray-500 dark:text-gray-400 lowercase">{row.original.customer_email}</div>
             </div>
         ),
     },
@@ -59,7 +59,7 @@ export const columns: ColumnDef<TopCustomer>[] = [
         header: ({ column }) => (
             <div className="text-right w-[80px] ml-auto">
                 <button
-                    className="inline-flex items-center hover:text-gray-900 transition-colors"
+                    className="inline-flex items-center hover:text-gray-900 dark:text-white transition-colors"
                     onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 >
                     Compras
@@ -68,7 +68,7 @@ export const columns: ColumnDef<TopCustomer>[] = [
             </div>
         ),
         cell: ({ row }) => {
-            return <div className="text-right font-medium text-gray-900 pr-4">{row.getValue('order_count')}</div>;
+            return <div className="text-right font-medium text-gray-900 dark:text-white pr-4">{row.getValue('order_count')}</div>;
         },
     },
 ];
@@ -113,7 +113,7 @@ export function TopCustomersTable({ data }: { data: TopCustomer[] }) {
                                 <tr key={headerGroup.id} className="border-b transition-colors data-[state=selected]:bg-gray-100/50">
                                     {headerGroup.headers.map((header) => {
                                         return (
-                                            <th key={header.id} className="h-8 px-2 text-left align-middle font-medium text-gray-500 text-xs [&:has([role=checkbox])]:pr-0">
+                                            <th key={header.id} className="h-8 px-2 text-left align-middle font-medium text-gray-500 dark:text-gray-400 text-xs [&:has([role=checkbox])]:pr-0">
                                                 {header.isPlaceholder
                                                     ? null
                                                     : flexRender(
@@ -148,7 +148,7 @@ export function TopCustomersTable({ data }: { data: TopCustomer[] }) {
                                 <tr>
                                     <td
                                         colSpan={columns.length}
-                                        className="h-24 text-center text-gray-500"
+                                        className="h-24 text-center text-gray-500 dark:text-gray-400"
                                     >
                                         No se encontraron resultados.
                                     </td>

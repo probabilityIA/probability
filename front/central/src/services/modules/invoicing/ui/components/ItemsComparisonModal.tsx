@@ -57,14 +57,14 @@ export function ItemsComparisonModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 flex-shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Comparar Productos</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Comparar Productos</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Compara los productos del sistema contra los registrados en el proveedor de facturación
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -74,7 +74,7 @@ export function ItemsComparisonModal({
         {!data && !loading && (
           <div className="flex flex-col items-center justify-center py-20 px-6">
             <div className="text-6xl mb-4">📦</div>
-            <p className="text-gray-600 text-sm mb-6 text-center max-w-md">
+            <p className="text-gray-600 dark:text-gray-300 text-sm mb-6 text-center max-w-md">
               Se compararán todos los productos de tu sistema contra el catálogo del proveedor de facturación, cruzando por código SKU.
             </p>
             <button
@@ -88,7 +88,7 @@ export function ItemsComparisonModal({
 
         {/* Spinner */}
         {loading && !data && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500 flex-shrink-0">
+          <div className="flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400 flex-shrink-0">
             <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4" />
             <p className="text-sm font-medium">Obteniendo catálogo del proveedor…</p>
             <p className="text-xs mt-1 text-gray-400">Esto puede tardar unos segundos</p>
@@ -140,13 +140,13 @@ export function ItemsComparisonModal({
                           key={idx}
                           className={`border-b ${cfg.rowClass} transition-all hover:brightness-95`}
                         >
-                          <td className="px-4 py-3 font-mono font-medium text-gray-800">
+                          <td className="px-4 py-3 font-mono font-medium text-gray-800 dark:text-gray-100">
                             {row.item_code || '—'}
                           </td>
-                          <td className="px-4 py-3 text-gray-700">
+                          <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
                             {row.provider_name || '—'}
                           </td>
-                          <td className="px-4 py-3 text-gray-700">
+                          <td className="px-4 py-3 text-gray-700 dark:text-gray-200">
                             {row.system_name || '—'}
                           </td>
                           <td className="px-4 py-3 text-right font-semibold">

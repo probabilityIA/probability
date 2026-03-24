@@ -42,7 +42,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({ initialData, onSucce
             />
 
             <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                     Descripción
                 </label>
                 <textarea
@@ -54,7 +54,7 @@ export const ResourceForm: React.FC<ResourceFormProps> = ({ initialData, onSucce
                 />
             </div>
 
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-gray-500 dark:text-gray-400">
                 Los recursos representan entidades del sistema sobre las cuales se pueden definir permisos (ej: orders, users, products).
             </p>
 

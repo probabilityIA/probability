@@ -52,8 +52,8 @@ export default function VehicleManager({ selectedBusinessId = null }: VehicleMan
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900">Vehiculos</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Vehiculos</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Gestiona los vehiculos de tu negocio
                     </p>
                 </div>
@@ -71,7 +71,7 @@ export default function VehicleManager({ selectedBusinessId = null }: VehicleMan
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.125-.504 1.125-1.125v-3.026a2.999 2.999 0 00-.879-2.121l-3.121-3.121A3 3 0 0014.379 8H14V5.625c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v12.25" />
                     </svg>
-                    <p className="text-gray-500 text-sm">Selecciona un negocio para ver y gestionar sus vehiculos</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver y gestionar sus vehiculos</p>
                 </div>
             ) : (
                 <VehicleList
@@ -86,12 +86,12 @@ export default function VehicleManager({ selectedBusinessId = null }: VehicleMan
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
                         <div className="flex items-center justify-between px-6 py-4 border-b">
-                            <h2 className="text-lg font-semibold text-gray-900">
+                            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                 {modalMode === 'create' ? 'Nuevo vehiculo' : 'Editar vehiculo'}
                             </h2>
                             <button
                                 onClick={closeModal}
-                                className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none"
                             >
                                 &times;
                             </button>

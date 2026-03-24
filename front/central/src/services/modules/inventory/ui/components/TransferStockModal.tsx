@@ -79,8 +79,8 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between px-6 py-4 border-b">
-                    <h2 className="text-lg font-semibold text-gray-900">Transferir stock</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Transferir stock</h2>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none">
                         &times;
                     </button>
                 </div>
@@ -97,7 +97,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             ID del producto <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -112,11 +112,11 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Bodega destino <span className="text-red-500">*</span>
                         </label>
                         {loadingWarehouses ? (
-                            <p className="text-sm text-gray-500">Cargando bodegas...</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">Cargando bodegas...</p>
                         ) : (
                             <select
                                 value={formData.to_warehouse_id || ''}
@@ -133,7 +133,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                             Cantidad <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -146,7 +146,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Razón</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Razón</label>
                         <Input
                             type="text"
                             value={formData.reason}
@@ -156,7 +156,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Notas</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Notas</label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}

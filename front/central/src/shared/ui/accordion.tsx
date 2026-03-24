@@ -18,9 +18,9 @@ export function AccordionItem({ title, children, defaultOpen = false, className 
                 className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <span className="font-medium text-gray-900 dark:text-gray-100">{title}</span>
+                <span className="font-medium text-gray-900 dark:text-white dark:text-white dark:text-gray-100">{title}</span>
                 <span className={`transform transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg className="w-5 h-5 text-gray-500 dark:text-gray-400 dark:text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                     </svg>
                 </span>

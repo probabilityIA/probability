@@ -79,7 +79,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel, businessId
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Nombre */}
                 <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Nombre <span className="text-red-500">*</span>
                     </label>
                     <Input
@@ -95,7 +95,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel, businessId
 
                 {/* Email */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Email
                     </label>
                     <Input
@@ -109,7 +109,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel, businessId
 
                 {/* Teléfono */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Teléfono
                     </label>
                     <Input
@@ -123,7 +123,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel, businessId
 
                 {/* Documento (DNI) */}
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Documento de identidad
                     </label>
                     <Input

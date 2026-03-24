@@ -69,7 +69,7 @@ export function InvoicingConfigList({
   if (configs.length === 0) {
     return (
       <div className="text-center py-12 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-        <p className="text-gray-500">No hay configuraciones de facturación.</p>
+        <p className="text-gray-500 dark:text-gray-400">No hay configuraciones de facturación.</p>
         <p className="text-sm text-gray-400 mt-1">
           Crea una nueva configuración para empezar.
         </p>
@@ -105,7 +105,7 @@ export function InvoicingConfigList({
                     <XCircleIcon className="w-5 h-5 text-gray-400" />
                   )}
 
-                  <h3 className="font-medium text-gray-900">
+                  <h3 className="font-medium text-gray-900 dark:text-white">
                     {config.integration_names && config.integration_names.length > 0
                       ? config.integration_names.join(', ')
                       : config.integration_ids && config.integration_ids.length > 0
@@ -122,7 +122,7 @@ export function InvoicingConfigList({
                     className={`px-2 py-1 text-xs rounded-full transition-colors disabled:opacity-50 hover:opacity-80 ${
                       config.auto_invoice
                         ? 'bg-blue-100 text-blue-800 hover:bg-blue-200'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-gray-100 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                     }`}
                     title={config.auto_invoice ? 'Click para desactivar auto-facturación' : 'Click para activar auto-facturación'}
                   >
@@ -138,7 +138,7 @@ export function InvoicingConfigList({
                     className={`px-2 py-1 text-xs rounded-full transition-colors disabled:opacity-50 hover:opacity-80 ${
                       config.enabled
                         ? 'bg-green-100 text-green-800 hover:bg-green-200'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                        : 'bg-gray-100 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
                     }`}
                     title={config.enabled ? 'Click para desactivar' : 'Click para activar'}
                   >
@@ -149,23 +149,23 @@ export function InvoicingConfigList({
                 {/* Detalles */}
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                   <div>
-                    <dt className="text-gray-500">Proveedor ID:</dt>
-                    <dd className="text-gray-900 font-medium">
+                    <dt className="text-gray-500 dark:text-gray-400">Proveedor ID:</dt>
+                    <dd className="text-gray-900 dark:text-white font-medium">
                       {config.invoicing_provider_id}
                     </dd>
                   </div>
 
                   <div>
-                    <dt className="text-gray-500">Facturación automática:</dt>
-                    <dd className="text-gray-900">
+                    <dt className="text-gray-500 dark:text-gray-400">Facturación automática:</dt>
+                    <dd className="text-gray-900 dark:text-white">
                       {config.auto_invoice ? 'Sí' : 'No'}
                     </dd>
                   </div>
 
                   {config.auto_invoice && (
                     <div className="col-span-2">
-                      <dt className="text-gray-500">Filtros activos:</dt>
-                      <dd className="text-gray-900">
+                      <dt className="text-gray-500 dark:text-gray-400">Filtros activos:</dt>
+                      <dd className="text-gray-900 dark:text-white">
                         {activeFilters.length === 0 ? (
                           <span className="text-gray-400">
                             Sin filtros (todas las órdenes)
@@ -175,7 +175,7 @@ export function InvoicingConfigList({
                             {activeFilters.map(([key, value]) => (
                               <span
                                 key={key}
-                                className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded"
+                                className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 dark:text-gray-200 rounded"
                               >
                                 {key}
                               </span>
@@ -188,15 +188,15 @@ export function InvoicingConfigList({
 
                   {config.config?.include_shipping && (
                     <div>
-                      <dt className="text-gray-500">Incluye envío:</dt>
-                      <dd className="text-gray-900">Sí</dd>
+                      <dt className="text-gray-500 dark:text-gray-400">Incluye envío:</dt>
+                      <dd className="text-gray-900 dark:text-white">Sí</dd>
                     </div>
                   )}
 
                   {config.config?.default_tax_rate && (
                     <div>
-                      <dt className="text-gray-500">IVA:</dt>
-                      <dd className="text-gray-900">
+                      <dt className="text-gray-500 dark:text-gray-400">IVA:</dt>
+                      <dd className="text-gray-900 dark:text-white">
                         {config.config.default_tax_rate}%
                       </dd>
                     </div>
@@ -212,7 +212,7 @@ export function InvoicingConfigList({
                     config.id && handleToggleEnabled(config.id, config.enabled)
                   }
                   disabled={loading || !config.id}
-                  className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
                   title={
                     config.enabled
                       ? 'Desactivar configuración'
@@ -231,7 +231,7 @@ export function InvoicingConfigList({
                   <button
                     onClick={() => onEdit(config)}
                     disabled={loading}
-                    className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
+                    className="p-2 text-gray-600 dark:text-gray-300 hover:text-blue-600 hover:bg-blue-50 rounded disabled:opacity-50"
                     title="Editar configuración"
                   >
                     <PencilIcon className="w-5 h-5" />
@@ -242,7 +242,7 @@ export function InvoicingConfigList({
                 <button
                   onClick={() => config.id && handleDelete(config.id)}
                   disabled={loading || isDeleting || !config.id}
-                  className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                  className="p-2 text-gray-600 dark:text-gray-300 hover:text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
                   title="Eliminar configuración"
                 >
                   {isDeleting ? (
@@ -257,8 +257,8 @@ export function InvoicingConfigList({
             {/* Notas (si existen) */}
             {config.config?.notes && (
               <div className="mt-3 pt-3 border-t border-gray-100">
-                <p className="text-xs text-gray-500">Notas:</p>
-                <p className="text-sm text-gray-700 mt-1">
+                <p className="text-xs text-gray-500 dark:text-gray-400">Notas:</p>
+                <p className="text-sm text-gray-700 dark:text-gray-200 mt-1">
                   {config.config.notes}
                 </p>
               </div>

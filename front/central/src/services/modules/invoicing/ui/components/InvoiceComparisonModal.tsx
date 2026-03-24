@@ -49,21 +49,21 @@ function ItemsTable({ items, emptyText }: { items?: CompareItemDetail[]; emptyTe
     <table className="w-full text-xs border border-gray-200 dark:border-gray-700 rounded">
       <thead className="bg-gray-100">
         <tr>
-          <th className="px-2 py-1 text-left font-medium text-gray-600">Código</th>
-          <th className="px-2 py-1 text-left font-medium text-gray-600">Nombre</th>
-          <th className="px-2 py-1 text-center font-medium text-gray-600">Cant.</th>
-          <th className="px-2 py-1 text-right font-medium text-gray-600">Precio Unit.</th>
-          <th className="px-2 py-1 text-center font-medium text-gray-600">IVA%</th>
+          <th className="px-2 py-1 text-left font-medium text-gray-600 dark:text-gray-300">Código</th>
+          <th className="px-2 py-1 text-left font-medium text-gray-600 dark:text-gray-300">Nombre</th>
+          <th className="px-2 py-1 text-center font-medium text-gray-600 dark:text-gray-300">Cant.</th>
+          <th className="px-2 py-1 text-right font-medium text-gray-600 dark:text-gray-300">Precio Unit.</th>
+          <th className="px-2 py-1 text-center font-medium text-gray-600 dark:text-gray-300">IVA%</th>
         </tr>
       </thead>
       <tbody>
         {items.map((item, i) => (
           <tr key={i} className="border-t border-gray-100">
-            <td className="px-2 py-1 font-mono text-gray-700">{item.item_code || '—'}</td>
-            <td className="px-2 py-1 text-gray-700">{item.item_name}</td>
-            <td className="px-2 py-1 text-center text-gray-700">{item.quantity}</td>
-            <td className="px-2 py-1 text-right text-gray-700">{formatCurrency(item.unit_value)}</td>
-            <td className="px-2 py-1 text-center text-gray-700">{item.iva}%</td>
+            <td className="px-2 py-1 font-mono text-gray-700 dark:text-gray-200">{item.item_code || '—'}</td>
+            <td className="px-2 py-1 text-gray-700 dark:text-gray-200">{item.item_name}</td>
+            <td className="px-2 py-1 text-center text-gray-700 dark:text-gray-200">{item.quantity}</td>
+            <td className="px-2 py-1 text-right text-gray-700 dark:text-gray-200">{formatCurrency(item.unit_value)}</td>
+            <td className="px-2 py-1 text-center text-gray-700 dark:text-gray-200">{item.iva}%</td>
           </tr>
         ))}
       </tbody>
@@ -132,14 +132,14 @@ export function InvoiceComparisonModal({
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 flex-shrink-0">
           <div>
-            <h2 className="text-xl font-bold text-gray-900">Auditoría Comparativa de Facturas</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white">Auditoría Comparativa de Facturas</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
               Compara las facturas del sistema contra las registradas en el proveedor
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+            className="p-2 text-gray-400 hover:text-gray-600 dark:text-gray-300 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <XMarkIcon className="w-5 h-5" />
           </button>
@@ -151,7 +151,7 @@ export function InvoiceComparisonModal({
             <div className="flex items-end gap-4">
               {/* DateRangePicker ocupa todo el espacio disponible */}
               <div className="flex-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1.5">
                   Rango de fechas{' '}
                   <span className="text-gray-400 font-normal">(máximo 7 días)</span>
                 </label>
@@ -184,7 +184,7 @@ export function InvoiceComparisonModal({
 
         {/* ── Spinner ── */}
         {loading && !compareData && (
-          <div className="flex flex-col items-center justify-center py-20 text-gray-500 flex-shrink-0">
+          <div className="flex flex-col items-center justify-center py-20 text-gray-500 dark:text-gray-400 flex-shrink-0">
             <div className="w-12 h-12 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mb-4" />
             <p className="text-sm font-medium">Obteniendo datos del proveedor…</p>
             <p className="text-xs mt-1 text-gray-400">Esto puede tardar unos segundos</p>
@@ -242,8 +242,8 @@ export function InvoiceComparisonModal({
                             <td className="px-4 py-3 font-mono font-medium">
                               {row.prefix ? `${row.prefix}-` : ''}{row.invoice_number || '—'}
                             </td>
-                            <td className="px-4 py-3 text-gray-600">{row.document_date || '—'}</td>
-                            <td className="px-4 py-3 text-gray-600">{row.order_created_at || '—'}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{row.document_date || '—'}</td>
+                            <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{row.order_created_at || '—'}</td>
                             <td className="px-4 py-3 text-right font-semibold">
                               {row.provider_total ? formatCurrency(row.provider_total) : '—'}
                             </td>
@@ -271,7 +271,7 @@ export function InvoiceComparisonModal({
                                 <div className="grid grid-cols-2 gap-6">
                                   {/* Sistema */}
                                   <div>
-                                    <h4 className="text-xs font-bold text-gray-600 uppercase mb-2">
+                                    <h4 className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase mb-2">
                                       📋 Sistema
                                     </h4>
                                     <ItemsTable
@@ -281,7 +281,7 @@ export function InvoiceComparisonModal({
                                   </div>
                                   {/* Softpymes */}
                                   <div>
-                                    <h4 className="text-xs font-bold text-gray-600 uppercase mb-2">
+                                    <h4 className="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase mb-2">
                                       🔗 Softpymes
                                     </h4>
                                     <ItemsTable
@@ -291,14 +291,14 @@ export function InvoiceComparisonModal({
                                   </div>
                                 </div>
                                 {row.customer_name && (
-                                  <p className="mt-3 text-xs text-gray-500">
+                                  <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">
                                     Cliente:{' '}
                                     <span className="font-medium">{row.customer_name}</span>
                                     {row.customer_nit && ` · NIT: ${row.customer_nit}`}
                                   </p>
                                 )}
                                 {row.comment && (
-                                  <p className="mt-1 text-xs text-gray-500">
+                                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                                     Comentario:{' '}
                                     <span className="font-medium font-mono">{row.comment}</span>
                                   </p>

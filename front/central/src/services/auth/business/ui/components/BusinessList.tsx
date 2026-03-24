@@ -287,7 +287,7 @@ export const BusinessList: React.FC = () => {
     return (
         <div className="p-6 space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Negocios</h1>
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Negocios</h1>
             </div>
 
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
@@ -330,19 +330,19 @@ export const BusinessList: React.FC = () => {
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     ID
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Logo
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Nombre
                                 </th>
-                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Activo
                                 </th>
-                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                                     Acciones
                                 </th>
                             </tr>
@@ -350,20 +350,20 @@ export const BusinessList: React.FC = () => {
                         <tbody className="bg-white divide-y divide-gray-200">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         Cargando negocios...
                                     </td>
                                 </tr>
                             ) : businesses.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
+                                    <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
                                         No hay negocios disponibles
                                     </td>
                                 </tr>
                             ) : (
                                 businesses.map((business) => (
                                     <tr key={business.id} className="hover:bg-gray-50">
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                             {business.id}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -376,13 +376,13 @@ export const BusinessList: React.FC = () => {
                                                 />
                                             ) : (
                                                 <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                                                    <span className="text-sm font-medium text-gray-600">
+                                                    <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                                         {business.name.charAt(0).toUpperCase()}
                                                     </span>
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
                                             {business.name}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
@@ -461,7 +461,7 @@ export const BusinessList: React.FC = () => {
                             {/* Desktop: Full pagination */}
                             <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
                                 <div>
-                                    <p className="text-sm text-gray-700">
+                                    <p className="text-sm text-gray-700 dark:text-gray-200">
                                         Mostrando{' '}
                                         <span className="font-medium">
                                             {(page - 1) * pageSize + 1}
@@ -477,17 +477,17 @@ export const BusinessList: React.FC = () => {
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
                                         Página {page} de {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Siguiente
                                     </button>
@@ -497,7 +497,7 @@ export const BusinessList: React.FC = () => {
                             {/* Mobile: Page size selector */}
                             <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
                                 <div className="flex items-center gap-2">
-                                    <label className="text-xs text-gray-700 whitespace-nowrap">
+                                    <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                         Mostrar:
                                     </label>
                                     <select
@@ -506,7 +506,7 @@ export const BusinessList: React.FC = () => {
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, per_page: newPageSize, page: 1 });
                                         }}
-                                        className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                        className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -514,7 +514,7 @@ export const BusinessList: React.FC = () => {
                                         <option value="100">100</option>
                                     </select>
                                 </div>
-                                <p className="text-xs text-gray-500">
+                                <p className="text-xs text-gray-500 dark:text-gray-400">
                                     Página {page} de {totalPages}
                                 </p>
                             </div>
@@ -574,7 +574,7 @@ export const BusinessList: React.FC = () => {
                             <Spinner />
                         </div>
                     ) : businessResources.length === 0 ? (
-                        <div className="text-center py-8 text-gray-500">
+                        <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                             <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                             </svg>
@@ -583,7 +583,7 @@ export const BusinessList: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            <p className="text-sm text-gray-600 mb-4">
+                            <p className="text-sm text-gray-600 dark:text-gray-300 mb-4">
                                 Activa o desactiva los recursos disponibles para este negocio. Los usuarios solo podrán acceder a los recursos activos.
                             </p>
                             <div className="divide-y divide-gray-200 border rounded-lg overflow-hidden">
@@ -594,7 +594,7 @@ export const BusinessList: React.FC = () => {
                                     >
                                         <div className="flex items-center gap-3">
                                             <div className={`w-2 h-2 rounded-full ${resource.is_active ? 'bg-green-500' : 'bg-gray-300'}`} />
-                                            <span className="font-medium text-gray-900">{resource.resource_name}</span>
+                                            <span className="font-medium text-gray-900 dark:text-white">{resource.resource_name}</span>
                                         </div>
                                         <button
                                             onClick={() => handleToggleResource(resource)}
@@ -626,7 +626,7 @@ export const BusinessList: React.FC = () => {
                                     </div>
                                 ))}
                             </div>
-                            <div className="flex items-center justify-between pt-4 text-sm text-gray-500">
+                            <div className="flex items-center justify-between pt-4 text-sm text-gray-500 dark:text-gray-400">
                                 <span>
                                     {businessResources.filter(r => r.is_active).length} de {businessResources.length} recursos activos
                                 </span>

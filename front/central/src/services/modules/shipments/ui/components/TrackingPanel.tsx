@@ -145,7 +145,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
       <div className="flex-1 overflow-y-auto">
         {/* ─── PROGRESS BAR (5 STEPS) ─── */}
         <div className="px-5 py-6 border-b border-gray-100 bg-gray-50/30">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-4">Progreso del envío</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-4">Progreso del envío</p>
 
           <div className="flex items-center justify-between gap-2">
             {STEP_ICONS.map((step, idx) => {
@@ -164,12 +164,12 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
                           ? 'bg-blue-500 text-white scale-110 animate-pulse'
                           : isCompleted
                             ? 'bg-emerald-500 text-white'
-                            : 'bg-gray-300 text-gray-600'
+                            : 'bg-gray-300 text-gray-600 dark:text-gray-300'
                     }`}
                   >
                     <Icon size={16} />
                   </div>
-                  <span className="text-[10px] font-semibold text-gray-600 text-center">{step.label}</span>
+                  <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300 text-center">{step.label}</span>
                 </div>
               );
             })}
@@ -226,7 +226,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
 
         {/* ─── MAPA COLOMBIA ─── */}
         <div className="px-4 py-5 border-t border-gray-100">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Departamento de destino</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Departamento de destino</p>
           <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 p-3">
             <ColombiaMap highlightedDepartment={departmentName ?? undefined} status={shipment.status} />
           </div>
@@ -234,7 +234,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
 
         {/* ─── TIMELINE ─── */}
         <div className="px-4 py-5 border-t border-gray-100">
-          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Historial de rastreo</p>
+          <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Historial de rastreo</p>
 
           {tracking.loading ? (
             <div className="flex items-center gap-2 text-sm text-gray-400 py-6">
@@ -272,14 +272,14 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
                       {/* Content */}
                       <div className="pt-0.5">
                         <div className="flex items-baseline justify-between gap-2">
-                          <p className={`text-sm font-bold ${isFirst ? 'text-blue-700' : 'text-gray-800'}`}>
+                          <p className={`text-sm font-bold ${isFirst ? 'text-blue-700' : 'text-gray-800 dark:text-gray-100'}`}>
                             {event.status}
                           </p>
                           <p className="text-[10px] text-gray-400 flex-shrink-0">{event.date}</p>
                         </div>
-                        {event.description && <p className="text-xs text-gray-600 mt-0.5">{event.description}</p>}
+                        {event.description && <p className="text-xs text-gray-600 dark:text-gray-300 mt-0.5">{event.description}</p>}
                         {event.location && (
-                          <div className="flex items-center gap-1 mt-1.5 text-[11px] text-gray-500">
+                          <div className="flex items-center gap-1 mt-1.5 text-[11px] text-gray-500 dark:text-gray-400">
                             <MapPin size={11} className="flex-shrink-0" />
                             <span>{event.location}</span>
                           </div>

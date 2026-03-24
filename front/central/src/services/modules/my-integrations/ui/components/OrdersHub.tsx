@@ -34,7 +34,7 @@ export function OrdersHub() {
                 {/* Círculo principal */}
                 <div className="relative flex flex-col items-center justify-center w-28 h-28 rounded-full bg-white dark:bg-gray-800 border-[3px] border-indigo-500 dark:border-indigo-400 shadow-xl shadow-indigo-500/20">
                     <span className="text-2xl">📋</span>
-                    <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300 mt-1 leading-tight text-center px-2">
+                    <span className="text-[10px] font-bold text-gray-700 dark:text-gray-200 dark:text-gray-300 mt-1 leading-tight text-center px-2">
                         Gestión de Órdenes
                     </span>
 

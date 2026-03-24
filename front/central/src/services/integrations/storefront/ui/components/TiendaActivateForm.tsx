@@ -61,8 +61,8 @@ export function TiendaActivateForm({ integrationType, onSuccess, onBack }: Tiend
                 <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
                     <ShoppingBagIcon className="w-8 h-8 text-emerald-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900">Activar Tienda</h3>
-                <p className="text-sm text-gray-500 mt-2">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Activar Tienda</h3>
+                <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                     Habilita la tienda con login para los clientes de tu negocio.
                     Los clientes podrán registrarse, ver el catálogo y hacer pedidos.
                 </p>

@@ -62,8 +62,8 @@ export default function RouteManager({ selectedBusinessId = null }: RouteManager
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900">Rutas de Entrega</h1>
-                    <p className="text-sm text-gray-500 mt-0.5">
+                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Rutas de Entrega</h1>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Gestiona las rutas de entrega de ultima milla
                     </p>
                 </div>
@@ -86,7 +86,7 @@ export default function RouteManager({ selectedBusinessId = null }: RouteManager
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 6.75V15m6-6v8.25m.503 3.498l4.875-2.437c.381-.19.622-.58.622-1.006V4.82c0-.836-.88-1.38-1.628-1.006l-3.869 1.934c-.317.159-.69.159-1.006 0L9.503 3.252a1.125 1.125 0 00-1.006 0L3.622 5.689C3.24 5.88 3 6.27 3 6.695V19.18c0 .836.88 1.38 1.628 1.006l3.869-1.934c.317-.159.69-.159 1.006 0l4.994 2.497c.317.158.69.158 1.006 0z" />
                     </svg>
-                    <p className="text-gray-500 text-sm">Selecciona un negocio para ver y gestionar sus rutas</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver y gestionar sus rutas</p>
                 </div>
             ) : (
                 <>
@@ -105,12 +105,12 @@ export default function RouteManager({ selectedBusinessId = null }: RouteManager
                         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
                             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                                 <div className="flex items-center justify-between px-6 py-4 border-b">
-                                    <h2 className="text-lg font-semibold text-gray-900">
+                                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
                                         {editingRoute ? 'Editar ruta' : 'Nueva ruta'}
                                     </h2>
                                     <button
                                         onClick={backToList}
-                                        className="text-gray-400 hover:text-gray-600 text-xl leading-none"
+                                        className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none"
                                     >
                                         &times;
                                     </button>

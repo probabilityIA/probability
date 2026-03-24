@@ -43,7 +43,7 @@ export function ConfirmModal({
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm" zIndex={60}>
       <div className="space-y-6">
         {/* Mensaje */}
-        <p className="text-gray-700">{message}</p>
+        <p className="text-gray-700 dark:text-gray-200 dark:text-gray-200">{message}</p>
 
         {/* Botones */}
         <div className="flex gap-3 justify-end">

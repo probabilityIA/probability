@@ -31,7 +31,7 @@ export function PublicProductCard({ product, slug }: PublicProductCardProps) {
                 {product.brand && (
                     <p className="text-xs text-gray-400 uppercase tracking-wide mb-1">{product.brand}</p>
                 )}
-                <h3 className="font-medium text-gray-900 text-sm mb-2 line-clamp-2">{product.name}</h3>
+                <h3 className="font-medium text-gray-900 dark:text-white text-sm mb-2 line-clamp-2">{product.name}</h3>
                 <div className="flex items-baseline gap-2">
                     <span className="font-bold text-lg" style={{ color: 'var(--brand-secondary)' }}>
                         ${product.price.toLocaleString('es-CO')}

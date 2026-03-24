@@ -65,7 +65,7 @@ function LoginContent() {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-white dark:bg-navy-900">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4"></div>
-        <p className="text-gray-600 dark:text-gray-300">Autenticando con Shopify...</p>
+        <p className="text-gray-600 dark:text-gray-300 dark:text-gray-300">Autenticando con Shopify...</p>
       </div>
     );
   }
@@ -108,7 +108,7 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-gray-500">Cargando...</div>
+        <div className="text-gray-500 dark:text-gray-400">Cargando...</div>
       </div>
     }>
       <LoginContent />

@@ -148,7 +148,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
             )}
           </div>
         ) : (
-          <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${CHANNEL_BADGE[channelCode] || "bg-gray-100 text-gray-600"}`}>
+          <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold ${CHANNEL_BADGE[channelCode] || "bg-gray-100 text-gray-600 dark:text-gray-300"}`}>
             {channelName || "—"}
           </span>
         )}
@@ -178,7 +178,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
             <span className="text-xs text-gray-300 italic">Selecciona canal</span>
           )
         ) : (
-          <span className="text-xs text-gray-700">{eventName || "—"}</span>
+          <span className="text-xs text-gray-700 dark:text-gray-200">{eventName || "—"}</span>
         )}
       </td>
 
@@ -204,7 +204,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
                     onChange({ ...rule, order_status_ids: newIds });
                   }}
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer ${
-                    isChecked ? "border-blue-300 bg-blue-50 text-blue-700" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 hover:bg-gray-50"
+                    isChecked ? "border-blue-300 bg-blue-50 text-blue-700" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400 hover:bg-gray-50"
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
