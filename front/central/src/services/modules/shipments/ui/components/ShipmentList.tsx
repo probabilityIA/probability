@@ -29,10 +29,10 @@ const MapComponent = dynamic(() => import('@/shared/ui/MapComponent'), {
 // ─── Helpers ───────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: React.ReactNode; border: string }> = {
-    delivered: { label: 'Entregado', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <CheckCircle2 size={12} />, border: 'border-purple-400' },
-    in_transit: { label: 'En tránsito', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <Truck size={12} />, border: 'border-purple-400' },
-    pending: { label: 'Pendiente', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <Clock size={12} />, border: 'border-purple-400' },
-    failed: { label: 'Fallido', color: 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-600', icon: <XCircle size={12} />, border: 'border-purple-400' },
+    delivered: { label: 'Entregado', color: 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-600', icon: <CheckCircle2 size={12} />, border: 'border-emerald-400' },
+    in_transit: { label: 'En tránsito', color: 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-600', icon: <Truck size={12} />, border: 'border-blue-400' },
+    pending: { label: 'Pendiente', color: 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-600', icon: <Clock size={12} />, border: 'border-amber-400' },
+    failed: { label: 'Fallido', color: 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 border-red-200 dark:border-red-600', icon: <XCircle size={12} />, border: 'border-red-400' },
 };
 
 const CHIP_STATUS_OPTIONS = [
