@@ -72,7 +72,7 @@ export function NotificationTypeList({
   return (
     <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
       <div className="p-4 border-b flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Tipos de Notificación</h2>
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Tipos de Notificación</h2>
         <button
           type="button"
           onClick={onCreate}

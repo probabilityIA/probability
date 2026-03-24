@@ -116,7 +116,7 @@ export function NotificationEventTypeList({
     <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
       <div className="p-4 border-b">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-lg font-semibold">Eventos de Notificación</h2>
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Eventos de Notificación</h2>
           <div className="flex gap-2 items-center w-full sm:w-auto">
             <select
               value={selectedTypeFilter}
