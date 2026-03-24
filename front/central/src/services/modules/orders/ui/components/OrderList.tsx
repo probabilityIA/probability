@@ -1618,18 +1618,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     }
 
                     .ordersTable :global(.table tbody tr) {
-                        background: rgba(255, 255, 255, 0.95);
-                        box-shadow: 0 1px 0 rgba(17, 24, 39, 0.04);
                         transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
                     }
 
-                    /* Zebra suave en morado */
-                    .ordersTable :global(.table tbody tr:nth-child(even)) {
-                        background: rgba(124, 58, 237, 0.03);
-                    }
-
                     .ordersTable :global(.table tbody tr:hover) {
-                        background: rgba(124, 58, 237, 0.06);
                         box-shadow: 0 10px 25px rgba(17, 24, 39, 0.08);
                         transform: translateY(-1px);
                     }
