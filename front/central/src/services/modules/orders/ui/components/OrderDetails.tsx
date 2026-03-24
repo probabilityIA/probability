@@ -238,10 +238,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         <div className="flex-1 space-y-4">
                                             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                 <div>
-                                                    <span className="text-xs font-bold text-purple-600 uppercase tracking-wider bg-purple-100 px-2 py-1 rounded">
+                                                    <span className="text-xs font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wider bg-purple-100 dark:bg-purple-900 px-2 py-1 rounded">
                                                         Mejor Opción
                                                     </span>
-                                                    <p className="text-4xl font-extrabold text-purple-800 mt-2">
+                                                    <p className="text-4xl font-extrabold text-purple-600 dark:text-purple-400 mt-2">
                                                         {aiRecommendation.recommended_carrier}
                                                     </p>
                                                 </div>
@@ -260,8 +260,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         </div>
 
                                         {aiRecommendation.quotations && aiRecommendation.quotations.length > 0 && (
-                                            <div className="border-t border-blue-200 pt-6 mt-2">
-                                                <h4 className="text-sm font-bold text-purple-800 uppercase tracking-wide mb-4 flex items-center gap-2">
+                                            <div className="border-t border-blue-200 dark:border-blue-900 pt-6 mt-2">
+                                                <h4 className="text-sm font-bold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-4 flex items-center gap-2">
                                                     <span>📊</span> Cotizaciones Estimadas
                                                 </h4>
                                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -269,19 +269,19 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         const isRecommended = quote.carrier === aiRecommendation.recommended_carrier;
                                                         return (
                                                             <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between transition-all hover:shadow-md ${isRecommended
-                                                                ? 'bg-white dark:bg-gray-800 border-blue-300 shadow-sm ring-1 ring-blue-100 relative overflow-hidden'
-                                                                : 'bg-slate-50 border-slate-200 hover:bg-white dark:bg-gray-800'
+                                                                ? 'bg-white dark:bg-gray-800 border-blue-300 dark:border-blue-600 shadow-sm ring-1 ring-blue-100 dark:ring-blue-900 relative overflow-hidden'
+                                                                : 'bg-slate-50 dark:bg-gray-800 border-slate-200 dark:border-gray-700 hover:bg-white dark:hover:bg-gray-700'
                                                                 }`}>
                                                                 {isRecommended && <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">RECOMENDADO</div>}
                                                                 <div>
-                                                                    <p className={`font-bold text-lg ${isRecommended ? 'text-blue-900' : 'text-gray-700 dark:text-gray-200'}`}>
+                                                                    <p className={`font-bold text-lg ${isRecommended ? 'text-blue-600 dark:text-blue-400' : 'text-gray-700 dark:text-gray-200'}`}>
                                                                         {quote.carrier}
                                                                     </p>
                                                                     <p className="text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
                                                                         <span>⏱️</span> {quote.estimated_delivery_days} días hábiles
                                                                     </p>
                                                                 </div>
-                                                                <div className="mt-4 pt-3 border-t border-gray-100">
+                                                                <div className="mt-4 pt-3 border-t border-gray-100 dark:border-gray-700">
                                                                     <p className="text-gray-500 dark:text-gray-400 text-xs uppercase mb-0.5">Costo Estimado</p>
                                                                     <div className="flex justify-between items-end">
                                                                         <p className={`font-bold text-xl ${isRecommended ? 'text-purple-600' : 'text-gray-600 dark:text-gray-300'}`}>
@@ -289,7 +289,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                                         </p>
                                                                         <button
                                                                             onClick={() => setShowGuideModal(true)}
-                                                                            className="text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 dark:text-gray-200 px-2 py-1 rounded"
+                                                                            className="text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 px-2 py-1 rounded"
                                                                         >
                                                                             Elegir
                                                                         </button>
@@ -303,7 +303,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                         )}
                                     </div>
                                 ) : (
-                                    <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 p-3 rounded border border-gray-100">
+                                    <div className="text-sm text-gray-500 dark:text-gray-400 italic bg-gray-50 dark:bg-gray-800 p-3 rounded border border-gray-100 dark:border-gray-700">
                                         No hay recomendación disponible. Verifique que la orden tenga dirección completa (Ciudad y Departamento).
                                     </div>
                                 )}
@@ -335,7 +335,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     {/* 3 Column Layout - Información Grande a la Izquierda */}
                     <div className="grid gap-3" style={{ gridTemplateColumns: '1fr 1fr 1fr', gridTemplateRows: 'auto auto auto' }}>
                         {/* ROW 1, COL 1: Información General - LARGER */}
-                        <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Información General</h3>
                             {loadingDetails ? (
                                 <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">Cargando información...</div>
@@ -375,7 +375,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 {order.order_status.name || order.status}
                                             </span>
                                         ) : (
-                                            <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 text-purple-800 mt-1">
+                                            <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 mt-1">
                                                 {order.order_status?.name || order.status || '-'}
                                             </span>
                                         )}
@@ -399,7 +399,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         {/* ROW 1, COL 2: Resumen Financiero + Productos (STACKED) */}
                         <div className="space-y-3">
                             {/* Resumen Financiero */}
-                            <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Resumen Financiero</h3>
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
@@ -448,14 +448,14 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                             </div>
 
                             {/* Productos del Pedido */}
-                            <div className="bg-gray-50 rounded-lg p-4">
+                            <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                                 <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Productos del Pedido</h3>
                                 {loadingDetails ? (
                                     <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400">Cargando productos...</div>
                                 ) : (order.order_items || items).length > 0 ? (
                                     <div className="overflow-x-auto">
-                                        <table className="w-full divide-y divide-gray-200 text-sm">
-                                            <thead className="bg-gray-100">
+                                        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700 text-sm">
+                                            <thead className="bg-gray-100 dark:bg-gray-700">
                                                 <tr>
                                                     <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Producto</th>
                                                     <th className="px-2 py-2 text-left text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">SKU</th>
@@ -465,9 +465,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                     <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 dark:text-gray-200 uppercase">Total</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
+                                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                                 {(order.order_items || items).map((item: any, idx: number) => (
-                                                    <tr key={idx} className="hover:bg-gray-50">
+                                                    <tr key={idx} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                                                         <td className="px-2 py-2 text-xs text-gray-900 dark:text-white">{item.product_name || item.name || item.title || '-'}</td>
                                                         <td className="px-2 py-2 text-xs text-gray-600 dark:text-gray-300">{item.product_sku || item.sku || '-'}</td>
                                                         <td className="px-2 py-2 text-xs text-gray-900 dark:text-white text-right">{item.quantity || 0}</td>
@@ -492,7 +492,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         </div>
 
                         {/* ROW 1, COL 3: Cronología y Pago */}
-                        <div className="bg-gray-50 rounded-lg p-4">
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
                             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-3">Cronología y Pago</h3>
                             <div className="space-y-4">
                                 {/* Cronología */}
@@ -522,9 +522,9 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     <div className="space-y-2">
                                         <div>
                                             <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Estado</p>
-                                            <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${(order.payment_details?.financial_status === 'paid' || order.is_paid) ? 'bg-green-100 text-green-800' :
-                                                (order.payment_details?.financial_status === 'refunded') ? 'bg-red-100 text-red-800' :
-                                                    'bg-yellow-100 text-yellow-800'
+                                            <span className={`inline-block px-3 py-1 text-sm font-semibold rounded-full ${(order.payment_details?.financial_status === 'paid' || order.is_paid) ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' :
+                                                (order.payment_details?.financial_status === 'refunded') ? 'bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200' :
+                                                    'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
                                                 }`}>
                                                 {order.payment_details?.financial_status?.toUpperCase() || (order.is_paid ? 'PAID' : 'PENDING')}
                                             </span>
@@ -596,10 +596,10 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     <label className="text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">Confirmación de Pedido</label>
                                     <select
                                         className={`block w-full pl-3 pr-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 ${isConfirmed === true
-                                            ? 'bg-green-50 text-green-700 border-green-500 font-semibold'
+                                            ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-500 dark:border-green-600 font-semibold'
                                             : isConfirmed === false
-                                                ? 'bg-red-50 text-red-700 border-red-500 font-semibold'
-                                                : 'bg-yellow-50 text-yellow-700 border-yellow-500 font-semibold'
+                                                ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 border-red-500 dark:border-red-600 font-semibold'
+                                                : 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-400 border-yellow-500 dark:border-yellow-600 font-semibold'
                                             }`}
                                         value={isConfirmed === null ? 'pending' : (isConfirmed ? 'yes' : 'no')}
                                         onChange={(e) => {
@@ -636,7 +636,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                             disabled={isSendingWhatsApp || whatsAppSent}
                                             className={`inline-flex items-center justify-center px-4 py-2 border text-sm font-semibold rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 ${
                                                 whatsAppSent
-                                                    ? 'bg-green-100 text-green-700 border-green-300'
+                                                    ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 border-green-300 dark:border-green-600'
                                                     : 'text-white bg-green-600 hover:bg-green-700 border-transparent'
                                             }`}
                                             title={!order.customer_phone ? 'La orden no tiene teléfono de cliente' : 'Enviar confirmación por WhatsApp'}

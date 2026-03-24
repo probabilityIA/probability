@@ -799,11 +799,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
     return (
         <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50 p-2">
-            <div className="bg-white rounded-2xl shadow-xl flex flex-col" style={{ width: '85%', height: '85vh' }}>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl flex flex-col" style={{ width: '85%', height: '85vh' }}>
                 {/* Header */}
-                <div className="bg-white border-b px-3 py-3 flex-shrink-0">
+                <div className="bg-white dark:bg-gray-800 border-b px-3 py-3 flex-shrink-0">
                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-2xl font-bold text-purple-700">Generar Guía de Envío</h2>
+                        <h2 className="text-2xl font-bold text-purple-700 dark:text-purple-400">Generar Guía de Envío</h2>
                         <button
                             onClick={onClose}
                             className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 text-2xl"
@@ -817,7 +817,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 {/* Content */}
                 <div className="p-3 flex flex-col flex-1 overflow-hidden min-h-0">
                     {error && (
-                        <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                        <div className="mb-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg text-red-700 dark:text-red-400 text-sm">
                             {error.includes('\n') ? (
                                 <div>
                                     <div className="font-semibold mb-2">⚠️ Por favor corrige los siguientes errores:</div>
@@ -834,7 +834,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     )}
 
                     {success && (
-                        <div className="mb-2 p-2 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                        <div className="mb-2 p-2 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg text-green-700 dark:text-green-400">
                             {success}
                         </div>
                     )}
@@ -849,10 +849,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         {/* Origin */}
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
-                                                <h3 className="font-semibold text-lg text-purple-700">Origen</h3>
+                                                <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">Origen</h3>
                                                 {originWarehouses.length > 0 && (
                                                     <select
-                                                        className="text-xs border border-gray-200 rounded px-2 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-purple-500"
+                                                        className="text-xs border border-gray-200 dark:border-gray-600 rounded px-2 py-1 bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500"
                                                         onChange={(e) => {
                                                             const addr = originWarehouses.find(a => a.id === parseInt(e.target.value));
                                                             if (addr) handleWarehouseSelect(addr);
@@ -880,14 +880,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         if (!e.target.value) step1Form.setValue("originDaneCode", "", { shouldValidate: true });
                                                     }}
                                                     onFocus={() => setShowOriginResults(true)}
-                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${step1Form.formState.errors.originDaneCode ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${step1Form.formState.errors.originDaneCode ? "border-red-500 bg-red-50 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}`}
                                                     placeholder="Buscar ciudad..."
                                                 />
                                                 {step1Form.formState.errors.originDaneCode && (
-                                                    <p className="mt-1 text-xs text-red-600">Selecciona una ciudad de origen de la lista</p>
+                                                    <p className="mt-1 text-xs text-red-600 dark:text-red-400">Selecciona una ciudad de origen de la lista</p>
                                                 )}
                                                 {showOriginResults && filteredOriginOptions.length > 0 && (
-                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                         {filteredOriginOptions.slice(0, 50).map((opt) => (
                                                             <div
                                                                 key={opt.value}
@@ -896,7 +896,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                     setOriginSearch(opt.label);
                                                                     setShowOriginResults(false);
                                                                 }}
-                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                                className="px-3 py-2 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-700 cursor-pointer"
                                                             >
                                                                 {opt.label}
                                                             </div>
@@ -916,7 +916,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                         {/* Destination */}
                                         <div className="space-y-2">
-                                            <h3 className="font-semibold text-lg text-purple-700">Destino</h3>
+                                            <h3 className="font-semibold text-lg text-purple-700 dark:text-purple-400">Destino</h3>
 
                                             <div ref={destRef} className="relative">
                                                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
@@ -931,14 +931,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                         if (!e.target.value) step1Form.setValue("destDaneCode", "", { shouldValidate: true });
                                                     }}
                                                     onFocus={() => setShowDestResults(true)}
-                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 ${step1Form.formState.errors.destDaneCode ? "border-red-500 bg-red-50" : "border-gray-300"}`}
+                                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white ${step1Form.formState.errors.destDaneCode ? "border-red-500 bg-red-50 dark:bg-red-900/20" : "border-gray-300 dark:border-gray-600"}`}
                                                     placeholder="Buscar ciudad..."
                                                 />
                                                 {step1Form.formState.errors.destDaneCode && (
-                                                    <p className="mt-1 text-xs text-red-600">Selecciona una ciudad de destino de la lista</p>
+                                                    <p className="mt-1 text-xs text-red-600 dark:text-red-400">Selecciona una ciudad de destino de la lista</p>
                                                 )}
                                                 {showDestResults && filteredDestOptions.length > 0 && (
-                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                                         {filteredDestOptions.slice(0, 50).map((opt) => (
                                                             <div
                                                                 key={opt.value}
@@ -947,7 +947,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                     setDestSearch(opt.label);
                                                                     setShowDestResults(false);
                                                                 }}
-                                                                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                                                                className="px-3 py-2 hover:bg-gray-100 dark:bg-gray-700 dark:hover:bg-gray-700 cursor-pointer"
                                                             >
                                                                 {opt.label}
                                                             </div>
@@ -1047,7 +1047,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             </label>
                                             <select
                                                 {...step1Form.register("codPaymentMethod")}
-                                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                             >
                                                 <option value="cash">Efectivo</option>
                                                 <option value="data_phone">Datáfono</option>
@@ -1092,7 +1092,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 <div
                                                     key={rate.idRate}
                                                     onClick={() => handleRateSelection(rate)}
-                                                    className="border border-gray-200 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white"
+                                                    className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white dark:bg-gray-800"
                                                 >
                                                     <div className="flex flex-col h-full">
                                                         <div className="flex flex-col items-center mb-2">
@@ -1155,7 +1155,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                     {/* Step 3: Details */}
                     {currentStep === 3 && (
                         <form onSubmit={step3Form.handleSubmit(handleStep3Submit)} className="flex flex-col h-full overflow-hidden">
-                            <div className="border border-gray-200 rounded-lg p-0 bg-gray-50 overflow-y-auto flex-1">
+                            <div className="border border-gray-200 dark:border-gray-600 rounded-lg p-0 bg-gray-50 dark:bg-gray-700 overflow-y-auto flex-1">
                                 <div className="grid grid-cols-2 gap-1 p-1">
                                     {/* Origin Details - Columna 1 */}
                                     <div>
@@ -1337,7 +1337,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                             <div className="flex-shrink-0 space-y-3">
                                 <h3 className="font-semibold text-lg text-gray-700 dark:text-gray-200 dark:text-gray-200">Resumen de tu envío</h3>
 
-                                <div className="bg-gray-50 p-2 rounded-lg">
+                                <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded-lg">
                                     <div className="flex items-center justify-between mb-2">
                                         <div className="flex items-center space-x-2">
                                             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1366,7 +1366,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                         <img
                                             src={getCarrierLogo(selectedRate.carrier)}
                                             alt={selectedRate.carrier}
-                                            className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white p-1 flex-shrink-0"
+                                            className="w-16 h-16 object-contain rounded-lg border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-800 p-1 flex-shrink-0"
                                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                         <div>
@@ -1438,7 +1438,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                     <a
                                                         href={generatedPdfUrl}
                                                         download
-                                                        className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-gray-100 hover:bg-gray-200 text-gray-700 dark:text-gray-200 dark:text-gray-200 font-semibold rounded-lg transition-colors text-xs"
+                                                        className="flex items-center justify-center gap-1 w-full py-1.5 px-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 dark:text-gray-200 font-semibold rounded-lg transition-colors text-xs"
                                                     >
                                                         <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -1457,7 +1457,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 </div>
 
                 {/* Footer with Buttons */}
-                <div className="bg-white border-t px-3 py-3 flex-shrink-0 flex justify-between items-center gap-3">
+                <div className="bg-white dark:bg-gray-800 border-t px-3 py-3 flex-shrink-0 flex justify-between items-center gap-3">
                     {/* Back Button */}
                     {(currentStep === 2 || currentStep === 3 || currentStep === 4) && !generatedPdfUrl && (
                         <Button

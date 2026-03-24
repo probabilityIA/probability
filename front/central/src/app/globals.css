@@ -402,26 +402,20 @@
   border: 1px solid var(--gray-300);
 }
 
-@media (prefers-color-scheme: dark) {
-  .pagination-info {
-    color: var(--gray-200);
-    background: var(--gray-700);
-    border-color: var(--gray-600);
-  }
+.dark .pagination-info {
+  color: var(--gray-200);
+  background: var(--gray-700);
+  border-color: var(--gray-600);
 }
 
 /* Paginación alternativa más visible */
 .pagination-alt {
-  @apply flex justify-between items-center mt-6 p-4 rounded-lg;
-  background: white;
+  @apply flex justify-between items-center mt-6 p-4 rounded-lg bg-white dark:bg-gray-700;
   border: 1px solid var(--gray-200);
 }
 
-@media (prefers-color-scheme: dark) {
-  .pagination-alt {
-    background: var(--gray-700);
-    border-color: var(--gray-600);
-  }
+.dark .pagination-alt {
+  border-color: var(--gray-600);
 }
 
 .pagination-alt .pagination-info {

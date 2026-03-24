@@ -90,7 +90,7 @@ export function Table<T = Record<string, unknown>>({
     if (totalPages <= 1 && totalItems === 0) return null;
 
     return (
-      <div className="pagination-alt border-t border-gray-200 dark:border-gray-700 rounded-t-none mt-0">
+      <div className="pagination-alt border-t border-gray-200 dark:border-gray-700 rounded-t-none mt-0 bg-white dark:bg-gray-700">
         <div className="flex items-center justify-between w-full flex-wrap gap-4">
           {/* Información y navegación - Centrado */}
           <div className="flex items-center gap-3 flex-1 justify-center">
