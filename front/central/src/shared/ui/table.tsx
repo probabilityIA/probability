@@ -186,7 +186,7 @@ export function Table<T = Record<string, unknown>>({
             {/* Body */}
             <tbody>
               {loading ? (
-                <tr>
+                <tr className="bg-white dark:bg-gray-800">
                   <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     <div className="flex justify-center items-center gap-3">
                       <div className="spinner"></div>
@@ -195,7 +195,7 @@ export function Table<T = Record<string, unknown>>({
                   </td>
                 </tr>
               ) : data.length === 0 ? (
-                <tr>
+                <tr className="bg-white dark:bg-gray-800">
                   <td colSpan={columns.length} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                     {emptyMessage}
                   </td>
@@ -204,7 +204,7 @@ export function Table<T = Record<string, unknown>>({
                 data.map((row, rowIndex) => (
                   <tr
                     key={keyExtractor(row, rowIndex)}
-                    className={`transition-colors ${onRowClick || onRowDoubleClick ? 'cursor-pointer' : ''} ${rowClassName?.(row, rowIndex) || ''}`}
+                    className={`bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors ${onRowClick || onRowDoubleClick ? 'cursor-pointer' : ''} ${rowClassName?.(row, rowIndex) || ''}`}
                     onClick={() => onRowClick?.(row, rowIndex)}
                     onDoubleClick={() => onRowDoubleClick?.(row, rowIndex)}
                   >
