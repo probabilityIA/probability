@@ -371,10 +371,6 @@
   @apply bg-gray-100 dark:bg-gray-700;
 }
 
-.table tbody tr:nth-child(even) {
-  @apply bg-gray-50 dark:bg-gray-700;
-}
-
 /* Paginación */
 .pagination {
   @apply flex justify-center items-center gap-2 mt-6;

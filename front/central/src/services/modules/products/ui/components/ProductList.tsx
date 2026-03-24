@@ -145,7 +145,7 @@ const ProductList = forwardRef(function ProductList(
             {/* Table */}
             <div className="productTable">
                 <div className="overflow-x-auto">
-                    <table className="min-w-full" style={{ borderCollapse: 'separate', borderSpacing: '0 10px', background: 'transparent' }}>
+                    <table className="min-w-full table" style={{ borderCollapse: 'separate', borderSpacing: '0 10px', background: 'transparent' }}>
                         <thead>
                             <tr style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%)' }}>
                                 <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider rounded-l-lg">
