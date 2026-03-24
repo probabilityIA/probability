@@ -29,11 +29,11 @@ export default async function PedidosPage({ searchParams }: PageProps) {
 
     return (
         <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white mb-6">Mis Pedidos</h1>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">Mis Pedidos</h1>
 
             {data.data.length === 0 ? (
                 <div className="text-center py-12">
-                    <p className="text-gray-500 dark:text-gray-400 dark:text-gray-400 text-lg mb-4">No tienes pedidos aun</p>
+                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">No tienes pedidos aun</p>
                     <Link
                         href="/storefront/nuevo-pedido"
                         className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -47,10 +47,10 @@ export default async function PedidosPage({ searchParams }: PageProps) {
                         <table className="w-full">
                             <thead className="bg-gray-50 dark:bg-gray-700">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase">Orden</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase">Fecha</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase">Estado</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase">Total</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Orden</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Fecha</th>
+                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Estado</th>
+                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Total</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -69,7 +69,7 @@ export default async function PedidosPage({ searchParams }: PageProps) {
                                                 {order.status}
                                             </span>
                                         </td>
-                                        <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white dark:text-white">
+                                        <td className="px-4 py-3 text-sm text-right font-medium text-gray-900 dark:text-white">
                                             {formatPrice(order.total_amount)}
                                         </td>
                                     </tr>

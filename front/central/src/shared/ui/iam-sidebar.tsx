@@ -68,7 +68,7 @@ export function IAMSidebar() {
                         </svg>
                     </div>
                     {isExpanded && (
-                        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 dark:text-gray-100 dark:text-gray-100 leading-tight whitespace-nowrap">
+                        <h2 className="text-base font-bold text-gray-800 dark:text-gray-100 dark:text-gray-100 leading-tight whitespace-nowrap">
                             Gestión de<br />Identidad
                         </h2>
                     )}
@@ -79,7 +79,7 @@ export function IAMSidebar() {
                     {canViewBusinesses && (
                         <div>
                             {isExpanded && (
-                                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
+                                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
                                     ORGANIZACIÓN
                                 </h3>
                             )}
@@ -90,7 +90,7 @@ export function IAMSidebar() {
                                         className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                             isActive('/businesses')
                                                 ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border-l-2 border-blue-600'
-                                                : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-100'
+                                                : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                                         }`}
                                     >
                                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +107,7 @@ export function IAMSidebar() {
                     {(canViewUsers || canViewRoles || canViewPermissions) && (
                         <div>
                             {isExpanded && (
-                                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
+                                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
                                     CONTROL DE ACCESO
                                 </h3>
                             )}
@@ -119,7 +119,7 @@ export function IAMSidebar() {
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                                 isActive('/users')
                                                     ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border-l-2 border-blue-600'
-                                                    : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-100'
+                                                    : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                                             }`}
                                         >
                                             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -136,7 +136,7 @@ export function IAMSidebar() {
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                                 isActive('/roles')
                                                     ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border-l-2 border-blue-600'
-                                                    : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-100'
+                                                    : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                                             }`}
                                         >
                                             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -153,7 +153,7 @@ export function IAMSidebar() {
                                             className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                                 isActive('/permissions')
                                                     ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border-l-2 border-blue-600'
-                                                    : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-100'
+                                                    : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                                             }`}
                                         >
                                             <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -171,7 +171,7 @@ export function IAMSidebar() {
                     {canViewResources && (
                         <div>
                             {isExpanded && (
-                                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
+                                <h3 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 px-2">
                                     SISTEMA
                                 </h3>
                             )}
@@ -182,7 +182,7 @@ export function IAMSidebar() {
                                         className={`flex items-center gap-3 px-2.5 py-2 rounded-md text-sm font-medium transition-all ${
                                             isActive('/resources')
                                                 ? 'bg-blue-50 dark:bg-blue-900 text-blue-700 dark:text-blue-200 border-l-2 border-blue-600'
-                                                : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-100'
+                                                : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100'
                                         }`}
                                     >
                                         <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

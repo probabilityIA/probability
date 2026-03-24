@@ -24,7 +24,7 @@ export function CatalogSearch({ initialSearch }: { initialSearch: string }) {
                 value={search}
                 onChange={e => setSearch(e.target.value)}
                 placeholder="Buscar productos..."
-                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:text-white"
+                className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
             />
             <button type="submit" className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors">
                 Buscar

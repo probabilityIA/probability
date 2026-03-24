@@ -114,7 +114,7 @@ const ChartTooltipContent = React.forwardRef<
                 )}
             >
                 {!hideLabel && label && (
-                    <div className="font-semibold text-gray-900 dark:text-white dark:text-white dark:text-gray-100">
+                    <div className="font-semibold text-gray-900 dark:text-white dark:text-gray-100">
                         {label}
                     </div>
                 )}
@@ -150,7 +150,7 @@ const ChartTooltipContent = React.forwardRef<
                                 <span className="text-gray-600 dark:text-gray-300 dark:text-gray-400">
                                     {entry.name || entry.dataKey}:
                                 </span>
-                                <span className="font-bold text-gray-900 dark:text-white dark:text-white dark:text-gray-100">
+                                <span className="font-bold text-gray-900 dark:text-white dark:text-gray-100">
                                     {typeof entry.value === 'number'
                                         ? entry.value.toLocaleString()
                                         : entry.value}

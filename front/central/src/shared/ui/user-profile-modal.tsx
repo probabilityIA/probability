@@ -200,7 +200,7 @@ export function UserProfileModal({ isOpen, onClose, user, onUpdate }: UserProfil
               <button
                 type="button"
                 onClick={() => setShowChangePassword(false)}
-                className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-400 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-200 transition-colors"
+                className="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 dark:text-gray-400 hover:text-gray-900 dark:text-white dark:hover:text-gray-200 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />

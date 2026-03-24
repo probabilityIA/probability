@@ -53,7 +53,7 @@ export default function DownloadOrdersModal({ isOpen, onClose, onDownload }: Dow
     return (
         <div className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50" style={{ backgroundColor: 'rgba(255, 255, 255, 0.02)' }}>
             <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full mx-4">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white dark:text-white mb-4">Descargar Órdenes</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Descargar Órdenes</h2>
 
                 <div className="space-y-4">
                     <div>

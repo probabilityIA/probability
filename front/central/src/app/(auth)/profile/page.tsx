@@ -148,7 +148,7 @@ export default function ProfilePage() {
                 <div className="flex-1 text-center md:text-left pt-2">
                     <div className="flex flex-col md:flex-row items-center md:items-start md:justify-between gap-4 mb-2">
                         <div className="flex flex-col md:flex-row items-center gap-4">
-                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white dark:text-white tracking-tight">
+                            <h1 className="text-4xl font-bold text-gray-900 dark:text-white tracking-tight">
                                 {user.name}
                             </h1>
                             <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-50 text-indigo-600 border border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-300 dark:border-indigo-800 self-center">
@@ -156,7 +156,7 @@ export default function ProfilePage() {
                             </span>
                         </div>
                     </div>
-                    <p className="text-gray-500 dark:text-gray-400 dark:text-gray-400 text-lg mb-6 max-w-2xl font-light">
+                    <p className="text-gray-500 dark:text-gray-400 text-lg mb-6 max-w-2xl font-light">
                         {user.email}
                     </p>
 
@@ -185,7 +185,7 @@ export default function ProfilePage() {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                                     </svg>
                                 </div>
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white dark:text-white">Mis Productos</h3>
+                                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Mis Productos</h3>
                             </div>
                             <Link
                                 href="/products"
@@ -210,7 +210,7 @@ export default function ProfilePage() {
                                                 ID: {prod.id}
                                             </span>
                                         </div>
-                                        <h4 className="font-bold text-gray-900 dark:text-white dark:text-white mb-1 truncate">{prod.name}</h4>
+                                        <h4 className="font-bold text-gray-900 dark:text-white mb-1 truncate">{prod.name}</h4>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">{prod.description || 'Sin descripción disponible'}</p>
                                     </div>
                                 ))
@@ -236,7 +236,7 @@ export default function ProfilePage() {
                 <div className="space-y-6">
                     {/* Tarjeta de Contacto */}
                     <div className="bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 rounded-3xl p-6 shadow-lg shadow-gray-100/50 dark:shadow-none">
-                        <h3 className="text-lg font-bold text-gray-900 dark:text-white dark:text-white mb-6">Detalles de Contacto</h3>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-6">Detalles de Contacto</h3>
                         <div className="space-y-4">
                             <div className="flex items-center gap-4 p-3 hover:bg-gray-50 dark:hover:bg-white/5 rounded-2xl transition-colors group">
                                 <div className="h-10 w-10 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
@@ -246,7 +246,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Email</p>
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white truncate" title={user.email}>
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white truncate" title={user.email}>
                                         {user.email}
                                     </p>
                                 </div>
@@ -260,7 +260,7 @@ export default function ProfilePage() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-xs text-gray-500 dark:text-gray-400 font-medium uppercase tracking-wide">Teléfono</p>
-                                    <p className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
+                                    <p className="text-sm font-semibold text-gray-900 dark:text-white">
                                         {user.phone || 'Sin registrar'}
                                     </p>
                                 </div>

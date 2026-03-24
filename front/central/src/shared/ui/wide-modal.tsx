@@ -60,7 +60,7 @@ export function WideModal({ isOpen, onClose, title, children, width = '90vw' }: 
           {/* Header */}
           {title && (
             <div className="relative mb-4 flex-shrink-0">
-              <h3 className="text-xl font-bold text-gray-900 dark:text-white dark:text-white text-center">{title}</h3>
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white text-center">{title}</h3>
               <button
                 onClick={onClose}
                 className="absolute right-0 top-0 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"

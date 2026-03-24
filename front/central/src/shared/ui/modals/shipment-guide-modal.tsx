@@ -1370,7 +1370,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                                         />
                                         <div>
-                                            <div className="font-medium text-gray-800 dark:text-gray-100 dark:text-gray-100">{selectedRate.carrier}</div>
+                                            <div className="font-medium text-gray-800 dark:text-gray-100">{selectedRate.carrier}</div>
                                             <div className="text-sm text-gray-500 dark:text-gray-400">{selectedRate.product}</div>
                                             {selectedRate.deliveryDays > 0 && (
                                                 <div className="text-xs text-gray-400 mt-1">{selectedRate.deliveryDays} día{selectedRate.deliveryDays !== 1 ? 's' : ''} hábil{selectedRate.deliveryDays !== 1 ? 'es' : ''}</div>

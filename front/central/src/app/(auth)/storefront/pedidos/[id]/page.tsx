@@ -27,7 +27,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
     if (!order) {
         return (
             <div className="text-center py-12">
-                <p className="text-gray-500 dark:text-gray-400 dark:text-gray-400 text-lg mb-4">Orden no encontrada</p>
+                <p className="text-gray-500 dark:text-gray-400 text-lg mb-4">Orden no encontrada</p>
                 <Link href="/storefront/pedidos" className="text-indigo-600 hover:text-indigo-700 font-medium">
                     Volver a pedidos
                 </Link>
@@ -41,7 +41,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                 <Link href="/storefront/pedidos" className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 dark:text-gray-400 dark:hover:text-gray-200">
                     &larr; Volver
                 </Link>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white">
+                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
                     Orden {order.order_number}
                 </h1>
                 <span className={`inline-flex px-3 py-1 text-sm font-medium rounded-full ${statusColors[order.status] || 'bg-gray-100 text-gray-800 dark:text-gray-100 dark:bg-gray-700 dark:text-gray-300'}`}>
@@ -63,18 +63,18 @@ export default async function OrderDetailPage({ params }: PageProps) {
                                             <img src={item.image_url} alt={item.product_name} className="w-12 h-12 object-cover rounded" />
                                         )}
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-gray-900 dark:text-white dark:text-white">{item.product_name}</p>
-                                            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                                            <p className="font-medium text-gray-900 dark:text-white">{item.product_name}</p>
+                                            <p className="text-sm text-gray-500 dark:text-gray-400">
                                                 {formatPrice(item.unit_price)} x {item.quantity}
                                             </p>
                                         </div>
-                                        <p className="font-medium text-gray-900 dark:text-white dark:text-white">
+                                        <p className="font-medium text-gray-900 dark:text-white">
                                             {formatPrice(item.total_price)}
                                         </p>
                                     </div>
                                 ))
                             ) : (
-                                <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400 dark:text-gray-400">Sin items</div>
+                                <div className="px-4 py-6 text-center text-gray-500 dark:text-gray-400">Sin items</div>
                             )}
                         </div>
                     </div>
@@ -100,7 +100,7 @@ export default async function OrderDetailPage({ params }: PageProps) {
                             )}
                         </div>
                         <div className="border-t border-gray-200 dark:border-gray-600 pt-3">
-                            <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white dark:text-white">
+                            <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
                                 <span>Total</span>
                                 <span>{formatPrice(order.total_amount)}</span>
                             </div>

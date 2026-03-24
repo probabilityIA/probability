@@ -49,10 +49,10 @@ export default function SubscriptionPage() {
         <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white dark:text-white">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
                         Suscripción
                     </h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-400 mt-1">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Gestiona el acceso a la plataforma
                     </p>
                 </div>
@@ -181,7 +181,7 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold text-gray-900 dark:text-white dark:text-white">Clientes y Suscripciones</h2>
+                <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Clientes y Suscripciones</h2>
                 <select
                     value={filter}
                     onChange={(e) => setFilter(e.target.value)}
@@ -216,7 +216,7 @@ function AdminSubscriptionsView({ businesses }: { businesses: Array<{ id: number
                         <div key={biz.id} className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-5 space-y-3">
                             <div className="flex items-start justify-between">
                                 <div>
-                                    <h3 className="font-semibold text-gray-900 dark:text-white dark:text-white">{biz.name}</h3>
+                                    <h3 className="font-semibold text-gray-900 dark:text-white">{biz.name}</h3>
                                     <span className="text-xs text-gray-400">ID: {biz.id}</span>
                                     {subInfo?.endDate && (
                                         <p className="text-xs text-gray-400 mt-0.5">Vence: {formatDate(subInfo.endDate)}</p>
@@ -329,7 +329,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
 
             {/* Payment instructions + QR */}
             <div className="bg-white dark:bg-gray-700 rounded-xl border border-gray-200 dark:border-gray-600 shadow-sm p-6">
-                <h3 className="text-lg font-bold text-gray-900 dark:text-white dark:text-white mb-4">📋 Información de Pago</h3>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">📋 Información de Pago</h3>
                 <p className="text-gray-600 dark:text-gray-300 dark:text-gray-300 text-sm mb-4">
                     Para renovar tu suscripción, escanea el QR con tu app Nequi o realiza una transferencia
                     con los datos indicados y notifica a tu asesor con el comprobante.
@@ -342,7 +342,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src="/QR.png" alt="QR de pago Nequi" className="w-full h-full object-contain" />
                         </div>
-                        <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400 text-center">Escanear con Nequi</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 text-center">Escanear con Nequi</p>
                     </div>
 
                     {/* Datos bancarios */}
@@ -350,26 +350,26 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center text-xl">🏦</div>
                             <div>
-                                <p className="font-semibold text-gray-900 dark:text-white dark:text-white text-sm">Bancolombia / Nequi</p>
-                                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">Cuenta de Ahorros</p>
+                                <p className="font-semibold text-gray-900 dark:text-white text-sm">Bancolombia / Nequi</p>
+                                <p className="text-xs text-gray-500 dark:text-gray-400">Cuenta de Ahorros</p>
                             </div>
                         </div>
                         <div className="grid grid-cols-2 gap-2 text-sm">
                             <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
                                 <p className="text-gray-400 text-xs uppercase tracking-wider">Titular</p>
-                                <p className="font-semibold text-gray-900 dark:text-white dark:text-white mt-0.5">ProbabilityIA SAS</p>
+                                <p className="font-semibold text-gray-900 dark:text-white mt-0.5">ProbabilityIA SAS</p>
                             </div>
                             <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
                                 <p className="text-gray-400 text-xs uppercase tracking-wider">Número de cuenta</p>
-                                <p className="font-semibold text-gray-900 dark:text-white dark:text-white font-mono mt-0.5">*** *** **** ****</p>
+                                <p className="font-semibold text-gray-900 dark:text-white font-mono mt-0.5">*** *** **** ****</p>
                             </div>
                             <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
                                 <p className="text-gray-400 text-xs uppercase tracking-wider">NIT</p>
-                                <p className="font-semibold text-gray-900 dark:text-white dark:text-white mt-0.5">***.***.***-*</p>
+                                <p className="font-semibold text-gray-900 dark:text-white mt-0.5">***.***.***-*</p>
                             </div>
                             <div className="bg-white dark:bg-gray-700 rounded-lg p-3">
                                 <p className="text-gray-400 text-xs uppercase tracking-wider">Celular (Nequi)</p>
-                                <p className="font-semibold text-gray-900 dark:text-white dark:text-white mt-0.5">+57 *** *** ****</p>
+                                <p className="font-semibold text-gray-900 dark:text-white mt-0.5">+57 *** *** ****</p>
                             </div>
                         </div>
                     </div>

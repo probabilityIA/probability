@@ -141,8 +141,8 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
         return (
             <div className="text-center py-12">
                 <div className="text-green-500 text-6xl mb-4">&#10003;</div>
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white dark:text-white mb-2">Pedido enviado</h2>
-                <p className="text-gray-500 dark:text-gray-400 dark:text-gray-400 mb-6">Tu pedido esta siendo procesado. Recibiras una notificacion cuando este listo.</p>
+                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">Pedido enviado</h2>
+                <p className="text-gray-500 dark:text-gray-400 mb-6">Tu pedido esta siendo procesado. Recibiras una notificacion cuando este listo.</p>
                 <button
                     onClick={() => { setSuccess(false); setCart([]); }}
                     className="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
@@ -163,7 +163,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
                         value={search}
                         onChange={e => setSearch(e.target.value)}
                         placeholder="Buscar productos..."
-                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white dark:text-white"
+                        className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
                     />
                     <button type="submit" className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
                         Buscar
@@ -180,24 +180,24 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
             {/* Cart Summary */}
             <div className="lg:col-span-1">
                 <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 sticky top-4">
-                    <h3 className="text-lg font-bold text-gray-900 dark:text-white dark:text-white mb-4">Tu Pedido</h3>
+                    <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Tu Pedido</h3>
 
                     {cart.length === 0 ? (
-                        <p className="text-gray-500 dark:text-gray-400 dark:text-gray-400 text-sm">Agrega productos a tu pedido</p>
+                        <p className="text-gray-500 dark:text-gray-400 text-sm">Agrega productos a tu pedido</p>
                     ) : (
                         <form onSubmit={handleSubmit}>
                             <div className="space-y-3 mb-4 max-h-64 overflow-y-auto">
                                 {cart.map(item => (
                                     <div key={item.product.id} className="flex items-center justify-between gap-2 text-sm">
                                         <div className="flex-1 min-w-0">
-                                            <p className="font-medium text-gray-900 dark:text-white dark:text-white truncate">{item.product.name}</p>
+                                            <p className="font-medium text-gray-900 dark:text-white truncate">{item.product.name}</p>
                                             <p className="text-gray-500 dark:text-gray-400">{formatPrice(item.product.price)}</p>
                                         </div>
                                         <div className="flex items-center gap-1">
                                             <button type="button" onClick={() => updateQuantity(item.product.id, -1)} className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-300">
                                                 <MinusIcon className="w-4 h-4" />
                                             </button>
-                                            <span className="w-6 text-center text-gray-900 dark:text-white dark:text-white">{item.quantity}</span>
+                                            <span className="w-6 text-center text-gray-900 dark:text-white">{item.quantity}</span>
                                             <button type="button" onClick={() => updateQuantity(item.product.id, 1)} className="p-1 text-gray-400 hover:text-gray-600 dark:text-gray-300">
                                                 <PlusIcon className="w-4 h-4" />
                                             </button>
@@ -210,7 +210,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
                             </div>
 
                             <div className="border-t border-gray-200 dark:border-gray-600 pt-3 mb-4">
-                                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white dark:text-white">
+                                <div className="flex justify-between text-lg font-bold text-gray-900 dark:text-white">
                                     <span>Total</span>
                                     <span>{formatPrice(total)}</span>
                                 </div>
@@ -224,14 +224,14 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
                                     placeholder="Nombre"
                                     value={address.first_name}
                                     onChange={e => setAddress(prev => ({ ...prev, first_name: e.target.value }))}
-                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                 />
                                 <input
                                     type="text"
                                     placeholder="Direccion"
                                     value={address.street}
                                     onChange={e => setAddress(prev => ({ ...prev, street: e.target.value }))}
-                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
+                                    className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                 />
                                 <div className="flex gap-2">
                                     <input
@@ -239,14 +239,14 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
                                         placeholder="Ciudad"
                                         value={address.city}
                                         onChange={e => setAddress(prev => ({ ...prev, city: e.target.value }))}
-                                        className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
+                                        className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     />
                                     <input
                                         type="text"
                                         placeholder="Telefono"
                                         value={address.phone}
                                         onChange={e => setAddress(prev => ({ ...prev, phone: e.target.value }))}
-                                        className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
+                                        className="flex-1 px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                                     />
                                 </div>
                             </div>
@@ -257,7 +257,7 @@ export function NewOrderForm({ businessId }: NewOrderFormProps) {
                                 value={notes}
                                 onChange={e => setNotes(e.target.value)}
                                 rows={2}
-                                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white dark:text-white"
+                                className="w-full px-3 py-1.5 text-sm border border-gray-300 dark:border-gray-600 rounded mb-4 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             />
 
                             {error && (

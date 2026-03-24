@@ -38,7 +38,7 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
                         {typeName}
                     </span>
                 )}
-                <span className="text-[11px] text-gray-500 dark:text-gray-400 dark:text-gray-400 truncate leading-tight">
+                <span className="text-[11px] text-gray-500 dark:text-gray-400 truncate leading-tight">
                     {integration.name}
                 </span>
             </div>

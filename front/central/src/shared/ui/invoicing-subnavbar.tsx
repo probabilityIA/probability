@@ -93,7 +93,7 @@ export const InvoicingSubNavbar = memo(function InvoicingSubNavbar() {
                                 className={`px-4 py-3 text-base font-medium whitespace-nowrap transition-all rounded-lg flex items-center gap-3 ${
                                     isActive(item.href)
                                         ? 'bg-purple-200 dark:bg-purple-900/50 text-purple-900 dark:text-purple-200'
-                                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:text-white dark:hover:text-gray-100 hover:shadow-md hover:scale-105'
+                                        : 'text-gray-700 dark:text-gray-200 dark:text-gray-200 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 hover:text-gray-900 dark:text-white dark:hover:text-gray-100 hover:shadow-md hover:scale-105'
                                 }`}
                             >
                                 <span>{item.icon}</span>

@@ -112,7 +112,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                 value={value ? formatDisplayDate(value) : ''}
                 placeholder={placeholder}
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white dark:text-white placeholder:text-gray-500 dark:text-gray-400 bg-white cursor-pointer"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white placeholder:text-gray-500 dark:text-gray-400 bg-white cursor-pointer"
             />
             
             {isOpen && (
@@ -128,7 +128,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                             </svg>
                         </button>
-                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white dark:text-white">
+                        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
                             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
                         </h3>
                         <button
@@ -190,7 +190,7 @@ export function DatePicker({ value, onChange, placeholder = 'Seleccionar fecha',
                                     onChange('');
                                     setIsOpen(false);
                                 }}
-                                className="w-full px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white dark:text-white hover:bg-gray-50 rounded transition-colors"
+                                className="w-full px-3 py-1.5 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:text-white hover:bg-gray-50 rounded transition-colors"
                                 type="button"
                             >
                                 Limpiar
