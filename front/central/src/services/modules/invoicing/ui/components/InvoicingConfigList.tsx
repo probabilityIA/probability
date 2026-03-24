@@ -92,7 +92,7 @@ export function InvoicingConfigList({
         return (
           <div
             key={config.id}
-            className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between">
               {/* Info principal */}

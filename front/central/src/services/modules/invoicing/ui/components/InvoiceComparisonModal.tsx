@@ -46,7 +46,7 @@ function ItemsTable({ items, emptyText }: { items?: CompareItemDetail[]; emptyTe
     return <p className="text-xs text-gray-400 italic">{emptyText}</p>;
   }
   return (
-    <table className="w-full text-xs border border-gray-200 rounded">
+    <table className="w-full text-xs border border-gray-200 dark:border-gray-700 rounded">
       <thead className="bg-gray-100">
         <tr>
           <th className="px-2 py-1 text-left font-medium text-gray-600">Código</th>
@@ -128,7 +128,7 @@ export function InvoiceComparisonModal({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col max-h-[92vh]">
+      <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl w-full max-w-6xl flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-6 pb-5 border-b border-gray-100 flex-shrink-0">
           <div>
@@ -215,7 +215,7 @@ export function InvoiceComparisonModal({
                 No se encontraron facturas en el rango seleccionado
               </div>
             ) : (
-              <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <div className="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="bg-gradient-to-r from-purple-600 to-purple-700 text-white text-xs uppercase tracking-wide">
@@ -267,7 +267,7 @@ export function InvoiceComparisonModal({
                           </tr>
                           {isExpanded && (
                             <tr key={`${idx}-detail`}>
-                              <td colSpan={7} className="px-4 py-4 bg-gray-50 border-b border-gray-200">
+                              <td colSpan={7} className="px-4 py-4 bg-gray-50 border-b border-gray-200 dark:border-gray-700">
                                 <div className="grid grid-cols-2 gap-6">
                                   {/* Sistema */}
                                   <div>

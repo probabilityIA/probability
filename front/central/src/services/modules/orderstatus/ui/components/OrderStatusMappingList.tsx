@@ -212,7 +212,7 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
                     <img
                         src={mapping.integration_type.image_url}
                         alt={mapping.integration_type.name || `ID: ${mapping.integration_type_id}`}
-                        className="h-10 w-10 object-contain border border-gray-200 rounded-lg p-1 bg-white"
+                        className="h-10 w-10 object-contain border border-gray-200 dark:border-gray-700 rounded-lg p-1 bg-white dark:bg-gray-800"
                         onError={(e) => {
                             // Si la imagen falla al cargar, mostrar un placeholder
                             (e.target as HTMLImageElement).style.display = 'none';
@@ -322,7 +322,7 @@ export default function OrderStatusMappingList({ onView, onEdit }: OrderStatusMa
                 </Alert>
             )}
 
-            <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                 <Table
                     columns={columns}
                     data={mappings.map(renderRow)}

@@ -218,7 +218,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
                 <select
                     value={statusFilter}
                     onChange={(e) => handleStatusFilterChange(e.target.value)}
-                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white"
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-800"
                 >
                     <option value="">Todos los estados</option>
                     <option value="planned">Planificada</option>
@@ -234,7 +234,7 @@ export default function RouteList({ onView, onEdit, onRefreshRef, selectedBusine
                 </Alert>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <Table
                     columns={columns}
                     data={routes.map(renderRow)}

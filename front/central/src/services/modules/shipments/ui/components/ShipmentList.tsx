@@ -43,7 +43,7 @@ const CHIP_STATUS_OPTIONS = [
 ];
 
 function StatusBadge({ status }: { status: string }) {
-    const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-600 border-gray-200', icon: null };
+    const cfg = STATUS_CONFIG[status] || { label: status, color: 'bg-gray-100 text-gray-600 border-gray-200 dark:border-gray-700', icon: null };
     return (
         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${cfg.color}`}>
             {cfg.icon}
@@ -423,7 +423,7 @@ function TrackingDetail({ shipment, onClose, onCancel, cancelingId }: TrackingDe
                 {destination && (
                     <div className="px-4 pb-5">
                         <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Mapa de referencia</p>
-                        <div style={{ height: '200px' }} className="rounded-xl overflow-hidden border border-gray-200">
+                        <div style={{ height: '200px' }} className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700">
                             <MapComponent
                                 address={destination}
                                 city={city}
@@ -591,7 +591,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
             </div>
 
             {/* ─── Filters ─── */}
-            <div className="flex-shrink-0 bg-white rounded-xl shadow-sm border border-gray-100 px-4 py-3">
+            <div className="flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 px-4 py-3">
                 <div className="flex gap-3">
                     {/* Búsqueda por nombre del cliente */}
                     <div className="relative flex-1">
@@ -599,14 +599,14 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                         <input
                             type="text"
                             placeholder="Buscar por nombre del cliente..."
-                            className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 text-gray-900 placeholder:text-gray-400 transition-colors"
+                            className="w-full pl-9 pr-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 text-sm bg-gray-50 text-gray-900 placeholder:text-gray-400 transition-colors"
                             value={filters.customer_name || ''}
                             onChange={(e) => updateFilters({ customer_name: e.target.value || undefined })}
                         />
                     </div>
                     {/* Select estado */}
                     <select
-                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-blue-500/20 min-w-[140px] transition-colors"
+                        className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-blue-500/20 min-w-[140px] transition-colors"
                         value={filters.status || ''}
                         onChange={(e) => updateFilters({ status: e.target.value || undefined })}
                     >
@@ -618,7 +618,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                     </select>
                     {/* Select entorno */}
                     <select
-                        className="px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-orange-500/20 min-w-[140px] transition-colors"
+                        className="px-3 py-2 border border-gray-200 dark:border-gray-700 rounded-lg text-sm text-gray-600 bg-gray-50 focus:ring-2 focus:ring-orange-500/20 min-w-[140px] transition-colors"
                         value={filters.is_test === undefined ? '' : filters.is_test ? 'test' : 'production'}
                         onChange={(e) => {
                             const val = e.target.value;
@@ -636,7 +636,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
             <div className="flex gap-4 flex-1 min-h-0">
 
                 {/* LEFT — Shipment cards list */}
-                <div className="w-1/2 flex flex-col min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="w-1/2 flex flex-col min-h-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     {/* List */}
                     <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
                         {loading ? (
@@ -654,7 +654,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                 const isSelected = selectedShipment?.id === shipment.id;
                                 const city = extractCity(shipment.destination_address);
                                 const clientName = (shipment.customer_name || shipment.client_name)?.trim() || null;
-                                const statusCfg = STATUS_CONFIG[shipment.status] || { label: shipment.status, color: 'bg-gray-100 text-gray-600 border-gray-200', icon: null, border: 'border-gray-300' };
+                                const statusCfg = STATUS_CONFIG[shipment.status] || { label: shipment.status, color: 'bg-gray-100 text-gray-600 border-gray-200 dark:border-gray-700', icon: null, border: 'border-gray-300' };
 
                                 return (
                                     <button
@@ -746,7 +746,7 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                 </div>
 
                 {/* RIGHT — Detail panel */}
-                <div className="w-1/2 min-h-0 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="w-1/2 min-h-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 overflow-hidden">
                     {selectedShipment ? (
                         <TrackingDetail
                             shipment={selectedShipment}

@@ -315,12 +315,12 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop con blur */}
         <div
-          className="fixed inset-0 backdrop-blur-sm bg-white/10 transition-opacity"
+          className="fixed inset-0 backdrop-blur-sm bg-white dark:bg-gray-800/10 transition-opacity"
           onClick={onClose}
         />
 
         {/* Modal 95% de la pantalla */}
-        <div className="relative bg-white rounded-xl shadow-2xl w-[95vw] h-[95vh] flex flex-col overflow-hidden">
+        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[95vw] h-[95vh] flex flex-col overflow-hidden">
           {/* Header con gradiente morado */}
           <div className="flex items-center justify-between p-8 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9]">
             <div>
@@ -329,14 +329,14 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
             </div>
             <div className="flex items-center gap-4">
               {/* Contador de órdenes seleccionadas */}
-              <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2">
+              <div className="bg-white dark:bg-gray-800/20 backdrop-blur-sm rounded-full px-4 py-2">
                 <span className="text-white font-semibold text-lg">
                   {selectedOrderIds.length} seleccionada{selectedOrderIds.length !== 1 ? 's' : ''}
                 </span>
               </div>
               <button
                 onClick={onClose}
-                className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200"
+                className="text-white hover:bg-white dark:bg-gray-800/20 rounded-full p-2 transition-all duration-200"
               >
                 <XMarkIcon className="w-6 h-6" />
               </button>
@@ -344,7 +344,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
           </div>
 
           {/* Content */}
-          <div className="flex-1 flex flex-col overflow-hidden p-8 bg-white">
+          <div className="flex-1 flex flex-col overflow-hidden p-8 bg-white dark:bg-gray-800">
             {/* Filtro de Business (solo Super Admin) - siempre visible arriba */}
             {isSuperAdmin && (
               <div className="mb-4">
@@ -444,7 +444,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                     placeholder="Buscar orden por número o cliente..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] transition-all duration-200"
+                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#7c3aed] focus:border-[#7c3aed] transition-all duration-200"
                   />
                 </div>
 
@@ -465,7 +465,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
                 </div>
 
                 {/* Orders List con scroll suave */}
-                <div className="border border-gray-200 rounded-lg flex-1 min-h-0 overflow-y-auto scroll-smooth">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg flex-1 min-h-0 overflow-y-auto scroll-smooth">
                   {filteredOrders.map((order) => {
                     const orderStatus = orderStatuses[order.id];
 
@@ -743,7 +743,7 @@ export function BulkCreateInvoiceModal({ isOpen, onClose, onSuccess, businessId:
       {showBusinessAlert && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center">
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowBusinessAlert(false)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
+          <div className="relative bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full mx-4 overflow-hidden">
             <div className="bg-amber-500 p-4 flex items-center gap-3">
               <ExclamationTriangleIcon className="w-8 h-8 text-white" />
               <h3 className="text-lg font-bold text-white">Negocio requerido</h3>

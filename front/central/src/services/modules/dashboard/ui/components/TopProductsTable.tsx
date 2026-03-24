@@ -113,7 +113,7 @@ export function TopProductsTable({ data }: { data: TopProductRow[] }) {
         <div className="w-full space-y-4">
 
 
-            <div className="rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden">
+            <div className="rounded-xl border border-gray-100 bg-white dark:bg-gray-800 shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full caption-bottom text-sm text-left">
                         <thead className="[&_tr]:border-b bg-gray-50/50">

@@ -624,7 +624,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         </div>
         <button
           onClick={() => setShowConfigsModal(true)}
-          className="ml-3 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          className="ml-3 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Configuraciones de facturación"
         >
           <Cog6ToothIcon className="w-5 h-5" />
@@ -637,7 +637,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
             setCompareLoading(false);
             setCompareCorrelationId(null);
           }}
-          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Comparar con proveedor"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -652,7 +652,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
             setItemsLoading(false);
             setItemsCorrelationId(null);
           }}
-          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Comparar productos con proveedor"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -661,7 +661,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         </button>
         <button
           onClick={() => setShowManualModal(true)}
-          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Registrar Factura Manual"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -670,7 +670,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
         </button>
         <button
           onClick={() => setShowBulkModal(true)}
-          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
+          className="ml-1 flex-shrink-0 p-2 rounded-full bg-white dark:bg-gray-800 border-2 border-[#7c3aed] text-[#7c3aed] hover:shadow-lg transition-all duration-200 hover:scale-110"
           title="Crear Facturas"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -737,7 +737,7 @@ export const InvoiceList = forwardRef(function InvoiceList(
           }
 
           /* Quitar el borde del contenedor global de Table SOLO aquí */
-          .invoiceTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+          .invoiceTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200 dark:border-gray-700.bg-white dark:bg-gray-800) {
             border: none !important;
             background: transparent !important;
           }

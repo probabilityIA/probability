@@ -60,7 +60,7 @@ export function FullWidthModal({
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4">
         <div
-          className="bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
+          className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl flex flex-col overflow-hidden"
           style={{
             width: width,
             height: height,
@@ -72,15 +72,15 @@ export function FullWidthModal({
         >
           {/* Header */}
           {title && (
-            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gray-50 flex-shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700 flex-shrink-0">
               {typeof title === 'string' ? (
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900">{title}</h2>
+                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</h2>
               ) : (
-                <div className="text-xl sm:text-2xl font-bold text-gray-900">{title}</div>
+                <div className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-gray-100">{title}</div>
               )}
               <button
                 onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-200 rounded-lg"
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-2 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg"
                 aria-label="Cerrar"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

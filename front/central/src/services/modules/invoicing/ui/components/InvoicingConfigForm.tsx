@@ -214,7 +214,7 @@ export function InvoicingConfigForm({
       )}
 
       {/* Facturación automática */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -232,7 +232,7 @@ export function InvoicingConfigForm({
 
       {/* Filtros de Pago */}
       {formData.auto_invoice && (
-        <div className="bg-white p-4 rounded-lg border border-gray-200">
+        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <h4 className="text-sm font-medium text-gray-900 mb-3">Filtros de Pago</h4>
           <div>
             <label className="block text-sm text-gray-700 mb-1">Estado de pago</label>
@@ -252,7 +252,7 @@ export function InvoicingConfigForm({
       )}
 
       {/* Facturar como Consumidor Final */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
@@ -269,7 +269,7 @@ export function InvoicingConfigForm({
       </div>
 
       {/* Recibo de Caja */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <label className="flex items-center gap-3 cursor-pointer mb-3">
             <input
               type="checkbox"
@@ -337,7 +337,7 @@ export function InvoicingConfigForm({
                           className={`w-full text-left p-2 rounded text-xs border ${
                             formData.payment_bank_account_id === account.account_number
                               ? 'border-green-500 bg-green-50'
-                              : 'border-gray-200 hover:bg-gray-50'
+                              : 'border-gray-200 dark:border-gray-700 hover:bg-gray-50'
                           }`}
                         >
                           <span className="font-medium">{account.account_number}</span>
@@ -425,7 +425,7 @@ export function InvoicingConfigForm({
               onClick={() => setShowItemMappings(!showItemMappings)}
               className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none flex-shrink-0 ml-4 ${showItemMappings ? 'bg-purple-500' : 'bg-gray-200'}`}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${showItemMappings ? 'translate-x-6' : 'translate-x-1'}`} />
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-800 transition-transform ${showItemMappings ? 'translate-x-6' : 'translate-x-1'}`} />
             </button>
           </div>
 
@@ -472,7 +472,7 @@ export function InvoicingConfigForm({
         </div>
 
       {/* Integraciones de origen de órdenes */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <h4 className="text-sm font-medium text-gray-900 mb-1">
           Fuentes de órdenes
         </h4>
@@ -524,7 +524,7 @@ export function InvoicingConfigForm({
             type="button"
             onClick={onCancel}
             disabled={loading}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50"
           >
             Cancelar
           </button>

@@ -14,7 +14,7 @@ function IntegrationButton({ integration, onSelect }: { integration: Integration
     <button
       type="button"
       onClick={() => onSelect(integration)}
-      className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 bg-white hover:bg-blue-50 hover:border-blue-300 transition-all text-left group"
+      className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-blue-50 hover:border-blue-300 transition-all text-left group"
     >
       {integration.image_url ? (
         <img

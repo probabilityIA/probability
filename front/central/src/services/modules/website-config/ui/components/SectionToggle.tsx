@@ -24,7 +24,7 @@ export function SectionToggle({ label, description, checked, onChange }: Section
                 }`}
             >
                 <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-gray-800 transition-transform ${
                         checked ? 'translate-x-6' : 'translate-x-1'
                     }`}
                 />

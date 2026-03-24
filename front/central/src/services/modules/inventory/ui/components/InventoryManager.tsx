@@ -146,7 +146,7 @@ export default function InventoryManager() {
             ) : (
                 <>
                     {/* Selector de bodega */}
-                    <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
                         <label className="block text-sm font-medium text-gray-700 mb-2">Bodega</label>
                         {loadingWarehouses ? (
                             <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function InventoryManager() {
                     {/* Tabs */}
                     {selectedWarehouseId && (
                         <>
-                            <div className="border-b border-gray-200">
+                            <div className="border-b border-gray-200 dark:border-gray-700">
                                 <nav className="flex gap-6" aria-label="Tabs">
                                     <button
                                         onClick={() => setActiveTab('stock')}

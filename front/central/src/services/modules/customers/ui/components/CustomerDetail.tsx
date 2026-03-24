@@ -92,7 +92,7 @@ export default function CustomerDetailView({ customerId, businessId }: CustomerD
             </div>
 
             {/* Datos del cliente */}
-            <div className="bg-white border border-gray-200 rounded-lg p-5 space-y-4">
+            <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-5 space-y-4">
                 <h3 className="text-sm font-semibold text-gray-700 uppercase tracking-wide border-b pb-2">
                     Información de contacto
                 </h3>

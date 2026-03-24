@@ -204,7 +204,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
                     onChange({ ...rule, order_status_ids: newIds });
                   }}
                   className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium border transition-colors cursor-pointer ${
-                    isChecked ? "border-blue-300 bg-blue-50 text-blue-700" : "border-gray-200 bg-white text-gray-500 hover:bg-gray-50"
+                    isChecked ? "border-blue-300 bg-blue-50 text-blue-700" : "border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-500 hover:bg-gray-50"
                   }`}
                 >
                   <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: statusColor }} />
@@ -232,7 +232,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
           title={rule.enabled ? "Desactivar" : "Activar"}
         >
           <div className={`relative w-8 h-[18px] rounded-full transition-colors ${rule.enabled ? "bg-green-500" : "bg-gray-300"}`}>
-            <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white shadow transition-transform ${rule.enabled ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
+            <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white dark:bg-gray-800 shadow transition-transform ${rule.enabled ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
           </div>
         </button>
       </td>

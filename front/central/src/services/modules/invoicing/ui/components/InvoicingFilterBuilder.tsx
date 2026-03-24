@@ -25,7 +25,7 @@ export function InvoicingFilterBuilder({
   };
 
   return (
-    <div className="space-y-6 border border-gray-200 rounded-lg p-6 bg-gray-50">
+    <div className="space-y-6 border border-gray-200 dark:border-gray-700 rounded-lg p-6 bg-gray-50">
       <h3 className="text-lg font-semibold text-gray-900 mb-4">
         Filtros de Facturación Automática
       </h3>
@@ -33,7 +33,7 @@ export function InvoicingFilterBuilder({
       {/* ============================================ */}
       {/* SECCIÓN: MONTO */}
       {/* ============================================ */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <h4 className="font-medium text-gray-900 mb-3">Filtros de Monto</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Monto mínimo */}
@@ -81,7 +81,7 @@ export function InvoicingFilterBuilder({
       {/* ============================================ */}
       {/* SECCIÓN: PAGO */}
       {/* ============================================ */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <h4 className="font-medium text-gray-900 mb-3">Filtros de Pago</h4>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Estado de pago */}
@@ -112,7 +112,7 @@ export function InvoicingFilterBuilder({
       {/* ============================================ */}
       {/* SECCIÓN: ORDEN */}
       {/* ============================================ */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <h4 className="font-medium text-gray-900 mb-3">Filtros de Orden</h4>
         <div className="space-y-4">
           {/* Tipos de orden */}
@@ -166,7 +166,7 @@ export function InvoicingFilterBuilder({
       {/* ============================================ */}
       {/* SECCIÓN: PRODUCTOS */}
       {/* ============================================ */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <h4 className="font-medium text-gray-900 mb-3">Filtros de Productos</h4>
         <div className="space-y-4">
           {/* Productos excluidos */}
@@ -270,7 +270,7 @@ export function InvoicingFilterBuilder({
       {/* ============================================ */}
       {/* SECCIÓN: UBICACIÓN */}
       {/* ============================================ */}
-      <div className="bg-white p-4 rounded-lg border border-gray-200">
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <h4 className="font-medium text-gray-900 mb-3">Filtros de Ubicación</h4>
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">

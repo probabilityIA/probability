@@ -113,7 +113,7 @@ export function NotificationEventTypeList({
   }
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
       <div className="p-4 border-b">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="text-lg font-semibold">Eventos de Notificación</h2>
@@ -165,7 +165,7 @@ export function NotificationEventTypeList({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
             {eventTypes.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center text-gray-500">

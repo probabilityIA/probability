@@ -91,7 +91,7 @@ const OrderRow = memo(({
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
                 <div className="flex items-center gap-1">
                     <div
-                        className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 hover:shadow-lg transition-all cursor-pointer bg-white flex items-center justify-center overflow-hidden"
+                        className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 dark:border-gray-700 hover:shadow-lg transition-all cursor-pointer bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden"
                         title={`${order.platform} - Click para ver JSON crudo`}
                         onClick={() => onShowRaw(order.id)}
                     >
@@ -1318,7 +1318,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
             <div className="ordersTable relative">
                 {/* Overlay de carga solo para la tabla */}
                 {tableLoading && (
-                    <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-10 flex items-center justify-center transition-opacity duration-200">
+                    <div className="absolute inset-0 bg-white dark:bg-gray-800/80 backdrop-blur-sm z-10 flex items-center justify-center transition-opacity duration-200">
                         <div className="flex flex-col items-center gap-2">
                             <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
                             <p className="text-sm text-gray-600">Actualizando...</p>
@@ -1457,7 +1457,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                         }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
+                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -1472,7 +1472,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-l-md border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="relative inline-flex items-center px-2.5 py-2 rounded-l-md border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
                                         title="Primera página"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" /></svg>
@@ -1481,7 +1481,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
                                         title="Anterior"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
@@ -1507,7 +1507,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
                                         return pages.map((p, idx) =>
                                             typeof p === 'string' ? (
-                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-3 py-2 border border-purple-200 bg-white text-xs text-gray-500">
+                                                <span key={`ellipsis-${idx}`} className="relative inline-flex items-center px-3 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs text-gray-500">
                                                     ...
                                                 </span>
                                             ) : (
@@ -1517,7 +1517,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                                     className={`relative inline-flex items-center px-3.5 py-2 border text-sm font-medium transition-all ${
                                                         p === page
                                                             ? 'z-10 bg-purple-600 border-purple-600 text-white'
-                                                            : 'border-purple-200 bg-white text-purple-700 hover:bg-purple-50'
+                                                            : 'border-purple-200 bg-white dark:bg-gray-800 text-purple-700 hover:bg-purple-50'
                                                     }`}
                                                 >
                                                     {p}
@@ -1529,7 +1529,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="relative inline-flex items-center px-2.5 py-2 border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
                                         title="Siguiente"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
@@ -1538,7 +1538,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                     <button
                                         onClick={() => setFilters({ ...filters, page: totalPages })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2.5 py-2 rounded-r-md border border-purple-200 bg-white text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
+                                        className="relative inline-flex items-center px-2.5 py-2 rounded-r-md border border-purple-200 bg-white dark:bg-gray-800 text-xs font-medium text-purple-700 hover:bg-purple-50 disabled:opacity-40 transition-all"
                                         title="Última página"
                                     >
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 5l7 7-7 7M5 5l7 7-7 7" /></svg>
@@ -1559,7 +1559,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                     }}
-                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white"
+                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-purple-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
                                 >
                                     <option value="10">10</option>
                                     <option value="20">20</option>
@@ -1583,7 +1583,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     }
 
                     /* Quitar el borde del contenedor global de Table SOLO aquí */
-                    .ordersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+                    .ordersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200 dark:border-gray-700.bg-white dark:bg-gray-800) {
                         border: none !important;
                         background: transparent !important;
                     }
@@ -1679,7 +1679,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 >
                     <div className="absolute inset-0 bg-black/60" />
                     <div
-                        className="relative z-10 bg-white rounded-xl shadow-2xl flex flex-col overflow-hidden"
+                        className="relative z-10 bg-white dark:bg-gray-800 rounded-xl shadow-2xl flex flex-col overflow-hidden"
                         style={{ width: '480px', maxWidth: '90vw' }}
                         onClick={(e) => e.stopPropagation()}
                     >

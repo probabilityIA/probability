@@ -112,7 +112,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
   // For super admins, businessId must be provided via prop
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b flex flex-col sm:flex-row items-start sm:items-center gap-3">
         <div className="flex items-center gap-2">
@@ -165,7 +165,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
             <thead>
-              <tr className="border-b border-gray-200">
+              <tr className="border-b border-gray-200 dark:border-gray-700">
                 <th className="text-left py-2 px-2 font-medium text-gray-500">Fecha</th>
                 <th className="text-left py-2 px-2 font-medium text-gray-500">Destino</th>
                 <th className="text-left py-2 px-2 font-medium text-gray-500">Orden</th>

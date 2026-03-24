@@ -134,7 +134,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
       {/* Header */}
       <div className="p-4 border-b flex items-center justify-between">
         <div>
@@ -239,7 +239,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                         className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium border ${
                           ev.enabled
                             ? `${channelBg} border-transparent`
-                            : 'bg-gray-50 text-gray-400 border-gray-200 line-through'
+                            : 'bg-gray-50 text-gray-400 border-gray-200 dark:border-gray-700 line-through'
                         }`}
                       >
                         <span className="font-semibold">{ev.channelName}</span>

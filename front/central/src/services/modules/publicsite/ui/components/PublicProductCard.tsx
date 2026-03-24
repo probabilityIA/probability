@@ -10,7 +10,7 @@ export function PublicProductCard({ product, slug }: PublicProductCardProps) {
     return (
         <Link
             href={`/tienda/${slug}/producto/${product.id}`}
-            className="group bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+            className="group bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
         >
             <div className="aspect-square bg-gray-100 overflow-hidden">
                 {product.image_url ? (

@@ -103,7 +103,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
     : 'Desconocido';
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full bg-white dark:bg-gray-800">
       {/* ─── HEADER CON GRADIENTE ─── */}
       <div
         className="text-white p-5 flex justify-between items-start gap-3"
@@ -189,7 +189,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
         </div>
 
         {/* ─── STATS CARDS (2x2 GRID) ─── */}
-        <div className="grid grid-cols-2 gap-3 p-4 bg-white">
+        <div className="grid grid-cols-2 gap-3 p-4 bg-white dark:bg-gray-800">
           {/* Estado */}
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-3 border border-blue-200">
             <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Estado</p>
@@ -227,7 +227,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
         {/* ─── MAPA COLOMBIA ─── */}
         <div className="px-4 py-5 border-t border-gray-100">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Departamento de destino</p>
-          <div className="rounded-xl overflow-hidden border border-gray-200 bg-gray-50 p-3">
+          <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-50 p-3">
             <ColombiaMap highlightedDepartment={departmentName ?? undefined} status={shipment.status} />
           </div>
         </div>
@@ -302,7 +302,7 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
       </div>
 
       {/* ─── ACTION BUTTONS (STICKY) ─── */}
-      <div className="border-t border-gray-100 bg-white p-4 flex gap-2 sticky bottom-0">
+      <div className="border-t border-gray-100 bg-white dark:bg-gray-800 p-4 flex gap-2 sticky bottom-0">
         {shipment.guide_url && (
           <a
             href={shipment.guide_url}

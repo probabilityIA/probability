@@ -114,7 +114,7 @@ export function WebsiteConfigManager() {
                             setSelectedBusinessId(val);
                             setConfig(null);
                         }}
-                        className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white text-gray-900"
+                        className="w-full px-3 py-2 border border-blue-300 rounded-lg bg-white dark:bg-gray-800 text-gray-900"
                         disabled={loadingBusinesses}
                     >
                         <option value="">-- Selecciona un negocio --</option>
@@ -136,7 +136,7 @@ export function WebsiteConfigManager() {
                     <PreviewLink businessCode={businessCode} />
 
                     {/* Template selector */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                         <h2 className="text-lg font-semibold text-gray-900 mb-2">Plantilla del sitio</h2>
                         <p className="text-sm text-gray-500 mb-4">
                             Selecciona el diseno visual de tu sitio web
@@ -144,7 +144,7 @@ export function WebsiteConfigManager() {
                         <select
                             value={config.template || 'default'}
                             onChange={(e) => setConfig({ ...config, template: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white text-gray-900"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white dark:bg-gray-800 text-gray-900"
                         >
                             {getAvailableTemplates().map(t => (
                                 <option key={t.id} value={t.id}>{t.name} — {t.description}</option>
@@ -152,7 +152,7 @@ export function WebsiteConfigManager() {
                         </select>
                     </div>
 
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-4">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 space-y-4">
                         <h2 className="text-lg font-semibold text-gray-900 mb-4">Secciones de la pagina</h2>
 
                         <SectionToggle

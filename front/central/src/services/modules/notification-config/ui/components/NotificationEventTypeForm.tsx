@@ -316,7 +316,7 @@ export function NotificationEventTypeForm({
                       className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border transition-colors ${
                         isChecked
                           ? "bg-blue-50 border-blue-200"
-                          : "bg-white border-gray-200 hover:bg-gray-50"
+                          : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50"
                       }`}
                     >
                       <span
@@ -334,7 +334,7 @@ export function NotificationEventTypeForm({
                         }`}
                       >
                         <div
-                          className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+                          className={`absolute top-0.5 w-4 h-4 rounded-full bg-white dark:bg-gray-800 shadow transition-transform ${
                             isChecked ? "translate-x-4" : "translate-x-0.5"
                           }`}
                         />

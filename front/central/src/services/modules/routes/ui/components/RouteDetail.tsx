@@ -189,7 +189,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             )}
 
             {/* Route header card */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                     <div className="space-y-2">
                         <div className="flex items-center gap-3">
@@ -275,8 +275,8 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             </div>
 
             {/* Stops list */}
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                <div className="px-6 py-4 border-b border-gray-200">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <h3 className="text-base font-semibold text-gray-900">
                         Paradas ({sortedStops.length})
                     </h3>
@@ -357,7 +357,7 @@ export default function RouteDetail({ routeId, businessId, onBack, onRefreshList
             {/* Failure reason modal */}
             {failureStopId !== null && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-                    <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+                    <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md">
                         <div className="px-6 py-4 border-b">
                             <h3 className="text-lg font-semibold text-gray-900">Motivo del fallo</h3>
                         </div>

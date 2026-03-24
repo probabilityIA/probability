@@ -279,12 +279,12 @@ export function InvoiceDetailModal({
       <div className="flex min-h-screen items-center justify-center p-4">
         {/* Backdrop - fondo claro opaco, se ve la plataforma detrás */}
         <div
-          className="fixed inset-0 bg-white/60 backdrop-blur-sm transition-opacity"
+          className="fixed inset-0 bg-white dark:bg-gray-800/60 backdrop-blur-sm transition-opacity"
           onClick={onClose}
         />
 
         {/* Modal */}
-        <div className="relative bg-white rounded-lg shadow-2xl border border-gray-200 max-w-2xl w-full max-h-[85vh] flex flex-col">
+        <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-2xl border border-gray-200 dark:border-gray-700 max-w-2xl w-full max-h-[85vh] flex flex-col">
           {/* Header */}
           <div className="flex items-center justify-between px-6 py-4 border-b">
             <div className="flex items-center gap-3">
@@ -346,19 +346,19 @@ export function InvoiceDetailModal({
                   <div className="flex flex-wrap gap-2 mt-2">
                     {invoice.invoice_url && (
                       <a href={invoice.invoice_url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
                         Ver Factura
                       </a>
                     )}
                     {invoice.pdf_url && (
                       <a href={invoice.pdf_url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
                         Descargar PDF
                       </a>
                     )}
                     {invoice.xml_url && (
                       <a href={invoice.xml_url} target="_blank" rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
+                        className="inline-flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-gray-800 border border-green-300 rounded-md text-xs font-medium text-green-700 hover:bg-green-100 transition-colors">
                         Descargar XML
                       </a>
                     )}
@@ -416,7 +416,7 @@ export function InvoiceDetailModal({
                     </div>
 
                     {/* Totales */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white/60 rounded">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 p-3 bg-white dark:bg-gray-800/60 rounded">
                       {invoice.provider_response.total && (
                         <div>
                           <p className="text-xs text-gray-500 mb-0.5">Total</p>
@@ -457,7 +457,7 @@ export function InvoiceDetailModal({
                         <p className="text-xs text-gray-500 mb-2">Items ({invoice.provider_response.details.length})</p>
                         <div className="space-y-2">
                           {invoice.provider_response.details.map((detail: any, idx: number) => (
-                            <div key={idx} className="p-2 bg-white/80 rounded text-xs border border-gray-200">
+                            <div key={idx} className="p-2 bg-white dark:bg-gray-800/80 rounded text-xs border border-gray-200 dark:border-gray-700">
                               <div className="flex justify-between items-start mb-1">
                                 <span className="font-medium text-gray-900">{detail.itemName || detail.itemCode}</span>
                                 <span className="font-semibold text-gray-900">${detail.value}</span>
@@ -477,7 +477,7 @@ export function InvoiceDetailModal({
 
                     {/* Información de envío */}
                     {invoice.provider_response.shipInformation && (
-                      <div className="p-3 bg-white/60 rounded">
+                      <div className="p-3 bg-white dark:bg-gray-800/60 rounded">
                         <p className="text-xs text-gray-500 mb-2 font-medium">Información de Envío</p>
                         <div className="space-y-1 text-xs text-gray-700">
                           {invoice.provider_response.shipInformation.shipAddress && (
@@ -531,7 +531,7 @@ export function InvoiceDetailModal({
                           fieldId="full-document-json"
                         />
                       </summary>
-                      <pre className="mt-2 text-xs bg-white/80 rounded p-3 overflow-x-auto max-h-64 border border-gray-200 font-mono text-gray-700">
+                      <pre className="mt-2 text-xs bg-white dark:bg-gray-800/80 rounded p-3 overflow-x-auto max-h-64 border border-gray-200 dark:border-gray-700 font-mono text-gray-700">
                         {JSON.stringify(invoice.provider_response, null, 2)}
                       </pre>
                     </details>
@@ -550,7 +550,7 @@ export function InvoiceDetailModal({
 
             {/* Barra de progreso del retry */}
             {(retrying || retryResult) && (
-              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+              <div className="mb-6 p-4 bg-gray-50 border border-gray-200 dark:border-gray-700 rounded-lg">
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-medium text-gray-700">
                     {retryResult === 'success'
@@ -583,7 +583,7 @@ export function InvoiceDetailModal({
             )}
 
             {/* Acciones */}
-            <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200">
+            <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
               {invoice.status === 'failed' && (
                 <Button
                   variant="primary"
@@ -665,7 +665,7 @@ export function InvoiceDetailModal({
                           : log.status === 'failed'
                             ? 'border-red-200 bg-red-50'
                             : log.status === 'cancelled'
-                              ? 'border-gray-200 bg-gray-50'
+                              ? 'border-gray-200 dark:border-gray-700 bg-gray-50'
                               : 'border-yellow-200 bg-yellow-50'
                       }`}
                     >
@@ -698,7 +698,7 @@ export function InvoiceDetailModal({
 
                       {/* Error message */}
                       {log.error_message && (
-                        <div className="mt-2 p-2 bg-white/60 rounded text-xs text-red-700 font-mono break-all">
+                        <div className="mt-2 p-2 bg-white dark:bg-gray-800/60 rounded text-xs text-red-700 font-mono break-all">
                           {log.error_message}
                         </div>
                       )}
@@ -729,7 +729,7 @@ export function InvoiceDetailModal({
                                     fieldId={`req-${log.id}`}
                                   />
                                 </p>
-                                <pre className="text-xs bg-white/60 rounded p-2 overflow-x-auto max-h-32">
+                                <pre className="text-xs bg-white dark:bg-gray-800/60 rounded p-2 overflow-x-auto max-h-32">
                                   {JSON.stringify(log.request_payload, null, 2)}
                                 </pre>
                               </div>
@@ -743,7 +743,7 @@ export function InvoiceDetailModal({
                                     fieldId={`res-${log.id}`}
                                   />
                                 </p>
-                                <pre className="text-xs bg-white/60 rounded p-2 overflow-x-auto max-h-32">
+                                <pre className="text-xs bg-white dark:bg-gray-800/60 rounded p-2 overflow-x-auto max-h-32">
                                   {JSON.stringify(log.response_body, null, 2)}
                                 </pre>
                               </div>

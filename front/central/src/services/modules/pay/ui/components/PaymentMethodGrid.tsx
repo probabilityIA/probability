@@ -40,8 +40,8 @@ export function PaymentMethodGrid({ gateways, loading, onSelect }: PaymentMethod
                         className={`
                             flex flex-col items-center justify-center gap-2 p-4 rounded-xl border transition-all
                             ${disabled
-                                ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200'
-                                : 'cursor-pointer bg-white border-gray-200 hover:border-purple-400 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
+                                ? 'opacity-50 cursor-not-allowed bg-gray-50 border-gray-200 dark:border-gray-700'
+                                : 'cursor-pointer bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-purple-400 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]'
                             }
                         `}
                     >

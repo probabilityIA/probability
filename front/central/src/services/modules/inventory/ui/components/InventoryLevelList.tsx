@@ -196,7 +196,7 @@ export default function InventoryLevelList({ warehouseId, selectedBusinessId, on
                 </Alert>
             )}
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <Table
                     columns={columns}
                     data={levels.map(renderRow)}

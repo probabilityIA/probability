@@ -266,11 +266,11 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                             Cargando ordenes disponibles...
                         </div>
                     ) : assignableOrders.length === 0 ? (
-                        <div className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 rounded-lg">
+                        <div className="text-sm text-gray-400 text-center py-6 border border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
                             No hay ordenes en procesamiento disponibles para asignar
                         </div>
                     ) : (
-                        <div className="max-h-64 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                        <div className="max-h-64 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg divide-y divide-gray-100">
                             {assignableOrders.map((order) => {
                                 const isSelected = selectedOrderIds.has(order.id);
                                 return (
@@ -281,7 +281,7 @@ export default function RouteForm({ route, onSuccess, onCancel, businessId }: Ro
                                         className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${
                                             isSelected
                                                 ? 'bg-blue-50 hover:bg-blue-100'
-                                                : 'bg-white hover:bg-gray-50'
+                                                : 'bg-white dark:bg-gray-800 hover:bg-gray-50'
                                         }`}
                                     >
                                         {/* Checkbox */}

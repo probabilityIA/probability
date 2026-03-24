@@ -40,7 +40,7 @@ export function InvoicingProviderSelector({
                 ${
                   isSelected
                     ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 bg-white hover:border-gray-300'
+                    : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300'
                 }
                 ${isDisabled ? 'opacity-50 cursor-not-allowed' : ''}
               `}
@@ -53,12 +53,12 @@ export function InvoicingProviderSelector({
                   ${
                     isSelected
                       ? 'border-blue-500 bg-blue-500'
-                      : 'border-gray-300 bg-white'
+                      : 'border-gray-300 bg-white dark:bg-gray-800'
                   }
                 `}
                 >
                   {isSelected && (
-                    <div className="w-2 h-2 bg-white rounded-full" />
+                    <div className="w-2 h-2 bg-white dark:bg-gray-800 rounded-full" />
                   )}
                 </div>
 
@@ -95,7 +95,7 @@ export function InvoicingProviderSelector({
 
       {/* Información del proveedor seleccionado */}
       {selectedProvider && (
-        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+        <div className="mt-4 p-4 bg-gray-50 border border-gray-200 dark:border-gray-700 rounded-lg">
           <h4 className="text-sm font-medium text-gray-900 mb-2">
             Información del proveedor
           </h4>

@@ -118,9 +118,9 @@ export default function ChannelStatusManager({ isOpen, onClose }: ChannelStatusM
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
 
             {/* Modal */}
-            <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
+            <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-4xl mx-4 max-h-[90vh] flex flex-col">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700">
                     <div className="flex items-center gap-3">
                         {view !== 'list' && (
                             <button
@@ -194,7 +194,7 @@ export default function ChannelStatusManager({ isOpen, onClose }: ChannelStatusM
                                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border transition-colors ${
                                                 selectedType?.id === it.id
                                                     ? 'bg-blue-600 text-white border-blue-600'
-                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-blue-300 hover:text-blue-600'
+                                                    : 'bg-white dark:bg-gray-800 text-gray-600 border-gray-200 dark:border-gray-700 hover:border-blue-300 hover:text-blue-600'
                                             }`}
                                         >
                                             {it.image_url && (
@@ -270,7 +270,7 @@ export default function ChannelStatusManager({ isOpen, onClose }: ChannelStatusM
             {/* Delete Confirm Modal */}
             {deleteConfirm && (
                 <div className="absolute inset-0 z-60 flex items-center justify-center">
-                    <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+                    <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Eliminar estado</h3>
                         <p className="text-sm text-gray-600 mb-1">
                             ¿Estás seguro de que deseas eliminar el estado{' '}
@@ -290,7 +290,7 @@ export default function ChannelStatusManager({ isOpen, onClose }: ChannelStatusM
                             <button
                                 onClick={() => { setDeleteConfirm(null); setDeleteError(null); }}
                                 disabled={deleteLoading}
-                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                             >
                                 Cancelar
                             </button>
@@ -512,7 +512,7 @@ function ChannelStatusForm({ integrationTypeId, integrationTypeName, status, onS
                     type="button"
                     onClick={onCancel}
                     disabled={loading}
-                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white dark:bg-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
                 >
                     Cancelar
                 </button>

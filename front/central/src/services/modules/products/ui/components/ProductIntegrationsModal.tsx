@@ -205,7 +205,7 @@ export default function ProductIntegrationsModal({
                 )}
 
                 {/* Agregar nueva integración */}
-                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <div className="bg-gray-50 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
                     <h3 className="text-sm font-semibold text-gray-700 mb-3">Agregar Integración</h3>
                     <div className="space-y-3">
                         <Select
@@ -265,7 +265,7 @@ export default function ProductIntegrationsModal({
                             {integrations.map((integration) => (
                                 <div
                                     key={integration.id}
-                                    className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
+                                    className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50"
                                 >
                                     <div className="flex-1">
                                         <div className="flex items-center gap-2 mb-1">
@@ -298,7 +298,7 @@ export default function ProductIntegrationsModal({
                 </div>
 
                 {/* Botones de acción */}
-                <div className="flex justify-end gap-2 pt-4 border-t border-gray-200">
+                <div className="flex justify-end gap-2 pt-4 border-t border-gray-200 dark:border-gray-700">
                     <Button variant="secondary" onClick={onClose} disabled={loading}>
                         Cerrar
                     </Button>

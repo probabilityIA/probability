@@ -32,7 +32,7 @@ export function ColombiaMap({ data, height = 500 }: ColombiaMapProps) {
                     zIndex: 0,
                     isolation: 'isolate'
                 }}
-                className="rounded-lg overflow-hidden border border-gray-200 bg-gray-100"
+                className="rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 bg-gray-100"
             >
                 <MapGLComponent data={data} height={height} onDepartmentMapChange={setDepartmentMap} />
             </div>
@@ -40,7 +40,7 @@ export function ColombiaMap({ data, height = 500 }: ColombiaMapProps) {
             {/* Métricas debajo del mapa */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Escala de Órdenes */}
-                <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
                     <p className="text-sm font-semibold mb-3 text-gray-700">Escala de Órdenes</p>
                     <div className="space-y-2 text-sm">
                         <div className="flex items-center gap-2">
@@ -67,7 +67,7 @@ export function ColombiaMap({ data, height = 500 }: ColombiaMapProps) {
                 </div>
 
                 {/* Top Departamentos */}
-                <div className="bg-white p-4 rounded-lg shadow border border-gray-200">
+                <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700">
                     <p className="text-sm font-semibold text-gray-700 mb-3">Top Departamentos</p>
                     <div className="text-sm text-gray-600 space-y-2">
                         {departmentMap && Array.from(departmentMap.entries())

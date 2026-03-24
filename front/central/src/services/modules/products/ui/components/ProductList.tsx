@@ -271,7 +271,7 @@ const ProductList = forwardRef(function ProductList(
 
                 {/* Pagination */}
                 {(totalPages > 1 || total > 0) && (
-                    <div className="bg-white px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200">
+                    <div className="bg-white dark:bg-gray-800 px-3 sm:px-4 lg:px-6 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-200 dark:border-gray-700">
                         {/* Mobile: Simple pagination */}
                         <div className="flex-1 flex justify-between sm:hidden w-full">
                             <Button
@@ -310,7 +310,7 @@ const ProductList = forwardRef(function ProductList(
                                             const newPageSize = parseInt(e.target.value);
                                             setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                         }}
-                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                        className="px-2 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
                                     >
                                         <option value="10">10</option>
                                         <option value="20">20</option>
@@ -324,17 +324,17 @@ const ProductList = forwardRef(function ProductList(
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page - 1 })}
                                         disabled={page === 1}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Anterior
                                     </button>
-                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700">
+                                    <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-700">
                                         Página {page} de {totalPages}
                                     </span>
                                     <button
                                         onClick={() => setFilters({ ...filters, page: page + 1 })}
                                         disabled={page === totalPages}
-                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
+                                        className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white dark:bg-gray-800 text-xs sm:text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
                                     >
                                         Siguiente
                                     </button>
@@ -343,7 +343,7 @@ const ProductList = forwardRef(function ProductList(
                         </div>
 
                         {/* Mobile: Page size selector */}
-                        <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
+                        <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200 dark:border-gray-700">
                             <div className="flex items-center gap-2">
                                 <label className="text-xs text-gray-700 whitespace-nowrap">
                                     Mostrar:
@@ -354,7 +354,7 @@ const ProductList = forwardRef(function ProductList(
                                         const newPageSize = parseInt(e.target.value);
                                         setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                     }}
-                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white"
+                                    className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 bg-white dark:bg-gray-800"
                                 >
                                     <option value="10">10</option>
                                     <option value="20">20</option>
@@ -394,7 +394,7 @@ const ProductList = forwardRef(function ProductList(
             background: transparent;
           }
 
-          .productTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+          .productTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200 dark:border-gray-700.bg-white dark:bg-gray-800) {
             border: none !important;
             background: transparent !important;
           }

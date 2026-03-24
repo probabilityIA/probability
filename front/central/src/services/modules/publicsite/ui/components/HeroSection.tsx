@@ -29,7 +29,7 @@ export function HeroSection({ content, business, slug }: HeroSectionProps) {
                 <p className="text-xl text-white/80 mb-8">{subtitle}</p>
                 <Link
                     href={`/tienda/${slug}/productos`}
-                    className="inline-block px-8 py-4 bg-white rounded-lg font-bold text-lg transition-transform hover:scale-105"
+                    className="inline-block px-8 py-4 bg-white dark:bg-gray-800 rounded-lg font-bold text-lg transition-transform hover:scale-105"
                     style={{ color: 'var(--brand-primary)' }}
                 >
                     {ctaText}

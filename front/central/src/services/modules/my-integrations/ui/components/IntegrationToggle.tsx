@@ -63,7 +63,7 @@ export function IntegrationToggle({ integration, onToggle, onEdit, togglingId }:
                 } ${isToggling ? 'opacity-50 cursor-wait' : 'cursor-pointer'}`}
             >
                 <span
-                    className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform shadow-sm ${
+                    className={`inline-block h-3.5 w-3.5 rounded-full bg-white dark:bg-gray-800 transition-transform shadow-sm ${
                         integration.is_active ? 'translate-x-4' : 'translate-x-0.5'
                     }`}
                 />

@@ -172,12 +172,12 @@ export function DateRangePicker({
             </div>
 
             {isOpen && (
-                <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl p-4 w-auto">
+                <div className="absolute z-50 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl p-4 w-auto">
                     {/* Indicador de selección con horas */}
-                    <div className="mb-3 px-2 py-2 bg-gray-50 rounded-md">
-                        <div className="flex items-center gap-2 text-sm">
+                    <div className="mb-3 px-2 py-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                        <div className="flex items-center gap-2 text-sm dark:text-gray-200">
                             <div className="flex items-center gap-1">
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.from ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.from ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>
                                     {tempRange?.from ? format(tempRange.from, 'dd/MM/yyyy', { locale: es }) : 'Inicio'}
                                 </span>
                                 {showTime && tempRange?.from && (
@@ -185,13 +185,13 @@ export function DateRangePicker({
                                         type="time"
                                         value={startTime}
                                         onChange={(e) => setStartTime(e.target.value)}
-                                        className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-[70px]"
+                                        className="px-1 py-0.5 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-[70px]"
                                     />
                                 )}
                             </div>
-                            <span className="text-gray-400">→</span>
+                            <span className="text-gray-400 dark:text-gray-600">→</span>
                             <div className="flex items-center gap-1">
-                                <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.to ? 'bg-blue-100 text-blue-700' : 'text-gray-500'}`}>
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${tempRange?.to ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200' : 'text-gray-500 dark:text-gray-400'}`}>
                                     {tempRange?.to ? format(tempRange.to, 'dd/MM/yyyy', { locale: es }) : 'Fin'}
                                 </span>
                                 {showTime && tempRange?.to && (
@@ -199,7 +199,7 @@ export function DateRangePicker({
                                         type="time"
                                         value={endTime}
                                         onChange={(e) => setEndTime(e.target.value)}
-                                        className="px-1 py-0.5 text-xs border border-gray-300 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-[70px]"
+                                        className="px-1 py-0.5 text-xs border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 w-[70px]"
                                     />
                                 )}
                             </div>
@@ -217,33 +217,33 @@ export function DateRangePicker({
                             months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
                             month: 'space-y-4',
                             caption: 'flex justify-center pt-1 relative items-center mb-2',
-                            caption_label: 'text-base font-bold text-black',
+                            caption_label: 'text-base font-bold text-black dark:text-gray-100',
                             nav: 'space-x-1 flex items-center',
-                            nav_button: 'h-8 w-8 bg-transparent p-0 text-black hover:bg-gray-100 rounded transition-colors',
+                            nav_button: 'h-8 w-8 bg-transparent p-0 text-black dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors',
                             nav_button_previous: 'absolute left-1',
                             nav_button_next: 'absolute right-1',
                             table: 'w-full border-collapse space-y-1',
                             head_row: 'flex mb-1',
-                            head_cell: 'text-black rounded-md w-10 font-bold text-xs uppercase tracking-wider',
+                            head_cell: 'text-black dark:text-gray-200 rounded-md w-10 font-bold text-xs uppercase tracking-wider',
                             row: 'flex w-full mt-1',
                             cell: 'text-center text-sm p-0 relative',
-                            day: 'h-10 w-10 p-0 font-medium text-black rounded-md transition-colors hover:bg-gray-100',
+                            day: 'h-10 w-10 p-0 font-medium text-black dark:text-gray-200 rounded-md transition-colors hover:bg-gray-100 dark:hover:bg-gray-700',
                             day_range_start: 'bg-blue-500 text-white hover:bg-blue-600 font-semibold rounded-l-md',
                             day_range_end: 'bg-blue-500 text-white hover:bg-blue-600 font-semibold rounded-r-md',
                             day_selected: 'bg-blue-500 text-white hover:bg-blue-600 font-semibold',
-                            day_today: 'bg-gray-100 text-black font-bold border-2 border-blue-500',
-                            day_outside: 'text-gray-500 opacity-60',
-                            day_disabled: 'text-gray-300 opacity-50 cursor-not-allowed',
-                            day_range_middle: 'bg-blue-100 text-blue-700 font-medium',
+                            day_today: 'bg-gray-100 dark:bg-gray-700 text-black dark:text-gray-100 font-bold border-2 border-blue-500',
+                            day_outside: 'text-gray-500 dark:text-gray-500 opacity-60',
+                            day_disabled: 'text-gray-300 dark:text-gray-600 opacity-50 cursor-not-allowed',
+                            day_range_middle: 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 font-medium',
                             day_hidden: 'invisible',
                         }}
                     />
 
                     {/* Botones de acción */}
-                    <div className="mt-4 pt-4 border-t border-gray-200 flex gap-2">
+                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700 flex gap-2">
                         <button
                             onClick={clearDates}
-                            className="flex-1 px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors font-medium border border-gray-300"
+                            className="flex-1 px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-50 dark:hover:bg-gray-700 rounded-md transition-colors font-medium border border-gray-300 dark:border-gray-600"
                             type="button"
                         >
                             Limpiar

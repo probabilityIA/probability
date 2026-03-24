@@ -178,7 +178,7 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
             </div>
 
             {isFormOpen && (
-                <div className="bg-white border-2 border-orange-100 rounded-xl overflow-hidden shadow-sm transition-all duration-300">
+                <div className="bg-white dark:bg-gray-800 border-2 border-orange-100 rounded-xl overflow-hidden shadow-sm transition-all duration-300">
                     <div className="bg-orange-50 px-6 py-4 flex justify-between items-center border-b border-orange-100">
                         <div>
                             <h3 className="font-bold text-gray-800">{editingAddress ? 'Editar Dirección' : 'Nueva Dirección de Origen'}</h3>
@@ -271,7 +271,7 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                                     required
                                 />
                                 {citySuggestions.length > 0 && (
-                                    <div className="absolute z-10 w-full bg-white border border-gray-200 rounded-lg shadow-xl mt-1 max-h-48 overflow-auto animate-in fade-in slide-in-from-top-2">
+                                    <div className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl mt-1 max-h-48 overflow-auto animate-in fade-in slide-in-from-top-2">
                                         {citySuggestions.map(s => (
                                             <div
                                                 key={s.code}
@@ -301,7 +301,7 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                 {addresses.map(address => (
                     <div
                         key={address.id}
-                        className={`group relative bg-white border-2 rounded-xl p-5 transition-all duration-300 ${address.is_default ? 'border-orange-400 shadow-md ring-1 ring-orange-100' : 'border-gray-100 hover:border-orange-200 hover:shadow-sm'
+                        className={`group relative bg-white dark:bg-gray-800 border-2 rounded-xl p-5 transition-all duration-300 ${address.is_default ? 'border-orange-400 shadow-md ring-1 ring-orange-100' : 'border-gray-100 hover:border-orange-200 hover:shadow-sm'
                             }`}
                     >
                         <div className="flex justify-between items-start mb-4">
@@ -371,7 +371,7 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                         {canUpdate && !address.is_default && (
                             <button
                                 onClick={() => handleSetDefault(address.id)}
-                                className="w-full mt-5 py-2 text-[11px] font-bold border border-gray-200 rounded-lg text-gray-500 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all uppercase tracking-wide"
+                                className="w-full mt-5 py-2 text-[11px] font-bold border border-gray-200 dark:border-gray-700 rounded-lg text-gray-500 hover:border-orange-300 hover:text-orange-600 hover:bg-orange-50 transition-all uppercase tracking-wide"
                             >
                                 Establecer como principal
                             </button>
@@ -380,8 +380,8 @@ export function OriginAddressManager({ selectedBusinessId }: OriginAddressManage
                 ))}
 
                 {addresses.length === 0 && !isFormOpen && (
-                    <div className="col-span-full py-20 bg-gray-50/50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-center">
-                        <div className="bg-white p-4 rounded-full shadow-sm mb-4">
+                    <div className="col-span-full py-20 bg-gray-50/50 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-2xl flex flex-col items-center justify-center text-center">
+                        <div className="bg-white dark:bg-gray-800 p-4 rounded-full shadow-sm mb-4">
                             <MapPin className="w-10 h-10 text-gray-300" />
                         </div>
                         <h4 className="text-gray-900 font-bold mb-1">Sin direcciones guardadas</h4>

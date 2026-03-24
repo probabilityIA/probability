@@ -105,7 +105,7 @@ export default function ProductSelector({
 
                 {/* Results dropdown */}
                 {showResults && (searchTerm || loading) && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-xl max-h-64 overflow-auto">
+                    <div className="absolute z-10 w-full mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl max-h-64 overflow-auto">
                         {loading ? (
                             <div className="p-4 text-center text-gray-500">Buscando productos...</div>
                         ) : products.length > 0 ? (
@@ -155,7 +155,7 @@ export default function ProductSelector({
 
             {/* Selected products list */}
             {selectedProducts.length > 0 && (
-                <div className="border border-gray-200 rounded-lg overflow-hidden">
+                <div className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                     <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                             <tr>
@@ -164,7 +164,7 @@ export default function ProductSelector({
                                 <th className="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                             </tr>
                         </thead>
-                        <tbody className="bg-white divide-y divide-gray-200">
+                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                             {selectedProducts.map((product) => (
                                 <tr key={product.id}>
                                     <td className="px-4 py-2 whitespace-nowrap">

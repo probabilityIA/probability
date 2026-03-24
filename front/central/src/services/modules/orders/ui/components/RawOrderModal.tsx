@@ -164,7 +164,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
             title={
                 <div className="flex items-center gap-3">
                     {integrationLogoUrl ? (
-                        <div className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 bg-white flex items-center justify-center overflow-hidden">
+                        <div className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center overflow-hidden">
                             <img 
                                 src={integrationLogoUrl} 
                                 alt={platform || 'Integración'}
@@ -172,7 +172,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                             />
                         </div>
                     ) : platform ? (
-                        <div className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 bg-white flex items-center justify-center">
+                        <div className="h-8 w-8 rounded-full shadow-md border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 flex items-center justify-center">
                             <span className="text-xs font-medium text-gray-600 uppercase">
                                 {platform.charAt(0)}
                             </span>
@@ -293,7 +293,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                                                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Vendor</th>
                                             </tr>
                                         </thead>
-                                        <tbody className="bg-white divide-y divide-gray-200">
+                                        <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                                             {shopifyOrder.line_items.map((item, index) => (
                                                 <tr key={item.id || index} className="hover:bg-gray-50">
                                                     <td className="px-4 py-3 text-sm text-gray-900">{item.title || item.name || 'N/A'}</td>
@@ -368,7 +368,7 @@ export default function RawOrderModal({ orderId, isOpen, onClose, integrationLog
                                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Fulfillments</h3>
                                 <div className="grid grid-cols-2 gap-4">
                                     {shopifyOrder.fulfillments.map((fulfillment, index) => (
-                                        <div key={fulfillment.id || index} className="bg-white rounded-lg p-4 border border-gray-200">
+                                        <div key={fulfillment.id || index} className="bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div>
                                                     <p className="text-xs text-gray-500 uppercase">ID</p>

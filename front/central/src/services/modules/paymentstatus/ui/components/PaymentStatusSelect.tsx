@@ -52,7 +52,7 @@ export default function PaymentStatusSelect({
                 value={value ?? ''}
                 onChange={(e) => onChange(e.target.value)}
                 disabled={disabled || loading}
-                className={`block w-full rounded-md border border-gray-300 bg-white py-2 pr-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400 ${selectedStatus?.color ? 'pl-8' : 'pl-3'} ${className}`}
+                className={`block w-full rounded-md border border-gray-300 bg-white dark:bg-gray-800 py-2 pr-3 text-sm shadow-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 disabled:bg-gray-50 disabled:text-gray-400 ${selectedStatus?.color ? 'pl-8' : 'pl-3'} ${className}`}
             >
                 <option value="">{loading ? 'Cargando...' : placeholder}</option>
                 {paymentStatuses.map((status) => (

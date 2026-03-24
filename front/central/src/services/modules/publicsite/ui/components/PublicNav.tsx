@@ -13,7 +13,7 @@ export function PublicNav({ business }: PublicNavProps) {
     const slug = business.code;
 
     return (
-        <nav className="sticky top-0 z-50 bg-white shadow-sm border-b border-gray-100">
+        <nav className="sticky top-0 z-50 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-100">
             <div className="max-w-7xl mx-auto px-4">
                 <div className="flex items-center justify-between h-16">
                     <Link href={`/tienda/${slug}`} className="flex items-center gap-3">

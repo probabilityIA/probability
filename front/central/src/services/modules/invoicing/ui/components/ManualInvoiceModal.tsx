@@ -172,11 +172,11 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center p-4">
         <div
-          className="fixed inset-0 backdrop-blur-sm bg-white/10 transition-opacity"
+          className="fixed inset-0 backdrop-blur-sm bg-white dark:bg-gray-800/10 transition-opacity"
           onClick={onClose}
         />
 
-        <div className="relative bg-white rounded-xl shadow-2xl w-full max-w-lg">
+        <div className="relative bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-full max-w-lg">
           {/* Header */}
           <div className="flex items-center justify-between p-6 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] rounded-t-xl">
             <div className="flex items-center gap-3">
@@ -188,7 +188,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
             </div>
             <button
               onClick={onClose}
-              className="text-white hover:bg-white/20 rounded-full p-2 transition-all duration-200"
+              className="text-white hover:bg-white dark:bg-gray-800/20 rounded-full p-2 transition-all duration-200"
             >
               <XMarkIcon className="w-5 h-5" />
             </button>
@@ -296,7 +296,7 @@ export function ManualInvoiceModal({ isOpen, onClose, onSuccess, businessId: pro
 
                       {/* Dropdown de resultados */}
                       {showDropdown && !superAdminNeedsBusiness && (
-                        <div className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-60 overflow-y-auto">
                           {loading ? (
                             <div className="p-4 text-center text-gray-500 text-sm">
                               <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-purple-600 mx-auto mb-2" />

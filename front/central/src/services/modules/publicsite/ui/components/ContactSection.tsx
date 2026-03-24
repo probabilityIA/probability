@@ -46,7 +46,7 @@ export function ContactSection({ slug, content }: ContactSectionProps) {
                 {content?.contacts && content.contacts.length > 0 && (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
                         {content.contacts.map((contact, i) => (
-                            <div key={i} className="bg-white rounded-lg p-4 shadow-sm">
+                            <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm">
                                 <p className="font-medium text-gray-900">{contact.name}</p>
                                 <p className="text-sm text-gray-500">{contact.role}</p>
                                 <p className="text-sm text-gray-600 mt-1">{contact.phone}</p>
@@ -66,7 +66,7 @@ export function ContactSection({ slug, content }: ContactSectionProps) {
                     </p>
                 )}
 
-                <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+                <form onSubmit={handleSubmit} className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Nombre *</label>
                         <input

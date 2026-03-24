@@ -70,7 +70,7 @@ export function NotificationTypeList({
   }
 
   return (
-    <div className="bg-white shadow-md rounded-lg overflow-hidden">
+    <div className="bg-white dark:bg-gray-800 shadow-md rounded-lg overflow-hidden">
       <div className="p-4 border-b flex justify-between items-center">
         <h2 className="text-lg font-semibold">Tipos de Notificación</h2>
         <button
@@ -106,7 +106,7 @@ export function NotificationTypeList({
               </th>
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
             {types.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center text-gray-500">

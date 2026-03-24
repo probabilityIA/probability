@@ -357,8 +357,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${isActive('/integrations') || pathname.startsWith('/integrations')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -390,8 +390,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${pathname.startsWith('/products') || pathname.startsWith('/warehouses') || pathname.startsWith('/inventory')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -419,8 +419,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${pathname.startsWith('/orders') || pathname.startsWith('/shipments') || pathname.startsWith('/order-status')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -448,8 +448,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${pathname.startsWith('/delivery')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -477,8 +477,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${pathname.startsWith('/notification-config')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -506,8 +506,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${pathname.startsWith('/customers')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -536,8 +536,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${pathname.startsWith('/storefront') || pathname.startsWith('/website-config')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -565,8 +565,8 @@ export function Sidebar({ user }: SidebarProps) {
                     className={`
                       flex items-center gap-3 p-3 rounded-lg transition-all duration-300
                       ${pathname.startsWith('/invoicing')
-                        ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                        ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                       }
                     `}
                   >
@@ -660,8 +660,8 @@ export function Sidebar({ user }: SidebarProps) {
                           aria-controls="iam-submenu"
                           className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 text-left w-full
                             ${isActive('/users') || isActive('/roles') || isActive('/permissions') || isActive('/businesses') || isActive('/resources')
-                              ? 'bg-gray-100 text-gray-900 shadow-sm scale-105'
-                              : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900 hover:scale-105'
+                              ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 shadow-sm scale-105'
+                              : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-gray-100 hover:scale-105'
                             }
                           `}
                         >

@@ -212,7 +212,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                     {onClose && (
                         <button
                             onClick={onClose}
-                            className="absolute top-2 right-2 z-20 p-1 bg-white/20 hover:bg-white/40 text-blue-900 rounded-full transition-colors backdrop-blur-sm"
+                            className="absolute top-2 right-2 z-20 p-1 bg-white dark:bg-gray-800/20 hover:bg-white dark:bg-gray-800/40 text-blue-900 rounded-full transition-colors backdrop-blur-sm"
                             title="Cerrar"
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -229,7 +229,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         {isReady ? (
                             <>
                                 {loadingAI ? (
-                                    <div className="flex items-center gap-3 text-purple-600 bg-white/50 p-3 rounded-lg animate-pulse">
+                                    <div className="flex items-center gap-3 text-purple-600 bg-white dark:bg-gray-800/50 p-3 rounded-lg animate-pulse">
                                         <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                                         <span>Analizando mejores rutas y tarifas...</span>
                                     </div>
@@ -253,7 +253,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                 </button>
                                             </div>
 
-                                            <div className="bg-white/80 p-5 rounded-lg border border-blue-100 text-gray-700 text-sm leading-relaxed shadow-sm">
+                                            <div className="bg-white dark:bg-gray-800/80 p-5 rounded-lg border border-blue-100 text-gray-700 text-sm leading-relaxed shadow-sm">
                                                 <p className="font-semibold text-blue-900 mb-1">Análisis:</p>
                                                 {aiRecommendation.reasoning}
                                             </div>
@@ -269,8 +269,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                         const isRecommended = quote.carrier === aiRecommendation.recommended_carrier;
                                                         return (
                                                             <div key={idx} className={`p-4 rounded-xl border flex flex-col justify-between transition-all hover:shadow-md ${isRecommended
-                                                                ? 'bg-white border-blue-300 shadow-sm ring-1 ring-blue-100 relative overflow-hidden'
-                                                                : 'bg-slate-50 border-slate-200 hover:bg-white'
+                                                                ? 'bg-white dark:bg-gray-800 border-blue-300 shadow-sm ring-1 ring-blue-100 relative overflow-hidden'
+                                                                : 'bg-slate-50 border-slate-200 hover:bg-white dark:bg-gray-800'
                                                                 }`}>
                                                                 {isRecommended && <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] px-2 py-0.5 rounded-bl-lg font-bold">RECOMENDADO</div>}
                                                                 <div>
@@ -465,7 +465,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                                     <th className="px-2 py-2 text-right text-xs font-semibold text-gray-700 uppercase">Total</th>
                                                 </tr>
                                             </thead>
-                                            <tbody className="bg-white divide-y divide-gray-200">
+                                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
                                                 {(order.order_items || items).map((item: any, idx: number) => (
                                                     <tr key={idx} className="hover:bg-gray-50">
                                                         <td className="px-2 py-2 text-xs text-gray-900">{item.product_name || item.name || item.title || '-'}</td>
@@ -498,7 +498,7 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                 {/* Cronología */}
                                 <div>
                                     <p className="text-xs text-gray-500 uppercase font-bold tracking-wide mb-2">Cronología</p>
-                                    <div className="space-y-2 border-b border-gray-200 pb-3">
+                                    <div className="space-y-2 border-b border-gray-200 dark:border-gray-700 pb-3">
                                         <div>
                                             <p className="text-xs text-gray-600 font-medium">Creado (DB)</p>
                                             <p className="text-sm font-semibold text-gray-900">{formatDate(order.created_at)}</p>

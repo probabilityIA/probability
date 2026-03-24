@@ -215,7 +215,7 @@ export default function Dashboard() {
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+                <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
                     <p className="font-semibold text-gray-900">
                         {payload[0].payload.fullName || payload[0].payload.name}
                     </p>
@@ -247,7 +247,7 @@ export default function Dashboard() {
             <div className="relative" ref={ref}>
                 <button onClick={() => setOpen(v => !v)} className="h-6 w-6 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">⋯</button>
                 {open && (
-                    <div className="absolute right-0 mt-2 w-40 bg-white border rounded shadow-md z-50">
+                    <div className="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 border rounded shadow-md z-50">
                         {items.map((it, i) => (
                             <button key={i} className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50">{it}</button>
                         ))}
@@ -883,7 +883,7 @@ export default function Dashboard() {
             {/* Small summary cards under the revenue header (like the screenshot) */}
             <div className="mt-4">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="p-4 bg-white rounded-lg shadow-md flex items-center justify-between">
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500">Órdenes Totales</p>
                             <div className="mt-2 flex items-center space-x-4">
@@ -906,7 +906,7 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-white rounded-lg shadow-md flex items-center justify-between">
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md flex items-center justify-between">
                         <div>
                             <p className="text-sm text-gray-500">Órdenes del día</p>
                             <div className="mt-2 flex items-center space-x-4">
@@ -923,7 +923,7 @@ export default function Dashboard() {
                         </div>
                     </div>
 
-                    <div className="p-4 bg-white rounded-lg shadow-md">
+                    <div className="p-4 bg-white dark:bg-gray-800 rounded-lg shadow-md">
                         <p className="text-sm text-gray-500 mb-3">Órdenes Mensuales</p>
                         <div className="flex items-center gap-4">
                             <div className="flex items-center space-x-2">
@@ -971,7 +971,7 @@ export default function Dashboard() {
             {/* Primera fila: Mapa de Órdenes + Estado de Envíos */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-0">
                 {/* Orders by Location - Mapa de Colombia */}
-                <div className="bg-white rounded-2xl shadow-md p-6 md:col-span-2 relative z-0" style={{ overflow: 'hidden' }}>
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6 md:col-span-2 relative z-0" style={{ overflow: 'hidden' }}>
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <MapPinIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -987,7 +987,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Orders by Department - Horizontal Bar Chart */}
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center">
                             <MapPinIcon className="w-6 h-6 text-purple-500 mr-3" />
@@ -1039,7 +1039,7 @@ export default function Dashboard() {
             {/* Segunda fila: Envíos por Transportista + Envíos por Día */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Shipments by Carrier */}
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1047,23 +1047,23 @@ export default function Dashboard() {
                         </div>
                         <div className="flex items-center gap-2">
                             {/* Toggle Hoy / Total */}
-                            <div className="flex rounded-lg overflow-hidden border border-gray-200 text-xs font-medium">
+                            <div className="flex rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 text-xs font-medium">
                                 <button
                                     onClick={() => setCarrierFilter('total')}
                                     className={`px-3 py-1.5 transition-colors ${
                                         carrierFilter === 'total'
                                             ? 'bg-indigo-600 text-white'
-                                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                                            : 'bg-white dark:bg-gray-800 text-gray-600 hover:bg-gray-50'
                                     }`}
                                 >
                                     Total
                                 </button>
                                 <button
                                     onClick={() => setCarrierFilter('today')}
-                                    className={`px-3 py-1.5 transition-colors border-l border-gray-200 ${
+                                    className={`px-3 py-1.5 transition-colors border-l border-gray-200 dark:border-gray-700 ${
                                         carrierFilter === 'today'
                                             ? 'bg-indigo-600 text-white'
-                                            : 'bg-white text-gray-600 hover:bg-gray-50'
+                                            : 'bg-white dark:bg-gray-800 text-gray-600 hover:bg-gray-50'
                                     }`}
                                 >
                                     Hoy
@@ -1084,7 +1084,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Shipments by Day of Week */}
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <CalendarDaysIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1102,7 +1102,7 @@ export default function Dashboard() {
                                     newDate.setDate(newDate.getDate() - 7);
                                     setWeekStartDate(newDate);
                                 }}
-                                className="px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-600 text-sm"
+                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 text-sm"
                                 title="Semana anterior"
                             >
                                 ←
@@ -1113,7 +1113,7 @@ export default function Dashboard() {
                                     newDate.setDate(newDate.getDate() + 7);
                                     setWeekStartDate(newDate);
                                 }}
-                                className="px-2 py-1 border border-gray-200 rounded hover:bg-gray-50 text-gray-600 text-sm"
+                                className="px-2 py-1 border border-gray-200 dark:border-gray-700 rounded hover:bg-gray-50 text-gray-600 text-sm"
                                 title="Semana siguiente"
                             >
                                 →
@@ -1144,7 +1144,7 @@ export default function Dashboard() {
             {/* Tercera fila: 3 columnas - Mejores Clientes, Productos Más Vendidos, Estado de Envíos */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Orders by Integration Type - Gráfico de Pastel
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ChartBarIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1162,7 +1162,7 @@ export default function Dashboard() {
 
                 {/* Top Customers - Gráfico de Barras */}
                 {/* Top Customers - Tabla Interactiva */}
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
                             <UserGroupIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1178,7 +1178,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Top Drivers
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <TruckIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1214,7 +1214,7 @@ export default function Dashboard() {
                 </div>  */}
 
                 {/* Drivers by Location 
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <TruckIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1253,7 +1253,7 @@ export default function Dashboard() {
 
                 {/* Top Products as Table */}
                 {/* Top Products - Tabla Interactiva */}
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center">
                             <CubeIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1269,7 +1269,7 @@ export default function Dashboard() {
                 </div>
 
                 {/* Products by Category 
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <CubeIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1308,7 +1308,7 @@ export default function Dashboard() {
                 </div> */}
 
                 {/* Products by Brand 
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <CubeIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1349,7 +1349,7 @@ export default function Dashboard() {
 
 
                 {/* Shipments by Warehouse 
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1387,7 +1387,7 @@ export default function Dashboard() {
                 </div> */}
 
                 {/* Shipments by Status - Estado de Envíos */}
-                <div className="bg-white rounded-2xl shadow-md p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-6">
                     <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center">
                             <ArchiveBoxIcon className="w-5 h-5 text-gray-400 mr-2" />
@@ -1405,7 +1405,7 @@ export default function Dashboard() {
 
             {/* Businesses (solo super admin, solo cuando NO hay filtro aplicado) */}
             {isSuperAdmin && !selectedBusinessId && stats.orders_by_business && stats.orders_by_business.length > 0 && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                     <div className="flex items-center mb-4">
                         <BuildingOfficeIcon className="w-5 h-5 text-gray-400 mr-2" />
                         <h2 className="text-lg font-semibold text-gray-900">Órdenes por Business</h2>
