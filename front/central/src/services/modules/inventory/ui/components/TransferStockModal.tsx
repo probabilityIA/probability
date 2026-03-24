@@ -80,7 +80,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
             <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between px-6 py-4 border-b">
                     <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Transferir stock</h2>
-                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 dark:text-gray-300 text-xl leading-none">
+                    <button onClick={onClose} className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 text-xl leading-none">
                         &times;
                     </button>
                 </div>
@@ -97,7 +97,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     )}
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                             ID del producto <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -107,21 +107,21 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                             placeholder="UUID del producto"
                             required
                             readOnly={!!productId}
-                            className={productId ? 'bg-gray-100 cursor-not-allowed' : ''}
+                            className={productId ? 'bg-gray-100 dark:bg-gray-700 cursor-not-allowed' : ''}
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                             Bodega destino <span className="text-red-500">*</span>
                         </label>
                         {loadingWarehouses ? (
-                            <p className="text-sm text-gray-500 dark:text-gray-400">Cargando bodegas...</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Cargando bodegas...</p>
                         ) : (
                             <select
                                 value={formData.to_warehouse_id || ''}
                                 onChange={(e) => setFormData(prev => ({ ...prev, to_warehouse_id: Number(e.target.value) }))}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                                 required
                             >
                                 <option value="">— Selecciona bodega destino —</option>
@@ -133,7 +133,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
                             Cantidad <span className="text-red-500">*</span>
                         </label>
                         <Input
@@ -146,7 +146,7 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Razón</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Razón</label>
                         <Input
                             type="text"
                             value={formData.reason}
@@ -156,13 +156,13 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Notas</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">Notas</label>
                         <textarea
                             value={formData.notes}
                             onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
                             placeholder="Notas adicionales..."
                             rows={3}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent resize-none"
                         />
                     </div>
 

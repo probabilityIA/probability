@@ -88,7 +88,7 @@ export default function InventoryManager() {
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Inventario</h1>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
+                    <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 mt-0.5">
                         Gestiona el stock y movimientos de inventario
                     </p>
                 </div>
@@ -109,12 +109,12 @@ export default function InventoryManager() {
             {/* Selector de negocio para super admin */}
             {isSuperAdmin && (
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">
                         Negocio <span className="text-red-500">*</span>
-                        <span className="ml-1 text-xs text-gray-500 dark:text-gray-400 font-normal">(requerido para gestionar inventario)</span>
+                        <span className="ml-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 font-normal">(requerido para gestionar inventario)</span>
                     </label>
                     {loadingBusinesses ? (
-                        <p className="text-sm text-gray-500 dark:text-gray-400">Cargando negocios...</p>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Cargando negocios...</p>
                     ) : (
                         <select
                             value={selectedBusinessId?.toString() ?? ''}
@@ -122,7 +122,7 @@ export default function InventoryManager() {
                                 const val = e.target.value;
                                 setSelectedBusinessId(val ? Number(val) : null);
                             }}
-                            className="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="w-full max-w-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                         >
                             <option value="">— Selecciona un negocio —</option>
                             {businesses.map((b) => (
@@ -141,25 +141,25 @@ export default function InventoryManager() {
                     <svg className="w-12 h-12 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
-                    <p className="text-gray-500 dark:text-gray-400 text-sm">Selecciona un negocio para ver y gestionar su inventario</p>
+                    <p className="text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 text-sm">Selecciona un negocio para ver y gestionar su inventario</p>
                 </div>
             ) : (
                 <>
                     {/* Selector de bodega */}
                     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Bodega</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-2">Bodega</label>
                         {loadingWarehouses ? (
                             <div className="flex items-center gap-2">
                                 <Spinner size="sm" />
-                                <span className="text-sm text-gray-500 dark:text-gray-400">Cargando bodegas...</span>
+                                <span className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">Cargando bodegas...</span>
                             </div>
                         ) : warehouses.length === 0 ? (
-                            <p className="text-sm text-gray-500 dark:text-gray-400">No hay bodegas activas. Crea una en el módulo de Bodegas.</p>
+                            <p className="text-sm text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500">No hay bodegas activas. Crea una en el módulo de Bodegas.</p>
                         ) : (
                             <select
                                 value={selectedWarehouseId?.toString() ?? ''}
                                 onChange={(e) => setSelectedWarehouseId(e.target.value ? Number(e.target.value) : null)}
-                                className="w-full max-w-sm px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="w-full max-w-sm px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
                             >
                                 {warehouses.map((w) => (
                                     <option key={w.id} value={w.id}>
@@ -180,7 +180,7 @@ export default function InventoryManager() {
                                         className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
                                             activeTab === 'stock'
                                                 ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300'
+                                                : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 hover:border-gray-300 dark:border-gray-600'
                                         }`}
                                     >
                                         Stock
@@ -190,7 +190,7 @@ export default function InventoryManager() {
                                         className={`py-3 px-1 text-sm font-medium border-b-2 transition-colors ${
                                             activeTab === 'movements'
                                                 ? 'border-blue-500 text-blue-600'
-                                                : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:text-gray-200 hover:border-gray-300'
+                                                : 'border-transparent text-gray-500 dark:text-gray-400 dark:text-gray-500 dark:text-gray-400 dark:text-gray-500 hover:text-gray-700 dark:text-gray-200 dark:text-gray-200 hover:border-gray-300 dark:border-gray-600'
                                         }`}
                                     >
                                         Movimientos
