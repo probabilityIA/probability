@@ -34,8 +34,8 @@ const stats = [
   {
     key: 'channels',
     label: 'Canales',
-    colorClasses: 'bg-blue-50 text-blue-700',
-    iconColor: 'text-blue-500',
+    colorClasses: 'bg-purple-50 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400',
+    iconColor: 'text-purple-600 dark:text-purple-400',
     icon: (
       <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />

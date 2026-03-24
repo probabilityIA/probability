@@ -169,7 +169,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
           <button
             type="button"
             onClick={onCreate}
-            className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+            className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
             title="Agregar Integración"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -193,11 +193,11 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
           <p className="text-gray-400 text-xs mt-1">Haz clic en &quot;Agregar Integración&quot; para empezar</p>
         </div>
       ) : (
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-gray-100 dark:divide-gray-700">
           {groups.map((group) => (
             <div
               key={group.integration.id}
-              className="flex items-start gap-4 px-4 py-3 hover:bg-gray-50 transition-colors"
+              className="flex items-start gap-4 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               {/* Integration info */}
               <div className="flex items-center gap-3 shrink-0 w-[180px] pt-0.5">
@@ -232,7 +232,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                     const channelBg = chCode.includes('whatsapp') ? 'bg-green-100 text-green-700'
                       : chCode.includes('email') ? 'bg-orange-100 text-orange-700'
                       : chCode.includes('sms') ? 'bg-purple-100 text-purple-700'
-                      : 'bg-blue-100 text-blue-700';
+                      : 'bg-purple-100 text-purple-700';
                     return (
                       <span
                         key={i}
@@ -263,7 +263,7 @@ export function ConfigListTable({ onConfigure, onCreate, refreshKey = 0, selecte
                 <button
                   type="button"
                   onClick={() => onConfigure(group.integration)}
-                  className="p-1.5 rounded-md text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                  className="p-1.5 rounded-md text-gray-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 transition-colors"
                   title="Configurar"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -121,7 +121,7 @@ export function NotificationEventTypeList({
             <select
               value={selectedTypeFilter}
               onChange={(e) => setSelectedTypeFilter(parseInt(e.target.value))}
-              className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-purple-500 focus:border-purple-500 dark:focus:ring-purple-400 dark:focus:border-purple-400 text-sm"
             >
               <option value="0">Todos los tipos</option>
               {notificationTypes.map((type) => (
@@ -133,7 +133,7 @@ export function NotificationEventTypeList({
             <button
               type="button"
               onClick={onCreate}
-              className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
               title="Nuevo Evento"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -145,22 +145,22 @@ export function NotificationEventTypeList({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-purple-600 dark:bg-purple-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Tipo
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Evento
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Descripción
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Estado
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -193,8 +193,8 @@ export function NotificationEventTypeList({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${eventType.is_active
-                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-                          : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+                          ? "bg-green-100 dark:bg-green-600 text-green-800 dark:text-white"
+                          : "bg-red-100 dark:bg-red-600 text-red-800 dark:text-white"
                         }`}
                     >
                       {eventType.is_active ? "Activo" : "Inactivo"}
@@ -207,8 +207,8 @@ export function NotificationEventTypeList({
                         onClick={() => handleToggleActive(eventType)}
                         className={`p-1.5 rounded-md transition-colors ${
                           eventType.is_active
-                            ? "bg-green-50 text-green-600 hover:bg-green-100"
-                            : "bg-gray-100 text-gray-400 hover:bg-gray-200"
+                            ? "bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-100 dark:hover:bg-green-900/30"
+                            : "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-600"
                         }`}
                         title={eventType.is_active ? "Desactivar" : "Activar"}
                       >
@@ -223,7 +223,7 @@ export function NotificationEventTypeList({
                       <button
                         type="button"
                         onClick={() => onEdit(eventType)}
-                        className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
+                        className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
                         title="Editar"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -233,7 +233,7 @@ export function NotificationEventTypeList({
                       <button
                         type="button"
                         onClick={() => setDeleteModal({ isOpen: true, eventType })}
-                        className="p-1.5 rounded-md bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        className="p-1.5 rounded-md bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                         title="Eliminar"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

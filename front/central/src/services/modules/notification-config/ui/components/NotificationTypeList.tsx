@@ -76,7 +76,7 @@ export function NotificationTypeList({
         <button
           type="button"
           onClick={onCreate}
-          className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+          className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
           title="Nuevo Tipo"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -86,22 +86,22 @@ export function NotificationTypeList({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-purple-600 dark:bg-purple-700">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Nombre
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Código
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Descripción
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                 Estado
               </th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+              <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
                 Acciones
               </th>
             </tr>
@@ -127,7 +127,7 @@ export function NotificationTypeList({
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <code className="text-sm text-gray-600 dark:text-gray-300 bg-gray-100 px-2 py-1 rounded">
+                    <code className="text-sm text-green-800 dark:text-green-200 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded font-semibold">
                       {type.code}
                     </code>
                   </td>
@@ -140,8 +140,8 @@ export function NotificationTypeList({
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
                         type.is_active
-                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
-                          : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
+                          ? "bg-green-100 dark:bg-green-600 text-green-800 dark:text-white"
+                          : "bg-red-100 dark:bg-red-600 text-red-800 dark:text-white"
                       }`}
                     >
                       {type.is_active ? "Activo" : "Inactivo"}
@@ -152,7 +152,7 @@ export function NotificationTypeList({
                       <button
                         type="button"
                         onClick={() => onEdit(type)}
-                        className="p-1.5 rounded-md bg-amber-50 text-amber-600 hover:bg-amber-100 transition-colors"
+                        className="p-1.5 rounded-md bg-amber-50 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition-colors"
                         title="Editar"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -162,7 +162,7 @@ export function NotificationTypeList({
                       <button
                         type="button"
                         onClick={() => setDeleteModal({ isOpen: true, type })}
-                        className="p-1.5 rounded-md bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                        className="p-1.5 rounded-md bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
                         title="Eliminar"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

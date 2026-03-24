@@ -50,19 +50,22 @@ export default function OrderStatusPage() {
                 </div>
                 <div className="flex gap-2">
                     <Button
-                        variant="outline"
+                        variant="primary"
+                        className="!bg-purple-600 hover:!bg-purple-700 dark:!bg-purple-700 dark:hover:!bg-purple-800 !text-white"
                         onClick={() => setShowChannelStatusModal(true)}
                     >
                         Estados por Canal
                     </Button>
                     <Button
-                        variant="outline"
+                        variant="primary"
+                        className="!bg-purple-600 hover:!bg-purple-700 dark:!bg-purple-700 dark:hover:!bg-purple-800 !text-white"
                         onClick={() => setShowCatalogModal(true)}
                     >
                         Estados de Probability
                     </Button>
                     <Button
                         variant="primary"
+                        className="!bg-purple-600 hover:!bg-purple-700 dark:!bg-purple-700 dark:hover:!bg-purple-800 !text-white"
                         onClick={() => setShowCreateModal(true)}
                     >
                         + Crear Mapping

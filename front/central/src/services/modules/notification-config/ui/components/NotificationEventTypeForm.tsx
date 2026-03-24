@@ -179,7 +179,7 @@ export function NotificationEventTypeForm({
                     notification_type_id: parseInt(e.target.value),
                   } as CreateNotificationEventTypeDTO)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-purple-500 focus:border-purple-500 dark:focus:ring-purple-400 dark:focus:border-purple-400"
                 required
                 disabled={loadingTypes}
               >
@@ -283,7 +283,7 @@ export function NotificationEventTypeForm({
               <button
                 type="button"
                 onClick={handleSelectAll}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium"
+                className="text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300 font-medium"
               >
                 Seleccionar todos
               </button>
@@ -315,7 +315,7 @@ export function NotificationEventTypeForm({
                       onClick={() => toggleStatusId(status.id)}
                       className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg border transition-colors ${
                         isChecked
-                          ? "bg-blue-50 border-blue-200"
+                          ? "bg-purple-50 dark:bg-purple-900/20 border-purple-200 dark:border-purple-600"
                           : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:bg-gray-50"
                       }`}
                     >
@@ -330,7 +330,7 @@ export function NotificationEventTypeForm({
                       </span>
                       <div
                         className={`relative w-9 h-5 rounded-full shrink-0 transition-colors ${
-                          isChecked ? "bg-blue-500" : "bg-gray-300"
+                          isChecked ? "bg-purple-600 dark:bg-purple-600" : "bg-gray-300"
                         }`}
                       >
                         <div
@@ -351,7 +351,7 @@ export function NotificationEventTypeForm({
             </p>
           )}
           {selectedStatusIds.length > 0 && (
-            <p className="text-xs text-blue-600">
+            <p className="text-xs text-purple-600 dark:text-purple-400">
               {selectedStatusIds.length} estado(s) seleccionado(s)
             </p>
           )}

@@ -43,13 +43,13 @@ export function MessageAuditPlaceholder() {
         <div className="space-y-2">
           <p className="text-xs font-medium text-gray-400">Últimos mensajes</p>
           {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 animate-pulse">
-              <div className="w-8 h-8 rounded-full bg-gray-200 shrink-0" />
+            <div key={i} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-700 animate-pulse">
+              <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-600 shrink-0" />
               <div className="flex-1 space-y-1.5">
-                <div className="h-3 bg-gray-200 rounded w-3/4" />
-                <div className="h-2.5 bg-gray-200 rounded w-1/2" />
+                <div className="h-3 bg-gray-200 dark:bg-gray-600 rounded w-3/4" />
+                <div className="h-2.5 bg-gray-200 dark:bg-gray-600 rounded w-1/2" />
               </div>
-              <div className="h-5 w-14 bg-gray-200 rounded-full shrink-0" />
+              <div className="h-5 w-14 bg-gray-200 dark:bg-gray-600 rounded-full shrink-0" />
             </div>
           ))}
         </div>

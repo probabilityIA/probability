@@ -41,14 +41,14 @@ const CHANNEL_COLORS: Record<string, { bg: string; selectedBg: string }> = {
   whatsapp: { bg: "bg-green-50 border-green-200 text-green-700", selectedBg: "bg-green-500 border-green-600 text-white" },
   email: { bg: "bg-orange-50 border-orange-200 text-orange-700", selectedBg: "bg-orange-500 border-orange-600 text-white" },
   sms: { bg: "bg-purple-50 border-purple-200 text-purple-700", selectedBg: "bg-purple-500 border-purple-600 text-white" },
-  sse: { bg: "bg-blue-50 border-blue-200 text-blue-700", selectedBg: "bg-blue-500 border-blue-600 text-white" },
+  sse: { bg: "bg-purple-50 border-purple-200 text-purple-700", selectedBg: "bg-purple-500 border-purple-600 text-white" },
 };
 
 const CHANNEL_BADGE: Record<string, string> = {
   whatsapp: "bg-green-100 text-green-700",
   email: "bg-orange-100 text-orange-700",
   sms: "bg-purple-100 text-purple-700",
-  sse: "bg-blue-100 text-blue-700",
+  sse: "bg-purple-100 text-purple-700",
 };
 
 export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: RuleCardProps) {
@@ -106,10 +106,10 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
   const eventName = selectedEvent?.event_name || "";
 
   return (
-    <tr className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors align-top">
+    <tr className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors align-top">
       {/* # */}
       <td className="py-3 px-3 text-center">
-        <span className="text-[10px] font-bold text-gray-400 bg-gray-100 rounded-full w-5 h-5 inline-flex items-center justify-center">
+        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 bg-gray-100 dark:bg-gray-700 rounded-full w-5 h-5 inline-flex items-center justify-center">
           {index + 1}
         </span>
       </td>
@@ -164,7 +164,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
                 const eventTypeId = parseInt(e.target.value) || 0;
                 onChange({ ...rule, notification_event_type_id: eventTypeId, order_status_ids: [] });
               }}
-              className="w-full px-2 py-1 border border-gray-300 rounded text-xs focus:ring-blue-500 focus:border-blue-500"
+              className="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded text-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-purple-500 focus:border-purple-500 dark:focus:ring-purple-400 dark:focus:border-purple-400"
               disabled={loadingEvents}
             >
               <option value="0">Seleccionar...</option>
@@ -231,7 +231,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
           className="inline-flex items-center gap-1"
           title={rule.enabled ? "Desactivar" : "Activar"}
         >
-          <div className={`relative w-8 h-[18px] rounded-full transition-colors ${rule.enabled ? "bg-green-500" : "bg-gray-300"}`}>
+          <div className={`relative w-8 h-[18px] rounded-full transition-colors ${rule.enabled ? "bg-green-500 dark:bg-green-600" : "bg-gray-300 dark:bg-gray-600"}`}>
             <div className={`absolute top-[2px] w-[14px] h-[14px] rounded-full bg-white dark:bg-gray-800 shadow transition-transform ${rule.enabled ? "translate-x-[14px]" : "translate-x-[2px]"}`} />
           </div>
         </button>
@@ -242,7 +242,7 @@ export function RuleCard({ rule, index, orderStatuses, onChange, onDelete }: Rul
         <button
           type="button"
           onClick={onDelete}
-          className="p-1.5 rounded-md bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+          className="p-1.5 rounded-md bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors"
           title="Eliminar"
         >
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -27,10 +27,10 @@ function maskPhone(phone: string): string {
 }
 
 const statusBadge: Record<string, { bg: string; text: string; label: string }> = {
-  sent: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Enviado' },
-  delivered: { bg: 'bg-green-100', text: 'text-green-700', label: 'Entregado' },
-  read: { bg: 'bg-emerald-100', text: 'text-emerald-700', label: 'Leido' },
-  failed: { bg: 'bg-red-100', text: 'text-red-700', label: 'Fallido' },
+  sent: { bg: 'bg-purple-100 dark:bg-purple-600', text: 'text-purple-700 dark:text-white', label: 'Enviado' },
+  delivered: { bg: 'bg-green-100 dark:bg-green-600', text: 'text-green-700 dark:text-white', label: 'Entregado' },
+  read: { bg: 'bg-emerald-100 dark:bg-emerald-600', text: 'text-emerald-700 dark:text-white', label: 'Leido' },
+  failed: { bg: 'bg-red-100 dark:bg-red-600', text: 'text-red-700 dark:text-white', label: 'Fallido' },
 };
 
 const directionLabel: Record<string, string> = {
@@ -123,14 +123,14 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
             type="date"
             value={dateFrom}
             onChange={(e) => setDateFrom(e.target.value)}
-            className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400"
           />
-          <span className="text-xs text-gray-400">a</span>
+          <span className="text-xs text-gray-400 dark:text-white">a</span>
           <input
             type="date"
             value={dateTo}
             onChange={(e) => setDateTo(e.target.value)}
-            className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400"
           />
         </div>
       </div>
@@ -144,7 +144,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
           <select
             value={status}
             onChange={(e) => setStatus(e.target.value)}
-            className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400"
           >
             <option value="">Todos los estados</option>
             <option value="sent">Enviado</option>
@@ -157,27 +157,27 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
             value={templateName}
             onChange={(e) => setTemplateName(e.target.value)}
             placeholder="Buscar plantilla..."
-            className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 w-40"
+            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-purple-500 dark:focus:ring-purple-400 w-40"
           />
         </div>
 
         {/* Table */}
         <div className="overflow-x-auto">
           <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
-                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Fecha</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Destino</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Orden</th>
-                <th className="text-left py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Plantilla</th>
-                <th className="text-center py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Estado</th>
-                <th className="text-center py-2 px-2 font-medium text-gray-500 dark:text-gray-400">Direccion</th>
+            <thead className="bg-purple-600 dark:bg-purple-700">
+              <tr className="border-b border-purple-700 dark:border-purple-800">
+                <th className="text-left py-2 px-2 font-medium text-white">Fecha</th>
+                <th className="text-left py-2 px-2 font-medium text-white">Destino</th>
+                <th className="text-left py-2 px-2 font-medium text-white">Orden</th>
+                <th className="text-left py-2 px-2 font-medium text-white">Plantilla</th>
+                <th className="text-center py-2 px-2 font-medium text-white">Estado</th>
+                <th className="text-center py-2 px-2 font-medium text-white">Direccion</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
                 Array.from({ length: 5 }).map((_, i) => (
-                  <tr key={i} className="border-b border-gray-100">
+                  <tr key={i} className="border-b border-gray-100 dark:border-gray-700">
                     {Array.from({ length: 6 }).map((_, j) => (
                       <td key={j} className="py-2 px-2">
                         <div className="h-4 bg-gray-200 rounded animate-pulse" />
@@ -195,8 +195,8 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                 logs.map((log) => {
                   const badge = statusBadge[log.status] || statusBadge.sent;
                   return (
-                    <tr key={log.id} className="border-b border-gray-100 hover:bg-gray-50">
-                      <td className="py-2 px-2 text-gray-600 dark:text-gray-300 whitespace-nowrap">
+                    <tr key={log.id} className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                      <td className="py-2 px-2 text-gray-600 dark:text-white whitespace-nowrap">
                         {new Date(log.created_at).toLocaleDateString('es-CO', {
                           day: '2-digit',
                           month: 'short',
@@ -204,13 +204,13 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                           minute: '2-digit',
                         })}
                       </td>
-                      <td className="py-2 px-2 text-gray-700 dark:text-gray-200 font-mono">
+                      <td className="py-2 px-2 text-gray-700 dark:text-white font-mono">
                         {maskPhone(log.phone_number)}
                       </td>
-                      <td className="py-2 px-2 text-gray-600 dark:text-gray-300">
+                      <td className="py-2 px-2 text-gray-600 dark:text-white">
                         {log.order_number || '-'}
                       </td>
-                      <td className="py-2 px-2 text-gray-600 dark:text-gray-300 max-w-[120px] truncate">
+                      <td className="py-2 px-2 text-gray-600 dark:text-white max-w-[120px] truncate">
                         {log.template_name || '-'}
                       </td>
                       <td className="py-2 px-2 text-center">
@@ -218,7 +218,7 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
                           {badge.label}
                         </span>
                       </td>
-                      <td className="py-2 px-2 text-center text-gray-500 dark:text-gray-400">
+                      <td className="py-2 px-2 text-center text-gray-500 dark:text-white">
                         {directionLabel[log.direction] || log.direction}
                       </td>
                     </tr>
@@ -239,14 +239,14 @@ export function MessageAudit({ businessId }: MessageAuditProps) {
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50"
+                className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
               >
                 Anterior
               </button>
               <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="px-2 py-1 text-xs border border-gray-300 rounded disabled:opacity-40 hover:bg-gray-50"
+                className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 transition-colors"
               >
                 Siguiente
               </button>

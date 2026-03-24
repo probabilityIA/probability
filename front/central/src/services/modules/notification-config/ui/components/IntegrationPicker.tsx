@@ -14,7 +14,7 @@ function IntegrationButton({ integration, onSelect }: { integration: Integration
     <button
       type="button"
       onClick={() => onSelect(integration)}
-      className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-blue-50 hover:border-blue-300 transition-all text-left group"
+      className="flex items-center gap-3 px-4 py-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-300 dark:hover:border-purple-600 transition-all text-left group"
     >
       {integration.image_url ? (
         <img
@@ -23,21 +23,21 @@ function IntegrationButton({ integration, onSelect }: { integration: Integration
           className="w-9 h-9 object-contain rounded shrink-0"
         />
       ) : (
-        <div className="w-9 h-9 rounded bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-blue-100">
-          <span className="text-sm font-bold text-gray-400 group-hover:text-blue-500">
+        <div className="w-9 h-9 rounded bg-gray-100 flex items-center justify-center shrink-0 group-hover:bg-purple-100 dark:group-hover:bg-purple-900/30">
+          <span className="text-sm font-bold text-gray-400 group-hover:text-purple-600 dark:group-hover:text-purple-400">
             {integration.name?.charAt(0).toUpperCase() || "?"}
           </span>
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-blue-700">
+        <p className="text-sm font-medium text-gray-900 dark:text-white truncate group-hover:text-purple-700 dark:group-hover:text-purple-400">
           {integration.name}
         </p>
         <p className="text-xs text-gray-500 dark:text-gray-400">
           {integration.category_name || integration.type}
         </p>
       </div>
-      <svg className="w-5 h-5 text-gray-300 group-hover:text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg className="w-5 h-5 text-gray-300 group-hover:text-purple-500 dark:group-hover:text-purple-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
       </svg>
     </button>

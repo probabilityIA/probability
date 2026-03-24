@@ -162,7 +162,7 @@ export function IntegrationRulesForm({
   return (
     <div className="space-y-4">
       {/* Integration header */}
-      <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 border border-gray-200">
+      <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600">
         {integration.image_url ? (
           <img
             src={integration.image_url}
@@ -170,7 +170,7 @@ export function IntegrationRulesForm({
             className="w-8 h-8 object-contain rounded"
           />
         ) : (
-          <div className="w-8 h-8 rounded bg-gray-200 flex items-center justify-center">
+          <div className="w-8 h-8 rounded bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
             <span className="text-xs font-bold text-gray-500 dark:text-gray-400">
               {integration.type?.charAt(0).toUpperCase() || "?"}
             </span>
@@ -188,21 +188,21 @@ export function IntegrationRulesForm({
       ) : (
         <>
           {/* Rules table */}
-          <div className="border border-gray-200 rounded-lg overflow-hidden">
+          <div className="border border-gray-200 dark:border-gray-600 rounded-lg overflow-hidden">
             {rules.filter((r) => !r._deleted).length === 0 ? (
               <div className="text-center py-8 text-gray-400">
                 No hay reglas configuradas. Agrega una para empezar.
               </div>
             ) : (
               <table className="w-full">
-                <thead>
-                  <tr className="bg-gray-50 border-b border-gray-200">
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-center w-10">#</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-left w-[120px]">Canal</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-left w-[160px]">Evento</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-left">Estados</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-center w-[70px]">Activo</th>
-                    <th className="py-2 px-3 text-[10px] font-semibold text-gray-500 dark:text-gray-400 uppercase text-center w-[50px]"></th>
+                <thead className="bg-purple-600 dark:bg-purple-700">
+                  <tr className="border-b border-purple-700 dark:border-purple-800">
+                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-10">#</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[120px]">Canal</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left w-[160px]">Evento</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-left">Estados</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[70px]">Activo</th>
+                    <th className="py-2 px-3 text-[10px] font-semibold text-white uppercase text-center w-[50px]"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -228,7 +228,7 @@ export function IntegrationRulesForm({
             <button
               type="button"
               onClick={handleAddRule}
-              className="p-2 rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+              className="p-2 rounded-lg bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 hover:bg-purple-200 dark:hover:bg-purple-900/50 transition-colors"
               title="Agregar regla"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
