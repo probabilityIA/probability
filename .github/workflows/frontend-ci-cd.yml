@@ -40,7 +40,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./front/central
-        run: pnpm install --frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Ejecutar tests unitarios
         working-directory: ./front/central
