@@ -68,10 +68,13 @@ export default function WarehouseManager() {
                     </p>
                 </div>
                 {!requiresBusinessSelection && (
-                    <Button variant="primary" onClick={openCreate}>
-                        <PlusIcon className="w-4 h-4 mr-2" />
+                    <button
+                        onClick={openCreate}
+                        className="px-5 py-3 bg-gradient-to-r from-[#7c3aed] to-[#6d28d9] hover:from-[#6d28d9] hover:to-[#5b21b6] text-white font-bold rounded-lg shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:scale-110 hover:-translate-y-1 flex items-center gap-2"
+                    >
+                        <PlusIcon className="w-4 h-4" />
                         Nueva bodega
-                    </Button>
+                    </button>
                 )}
             </div>
 

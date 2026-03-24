@@ -105,7 +105,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
                 {warehouse.address ? (
                     <p className="text-gray-900 dark:text-white truncate max-w-[200px]" title={warehouse.address}>{warehouse.address}</p>
                 ) : (
-                    <p className="text-gray-300">&mdash;</p>
+                    <p className="text-gray-500 dark:text-gray-400">&mdash;</p>
                 )}
                 {(warehouse.city || warehouse.state) && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -123,19 +123,19 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
                     <p className="text-xs text-gray-500 dark:text-gray-400">{warehouse.phone}</p>
                 ) : null}
                 {!warehouse.contact_name && !warehouse.phone && (
-                    <span className="text-gray-300">&mdash;</span>
+                    <span className="text-gray-500 dark:text-gray-400">&mdash;</span>
                 )}
             </div>
         ),
         badges: (
             <div className="flex justify-center gap-1">
                 {warehouse.is_default && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
                         Principal
                     </span>
                 )}
                 {warehouse.is_fulfillment && (
-                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
                         Fulfillment
                     </span>
                 )}
@@ -143,7 +143,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
         ),
         status: (
             <div className="flex justify-center">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${warehouse.is_active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600 dark:text-gray-300'}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${warehouse.is_active ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200' : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}>
                     {warehouse.is_active ? 'Activa' : 'Inactiva'}
                 </span>
             </div>
@@ -195,7 +195,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Buscar por nombre o código..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors"
                 />
                 <button
                     type="submit"
@@ -207,7 +207,7 @@ export default function WarehouseList({ onView, onEdit, onRefreshRef, selectedBu
                     <button
                         type="button"
                         onClick={handleClearSearch}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     >
                         Limpiar
                     </button>
