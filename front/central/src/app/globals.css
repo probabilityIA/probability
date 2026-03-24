@@ -355,14 +355,8 @@
 
 .table th {
   @apply px-6 py-4 text-sm font-semibold text-left;
-  background: var(--color-primary);
+  background: #7c3aed;
   color: white;
-}
-
-@media (prefers-color-scheme: dark) {
-  .table th {
-    background: #7c3aed;
-  }
 }
 
 .table td {
