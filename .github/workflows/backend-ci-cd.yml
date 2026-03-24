@@ -31,7 +31,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.23'
+          go-version: '1.24'
           cache-dependency-path: back/central/go.sum
 
       - name: Ejecutar tests unitarios
@@ -87,7 +87,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: '1.23'
+          go-version: '1.24'
           cache-dependency-path: back/central/go.sum
 
       - name: Configure AWS credentials
