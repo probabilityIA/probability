@@ -27,7 +27,7 @@ export default function NotificationChannelsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8">
       <div className="space-y-6">
         <div>
           <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Canales de Notificación</h1>
