@@ -35,11 +35,15 @@ func (r *Repository) CountOrdersByClientID(ctx context.Context, clientID uint) (
 	return count, err
 }
 
-func (r *Repository) UpdateOrderScore(ctx context.Context, orderID string, score float64, factors []byte) error {
+func (r *Repository) UpdateOrderScore(ctx context.Context, orderID string, score float64, factors []byte, breakdown []byte) error {
+	updates := map[string]interface{}{
+		"delivery_probability": score,
+		"negative_factors":     factors,
+	}
+	if breakdown != nil {
+		updates["score_breakdown"] = breakdown
+	}
 	return r.db.Conn(ctx).Model(&models.Order{}).
 		Where("id = ?", orderID).
-		Updates(map[string]interface{}{
-			"delivery_probability": score,
-			"negative_factors":     factors,
-		}).Error
+		Updates(updates).Error
 }

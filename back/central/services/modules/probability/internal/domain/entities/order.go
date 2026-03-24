@@ -20,6 +20,15 @@ type ScoreOrder struct {
 	Payments           []ScorePayment
 	Addresses          []ScoreAddress
 	ChannelMetadata    []ScoreChannelMetadata
+	TotalAmount        float64
+	IsPaid             bool
+	IsConfirmed        *bool
+	Coupon             *string
+	Weight             *float64
+	PaymentMethodID    uint
+	OrderItemCount     int
+	CustomerHistory    *CustomerHistory
+	DeliveryHistory    *DeliveryHistory
 }
 
 // ScorePayment contiene los datos de pago relevantes para scoring

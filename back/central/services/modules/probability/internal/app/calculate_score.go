@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"math"
 	"regexp"
 	"strings"
 	"unicode"
@@ -11,53 +12,225 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// CalculateOrderScore calcula el score de una orden y sus factores negativos
-func (uc *UseCaseScore) CalculateOrderScore(order *entities.ScoreOrder) (float64, []string) {
-	// Start with 100
-	score := 100.0
+// Category weights
+const (
+	weightDataQuality     = 0.30
+	weightPurchaseHistory = 0.25
+	weightLogistics       = 0.20
+	weightOrderChars      = 0.15
+	weightPaymentRisk     = 0.10
+)
 
-	// Get Static Negative Factors
-	staticFactors := uc.GetStaticNegativeFactors(order)
+// CalculateOrderScore calcula el score de una orden usando un sistema de categorias ponderadas.
+// Retorna el score final, la lista plana de factores negativos, y el desglose completo.
+func (uc *UseCaseScore) CalculateOrderScore(order *entities.ScoreOrder) (float64, []string, *entities.ScoreBreakdown) {
+	var categories []entities.CategoryResult
+	var allFactors []string
 
-	// Apply penalties for static factors
-	// Each factor reduces score by 10 (example weight)
-	// Python reference used weights. We will assume 10 per factor for now or matching Python.
-	// Mapa de penalizaciones
-	criteriaMap := map[string]float64{
-		"Email válido":             -10,
-		"Nombre y apellido":        -10,
-		"Canal de venta":           -10,
-		"Teléfono":                 -10,
-		"Dirección":                -10,
-		"Complemento de dirección": -10,
-		"Historial de compra":      -10,
+	// --- Category 1: Data Quality (30%) ---
+	dqScore, dqFactors := uc.scoreDataQuality(order)
+	dqWeighted := dqScore * weightDataQuality
+	categories = append(categories, entities.CategoryResult{
+		Name:          "Calidad de datos",
+		Weight:        weightDataQuality,
+		RawScore:      math.Round(dqScore*100) / 100,
+		WeightedScore: math.Round(dqWeighted*100) / 100,
+		Factors:       dqFactors,
+	})
+	allFactors = append(allFactors, dqFactors...)
+
+	// --- Category 2: Purchase History (25%) ---
+	phScore, phFactors := uc.scorePurchaseHistory(order)
+	phWeighted := phScore * weightPurchaseHistory
+	categories = append(categories, entities.CategoryResult{
+		Name:          "Historial de compra",
+		Weight:        weightPurchaseHistory,
+		RawScore:      math.Round(phScore*100) / 100,
+		WeightedScore: math.Round(phWeighted*100) / 100,
+		Factors:       phFactors,
+	})
+	allFactors = append(allFactors, phFactors...)
+
+	// --- Category 3: Logistics (20%) ---
+	logScore, logFactors := uc.scoreLogistics(order)
+	logWeighted := logScore * weightLogistics
+	categories = append(categories, entities.CategoryResult{
+		Name:          "Logistica",
+		Weight:        weightLogistics,
+		RawScore:      math.Round(logScore*100) / 100,
+		WeightedScore: math.Round(logWeighted*100) / 100,
+		Factors:       logFactors,
+	})
+	allFactors = append(allFactors, logFactors...)
+
+	// --- Category 4: Order Characteristics (15%) ---
+	ocScore, ocFactors := uc.scoreOrderCharacteristics(order)
+	ocWeighted := ocScore * weightOrderChars
+	categories = append(categories, entities.CategoryResult{
+		Name:          "Caracteristicas del pedido",
+		Weight:        weightOrderChars,
+		RawScore:      math.Round(ocScore*100) / 100,
+		WeightedScore: math.Round(ocWeighted*100) / 100,
+		Factors:       ocFactors,
+	})
+	allFactors = append(allFactors, ocFactors...)
+
+	// --- Category 5: Payment Risk (10%) ---
+	prScore, prFactors := uc.scorePaymentRisk(order)
+	prWeighted := prScore * weightPaymentRisk
+	categories = append(categories, entities.CategoryResult{
+		Name:          "Riesgo de pago",
+		Weight:        weightPaymentRisk,
+		RawScore:      math.Round(prScore*100) / 100,
+		WeightedScore: math.Round(prWeighted*100) / 100,
+		Factors:       prFactors,
+	})
+	allFactors = append(allFactors, prFactors...)
+
+	// --- Final score ---
+	finalScore := dqWeighted + phWeighted + logWeighted + ocWeighted + prWeighted
+
+	// Clamp to [0, 100]
+	if finalScore < 0 {
+		finalScore = 0
+	}
+	if finalScore > 100 {
+		finalScore = 100
 	}
 
-	// Calculate Score based on factors
-	for _, factor := range staticFactors {
-		if penalty, exists := criteriaMap[factor]; exists {
-			score += penalty // Penalty is negative
+	// Round to 2 decimals
+	finalScore = math.Round(finalScore*100) / 100
+
+	breakdown := &entities.ScoreBreakdown{
+		FinalScore:      finalScore,
+		Categories:      categories,
+		NegativeFactors: allFactors,
+	}
+
+	return finalScore, allFactors, breakdown
+}
+
+// scoreLogistics calculates Category 3: Logistics score (0-100)
+func (uc *UseCaseScore) scoreLogistics(order *entities.ScoreOrder) (float64, []string) {
+	var factors []string
+	score := 100.0
+
+	// Sub-signal 1: Delivery history failure rate (60%)
+	deliveryScore := 100.0
+	if order.DeliveryHistory != nil && order.DeliveryHistory.TotalShipments > 0 {
+		failRate := float64(order.DeliveryHistory.FailedShipments) / float64(order.DeliveryHistory.TotalShipments) * 100
+		deliveryScore = tierScoreDesc(failRate, []tier{
+			{0, 100}, {10, 70}, {25, 40}, {50, 10},
+		})
+		if failRate >= 10 {
+			factors = append(factors, "Alta tasa de envios fallidos del cliente")
 		}
 	}
 
-	// COD Logic
+	// Sub-signal 2: Distinct addresses (20%)
+	addressScore := 100.0
+	if order.CustomerHistory != nil && order.CustomerHistory.DistinctAddresses > 5 {
+		addressScore = 50.0
+		factors = append(factors, "Multiples direcciones de envio distintas")
+	}
+
+	// Sub-signal 3: Weight anomaly (20%)
+	weightScore := 100.0
+	if order.Weight != nil && *order.Weight > 50.0 {
+		weightScore = 60.0
+		factors = append(factors, "Peso del pedido inusualmente alto")
+	}
+
+	score = deliveryScore*0.60 + addressScore*0.20 + weightScore*0.20
+
+	return math.Round(score*100) / 100, factors
+}
+
+// scoreOrderCharacteristics calculates Category 4: Order Characteristics score (0-100)
+func (uc *UseCaseScore) scoreOrderCharacteristics(order *entities.ScoreOrder) (float64, []string) {
+	var factors []string
+	score := 100.0
+
+	// Sub-signal 1: Order value range (30%)
+	valueScore := 100.0
+	if order.TotalAmount > 2000000 {
+		valueScore = 50.0
+		factors = append(factors, "Valor del pedido muy alto")
+	} else if order.TotalAmount > 1000000 {
+		valueScore = 75.0
+	} else if order.TotalAmount <= 0 {
+		valueScore = 30.0
+		factors = append(factors, "Valor del pedido es cero o negativo")
+	}
+
+	// Sub-signal 2: Item count (20%)
+	itemScore := 100.0
+	if order.OrderItemCount > 20 {
+		itemScore = 50.0
+		factors = append(factors, "Cantidad de items inusualmente alta")
+	} else if order.OrderItemCount > 10 {
+		itemScore = 75.0
+	}
+
+	// Sub-signal 3: Coupon usage (15%)
+	couponScore := 100.0
+	if order.Coupon != nil && *order.Coupon != "" {
+		couponScore = 80.0
+	}
+
+	// Sub-signal 4: Confirmation status (20%)
+	confirmScore := 100.0
+	if order.IsConfirmed != nil && !*order.IsConfirmed {
+		confirmScore = 50.0
+		factors = append(factors, "Pedido no confirmado")
+	}
+
+	// Sub-signal 5: COD penalty (15%)
+	codScore := 100.0
 	if uc.IsCODPayment(order) {
-		score = score * 0.8 // Apply 20% reduction
-		// Add to factors so user knows why it's not 100%
-		staticFactors = append(staticFactors, "Pago Contra Entrega")
+		codScore = 60.0
+		factors = append(factors, "Pago Contra Entrega")
 	}
 
-	// Ensure limits
-	if score < 0 {
-		score = 0
-	}
-	if score > 100 {
-		score = 100
+	score = valueScore*0.30 + itemScore*0.20 + couponScore*0.15 + confirmScore*0.20 + codScore*0.15
+
+	return math.Round(score*100) / 100, factors
+}
+
+// scorePaymentRisk calculates Category 5: Payment Risk score (0-100)
+func (uc *UseCaseScore) scorePaymentRisk(order *entities.ScoreOrder) (float64, []string) {
+	var factors []string
+	score := 100.0
+
+	// Sub-signal 1: Payment status (50%)
+	paymentScore := 100.0
+	if !order.IsPaid {
+		paymentScore = 40.0
+		factors = append(factors, "Pedido no pagado")
 	}
 
-	// Redondear a 2 decimales
-	finalScore := float64(int(score*100)) / 100
-	return finalScore, staticFactors
+	// Sub-signal 2: COD risk (30%)
+	codRiskScore := 100.0
+	if uc.IsCODPayment(order) {
+		codRiskScore = 50.0
+		// COD factor is already added in order characteristics, avoid duplicate
+	}
+
+	// Sub-signal 3: Customer COD history (20%)
+	codHistoryScore := 100.0
+	if order.CustomerHistory != nil && order.CustomerHistory.TotalOrders > 0 {
+		codRate := float64(order.CustomerHistory.CODOrderCount) / float64(order.CustomerHistory.TotalOrders) * 100
+		if codRate >= 80 {
+			codHistoryScore = 40.0
+			factors = append(factors, "Cliente con alta proporcion de pedidos contra entrega")
+		} else if codRate >= 50 {
+			codHistoryScore = 70.0
+		}
+	}
+
+	score = paymentScore*0.50 + codRiskScore*0.30 + codHistoryScore*0.20
+
+	return math.Round(score*100) / 100, factors
 }
 
 // GetStaticNegativeFactors obtiene la lista de factores negativos estáticos

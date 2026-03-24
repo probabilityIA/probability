@@ -10,12 +10,16 @@ import (
 type IRepository interface {
 	GetOrderForScoring(ctx context.Context, orderID string) (*entities.ScoreOrder, error)
 	CountOrdersByClientID(ctx context.Context, clientID uint) (int64, error)
-	UpdateOrderScore(ctx context.Context, orderID string, score float64, factors []byte) error
+	UpdateOrderScore(ctx context.Context, orderID string, score float64, factors []byte, breakdown []byte) error
+	GetCustomerOrderHistory(ctx context.Context, customerID uint, excludeOrderID string) (*entities.CustomerHistory, error)
+	GetCustomerDeliveryHistory(ctx context.Context, customerID uint) (*entities.DeliveryHistory, error)
+	GetOrderItemCount(ctx context.Context, orderID string) (int, error)
+	GetPaymentMethodCategory(ctx context.Context, paymentMethodID uint) (string, error)
 }
 
 // IScoreUseCase define los casos de uso del modulo de probability
 type IScoreUseCase interface {
-	CalculateOrderScore(order *entities.ScoreOrder) (float64, []string)
+	CalculateOrderScore(order *entities.ScoreOrder) (float64, []string, *entities.ScoreBreakdown)
 	CalculateAndUpdateOrderScore(ctx context.Context, orderID string) error
 }
 

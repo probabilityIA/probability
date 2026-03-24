@@ -7,15 +7,21 @@ import (
 
 func OrderToScoreOrder(m *models.Order) *entities.ScoreOrder {
 	order := &entities.ScoreOrder{
-		ID:             m.ID,
-		OrderNumber:    m.OrderNumber,
-		IntegrationID:  m.IntegrationID,
-		CustomerEmail:  m.CustomerEmail,
-		CustomerName:   m.CustomerName,
-		Platform:       m.Platform,
-		CustomerPhone:  m.CustomerPhone,
-		ShippingStreet: m.ShippingStreet,
-		CodTotal:       m.CodTotal,
+		ID:              m.ID,
+		OrderNumber:     m.OrderNumber,
+		IntegrationID:   m.IntegrationID,
+		CustomerEmail:   m.CustomerEmail,
+		CustomerName:    m.CustomerName,
+		Platform:        m.Platform,
+		CustomerPhone:   m.CustomerPhone,
+		ShippingStreet:  m.ShippingStreet,
+		CodTotal:        m.CodTotal,
+		TotalAmount:     m.TotalAmount,
+		IsPaid:          m.IsPaid,
+		IsConfirmed:     m.IsConfirmed,
+		Coupon:          m.Coupon,
+		Weight:          m.Weight,
+		PaymentMethodID: m.PaymentMethodID,
 	}
 
 	// BusinessID

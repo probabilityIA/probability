@@ -52,10 +52,47 @@ func (uc *UseCaseScore) CalculateAndUpdateOrderScore(ctx context.Context, orderI
 		}
 	}
 
-	// 4. Calculate score
-	score, factors := uc.CalculateOrderScore(order)
+	// 4. Fetch customer order history (for purchase history, logistics, and payment risk categories)
+	if order.CustomerID != nil {
+		customerHistory, err := uc.repo.GetCustomerOrderHistory(ctx, *order.CustomerID, orderID)
+		if err != nil {
+			uc.log.Warn(ctx).Err(err).Str("order_id", orderID).Msg("Could not fetch customer order history, scoring will use defaults")
+		} else {
+			order.CustomerHistory = customerHistory
+		}
+	}
 
-	// 5. Serialize factors
+	// 5. Fetch customer delivery history (for logistics category)
+	if order.CustomerID != nil {
+		deliveryHistory, err := uc.repo.GetCustomerDeliveryHistory(ctx, *order.CustomerID)
+		if err != nil {
+			uc.log.Warn(ctx).Err(err).Str("order_id", orderID).Msg("Could not fetch customer delivery history, scoring will use defaults")
+		} else {
+			order.DeliveryHistory = deliveryHistory
+		}
+	}
+
+	// 6. Fetch order item count (for order characteristics category)
+	itemCount, err := uc.repo.GetOrderItemCount(ctx, orderID)
+	if err != nil {
+		uc.log.Warn(ctx).Err(err).Str("order_id", orderID).Msg("Could not fetch order item count, scoring will use default 0")
+	} else {
+		order.OrderItemCount = itemCount
+	}
+
+	// 7. Fetch payment method category (for payment risk category)
+	if order.PaymentMethodID > 0 {
+		_, err := uc.repo.GetPaymentMethodCategory(ctx, order.PaymentMethodID)
+		if err != nil {
+			uc.log.Warn(ctx).Err(err).Str("order_id", orderID).Msg("Could not fetch payment method category")
+		}
+		// The category can be used in future scoring refinements
+	}
+
+	// 8. Calculate score (returns score, factors list, and full breakdown)
+	score, factors, breakdown := uc.CalculateOrderScore(order)
+
+	// 9. Serialize factors
 	var factorsJSON []byte
 	if len(factors) > 0 {
 		factorsJSON, _ = json.Marshal(factors)
@@ -63,12 +100,18 @@ func (uc *UseCaseScore) CalculateAndUpdateOrderScore(ctx context.Context, orderI
 		factorsJSON = []byte("[]")
 	}
 
-	// 6. Update order in DB
-	if err := uc.repo.UpdateOrderScore(ctx, orderID, score, factorsJSON); err != nil {
+	// 10. Serialize breakdown
+	var breakdownJSON []byte
+	if breakdown != nil {
+		breakdownJSON, _ = json.Marshal(breakdown)
+	}
+
+	// 11. Update order in DB (score + factors + breakdown)
+	if err := uc.repo.UpdateOrderScore(ctx, orderID, score, factorsJSON, breakdownJSON); err != nil {
 		return fmt.Errorf("failed to update order score: %w", err)
 	}
 
-	// 7. Publish score_calculated event
+	// 12. Publish score_calculated event
 	businessID := uint(0)
 	if order.BusinessID != nil {
 		businessID = *order.BusinessID
