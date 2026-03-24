@@ -167,14 +167,14 @@ export function NotificationEventTypeList({
           </thead>
           <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200">
             {eventTypes.length === 0 ? (
-              <tr>
+              <tr className="bg-white dark:bg-gray-800">
                 <td colSpan={5} className="px-6 py-4 text-center text-gray-500 dark:text-gray-400">
                   No hay eventos de notificación
                 </td>
               </tr>
             ) : (
               eventTypes.map((eventType) => (
-                <tr key={eventType.id} className="hover:bg-gray-50">
+                <tr key={eventType.id} className="bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
                       {eventType.notification_type?.name || "-"}
@@ -193,8 +193,8 @@ export function NotificationEventTypeList({
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${eventType.is_active
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
+                          ? "bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200"
+                          : "bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200"
                         }`}
                     >
                       {eventType.is_active ? "Activo" : "Inactivo"}

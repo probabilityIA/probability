@@ -87,7 +87,7 @@ const OrderRow = memo(({
     isSuperAdmin: boolean;
 }) => {
     return (
-        <tr className={`transition-all duration-300 hover:bg-purple-50 cursor-pointer ${isNew ? 'animate-slide-in' : ''}`}>
+        <tr className={`bg-white dark:bg-gray-800 transition-all duration-300 hover:bg-purple-50 dark:hover:bg-gray-700 cursor-pointer ${isNew ? 'animate-slide-in' : ''}`}>
             <td className="px-2 sm:px-3 py-2 whitespace-nowrap">
                 <div className="flex items-center gap-1">
                     <div
