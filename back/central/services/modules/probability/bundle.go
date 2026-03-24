@@ -41,3 +41,4 @@ func New(database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue) {
 
 	logger.Info(ctx).Msg("Modulo de probability (score) inicializado - consumiendo orders.events.score")
 }
+
