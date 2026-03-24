@@ -19,8 +19,37 @@ env:
   IMAGE_NAME: frontend
 
 jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: front/central/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: ./front/central
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        working-directory: ./front/central
+        run: pnpm test
+
   build-and-push:
     name: Build and Push to ECR
+    needs: test
     runs-on: ubuntu-24.04-arm  # Runner ARM64 nativo - más rápido y barato
     permissions:
       contents: write  # Necesario para crear y push de tags
