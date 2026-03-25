@@ -68,7 +68,7 @@ export function InvoicingConfigFormPage() {
   }
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
       <div className="mb-6">
         <Button
@@ -91,7 +91,7 @@ export function InvoicingConfigFormPage() {
 
       {/* Selector de negocio (solo para super admin) */}
       {isSuperAdmin && !selectedBusinessId && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">
             Paso 1: Selecciona un negocio
           </h2>
@@ -132,7 +132,7 @@ export function InvoicingConfigFormPage() {
 
       {/* Selector de proveedor de facturación (PRIMERO) */}
       {effectiveBusinessId && !selectedInvoicingIntegrationId && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold">
@@ -212,7 +212,7 @@ export function InvoicingConfigFormPage() {
 
       {/* Selector de integración de E-commerce (SEGUNDO - MÚLTIPLE) */}
       {effectiveBusinessId && selectedInvoicingIntegrationId && selectedEcommerceIntegrationIds.length === 0 && (
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-lg font-semibold">
@@ -334,7 +334,7 @@ export function InvoicingConfigFormPage() {
 
       {/* Formulario de configuración */}
       {effectiveBusinessId && selectedInvoicingIntegrationId && selectedEcommerceIntegrationIds.length > 0 && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 p-6">
           <div className="mb-6">
             <h2 className="text-lg font-semibold mb-4">
               {isSuperAdmin ? 'Paso 4' : 'Paso 3'}: Configura la facturación automática

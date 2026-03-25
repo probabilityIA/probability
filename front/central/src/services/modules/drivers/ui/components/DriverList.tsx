@@ -167,11 +167,11 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Buscar por nombre, identificacion o telefono..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
                 />
                 <button
                     type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 transition-colors"
+                    className="px-4 py-2 bg-purple-600 dark:bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 dark:hover:bg-purple-700 transition-colors"
                 >
                     Buscar
                 </button>
@@ -179,7 +179,7 @@ export default function DriverList({ onEdit, onRefreshRef, selectedBusinessId }:
                     <button
                         type="button"
                         onClick={handleClearSearch}
-                        className="px-4 py-2 bg-gray-100 text-gray-700 dark:text-gray-200 rounded-lg text-sm hover:bg-gray-200 transition-colors"
+                        className="px-4 py-2 bg-purple-600 dark:bg-purple-600 text-white rounded-lg text-sm hover:bg-purple-700 dark:hover:bg-purple-700 transition-colors"
                     >
                         Limpiar
                     </button>

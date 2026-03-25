@@ -107,17 +107,17 @@ export const ResourceList: React.FC = () => {
     };
 
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Recursos</h1>
+        <div className="space-y-6">
+            <div className="flex justify-between items-center mb-6">
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Usuarios</h1>
             </div>
 
             {error && <Alert type="error" onClose={() => setError(null)}>{error}</Alert>}
 
             {/* Filtros dinámicos y Tabla */}
             <div>
-                <div className="bg-white rounded-t-lg shadow-sm border border-gray-200 border-b-0">
-                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 gap-4">
+                <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-b-0">
+                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 gap-4">
                         <div className="flex-1 min-w-0">
                             <DynamicFilters
                                 availableFilters={availableFilters}
@@ -142,44 +142,44 @@ export const ResourceList: React.FC = () => {
                     </div>
                 </div>
                 {/* Tabla */}
-                <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden">
+                <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-purple-600 dark:bg-purple-600">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Nombre
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Descripción
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Tipo de Negocio
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
                                         Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {loading ? (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                            Cargando recursos...
+                                            Cargando usuarios...
                                         </td>
                                     </tr>
                                 ) : resources.length === 0 ? (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
-                                            No hay recursos disponibles
+                                            No hay usuarios disponibles
                                         </td>
                                     </tr>
                                 ) : (
                                     resources.map((resource) => (
-                                        <tr key={resource.id} className="hover:bg-gray-50">
+                                        <tr key={resource.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {resource.id}
                                             </td>
@@ -225,7 +225,7 @@ export const ResourceList: React.FC = () => {
 
                     {/* Paginación */}
                     {!loading && resources.length > 0 && (
-                        <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                        <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 {/* Desktop: Full pagination */}
                                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
@@ -246,17 +246,17 @@ export const ResourceList: React.FC = () => {
                                         <button
                                             onClick={() => setPage(page - 1)}
                                             disabled={page === 1}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Anterior
                                         </button>
-                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-purple-600 dark:border-purple-600 bg-white dark:bg-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
                                             Página {page} de {totalPages}
                                         </span>
                                         <button
                                             onClick={() => setPage(page + 1)}
                                             disabled={page === totalPages}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Siguiente
                                         </button>
@@ -264,7 +264,7 @@ export const ResourceList: React.FC = () => {
                                 </div>
 
                                 {/* Mobile: Page size selector */}
-                                <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
+                                <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <div className="flex items-center gap-2">
                                         <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                             Mostrar:
@@ -276,7 +276,7 @@ export const ResourceList: React.FC = () => {
                                                 setPageSize(newPageSize);
                                                 setPage(1);
                                             }}
-                                            className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white"
+                                            className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
                                         >
                                             <option value="10">10</option>
                                             <option value="20">20</option>

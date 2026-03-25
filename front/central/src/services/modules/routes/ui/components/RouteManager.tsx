@@ -62,19 +62,19 @@ export default function RouteManager({ selectedBusinessId = null }: RouteManager
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Rutas de Entrega</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Rutas de Entrega</h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Gestiona las rutas de entrega de ultima milla
                     </p>
                 </div>
                 {!requiresBusinessSelection && viewMode === 'list' && (
-                    <Button variant="primary" onClick={openCreate}>
+                    <Button variant="purple" onClick={openCreate}>
                         <PlusIcon className="w-4 h-4 mr-2" />
                         Nueva ruta
                     </Button>
                 )}
                 {viewMode !== 'list' && (
-                    <Button variant="outline" onClick={backToList}>
+                    <Button variant="outline-purple" onClick={backToList}>
                         Volver a la lista
                     </Button>
                 )}

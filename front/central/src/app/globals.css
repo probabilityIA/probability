@@ -213,6 +213,29 @@
   @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-500;
 }
 
+/* Botones morado para módulo de delivery */
+.btn-purple {
+  background: #7c3aed;
+  color: white;
+  @apply hover:shadow-lg hover:scale-105 transition-all;
+}
+
+.btn-purple:hover {
+  background: #6d28d9;
+}
+
+.btn-outline-purple {
+  border: 2px solid #7c3aed;
+  color: #7c3aed;
+  background: transparent;
+  @apply hover:shadow-lg transition-all;
+}
+
+.btn-outline-purple:hover {
+  background: #7c3aed;
+  color: white;
+}
+
 .btn-sm {
   @apply px-4 py-2 text-sm;
 }

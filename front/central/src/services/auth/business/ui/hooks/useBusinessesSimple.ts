@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { getBusinessesSimpleAction } from '../../infra/actions';
 import { BusinessSimple } from '../../domain/types';

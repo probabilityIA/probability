@@ -159,7 +159,7 @@ export default function CustomerList({ onView, onEdit, onRefreshRef, selectedBus
                     value={searchInput}
                     onChange={(e) => setSearchInput(e.target.value)}
                     placeholder="Buscar por nombre, email o teléfono..."
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white bg-white dark:bg-gray-700 placeholder-gray-500 dark:placeholder-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <button
                     type="submit"

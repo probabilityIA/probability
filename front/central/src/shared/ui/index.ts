@@ -25,6 +25,7 @@ export * from './notifications-subnavbar';
 export * from './invoicing-subnavbar';
 export * from './delivery-subnavbar';
 export * from './storefront-subnavbar';
+export * from './iam-subnavbar';
 export * from './spinner';
 export * from './stepper';
 export * from './table';

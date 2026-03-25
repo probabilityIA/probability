@@ -1,3 +1,5 @@
+'use client';
+
 import React from 'react';
 import { Table } from '@/shared/ui/table';
 import { Button } from '@/shared/ui/button';

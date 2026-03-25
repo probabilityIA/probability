@@ -353,8 +353,8 @@ export const UserList: React.FC = () => {
 
             {/* Filtros dinámicos y Tabla */}
             <div>
-                <div className="bg-white rounded-t-lg shadow-sm border border-gray-200 border-b-0">
-                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 gap-4">
+                <div className="bg-white dark:bg-gray-800 rounded-t-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-b-0">
+                    <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200 dark:border-gray-700 gap-4">
                         <div className="flex-1 min-w-0">
                             <DynamicFilters
                                 availableFilters={availableFilters}
@@ -379,41 +379,41 @@ export const UserList: React.FC = () => {
                     </div>
                 </div>
                 {/* Tabla */}
-                <div className="bg-white rounded-b-lg rounded-t-none shadow-sm border border-gray-200 border-t-0 overflow-hidden -mt-px">
+                <div className="bg-white dark:bg-gray-800 rounded-b-lg rounded-t-none shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 border-t-0 overflow-hidden -mt-px">
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                            <thead className="bg-purple-600 dark:bg-purple-600">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         ID
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Avatar
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Nombre
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Email
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Teléfono
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Scope
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Rol
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-white uppercase tracking-wider">
                                         Activo
                                     </th>
-                                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                                    <th className="px-6 py-3 text-right text-xs font-medium text-white uppercase tracking-wider">
                                         Acciones
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-200">
+                            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                                 {loading ? (
                                     <tr>
                                         <td colSpan={9} className="px-6 py-4 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -428,7 +428,7 @@ export const UserList: React.FC = () => {
                                     </tr>
                                 ) : (
                                     users.map((user) => (
-                                        <tr key={user.id} className="hover:bg-gray-50">
+                                        <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-white">
                                                 {user.id}
                                             </td>
@@ -440,7 +440,7 @@ export const UserList: React.FC = () => {
                                                         className="w-10 h-10 rounded-full object-cover"
                                                     />
                                                 ) : (
-                                                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
+                                                    <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
                                                         <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                                             {user.name.charAt(0).toUpperCase()}
                                                         </span>
@@ -467,7 +467,7 @@ export const UserList: React.FC = () => {
                                                         {user.scope_code === 'platform' ? 'Platform' : 'Business'}
                                                     </span>
                                                 ) : (
-                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600 dark:text-gray-300">
+                                                    <span className="px-2 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
                                                         Sin scope
                                                     </span>
                                                 )}
@@ -478,7 +478,7 @@ export const UserList: React.FC = () => {
                                                         {user.business_role_assignments.map((assignment, idx) => (
                                                             <span
                                                                 key={idx}
-                                                                className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 dark:text-gray-200 rounded"
+                                                                className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded"
                                                                 title={`Negocio: ${assignment.business_name || assignment.business_id}`}
                                                             >
                                                                 {assignment.role_name || `Rol ${assignment.role_id}`}
@@ -543,7 +543,7 @@ export const UserList: React.FC = () => {
 
                     {/* Paginación */}
                     {!loading && users.length > 0 && (
-                        <div className="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+                        <div className="bg-white dark:bg-gray-800 px-4 py-3 border-t border-gray-200 dark:border-gray-700 sm:px-6">
                             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                 {/* Desktop: Full pagination */}
                                 <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
@@ -564,17 +564,17 @@ export const UserList: React.FC = () => {
                                         <button
                                             onClick={() => setFilters({ ...filters, page: page - 1 })}
                                             disabled={page === 1}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-l-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Anterior
                                         </button>
-                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
+                                        <span className="relative inline-flex items-center px-3 sm:px-4 py-2 border border-purple-600 dark:border-purple-600 bg-white dark:bg-gray-700 text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-200">
                                             Página {page} de {totalPages}
                                         </span>
                                         <button
                                             onClick={() => setFilters({ ...filters, page: page + 1 })}
                                             disabled={page === totalPages}
-                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-gray-300 bg-white text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 disabled:opacity-50"
+                                            className="relative inline-flex items-center px-2 sm:px-3 py-2 rounded-r-md border border-purple-600 dark:border-purple-600 bg-purple-600 dark:bg-purple-600 text-xs sm:text-sm font-medium text-white hover:bg-purple-700 dark:hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             Siguiente
                                         </button>
@@ -582,7 +582,7 @@ export const UserList: React.FC = () => {
                                 </div>
 
                                 {/* Mobile: Page size selector */}
-                                <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200">
+                                <div className="flex items-center justify-between w-full sm:hidden pt-2 border-t border-gray-200 dark:border-gray-700">
                                     <div className="flex items-center gap-2">
                                         <label className="text-xs text-gray-700 dark:text-gray-200 whitespace-nowrap">
                                             Mostrar:
@@ -593,7 +593,7 @@ export const UserList: React.FC = () => {
                                                 const newPageSize = parseInt(e.target.value);
                                                 setFilters({ ...filters, page_size: newPageSize, page: 1 });
                                             }}
-                                            className="px-2 py-1.5 text-xs border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white"
+                                            className="px-2 py-1.5 text-xs border border-gray-300 dark:border-gray-600 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900 dark:text-white bg-white dark:bg-gray-700"
                                         >
                                             <option value="10">10</option>
                                             <option value="20">20</option>
@@ -647,8 +647,8 @@ export const UserList: React.FC = () => {
                     <div className="space-y-4">
                         {/* Indicador de tipo de usuario */}
                         {assigningRoleUser?.scope_code === 'platform' && (
-                            <div className="p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                                <p className="text-sm text-purple-700">
+                            <div className="p-3 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-800 rounded-lg">
+                                <p className="text-sm text-purple-700 dark:text-purple-200">
                                     <span className="font-medium">Usuario Platform:</span> Los roles se asignan a nivel de plataforma (sin negocio específico).
                                 </p>
                             </div>
@@ -656,13 +656,13 @@ export const UserList: React.FC = () => {
 
                         {/* Roles actuales del usuario */}
                         {assigningRoleUser?.business_role_assignments && assigningRoleUser.business_role_assignments.length > 0 && (
-                            <div className="p-3 bg-gray-50 rounded-lg">
+                            <div className="p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
                                 <p className="text-sm font-medium text-gray-700 dark:text-gray-200 mb-2">Roles actuales:</p>
                                 <div className="flex flex-wrap gap-2">
                                     {assigningRoleUser.business_role_assignments.map((assignment, idx) => (
                                         <span
                                             key={idx}
-                                            className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full"
+                                            className="px-2 py-1 text-xs bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200 rounded-full"
                                         >
                                             {assignment.role_name}{assignment.business_name ? ` - ${assignment.business_name}` : ''}
                                         </span>

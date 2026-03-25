@@ -6,16 +6,17 @@ import { CustomerInfo } from '../../domain/types';
 import CustomerList from './CustomerList';
 import CustomerForm from './CustomerForm';
 import CustomerDetailView from './CustomerDetail';
-import { Button } from '@/shared/ui';
+import { Button, SuperAdminBusinessSelector } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 
 type ModalMode = 'create' | 'edit' | 'view' | null;
 
 interface CustomerManagerProps {
     selectedBusinessId?: number | null;
+    onBusinessChange?: (businessId: number | null) => void;
 }
 
-export default function CustomerManager({ selectedBusinessId = null }: CustomerManagerProps) {
+export default function CustomerManager({ selectedBusinessId = null, onBusinessChange }: CustomerManagerProps) {
     const { isSuperAdmin } = usePermissions();
     const [modalMode, setModalMode] = useState<ModalMode>(null);
     const [selectedCustomer, setSelectedCustomer] = useState<CustomerInfo | null>(null);
@@ -63,12 +64,25 @@ export default function CustomerManager({ selectedBusinessId = null }: CustomerM
                         Gestiona los clientes de tu negocio
                     </p>
                 </div>
-                {!requiresBusinessSelection && (
-                    <Button variant="primary" onClick={openCreate}>
-                        <PlusIcon className="w-4 h-4 mr-2" />
-                        Nuevo cliente
-                    </Button>
-                )}
+                <div className="flex items-center gap-2">
+                    {isSuperAdmin && (
+                        <SuperAdminBusinessSelector
+                            value={selectedBusinessId ?? null}
+                            onChange={onBusinessChange}
+                            variant="default"
+                            placeholder="— Selecciona un negocio —"
+                        />
+                    )}
+                    {isSuperAdmin && !requiresBusinessSelection && (
+                        <button
+                            onClick={openCreate}
+                            className="inline-flex items-center justify-center px-6 py-3 font-semibold rounded-lg bg-purple-600 hover:bg-purple-700 text-white transition-all duration-300 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        >
+                            <PlusIcon className="w-4 h-4 mr-2" />
+                            Nuevo cliente
+                        </button>
+                    )}
+                </div>
             </div>
 
             {/* Gate: super admin debe seleccionar negocio */}

@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { getUsersAction, deleteUserAction } from '../../infra/actions';
 import { User, Pagination } from '../../domain/types';
