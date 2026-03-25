@@ -68,7 +68,7 @@ export default function CustomerManager({ selectedBusinessId = null, onBusinessC
                     {isSuperAdmin && (
                         <SuperAdminBusinessSelector
                             value={selectedBusinessId ?? null}
-                            onChange={onBusinessChange}
+                            onChange={onBusinessChange || (() => {})}
                             variant="default"
                             placeholder="— Selecciona un negocio —"
                         />
