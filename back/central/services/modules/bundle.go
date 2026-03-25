@@ -12,6 +12,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/notification_config"
 	"github.com/secamc93/probability/back/central/services/modules/orders"
 	"github.com/secamc93/probability/back/central/services/modules/orderstatus"
+	"github.com/secamc93/probability/back/central/services/modules/probability"
 	"github.com/secamc93/probability/back/central/services/modules/pay"
 	"github.com/secamc93/probability/back/central/services/modules/payments"
 	"github.com/secamc93/probability/back/central/services/modules/products"
@@ -52,6 +53,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	// Inicializar módulo de orders
 	orders.New(router, database, logger, environment, rabbitMQ)
+
+	// Inicializar módulo de probability (score de entrega via RabbitMQ consumer)
+	probability.New(database, logger, rabbitMQ)
 
 	// Inicializar módulo de products
 	products.New(router, database, logger, environment, s3)

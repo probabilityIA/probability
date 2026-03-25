@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecasecreateorder"
-	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorderscore"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdateorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers"
@@ -33,8 +32,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	integrationEventPub := eventpublisher.New(rabbitMQ)
 
 	// 3. Inicializar Use Cases
-	scoreUseCase := usecaseorderscore.New(repo)
-	orderCRUD := usecaseorder.New(repo, rabbitPublisher, logger, scoreUseCase)
+	orderCRUD := usecaseorder.New(repo, rabbitPublisher, logger)
 
 	// Update use case se crea primero (no depende de create)
 	updateUC := usecaseupdateorder.New(repo, logger, rabbitPublisher, integrationEventPub)

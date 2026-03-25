@@ -168,6 +168,9 @@ type Order struct {
 	// Factores Negativos (Calculados)
 	NegativeFactors datatypes.JSON `gorm:"type:jsonb"` // lista de factores negativos que afectan el score
 
+	// Desglose del Score (Calculado)
+	ScoreBreakdown datatypes.JSON `gorm:"type:jsonb"` // desglose detallado del score por categoría
+
 	// Detalles financieros adicionales (descuentos por item, promociones, etc.)
 	FinancialDetails datatypes.JSON `gorm:"type:jsonb"`
 

@@ -298,26 +298,6 @@ func (m *mockIntegrationEventPublisher) PublishSyncOrderRejected(ctx context.Con
 	}
 }
 
-// ─── Mock: IOrderScoreUseCase ────────────────────────────────────────────────
-
-type mockScoreUseCase struct {
-	CalculateOrderScoreFn          func(order *entities.ProbabilityOrder) (float64, []string)
-	CalculateAndUpdateOrderScoreFn func(ctx context.Context, orderID string) error
-}
-
-func (m *mockScoreUseCase) CalculateOrderScore(order *entities.ProbabilityOrder) (float64, []string) {
-	if m.CalculateOrderScoreFn != nil {
-		return m.CalculateOrderScoreFn(order)
-	}
-	return 0.0, nil
-}
-func (m *mockScoreUseCase) CalculateAndUpdateOrderScore(ctx context.Context, orderID string) error {
-	if m.CalculateAndUpdateOrderScoreFn != nil {
-		return m.CalculateAndUpdateOrderScoreFn(ctx, orderID)
-	}
-	return nil
-}
-
 // ─── Mock: IOrderUpdateUseCase ──────────────────────────────────────────────
 
 type mockUpdateUseCase struct {
@@ -373,13 +353,11 @@ func newTestCreateUseCase(
 	repo *mockRepository,
 	rabbitPublisher *mockRabbitPublisher,
 	integrationEventPublisher *mockIntegrationEventPublisher,
-	scoreUseCase *mockScoreUseCase,
 	updateUseCase *mockUpdateUseCase,
 ) *UseCaseCreateOrder {
 	uc := &UseCaseCreateOrder{
-		repo:         repo,
-		logger:       &mockLogger{},
-		scoreUseCase: scoreUseCase,
+		repo:   repo,
+		logger: &mockLogger{},
 	}
 	if rabbitPublisher != nil {
 		uc.rabbitEventPublisher = rabbitPublisher
@@ -420,7 +398,7 @@ func newMinimalDTO(externalID string, integrationID uint, businessID uint) *dtos
 func TestMapAndSaveOrder_FaltaIntegrationID_RetornaError(t *testing.T) {
 	// Arrange
 	repo := &mockRepository{}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	bID := uint(1)
 	dto := &dtos.ProbabilityOrderDTO{
 		BusinessID:    &bID,
@@ -446,7 +424,7 @@ func TestMapAndSaveOrder_FaltaIntegrationID_RetornaError(t *testing.T) {
 func TestMapAndSaveOrder_FaltaBusinessID_RetornaError(t *testing.T) {
 	// Arrange
 	repo := &mockRepository{}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := &dtos.ProbabilityOrderDTO{
 		BusinessID:    nil, // Falta BusinessID
 		IntegrationID: 10,
@@ -471,7 +449,7 @@ func TestMapAndSaveOrder_FaltaBusinessID_RetornaError(t *testing.T) {
 func TestMapAndSaveOrder_BusinessIDCero_RetornaError(t *testing.T) {
 	// Arrange
 	repo := &mockRepository{}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	zeroID := uint(0)
 	dto := &dtos.ProbabilityOrderDTO{
 		BusinessID:    &zeroID, // BusinessID = 0
@@ -499,7 +477,7 @@ func TestMapAndSaveOrder_ErrorAlVerificarExistencia_RetornaError(t *testing.T) {
 			return false, expectedErr
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := newMinimalDTO("EXT-001", 10, 1)
 
 	// Act
@@ -533,7 +511,7 @@ func TestMapAndSaveOrder_OrdenNueva_ExitoSinEntidadesRelacionadas(t *testing.T) 
 			return nil
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := newMinimalDTO("EXT-002", 10, 1)
 
 	// Act
@@ -584,7 +562,7 @@ func TestMapAndSaveOrder_OrdenExistente_LlamaUpdateOrder(t *testing.T) {
 			}, nil
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, mockUpdate)
+	uc := newTestCreateUseCase(repo, nil, nil, mockUpdate)
 	dto := newMinimalDTO("EXT-003", 10, 1)
 	dto.Status = "completed" // Estado diferente para forzar cambio
 
@@ -624,7 +602,7 @@ func TestMapAndSaveOrder_ErrorAlCrearOrden_RetornaError(t *testing.T) {
 		},
 	}
 	integrationPub := &mockIntegrationEventPublisher{}
-	uc := newTestCreateUseCase(repo, nil, integrationPub, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, integrationPub, nil)
 	dto := newMinimalDTO("EXT-004", 10, 1)
 
 	// Act
@@ -654,7 +632,7 @@ func TestMapAndSaveOrder_ErrorAlProcesarCliente_RetornaError(t *testing.T) {
 		},
 	}
 	integrationPub := &mockIntegrationEventPublisher{}
-	uc := newTestCreateUseCase(repo, nil, integrationPub, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, integrationPub, nil)
 	dto := newMinimalDTO("EXT-005", 10, 1)
 
 	// Act
@@ -676,7 +654,7 @@ func TestMapAndSaveOrder_ErrorAlProcesarCliente_RetornaError(t *testing.T) {
 
 func TestBuildOrderEntity_MapeaCamposCorrectamente(t *testing.T) {
 	// Arrange
-	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	bID := uint(42)
 	clientID := uint(99)
 	dto := &dtos.ProbabilityOrderDTO{
@@ -734,7 +712,7 @@ func TestBuildOrderEntity_MapeaCamposCorrectamente(t *testing.T) {
 
 func TestAssignPaymentMethodID_SinPagos_AsignaValorPorDefecto(t *testing.T) {
 	// Arrange
-	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	order := &entities.ProbabilityOrder{}
 	dto := &dtos.ProbabilityOrderDTO{
 		Payments: nil, // Sin pagos
@@ -751,7 +729,7 @@ func TestAssignPaymentMethodID_SinPagos_AsignaValorPorDefecto(t *testing.T) {
 
 func TestAssignPaymentMethodID_ConPagoCompletado_AsignaPaymentMethodID(t *testing.T) {
 	// Arrange
-	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	order := &entities.ProbabilityOrder{}
 	dto := &dtos.ProbabilityOrderDTO{
 		Payments: []dtos.ProbabilityPaymentDTO{
@@ -775,7 +753,7 @@ func TestAssignPaymentMethodID_ConPagoCompletado_AsignaPaymentMethodID(t *testin
 
 func TestPopulateOrderFields_DireccionDeEnvio_PopulaCamposPlanos(t *testing.T) {
 	// Arrange
-	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	order := &entities.ProbabilityOrder{}
 	dto := &dtos.ProbabilityOrderDTO{
 		Addresses: []dtos.ProbabilityAddressDTO{
@@ -811,7 +789,7 @@ func TestPopulateOrderFields_DireccionDeEnvio_PopulaCamposPlanos(t *testing.T) {
 
 func TestPopulateOrderFields_SinDireccionDeEnvio_NoModificaCampos(t *testing.T) {
 	// Arrange
-	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	order := &entities.ProbabilityOrder{
 		ShippingCity:    "CiudadOriginal",
 		ShippingCountry: "PaisOriginal",
@@ -842,7 +820,7 @@ func TestPopulateOrderFields_SinDireccionDeEnvio_NoModificaCampos(t *testing.T) 
 func TestGetOrCreateCustomer_SinEmailNiNombre_RetornaNilSinError(t *testing.T) {
 	// Arrange
 	repo := &mockRepository{}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := &dtos.ProbabilityOrderDTO{
 		CustomerEmail: "", // Sin email
 		CustomerName:  "", // Sin nombre
@@ -872,7 +850,7 @@ func TestGetOrCreateCustomer_ClienteExistentePorEmail_RetornaClienteExistente(t 
 			return existingClient, nil // Cliente encontrado
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := &dtos.ProbabilityOrderDTO{
 		CustomerEmail: "existente@example.com",
 	}
@@ -908,7 +886,7 @@ func TestGetOrCreateCustomer_ClienteNuevo_CreaYRetorna(t *testing.T) {
 			return nil
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := &dtos.ProbabilityOrderDTO{
 		CustomerEmail: "nuevo@example.com",
 		CustomerName:  "Nuevo Cliente",
@@ -942,7 +920,7 @@ func TestGetOrCreateCustomer_ErrorAlBuscarPorEmail_RetornaError(t *testing.T) {
 			return nil, expectedErr
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	dto := &dtos.ProbabilityOrderDTO{
 		CustomerEmail: "error@example.com",
 	}
@@ -967,7 +945,7 @@ func TestGetOrCreateCustomer_ErrorAlBuscarPorEmail_RetornaError(t *testing.T) {
 func TestGetOrCreateProduct_SinSKU_RetornaError(t *testing.T) {
 	// Arrange
 	repo := &mockRepository{}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	itemDTO := dtos.ProbabilityOrderItemDTO{
 		ProductSKU: "", // Sin SKU
 	}
@@ -995,7 +973,7 @@ func TestGetOrCreateProduct_ProductoExistente_RetornaExistente(t *testing.T) {
 			return existingProduct, nil
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	itemDTO := dtos.ProbabilityOrderItemDTO{
 		ProductSKU: "SKU-ABC",
 	}
@@ -1028,7 +1006,7 @@ func TestGetOrCreateProduct_ProductoNuevo_CreaYRetorna(t *testing.T) {
 			return nil
 		},
 	}
-	uc := newTestCreateUseCase(repo, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(repo, nil, nil, nil)
 	itemDTO := dtos.ProbabilityOrderItemDTO{
 		ProductSKU:  "SKU-NUEVO",
 		ProductName: "Producto Nuevo",
@@ -1053,7 +1031,7 @@ func TestGetOrCreateProduct_ProductoNuevo_CreaYRetorna(t *testing.T) {
 
 func TestMapOrderToResponse_MapeaTodosLosCamposPrincipales(t *testing.T) {
 	// Arrange
-	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, &mockScoreUseCase{}, nil)
+	uc := newTestCreateUseCase(&mockRepository{}, nil, nil, nil)
 	bID := uint(10)
 	statusID := uint(3)
 	order := &entities.ProbabilityOrder{

@@ -10,7 +10,6 @@ type UseCaseOrder struct {
 	repo                 ports.IRepository
 	rabbitEventPublisher ports.IOrderRabbitPublisher
 	logger               log.ILogger
-	scoreUseCase         ports.IOrderScoreUseCase
 }
 
 // New crea una nueva instancia de UseCaseOrder retornando la interfaz IOrderUseCase
@@ -18,12 +17,10 @@ func New(
 	repo ports.IRepository,
 	rabbitPublisher ports.IOrderRabbitPublisher,
 	logger log.ILogger,
-	scoreUseCase ports.IOrderScoreUseCase,
 ) ports.IOrderUseCase {
 	return &UseCaseOrder{
 		repo:                 repo,
 		rabbitEventPublisher: rabbitPublisher,
 		logger:               logger,
-		scoreUseCase:         scoreUseCase,
 	}
 }

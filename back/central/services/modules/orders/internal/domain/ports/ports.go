@@ -121,12 +121,6 @@ type IOrderUpdateUseCase interface {
 //
 // ───────────────────────────────────────────
 
-// IOrderScoreUseCase define la interfaz para el caso de uso de cálculo de score
-type IOrderScoreUseCase interface {
-	CalculateOrderScore(order *entities.ProbabilityOrder) (float64, []string)
-	CalculateAndUpdateOrderScore(ctx context.Context, orderID string) error
-}
-
 // IRequestConfirmationUseCase define la interfaz del caso de uso de solicitud de confirmación
 type IRequestConfirmationUseCase interface {
 	RequestConfirmation(ctx context.Context, orderID string) error
