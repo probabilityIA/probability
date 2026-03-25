@@ -170,6 +170,17 @@ export interface Order {
 
     // Calculated Fields
     negative_factors?: string[];
+    score_breakdown?: {
+        final_score: number;
+        categories: {
+            name: string;
+            weight: number;
+            raw_score: number;
+            weighted_score: number;
+            factors: string[] | null;
+        }[];
+        negative_factors: string[];
+    };
 }
 
 export interface PaginatedResponse<T> {

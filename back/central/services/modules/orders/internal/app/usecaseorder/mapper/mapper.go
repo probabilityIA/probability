@@ -145,6 +145,7 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 
 		// Calculated Fields
 		NegativeFactors: UnmarshalNegativeFactors(order.NegativeFactors),
+		ScoreBreakdown:  json.RawMessage(order.ScoreBreakdown),
 	}
 }
 
@@ -224,6 +225,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		ItemsCount:             len(order.OrderItems),
 		DeliveryProbability:    order.DeliveryProbability,
 		NegativeFactors:        UnmarshalNegativeFactors(order.NegativeFactors),
+		ScoreBreakdown:         json.RawMessage(order.ScoreBreakdown),
 		OrderStatus:            order.OrderStatus,       // Información del estado de Probability
 		PaymentStatus:          order.PaymentStatus,     // Información completa del estado de pago
 		FulfillmentStatus:      order.FulfillmentStatus, // Información completa del estado de fulfillment

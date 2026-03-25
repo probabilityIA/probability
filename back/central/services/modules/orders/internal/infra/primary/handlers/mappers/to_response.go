@@ -145,6 +145,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		PaymentDetails:          paymentDetailsJSON,
 		FulfillmentDetails:      fulfillmentDetailsJSON,
 		NegativeFactors:         dto.NegativeFactors,
+		ScoreBreakdown:          dto.ScoreBreakdown,
 		OccurredAt:              dto.OccurredAt,
 		ImportedAt:              dto.ImportedAt,
 	}
@@ -206,6 +207,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		ItemsCount:             dto.ItemsCount,
 		DeliveryProbability:    dto.DeliveryProbability,
 		NegativeFactors:        dto.NegativeFactors,
+		ScoreBreakdown:         dto.ScoreBreakdown,
 		OrderStatus:            orderStatus,
 		PaymentStatus:          paymentStatus,
 		FulfillmentStatus:      fulfillmentStatus,

@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
@@ -139,6 +140,7 @@ type OrderResponse struct {
 	PaymentDetails     []byte
 	FulfillmentDetails []byte
 	NegativeFactors    []string
+	ScoreBreakdown     json.RawMessage
 
 	// Timestamps
 	OccurredAt time.Time

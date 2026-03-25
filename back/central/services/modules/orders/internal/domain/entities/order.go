@@ -142,6 +142,7 @@ type ProbabilityOrder struct {
 	Shipments       []ProbabilityShipment
 	ChannelMetadata []ProbabilityOrderChannelMetadata
 	NegativeFactors []byte
+	ScoreBreakdown  []byte
 
 	// Campos auxiliares para cálculo de score
 	CustomerOrderCount int
