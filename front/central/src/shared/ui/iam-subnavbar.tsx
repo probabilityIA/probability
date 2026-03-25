@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/shared/contexts/permissions-context';
@@ -9,6 +9,7 @@ import { SuperAdminBusinessSelector } from './super-admin-business-selector';
 export const IAMSubNavbar = memo(function IAMSubNavbar() {
     const pathname = usePathname();
     const { isSuperAdmin } = usePermissions();
+    const [selectedBusinessId, setSelectedBusinessId] = useState<number | null>(null);
 
     const isInModule = pathname.startsWith('/resources') || pathname.startsWith('/roles') || pathname.startsWith('/businesses') || pathname.startsWith('/permissions') || pathname.startsWith('/users');
 
@@ -49,6 +50,8 @@ export const IAMSubNavbar = memo(function IAMSubNavbar() {
                     <div className="flex items-center gap-3 ml-auto">
                         {isSuperAdmin && (
                             <SuperAdminBusinessSelector
+                                value={selectedBusinessId}
+                                onChange={setSelectedBusinessId}
                                 variant="navbar"
                             />
                         )}
