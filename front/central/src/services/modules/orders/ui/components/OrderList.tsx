@@ -216,21 +216,48 @@ const OrderRow = memo(({
                         <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 min-w-[40px] text-right">
                             {order.delivery_probability.toFixed(0)}%
                         </span>
-                        {order.negative_factors && order.negative_factors.length > 0 && (
+                        {(order.score_breakdown?.categories || (order.negative_factors && order.negative_factors.length > 0)) && (
                             <div className="relative group">
-                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-orange-100 text-orange-600 cursor-pointer hover:bg-orange-200 transition-colors">
+                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-blue-100 text-blue-600 cursor-pointer hover:bg-blue-200 transition-colors">
                                     <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                         <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                                     </svg>
                                 </div>
                                 <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block z-50">
-                                    <div className="bg-gray-900 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap">
-                                        <div className="font-semibold mb-1">Datos faltantes:</div>
-                                        {order.negative_factors.map((factor, idx) => (
-                                            <div key={idx} className="flex items-center gap-1">
-                                                <span className="text-orange-400">•</span> {factor}
+                                    <div className="bg-gray-900 text-white text-xs rounded-lg py-3 px-4 shadow-lg min-w-[220px]">
+                                        <div className="font-semibold mb-2 text-center">Análisis de probabilidad</div>
+
+                                        {order.score_breakdown?.categories ? (
+                                            <div className="space-y-1.5 mb-2">
+                                                {order.score_breakdown.categories.map((cat, idx) => (
+                                                    <div key={idx} className="flex items-center gap-2">
+                                                        <span className="w-[100px] truncate text-[10px] text-gray-300">{cat.name}</span>
+                                                        <div className="flex-1 bg-gray-700 rounded-full h-1.5 overflow-hidden">
+                                                            <div
+                                                                className={`h-full rounded-full ${cat.raw_score >= 80 ? 'bg-green-400' : cat.raw_score >= 60 ? 'bg-yellow-400' : 'bg-red-400'}`}
+                                                                style={{ width: `${cat.raw_score}%` }}
+                                                            />
+                                                        </div>
+                                                        <span className={`text-[10px] font-medium min-w-[28px] text-right ${cat.raw_score >= 80 ? 'text-green-400' : cat.raw_score >= 60 ? 'text-yellow-400' : 'text-red-400'}`}>
+                                                            {cat.raw_score.toFixed(0)}
+                                                        </span>
+                                                    </div>
+                                                ))}
                                             </div>
-                                        ))}
+                                        ) : null}
+
+                                        {order.negative_factors && order.negative_factors.length > 0 && (
+                                            <div className="border-t border-gray-700 pt-2 mt-2">
+                                                <div className="font-semibold mb-1 text-orange-400 text-[10px]">Datos faltantes:</div>
+                                                {order.negative_factors.map((factor, idx) => (
+                                                    <div key={idx} className="flex items-center gap-1">
+                                                        <span className="text-orange-400">•</span>
+                                                        <span className="text-[10px]">{factor}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+
                                         <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
                                     </div>
                                 </div>

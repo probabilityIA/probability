@@ -1,6 +1,7 @@
 package response
 
 import (
+	"encoding/json"
 	"time"
 
 	"gorm.io/datatypes"
@@ -135,7 +136,8 @@ type Order struct {
 	ShippingDetails    datatypes.JSON `json:"shipping_details,omitempty"`
 	PaymentDetails     datatypes.JSON `json:"payment_details,omitempty"`
 	FulfillmentDetails datatypes.JSON `json:"fulfillment_details,omitempty"`
-	NegativeFactors    []string       `json:"negative_factors,omitempty"`
+	NegativeFactors    []string        `json:"negative_factors,omitempty"`
+	ScoreBreakdown     json.RawMessage `json:"score_breakdown,omitempty"`
 
 	// Timestamps
 	OccurredAt time.Time `json:"occurred_at"`

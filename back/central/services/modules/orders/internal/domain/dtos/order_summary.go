@@ -1,6 +1,7 @@
 package dtos
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
@@ -38,6 +39,7 @@ type OrderSummary struct {
 	ItemsCount             int
 	DeliveryProbability    *float64
 	NegativeFactors        []string
+	ScoreBreakdown         json.RawMessage
 	OrderStatus            *entities.OrderStatusInfo
 	PaymentStatus          *entities.PaymentStatusInfo
 	FulfillmentStatus      *entities.FulfillmentStatusInfo

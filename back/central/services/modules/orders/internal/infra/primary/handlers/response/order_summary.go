@@ -1,6 +1,9 @@
 package response
 
-import "time"
+import (
+	"encoding/json"
+	"time"
+)
 
 // OrderSummary representa un resumen de orden para listados HTTP
 // ✅ DTO HTTP - CON TAGS (json)
@@ -32,6 +35,7 @@ type OrderSummary struct {
 	ItemsCount             int                    `json:"items_count"`
 	DeliveryProbability    *float64               `json:"delivery_probability"`
 	NegativeFactors        []string               `json:"negative_factors"`
+	ScoreBreakdown         json.RawMessage        `json:"score_breakdown,omitempty"`
 	OrderStatus            *OrderStatusInfo       `json:"order_status,omitempty"`
 	PaymentStatus          *PaymentStatusInfo     `json:"payment_status,omitempty"`
 	FulfillmentStatus      *FulfillmentStatusInfo `json:"fulfillment_status,omitempty"`
