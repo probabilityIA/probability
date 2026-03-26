@@ -4,6 +4,7 @@ import TrackingProgressBar from './tracking/TrackingProgressBar';
 import TrackingDetails from './tracking/TrackingDetails';
 import TrackingTimeline from './tracking/TrackingTimeline';
 import type { TrackingSearchResult, TrackingHistory } from '../types/tracking';
+import { API_BASE_URL } from '../config/api';
 
 interface SearchResult {
   success: boolean;
@@ -31,7 +32,7 @@ export default function TrackingClient() {
     try {
       // Llamar al endpoint del backend
       const response = await fetch(
-        `${import.meta.env.PUBLIC_API_URL}/tracking/search?tracking_number=${encodeURIComponent(query)}`
+        `${API_BASE_URL}/tracking/search?tracking_number=${encodeURIComponent(query)}`
       );
 
       if (!response.ok) {
@@ -57,7 +58,7 @@ export default function TrackingClient() {
       if (foundShipment.tracking_number) {
         try {
           const historyResponse = await fetch(
-            `${import.meta.env.PUBLIC_API_URL}/tracking/${encodeURIComponent(foundShipment.tracking_number)}/history`
+            `${API_BASE_URL}/tracking/${encodeURIComponent(foundShipment.tracking_number)}/history`
           );
 
           if (historyResponse.ok) {
