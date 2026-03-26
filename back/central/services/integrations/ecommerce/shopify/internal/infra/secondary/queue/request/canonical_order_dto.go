@@ -43,6 +43,7 @@ type SerializableProbabilityOrderDTO struct {
 	Approved           *bool                           `json:"approved"`
 	UserID             *uint                           `json:"user_id"`
 	UserName           string                          `json:"user_name"`
+	IsTest             bool                            `json:"is_test"`
 	Invoiceable        bool                            `json:"invoiceable"`
 	InvoiceURL         *string                         `json:"invoice_url"`
 	InvoiceID          *string                         `json:"invoice_id"`

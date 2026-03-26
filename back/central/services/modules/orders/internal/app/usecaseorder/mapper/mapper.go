@@ -119,6 +119,9 @@ func ToOrderResponse(order *entities.ProbabilityOrder) *dtos.OrderResponse {
 		IsConfirmed: order.IsConfirmed,
 		Novelty:     order.Novelty,
 
+		// Testing
+		IsTest: order.IsTest,
+
 		// Facturación
 		Invoiceable:     order.Invoiceable,
 		InvoiceURL:      order.InvoiceURL,
@@ -234,6 +237,7 @@ func ToOrderSummary(order *entities.ProbabilityOrder) dtos.OrderSummary {
 		IsPaid:                 order.IsPaid,
 		IsConfirmed:            order.IsConfirmed,
 		Novelty:                order.Novelty,
+		IsTest:                 order.IsTest,
 		InvoiceStatus:          order.InvoiceStatus,
 		Shipment:               shipment,
 	}

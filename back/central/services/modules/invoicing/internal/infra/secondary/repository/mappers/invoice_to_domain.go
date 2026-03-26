@@ -36,6 +36,7 @@ func InvoiceToDomain(model *models.Invoice) *entities.Invoice {
 		CustomerPhone:       model.CustomerPhone,
 		CustomerDNI:         model.CustomerDNI,
 		Status:              model.Status,
+		IsTest:              model.IsTest,
 		IssuedAt:            model.IssuedAt,
 		CancelledAt:         model.CancelledAt,
 		ExpiresAt:           model.ExpiresAt,

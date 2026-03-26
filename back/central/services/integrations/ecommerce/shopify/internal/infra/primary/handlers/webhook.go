@@ -100,6 +100,9 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 		return
 	}
 
+	// Detectar si es webhook de testing (header del simulador)
+	isTest := headers.ProbabilityTesting == "true"
+
 	// Respond 200 OK as fast as possible as required by Shopify
 	c.JSON(http.StatusOK, response.WebhookResponse{
 		Success: true,
@@ -107,13 +110,13 @@ func (h *ShopifyHandler) WebhookHandler(c *gin.Context) {
 	})
 
 	// Procesar el webhook de forma asíncrona para no bloquear la respuesta (requisito de Shopify: 200 OK rápido)
-	go h.processWebhookAsync(headers.Topic, headers.ShopDomain, bodyBytes)
+	go h.processWebhookAsync(headers.Topic, headers.ShopDomain, bodyBytes, isTest)
 }
 
 // processWebhookAsync procesa el webhook de forma asíncrona.
 // Usa context.Background() intencionalmente: el handler HTTP ya respondió 200 OK,
 // y el procesamiento debe continuar independientemente del ciclo de vida del request.
-func (h *ShopifyHandler) processWebhookAsync(topic string, shopDomain string, bodyBytes []byte) {
+func (h *ShopifyHandler) processWebhookAsync(topic string, shopDomain string, bodyBytes []byte, isTest bool) {
 	ctx := context.Background()
 
 	h.logger.Info().
@@ -144,7 +147,7 @@ func (h *ShopifyHandler) processWebhookAsync(topic string, shopDomain string, bo
 			Str("shop_domain", shopDomain).
 			Str("order_id", orderResp.Name).
 			Msg("📦 Procesando orden nueva (orders/create)")
-		err = h.useCase.CreateOrder(ctx, shopDomain, shopifyOrder, bodyBytes)
+		err = h.useCase.CreateOrder(ctx, shopDomain, shopifyOrder, bodyBytes, isTest)
 
 	case "orders/paid":
 		h.logger.Info(ctx).

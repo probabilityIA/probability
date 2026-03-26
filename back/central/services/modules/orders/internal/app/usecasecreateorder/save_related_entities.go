@@ -181,6 +181,7 @@ func (uc *UseCaseCreateOrder) saveShipments(ctx context.Context, order *entities
 			DriverID:          shipDTO.DriverID,
 			DriverName:        shipDTO.DriverName,
 			IsLastMile:        shipDTO.IsLastMile,
+			IsTest:            order.IsTest,
 			EstimatedDelivery: shipDTO.EstimatedDelivery,
 			DeliveryNotes:     shipDTO.DeliveryNotes,
 			Metadata:          shipDTO.Metadata,

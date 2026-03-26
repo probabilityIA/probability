@@ -118,6 +118,9 @@ type OrderResponse struct {
 	IsConfirmed *bool
 	Novelty     *string
 
+	// Testing
+	IsTest bool
+
 	// Facturación
 	Invoiceable     bool
 	InvoiceURL      *string

@@ -22,7 +22,7 @@ type IShopifyUseCase interface {
 	SyncOrdersWithParams(ctx context.Context, integrationID string, syncParams *domain.SyncOrdersParams) error
 	GetOrders(ctx context.Context, integration *domain.Integration, storeDomain, accessToken string, params *domain.GetOrdersParams) (int, error)
 	GetOrder(ctx context.Context, integrationID string, orderID string) error
-	CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte) error
+	CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte, isTest bool) error
 	ProcessOrderPaid(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
 	ProcessOrderUpdated(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error
 	ProcessOrderCancelled(ctx context.Context, shopDomain string, order *domain.ShopifyOrder) error

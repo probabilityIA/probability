@@ -52,6 +52,7 @@ func InvoiceToResponse(invoice *entities.Invoice, includeItems bool, baseURL str
 		InternalNumber:      invoice.InternalNumber,
 		ExternalID:          invoice.ExternalID,
 		Status:              invoice.Status,
+		IsTest:              invoice.IsTest,
 		TotalAmount:         invoice.TotalAmount,
 		Subtotal:            invoice.Subtotal,
 		Tax:                 invoice.Tax,

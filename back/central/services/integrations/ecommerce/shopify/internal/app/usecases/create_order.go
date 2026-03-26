@@ -9,7 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
 
-func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte) error {
+func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string, order *domain.ShopifyOrder, rawPayload []byte, isTest bool) error {
 	if order == nil {
 		return domain.ErrOrderPayloadNil
 	}
@@ -35,6 +35,9 @@ func (uc *SyncOrdersUseCase) CreateOrder(ctx context.Context, shopDomain string,
 	order.IntegrationType = "shopify"
 
 	probabilityOrder := mapper.MapShopifyOrderToProbability(order)
+
+	// Marcar como orden de prueba si el header X-Probability-Testing estaba presente
+	probabilityOrder.IsTest = isTest
 
 	// Enriquecer la orden con detalles extraídos del JSON original (PaymentDetails, FulfillmentDetails, etc.)
 	mapper.EnrichOrderWithDetails(probabilityOrder, rawPayload)

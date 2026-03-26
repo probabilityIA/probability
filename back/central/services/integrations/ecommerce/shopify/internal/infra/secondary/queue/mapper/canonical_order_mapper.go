@@ -175,6 +175,7 @@ func MapDomainToSerializable(order *domain.ProbabilityOrderDTO) *request.Seriali
 		Approved:           order.Approved,
 		UserID:             order.UserID,
 		UserName:           order.UserName,
+		IsTest:             order.IsTest,
 		Invoiceable:        order.Invoiceable,
 		InvoiceURL:         order.InvoiceURL,
 		InvoiceID:          order.InvoiceID,

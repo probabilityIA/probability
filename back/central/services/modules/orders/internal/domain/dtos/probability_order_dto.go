@@ -89,6 +89,9 @@ type ProbabilityOrderDTO struct {
 	PaymentDetails     json.RawMessage `json:"payment_details,omitempty"`
 	FulfillmentDetails json.RawMessage `json:"fulfillment_details,omitempty"`
 
+	// Testing
+	IsTest bool `json:"is_test"`
+
 	// Control de flujo (no se persiste)
 	IsManualOrder bool `json:"-"`
 
@@ -192,6 +195,7 @@ type ProbabilityShipmentDTO struct {
 	DriverID          *uint           `json:"driver_id,omitempty"`
 	DriverName        string          `json:"driver_name"`
 	IsLastMile        bool            `json:"is_last_mile"`
+	IsTest            bool            `json:"is_test"`
 	EstimatedDelivery *time.Time      `json:"estimated_delivery,omitempty"`
 	DeliveryNotes     *string         `json:"delivery_notes,omitempty"`
 	Metadata          json.RawMessage `json:"metadata,omitempty"`

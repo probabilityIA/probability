@@ -48,6 +48,7 @@ type OrderSummary struct {
 	IsPaid                 bool
 	IsConfirmed            *bool
 	Novelty                *string
+	IsTest                 bool
 	InvoiceStatus          string // "", "pending", "issued", "failed", "cancelled"
 	Shipment               *ShipmentSummary
 }

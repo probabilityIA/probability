@@ -126,8 +126,15 @@ const OrderRow = memo(({
                 </div>
             </td>
             <td className="px-2 sm:px-3 py-2">
-                <div className="text-xs font-medium text-gray-900 dark:text-white">
-                    {order.order_number || order.external_id || order.id}
+                <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-medium text-gray-900 dark:text-white">
+                        {order.order_number || order.external_id || order.id}
+                    </span>
+                    {order.is_test && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">
+                            TEST
+                        </span>
+                    )}
                 </div>
                 <div className="text-xs text-gray-500 dark:text-gray-400 sm:hidden">
                     {order.customer_name}

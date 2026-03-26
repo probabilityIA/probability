@@ -80,6 +80,7 @@ func (r *Repository) mapToOrderData(order *models.Order) *dtos.OrderData {
 		IsPaid:          order.IsPaid,
 		PaymentMethodID: order.PaymentMethodID,
 		Invoiceable:     order.Invoiceable,
+		IsTest:          order.IsTest,
 		Status:          order.Status,
 		CreatedAt:       order.CreatedAt,
 	}

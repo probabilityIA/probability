@@ -156,6 +156,7 @@ type ProbabilityOrderDTO struct {
 	Approved           *bool
 	UserID             *uint
 	UserName           string
+	IsTest             bool
 	Invoiceable        bool
 	InvoiceURL         *string
 	InvoiceID          *string

@@ -16,6 +16,7 @@ export interface Invoice {
   invoice_number: string;
   external_id?: string;
   status: 'pending' | 'issued' | 'cancelled' | 'failed';
+  is_test?: boolean;
   total_amount: number;
   subtotal: number;
   tax: number;

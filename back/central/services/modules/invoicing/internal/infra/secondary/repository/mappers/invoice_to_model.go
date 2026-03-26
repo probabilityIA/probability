@@ -41,6 +41,7 @@ func InvoiceToModel(entity *entities.Invoice) *models.Invoice {
 		CustomerPhone:       entity.CustomerPhone,
 		CustomerDNI:         entity.CustomerDNI,
 		Status:              entity.Status,
+		IsTest:              entity.IsTest,
 		IssuedAt:            entity.IssuedAt,
 		CancelledAt:         entity.CancelledAt,
 		ExpiresAt:           entity.ExpiresAt,

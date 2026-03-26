@@ -76,6 +76,9 @@ func (uc *UseCaseCreateOrder) buildOrderEntity(dto *dtos.ProbabilityOrderDTO, cl
 		UserID:   dto.UserID,
 		UserName: dto.UserName,
 
+		// Testing
+		IsTest: dto.IsTest,
+
 		// Facturación
 		Invoiceable:     dto.Invoiceable,
 		InvoiceURL:      dto.InvoiceURL,

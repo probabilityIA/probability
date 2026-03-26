@@ -61,6 +61,9 @@ type Invoice struct {
 	// "failed" = falló la generación
 	Status string `gorm:"size:64;not null;index;default:'pending'"`
 
+	// Testing
+	IsTest bool `gorm:"default:false;index"` // Si es una factura de prueba (orden origen fue test)
+
 	// Timestamps
 	IssuedAt   *time.Time `gorm:"index"` // Cuándo se emitió la factura
 	CancelledAt *time.Time               // Cuándo se canceló

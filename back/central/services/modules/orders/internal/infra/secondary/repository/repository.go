@@ -660,6 +660,7 @@ func (r *Repository) CreateShipments(ctx context.Context, shipments []*entities.
 			DriverID:          s.DriverID,
 			DriverName:        s.DriverName,
 			IsLastMile:        s.IsLastMile,
+			IsTest:            s.IsTest,
 			EstimatedDelivery: s.EstimatedDelivery,
 			DeliveryNotes:     s.DeliveryNotes,
 			Metadata:          s.Metadata,

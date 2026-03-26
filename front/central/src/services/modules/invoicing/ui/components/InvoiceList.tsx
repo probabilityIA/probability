@@ -498,7 +498,14 @@ export const InvoiceList = forwardRef(function InvoiceList(
       label: 'Factura',
       render: (_: unknown, invoice: Invoice) => (
         <div>
-          <div className="font-medium">{invoice.invoice_number || 'Sin número'}</div>
+          <div className="flex items-center gap-1.5">
+            <span className="font-medium">{invoice.invoice_number || 'Sin número'}</span>
+            {invoice.is_test && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-orange-100 text-orange-700 border border-orange-300 uppercase tracking-widest">
+                TEST
+              </span>
+            )}
+          </div>
           <div className="text-xs text-gray-500 dark:text-gray-400">ID: {invoice.id}</div>
         </div>
       ),

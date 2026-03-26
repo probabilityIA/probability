@@ -151,6 +151,7 @@ func (uc *useCase) CreateInvoice(ctx context.Context, dto *dtos.CreateInvoiceDTO
 		CustomerPhone:          order.CustomerPhone,
 		CustomerDNI:            order.CustomerDNI,
 		Status:                 constants.InvoiceStatusPending,
+		IsTest:                 order.IsTest,
 		Notes:                  dto.Notes,
 		Metadata:               make(map[string]interface{}),
 	}

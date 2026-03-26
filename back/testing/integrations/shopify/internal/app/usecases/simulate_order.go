@@ -294,7 +294,7 @@ func (s *OrderSimulator) generateSingleCurrencyOrder(orderNumber string, created
 		Tags:                     "",
 		TaxLines:                 s.generateTaxLines(taxStr, currency, taxRate),
 		TaxesIncluded:            false,
-		Test:                     false,
+		Test:                     true,
 		Token:                    fmt.Sprintf("ct_%x", rand.Int63()),
 		TotalDiscounts:           "0.00",
 		TotalDiscountsSet:        s.generateMoneySet("0.00", currency),
@@ -450,7 +450,7 @@ func (s *OrderSimulator) generateDualCurrencyOrder(orderNumber string, createdAt
 			},
 		},
 		TaxesIncluded:          true, // Precios incluyen IVA
-		Test:                   false,
+		Test:                   true,
 		Token:                  fmt.Sprintf("ct_%x", rand.Int63()),
 		TotalDiscounts:         "0.00",
 		TotalDiscountsSet:      s.dataGenerator.GenerateDualCurrencyMoneySet(0, exchangeRate),

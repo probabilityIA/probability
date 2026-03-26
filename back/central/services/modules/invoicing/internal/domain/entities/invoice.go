@@ -39,6 +39,9 @@ type Invoice struct {
 	// Estado
 	Status string
 
+	// Testing
+	IsTest bool
+
 	// Timestamps
 	IssuedAt    *time.Time
 	CancelledAt *time.Time

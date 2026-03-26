@@ -118,6 +118,9 @@ type Order struct {
 	IsConfirmed *bool   `json:"is_confirmed"`
 	Novelty     *string `json:"novelty"`
 
+	// Testing
+	IsTest bool `json:"is_test"`
+
 	// Facturación
 	Invoiceable     bool    `json:"invoiceable"`
 	InvoiceURL      *string `json:"invoice_url,omitempty"`

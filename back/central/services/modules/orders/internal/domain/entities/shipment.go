@@ -40,6 +40,7 @@ type ProbabilityShipment struct {
 	DriverID      *uint
 	DriverName    string
 	IsLastMile    bool
+	IsTest        bool
 
 	EstimatedDelivery *time.Time
 	DeliveryNotes     *string

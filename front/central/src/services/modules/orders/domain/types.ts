@@ -145,6 +145,9 @@ export interface Order {
     is_confirmed?: boolean | null;
     novelty?: string;
 
+    // Testing
+    is_test?: boolean;
+
     // Facturación
     invoiceable: boolean;
     invoice_url?: string;
@@ -415,6 +418,9 @@ export interface UpdateOrderDTO {
     is_confirmed?: boolean | null;
     confirmation_status?: 'yes' | 'no' | 'pending';
     novelty?: string;
+
+    // Testing
+    is_test?: boolean;
 
     // Facturación
     invoiceable?: boolean;

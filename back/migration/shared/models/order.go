@@ -147,6 +147,9 @@ type Order struct {
 	IsConfirmed *bool   `gorm:"default:false"` // Pedido Confirmado
 	Novelty     *string `gorm:"type:text"`     // Novedades
 
+	// Testing
+	IsTest bool `gorm:"default:false;index"` // Si es una orden de prueba (generada por simulador de testing)
+
 	// ============================================
 	// FACTURACIÓN
 	// ============================================

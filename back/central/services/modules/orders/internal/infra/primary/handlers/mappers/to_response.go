@@ -133,6 +133,7 @@ func OrderToResponse(dto *dtos.OrderResponse) *response.Order {
 		UserName:                dto.UserName,
 		IsConfirmed:             dto.IsConfirmed,
 		Novelty:                 dto.Novelty,
+		IsTest:                  dto.IsTest,
 		Invoiceable:             dto.Invoiceable,
 		InvoiceURL:              dto.InvoiceURL,
 		InvoiceID:               dto.InvoiceID,
@@ -216,6 +217,7 @@ func OrderSummaryToResponse(dto *dtos.OrderSummary) *response.OrderSummary {
 		IsPaid:                 dto.IsPaid,
 		IsConfirmed:            dto.IsConfirmed,
 		Novelty:                dto.Novelty,
+		IsTest:                 dto.IsTest,
 		InvoiceStatus:          dto.InvoiceStatus,
 		Shipment:               shipment,
 	}

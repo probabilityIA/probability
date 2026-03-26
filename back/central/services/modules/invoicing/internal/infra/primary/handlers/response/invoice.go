@@ -15,6 +15,7 @@ type Invoice struct {
 	InternalNumber      string                 `json:"internal_number"`
 	ExternalID          *string                `json:"external_id,omitempty"`
 	Status              string                 `json:"status"`
+	IsTest              bool                   `json:"is_test"`
 	TotalAmount         float64                `json:"total_amount"`
 	Subtotal            float64                `json:"subtotal"`
 	Tax                 float64                `json:"tax"`

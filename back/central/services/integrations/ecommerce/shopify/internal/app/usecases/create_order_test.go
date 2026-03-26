@@ -39,7 +39,7 @@ func TestCreateOrder_Success(t *testing.T) {
 	uc := newTestUseCase(integrationSvc, &mockShopifyClient{}, publisher, &mockSyncEventPublisher{})
 
 	// Act
-	err := uc.CreateOrder(ctx, shopDomain, order, rawPayload)
+	err := uc.CreateOrder(ctx, shopDomain, order, rawPayload, false)
 
 	// Assert
 	if err != nil {
@@ -86,7 +86,7 @@ func TestCreateOrder_NilOrder(t *testing.T) {
 	uc := newTestUseCase(&mockIntegrationService{}, &mockShopifyClient{}, &mockOrderPublisher{}, &mockSyncEventPublisher{})
 
 	// Act
-	err := uc.CreateOrder(ctx, "mi-tienda.myshopify.com", nil, nil)
+	err := uc.CreateOrder(ctx, "mi-tienda.myshopify.com", nil, nil, false)
 
 	// Assert
 	if err == nil {
@@ -111,7 +111,7 @@ func TestCreateOrder_IntegrationServiceError(t *testing.T) {
 	order := &domain.ShopifyOrder{ExternalID: "order-001"}
 
 	// Act
-	err := uc.CreateOrder(ctx, "tienda-desconocida.myshopify.com", order, nil)
+	err := uc.CreateOrder(ctx, "tienda-desconocida.myshopify.com", order, nil, false)
 
 	// Assert
 	if err == nil {
@@ -148,7 +148,7 @@ func TestCreateOrder_PublisherError(t *testing.T) {
 	order := &domain.ShopifyOrder{ExternalID: "order-002"}
 
 	// Act
-	err := uc.CreateOrder(ctx, "mi-tienda.myshopify.com", order, nil)
+	err := uc.CreateOrder(ctx, "mi-tienda.myshopify.com", order, nil, false)
 
 	// Assert
 	if err == nil {
@@ -176,7 +176,7 @@ func TestCreateOrder_WithoutRawPayload_NoChannelMetadata(t *testing.T) {
 	order := &domain.ShopifyOrder{ExternalID: "order-003"}
 
 	// Act - rawPayload vacio (nil)
-	err := uc.CreateOrder(ctx, "mi-tienda.myshopify.com", order, nil)
+	err := uc.CreateOrder(ctx, "mi-tienda.myshopify.com", order, nil, false)
 
 	// Assert
 	if err != nil {

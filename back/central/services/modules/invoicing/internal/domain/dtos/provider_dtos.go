@@ -74,6 +74,7 @@ type OrderData struct {
 	IsPaid           bool
 	PaymentMethodID  uint
 	Invoiceable      bool
+	IsTest           bool
 	Items            []OrderItemData
 
 	// Campos para filtros avanzados
