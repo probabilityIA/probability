@@ -15,6 +15,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NODE_ENV=production
+ENV PUBLIC_API_URL=/api/v1
 RUN npm run build
 
 FROM --platform=linux/arm64 nginx:alpine AS runner
