@@ -42,8 +42,8 @@ export default function WalletPage() {
 
                 {/* Business selector - solo para super admin */}
                 {isSuperAdmin && businesses.length > 0 && (
-                    <div className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-                        <label className="text-sm font-medium text-blue-800 whitespace-nowrap">
+                    <div className="flex items-center gap-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-2">
+                        <label className="text-sm font-medium text-blue-800 dark:text-blue-200 whitespace-nowrap">
                             Negocio:
                         </label>
                         <select
@@ -52,7 +52,7 @@ export default function WalletPage() {
                                 const val = e.target.value;
                                 setSelectedBusinessId(val ? Number(val) : null);
                             }}
-                            className="px-3 py-1.5 border border-blue-300 rounded-md text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
+                            className="px-3 py-1.5 border border-blue-300 dark:border-blue-700 rounded-md text-sm bg-white dark:bg-gray-700 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-[200px]"
                         >
                             <option value="">Vista Administrativa</option>
                             {businesses.map((b) => (
@@ -63,7 +63,7 @@ export default function WalletPage() {
                 )}
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="p-6">
                     {isSuperAdmin ? (
                         selectedBusinessId ? (
@@ -183,54 +183,48 @@ function AdminWalletView() {
             </div>
 
             {/* Top Section - En Revisión (Full Width) */}
-            <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                <RequestsTableView
-                    title="En revisión"
-                    businesses={businesses}
-                    onRequestsChanged={fetchWalletsAndBusinesses}
-                    allWallets={wallets}
-                    fetchAction={getPendingRequestsAction}
-                    showActions={true}
-                    emptyMessage="Sin pendientes"
-                    compact={false}
-                    itemsPerPage={itemsPerPage}
-                    onItemsPerPageChange={setItemsPerPage}
-                />
-            </div>
+            <RequestsTableView
+                title="En revisión"
+                businesses={businesses}
+                onRequestsChanged={fetchWalletsAndBusinesses}
+                allWallets={wallets}
+                fetchAction={getPendingRequestsAction}
+                showActions={true}
+                emptyMessage="Sin pendientes"
+                compact={false}
+                itemsPerPage={itemsPerPage}
+                onItemsPerPageChange={setItemsPerPage}
+            />
 
             {/* Bottom Row - Approved and Rejected (Side by Side) */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                    <RequestsTableView
-                        title="Aprobados"
-                        businesses={businesses}
-                        onRequestsChanged={fetchWalletsAndBusinesses}
-                        allWallets={wallets}
-                        fetchAction={getProcessedRequestsAction}
-                        filterStatus="COMPLETED"
-                        showActions={false}
-                        emptyMessage="Sin aprobados"
-                        compact={true}
-                        itemsPerPage={itemsPerPage}
-                        onItemsPerPageChange={setItemsPerPage}
-                    />
-                </div>
+                <RequestsTableView
+                    title="Aprobados"
+                    businesses={businesses}
+                    onRequestsChanged={fetchWalletsAndBusinesses}
+                    allWallets={wallets}
+                    fetchAction={getProcessedRequestsAction}
+                    filterStatus="COMPLETED"
+                    showActions={false}
+                    emptyMessage="Sin aprobados"
+                    compact={true}
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                />
 
-                <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                    <RequestsTableView
-                        title="Rechazados"
-                        businesses={businesses}
-                        onRequestsChanged={fetchWalletsAndBusinesses}
-                        allWallets={wallets}
-                        fetchAction={getProcessedRequestsAction}
-                        filterStatus="FAILED"
-                        showActions={false}
-                        emptyMessage="Sin rechazados"
-                        compact={true}
-                        itemsPerPage={itemsPerPage}
-                        onItemsPerPageChange={setItemsPerPage}
-                    />
-                </div>
+                <RequestsTableView
+                    title="Rechazados"
+                    businesses={businesses}
+                    onRequestsChanged={fetchWalletsAndBusinesses}
+                    allWallets={wallets}
+                    fetchAction={getProcessedRequestsAction}
+                    filterStatus="FAILED"
+                    showActions={false}
+                    emptyMessage="Sin rechazados"
+                    compact={true}
+                    itemsPerPage={itemsPerPage}
+                    onItemsPerPageChange={setItemsPerPage}
+                />
             </div>
         </div>
     );
@@ -318,7 +312,7 @@ function ClearHistoryButton({ businessId, businessName, onSuccess }: { businessI
 
     return (
         <>
-            <Button size="sm" variant="outline" className="text-red-600 border-red-200 hover:bg-red-50" onClick={() => setIsOpen(true)}>
+            <Button size="sm" variant="outline" className="text-red-600 dark:text-red-400 border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-950" onClick={() => setIsOpen(true)}>
                 Borrar Historial
             </Button>
             <Modal isOpen={isOpen} onClose={() => setIsOpen(false)} title="Confirmar Eliminación">
@@ -519,9 +513,9 @@ function RequestsTableView({
     const paginatedData = requests.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
-        <div className={`${compact ? 'p-2' : 'pt-4 border-t border-gray-100 mt-8'}`}>
+        <div className={`bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 shadow-sm dark:shadow-lg overflow-hidden flex flex-col ${compact ? 'p-2' : 'pt-4 border-t border-gray-100 mt-8'}`}>
             {!compact && <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{title}</h2>}
-            {compact && <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 font-bold text-gray-700 dark:text-gray-200 text-sm uppercase tracking-wider">{title}</div>}
+            {compact && <div className="px-4 py-2 bg-gray-50 dark:bg-gray-700 border-b border-gray-100 dark:border-gray-600 font-bold text-gray-700 dark:text-gray-100 text-sm uppercase tracking-wider">{title}</div>}
             <Table
                 columns={requestColumns}
                 data={paginatedData}
@@ -621,7 +615,10 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
         setProcessing(true);
 
         try {
-            const res = await rechargeWalletAction(Number(rechargeAmount), businessId);
+            // Si no hay businessId (vista de usuario normal), usar el del permissions
+            const targetBusinessId = businessId || permissions?.business_id;
+
+            const res = await rechargeWalletAction(Number(rechargeAmount), targetBusinessId);
 
             if (!res.success) {
                 throw new Error(res.error || 'Error al reportar pago');
@@ -653,11 +650,11 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
         <>
             {/* Banner de contexto para super admin */}
             {isSuperAdminView && (
-                <div className="mb-6 flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3">
+                <div className="mb-6 flex items-center gap-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg px-4 py-3">
                     <svg className="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <p className="text-sm text-blue-800">
+                    <p className="text-sm text-blue-800 dark:text-blue-200">
                         Vista de billetera de <strong>{displayName}</strong> (ID: {businessId}) — modo super admin
                     </p>
                 </div>
@@ -676,7 +673,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 </div>
 
                 {/* Recharge Section */}
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 lg:p-8">
+                <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 shadow-sm dark:shadow-lg p-6 lg:p-8">
                     <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-6">
                         {isSuperAdminView ? `Recargar Saldo — ${displayName}` : 'Recargar Saldo'}
                     </h2>
@@ -700,7 +697,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                                     onClick={() => setRechargeAmount(String(amt))}
                                     className={`px-2 py-2 text-xs font-medium rounded-lg border transition-all ${Number(rechargeAmount) === amt
                                         ? 'bg-[#7c3aed] text-white border-[#7c3aed] shadow-md transform scale-105'
-                                        : 'bg-white text-gray-700 dark:text-gray-200 border-gray-200 hover:border-purple-300 hover:bg-purple-50'
+                                        : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 border-gray-200 dark:border-gray-600 hover:border-purple-300 hover:bg-purple-50 dark:hover:bg-gray-600'
                                         }`}
                                 >
                                     $ {amt / 1000}k
@@ -754,7 +751,7 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                 size="md"
             >
                 <div className="flex flex-col items-center justify-center p-2 text-center">
-                    <div className="bg-white p-2 rounded-xl border border-gray-100 mb-4 w-full max-w-[200px] flex justify-center">
+                    <div className="bg-white dark:bg-gray-800 p-2 rounded-xl border border-gray-100 dark:border-gray-700 mb-4 w-full max-w-[200px] flex justify-center">
                         <img src="/QR.png" alt="Nequi QR" className="w-full h-auto object-contain mix-blend-multiply" />
                     </div>
 
@@ -765,9 +762,9 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
                         Total a pagar vía Nequi/Bancolombia
                     </p>
 
-                    <div className="w-full bg-blue-50 border border-blue-100 rounded-lg p-3 mb-4 text-left">
-                        <h4 className="font-semibold text-blue-900 text-xs mb-1">Siguientes pasos:</h4>
-                        <ul className="list-disc list-inside text-[11px] text-blue-800 space-y-0.5">
+                    <div className="w-full bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-800 rounded-lg p-3 mb-4 text-left">
+                        <h4 className="font-semibold text-blue-900 dark:text-blue-200 text-xs mb-1">Siguientes pasos:</h4>
+                        <ul className="list-disc list-inside text-[11px] text-blue-800 dark:text-blue-200 space-y-0.5">
                             <li>Escanea el código QR desde tu App bancaria.</li>
                             <li>Verifica que el monto sea exacto.</li>
                             <li>Realiza el pago.</li>
@@ -953,8 +950,8 @@ function HistoryTable({ title, data, emptyMessage }: { title: string, data: any[
     const paginatedData = data.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     return (
-        <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-            <div className="p-4 border-b border-gray-50 bg-gray-50/50">
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
+            <div className="p-4 border-b border-gray-50 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-700/50">
                 <h3 className="font-semibold text-gray-900 dark:text-white">{title}</h3>
             </div>
             <Table

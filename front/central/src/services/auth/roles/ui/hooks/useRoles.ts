@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getRolesAction, deleteRoleAction } from '../../infra/actions';
 import { Role, GetRolesParams } from '../../domain/types';

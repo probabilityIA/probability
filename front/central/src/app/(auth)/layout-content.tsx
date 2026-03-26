@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { usePathname } from 'next/navigation';
-import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar } from '@/shared/ui';
+import { Sidebar, OrdersSubNavbar, InventorySubNavbar, IntegrationsSubNavbar, NotificationsSubNavbar, InvoicingSubNavbar, DeliverySubNavbar, StorefrontSubNavbar, IAMSubNavbar } from '@/shared/ui';
 import { useSidebar } from '@/shared/contexts/sidebar-context';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { InventoryBusinessProvider } from '@/shared/contexts/inventory-business-context';
@@ -103,6 +103,7 @@ function LayoutContent({ user, children }: LayoutContentProps) {
                     <InvoicingSubNavbar />
                     <DeliverySubNavbar />
                     <StorefrontSubNavbar />
+                    <IAMSubNavbar />
                     <div className="w-full min-w-0 flex-1">
                       <SubscriptionGuard>
                         {children}

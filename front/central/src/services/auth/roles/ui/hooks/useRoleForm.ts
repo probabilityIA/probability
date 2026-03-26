@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { createRoleAction, updateRoleAction } from '../../infra/actions';
 import { Role, CreateRoleDTO, UpdateRoleDTO } from '../../domain/types';

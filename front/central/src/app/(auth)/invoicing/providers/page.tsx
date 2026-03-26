@@ -125,7 +125,7 @@ export default function InvoicingProvidersPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 min-h-screen bg-gray-50 dark:bg-gray-900">
 
       <div className="providersTable">
         <Table
@@ -143,7 +143,8 @@ export default function InvoicingProvidersPage() {
           }
 
           /* Quitar el borde del contenedor global de Table */
-          .providersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white) {
+          .providersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.bg-white),
+          .providersTable :global(div.overflow-hidden.w-full.rounded-lg.border.border-gray-200.dark\\:border-gray-700.bg-white.dark\\:bg-gray-800) {
             border: none !important;
             background: transparent !important;
           }
@@ -183,7 +184,26 @@ export default function InvoicingProvidersPage() {
             transition: transform 180ms ease, box-shadow 180ms ease, background 180ms ease;
           }
 
-          /* Zebra suave en morado */
+          /* Dark mode para las filas */
+          @media (prefers-color-scheme: dark) {
+            .providersTable :global(.table tbody tr) {
+              background: rgba(31, 41, 55, 0.95);
+              box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04);
+            }
+
+            /* Zebra suave en morado oscuro */
+            .providersTable :global(.table tbody tr:nth-child(even)) {
+              background: rgba(124, 58, 237, 0.15);
+            }
+
+            .providersTable :global(.table tbody tr:hover) {
+              background: rgba(124, 58, 237, 0.25);
+              box-shadow: 0 10px 25px rgba(124, 58, 237, 0.15);
+              transform: translateY(-1px);
+            }
+          }
+
+          /* Zebra suave en morado (light mode) */
           .providersTable :global(.table tbody tr:nth-child(even)) {
             background: rgba(124, 58, 237, 0.03);
           }

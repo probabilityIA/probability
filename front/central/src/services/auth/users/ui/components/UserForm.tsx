@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState, useRef } from 'react';
 import { Button } from '@/shared/ui/button';
 import { Input } from '@/shared/ui/input';

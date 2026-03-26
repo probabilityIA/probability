@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { getBusinessesAction, deleteBusinessAction, getBusinessTypesAction } from '../../infra/actions';
 import { Business, BusinessType } from '../../domain/types';

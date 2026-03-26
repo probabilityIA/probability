@@ -52,13 +52,13 @@ export default function DriverManager({ selectedBusinessId = null }: DriverManag
             {/* Header */}
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-xl font-semibold text-gray-900 dark:text-white">Conductores</h1>
+                    <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Conductores</h1>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
                         Gestiona los conductores de tu negocio
                     </p>
                 </div>
                 {!requiresBusinessSelection && (
-                    <Button variant="primary" onClick={openCreate}>
+                    <Button variant="purple" onClick={openCreate}>
                         <PlusIcon className="w-4 h-4 mr-2" />
                         Nuevo conductor
                     </Button>

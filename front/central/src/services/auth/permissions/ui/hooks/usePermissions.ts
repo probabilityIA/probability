@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useCallback } from 'react';
 import { getPermissionsAction, deletePermissionAction } from '../../infra/actions';
 import { Permission } from '../../domain/types';

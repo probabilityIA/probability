@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 import { Button } from '@/shared/ui/button';

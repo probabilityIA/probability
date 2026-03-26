@@ -26,9 +26,9 @@ export default function InvoicesPage() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-8 min-h-screen bg-gray-50 dark:bg-gray-900">
       <div ref={invoiceListRef} />
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm dark:shadow-lg border border-gray-200 dark:border-gray-700 p-6">
         <InvoiceList ref={invoiceListRef} businessId={businessId} selectedBusinessId={selectedBusinessId} />
       </div>
     </div>
