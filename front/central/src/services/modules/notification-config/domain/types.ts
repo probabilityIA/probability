@@ -233,3 +233,58 @@ export interface PaginatedMessageAuditResponse {
     page_size: number;
     total_pages: number;
 }
+
+// ===================================================
+// CONVERSATIONS - Vista de chat WhatsApp
+// ===================================================
+
+export interface ConversationSummary {
+    id: string;
+    phone_number: string;
+    order_number: string;
+    current_state: string;
+    message_count: number;
+    last_message_content: string;
+    last_message_direction: string;
+    last_message_status: string;
+    last_activity: string;
+    created_at: string;
+}
+
+export interface ConversationListFilter {
+    business_id: number;
+    state?: string;
+    phone?: string;
+    date_from?: string;
+    date_to?: string;
+    page?: number;
+    page_size?: number;
+}
+
+export interface PaginatedConversationListResponse {
+    data: ConversationSummary[];
+    total: number;
+    page: number;
+    page_size: number;
+    total_pages: number;
+}
+
+export interface ConversationMessage {
+    id: string;
+    direction: string;
+    message_id: string;
+    template_name: string;
+    content: string;
+    status: string;
+    delivered_at?: string;
+    read_at?: string;
+    created_at: string;
+}
+
+export interface ConversationDetailResponse {
+    conversation_id: string;
+    phone_number: string;
+    order_number: string;
+    current_state: string;
+    messages: ConversationMessage[];
+}

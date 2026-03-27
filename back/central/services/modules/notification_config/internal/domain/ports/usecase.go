@@ -78,4 +78,11 @@ type IUseCase interface {
 
 	// GetMessageAuditStats obtiene estadísticas agregadas de mensajes
 	GetMessageAuditStats(ctx context.Context, businessID uint, dateFrom, dateTo *string) (*dtos.MessageAuditStatsResponseDTO, error)
+
+	// ========== Conversation View ==========
+	// ListConversations obtiene conversaciones agrupadas con resumen
+	ListConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) (*dtos.PaginatedConversationListResponseDTO, error)
+
+	// GetConversationMessages obtiene los mensajes de una conversación para la vista de chat
+	GetConversationMessages(ctx context.Context, conversationID string, businessID uint) (*dtos.ConversationDetailResponseDTO, error)
 }

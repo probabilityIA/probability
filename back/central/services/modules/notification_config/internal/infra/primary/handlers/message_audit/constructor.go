@@ -13,6 +13,8 @@ type IHandler interface {
 	RegisterRoutes(router *gin.RouterGroup)
 	List(c *gin.Context)
 	Stats(c *gin.Context)
+	ListConversations(c *gin.Context)
+	GetConversationMessages(c *gin.Context)
 }
 
 type handler struct {

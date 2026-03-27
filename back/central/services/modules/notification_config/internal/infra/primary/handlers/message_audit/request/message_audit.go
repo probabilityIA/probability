@@ -18,3 +18,14 @@ type StatsMessageAudit struct {
 	DateFrom   *string `form:"date_from"`
 	DateTo     *string `form:"date_to"`
 }
+
+// ListConversations representa los query params para listar conversaciones
+type ListConversations struct {
+	BusinessID uint    `form:"business_id"`
+	State      *string `form:"state"`
+	Phone      *string `form:"phone"`
+	DateFrom   *string `form:"date_from"`
+	DateTo     *string `form:"date_to"`
+	Page       int     `form:"page"`
+	PageSize   int     `form:"page_size"`
+}

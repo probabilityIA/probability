@@ -18,3 +18,16 @@ func ListRequestToDomain(req *request.ListMessageAudit, businessID uint) dtos.Me
 		PageSize:     req.PageSize,
 	}
 }
+
+// ConversationListRequestToDomain convierte query params de conversaciones a DTO de dominio
+func ConversationListRequestToDomain(req *request.ListConversations, businessID uint) dtos.ConversationListFilterDTO {
+	return dtos.ConversationListFilterDTO{
+		BusinessID: businessID,
+		State:      req.State,
+		Phone:      req.Phone,
+		DateFrom:   req.DateFrom,
+		DateTo:     req.DateTo,
+		Page:       req.Page,
+		PageSize:   req.PageSize,
+	}
+}

@@ -45,3 +45,56 @@ func DomainToStatsResponse(dto *dtos.MessageAuditStatsResponseDTO) response.Mess
 		SuccessRate:    dto.SuccessRate,
 	}
 }
+
+// DomainToConversationListResponse convierte lista de conversaciones de dominio a response HTTP
+func DomainToConversationListResponse(dto *dtos.PaginatedConversationListResponseDTO) response.PaginatedConversationListResponse {
+	conversations := make([]response.ConversationSummary, len(dto.Data))
+	for i, d := range dto.Data {
+		conversations[i] = response.ConversationSummary{
+			ID:                   d.ID,
+			PhoneNumber:          d.PhoneNumber,
+			OrderNumber:          d.OrderNumber,
+			CurrentState:         d.CurrentState,
+			MessageCount:         d.MessageCount,
+			LastMessageContent:   d.LastMessageContent,
+			LastMessageDirection: d.LastMessageDirection,
+			LastMessageStatus:    d.LastMessageStatus,
+			LastActivity:         d.LastActivity,
+			CreatedAt:            d.CreatedAt,
+		}
+	}
+
+	return response.PaginatedConversationListResponse{
+		Data:       conversations,
+		Total:      dto.Total,
+		Page:       dto.Page,
+		PageSize:   dto.PageSize,
+		TotalPages: dto.TotalPages,
+	}
+}
+
+// DomainToConversationDetailResponse convierte detalle de conversación de dominio a response HTTP
+func DomainToConversationDetailResponse(dto *dtos.ConversationDetailResponseDTO) response.ConversationDetailResponse {
+	messages := make([]response.ConversationMessage, len(dto.Messages))
+	for i, m := range dto.Messages {
+		messages[i] = response.ConversationMessage{
+			ID:           m.ID,
+			Direction:    m.Direction,
+			MessageID:    m.MessageID,
+			TemplateName: m.TemplateName,
+			Content:      m.Content,
+			Status:       m.Status,
+			DeliveredAt:  m.DeliveredAt,
+			ReadAt:       m.ReadAt,
+			CreatedAt:    m.CreatedAt,
+		}
+	}
+
+	return response.ConversationDetailResponse{
+		ConversationID: dto.ConversationID,
+		PhoneNumber:    dto.PhoneNumber,
+		OrderNumber:    dto.OrderNumber,
+		CurrentState:   dto.CurrentState,
+		Messages:       messages,
+	}
+}

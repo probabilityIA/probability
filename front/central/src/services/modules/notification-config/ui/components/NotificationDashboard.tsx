@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { SummaryStatsRow } from './SummaryStatsRow';
 import { ConfigListTable } from './ConfigListTable';
 import { MessageAudit } from './MessageAudit';
+import { WhatsAppConversations } from './WhatsAppConversations';
 import { IntegrationPicker } from './IntegrationPicker';
 import { IntegrationRulesForm } from './IntegrationRulesForm';
 import { Modal } from '@/shared/ui/modal';
@@ -37,6 +38,9 @@ export function NotificationDashboard() {
     eventTypeCount: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState<'rules' | 'audit' | 'conversations'>('rules');
 
   // Config flow: picker -> rules form
   const [isPickerModalOpen, setIsPickerModalOpen] = useState(false);
@@ -118,7 +122,7 @@ export function NotificationDashboard() {
           Selecciona un negocio para ver las configuraciones de notificación
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
           {/* Summary Stats */}
           <SummaryStatsRow
             integrationCount={stats.integrationCount}
@@ -128,16 +132,46 @@ export function NotificationDashboard() {
             loading={statsLoading}
           />
 
-          {/* Main section: Rules by Integration */}
-          <ConfigListTable
-            onConfigure={handleConfigureIntegration}
-            onCreate={handleCreateConfig}
-            refreshKey={configRefreshKey}
-            selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
-          />
+          {/* Tabs */}
+          <div className="border-b border-gray-200 dark:border-gray-700">
+            <nav className="flex gap-6" aria-label="Tabs">
+              {([
+                { key: 'rules' as const, label: 'Reglas' },
+                { key: 'audit' as const, label: 'Auditoria' },
+                { key: 'conversations' as const, label: 'Conversaciones' },
+              ]).map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`pb-3 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === tab.key
+                      ? 'border-purple-600 text-purple-600 dark:border-purple-400 dark:text-purple-400'
+                      : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </nav>
+          </div>
 
-          {/* Message Audit */}
-          <MessageAudit businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
+          {/* Tab content */}
+          {activeTab === 'rules' && (
+            <ConfigListTable
+              onConfigure={handleConfigureIntegration}
+              onCreate={handleCreateConfig}
+              refreshKey={configRefreshKey}
+              selectedBusinessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined}
+            />
+          )}
+
+          {activeTab === 'audit' && (
+            <MessageAudit businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
+          )}
+
+          {activeTab === 'conversations' && (
+            <WhatsAppConversations businessId={isSuperAdmin ? selectedBusinessId ?? undefined : undefined} />
+          )}
 
           {/* --- Modals --- */}
 

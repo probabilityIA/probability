@@ -201,6 +201,203 @@ func (q *messageAuditQuerier) ListEmailLogs(ctx context.Context, businessID uint
 	return logs, total, nil
 }
 
+// ─── Conversation List & Detail ────────────────────────────────
+
+// conversationSummaryRow representa una fila del resultado de ListConversations
+type conversationSummaryRow struct {
+	ID                   uuid.UUID
+	PhoneNumber          string
+	OrderNumber          string
+	BusinessID           uint
+	CurrentState         string
+	MessageCount         int
+	LastMessageContent   string
+	LastMessageDirection string
+	LastMessageStatus    string
+	LastActivity         time.Time
+	CreatedAt            time.Time
+}
+
+// ListConversations obtiene conversaciones con resumen para la vista de lista
+func (q *messageAuditQuerier) ListConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
+	// Base query: conversaciones con aggregates de mensajes
+	baseQuery := q.db.Conn(ctx).
+		Table("whatsapp_conversations c").
+		Select(`c.id, c.phone_number, c.order_number, c.business_id, c.current_state, c.created_at,
+			COALESCE(agg.message_count, 0) AS message_count,
+			COALESCE(agg.last_activity, c.updated_at) AS last_activity,
+			COALESCE(latest.content, '') AS last_message_content,
+			COALESCE(latest.direction, '') AS last_message_direction,
+			COALESCE(latest.status, '') AS last_message_status`).
+		Joins(`LEFT JOIN (
+			SELECT conversation_id, COUNT(*) AS message_count, MAX(created_at) AS last_activity
+			FROM whatsapp_message_logs
+			GROUP BY conversation_id
+		) agg ON agg.conversation_id = c.id`).
+		Joins(`LEFT JOIN LATERAL (
+			SELECT content, direction, status
+			FROM whatsapp_message_logs
+			WHERE conversation_id = c.id
+			ORDER BY created_at DESC
+			LIMIT 1
+		) latest ON true`).
+		Where("c.business_id = ?", filter.BusinessID)
+
+	// Filtros opcionales
+	if filter.State != nil && *filter.State != "" {
+		baseQuery = baseQuery.Where("c.current_state = ?", *filter.State)
+	}
+	if filter.Phone != nil && *filter.Phone != "" {
+		baseQuery = baseQuery.Where("c.phone_number ILIKE ?", fmt.Sprintf("%%%s%%", *filter.Phone))
+	}
+	if filter.DateFrom != nil && *filter.DateFrom != "" {
+		baseQuery = baseQuery.Where("c.created_at >= ?", *filter.DateFrom)
+	}
+	if filter.DateTo != nil && *filter.DateTo != "" {
+		baseQuery = baseQuery.Where("c.created_at < ?::date + interval '1 day'", *filter.DateTo)
+	}
+
+	// Count total (necesitamos contar sin el select complejo)
+	var total int64
+	countQuery := q.db.Conn(ctx).
+		Table("whatsapp_conversations c").
+		Where("c.business_id = ?", filter.BusinessID)
+	if filter.State != nil && *filter.State != "" {
+		countQuery = countQuery.Where("c.current_state = ?", *filter.State)
+	}
+	if filter.Phone != nil && *filter.Phone != "" {
+		countQuery = countQuery.Where("c.phone_number ILIKE ?", fmt.Sprintf("%%%s%%", *filter.Phone))
+	}
+	if filter.DateFrom != nil && *filter.DateFrom != "" {
+		countQuery = countQuery.Where("c.created_at >= ?", *filter.DateFrom)
+	}
+	if filter.DateTo != nil && *filter.DateTo != "" {
+		countQuery = countQuery.Where("c.created_at < ?::date + interval '1 day'", *filter.DateTo)
+	}
+	if err := countQuery.Count(&total).Error; err != nil {
+		q.logger.Error().Err(err).Msg("Error counting conversations")
+		return nil, 0, err
+	}
+
+	if total == 0 {
+		return []entities.ConversationSummary{}, 0, nil
+	}
+
+	// Paginated query
+	offset := (filter.Page - 1) * filter.PageSize
+	var rows []conversationSummaryRow
+
+	err := baseQuery.
+		Order("last_activity DESC").
+		Offset(offset).
+		Limit(filter.PageSize).
+		Find(&rows).Error
+
+	if err != nil {
+		q.logger.Error().Err(err).Msg("Error listing conversations")
+		return nil, 0, err
+	}
+
+	// Map to domain entities
+	conversations := make([]entities.ConversationSummary, len(rows))
+	for i, row := range rows {
+		conversations[i] = entities.ConversationSummary{
+			ID:                   row.ID.String(),
+			PhoneNumber:          row.PhoneNumber,
+			OrderNumber:          row.OrderNumber,
+			BusinessID:           row.BusinessID,
+			CurrentState:         row.CurrentState,
+			MessageCount:         row.MessageCount,
+			LastMessageContent:   row.LastMessageContent,
+			LastMessageDirection: row.LastMessageDirection,
+			LastMessageStatus:    row.LastMessageStatus,
+			LastActivity:         row.LastActivity,
+			CreatedAt:            row.CreatedAt,
+		}
+	}
+
+	return conversations, total, nil
+}
+
+// conversationMessageRow representa una fila del resultado de GetConversationMessages
+type conversationMessageRow struct {
+	ID           uuid.UUID
+	Direction    string
+	MessageID    string
+	TemplateName string
+	Content      string
+	Status       string
+	DeliveredAt  *time.Time
+	ReadAt       *time.Time
+	CreatedAt    time.Time
+}
+
+// conversationMetaRow representa los metadatos de la conversación
+type conversationMetaRow struct {
+	ID           uuid.UUID
+	PhoneNumber  string
+	OrderNumber  string
+	CurrentState string
+}
+
+// GetConversationMessages obtiene los mensajes de una conversación para la vista de chat
+func (q *messageAuditQuerier) GetConversationMessages(ctx context.Context, conversationID string, businessID uint) (*entities.ConversationSummary, []entities.ConversationMessage, error) {
+	convID, err := uuid.Parse(conversationID)
+	if err != nil {
+		return nil, nil, fmt.Errorf("conversation ID inválido: %s", conversationID)
+	}
+
+	// Obtener metadatos de la conversación (y validar que pertenece al business)
+	var meta conversationMetaRow
+	err = q.db.Conn(ctx).
+		Table("whatsapp_conversations").
+		Select("id, phone_number, order_number, current_state").
+		Where("id = ? AND business_id = ?", convID, businessID).
+		First(&meta).Error
+	if err != nil {
+		return nil, nil, fmt.Errorf("conversation not found: %w", err)
+	}
+
+	// Obtener mensajes ordenados cronológicamente (ASC para chat view)
+	var rows []conversationMessageRow
+	err = q.db.Conn(ctx).
+		Table("whatsapp_message_logs").
+		Select("id, direction, message_id, template_name, content, status, delivered_at, read_at, created_at").
+		Where("conversation_id = ?", convID).
+		Order("created_at ASC").
+		Find(&rows).Error
+	if err != nil {
+		return nil, nil, fmt.Errorf("error listing conversation messages: %w", err)
+	}
+
+	// Map conversación
+	conv := &entities.ConversationSummary{
+		ID:           meta.ID.String(),
+		PhoneNumber:  meta.PhoneNumber,
+		OrderNumber:  meta.OrderNumber,
+		CurrentState: meta.CurrentState,
+		BusinessID:   businessID,
+	}
+
+	// Map mensajes
+	messages := make([]entities.ConversationMessage, len(rows))
+	for i, row := range rows {
+		messages[i] = entities.ConversationMessage{
+			ID:           row.ID.String(),
+			Direction:    row.Direction,
+			MessageID:    row.MessageID,
+			TemplateName: row.TemplateName,
+			Content:      row.Content,
+			Status:       row.Status,
+			DeliveredAt:  row.DeliveredAt,
+			ReadAt:       row.ReadAt,
+			CreatedAt:    row.CreatedAt,
+		}
+	}
+
+	return conv, messages, nil
+}
+
 // ─── WhatsApp Stats ────────────────────────────────────────────
 
 // statsResult representa el resultado de la query de estadísticas

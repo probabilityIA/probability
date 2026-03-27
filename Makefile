@@ -189,17 +189,26 @@ dev: docker-up ## Iniciar entorno completo de desarrollo
 	@echo "Para iniciar testing backend:  make run-testing"
 	@echo "Para iniciar testing frontend: make run-frontend-testing"
 
-run-all: ## Iniciar backend, frontend y testing server (requiere tmux)
-	@echo "🚀 Iniciando todos los servicios..."
-	@if ! command -v tmux &> /dev/null; then \
-		echo "❌ tmux no está instalado. Instálalo con: sudo apt install tmux"; \
-		exit 1; \
-	fi
-	tmux new-session -d -s probability "cd $(BACKEND_DIR) && go run cmd/main.go"
-	tmux split-window -v -t probability "cd $(FRONTEND_DIR) && pnpm dev"
-	tmux split-window -h -t probability "cd $(TESTING_DIR) && go run cmd/main.go"
-	tmux select-layout -t probability tiled
-	tmux attach-session -t probability
+run-all: ## Iniciar infra + backend + frontend en tmux
+	@./scripts/dev-services.sh start all
+
+stop-all: ## Detener todos los servicios y limpiar tmux
+	@./scripts/dev-services.sh stop all
+
+svc-status: ## Ver estado de todos los servicios
+	@./scripts/dev-services.sh status
+
+svc-restart: ## Reiniciar un servicio (uso: make svc-restart SVC=backend)
+	@./scripts/dev-services.sh restart $(SVC)
+
+svc-logs: ## Ver logs de un servicio (uso: make svc-logs SVC=backend LINES=100)
+	@./scripts/dev-services.sh logs $(SVC) $(LINES)
+
+kill-zombies: ## Matar procesos huérfanos (Go, Next.js, puertos)
+	@./scripts/dev-services.sh kill-zombies
+
+svc-ports: ## Ver puertos en uso del proyecto
+	@./scripts/dev-services.sh ports
 
 # ======================
 # Tests

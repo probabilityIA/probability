@@ -3,6 +3,8 @@ package rabbitmq
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
 
 	amqp "github.com/rabbitmq/amqp091-go"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -40,24 +42,41 @@ type IQueue interface {
 // QueueRegistryCallback es un callback para registrar colas declaradas
 type QueueRegistryCallback func(queueName string)
 
+// consumerRegistration almacena la info necesaria para re-registrar un consumer
+// después de una reconexión a RabbitMQ.
+type consumerRegistration struct {
+	queueName string
+	handler   func([]byte) error
+	ctx       context.Context
+}
+
 type rabbitMQ struct {
-	conn           *amqp.Connection
-	channel        *amqp.Channel
-	logger         log.ILogger
-	config         env.IConfig
-	queueRegistry  QueueRegistryCallback
+	conn          *amqp.Connection
+	channel       *amqp.Channel
+	logger        log.ILogger
+	config        env.IConfig
+	queueRegistry QueueRegistryCallback
+
+	// Reconexión automática
+	mu        sync.RWMutex           // Protege conn/channel durante reconexión
+	consumers []consumerRegistration // Registro de consumers para re-registrar
+	done      chan struct{}           // Señal de cierre intencional (Close())
 }
 
 // New crea una nueva instancia de RabbitMQ y conecta automáticamente
 func New(logger log.ILogger, config env.IConfig) (IQueue, error) {
 	r := &rabbitMQ{
-		logger: logger,
-		config: config,
+		logger:    logger,
+		config:    config,
+		consumers: make([]consumerRegistration, 0),
+		done:      make(chan struct{}),
 	}
 
 	if err := r.connect(); err != nil {
 		return nil, err
 	}
+
+	r.watchConnection()
 
 	return r, nil
 }
@@ -67,8 +86,9 @@ func (r *rabbitMQ) SetQueueRegistry(callback QueueRegistryCallback) {
 	r.queueRegistry = callback
 }
 
+// connect establece la conexión AMQP y crea el channel de publish.
+// NO adquiere mutex — el caller es responsable de tener el lock apropiado.
 func (r *rabbitMQ) connect() error {
-	// Construir URL de conexión desde variables de entorno
 	host := r.config.Get("RABBITMQ_HOST")
 	port := r.config.Get("RABBITMQ_PORT")
 	user := r.config.Get("RABBITMQ_USER")
@@ -93,7 +113,6 @@ func (r *rabbitMQ) connect() error {
 
 	url := fmt.Sprintf("amqp://%s:%s@%s:%s%s", user, pass, host, port, vhost)
 
-	// Conexión silenciosa - info mostrada en LogStartupInfo()
 	var err error
 	r.conn, err = amqp.Dial(url)
 	if err != nil {
@@ -111,52 +130,130 @@ func (r *rabbitMQ) connect() error {
 		return fmt.Errorf("failed to open channel: %w", err)
 	}
 
-	// Conexión exitosa - info mostrada en LogStartupInfo()
 	return nil
 }
 
-func (r *rabbitMQ) Publish(ctx context.Context, queueName string, message []byte) error {
-	if r.channel == nil {
-		return fmt.Errorf("rabbitmq channel is not initialized")
-	}
+// watchConnection escucha NotifyClose de la conexión AMQP y dispara reconexión automática.
+func (r *rabbitMQ) watchConnection() {
+	closeChan := make(chan *amqp.Error, 1)
+	r.conn.NotifyClose(closeChan)
 
-	err := r.channel.PublishWithContext(
-		ctx,
-		"",        // exchange
-		queueName, // routing key
-		false,     // mandatory
-		false,     // immediate
-		amqp.Publishing{
-			ContentType: "application/json",
-			Body:        message,
-		},
-	)
+	go func() {
+		select {
+		case amqpErr, ok := <-closeChan:
+			if !ok {
+				// Canal cerrado sin error — verificar si fue intencional
+				select {
+				case <-r.done:
+					return
+				default:
+				}
+			}
+			if amqpErr != nil {
+				r.logger.Error().
+					Int("code", amqpErr.Code).
+					Str("reason", amqpErr.Reason).
+					Msg("🔴 RabbitMQ connection lost - starting automatic reconnection")
+			} else {
+				r.logger.Warn().
+					Msg("🔴 RabbitMQ connection closed unexpectedly - starting automatic reconnection")
+			}
+			r.reconnect()
 
-	if err != nil {
-		r.logger.Error().
-			Err(err).
-			Str("queue", queueName).
-			Int("message_size", len(message)).
-			Msg("Failed to publish message to queue")
-		return fmt.Errorf("failed to publish message: %w", err)
-	}
-
-	r.logger.Info().
-		Str("queue", queueName).
-		Int("message_size", len(message)).
-		Msg("Message published to queue")
-
-	return nil
+		case <-r.done:
+			return
+		}
+	}()
 }
 
-func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([]byte) error) error {
-	if r.conn == nil {
-		return fmt.Errorf("rabbitmq connection is not initialized")
-	}
+// reconnect intenta reconectar con backoff exponencial y re-registra todos los consumers.
+func (r *rabbitMQ) reconnect() {
+	backoff := time.Second
+	maxBackoff := 30 * time.Second
 
-	// Crear un channel SEPARADO para este consumer
-	// Esto evita el error "unexpected command received" cuando múltiples consumers
-	// intentan usar el mismo channel
+	for attempt := 1; ; attempt++ {
+		select {
+		case <-r.done:
+			r.logger.Info().Msg("Reconnection cancelled - intentional shutdown")
+			return
+		default:
+		}
+
+		r.logger.Info().
+			Int("attempt", attempt).
+			Dur("backoff", backoff).
+			Msg("⏳ Attempting RabbitMQ reconnection...")
+
+		time.Sleep(backoff)
+
+		r.mu.Lock()
+		err := r.connect()
+		if err != nil {
+			r.mu.Unlock()
+			r.logger.Error().
+				Err(err).
+				Int("attempt", attempt).
+				Dur("next_backoff", backoff*2).
+				Msg("❌ RabbitMQ reconnection failed - will retry")
+
+			backoff *= 2
+			if backoff > maxBackoff {
+				backoff = maxBackoff
+			}
+			continue
+		}
+
+		// Conexión restaurada — re-registrar consumers
+		consumerCount := len(r.consumers)
+		r.logger.Info().
+			Int("attempt", attempt).
+			Int("consumers_to_restore", consumerCount).
+			Msg("✅ RabbitMQ reconnected successfully - re-registering consumers")
+
+		r.reregisterConsumers()
+		r.mu.Unlock()
+
+		// Iniciar watcher en la nueva conexión
+		r.watchConnection()
+		return
+	}
+}
+
+// reregisterConsumers re-crea los channels y goroutines de todos los consumers registrados.
+// DEBE ser llamado con r.mu.Lock() adquirido.
+func (r *rabbitMQ) reregisterConsumers() {
+	// Filtrar consumers cuyo contexto fue cancelado
+	active := make([]consumerRegistration, 0, len(r.consumers))
+	for _, c := range r.consumers {
+		select {
+		case <-c.ctx.Done():
+			r.logger.Info().
+				Str("queue", c.queueName).
+				Msg("Skipping consumer re-registration - context cancelled")
+			continue
+		default:
+			active = append(active, c)
+		}
+	}
+	r.consumers = active
+
+	for _, c := range r.consumers {
+		if err := r.startConsumer(c.ctx, c.queueName, c.handler); err != nil {
+			r.logger.Error().
+				Err(err).
+				Str("queue", c.queueName).
+				Msg("❌ Failed to re-register consumer after reconnection")
+		} else {
+			r.logger.Info().
+				Str("queue", c.queueName).
+				Msg("✅ Consumer re-registered successfully")
+		}
+	}
+}
+
+// startConsumer crea un channel dedicado e inicia la goroutine de consumo.
+// NO adquiere mutex — el caller debe tener al menos RLock.
+func (r *rabbitMQ) startConsumer(ctx context.Context, queueName string, handler func([]byte) error) error {
 	consumerChannel, err := r.conn.Channel()
 	if err != nil {
 		r.logger.Error().
@@ -196,17 +293,15 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 				if !ok {
 					r.logger.Warn().
 						Str("queue", queueName).
-						Msg("Consumer channel closed")
+						Msg("Consumer channel closed - will be restored on reconnection")
 					return
 				}
 
-				// Log del mensaje recibido
 				r.logger.Debug().
 					Str("queue", queueName).
 					Int("message_size", len(msg.Body)).
 					Msg("📨 Message received from queue - processing")
 
-				// Procesamos el mensaje
 				if err := handler(msg.Body); err != nil {
 					r.logger.Error().
 						Err(err).
@@ -216,13 +311,11 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 						Err(err).
 						Str("queue", queueName).
 						Msg("❌ Message processing FAILED - will be requeued")
-					// Nack the message so it can be requeued
 					msg.Nack(false, true)
 				} else {
 					r.logger.Debug().
 						Str("queue", queueName).
 						Msg("✅ Message processed successfully - ACK sent")
-					// Ack the message
 					msg.Ack(false)
 				}
 			}
@@ -232,13 +325,77 @@ func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([
 	return nil
 }
 
+func (r *rabbitMQ) Publish(ctx context.Context, queueName string, message []byte) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
+	if r.channel == nil {
+		return fmt.Errorf("rabbitmq channel is not initialized")
+	}
+
+	err := r.channel.PublishWithContext(
+		ctx,
+		"",        // exchange
+		queueName, // routing key
+		false,     // mandatory
+		false,     // immediate
+		amqp.Publishing{
+			ContentType: "application/json",
+			Body:        message,
+		},
+	)
+
+	if err != nil {
+		r.logger.Error().
+			Err(err).
+			Str("queue", queueName).
+			Int("message_size", len(message)).
+			Msg("Failed to publish message to queue")
+		return fmt.Errorf("failed to publish message: %w", err)
+	}
+
+	r.logger.Info().
+		Str("queue", queueName).
+		Int("message_size", len(message)).
+		Msg("Message published to queue")
+
+	return nil
+}
+
+func (r *rabbitMQ) Consume(ctx context.Context, queueName string, handler func([]byte) error) error {
+	r.mu.RLock()
+	if r.conn == nil {
+		r.mu.RUnlock()
+		return fmt.Errorf("rabbitmq connection is not initialized")
+	}
+
+	err := r.startConsumer(ctx, queueName, handler)
+	r.mu.RUnlock()
+
+	if err != nil {
+		return err
+	}
+
+	// Registrar consumer para re-creación automática tras reconexión
+	r.mu.Lock()
+	r.consumers = append(r.consumers, consumerRegistration{
+		queueName: queueName,
+		handler:   handler,
+		ctx:       ctx,
+	})
+	r.mu.Unlock()
+
+	return nil
+}
+
 func (r *rabbitMQ) DeclareQueue(queueName string, durable bool) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	if r.conn == nil {
 		return fmt.Errorf("rabbitmq connection is not initialized")
 	}
 
-	// Crear un channel temporal para declarar la cola
-	// Esto evita conflictos con otros channels que puedan estar en uso
 	ch, err := r.conn.Channel()
 	if err != nil {
 		r.logger.Error().
@@ -267,7 +424,6 @@ func (r *rabbitMQ) DeclareQueue(queueName string, durable bool) error {
 		return fmt.Errorf("failed to declare queue: %w", err)
 	}
 
-	// Registrar cola declarada exitosamente
 	if r.queueRegistry != nil {
 		r.queueRegistry(queueName)
 	}
@@ -276,6 +432,9 @@ func (r *rabbitMQ) DeclareQueue(queueName string, durable bool) error {
 }
 
 func (r *rabbitMQ) Ping() error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	if r.conn == nil || r.conn.IsClosed() {
 		return fmt.Errorf("rabbitmq connection is closed")
 	}
@@ -286,6 +445,9 @@ func (r *rabbitMQ) Ping() error {
 }
 
 func (r *rabbitMQ) PublishToExchange(ctx context.Context, exchangeName string, routingKey string, message []byte) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	if r.channel == nil {
 		return fmt.Errorf("rabbitmq channel is not initialized")
 	}
@@ -322,11 +484,13 @@ func (r *rabbitMQ) PublishToExchange(ctx context.Context, exchangeName string, r
 }
 
 func (r *rabbitMQ) DeclareExchange(exchangeName string, exchangeType string, durable bool) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	if r.conn == nil {
 		return fmt.Errorf("rabbitmq connection is not initialized")
 	}
 
-	// Crear un channel temporal para declarar el exchange
 	ch, err := r.conn.Channel()
 	if err != nil {
 		r.logger.Error().
@@ -357,16 +521,17 @@ func (r *rabbitMQ) DeclareExchange(exchangeName string, exchangeType string, dur
 		return fmt.Errorf("failed to declare exchange: %w", err)
 	}
 
-	// Silencioso - solo loguear errores
 	return nil
 }
 
 func (r *rabbitMQ) BindQueue(queueName string, exchangeName string, routingKey string) error {
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+
 	if r.conn == nil {
 		return fmt.Errorf("rabbitmq connection is not initialized")
 	}
 
-	// Crear un channel temporal para hacer el binding
 	ch, err := r.conn.Channel()
 	if err != nil {
 		r.logger.Error().
@@ -396,12 +561,17 @@ func (r *rabbitMQ) BindQueue(queueName string, exchangeName string, routingKey s
 		return fmt.Errorf("failed to bind queue: %w", err)
 	}
 
-	// Silencioso - solo loguear errores
 	return nil
 }
 
 func (r *rabbitMQ) Close() error {
 	r.logger.Info().Msg("Closing RabbitMQ connection")
+
+	// Señalar cierre intencional para que watchConnection no intente reconectar
+	close(r.done)
+
+	r.mu.Lock()
+	defer r.mu.Unlock()
 
 	if r.channel != nil {
 		if err := r.channel.Close(); err != nil {

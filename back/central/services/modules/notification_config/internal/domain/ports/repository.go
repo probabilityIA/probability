@@ -54,6 +54,13 @@ type IMessageAuditQuerier interface {
 
 	// ListEmailLogs obtiene logs de entregas de email con filtros y paginación
 	ListEmailLogs(ctx context.Context, businessID uint, status *string, dateFrom, dateTo *string, page, pageSize int) ([]entities.EmailDeliveryLog, int64, error)
+
+	// ListConversations obtiene conversaciones con resumen para la vista de lista
+	ListConversations(ctx context.Context, filter dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error)
+
+	// GetConversationMessages obtiene los mensajes de una conversación específica para la vista de chat
+	// businessID se usa para validar que la conversación pertenece al negocio
+	GetConversationMessages(ctx context.Context, conversationID string, businessID uint) (*entities.ConversationSummary, []entities.ConversationMessage, error)
 }
 
 // IDeliveryLogRepository persiste logs de entrega de notificaciones (email, SMS, etc.)

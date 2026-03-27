@@ -1,4 +1,11 @@
-import type { MessageAuditFilter, PaginatedMessageAuditResponse, MessageAuditStats } from "../../domain/types";
+import type {
+    MessageAuditFilter,
+    PaginatedMessageAuditResponse,
+    MessageAuditStats,
+    ConversationListFilter,
+    PaginatedConversationListResponse,
+    ConversationDetailResponse,
+} from "../../domain/types";
 
 export class MessageAuditApiRepository {
     private baseUrl: string;
@@ -53,6 +60,52 @@ export class MessageAuditApiRepository {
         if (!response.ok) {
             const error = await response.json();
             throw new Error(error.error || "Failed to get message audit stats");
+        }
+
+        return response.json();
+    }
+
+    async listConversations(filter: ConversationListFilter): Promise<PaginatedConversationListResponse> {
+        const params = new URLSearchParams();
+        params.append("business_id", filter.business_id.toString());
+        if (filter.state) params.append("state", filter.state);
+        if (filter.phone) params.append("phone", filter.phone);
+        if (filter.date_from) params.append("date_from", filter.date_from);
+        if (filter.date_to) params.append("date_to", filter.date_to);
+        if (filter.page) params.append("page", filter.page.toString());
+        if (filter.page_size) params.append("page_size", filter.page_size.toString());
+
+        const response = await fetch(
+            `${this.baseUrl}/notification-configs/message-audit/conversations?${params.toString()}`,
+            {
+                headers: { Authorization: `Bearer ${this.token}` },
+                cache: "no-store",
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to list conversations");
+        }
+
+        return response.json();
+    }
+
+    async getConversationMessages(conversationId: string, businessId: number): Promise<ConversationDetailResponse> {
+        const params = new URLSearchParams();
+        params.append("business_id", businessId.toString());
+
+        const response = await fetch(
+            `${this.baseUrl}/notification-configs/message-audit/conversations/${conversationId}/messages?${params.toString()}`,
+            {
+                headers: { Authorization: `Bearer ${this.token}` },
+                cache: "no-store",
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Failed to get conversation messages");
         }
 
         return response.json();

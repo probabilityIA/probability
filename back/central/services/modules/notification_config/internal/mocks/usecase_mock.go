@@ -192,3 +192,12 @@ func (m *UseCaseMock) GetMessageAuditStats(ctx context.Context, businessID uint,
 	}
 	return nil, nil
 }
+
+// Conversation View
+func (m *UseCaseMock) ListConversations(_ context.Context, _ dtos.ConversationListFilterDTO) (*dtos.PaginatedConversationListResponseDTO, error) {
+	return nil, nil
+}
+
+func (m *UseCaseMock) GetConversationMessages(_ context.Context, _ string, _ uint) (*dtos.ConversationDetailResponseDTO, error) {
+	return nil, nil
+}

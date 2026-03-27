@@ -12,5 +12,7 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 	{
 		audit.GET("", h.List)
 		audit.GET("/stats", h.Stats)
+		audit.GET("/conversations", h.ListConversations)
+		audit.GET("/conversations/:id/messages", h.GetConversationMessages)
 	}
 }

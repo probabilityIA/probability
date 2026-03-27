@@ -34,3 +34,11 @@ func (m *MessageAuditQuerierMock) ListEmailLogs(ctx context.Context, businessID 
 	}
 	return []entities.EmailDeliveryLog{}, 0, nil
 }
+
+func (m *MessageAuditQuerierMock) ListConversations(_ context.Context, _ dtos.ConversationListFilterDTO) ([]entities.ConversationSummary, int64, error) {
+	return []entities.ConversationSummary{}, 0, nil
+}
+
+func (m *MessageAuditQuerierMock) GetConversationMessages(_ context.Context, _ string, _ uint) (*entities.ConversationSummary, []entities.ConversationMessage, error) {
+	return nil, []entities.ConversationMessage{}, nil
+}
