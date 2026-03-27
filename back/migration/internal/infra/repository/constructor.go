@@ -178,6 +178,32 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to seed shipment guide notification event type: %w", err)
 	}
 
+	// Pricing: client pricing rules + quantity discounts
+	if err := r.db.Conn(ctx).AutoMigrate(
+		&models.ClientPricingRule{},
+		&models.QuantityDiscount{},
+	); err != nil {
+		return fmt.Errorf("failed to auto-migrate pricing tables: %w", err)
+	}
+
+	// Partial unique index for global client pricing rules (product_id IS NULL)
+	if err := r.db.Conn(ctx).Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_client_pricing_rule_global
+		ON client_pricing_rules (business_id, client_id)
+		WHERE product_id IS NULL AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to create partial index for global pricing rules: %w", err)
+	}
+
+	// Partial unique index for global quantity discounts (product_id IS NULL)
+	if err := r.db.Conn(ctx).Exec(`
+		CREATE UNIQUE INDEX IF NOT EXISTS idx_qty_discount_global
+		ON quantity_discounts (business_id, min_quantity)
+		WHERE product_id IS NULL AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to create partial index for global quantity discounts: %w", err)
+	}
+
 	return nil
 }
 
