@@ -738,11 +738,11 @@ export function InvoiceDetailModal({
                         </div>
                       )}
 
-                      {/* Request/Response audit data */}
+                      {/* Request/Response audit data - Factura */}
                       {(log.request_payload || log.response_body) && (
                         <details className="mt-2">
                           <summary className="text-xs text-gray-500 dark:text-gray-400 cursor-pointer hover:text-gray-700 dark:text-gray-200">
-                            Ver request/response
+                            Ver request/response (Factura)
                           </summary>
                           <div className="mt-1 space-y-1">
                             {log.request_url && (
@@ -780,6 +780,55 @@ export function InvoiceDetailModal({
                                 </p>
                                 <pre className="text-xs bg-white dark:bg-gray-800/60 rounded p-2 overflow-x-auto max-h-32">
                                   {JSON.stringify(log.response_body, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      )}
+
+                      {/* Request/Response audit data - Recibo de Caja */}
+                      {(log.cash_receipt_request_url || log.cash_receipt_request_payload || log.cash_receipt_response_body) && (
+                        <details className="mt-2">
+                          <summary className="text-xs text-orange-600 dark:text-orange-400 cursor-pointer hover:text-orange-800 dark:text-orange-200">
+                            Ver request/response (Recibo de Caja)
+                          </summary>
+                          <div className="mt-1 space-y-1">
+                            {log.cash_receipt_request_url && (
+                              <div className="text-xs font-mono text-gray-600 dark:text-gray-300">
+                                URL: {log.cash_receipt_request_url}
+                              </div>
+                            )}
+                            {log.cash_receipt_response_status != null && log.cash_receipt_response_status > 0 && (
+                              <div className="text-xs font-mono text-gray-600 dark:text-gray-300">
+                                Status: {log.cash_receipt_response_status}
+                              </div>
+                            )}
+                            {log.cash_receipt_request_payload && (
+                              <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 flex items-center gap-1">
+                                  Request:
+                                  <CopyButton
+                                    text={JSON.stringify(log.cash_receipt_request_payload, null, 2)}
+                                    fieldId={`cr-req-${log.id}`}
+                                  />
+                                </p>
+                                <pre className="text-xs bg-white dark:bg-gray-800/60 rounded p-2 overflow-x-auto max-h-32">
+                                  {JSON.stringify(log.cash_receipt_request_payload, null, 2)}
+                                </pre>
+                              </div>
+                            )}
+                            {log.cash_receipt_response_body && (
+                              <div>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mb-0.5 flex items-center gap-1">
+                                  Response:
+                                  <CopyButton
+                                    text={JSON.stringify(log.cash_receipt_response_body, null, 2)}
+                                    fieldId={`cr-res-${log.id}`}
+                                  />
+                                </p>
+                                <pre className="text-xs bg-white dark:bg-gray-800/60 rounded p-2 overflow-x-auto max-h-32">
+                                  {JSON.stringify(log.cash_receipt_response_body, null, 2)}
                                 </pre>
                               </div>
                             )}

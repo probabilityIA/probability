@@ -103,31 +103,10 @@ func (c *InvoiceRequestConsumer) sendCashReceiptIfConfigured(
 		Msg("Sending cash receipt (configured in integration)")
 
 	receiptData, err := c.softpymesClient.SendCashReceiptFromDocument(ctx, apiKey, apiSecret, referer, baseURL, fullDocument, config)
-	if err != nil {
-		c.log.Error(ctx).Err(err).
-			Uint("invoice_id", invoiceID).
-			Msg("Cash receipt failed — invoice created but payment not registered in Softpymes")
-		fullDocument["cash_receipt"] = map[string]interface{}{
-			"status": "failed",
-			"error":  err.Error(),
-		}
-		// Retornar audit con el error para que el caller sepa que SÍ se intentó enviar
-		return &CashReceiptAudit{
-			RequestURL:     baseURL + "/app/integration/cash_receipt/",
-			ResponseStatus: 500,
-			ResponseBody:   err.Error(),
-		}
-	}
 
-	c.log.Info(ctx).
-		Uint("invoice_id", invoiceID).
-		Msg("Cash receipt sent successfully")
-
+	// Extraer audit data del resultado (disponible tanto en éxito como en error)
 	var audit *CashReceiptAudit
 	if receiptData != nil {
-		fullDocument["cash_receipt"] = receiptData
-
-		// Extraer audit data del resultado para almacenar por separado
 		audit = &CashReceiptAudit{}
 		if url, ok := receiptData["audit_request_url"].(string); ok {
 			audit.RequestURL = url
@@ -141,6 +120,25 @@ func (c *InvoiceRequestConsumer) sendCashReceiptIfConfigured(
 		if body, ok := receiptData["audit_response_body"].(string); ok {
 			audit.ResponseBody = body
 		}
+	}
+
+	if err != nil {
+		c.log.Error(ctx).Err(err).
+			Uint("invoice_id", invoiceID).
+			Msg("Cash receipt failed — invoice created but payment not registered in Softpymes")
+		fullDocument["cash_receipt"] = map[string]interface{}{
+			"status": "failed",
+			"error":  err.Error(),
+		}
+		return audit
+	}
+
+	c.log.Info(ctx).
+		Uint("invoice_id", invoiceID).
+		Msg("Cash receipt sent successfully")
+
+	if receiptData != nil {
+		fullDocument["cash_receipt"] = receiptData
 	}
 
 	return audit

@@ -133,7 +133,16 @@ func (c *Client) SendCashReceiptFromDocument(
 			Int("status", resp.StatusCode()).
 			Str("response", string(resp.Body())).
 			Msg("Cash receipt creation failed")
-		return nil, fmt.Errorf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
+		// Retornar datos de audit incluso en error para trazabilidad
+		failedData := map[string]interface{}{
+			"status":                "failed",
+			"error":                 fmt.Sprintf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body())),
+			"audit_request_url":     requestURL,
+			"audit_request_payload": body,
+			"audit_response_status": resp.StatusCode(),
+			"audit_response_body":   string(resp.Body()),
+		}
+		return failedData, fmt.Errorf("cash receipt failed with status %d: %s", resp.StatusCode(), string(resp.Body()))
 	}
 
 	// Softpymes puede devolver:
@@ -148,7 +157,16 @@ func (c *Client) SendCashReceiptFromDocument(
 			Str("error", errMsg).
 			Str("raw_response", string(respBody)).
 			Msg("Cash receipt API returned error")
-		return nil, fmt.Errorf("cash receipt error: %s", errMsg)
+		// Retornar datos de audit incluso en error embebido en HTTP 200
+		failedData := map[string]interface{}{
+			"status":                "failed",
+			"error":                 fmt.Sprintf("cash receipt error: %s", errMsg),
+			"audit_request_url":     requestURL,
+			"audit_request_payload": body,
+			"audit_response_status": resp.StatusCode(),
+			"audit_response_body":   string(respBody),
+		}
+		return failedData, fmt.Errorf("cash receipt error: %s", errMsg)
 	}
 
 	c.log.Info(ctx).
