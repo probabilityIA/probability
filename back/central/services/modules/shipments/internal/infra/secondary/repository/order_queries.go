@@ -152,3 +152,29 @@ func (r *Repository) UpdateOrderGuideLink(ctx context.Context, orderID string, g
 		Where("deleted_at IS NULL").
 		Updates(updates).Error
 }
+
+// UpdateOrderStatusByOrderID updates the status of an order on the orders table.
+// Replicated write — module isolation rule.
+func (r *Repository) UpdateOrderStatusByOrderID(ctx context.Context, orderID string, status string) error {
+	if orderID == "" || status == "" {
+		return nil
+	}
+
+	return r.db.Conn(ctx).
+		Table("orders").
+		Where("id = ?", orderID).
+		Where("deleted_at IS NULL").
+		Update("status", status).Error
+}
+
+// EnsureAllBusinessesActive sets all existing businesses to 'paid' status with a 2030 expiration date.
+// This is a one-time migration to ensure service continuity.
+func (r *Repository) EnsureAllBusinessesActive(ctx context.Context) error {
+	return r.db.Conn(ctx).
+		Table("businesses").
+		Where("deleted_at IS NULL").
+		Updates(map[string]interface{}{
+			"status":     "paid",
+			"expiration": "2030-01-01 00:00:00",
+		}).Error
+}

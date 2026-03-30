@@ -68,13 +68,19 @@ function extractDepartment(address?: string): string | null {
 }
 
 export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: TrackingPanelProps) {
-  const [tracking, setTracking] = useState<{ loading: boolean; data?: any; error?: string }>({ loading: false });
+  const [tracking, setTracking] = useState<{ loading: boolean; data?: any; error?: string }>({ 
+    loading: false,
+    data: shipment.metadata?.tracking_events ? { history: shipment.metadata.tracking_events } : undefined
+  });
   const [trackingUpdatedAt, setTrackingUpdatedAt] = useState<Date | null>(null);
 
   // Load tracking history on mount
   useEffect(() => {
     if (shipment.tracking_number) {
-      setTracking({ loading: true });
+      // Solo mostramos loading si no tenemos datos previos en el metadata
+      if (!tracking.data?.history) {
+        setTracking(prev => ({ ...prev, loading: true }));
+      }
       trackShipmentAction(shipment.tracking_number)
         .then(res => {
           if ('data' in res && res.success) {
@@ -236,12 +242,19 @@ export function TrackingPanel({ shipment, onClose, onCancel, cancelingId }: Trac
         <div className="px-4 py-5 border-t border-gray-100">
           <p className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-3">Historial de rastreo</p>
 
-          {tracking.loading ? (
+          {tracking.loading && !tracking.data?.history ? (
             <div className="flex items-center gap-2 text-sm text-gray-400 py-6">
               <RefreshCw size={16} className="animate-spin" />
-              <span>Consultando rastreo...</span>
+              <span>Consultando rastreo en tiempo real...</span>
             </div>
-          ) : tracking.error ? (
+          ) : tracking.loading && tracking.data?.history ? (
+            <div className="flex items-center gap-2 text-[10px] text-blue-500 py-1 mb-2">
+              <RefreshCw size={12} className="animate-spin" />
+              <span>Actualizando historial...</span>
+            </div>
+          ) : null}
+          
+          {tracking.error && !tracking.data?.history ? (
             <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
               <AlertTriangle size={14} className="flex-shrink-0 mt-0.5" />
               <span>{tracking.error}</span>

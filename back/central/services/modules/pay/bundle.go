@@ -11,6 +11,7 @@ import (
 	payredis "github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/secondary/redis"
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/infra/secondary/repository"
 	"github.com/secamc93/probability/back/central/shared/db"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
@@ -21,6 +22,7 @@ func New(
 	router *gin.RouterGroup,
 	database db.IDatabase,
 	logger log.ILogger,
+	config env.IConfig,
 	rabbitMQ rabbitmq.IQueue,
 	redisClient redis.IRedis,
 ) {
@@ -46,8 +48,8 @@ func New(
 	// 2. CAPA DE APLICACIÓN
 	// ═══════════════════════════════════════════════════════════════
 
-	useCase := app.New(repo, requestPublisher, ssePublisher, moduleLogger)
-	walletUC := app.NewWalletUseCase(repo, useCase, moduleLogger)
+	useCase := app.New(repo, requestPublisher, ssePublisher, config, moduleLogger)
+	walletUC := app.NewWalletUseCase(repo, useCase, config, moduleLogger)
 
 	// ═══════════════════════════════════════════════════════════════
 	// 3. INFRAESTRUCTURA PRIMARIA

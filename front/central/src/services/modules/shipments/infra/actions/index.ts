@@ -52,6 +52,19 @@ export const cancelShipmentAction = async (id: string) => {
     }
 };
 
+export const cancelBatchShipmentAction = async (req: any) => {
+    try {
+        const data = await (await getUseCases()).cancelBatchShipments(req);
+        return { success: true, data };
+    } catch (error: any) {
+        console.error('Cancel Batch Shipment Action Error:', error.message);
+        return {
+            success: false,
+            message: error.message || 'Error al cancelar envíos',
+        };
+    }
+};
+
 export const createShipmentAction = async (req: CreateShipmentRequest) => {
     try {
         return await (await getUseCases()).createShipment(req);

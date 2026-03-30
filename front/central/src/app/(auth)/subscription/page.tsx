@@ -292,7 +292,7 @@ function BusinessSubscriptionView({ businessId, businessName, isSuperAdminView }
 
     if (loading) return <div className="flex justify-center py-12"><Spinner /></div>;
 
-    const isExpired = subscription?.status === 'pending' || !subscription;
+    const isExpired = !subscription || ['pending', 'expired', 'cancelled'].includes(subscription.status);
 
     return (
         <div className="space-y-6">

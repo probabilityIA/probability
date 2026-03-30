@@ -2,7 +2,7 @@
 
 import { getAuthToken } from '@/shared/utils/server-auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3050';
+import { env } from '@/shared/config/env';
 
 async function buildHeaders(): Promise<Record<string, string>> {
     const token = await getAuthToken();
@@ -35,8 +35,8 @@ export async function getMySubscriptionAction(businessId?: number): Promise<{ su
     try {
         const headers = await buildHeaders();
         const url = businessId
-            ? `${API_BASE}/api/v1/subscriptions/me?businessId=${businessId}`
-            : `${API_BASE}/api/v1/subscriptions/me`;
+            ? `${env.API_BASE_URL}/subscriptions/me?businessId=${businessId}`
+            : `${env.API_BASE_URL}/subscriptions/me`;
         const res = await fetch(url, {
             headers,
             cache: 'no-store',
@@ -59,7 +59,7 @@ export async function registerSubscriptionPaymentAction(payload: {
 }): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
-        const res = await fetch(`${API_BASE}/api/v1/subscriptions/register-payment`, {
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/register-payment`, {
             method: 'POST',
             headers: { ...headers, 'Content-Type': 'application/json' },
             body: JSON.stringify(payload),
@@ -78,7 +78,7 @@ export async function registerSubscriptionPaymentAction(payload: {
 export async function disableSubscriptionAction(businessId: number): Promise<{ success: boolean; error?: string }> {
     try {
         const headers = await buildHeaders();
-        const res = await fetch(`${API_BASE}/api/v1/subscriptions/disable?businessId=${businessId}`, {
+        const res = await fetch(`${env.API_BASE_URL}/subscriptions/disable?businessId=${businessId}`, {
             method: 'POST',
             headers,
         });

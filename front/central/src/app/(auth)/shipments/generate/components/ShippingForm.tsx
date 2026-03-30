@@ -12,6 +12,7 @@ import { Order } from "@/services/modules/orders/domain/types";
 import { getWalletBalanceAction } from "@/services/modules/wallet/infra/actions";
 import { getAIRecommendationAction } from "@/services/modules/orders/infra/actions";
 import { quoteShipmentAction, generateGuideAction } from "@/services/modules/shipments/infra/actions";
+import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
 import daneCodes from "../resources/municipios_dane_extendido.json";
 
 // Zod Schema
@@ -101,6 +102,10 @@ export const ShippingForm = () => {
     const [destSearch, setDestSearch] = useState("");
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
+    
+    // Carrier Offices states
+    const [showOriginOffices, setShowOriginOffices] = useState(false);
+    const [showDestOffices, setShowDestOffices] = useState(false);
 
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
@@ -425,7 +430,30 @@ export const ShippingForm = () => {
                         <Input label="Apellido" {...register("origin.lastName")} error={errors.origin?.lastName?.message} />
                         <Input label="Email" {...register("origin.email")} error={errors.origin?.email?.message} />
                         <Input label="Teléfono" {...register("origin.phone")} error={errors.origin?.phone?.message} />
-                        <Input label="Dirección" {...register("origin.address")} error={errors.origin?.address?.message} />
+                        <div>
+                            <Input label="Dirección" {...register("origin.address")} error={errors.origin?.address?.message} />
+                            {originSearch && (
+                                <div className="mt-1">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowOriginOffices(!showOriginOffices)}
+                                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
+                                    >
+                                        📍 ¿Recoger en oficina principal?
+                                    </button>
+                                    {showOriginOffices && (
+                                        <CarrierOfficeSelector 
+                                            city={originSearch}
+                                            onSelectAddress={(addr) => {
+                                                setValue("origin.address", addr, { shouldValidate: true });
+                                                setShowOriginOffices(false);
+                                            }}
+                                            onClose={() => setShowOriginOffices(false)}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         <Input label="Barrio" {...register("origin.suburb")} error={errors.origin?.suburb?.message} />
                         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="relative" ref={originRef}>
@@ -482,7 +510,30 @@ export const ShippingForm = () => {
                         <Input label="Apellido" {...register("destination.lastName")} error={errors.destination?.lastName?.message} />
                         <Input label="Email" {...register("destination.email")} error={errors.destination?.email?.message} />
                         <Input label="Teléfono" {...register("destination.phone")} error={errors.destination?.phone?.message} />
-                        <Input label="Dirección" {...register("destination.address")} error={errors.destination?.address?.message} />
+                        <div>
+                            <Input label="Dirección" {...register("destination.address")} error={errors.destination?.address?.message} />
+                            {destSearch && (
+                                <div className="mt-1">
+                                    <button 
+                                        type="button" 
+                                        onClick={() => setShowDestOffices(!showDestOffices)}
+                                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
+                                    >
+                                        📍 ¿Enviar a oficina principal?
+                                    </button>
+                                    {showDestOffices && (
+                                        <CarrierOfficeSelector 
+                                            city={destSearch}
+                                            onSelectAddress={(addr) => {
+                                                setValue("destination.address", addr, { shouldValidate: true });
+                                                setShowDestOffices(false);
+                                            }}
+                                            onClose={() => setShowDestOffices(false)}
+                                        />
+                                    )}
+                                </div>
+                            )}
+                        </div>
                         <Input label="Barrio" {...register("destination.suburb")} error={errors.destination?.suburb?.message} />
                         <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="relative" ref={destRef}>
@@ -640,6 +691,20 @@ export const ShippingForm = () => {
                         </div>
                     </section>
                 )}
+
+				{/* 24-hour processing notice */}
+				<div className="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg mb-6">
+					<div className="flex items-center">
+						<div className="flex-shrink-0">
+							<span className="text-amber-800 font-bold">ℹ️</span>
+						</div>
+						<div className="ml-3">
+							<p className="text-sm text-amber-800">
+								<span className="font-bold">Aviso importante:</span> Los envíos pueden demorar hasta <span className="font-bold">24 horas hábiles</span> en ser procesados y recolectados por las transportadoras después de generada la guía.
+							</p>
+						</div>
+					</div>
+				</div>
 
                 <div className="flex justify-end pt-4 gap-4">
                     {/* Show "Cotizar" button if not yet quoted or if user wants to quote again (maybe always visible? no, context dependent) 

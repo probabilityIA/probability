@@ -5,7 +5,7 @@ import dynamic from 'next/dynamic';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Badge, Button } from '@/shared/ui';
 import { useHasPermission } from '@/shared/contexts/permissions-context';
-import { getShipmentsAction, trackShipmentAction, cancelShipmentAction } from '../../infra/actions';
+import { getShipmentsAction, trackShipmentAction, cancelShipmentAction, cancelBatchShipmentAction } from '../../infra/actions';
 import { GetShipmentsParams, Shipment, EnvioClickTrackHistory } from '../../domain/types';
 import {
     Search, Package, Truck, Calendar, MapPin, X, RefreshCw,
@@ -457,6 +457,8 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
     const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
     const [cancelingId, setCancelingId] = useState<string | null>(null);
     const [isManualModalOpen, setIsManualModalOpen] = useState(false);
+    const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+    const [isCancelingBatch, setIsCancelingBatch] = useState(false);
 
     // Auto-inject business_id for non-super-admins
     const defaultBusinessId = (!isSuperAdmin && permissions?.business_id) ? permissions.business_id : undefined;
@@ -534,6 +536,49 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
             alert(`Error: ${error.message}`);
         } finally {
             setCancelingId(null);
+        }
+    };
+
+    const handleBatchCancel = async () => {
+        if (selectedIds.size === 0) return;
+        if (!confirm(`¿Estás seguro de cancelar ${selectedIds.size} envíos?`)) return;
+
+        setIsCancelingBatch(true);
+        try {
+            const orders = Array.from(selectedIds).map(id => {
+                const shipment = shipments.find(s => s.id === id);
+                return {
+                    trackingCode: shipment?.tracking_number || id.toString(),
+                    motivo: 'Cancelado por el usuario'
+                };
+            });
+
+            const response = await cancelBatchShipmentAction({ orders });
+            if (response.success) {
+                fetchShipments();
+                setSelectedIds(new Set());
+            } else {
+                alert(`Error: ${response.message}`);
+            }
+        } catch (error: any) {
+            alert(`Error: ${error.message}`);
+        } finally {
+            setIsCancelingBatch(false);
+        }
+    };
+
+    const toggleSelection = (id: number) => {
+        const newSet = new Set(selectedIds);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setSelectedIds(newSet);
+    };
+
+    const toggleAll = () => {
+        if (selectedIds.size === shipments.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(shipments.map(s => s.id)));
         }
     };
 
@@ -637,6 +682,34 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
 
                 {/* LEFT — Shipment cards list */}
                 <div className="w-1/2 flex flex-col min-h-0 bg-white dark:bg-gray-800 dark:bg-gray-800 rounded-xl shadow-sm border border-gray-100 dark:border-gray-700 overflow-hidden">
+                    
+                    {/* Batch Actions Header */}
+                    {shipments.length > 0 && (
+                        <div className="flex items-center justify-between px-4 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50 flex-shrink-0">
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="checkbox" 
+                                    checked={selectedIds.size === shipments.length && shipments.length > 0} 
+                                    onChange={toggleAll}
+                                    className="rounded border-gray-300 text-purple-600 focus:ring-purple-500 w-4 h-4"
+                                />
+                                <span className="text-xs font-semibold text-gray-600 dark:text-gray-300">
+                                    {selectedIds.size > 0 ? `${selectedIds.size} seleccionados` : 'Seleccionar todos'}
+                                </span>
+                            </div>
+                            {selectedIds.size > 0 && (
+                                <button
+                                    onClick={handleBatchCancel}
+                                    disabled={isCancelingBatch}
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 text-xs font-semibold transition-colors disabled:opacity-50"
+                                >
+                                    {isCancelingBatch ? <RefreshCw size={12} className="animate-spin" /> : <XCircle size={12} />}
+                                    Cancelar Seleccionados
+                                </button>
+                            )}
+                        </div>
+                    )}
+
                     {/* List */}
                     <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
                         {loading ? (
@@ -660,12 +733,31 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                     <button
                                         key={shipment.id}
                                         onClick={() => setSelectedShipment(isSelected ? null : shipment)}
-                                        className={`w-full text-left px-4 py-3.5 transition-all duration-150 hover:bg-gray-700 dark:hover:bg-gray-700 ${isSelected
-                                                ? 'bg-purple-100 dark:bg-purple-900/30 border-l-[3px] border-purple-500'
+                                        className={`w-full text-left transition-all duration-150 hover:bg-gray-50 dark:hover:bg-gray-700 ${isSelected
+                                                ? 'bg-purple-100/50 dark:bg-purple-900/30 border-l-[3px] border-purple-500'
                                                 : `border-l-[3px] ${statusCfg.border}`
                                             }`}
                                     >
-                                        {/* Row 1: Client name + destination city */}
+                                        <div className="flex items-stretch w-full">
+                                            {/* Checkbox zone */}
+                                            <div 
+                                                className="px-3 py-4 flex items-start justify-center cursor-pointer border-r border-transparent hover:border-gray-100 dark:hover:border-gray-600"
+                                                onClick={(e) => { e.stopPropagation(); toggleSelection(shipment.id); }}
+                                            >
+                                                <input 
+                                                    type="checkbox" 
+                                                    checked={selectedIds.has(shipment.id)} 
+                                                    onChange={() => {}} // Controlled by the div click
+                                                    className="mt-1 rounded border-gray-300 text-purple-600 focus:ring-purple-500 w-4 h-4 cursor-pointer"
+                                                />
+                                            </div>
+                                            
+                                            {/* Main content click zone */}
+                                            <div 
+                                                className="flex-1 px-3 py-3.5 min-w-0"
+                                                onClick={() => setSelectedShipment(isSelected ? null : shipment)}
+                                            >
+                                                {/* Row 1: Client name + destination city */}
                                         <div className="flex items-center justify-between gap-2 mb-1.5">
                                             <div className="flex items-center gap-1.5 min-w-0">
                                                 {!clientName && <Package size={11} className="text-gray-300 flex-shrink-0" />}
@@ -713,6 +805,8 @@ export default function ShipmentList({ selectedBusinessId = null }: ShipmentList
                                                 </span>
                                             )}
                                         </div>
+                                    </div>
+                                    </div>
                                     </button>
                                 );
                             })

@@ -166,6 +166,80 @@ func handleAddressSearch(cfg env.IConfig) gin.HandlerFunc {
 	}
 }
 
+// placesSearchResponse represents the Google Places API response.
+type placesSearchResponse struct {
+	Status  string               `json:"status"`
+	Results []placesSearchResult `json:"results"`
+}
+
+type placesSearchResult struct {
+	Name             string `json:"name"`
+	FormattedAddress string `json:"formatted_address"`
+	PlaceID          string `json:"place_id"`
+	Geometry         struct {
+		Location struct {
+			Lat float64 `json:"lat"`
+			Lng float64 `json:"lng"`
+		} `json:"location"`
+	} `json:"geometry"`
+}
+
+// handlePlacesSearch proxies a text search to Google Places API
+// GET /api/v1/places-search?query=Oficina+Coordinadora+Bogota
+func handlePlacesSearch(cfg env.IConfig) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		query := c.Query("query")
+		if query == "" {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+
+		apiKey := cfg.Get("GOOGLE_MAPS_API_KEY")
+		if apiKey == "" {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+
+		placesURL := fmt.Sprintf(
+			"https://maps.googleapis.com/maps/api/place/textsearch/json?query=%s&key=%s&language=es",
+			url.QueryEscape(query),
+			apiKey,
+		)
+
+		resp, err := http.Get(placesURL)
+		if err != nil {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+		defer resp.Body.Close()
+
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+
+		var pResp placesSearchResponse
+		if err := json.Unmarshal(body, &pResp); err != nil || pResp.Status != "OK" {
+			c.JSON(http.StatusOK, []AddressSearchResult{})
+			return
+		}
+
+		results := make([]AddressSearchResult, 0, len(pResp.Results))
+		for _, res := range pResp.Results {
+			results = append(results, AddressSearchResult{
+				DisplayName: fmt.Sprintf("%s (%s)", res.Name, res.FormattedAddress),
+				PlaceID:     res.PlaceID,
+				Lat:         res.Geometry.Location.Lat,
+				Lon:         res.Geometry.Location.Lng,
+			})
+		}
+
+		c.JSON(http.StatusOK, results)
+	}
+}
+
+
 // googleGeocodeResponse represents the Google Geocoding API response.
 type googleGeocodeResponse struct {
 	Status  string              `json:"status"`

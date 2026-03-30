@@ -28,6 +28,10 @@ export class ShipmentUseCases {
         return this.repository.cancelShipment(id);
     }
 
+    async cancelBatchShipments(req: any) {
+        return this.repository.cancelBatchShipments(req);
+    }
+
     async createShipment(req: CreateShipmentRequest) {
         return this.repository.createShipment(req);
     }

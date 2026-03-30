@@ -31,6 +31,12 @@ func (uc *useCase) Cancel(ctx context.Context, baseURL, apiKey string, idShipmen
 	return uc.client.Cancel(baseURL, apiKey, idShipment)
 }
 
+// CancelBatch cancels multiple shipments in EnvioClick
+func (uc *useCase) CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error) {
+	uc.log.Info(ctx).Int("order_count", len(req.Orders)).Msg("Canceling shipments in batch")
+	return uc.client.CancelBatch(baseURL, apiKey, req)
+}
+
 // toMap converts a struct to map[string]interface{} via JSON marshaling
 func toMap(v interface{}) map[string]interface{} {
 	data, err := json.Marshal(v)

@@ -317,24 +317,37 @@ func (c *ResponseConsumer) handleTrackResponse(ctx context.Context, response *Tr
 	if response.ShipmentID != nil && response.Data != nil {
 		shipment, err := c.repo.GetShipmentByID(ctx, *response.ShipmentID)
 		if err == nil && shipment != nil {
-			// Extract status from carrier response (from provider, etc.)
-			if status, ok := response.Data["status"].(string); ok && status != "" {
-				oldStatus := shipment.Status
-				shipment.Status = status // Update to: in_transit, delivered, failed, etc.
+			status, ok := response.Data["status"].(string)
+			history, hasHistory := response.Data["history"]
+
+			if hasHistory {
+				var meta map[string]interface{}
+				if len(shipment.Metadata) > 0 {
+					json.Unmarshal(shipment.Metadata, &meta)
+				}
+				if meta == nil {
+					meta = make(map[string]interface{})
+				}
+				meta["tracking_events"] = history
+				if updatedBytes, err := json.Marshal(meta); err == nil {
+					shipment.Metadata = updatedBytes
+				}
+			}
+
+			if (ok && status != "") || hasHistory {
+				if ok && status != "" {
+					shipment.Status = status // Update to: in_transit, delivered, failed, etc.
+				}
 
 				if err := c.repo.UpdateShipment(ctx, shipment); err != nil {
 					c.log.Error(ctx).
 						Err(err).
 						Str("shipment_id", fmt.Sprintf("%d", *response.ShipmentID)).
-						Str("old_status", oldStatus).
-						Str("new_status", status).
-						Msg("Failed to update shipment status from tracking")
+						Msg("Failed to update shipment status/history from tracking")
 				} else {
 					c.log.Info(ctx).
 						Str("shipment_id", fmt.Sprintf("%d", *response.ShipmentID)).
-						Str("old_status", oldStatus).
-						Str("new_status", status).
-						Msg("✅ Shipment status updated from tracking response")
+						Msg("✅ Shipment status/history updated from tracking response")
 				}
 			}
 		}
