@@ -71,26 +71,3 @@ export interface AuthUser {
     email: string;
 }
 
-export type ServiceLayer = 'frontend' | 'backend' | 'infra' | 'monitoring';
-
-export const SERVICE_LAYERS: Record<string, ServiceLayer> = {
-    'font-central': 'frontend',
-    'front-central': 'frontend',
-    'font-website': 'frontend',
-    'front-website': 'frontend',
-    'front-testing': 'frontend',
-    'back-central': 'backend',
-    'back-testing': 'backend',
-    'redis': 'infra',
-    'rabbitmq': 'infra',
-    'nginx': 'infra',
-    'monitoring-api': 'monitoring',
-    'monitoring-web': 'monitoring',
-};
-
-export const LAYER_CONFIG: Record<ServiceLayer, { label: string; color: string; bg: string; border: string }> = {
-    frontend: { label: 'Frontend', color: '#00f0ff', bg: '#00f0ff08', border: '#00f0ff20' },
-    backend: { label: 'Backend', color: '#a855f7', bg: '#a855f708', border: '#a855f720' },
-    infra: { label: 'Infrastructure', color: '#ffaa00', bg: '#ffaa0008', border: '#ffaa0020' },
-    monitoring: { label: 'Monitoring', color: '#00ff88', bg: '#00ff8808', border: '#00ff8820' },
-};
