@@ -609,14 +609,14 @@ export function InvoiceDetailModal({
 
             {/* Acciones */}
             <div className="flex gap-2 mb-6 pb-6 border-b border-gray-200 dark:border-gray-700">
-              {invoice.status === 'failed' && (
+              {invoice.status === 'failed' && !cashReceiptFailed && (
                 <Button
                   variant="primary"
                   size="sm"
                   onClick={handleRetry}
                   disabled={retrying || maxRetriesReached}
                 >
-                  {retrying ? 'Reintentando...' : 'Reintentar'}
+                  {retrying ? 'Reintentando...' : 'Reintentar Factura'}
                 </Button>
               )}
               {invoice.status === 'pending' && (
@@ -655,12 +655,12 @@ export function InvoiceDetailModal({
               )}
               {cashReceiptFailed && (
                 <Button
-                  variant="secondary"
+                  variant="primary"
                   size="sm"
                   onClick={handleGenerateCashReceipt}
                   disabled={generatingCashReceipt || retrying}
                 >
-                  {generatingCashReceipt ? 'Generando...' : 'Generar Recibo de Caja'}
+                  {generatingCashReceipt ? 'Reintentando...' : 'Reintentar Recibo de Caja'}
                 </Button>
               )}
               {canDelete && (
