@@ -111,7 +111,12 @@ func (c *InvoiceRequestConsumer) sendCashReceiptIfConfigured(
 			"status": "failed",
 			"error":  err.Error(),
 		}
-		return nil
+		// Retornar audit con el error para que el caller sepa que SÍ se intentó enviar
+		return &CashReceiptAudit{
+			RequestURL:     baseURL + "/app/integration/cash_receipt/",
+			ResponseStatus: 500,
+			ResponseBody:   err.Error(),
+		}
 	}
 
 	c.log.Info(ctx).

@@ -39,13 +39,14 @@ func (uc *useCase) GenerateCashReceipt(ctx context.Context, invoiceID uint) erro
 		return fmt.Errorf("failed to get order: %w", err)
 	}
 
-	// 5. Obtener configuración de facturación
+	// 5. Obtener configuración de facturación (sin filtrar por enabled — la factura ya fue emitida,
+	// solo necesitamos las credenciales y config de cash receipt)
 	config, err := uc.repo.GetConfigByIntegration(ctx, order.IntegrationID)
 	if err != nil {
 		return fmt.Errorf("failed to get invoicing config: %w", err)
 	}
 	if config == nil {
-		config, err = uc.repo.GetEnabledConfigByBusiness(ctx, order.BusinessID)
+		config, err = uc.repo.GetAnyConfigByBusiness(ctx, order.BusinessID)
 		if err != nil || config == nil {
 			return errors.ErrProviderNotConfigured
 		}
