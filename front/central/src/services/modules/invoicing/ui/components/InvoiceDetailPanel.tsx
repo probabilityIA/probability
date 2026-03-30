@@ -224,7 +224,8 @@ export function InvoiceDetailModal({
   };
 
   // Detectar si el recibo de caja falló (desde provider_response)
-  const cashReceiptFailed = invoice?.status === 'issued' &&
+  // No depender del status — si tiene invoice_number, la factura fue creada en el proveedor
+  const cashReceiptFailed = !!invoice?.invoice_number &&
     (invoice.provider_response as Record<string, any>)?.cash_receipt?.status === 'failed';
 
   const hasPendingRetries = syncLogs.some(
