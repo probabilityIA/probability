@@ -26,5 +26,6 @@ func (h *handler) RegisterRoutes(router *gin.Engine) {
 		}
 
 		api.GET("/compose/services", h.GetComposeServices)
+		api.GET("/system/stats", h.GetSystemStats)
 	}
 }

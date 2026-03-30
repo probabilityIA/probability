@@ -1,6 +1,7 @@
 import { cookies } from 'next/headers';
 import { MonitoringApiRepository } from '@/services/monitoring/infra/repository/api-repository';
-import { ContainerGrid } from '@/services/monitoring/ui/components/ContainerGrid';
+import { ArchitectureView } from '@/services/monitoring/ui/components/ArchitectureView';
+import { SystemStatsBar } from '@/services/monitoring/ui/components/SystemStatsBar';
 import { Header } from '@/services/monitoring/ui/components/Header';
 
 export const dynamic = 'force-dynamic';
@@ -28,11 +29,17 @@ export default async function DashboardPage() {
             <Header userName={user?.name} />
 
             <main className="flex-1 px-4 sm:px-6 py-6">
-                <div className="max-w-7xl mx-auto">
-                    <div className="flex items-center justify-between mb-5">
-                        <h2 className="text-base font-semibold tracking-tight" style={{ color: '#e4e4ef' }}>
-                            Containers
-                        </h2>
+                <div className="max-w-7xl mx-auto space-y-5">
+                    {/* Top bar: title + server stats */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <h2 className="text-base font-semibold tracking-tight" style={{ color: '#e4e4ef' }}>
+                                Infrastructure
+                            </h2>
+                            <span className="text-[10px] font-mono px-2 py-0.5 rounded" style={{ background: '#12121a', color: '#55556a', border: '1px solid #1e1e2e' }}>
+                                {containers.length} services
+                            </span>
+                        </div>
                         <a
                             href="/dashboard"
                             className="text-xs px-3 py-1.5 rounded-md transition-all"
@@ -42,6 +49,10 @@ export default async function DashboardPage() {
                         </a>
                     </div>
 
+                    {/* Server resource usage */}
+                    <SystemStatsBar />
+
+                    {/* Architecture view */}
                     {error ? (
                         <div
                             className="rounded-xl p-4 text-sm"
@@ -57,7 +68,7 @@ export default async function DashboardPage() {
                             No containers found
                         </div>
                     ) : (
-                        <ContainerGrid containers={containers} />
+                        <ArchitectureView containers={containers} />
                     )}
                 </div>
             </main>

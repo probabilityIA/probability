@@ -1,5 +1,5 @@
 import type { IMonitoringRepository } from '../../domain/ports';
-import type { Container, ContainerStats, LogEntry, ComposeService, LoginRequest, LoginResponse } from '../../domain/types';
+import type { Container, ContainerStats, LogEntry, ComposeService, LoginRequest, LoginResponse, SystemStats } from '../../domain/types';
 import { apiFetch } from '@/shared/lib/api';
 
 export class MonitoringApiRepository implements IMonitoringRepository {
@@ -46,5 +46,9 @@ export class MonitoringApiRepository implements IMonitoringRepository {
 
     async listComposeServices(): Promise<ComposeService[]> {
         return apiFetch<ComposeService[]>('/api/v1/compose/services', { token: this.token });
+    }
+
+    async getSystemStats(): Promise<SystemStats> {
+        return apiFetch<SystemStats>('/api/v1/system/stats', { token: this.token });
     }
 }

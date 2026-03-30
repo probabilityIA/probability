@@ -115,6 +115,27 @@ body {
               var(--bg-primary);
 }
 
+/* ====== Connection flow animations ====== */
+@keyframes flow-down {
+  0% { top: -12px; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: calc(100% + 4px); opacity: 0; }
+}
+@keyframes flow-down-delayed {
+  0% { top: -12px; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { top: calc(100% + 4px); opacity: 0; }
+}
+.animate-flow {
+  animation: flow-down 1.8s ease-in-out infinite;
+}
+.animate-flow-delayed {
+  animation: flow-down-delayed 1.8s ease-in-out infinite;
+  animation-delay: 0.9s;
+}
+
 /* ====== Selection ====== */
 ::selection {
   background: #00f0ff30;

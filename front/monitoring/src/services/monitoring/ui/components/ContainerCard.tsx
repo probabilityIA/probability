@@ -5,6 +5,7 @@ import Link from 'next/link';
 
 interface ContainerCardProps {
     container: Container;
+    accentColor?: string;
 }
 
 function getStateConfig(state: string) {
@@ -45,7 +46,7 @@ function formatUptime(startedAt: string): string {
     return `${hours}h ${minutes}m`;
 }
 
-export function ContainerCard({ container }: ContainerCardProps) {
+export function ContainerCard({ container, accentColor }: ContainerCardProps) {
     const state = getStateConfig(container.state);
     const serviceName = container.service || container.name.replace(/^\//, '').replace(/_/g, ' ');
 
@@ -69,7 +70,7 @@ export function ContainerCard({ container }: ContainerCardProps) {
             {/* Subtle top accent line */}
             <div
                 className="absolute top-0 left-0 right-0 h-px opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ background: `linear-gradient(90deg, transparent, ${state.dot}60, transparent)` }}
+                style={{ background: `linear-gradient(90deg, transparent, ${accentColor || state.dot}60, transparent)` }}
             />
 
             {/* Header */}

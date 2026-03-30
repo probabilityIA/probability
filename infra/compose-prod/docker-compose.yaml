@@ -359,51 +359,6 @@ services:
           cpus: "0.10"
           memory: 96M
 
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:v0.50.0
-    container_name: cadvisor
-    restart: unless-stopped
-    privileged: true
-    command:
-      - -containerd=/run/containerd/containerd.sock
-      - -containerd-namespace=moby
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - /run/containerd/containerd.sock:/run/containerd/containerd.sock:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    networks:
-      - app-network
-
-  alloy:
-    image: grafana/alloy:latest
-    container_name: alloy
-    restart: unless-stopped
-    volumes:
-      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
-      - alloy_data:/var/lib/alloy/data
-    command:
-      - run
-      - /etc/alloy/config.alloy
-      - --storage.path=/var/lib/alloy/data
-    environment:
-      GRAFANA_CLOUD_API_KEY: "${GRAFANA_CLOUD_API_KEY}"
-    networks:
-      - app-network
-    depends_on:
-      - cadvisor
-      - back-central
-    deploy:
-      resources:
-        limits:
-          cpus: "0.25"
-          memory: 128M
-        reservations:
-          cpus: "0.10"
-          memory: 64M
-
   nginx:
     image: 476702565908.dkr.ecr.us-east-1.amazonaws.com/probability-nginx:latest
     container_name: nginx_prod
@@ -435,6 +390,4 @@ volumes:
   redis_data:
     driver: local
   rabbitmq_data:
-    driver: local
-  alloy_data:
     driver: local

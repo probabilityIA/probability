@@ -38,6 +38,17 @@ type LogEntry struct {
 	Message   string
 }
 
+type SystemStats struct {
+	CPUPercent    float64
+	CPUCores      int
+	MemoryTotal   uint64
+	MemoryUsed    uint64
+	MemoryPercent float64
+	DiskTotal     uint64
+	DiskUsed      uint64
+	DiskPercent   float64
+}
+
 type ComposeService struct {
 	Name         string
 	ContainerID  string

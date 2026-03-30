@@ -1,4 +1,4 @@
-import type { Container, ContainerStats, LogEntry, ComposeService, LoginRequest, LoginResponse } from './types';
+import type { Container, ContainerStats, LogEntry, ComposeService, LoginRequest, LoginResponse, SystemStats } from './types';
 
 export interface IMonitoringRepository {
     login(data: LoginRequest): Promise<LoginResponse>;
@@ -11,4 +11,5 @@ export interface IMonitoringRepository {
     stopContainer(id: string): Promise<{ message: string }>;
     startContainer(id: string): Promise<{ message: string }>;
     listComposeServices(): Promise<ComposeService[]>;
+    getSystemStats(): Promise<SystemStats>;
 }

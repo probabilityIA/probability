@@ -17,6 +17,7 @@ type IDockerService interface {
 	StopContainer(ctx context.Context, id string) error
 	StartContainer(ctx context.Context, id string) error
 	GetComposeServices(ctx context.Context) ([]entities.ComposeService, error)
+	GetSystemStats(ctx context.Context) (*entities.SystemStats, error)
 }
 
 type IUserRepository interface {
@@ -33,4 +34,5 @@ type IUseCase interface {
 	StreamContainerLogs(ctx context.Context, id string) (io.ReadCloser, error)
 	ContainerAction(ctx context.Context, id string, action string) error
 	GetComposeServices(ctx context.Context) ([]entities.ComposeService, error)
+	GetSystemStats(ctx context.Context) (*entities.SystemStats, error)
 }
