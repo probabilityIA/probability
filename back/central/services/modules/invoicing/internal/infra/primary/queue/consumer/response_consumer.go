@@ -699,6 +699,9 @@ func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog
 		var bodyMap map[string]interface{}
 		if json.Unmarshal([]byte(response.CashReceiptResponseBody), &bodyMap) == nil {
 			syncLog.CashReceiptResponseBody = bodyMap
+		} else {
+			// Si no es JSON válido, guardarlo como objeto con el string raw
+			syncLog.CashReceiptResponseBody = map[string]interface{}{"raw": response.CashReceiptResponseBody}
 		}
 	}
 }
