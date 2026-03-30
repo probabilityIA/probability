@@ -222,16 +222,9 @@ func buildPaymentBody(paymentType string, amount float64, config map[string]inte
 			payment["bankName"] = bank
 		}
 	case "TR":
-		// accountNumber puede venir como string o como float64 (JSON number)
-		switch v := config["payment_bank_account_id"].(type) {
-		case string:
-			if v != "" {
-				payment["accountNumber"] = v
-			}
-		case float64:
-			payment["accountNumber"] = fmt.Sprintf("%.0f", v)
-		case int:
-			payment["accountNumber"] = fmt.Sprintf("%d", v)
+		// bankAccountId es Number según la API de Softpymes (no accountNumber String)
+		if entityID := getConfigInt(config, "payment_bank_account_id"); entityID > 0 {
+			payment["bankAccountId"] = entityID
 		}
 		payment["documentNumber"] = docNumber
 		payment["prefixNumber"] = docPrefix
