@@ -54,12 +54,14 @@ func (c *Client) SendCashReceiptFromDocument(
 			branchCode = bc
 		}
 	}
-	// Primero intentar leer de config si no vino del documento
-	if customerBranchCode == "" || customerBranchCode == "000" {
-		if cb, ok := config["customer_branch_code"].(string); ok && cb != "" && cb != "000" {
+	// Determinar customerBranchCode: consumidor final usa "000", clientes reales usan "001"
+	defaultNit, _ := config["default_customer_nit"].(string)
+	if customerBranchCode == "" {
+		if customerNit != "" && defaultNit != "" && customerNit == defaultNit {
+			customerBranchCode = "000"
+		} else if cb, ok := config["customer_branch_code"].(string); ok && cb != "" {
 			customerBranchCode = cb
 		} else {
-			// Softpymes cash_receipt no acepta "000" (da 500), default a "001"
 			customerBranchCode = "001"
 		}
 	}
