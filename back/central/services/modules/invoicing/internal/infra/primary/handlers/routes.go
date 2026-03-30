@@ -20,7 +20,8 @@ func (h *handler) RegisterRoutes(router *gin.RouterGroup) {
 			invoices.POST("/:id/retry", middleware.JWT(), h.RetryInvoice)            // Reintentar factura
 			invoices.DELETE("/:id/retry", middleware.JWT(), h.CancelRetry)           // Cancelar reintentos pendientes
 			invoices.PUT("/:id/retry", middleware.JWT(), h.EnableRetry)              // Habilitar reintentos automáticos
-			invoices.DELETE("/:id", middleware.JWT(), h.DeleteInvoice)                // Eliminar factura pendiente (3+ consultas)
+			invoices.POST("/:id/cash-receipt", middleware.JWT(), h.GenerateCashReceipt) // Generar recibo de caja para factura emitida
+			invoices.DELETE("/:id", middleware.JWT(), h.DeleteInvoice)                  // Eliminar factura pendiente (3+ consultas)
 			invoices.GET("/:id/sync-logs", middleware.JWT(), h.GetInvoiceSyncLogs)   // Historial de sincronización
 			invoices.POST("/:id/credit-notes", middleware.JWT(), h.CreateCreditNote) // Crear nota de crédito
 

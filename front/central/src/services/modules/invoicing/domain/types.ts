@@ -390,6 +390,12 @@ export interface SyncLog {
   request_url?: string;
   response_status?: number;
   response_body?: Record<string, unknown>;
+
+  // Audit data del recibo de caja (separado de la factura)
+  cash_receipt_request_url?: string;
+  cash_receipt_request_payload?: Record<string, unknown>;
+  cash_receipt_response_status?: number;
+  cash_receipt_response_body?: Record<string, unknown>;
 }
 
 // ===================================

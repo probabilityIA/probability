@@ -182,6 +182,8 @@ func (c *ResponseConsumer) handleResponse(message []byte) error {
 		} else {
 			c.handleCancelError(ctx, invoice, syncLog, &response)
 		}
+	} else if response.Operation == dtos.OperationCashReceipt {
+		c.handleCashReceiptResponse(ctx, invoice, syncLog, &response)
 	} else {
 		switch response.Status {
 		case dtos.ResponseStatusSuccess:
@@ -506,6 +508,67 @@ func (c *ResponseConsumer) handleCancelError(
 	})
 }
 
+// handleCashReceiptResponse procesa la respuesta de una operación de recibo de caja.
+// No cambia el estado de la factura (ya está issued), solo actualiza el sync log y el document_json.
+func (c *ResponseConsumer) handleCashReceiptResponse(
+	ctx context.Context,
+	invoice *entities.Invoice,
+	syncLog *entities.InvoiceSyncLog,
+	response *dtos.InvoiceResponseMessage,
+) {
+	isSuccess := response.Status == dtos.ResponseStatusSuccess
+
+	if isSuccess {
+		c.log.Info(ctx).
+			Uint("invoice_id", invoice.ID).
+			Msg("Cash receipt generated successfully")
+
+		// Actualizar document_json de la factura con el nuevo cash_receipt
+		if response.DocumentJSON != nil {
+			invoice.ProviderResponse = response.DocumentJSON
+			if err := c.repo.UpdateInvoice(ctx, invoice); err != nil {
+				c.log.Error(ctx).Err(err).Msg("Failed to update invoice document_json after cash receipt")
+			}
+		}
+	} else {
+		c.log.Error(ctx).
+			Uint("invoice_id", invoice.ID).
+			Str("error", response.Error).
+			Msg("Cash receipt generation failed")
+	}
+
+	// Actualizar sync log
+	if syncLog != nil {
+		completedAt := time.Now()
+		duration := int(completedAt.Sub(syncLog.StartedAt).Milliseconds())
+		syncLog.CompletedAt = &completedAt
+		syncLog.Duration = &duration
+
+		if isSuccess {
+			syncLog.Status = constants.SyncStatusSuccess
+			syncLog.ResponseBody = response.DocumentJSON
+		} else {
+			syncLog.Status = constants.SyncStatusFailed
+			syncLog.ErrorMessage = &response.Error
+			syncLog.ErrorCode = &response.ErrorCode
+		}
+
+		// Poblar audit data del recibo de caja
+		c.populateSyncLogAudit(syncLog, response)
+
+		if err := c.repo.UpdateInvoiceSyncLog(ctx, syncLog); err != nil {
+			c.log.Error(ctx).Err(err).Msg("Failed to update cash receipt sync log")
+		}
+	}
+
+	// Publicar SSE para que el frontend se actualice
+	if isSuccess {
+		_ = c.ssePublisher.PublishInvoiceCreated(ctx, invoice)
+	} else {
+		_ = c.ssePublisher.PublishInvoiceFailed(ctx, invoice, response.Error)
+	}
+}
+
 // updateBulkJobOnResult actualiza los contadores del bulk job cuando se recibe el resultado del proveedor
 func (c *ResponseConsumer) updateBulkJobOnResult(ctx context.Context, invoiceID uint, success bool) {
 	// Buscar si esta factura pertenece a un bulk job
@@ -602,8 +665,10 @@ func (c *ResponseConsumer) completeBulkJob(ctx context.Context, job *entities.Bu
 		Msg("Bulk invoice job completed (from response consumer)")
 }
 
-// populateSyncLogAudit extrae audit data del response message y la almacena en el sync log
+// populateSyncLogAudit extrae audit data del response message y la almacena en el sync log.
+// Incluye tanto los datos de la factura como los del recibo de caja (si aplica).
 func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog, response *dtos.InvoiceResponseMessage) {
+	// Audit data de la factura
 	if response.AuditRequestURL != "" {
 		syncLog.RequestURL = response.AuditRequestURL
 	}
@@ -617,6 +682,23 @@ func (c *ResponseConsumer) populateSyncLogAudit(syncLog *entities.InvoiceSyncLog
 		var bodyMap map[string]interface{}
 		if json.Unmarshal([]byte(response.AuditResponseBody), &bodyMap) == nil {
 			syncLog.ResponseBody = bodyMap
+		}
+	}
+
+	// Audit data del recibo de caja (separado de la factura)
+	if response.CashReceiptRequestURL != "" {
+		syncLog.CashReceiptRequestURL = response.CashReceiptRequestURL
+	}
+	if response.CashReceiptRequestPayload != nil {
+		syncLog.CashReceiptRequestPayload = response.CashReceiptRequestPayload
+	}
+	if response.CashReceiptResponseStatus != 0 {
+		syncLog.CashReceiptResponseStatus = response.CashReceiptResponseStatus
+	}
+	if response.CashReceiptResponseBody != "" {
+		var bodyMap map[string]interface{}
+		if json.Unmarshal([]byte(response.CashReceiptResponseBody), &bodyMap) == nil {
+			syncLog.CashReceiptResponseBody = bodyMap
 		}
 	}
 }

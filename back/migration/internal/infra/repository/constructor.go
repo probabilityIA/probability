@@ -209,6 +209,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		return fmt.Errorf("failed to migrate order statuses v2: %w", err)
 	}
 
+	// Add cash receipt audit columns to invoice_sync_logs
+	if err := r.db.Conn(ctx).AutoMigrate(&models.InvoiceSyncLog{}); err != nil {
+		return fmt.Errorf("failed to auto-migrate invoice_sync_logs (cash receipt audit): %w", err)
+	}
+
 	return nil
 }
 

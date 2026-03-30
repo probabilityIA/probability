@@ -16,6 +16,7 @@ import {
   enableRetryAction,
   retryInvoiceAction,
   deletePendingInvoiceAction,
+  generateCashReceiptAction,
 } from '../../infra/actions';
 import { useInvoiceSSE } from '../hooks/useInvoiceSSE';
 import type { Invoice, SyncLog, InvoiceSSEEventData } from '../../domain/types';
@@ -47,6 +48,7 @@ export function InvoiceDetailModal({
   const [retryProgress, setRetryProgress] = useState(0);
   const [retryResult, setRetryResult] = useState<'success' | 'failed' | 'pending_validation' | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [generatingCashReceipt, setGeneratingCashReceipt] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, fieldId: string) => {
@@ -80,6 +82,7 @@ export function InvoiceDetailModal({
       setRetryProgress(100);
       setRetryResult('success');
       setRetrying(false);
+      setGeneratingCashReceipt(false);
       loadSyncLogs();
       onRefresh();
     }
@@ -91,6 +94,7 @@ export function InvoiceDetailModal({
       setRetryProgress(100);
       setRetryResult('failed');
       setRetrying(false);
+      setGeneratingCashReceipt(false);
       loadSyncLogs();
       onRefresh();
     }
@@ -202,6 +206,26 @@ export function InvoiceDetailModal({
       setDeleting(false);
     }
   };
+
+  const handleGenerateCashReceipt = async () => {
+    if (!invoice) return;
+    try {
+      setGeneratingCashReceipt(true);
+      setRetrying(true);
+      setRetryProgress(0);
+      setRetryResult(null);
+      await generateCashReceiptAction(invoice.id);
+    } catch (error: any) {
+      setRetrying(false);
+      setRetryProgress(0);
+      setGeneratingCashReceipt(false);
+      showToast('Error al generar recibo de caja: ' + error.message, 'error');
+    }
+  };
+
+  // Detectar si el recibo de caja falló (desde provider_response)
+  const cashReceiptFailed = invoice?.status === 'issued' &&
+    (invoice.provider_response as Record<string, any>)?.cash_receipt?.status === 'failed';
 
   const hasPendingRetries = syncLogs.some(
     log => (log.status === 'failed' || log.status === 'pending') && log.next_retry_at
@@ -626,6 +650,16 @@ export function InvoiceDetailModal({
                   title="Funcionalidad en desarrollo"
                 >
                   Cancelar Factura
+                </Button>
+              )}
+              {cashReceiptFailed && (
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleGenerateCashReceipt}
+                  disabled={generatingCashReceipt || retrying}
+                >
+                  {generatingCashReceipt ? 'Generando...' : 'Generar Recibo de Caja'}
                 </Button>
               )}
               {canDelete && (

@@ -182,6 +182,8 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		response = c.processCheckStatus(ctx, &request, startTime)
 	case "cancel":
 		response = c.processCancelInvoice(ctx, &request, startTime)
+	case "cash_receipt":
+		response = c.processCashReceipt(ctx, &request, startTime)
 	default:
 		c.log.Warn(ctx).
 			Str("operation", request.Operation).

@@ -170,6 +170,24 @@ func SyncLogToDomain(model *models.InvoiceSyncLog) *entities.InvoiceSyncLog {
 		}
 	}
 
+	// Cash receipt audit fields
+	entity.CashReceiptRequestURL = model.CashReceiptRequestURL
+	entity.CashReceiptResponseStatus = model.CashReceiptResponseStatus
+
+	if model.CashReceiptRequestPayload != nil {
+		var payload map[string]interface{}
+		if err := json.Unmarshal(model.CashReceiptRequestPayload, &payload); err == nil {
+			entity.CashReceiptRequestPayload = payload
+		}
+	}
+
+	if model.CashReceiptResponseBody != nil {
+		var body map[string]interface{}
+		if err := json.Unmarshal(model.CashReceiptResponseBody, &body); err == nil {
+			entity.CashReceiptResponseBody = body
+		}
+	}
+
 	return entity
 }
 
@@ -234,6 +252,22 @@ func SyncLogToModel(entity *entities.InvoiceSyncLog) *models.InvoiceSyncLog {
 	if entity.ErrorDetails != nil {
 		if data, err := json.Marshal(entity.ErrorDetails); err == nil {
 			model.ErrorDetails = datatypes.JSON(data)
+		}
+	}
+
+	// Cash receipt audit fields
+	model.CashReceiptRequestURL = entity.CashReceiptRequestURL
+	model.CashReceiptResponseStatus = entity.CashReceiptResponseStatus
+
+	if entity.CashReceiptRequestPayload != nil {
+		if data, err := json.Marshal(entity.CashReceiptRequestPayload); err == nil {
+			model.CashReceiptRequestPayload = datatypes.JSON(data)
+		}
+	}
+
+	if entity.CashReceiptResponseBody != nil {
+		if data, err := json.Marshal(entity.CashReceiptResponseBody); err == nil {
+			model.CashReceiptResponseBody = datatypes.JSON(data)
 		}
 	}
 

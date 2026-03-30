@@ -167,6 +167,11 @@ func (c *Client) SendCashReceiptFromDocument(
 		"document_date":   documentDate,
 		"request_body":    body,
 		"raw_response":    string(respBody),
+		// Audit data para trazabilidad separada
+		"audit_request_url":     requestURL,
+		"audit_request_payload": body,
+		"audit_response_status": resp.StatusCode(),
+		"audit_response_body":   string(respBody),
 	}
 
 	return receiptData, nil

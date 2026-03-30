@@ -46,6 +46,12 @@ type InvoiceSyncLog struct {
 	ResponseBody    datatypes.JSON `gorm:"type:jsonb"` // Cuerpo de la respuesta
 	ResponseHeaders datatypes.JSON `gorm:"type:jsonb"` // Headers de la respuesta
 
+	// Detalles del recibo de caja (request/response separados de la factura)
+	CashReceiptRequestURL     string         `gorm:"size:512"`   // URL del endpoint de recibo de caja
+	CashReceiptRequestPayload datatypes.JSON `gorm:"type:jsonb"` // Payload enviado al proveedor para recibo de caja
+	CashReceiptResponseStatus int            // HTTP status code del recibo de caja
+	CashReceiptResponseBody   datatypes.JSON `gorm:"type:jsonb"` // Respuesta del recibo de caja
+
 	// Información de error (si aplica)
 	ErrorMessage *string `gorm:"type:text"` // Mensaje de error
 	ErrorCode    *string `gorm:"size:64"`   // Código de error del proveedor

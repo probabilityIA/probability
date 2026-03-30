@@ -42,6 +42,7 @@ const (
 	OperationTypeCreditNote    = "credit_note"
 	OperationTypeQuery         = "query"
 	OperationTypeCreateJournal = "create_journal"
+	OperationTypeCashReceipt   = "cash_receipt"
 )
 
 // Triggers de sincronización

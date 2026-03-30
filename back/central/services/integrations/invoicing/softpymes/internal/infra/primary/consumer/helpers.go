@@ -68,25 +68,34 @@ func (c *InvoiceRequestConsumer) createErrorResponse(
 	return resp
 }
 
+// CashReceiptAudit contiene los datos de auditoría del recibo de caja
+type CashReceiptAudit struct {
+	RequestURL     string
+	RequestPayload map[string]interface{}
+	ResponseStatus int
+	ResponseBody   string
+}
+
 // sendCashReceiptIfConfigured envía un recibo de caja si la config lo tiene habilitado.
 // Es non-fatal: si falla, se loguea el error pero no afecta el resultado de la factura.
+// Retorna los datos de auditoría del recibo de caja para almacenarlos por separado.
 func (c *InvoiceRequestConsumer) sendCashReceiptIfConfigured(
 	ctx context.Context,
 	fullDocument map[string]interface{},
 	config map[string]interface{},
 	apiKey, apiSecret, referer, baseURL string,
 	invoiceID uint,
-) {
+) *CashReceiptAudit {
 	sendCashReceipt, _ := config["send_cash_receipt"].(bool)
 	if !sendCashReceipt {
-		return
+		return nil
 	}
 
 	if fullDocument == nil {
 		c.log.Warn(ctx).
 			Uint("invoice_id", invoiceID).
 			Msg("Cash receipt configured but full document is nil — skipping")
-		return
+		return nil
 	}
 
 	c.log.Info(ctx).
@@ -102,14 +111,34 @@ func (c *InvoiceRequestConsumer) sendCashReceiptIfConfigured(
 			"status": "failed",
 			"error":  err.Error(),
 		}
-	} else {
-		c.log.Info(ctx).
-			Uint("invoice_id", invoiceID).
-			Msg("Cash receipt sent successfully")
-		if receiptData != nil {
-			fullDocument["cash_receipt"] = receiptData
+		return nil
+	}
+
+	c.log.Info(ctx).
+		Uint("invoice_id", invoiceID).
+		Msg("Cash receipt sent successfully")
+
+	var audit *CashReceiptAudit
+	if receiptData != nil {
+		fullDocument["cash_receipt"] = receiptData
+
+		// Extraer audit data del resultado para almacenar por separado
+		audit = &CashReceiptAudit{}
+		if url, ok := receiptData["audit_request_url"].(string); ok {
+			audit.RequestURL = url
+		}
+		if payload, ok := receiptData["audit_request_payload"].(map[string]interface{}); ok {
+			audit.RequestPayload = payload
+		}
+		if status, ok := receiptData["audit_response_status"].(int); ok {
+			audit.ResponseStatus = status
+		}
+		if body, ok := receiptData["audit_response_body"].(string); ok {
+			audit.ResponseBody = body
 		}
 	}
+
+	return audit
 }
 
 // toMapPayload convierte cualquier valor (struct o map) a map[string]interface{} via JSON.

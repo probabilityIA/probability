@@ -29,6 +29,12 @@ type InvoiceSyncLog struct {
 	ResponseBody    map[string]interface{}
 	ResponseHeaders map[string]interface{}
 
+	// Detalles del recibo de caja (request/response separados de la factura)
+	CashReceiptRequestURL     string
+	CashReceiptRequestPayload map[string]interface{}
+	CashReceiptResponseStatus int
+	CashReceiptResponseBody   map[string]interface{}
+
 	// Información de error
 	ErrorMessage *string
 	ErrorCode    *string

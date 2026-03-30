@@ -256,10 +256,14 @@ func SyncLogToResponse(log *entities.InvoiceSyncLog) response.SyncLog {
 		StartedAt:      log.StartedAt,
 		CompletedAt:    log.CompletedAt,
 		CreatedAt:      log.CreatedAt,
-		RequestPayload: log.RequestPayload,
-		RequestURL:     log.RequestURL,
-		ResponseStatus: log.ResponseStatus,
-		ResponseBody:   log.ResponseBody,
+		RequestPayload:            log.RequestPayload,
+		RequestURL:                log.RequestURL,
+		ResponseStatus:            log.ResponseStatus,
+		ResponseBody:              log.ResponseBody,
+		CashReceiptRequestURL:     log.CashReceiptRequestURL,
+		CashReceiptRequestPayload: log.CashReceiptRequestPayload,
+		CashReceiptResponseStatus: log.CashReceiptResponseStatus,
+		CashReceiptResponseBody:   log.CashReceiptResponseBody,
 	}
 }
 

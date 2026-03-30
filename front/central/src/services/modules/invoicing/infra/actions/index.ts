@@ -142,6 +142,12 @@ export async function enableRetryAction(id: number): Promise<void> {
   });
 }
 
+export async function generateCashReceiptAction(id: number): Promise<Invoice> {
+  return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}/cash-receipt`, {
+    method: 'POST',
+  });
+}
+
 export async function deletePendingInvoiceAction(id: number): Promise<void> {
   return fetchWithAuth(`${API_BASE_URL}/invoicing/invoices/${id}`, {
     method: 'DELETE',

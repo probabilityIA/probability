@@ -23,11 +23,17 @@ type InvoiceResponseMessage struct {
 	Timestamp      time.Time              `json:"timestamp"`
 	ProcessingTime int64                  `json:"processing_time_ms"` // Tiempo de procesamiento en ms
 
-	// Audit data del request/response HTTP al proveedor
+	// Audit data del request/response HTTP al proveedor (factura)
 	AuditRequestURL     string                 `json:"audit_request_url,omitempty"`
 	AuditRequestPayload map[string]interface{} `json:"audit_request_payload,omitempty"`
 	AuditResponseStatus int                    `json:"audit_response_status,omitempty"`
 	AuditResponseBody   string                 `json:"audit_response_body,omitempty"`
+
+	// Audit data del request/response HTTP del recibo de caja
+	CashReceiptRequestURL     string                 `json:"cash_receipt_request_url,omitempty"`
+	CashReceiptRequestPayload map[string]interface{} `json:"cash_receipt_request_payload,omitempty"`
+	CashReceiptResponseStatus int                    `json:"cash_receipt_response_status,omitempty"`
+	CashReceiptResponseBody   string                 `json:"cash_receipt_response_body,omitempty"`
 }
 
 // Response statuses

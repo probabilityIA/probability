@@ -275,6 +275,7 @@ type IUseCase interface {
 	CheckPendingInvoice(ctx context.Context, invoiceID uint) error
 	CancelRetry(ctx context.Context, invoiceID uint) error
 	EnableRetry(ctx context.Context, invoiceID uint) error
+	GenerateCashReceipt(ctx context.Context, invoiceID uint) error
 	DeletePendingInvoice(ctx context.Context, invoiceID uint) error
 	GetInvoice(ctx context.Context, invoiceID uint) (*entities.Invoice, error)
 	ListInvoices(ctx context.Context, filters map[string]interface{}) ([]*entities.Invoice, int64, error)

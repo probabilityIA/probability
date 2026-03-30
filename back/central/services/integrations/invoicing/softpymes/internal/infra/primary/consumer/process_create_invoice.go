@@ -191,7 +191,7 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 
 	// 9. Send cash receipt if configured (non-fatal)
 	referer, _ := combinedConfig["referer"].(string)
-	c.sendCashReceiptIfConfigured(ctx, fullDocument, combinedConfig, apiKey, apiSecret, referer, effectiveURL, request.InvoiceID)
+	cashReceiptAudit := c.sendCashReceiptIfConfigured(ctx, fullDocument, combinedConfig, apiKey, apiSecret, referer, effectiveURL, request.InvoiceID)
 
 	// 10. Parsear issued_at
 	var issuedAt *time.Time
@@ -217,12 +217,20 @@ func (c *InvoiceRequestConsumer) processCreateInvoice(
 		ProcessingTime: processingTime,
 	}
 
-	// Incluir audit data en la respuesta
+	// Incluir audit data de factura en la respuesta
 	if result.AuditData != nil {
 		resp.AuditRequestURL = result.AuditData.RequestURL
 		resp.AuditRequestPayload = toMapPayload(result.AuditData.RequestPayload)
 		resp.AuditResponseStatus = result.AuditData.ResponseStatus
 		resp.AuditResponseBody = result.AuditData.ResponseBody
+	}
+
+	// Incluir audit data de recibo de caja en la respuesta (separado de la factura)
+	if cashReceiptAudit != nil {
+		resp.CashReceiptRequestURL = cashReceiptAudit.RequestURL
+		resp.CashReceiptRequestPayload = cashReceiptAudit.RequestPayload
+		resp.CashReceiptResponseStatus = cashReceiptAudit.ResponseStatus
+		resp.CashReceiptResponseBody = cashReceiptAudit.ResponseBody
 	}
 
 	return resp

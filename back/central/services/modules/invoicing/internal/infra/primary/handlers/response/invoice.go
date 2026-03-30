@@ -77,4 +77,10 @@ type SyncLog struct {
 	RequestURL     string                 `json:"request_url,omitempty"`
 	ResponseStatus int                    `json:"response_status,omitempty"`
 	ResponseBody   map[string]interface{} `json:"response_body,omitempty"`
+
+	// Audit data del recibo de caja (separado de la factura)
+	CashReceiptRequestURL     string                 `json:"cash_receipt_request_url,omitempty"`
+	CashReceiptRequestPayload map[string]interface{} `json:"cash_receipt_request_payload,omitempty"`
+	CashReceiptResponseStatus int                    `json:"cash_receipt_response_status,omitempty"`
+	CashReceiptResponseBody   map[string]interface{} `json:"cash_receipt_response_body,omitempty"`
 }

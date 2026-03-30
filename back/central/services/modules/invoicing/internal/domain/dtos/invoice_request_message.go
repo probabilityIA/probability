@@ -22,6 +22,7 @@ const (
 	OperationListItems        = "list_items"
 	OperationListBankAccounts = "list_bank_accounts"
 	OperationCreateJournal    = "create_journal"
+	OperationCashReceipt      = "cash_receipt"
 )
 
 // Providers
