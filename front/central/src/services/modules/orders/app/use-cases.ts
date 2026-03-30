@@ -2,7 +2,8 @@ import { IOrderRepository } from '../domain/ports';
 import {
     GetOrdersParams,
     CreateOrderDTO,
-    UpdateOrderDTO
+    UpdateOrderDTO,
+    ChangeOrderStatusDTO
 } from '../domain/types';
 
 export class OrderUseCases {
@@ -22,6 +23,10 @@ export class OrderUseCases {
 
     async updateOrder(id: string, data: UpdateOrderDTO) {
         return this.repository.updateOrder(id, data);
+    }
+
+    async changeOrderStatus(id: string, data: ChangeOrderStatusDTO) {
+        return this.repository.changeOrderStatus(id, data);
     }
 
     async deleteOrder(id: string) {

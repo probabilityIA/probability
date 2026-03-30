@@ -436,3 +436,9 @@ export interface UpdateOrderDTO {
     payment_details?: any;
     fulfillment_details?: any;
 }
+
+// ChangeOrderStatusDTO — request para PUT /orders/:id/status
+export interface ChangeOrderStatusDTO {
+    status: string;
+    metadata?: Record<string, unknown>;
+}

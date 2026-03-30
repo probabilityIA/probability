@@ -16,6 +16,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		orders.POST("", middleware.JWT(), h.CreateOrder)
 		orders.POST("/upload-bulk", middleware.JWT(), h.UploadBulkOrders)
 		orders.PUT("/:id", middleware.JWT(), h.UpdateOrder)
+		orders.PUT("/:id/status", middleware.JWT(), h.ChangeStatus)
 		orders.DELETE("/:id", middleware.JWT(), h.DeleteOrder)
 
 		// Mapeo de órdenes canónicas (para integraciones)

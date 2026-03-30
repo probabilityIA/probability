@@ -92,6 +92,9 @@ type CreateOrderRequest struct {
 	UserID   *uint   `json:"user_id,omitempty"`
 	UserName string  `json:"user_name"`
 
+	// Test
+	IsTest bool `json:"is_test"`
+
 	// Facturación
 	Invoiceable     bool    `json:"invoiceable"`
 	InvoiceURL      *string `json:"invoice_url,omitempty"`

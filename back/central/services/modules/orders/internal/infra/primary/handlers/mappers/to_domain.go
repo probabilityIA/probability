@@ -53,9 +53,9 @@ func MapUpdateOrderRequestToDomain(req *request.UpdateOrder) *dtos.UpdateOrderRe
 		Boxes:               req.Boxes,
 		OrderTypeID:         req.OrderTypeID,
 		OrderTypeName:       req.OrderTypeName,
-		Status:              req.Status,
-		OriginalStatus:      req.OriginalStatus,
-		StatusID:            req.StatusID,
+		// Status, OriginalStatus y StatusID NO se mapean desde el handler HTTP.
+		// El cambio de estado solo se permite via PUT /orders/:id/status (usecaseupdatestatus).
+		// Las integraciones (Shopify webhooks) pasan por MapAndSaveOrder → UpdateOrder directamente.
 		PaymentStatusID:     req.PaymentStatusID,
 		FulfillmentStatusID: req.FulfillmentStatusID,
 		Notes:               req.Notes,

@@ -5,6 +5,9 @@ import MapComponent from '@/shared/ui/MapComponent';
 import { getAIRecommendationAction, getOrderByIdAction, updateOrderAction, requestWhatsAppConfirmationAction, checkWhatsAppIntegrationAction } from '../../infra/actions';
 import { useState, useEffect } from 'react';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
+import { ChangeStatusModal } from './ChangeStatusModal';
+import { isTerminalStatus } from '../../domain/order-status-transitions';
+import { useToast } from '@/shared/providers/toast-provider';
 
 interface Quotation {
     carrier: string;
@@ -31,6 +34,8 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const [loadingAI, setLoadingAI] = useState(false);
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [showGuideModal, setShowGuideModal] = useState(false);
+    const [showChangeStatus, setShowChangeStatus] = useState(false);
+    const { showToast } = useToast();
 
     // Fetch full order details on mount
     const fetchDetails = async () => {
@@ -364,21 +369,31 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     </div>
                                     <div>
                                         <p className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wide font-semibold">Estado (Probability)</p>
-                                        {order.order_status?.color ? (
-                                            <span
-                                                className="inline-block px-3 py-1 text-sm font-semibold rounded-full mt-1"
-                                                style={{
-                                                    backgroundColor: order.order_status.color,
-                                                    color: getTextColor(order.order_status.color)
-                                                }}
-                                            >
-                                                {order.order_status.name || order.status}
-                                            </span>
-                                        ) : (
-                                            <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 mt-1">
-                                                {order.order_status?.name || order.status || '-'}
-                                            </span>
-                                        )}
+                                        <div className="flex items-center gap-2 mt-1">
+                                            {order.order_status?.color ? (
+                                                <span
+                                                    className="inline-block px-3 py-1 text-sm font-semibold rounded-full"
+                                                    style={{
+                                                        backgroundColor: order.order_status.color,
+                                                        color: getTextColor(order.order_status.color)
+                                                    }}
+                                                >
+                                                    {order.order_status.name || order.status}
+                                                </span>
+                                            ) : (
+                                                <span className="inline-block px-3 py-1 text-sm font-semibold rounded-full bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+                                                    {order.order_status?.name || order.status || '-'}
+                                                </span>
+                                            )}
+                                            {!isTerminalStatus(order.order_status?.code || order.status || '') && (
+                                                <button
+                                                    onClick={() => setShowChangeStatus(true)}
+                                                    className="px-2 py-1 text-xs font-medium text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg hover:bg-amber-100 dark:hover:bg-amber-900/50 transition-all"
+                                                >
+                                                    Cambiar
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                     {order.original_status && (
                                         <div>
@@ -671,6 +686,20 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Change Status Modal */}
+            {showChangeStatus && (
+                <ChangeStatusModal
+                    isOpen={showChangeStatus}
+                    onClose={() => setShowChangeStatus(false)}
+                    order={order}
+                    onSuccess={() => {
+                        showToast(`Estado de #${order.order_number} actualizado`, 'success');
+                        setShowChangeStatus(false);
+                        fetchDetails();
+                    }}
+                />
             )}
         </div>
     );

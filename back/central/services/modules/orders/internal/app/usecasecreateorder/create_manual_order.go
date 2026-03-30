@@ -148,6 +148,9 @@ func (uc *UseCaseCreateOrder) mapCreateRequestToDTO(req *dtos.CreateOrderRequest
 		UserID:   req.UserID,
 		UserName: req.UserName,
 
+		// Test
+		IsTest: req.IsTest,
+
 		// Facturación
 		Invoiceable:     req.Invoiceable,
 		InvoiceURL:      req.InvoiceURL,

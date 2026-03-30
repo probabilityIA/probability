@@ -228,3 +228,12 @@ func (m *RepositoryMock) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 	}
 	return args.Get(0).(*uint), args.Error(1)
 }
+
+// ============================================
+// HISTORIAL DE CAMBIOS DE ESTADO
+// ============================================
+
+func (m *RepositoryMock) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
+	args := m.Called(ctx, history)
+	return args.Error(0)
+}

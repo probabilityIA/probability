@@ -84,6 +84,13 @@ type IRepository interface {
 
 	// FulfillmentStatuses - Consultas a la tabla fulfillment_statuses
 	GetFulfillmentStatusIDByCode(ctx context.Context, code string) (*uint, error)
+
+	// ============================================
+	// HISTORIAL DE CAMBIOS DE ESTADO
+	// ============================================
+
+	// OrderHistory - Registro de cambios de estado
+	CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error
 }
 
 // ───────────────────────────────────────────
@@ -124,6 +131,11 @@ type IOrderUpdateUseCase interface {
 // IRequestConfirmationUseCase define la interfaz del caso de uso de solicitud de confirmación
 type IRequestConfirmationUseCase interface {
 	RequestConfirmation(ctx context.Context, orderID string) error
+}
+
+// IOrderStatusUseCase define el caso de uso para cambio de estado de órdenes
+type IOrderStatusUseCase interface {
+	ChangeStatus(ctx context.Context, orderID string, req *dtos.ChangeStatusRequest) (*dtos.OrderResponse, error)
 }
 
 // IOrderUseCase define la interfaz para los casos de uso CRUD de órdenes

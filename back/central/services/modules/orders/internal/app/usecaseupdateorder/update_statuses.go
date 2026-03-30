@@ -32,12 +32,26 @@ func (uc *UseCaseUpdateOrder) updateOrderStatuses(ctx context.Context, order *en
 	return hasChanges
 }
 
-// updateOrderStatus actualiza el estado general de la orden
+// updateOrderStatus actualiza el estado general de la orden.
+// Este método es usado por integraciones (Shopify, etc.) que son fuente de verdad de su estado.
+// NO aplica reglas de transición — las integraciones pueden "saltar" estados.
+// Las reglas de transición estrictas solo aplican en PUT /orders/:id/status (usecaseupdatestatus).
 func (uc *UseCaseUpdateOrder) updateOrderStatus(ctx context.Context, order *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) bool {
 	changed := false
 
-	// Actualizar Status
+	// Actualizar Status (sin validar transición — viene de integración externa)
 	if dto.Status != "" && order.Status != dto.Status {
+		// Log si la transición no sería válida en el flujo interno
+		currentStatus := entities.OrderStatus(order.Status)
+		targetStatus := entities.OrderStatus(dto.Status)
+		if !currentStatus.CanTransitionTo(targetStatus) && targetStatus != entities.OrderStatusCancelled {
+			uc.logger.Warn().
+				Str("order_id", order.ID).
+				Str("from", order.Status).
+				Str("to", dto.Status).
+				Str("integration_type", dto.IntegrationType).
+				Msg("Integración realizó salto de estado que no cumple flujo v2 — aceptado por ser fuente externa")
+		}
 		order.Status = dto.Status
 		changed = true
 	}

@@ -5,6 +5,7 @@ import {
     SingleResponse,
     CreateOrderDTO,
     UpdateOrderDTO,
+    ChangeOrderStatusDTO,
     ActionResponse
 } from './types';
 
@@ -13,6 +14,7 @@ export interface IOrderRepository {
     getOrderById(id: string): Promise<SingleResponse<Order>>;
     createOrder(data: CreateOrderDTO): Promise<SingleResponse<Order>>;
     updateOrder(id: string, data: UpdateOrderDTO): Promise<SingleResponse<Order>>;
+    changeOrderStatus(id: string, data: ChangeOrderStatusDTO): Promise<SingleResponse<Order>>;
     deleteOrder(id: string): Promise<ActionResponse>;
     getOrderRaw(id: string): Promise<SingleResponse<any>>;
     getAIRecommendation(origin: string, destination: string): Promise<any>;

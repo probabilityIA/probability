@@ -17,6 +17,9 @@ import { usePermissions } from '@/shared/contexts/permissions-context';
 import { playNotificationSound } from '@/shared/utils';
 import RawOrderModal from './RawOrderModal';
 import DownloadOrdersModal from '@/shared/ui/modals/download-orders-modal';
+import { OrderStatusFlowModal } from './OrderStatusFlowModal';
+import { ChangeStatusModal } from './ChangeStatusModal';
+import { isTerminalStatus } from '../../domain/order-status-transitions';
 import { getActionError } from '@/shared/utils/action-result';
 
 // Mapeo de carrier (valor raw de BD) a logo URL
@@ -59,6 +62,7 @@ const OrderRow = memo(({
     order,
     onView,
     onEdit,
+    onChangeStatus,
     onViewRecommendation,
     onDelete,
     onShowRaw,
@@ -74,6 +78,7 @@ const OrderRow = memo(({
     order: Order;
     onView?: (order: Order) => void;
     onEdit?: (order: Order) => void;
+    onChangeStatus?: (order: Order) => void;
     onViewRecommendation?: (order: Order) => void;
     onDelete: (id: string) => void;
     onShowRaw: (id: string) => void;
@@ -398,6 +403,25 @@ const OrderRow = memo(({
                             </svg>
                         </button>
                     )}
+                    {onChangeStatus && (
+                        <button
+                            onClick={() => onChangeStatus(order)}
+                            disabled={isTerminalStatus(order.order_status?.code || order.status || '')}
+                            className={`p-2 rounded-md transition-colors duration-200 focus:ring-2 focus:ring-offset-2 ${
+                                isTerminalStatus(order.order_status?.code || order.status || '')
+                                    ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
+                                    : 'bg-amber-500 hover:bg-amber-600 text-white focus:ring-amber-500'
+                            }`}
+                            title={isTerminalStatus(order.order_status?.code || order.status || '')
+                                ? 'Estado terminal — no se puede cambiar'
+                                : 'Cambiar estado'}
+                            aria-label="Cambiar estado"
+                        >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                            </svg>
+                        </button>
+                    )}
                     {order.guide_link && (
                         <button
                             onClick={() => onShowGuide(order.guide_link!)}
@@ -463,6 +487,10 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
 
     // Download Orders Modal
     const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
+    // Status Flow Info Modal
+    const [isStatusFlowOpen, setIsStatusFlowOpen] = useState(false);
+    // Change Status Modal
+    const [changeStatusOrder, setChangeStatusOrder] = useState<Order | null>(null);
 
     // Integrations for filter
     const [integrationsList, setIntegrationsList] = useState<{ value: string; label: string }[]>([]);
@@ -1346,6 +1374,17 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                     onDownload={() => setIsDownloadModalOpen(true)}
                     downloadButtonText="↓ Descargar Ordenes"
                 />
+                <div className="flex justify-end mt-2">
+                    <button
+                        onClick={() => setIsStatusFlowOpen(true)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-900/30 border border-purple-200 dark:border-purple-700 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/50 transition-all"
+                    >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Flujo de Estados
+                    </button>
+                </div>
             </div>
 
             {/* Table */}
@@ -1429,6 +1468,7 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                                         order={order}
                                         onView={onView}
                                         onEdit={onEdit}
+                                        onChangeStatus={(o) => setChangeStatusOrder(o)}
                                         onViewRecommendation={onViewRecommendation}
                                         onDelete={handleDelete}
                                         onShowRaw={(id) => {
@@ -1773,6 +1813,25 @@ export default function OrderList({ onView, onEdit, onViewRecommendation, refres
                 onClose={() => setIsDownloadModalOpen(false)}
                 onDownload={handleDownloadOrders}
             />
+
+            {/* Status Flow Info Modal */}
+            <OrderStatusFlowModal
+                isOpen={isStatusFlowOpen}
+                onClose={() => setIsStatusFlowOpen(false)}
+            />
+
+            {/* Change Status Modal */}
+            {changeStatusOrder && (
+                <ChangeStatusModal
+                    isOpen={!!changeStatusOrder}
+                    onClose={() => setChangeStatusOrder(null)}
+                    order={changeStatusOrder}
+                    onSuccess={() => {
+                        showToast(`Estado de #${changeStatusOrder.order_number} actualizado`, 'success');
+                        setChangeStatusOrder(null);
+                    }}
+                />
+            )}
         </div>
     );
 }

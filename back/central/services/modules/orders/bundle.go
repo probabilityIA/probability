@@ -7,6 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecasecreateorder"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdateorder"
+	"github.com/secamc93/probability/back/central/services/modules/orders/internal/app/usecaseupdatestatus"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/handlers"
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/infra/primary/queue"
@@ -39,10 +40,11 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// Create use case recibe update como dependencia
 	createUC := usecasecreateorder.New(repo, logger, rabbitPublisher, integrationEventPub, updateUC)
 
+	statusUC := usecaseupdatestatus.New(repo, logger, rabbitPublisher)
 	requestConfirmationUC := initRequestConfirmationUseCase(repo, rabbitPublisher, logger)
 
 	// 4. Inicializar Handlers y Registrar Rutas
-	h := handlers.New(orderCRUD, createUC, requestConfirmationUC, logger)
+	h := handlers.New(orderCRUD, createUC, requestConfirmationUC, statusUC, logger)
 	h.RegisterRoutes(router)
 
 	// 5. Inicializar Consumers (background goroutines)

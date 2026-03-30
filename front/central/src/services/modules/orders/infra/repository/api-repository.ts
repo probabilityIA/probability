@@ -7,6 +7,7 @@ import {
     SingleResponse,
     CreateOrderDTO,
     UpdateOrderDTO,
+    ChangeOrderStatusDTO,
     ActionResponse
 } from '../../domain/types';
 
@@ -82,6 +83,13 @@ export class OrderApiRepository implements IOrderRepository {
 
     async updateOrder(id: string, data: UpdateOrderDTO): Promise<SingleResponse<Order>> {
         return this.fetch<SingleResponse<Order>>(`/orders/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async changeOrderStatus(id: string, data: ChangeOrderStatusDTO): Promise<SingleResponse<Order>> {
+        return this.fetch<SingleResponse<Order>>(`/orders/${id}/status`, {
             method: 'PUT',
             body: JSON.stringify(data),
         });

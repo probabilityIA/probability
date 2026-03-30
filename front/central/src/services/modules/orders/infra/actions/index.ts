@@ -6,7 +6,8 @@ import { OrderUseCases } from '../../app/use-cases';
 import {
     GetOrdersParams,
     CreateOrderDTO,
-    UpdateOrderDTO
+    UpdateOrderDTO,
+    ChangeOrderStatusDTO
 } from '../../domain/types';
 
 async function getUseCases() {
@@ -48,6 +49,15 @@ export const updateOrderAction = async (id: string, data: UpdateOrderDTO) => {
     } catch (error: any) {
         console.error('Update Order Action Error:', error.message);
         throw new Error(error.message);
+    }
+};
+
+export const changeOrderStatusAction = async (id: string, data: ChangeOrderStatusDTO) => {
+    try {
+        return await (await getUseCases()).changeOrderStatus(id, data);
+    } catch (error: any) {
+        console.error('Change Order Status Action Error:', error.message);
+        return { success: false, message: error.message || 'Error al cambiar estado', data: null };
     }
 };
 

@@ -14,6 +14,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/migration/shared/models"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -842,4 +843,18 @@ func (r *Repository) CreateOrderError(ctx context.Context, orderError *entities.
 	}
 
 	return r.db.Conn(ctx).Create(dbError).Error
+}
+
+// CreateOrderHistory registra un cambio de estado en el historial de la orden
+func (r *Repository) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
+	dbHistory := &models.OrderHistory{
+		OrderID:        history.OrderID,
+		PreviousStatus: history.PreviousStatus,
+		NewStatus:      history.NewStatus,
+		ChangedBy:      history.ChangedBy,
+		ChangedByName:  history.ChangedByName,
+		Reason:         history.Reason,
+		Metadata:       datatypes.JSON(history.Metadata),
+	}
+	return r.db.Conn(ctx).Create(dbHistory).Error
 }

@@ -43,6 +43,7 @@ type mockRepository struct {
 	GetOrderStatusIDByCodeFn                             func(ctx context.Context, code string) (*uint, error)
 	GetPaymentStatusIDByCodeFn                           func(ctx context.Context, code string) (*uint, error)
 	GetFulfillmentStatusIDByCodeFn                       func(ctx context.Context, code string) (*uint, error)
+	CreateOrderHistoryFn                                 func(ctx context.Context, history *entities.OrderHistory) error
 }
 
 func (m *mockRepository) CreateOrder(ctx context.Context, order *entities.ProbabilityOrder) error {
@@ -223,6 +224,12 @@ func (m *mockRepository) GetFulfillmentStatusIDByCode(ctx context.Context, code 
 	return nil, nil
 }
 func (m *mockRepository) UpdateProductPrice(ctx context.Context, productID string, price float64) error {
+	return nil
+}
+func (m *mockRepository) CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error {
+	if m.CreateOrderHistoryFn != nil {
+		return m.CreateOrderHistoryFn(ctx, history)
+	}
 	return nil
 }
 

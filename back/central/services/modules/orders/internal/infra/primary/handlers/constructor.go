@@ -13,6 +13,7 @@ type Handlers struct {
 	orderCRUD             ports.IOrderUseCase
 	createUC              ports.IOrderCreateUseCase
 	requestConfirmationUC ports.IRequestConfirmationUseCase
+	statusUC              ports.IOrderStatusUseCase
 	logger                log.ILogger
 }
 
@@ -39,12 +40,14 @@ func New(
 	orderCRUD ports.IOrderUseCase,
 	createUC ports.IOrderCreateUseCase,
 	requestConfirmationUC ports.IRequestConfirmationUseCase,
+	statusUC ports.IOrderStatusUseCase,
 	logger log.ILogger,
 ) *Handlers {
 	return &Handlers{
 		orderCRUD:             orderCRUD,
 		createUC:              createUC,
 		requestConfirmationUC: requestConfirmationUC,
+		statusUC:              statusUC,
 		logger:                logger,
 	}
 }
