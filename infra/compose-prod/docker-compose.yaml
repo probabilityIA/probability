@@ -277,6 +277,88 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Monitoring Services (independent of nginx)
+  monitoring-api:
+    platform: linux/arm64
+    build:
+      context: ../../back/monitoring
+      dockerfile: Dockerfile
+    container_name: monitoring_api_prod
+    ports:
+      - "3070:3070"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      HTTP_PORT:        "3070"
+      JWT_SECRET:       "${MONITORING_JWT_SECRET:-monitoring-secret-change-in-prod}"
+      COMPOSE_PROJECT:  "compose-prod"
+      GIN_MODE:         "release"
+      LOG_LEVEL:        "info"
+      DB_HOST:          "${DB_HOST:-postgres}"
+      DB_PORT:          "5432"
+      DB_NAME:          "${DB_NAME}"
+      DB_USER:          "${DB_USER}"
+      DB_PASS:          "${DB_PASSWORD}"
+      PGSSLMODE:        "${DB_SSLMODE}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3070/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    networks:
+      - app-network
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.10"
+          memory: 64M
+
+  monitoring-web:
+    platform: linux/arm64
+    build:
+      context: ../../front/monitoring
+      dockerfile: Dockerfile
+    container_name: monitoring_web_prod
+    ports:
+      - "3002:3002"
+    environment:
+      MONITORING_API_URL:             "http://monitoring-api:3070"
+      NEXT_PUBLIC_MONITORING_API_URL: "http://monitoring-api:3070"
+      PORT:                           "3002"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3002/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - app-network
+    depends_on:
+      monitoring-api:
+        condition: service_healthy
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 192M
+        reservations:
+          cpus: "0.10"
+          memory: 96M
+
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.50.0
     container_name: cadvisor
