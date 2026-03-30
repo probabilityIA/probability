@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -158,8 +159,16 @@ func (h *Handlers) PublicGetTrackingHistory(c *gin.Context) {
 		return
 	}
 
-	// Retornar historial (vacío si no hay eventos)
-	history := []map[string]interface{}{}
+	// Retornar historial almacenado en metadata
+	var history interface{} = []map[string]interface{}{}
+	if len(shipment.Metadata) > 0 {
+		var meta map[string]interface{}
+		if err := json.Unmarshal(shipment.Metadata, &meta); err == nil {
+			if events, exists := meta["tracking_events"]; exists {
+				history = events
+			}
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

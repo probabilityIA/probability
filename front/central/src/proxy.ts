@@ -29,12 +29,12 @@ export function proxy(request: NextRequest) {
     const csp = [
         frameAncestors,
         "default-src 'self'",
-        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.shopify.com",
+        "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.shopify.com https://*.bold.co",
         "style-src 'self' 'unsafe-inline'",
-        "img-src 'self' data: https:",
+        "img-src 'self' data: https: https://*.bold.co",
         "font-src 'self' data:",
-        "connect-src 'self' http://localhost:3050 https://*.probabilityia.com.co wss://*.probabilityia.com.co https://cdn.shopify.com",
-        "frame-src 'self' https://admin.shopify.com",
+        "connect-src 'self' http://localhost:3050 https://*.probabilityia.com.co wss://*.probabilityia.com.co https://cdn.shopify.com https://*.bold.co",
+        "frame-src 'self' https://admin.shopify.com https://*.bold.co",
     ].join('; ');
 
     // Security headers

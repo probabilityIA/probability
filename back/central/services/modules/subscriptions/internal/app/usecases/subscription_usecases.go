@@ -54,3 +54,8 @@ func (uc *SubscriptionUsecase) DisableBusinessSubscription(ctx context.Context, 
 	endDateStr := now.Format(time.RFC3339)
 	return uc.repo.UpdateBusinessSubscriptionStatus(ctx, businessID, entities.BusinessStatusExpired, &endDateStr)
 }
+
+// Asegura que todos los negocios estén activos por defecto al iniciar
+func (uc *SubscriptionUsecase) EnsureAllBusinessesActive(ctx context.Context) error {
+	return uc.repo.EnsureAllBusinessesActive(ctx)
+}

@@ -150,6 +150,8 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 		response = c.processTrack(ctx, &request, baseURL, apiKey)
 	case "cancel":
 		response = c.processCancel(ctx, &request, baseURL, apiKey)
+	case "cancel_batch":
+		response = c.processCancelBatch(ctx, &request, baseURL, apiKey)
 	default:
 		c.log.Warn(ctx).
 			Str("operation", request.Operation).
@@ -318,6 +320,36 @@ func (c *TransportRequestConsumer) processCancel(ctx context.Context, request *T
 		BusinessID:    request.BusinessID,
 		Provider:      "envioclick",
 		Operation:     "cancel",
+		Status:        "success",
+		CorrelationID: request.CorrelationID,
+		IsTest:        request.IsTest,
+		Timestamp:     time.Now(),
+		Data:          toMap(resp),
+	}
+}
+
+// processCancelBatch handles multiple shipment cancellations
+func (c *TransportRequestConsumer) processCancelBatch(ctx context.Context, request *TransportRequestMessage, baseURL, apiKey string) *queue.TransportResponseMessage {
+	payloadBytes, err := json.Marshal(request.Payload)
+	if err != nil {
+		return c.errorResponse(request, "Failed to marshal payload: "+err.Error())
+	}
+
+	var req domain.CancelBatchRequest
+	if err := json.Unmarshal(payloadBytes, &req); err != nil {
+		return c.errorResponse(request, "Failed to unmarshal payload as CancelBatchRequest: "+err.Error())
+	}
+
+	resp, err := c.useCase.CancelBatch(ctx, baseURL, apiKey, req)
+	if err != nil {
+		return c.errorResponse(request, err.Error())
+	}
+
+	return &queue.TransportResponseMessage{
+		ShipmentID:    request.ShipmentID,
+		BusinessID:    request.BusinessID,
+		Provider:      "envioclick",
+		Operation:     "cancel_batch",
 		Status:        "success",
 		CorrelationID: request.CorrelationID,
 		IsTest:        request.IsTest,

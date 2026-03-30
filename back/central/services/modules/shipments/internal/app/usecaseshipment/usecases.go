@@ -213,7 +213,14 @@ func (uc *UseCaseShipment) UpdateShipment(ctx context.Context, id uint, req *dom
 		shipment.GuideURL = req.GuideURL
 	}
 	if req.Status != nil {
+		previousStatus := shipment.Status
 		shipment.Status = *req.Status
+
+		// Sincronizar estado con la orden si el ID existe y el estado cambió
+		if shipment.OrderID != nil && *shipment.OrderID != "" && shipment.Status != previousStatus {
+			// Intentar sincronizar el estado de la orden (silencioso si falla)
+			_ = uc.repo.UpdateOrderStatusByOrderID(ctx, *shipment.OrderID, shipment.Status)
+		}
 	}
 	if req.ShippedAt != nil {
 		shipment.ShippedAt = req.ShippedAt

@@ -78,7 +78,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	dashboard.New(router, database, logger)
 
 	// Inicializar módulo de pagos (pasarelas externas + wallet)
-	pay.New(router, database, logger, rabbitMQ, redisClient)
+	pay.New(router, database, logger, environment, rabbitMQ, redisClient)
 
 	// Inicializar módulo de invoicing
 	invoicing.New(router, database, logger, environment, rabbitMQ, redisClient)

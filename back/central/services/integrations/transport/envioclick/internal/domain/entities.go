@@ -97,3 +97,28 @@ type CancelResponse struct {
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
+
+type CancelBatchRequest struct {
+	Orders []CancelBatchOrder `json:"orders"`
+}
+
+type CancelBatchOrder struct {
+	TrackingCode string `json:"trackingCode"`
+	Motivo       string `json:"motivo"`
+}
+
+type CancelBatchResponse struct {
+	Status string          `json:"status"`
+	Data   CancelBatchData `json:"data,omitempty"`
+}
+
+type CancelBatchData struct {
+	Successful []CancelBatchResult `json:"successful,omitempty"`
+	Failed     []CancelBatchResult `json:"failed,omitempty"`
+}
+
+type CancelBatchResult struct {
+	TrackingCode string `json:"trackingCode"`
+	Message      string `json:"message,omitempty"`
+	Error        string `json:"error,omitempty"`
+}

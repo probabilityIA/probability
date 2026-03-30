@@ -79,4 +79,8 @@ type IWalletUseCase interface {
 	GetTransactionsByBusinessID(ctx context.Context, businessID uint) ([]*entities.WalletTransaction, error)
 	ClearRechargeHistory(ctx context.Context, businessID uint) error
 	AdminAdjustBalance(ctx context.Context, dto *dtos.AdminAdjustBalanceDTO) error
+
+	// Bold Integration
+	BoldGenerateSignature(ctx context.Context, amount float64, currency string) (*dtos.BoldSignatureResponse, error)
+	GetBoldStatus(ctx context.Context, boldOrderID string) (*dtos.BoldStatusResponse, error)
 }

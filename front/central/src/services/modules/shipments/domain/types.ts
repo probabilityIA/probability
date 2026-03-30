@@ -33,6 +33,7 @@ export interface Shipment {
     customer_phone?: string;
     customer_dni?: string;
     order_number?: string;
+    metadata?: any;
 }
 
 export interface GetShipmentsParams {
@@ -170,6 +171,19 @@ export interface EnvioClickCancelResponse {
         status: string;
         message: string;
     };
+}
+
+export interface EnvioClickCancelBatchRequest {
+    orders: {
+        trackingCode: string;
+        motivo: string;
+    }[];
+}
+
+export interface EnvioClickCancelBatchResponse {
+    success: boolean;
+    message: string;
+    correlation_id: string;
 }
 
 export interface CreateShipmentRequest {

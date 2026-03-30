@@ -8,4 +8,5 @@ type IEnvioClickClient interface {
 	Generate(baseURL, apiKey string, req QuoteRequest) (*GenerateResponse, error)
 	Track(baseURL, apiKey string, trackingNumber string) (*TrackingResponse, error)
 	Cancel(baseURL, apiKey string, idShipment string) (*CancelResponse, error)
+	CancelBatch(baseURL, apiKey string, req CancelBatchRequest) (*CancelBatchResponse, error)
 }
