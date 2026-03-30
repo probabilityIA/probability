@@ -120,6 +120,25 @@ func (r *SubscriptionRepository) UpdateBusinessSubscriptionStatus(ctx context.Co
 	return err
 }
 
+func (r *SubscriptionRepository) EnsureAllBusinessesActive(ctx context.Context) error {
+	// Poner a todos los negocios no eliminados como activos con una fecha lejana (2030)
+	// si no tienen ya un estado activo.
+	endDate := "2030-01-01T00:00:00Z"
+	updates := map[string]interface{}{
+		"subscription_status":    entities.BusinessStatusActive,
+		"subscription_end_date": endDate,
+	}
+
+	// Solo actualizamos negocios que no están explícitamente marcados como 'active'
+	// o que tienen el estado nulo.
+	err := r.db.Conn(ctx).
+		Table("business").
+		Where("deleted_at IS NULL AND (subscription_status <> ? OR subscription_status IS NULL)", entities.BusinessStatusActive).
+		Updates(updates).Error
+
+	return err
+}
+
 func (r *SubscriptionRepository) mapToDomain(db *BusinessSubscriptionDB) *entities.BusinessSubscription {
 	// Simplify date mapping for brevity as time.Time string handling might be needed
 	return &entities.BusinessSubscription{

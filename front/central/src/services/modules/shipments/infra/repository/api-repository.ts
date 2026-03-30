@@ -1,5 +1,5 @@
 import { IShipmentRepository } from '../../domain/ports';
-import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest } from '../../domain/types';
+import { GetShipmentsParams, PaginatedResponse, Shipment, EnvioClickQuoteRequest, EnvioClickGenerateResponse, EnvioClickQuoteResponse, EnvioClickTrackingResponse, EnvioClickCancelResponse, EnvioClickCancelBatchRequest, EnvioClickCancelBatchResponse, CreateShipmentRequest, OriginAddress, CreateOriginAddressRequest, UpdateOriginAddressRequest } from '../../domain/types';
 import { env } from '@/shared/config/env';
 
 export class ShipmentApiRepository implements IShipmentRepository {
@@ -64,14 +64,25 @@ export class ShipmentApiRepository implements IShipmentRepository {
     }
 
     async trackShipment(trackingNumber: string): Promise<EnvioClickTrackingResponse> {
-        return this.fetch<EnvioClickTrackingResponse>(`/shipments/tracking/${trackingNumber}/track`, {
-            method: 'POST',
+        // Disparamos actualización asíncrona pero sin esperar a que termine para no bloquear UI
+        this.fetch<any>(`/shipments/tracking/${trackingNumber}/track`, { method: 'POST' }).catch(e => console.error(e));
+        
+        // Consultamos historial actual
+        return this.fetch<EnvioClickTrackingResponse>(`/tracking/${trackingNumber}/history`, {
+            method: 'GET',
         });
     }
 
     async cancelShipment(id: string): Promise<EnvioClickCancelResponse> {
         return this.fetch<EnvioClickCancelResponse>(`/shipments/${id}/cancel`, {
             method: 'POST',
+        });
+    }
+
+    async cancelBatchShipments(req: EnvioClickCancelBatchRequest): Promise<EnvioClickCancelBatchResponse> {
+        return this.fetch<EnvioClickCancelBatchResponse>(`/shipments/cancel-batch`, {
+            method: 'POST',
+            body: JSON.stringify(req),
         });
     }
     async createShipment(req: CreateShipmentRequest): Promise<{ success: boolean; message: string; data?: Shipment }> {

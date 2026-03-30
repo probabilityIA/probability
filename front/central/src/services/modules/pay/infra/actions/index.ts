@@ -17,3 +17,15 @@ export async function getPaymentGatewayTypesAction(): Promise<PaymentGatewayType
         return [];
     }
 }
+
+export async function getBoldSignatureAction(amount: number, businessId?: number): Promise<any> {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || null;
+        const repo = new PayGatewayApiRepository(token);
+        return await repo.getBoldSignature(amount, businessId);
+    } catch (error: any) {
+        console.error('getBoldSignatureAction error:', error.message);
+        return { success: false, message: error.message };
+    }
+}

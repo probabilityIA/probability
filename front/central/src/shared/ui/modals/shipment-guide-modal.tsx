@@ -16,6 +16,7 @@ import danes from "@/app/(auth)/shipments/generate/resources/municipios_dane_ext
 import { useShipmentSSE } from "@/services/modules/shipments/ui/hooks/useShipmentSSE";
 import { usePermissions } from "@/shared/contexts/permissions-context";
 import { getActionError } from '@/shared/utils/action-result';
+import { CarrierOfficeSelector } from "@/services/modules/shipments/ui/components/CarrierOfficeSelector";
 
 const normalizeLocationName = (str: string) => {
     if (!str) return "";
@@ -196,6 +197,11 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
     const [destSearch, setDestSearch] = useState("");
     const [showOriginResults, setShowOriginResults] = useState(false);
     const [showDestResults, setShowDestResults] = useState(false);
+    
+    // Carrier Offices search states
+    const [showOriginOffices, setShowOriginOffices] = useState(false);
+    const [showDestOffices, setShowDestOffices] = useState(false);
+    
     const originRef = useRef<HTMLDivElement>(null);
     const destRef = useRef<HTMLDivElement>(null);
 
@@ -912,6 +918,27 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 error={step1Form.formState.errors.originAddress?.message}
                                                 placeholder="Calle 98 62-37"
                                             />
+                                            {originSearch && (
+                                                <div className="mt-1">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setShowOriginOffices(!showOriginOffices)}
+                                                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
+                                                    >
+                                                        📍 ¿Recoger en oficina principal?
+                                                    </button>
+                                                    {showOriginOffices && (
+                                                        <CarrierOfficeSelector 
+                                                            city={originSearch}
+                                                            onSelectAddress={(addr) => {
+                                                                step1Form.setValue("originAddress", addr, { shouldValidate: true });
+                                                                setShowOriginOffices(false);
+                                                            }}
+                                                            onClose={() => setShowOriginOffices(false)}
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Destination */}
@@ -963,6 +990,27 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                 error={step1Form.formState.errors.destAddress?.message}
                                                 placeholder="Carrera 46 # 93 - 45"
                                             />
+                                            {destSearch && (
+                                                <div className="mt-1">
+                                                    <button 
+                                                        type="button" 
+                                                        onClick={() => setShowDestOffices(!showDestOffices)}
+                                                        className="text-xs text-purple-600 dark:text-purple-400 hover:underline flex items-center gap-1 font-medium"
+                                                    >
+                                                        📍 ¿Enviar a oficina principal?
+                                                    </button>
+                                                    {showDestOffices && (
+                                                        <CarrierOfficeSelector 
+                                                            city={destSearch}
+                                                            onSelectAddress={(addr) => {
+                                                                step1Form.setValue("destAddress", addr, { shouldValidate: true });
+                                                                setShowDestOffices(false);
+                                                            }}
+                                                            onClose={() => setShowDestOffices(false)}
+                                                        />
+                                                    )}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 

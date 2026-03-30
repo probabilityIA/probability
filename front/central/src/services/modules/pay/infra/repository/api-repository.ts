@@ -45,4 +45,26 @@ export class PayGatewayApiRepository implements IPayGatewayRepository {
 
         return { success: true, data: paymentTypes };
     }
+
+    async getBoldSignature(amount: number, businessId?: number): Promise<any> {
+        let url = `${this.baseUrl}/pay/wallet/bold/signature?amount=${amount}`;
+        if (businessId) {
+            url += `&business_id=${businessId}`;
+        }
+
+        const res = await fetch(url, {
+            headers: {
+                'Authorization': `Bearer ${this.token}`,
+                'Content-Type': 'application/json',
+            },
+            cache: 'no-store',
+        });
+
+        if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Error al obtener firma de Bold: ${errorText}`);
+        }
+
+        return await res.json();
+    }
 }

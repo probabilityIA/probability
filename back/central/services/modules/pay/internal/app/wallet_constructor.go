@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/ports"
+	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
@@ -9,6 +10,7 @@ import (
 type walletUseCase struct {
 	repo           ports.IRepository
 	paymentUseCase ports.IUseCase
+	config         env.IConfig
 	log            log.ILogger
 }
 
@@ -16,11 +18,13 @@ type walletUseCase struct {
 func NewWalletUseCase(
 	repo ports.IRepository,
 	paymentUseCase ports.IUseCase,
+	config env.IConfig,
 	logger log.ILogger,
 ) ports.IWalletUseCase {
 	return &walletUseCase{
 		repo:           repo,
 		paymentUseCase: paymentUseCase,
+		config:         config,
 		log:            logger.WithModule("pay.wallet.usecase"),
 	}
 }

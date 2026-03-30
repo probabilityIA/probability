@@ -36,9 +36,14 @@ type IRepository interface {
 	GetShipmentBusinessIDByTracking(ctx context.Context, trackingNumber string) (uint, error)
 	GetShipmentBusinessIDByID(ctx context.Context, shipmentID uint) (uint, error)
 
-	// Order guide sync (replicated write — module isolation, no shared repo)
 	// Updates guide_link, tracking_number, and carrier on the orders table after guide generation.
 	UpdateOrderGuideLink(ctx context.Context, orderID string, guideLink string, trackingNumber string, carrier string) error
+
+	// UpdateOrderStatusByOrderID updates the status of an order on the orders table.
+	UpdateOrderStatusByOrderID(ctx context.Context, orderID string, status string) error
+
+	// EnsureAllBusinessesActive sets all existing businesses to 'paid' status as a one-time migration
+	EnsureAllBusinessesActive(ctx context.Context) error
 
 	// GetOrderIntegrationID retrieves the integration_id for an order (replicated query — module isolation)
 	GetOrderIntegrationID(ctx context.Context, orderUUID string) (uint, error)

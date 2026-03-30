@@ -8,7 +8,7 @@ import (
 	payerrs "github.com/secamc93/probability/back/central/services/modules/pay/internal/domain/errors"
 )
 
-// ApproveTransaction aprueba una transacción pendiente y acredita el saldo
+// ApproveTransaction aprueba una transacción pendiente y acredita el saldo manualmente (por un admin)
 func (uc *walletUseCase) ApproveTransaction(ctx context.Context, transactionID string) error {
 	txUUID, err := uuid.Parse(transactionID)
 	if err != nil {
@@ -20,6 +20,11 @@ func (uc *walletUseCase) ApproveTransaction(ctx context.Context, transactionID s
 		return err
 	}
 
+	return uc.approveTransactionInternal(ctx, tx)
+}
+
+// approveTransactionInternal contiene la lógica núcleo para acreditar saldo y marcar como completada
+func (uc *walletUseCase) approveTransactionInternal(ctx context.Context, tx *entities.WalletTransaction) error {
 	if tx.Status != entities.WalletTxStatusPending {
 		return payerrs.ErrTransactionNotPending
 	}
@@ -40,10 +45,10 @@ func (uc *walletUseCase) ApproveTransaction(ctx context.Context, transactionID s
 	}
 
 	uc.log.Info(ctx).
-		Str("tx_id", transactionID).
+		Str("tx_id", tx.ID.String()).
 		Float64("amount", tx.Amount).
 		Float64("new_balance", wallet.Balance).
-		Msg("Wallet transaction approved")
+		Msg("Wallet transaction automatically or manually approved")
 
 	return nil
 }

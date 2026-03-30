@@ -19,6 +19,7 @@ import {
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
 import { VirtualCard } from './virtual-card';
 import { getActionError } from '@/shared/utils/action-result';
+import { getBoldSignatureAction } from '@/services/modules/pay/infra/actions';
 
 const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(amount);
@@ -637,9 +638,60 @@ function BusinessWalletView({ businessId, businessName }: BusinessWalletViewProp
     };
 
     const handleSelectOtherGateway = (gatewayName: string) => {
+        if (gatewayName.toLowerCase().includes('bold')) {
+            handleSelectBold();
+            return;
+        }
         setShowPaymentSelector(false);
         setComingSoonGatewayName(gatewayName);
         setShowComingSoonModal(true);
+    };
+
+    const handleSelectBold = async () => {
+        setShowPaymentSelector(false);
+        setProcessing(true);
+        setMessage(null);
+
+        try {
+            // 1. Cargar script de Bold si no está cargado
+            if (!window.hasOwnProperty('BoldCheckout')) {
+                const script = document.createElement('script');
+                script.src = 'https://checkout.bold.co/library/bold.js';
+                script.async = true;
+                document.body.appendChild(script);
+                await new Promise((resolve) => script.onload = resolve);
+            }
+
+            // 2. Obtener firma del backend
+            const targetBusinessId = businessId || permissions?.business_id;
+            const res = await getBoldSignatureAction(Number(rechargeAmount), targetBusinessId);
+
+            if (!res.success) {
+                throw new Error(res.message || 'Error al obtener firma de Bold');
+            }
+
+            const { order_id, currency, amount, hash, public_key, redirection_url } = res.data;
+
+            // 3. Abrir checkout de Bold
+            // @ts-ignore
+            const checkout = new BoldCheckout({
+                orderId: order_id,
+                currency: currency,
+                amount: amount,
+                apiKey: public_key,
+                integritySignature: hash,
+                description: `Recarga de Billetera Probability - Orden ${order_id}`,
+                redirectionUrl: redirection_url,
+                tax: 0, // Generalmente 0 para recargas de servicios
+            });
+
+            checkout.open();
+        } catch (err: any) {
+            console.error('Bold error:', err);
+            setMessage({ type: 'error', text: err.message || 'Error al iniciar pago con Bold' });
+        } finally {
+            setProcessing(false);
+        }
     };
 
     if (loading && !wallet) return <div className="p-8 text-center"><Spinner /></div>;

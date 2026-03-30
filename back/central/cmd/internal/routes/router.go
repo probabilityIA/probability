@@ -62,6 +62,7 @@ func BuildRouter(ctx context.Context, logger log.ILogger, environment env.IConfi
 	// Address search proxy: sugerencias de autocompletado via Mapbox Geocoding
 	// GET /api/v1/address-search?q=avenida+calle+80&country=co
 	r.GET("/api/v1/address-search", handleAddressSearch(environment))
+	r.GET("/api/v1/places-search", handlePlacesSearch(environment))
 
 	// 404 JSON explícito + log WARN
 	r.NoRoute(func(c *gin.Context) {

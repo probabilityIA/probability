@@ -799,6 +799,15 @@ export default function OrderForm({ order, onSuccess, onCancel, selectedBusiness
                 <div className="lg:col-span-3">
                     <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-sm p-5 rounded-lg">
                         <h3 className="text-lg font-bold text-purple-700 mb-4 pb-3 border-b-2 border-purple-200">Logística</h3>
+                        
+                        {/* 24-hour processing notice */}
+                        <div className="mb-4 bg-blue-50 border-l-4 border-blue-400 p-3 rounded-r-lg">
+                            <p className="text-[11px] leading-tight text-blue-800">
+                                <span className="font-bold uppercase tracking-wider block mb-1">ℹ️ Aviso de Procesamiento</span>
+                                Recuerda que las transportadoras pueden demorar hasta <span className="font-bold">24 horas hábiles</span> en procesar y recolectar los pedidos después de generada la guía.
+                            </p>
+                        </div>
+
                         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div>
                                 <label className="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-2">

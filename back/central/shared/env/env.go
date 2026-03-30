@@ -202,6 +202,10 @@ type Config struct {
 
 	// Google Geocoding API
 	GoogleMapsAPIKey string `env:"GOOGLE_MAPS_API_KEY"`
+
+	// Bold.co
+	BoldIdentityKey string `env:"BOLD_IDENTITY_KEY"`
+	BoldSecretKey   string `env:"BOLD_SECRET_KEY"`
 }
 
 func splitTag(tag string) []string {

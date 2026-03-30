@@ -18,4 +18,7 @@ type SubscriptionRepository interface {
 
 	// Actualiza el estado de suscripción y fecha de fin en el modelo Business
 	UpdateBusinessSubscriptionStatus(ctx context.Context, businessID uint, status string, endDate *string) error
+
+	// Asegura que todos los negocios estén activos por defecto
+	EnsureAllBusinessesActive(ctx context.Context) error
 }

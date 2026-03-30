@@ -314,7 +314,7 @@ export function Sidebar({ user }: SidebarProps) {
           </button>
 
           {/* Menú de navegación */}
-          <nav className="flex-1 py-6 px-3">
+          <nav className="flex-1 py-6 px-3 overflow-y-auto overflow-x-hidden">
             <ul className="space-y-2">
               {/* Item Home  visible */}
               <li>

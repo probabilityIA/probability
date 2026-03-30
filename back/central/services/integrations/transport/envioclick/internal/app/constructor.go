@@ -13,6 +13,7 @@ type IUseCase interface {
 	Generate(ctx context.Context, baseURL, apiKey string, req domain.QuoteRequest) (*domain.GenerateResponse, error)
 	Track(ctx context.Context, baseURL, apiKey string, trackingNumber string) (*domain.TrackingResponse, error)
 	Cancel(ctx context.Context, baseURL, apiKey string, idShipment string) (*domain.CancelResponse, error)
+	CancelBatch(ctx context.Context, baseURL, apiKey string, req domain.CancelBatchRequest) (*domain.CancelBatchResponse, error)
 }
 
 // useCase handles EnvioClick transport operations
