@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { getTokenAction } from '../../infra/actions';
 
 interface UseLogStreamOptions {
     containerId: string;
@@ -11,42 +12,75 @@ export function useLogStream({ containerId, enabled = true }: UseLogStreamOption
     const [lines, setLines] = useState<string[]>([]);
     const [connected, setConnected] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const eventSourceRef = useRef<EventSource | null>(null);
+    const abortRef = useRef<AbortController | null>(null);
 
-    const connect = useCallback(() => {
+    const connect = useCallback(async () => {
         if (!containerId || !enabled) return;
 
-        // Close existing connection
-        eventSourceRef.current?.close();
+        // Close existing
+        abortRef.current?.abort();
         setError(null);
 
-        const es = new EventSource(`/api/logs/${containerId}`);
-        eventSourceRef.current = es;
+        const token = await getTokenAction();
+        if (!token) {
+            setError('Not authenticated');
+            return;
+        }
 
-        es.onopen = () => {
-            setConnected(true);
-            setError(null);
-        };
+        const controller = new AbortController();
+        abortRef.current = controller;
 
-        es.onmessage = (event) => {
-            setLines(prev => {
-                const next = [...prev, event.data];
-                // Keep last 1000 lines to avoid memory issues
-                if (next.length > 1000) return next.slice(-1000);
-                return next;
+        try {
+            // Fetch logs via Next.js proxy with token in query (avoids SSE proxy issues)
+            const res = await fetch(`/api/logs/${containerId}?token=${encodeURIComponent(token)}`, {
+                signal: controller.signal,
             });
-        };
 
-        es.onerror = () => {
+            if (!res.ok || !res.body) {
+                setError(`HTTP ${res.status}`);
+                return;
+            }
+
+            setConnected(true);
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const parts = buffer.split('\n');
+                buffer = parts.pop() || '';
+
+                const newLines: string[] = [];
+                for (const part of parts) {
+                    if (part.startsWith('data: ')) {
+                        newLines.push(part.slice(6));
+                    }
+                }
+
+                if (newLines.length > 0) {
+                    setLines(prev => {
+                        const next = [...prev, ...newLines];
+                        if (next.length > 1000) return next.slice(-1000);
+                        return next;
+                    });
+                }
+            }
+        } catch (err) {
+            if (err instanceof Error && err.name !== 'AbortError') {
+                setError('Connection lost');
+            }
+        } finally {
             setConnected(false);
-            setError('Connection lost');
-            es.close();
-        };
+        }
     }, [containerId, enabled]);
 
     const disconnect = useCallback(() => {
-        eventSourceRef.current?.close();
-        eventSourceRef.current = null;
+        abortRef.current?.abort();
+        abortRef.current = null;
         setConnected(false);
     }, []);
 
