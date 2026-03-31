@@ -1,11 +1,11 @@
 'use client';
 
 import type { Container } from '../../domain/types';
-import Link from 'next/link';
 
 interface ContainerCardProps {
     container: Container;
     accentColor?: string;
+    onClick?: (container: Container) => void;
 }
 
 function getStateConfig(state: string) {
@@ -46,14 +46,14 @@ function formatUptime(startedAt: string): string {
     return `${hours}h ${minutes}m`;
 }
 
-export function ContainerCard({ container, accentColor }: ContainerCardProps) {
+export function ContainerCard({ container, accentColor, onClick }: ContainerCardProps) {
     const state = getStateConfig(container.state);
     const serviceName = container.service || container.name.replace(/^\//, '').replace(/_/g, ' ');
 
     return (
-        <Link
-            href={`/dashboard/${container.id}`}
-            className="card-hover block rounded-xl p-4 relative overflow-hidden group"
+        <div
+            onClick={() => onClick?.(container)}
+            className="card-hover block rounded-xl p-4 relative overflow-hidden group cursor-pointer"
             style={{
                 background: '#12121a',
                 border: '1px solid #1e1e2e',
@@ -125,6 +125,6 @@ export function ContainerCard({ container, accentColor }: ContainerCardProps) {
                     </svg>
                 </div>
             </div>
-        </Link>
+        </div>
     );
 }

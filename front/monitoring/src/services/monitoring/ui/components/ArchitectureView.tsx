@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback } from 'react';
 import type { Container } from '../../domain/types';
-import Link from 'next/link';
+import { ContainerModal } from './ContainerModal';
 
 interface ArchitectureViewProps {
     containers: Container[];
@@ -21,20 +21,22 @@ function ServiceNode({
     container,
     color,
     id,
+    onSelect,
 }: {
     container: Container | undefined;
     color: string;
     id: string;
+    onSelect?: (c: Container) => void;
 }) {
     if (!container) return null;
     const isRunning = container.state === 'running';
     const stateColor = isRunning ? '#00ff88' : '#ff3366';
 
     return (
-        <Link
-            href={`/dashboard/${container.id}`}
+        <div
             id={id}
-            className="card-hover block rounded-lg px-3 py-2 relative overflow-hidden group"
+            onClick={() => onSelect?.(container)}
+            className="card-hover block rounded-lg px-3 py-2 relative overflow-hidden group cursor-pointer"
             style={{ background: '#12121a', border: `1px solid ${color}20` }}
             onMouseEnter={e => { e.currentTarget.style.borderColor = `${color}45`; e.currentTarget.style.boxShadow = `0 0 20px ${color}12`; }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = `${color}20`; e.currentTarget.style.boxShadow = 'none'; }}
@@ -58,7 +60,7 @@ function ServiceNode({
                     }} />
                 </div>
             </div>
-        </Link>
+        </div>
     );
 }
 
@@ -207,6 +209,7 @@ function SvgConnections({ connections, containerRef }: { connections: Connection
 // ── Main diagram ──
 export function ArchitectureView({ containers }: ArchitectureViewProps) {
     const containerRef = useRef<HTMLDivElement>(null);
+    const [selectedContainer, setSelectedContainer] = useState<Container | null>(null);
 
     const fc = find(containers, 'front-central');
     const fw = find(containers, 'front-website');
@@ -219,62 +222,74 @@ export function ArchitectureView({ containers }: ArchitectureViewProps) {
     const rd = find(containers, 'redis');
     const rq = find(containers, 'rabbitmq');
 
+    const onSelect = (c: Container) => setSelectedContainer(c);
+
     return (
-        <div ref={containerRef} className="relative" style={{ minHeight: 420 }}>
-            {/* SVG overlay for arrows */}
-            <SvgConnections connections={CONNECTIONS} containerRef={containerRef} />
+        <>
+            <div ref={containerRef} className="relative" style={{ minHeight: 420 }}>
+                {/* SVG overlay for arrows */}
+                <SvgConnections connections={CONNECTIONS} containerRef={containerRef} />
 
-            {/* Nodes grid - positioned to match the concept map */}
-            <div className="relative" style={{ zIndex: 2 }}>
+                {/* Nodes grid */}
+                <div className="relative" style={{ zIndex: 2 }}>
 
-                {/* Row 1: Frontends */}
-                <div className="grid grid-cols-4 gap-x-4 gap-y-0 mb-2">
-                    <div className="col-span-4 flex items-center gap-2 mb-1">
-                        <div className="w-1 h-3 rounded-full" style={{ background: '#00f0ff' }} />
-                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#00f0ff' }}>Frontend</span>
+                    {/* Row 1: Frontends */}
+                    <div className="grid grid-cols-4 gap-x-4 gap-y-0 mb-2">
+                        <div className="col-span-4 flex items-center gap-2 mb-1">
+                            <div className="w-1 h-3 rounded-full" style={{ background: '#00f0ff' }} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#00f0ff' }}>Frontend</span>
+                        </div>
                     </div>
-                </div>
-                <div className="grid grid-cols-4 gap-3">
-                    <ServiceNode container={mw} color="#8888a0" id="node-mw" />
-                    <ServiceNode container={fc} color="#00f0ff" id="node-fc" />
-                    <ServiceNode container={fw} color="#00ff88" id="node-fw" />
-                    <ServiceNode container={ft} color="#a855f7" id="node-ft" />
-                </div>
-
-                {/* Spacer for arrows */}
-                <div className="h-16" />
-
-                {/* Row 2: Backends */}
-                <div className="grid grid-cols-4 gap-x-4 gap-y-0 mb-2">
-                    <div className="col-span-4 flex items-center gap-2 mb-1">
-                        <div className="w-1 h-3 rounded-full" style={{ background: '#a855f7' }} />
-                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#a855f7' }}>Backend</span>
+                    <div className="grid grid-cols-4 gap-3">
+                        <ServiceNode container={mw} color="#8888a0" id="node-mw" onSelect={onSelect} />
+                        <ServiceNode container={fc} color="#00f0ff" id="node-fc" onSelect={onSelect} />
+                        <ServiceNode container={fw} color="#00ff88" id="node-fw" onSelect={onSelect} />
+                        <ServiceNode container={ft} color="#a855f7" id="node-ft" onSelect={onSelect} />
                     </div>
-                </div>
-                <div className="grid grid-cols-4 gap-3">
-                    <ServiceNode container={ma} color="#8888a0" id="node-ma" />
-                    <ServiceNode container={bc} color="#00f0ff" id="node-bc" />
-                    <ServiceNode container={nx} color="#ff6b6b" id="node-nx" />
-                    <ServiceNode container={bt} color="#a855f7" id="node-bt" />
-                </div>
 
-                {/* Spacer for arrows */}
-                <div className="h-16" />
+                    {/* Spacer for arrows */}
+                    <div className="h-16" />
 
-                {/* Row 3: Data */}
-                <div className="grid grid-cols-4 gap-x-4 gap-y-0 mb-2">
-                    <div className="col-span-4 flex items-center gap-2 mb-1">
-                        <div className="w-1 h-3 rounded-full" style={{ background: '#ffaa00' }} />
-                        <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#ffaa00' }}>Data & Messaging</span>
+                    {/* Row 2: Backends */}
+                    <div className="grid grid-cols-4 gap-x-4 gap-y-0 mb-2">
+                        <div className="col-span-4 flex items-center gap-2 mb-1">
+                            <div className="w-1 h-3 rounded-full" style={{ background: '#a855f7' }} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#a855f7' }}>Backend</span>
+                        </div>
                     </div>
-                </div>
-                <div className="grid grid-cols-4 gap-3">
-                    <div /> {/* empty col1 */}
-                    <ServiceNode container={rq} color="#ffaa00" id="node-rq" />
-                    <ServiceNode container={rd} color="#ffaa00" id="node-rd" />
-                    <div /> {/* empty col4 */}
+                    <div className="grid grid-cols-4 gap-3">
+                        <ServiceNode container={ma} color="#8888a0" id="node-ma" onSelect={onSelect} />
+                        <ServiceNode container={bc} color="#00f0ff" id="node-bc" onSelect={onSelect} />
+                        <ServiceNode container={nx} color="#ff6b6b" id="node-nx" onSelect={onSelect} />
+                        <ServiceNode container={bt} color="#a855f7" id="node-bt" onSelect={onSelect} />
+                    </div>
+
+                    {/* Spacer for arrows */}
+                    <div className="h-16" />
+
+                    {/* Row 3: Data */}
+                    <div className="grid grid-cols-4 gap-x-4 gap-y-0 mb-2">
+                        <div className="col-span-4 flex items-center gap-2 mb-1">
+                            <div className="w-1 h-3 rounded-full" style={{ background: '#ffaa00' }} />
+                            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: '#ffaa00' }}>Data & Messaging</span>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-4 gap-3">
+                        <div />
+                        <ServiceNode container={rq} color="#ffaa00" id="node-rq" onSelect={onSelect} />
+                        <ServiceNode container={rd} color="#ffaa00" id="node-rd" onSelect={onSelect} />
+                        <div />
+                    </div>
                 </div>
             </div>
-        </div>
+
+            {/* Modal */}
+            {selectedContainer && (
+                <ContainerModal
+                    container={selectedContainer}
+                    onClose={() => setSelectedContainer(null)}
+                />
+            )}
+        </>
     );
 }
