@@ -91,6 +91,7 @@ type IRepository interface {
 
 	// OrderHistory - Registro de cambios de estado
 	CreateOrderHistory(ctx context.Context, history *entities.OrderHistory) error
+	GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error)
 }
 
 // ───────────────────────────────────────────
@@ -142,6 +143,7 @@ type IOrderStatusUseCase interface {
 type IOrderUseCase interface {
 	GetOrderByID(ctx context.Context, id string) (*dtos.OrderResponse, error)
 	GetOrderRaw(ctx context.Context, id string) (*dtos.OrderRawResponse, error)
+	GetOrderHistory(ctx context.Context, orderID string) ([]dtos.OrderHistoryResponse, error)
 	ListOrders(ctx context.Context, page, pageSize int, filters map[string]interface{}) (*dtos.OrdersListResponse, error)
 	UpdateOrder(ctx context.Context, id string, req *dtos.UpdateOrderRequest) (*dtos.OrderResponse, error)
 	DeleteOrder(ctx context.Context, id string) error

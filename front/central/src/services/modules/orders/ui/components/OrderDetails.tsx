@@ -1,8 +1,8 @@
 'use client';
 
-import { Order } from '../../domain/types';
+import { Order, OrderHistory } from '../../domain/types';
 import MapComponent from '@/shared/ui/MapComponent';
-import { getAIRecommendationAction, getOrderByIdAction, updateOrderAction, requestWhatsAppConfirmationAction, checkWhatsAppIntegrationAction } from '../../infra/actions';
+import { getAIRecommendationAction, getOrderByIdAction, getOrderHistoryAction, updateOrderAction, requestWhatsAppConfirmationAction, checkWhatsAppIntegrationAction } from '../../infra/actions';
 import { useState, useEffect } from 'react';
 import ShipmentGuideModal from '@/shared/ui/modals/shipment-guide-modal';
 import { ChangeStatusModal } from './ChangeStatusModal';
@@ -35,24 +35,34 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
     const [loadingDetails, setLoadingDetails] = useState(false);
     const [showGuideModal, setShowGuideModal] = useState(false);
     const [showChangeStatus, setShowChangeStatus] = useState(false);
+    const [statusHistory, setStatusHistory] = useState<OrderHistory[]>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
     const { showToast } = useToast();
 
-    // Fetch full order details on mount
+    // Fetch full order details and history on mount
     const fetchDetails = async () => {
         if (!initialOrder.id) return;
 
         setLoadingDetails(true);
+        setLoadingHistory(true);
         try {
-            const response = await getOrderByIdAction(initialOrder.id);
-            if (response.success && response.data) {
-                setFullOrder(response.data);
-            } else if (!response.success) {
-                console.error("Failed to load order details:", response.message);
+            const [orderResponse, historyResponse] = await Promise.all([
+                getOrderByIdAction(initialOrder.id),
+                getOrderHistoryAction(initialOrder.id),
+            ]);
+            if (orderResponse.success && orderResponse.data) {
+                setFullOrder(orderResponse.data);
+            } else if (!orderResponse.success) {
+                console.error("Failed to load order details:", orderResponse.message);
+            }
+            if (historyResponse.success && historyResponse.data) {
+                setStatusHistory(historyResponse.data);
             }
         } catch (error) {
             console.error("Error loading order details:", error);
         } finally {
             setLoadingDetails(false);
+            setLoadingHistory(false);
         }
     };
 
@@ -683,6 +693,92 @@ export default function OrderDetails({ initialOrder, onClose, mode = 'details' }
                                     )}
                                 </div>
                             </div>
+                        </div>
+
+                        {/* ROW 4: Historial de Estados - Timeline */}
+                        <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4" style={{ gridColumn: '1 / 4' }}>
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4">Historial de Estados</h3>
+                        {loadingHistory ? (
+                            <div className="py-4 text-center text-sm text-gray-500 dark:text-gray-400 animate-pulse">Cargando historial...</div>
+                        ) : statusHistory.length === 0 ? (
+                            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">No hay cambios de estado registrados.</p>
+                        ) : (
+                            <div className="relative">
+                                {/* Línea horizontal */}
+                                <div className="absolute top-5 left-0 right-0 h-0.5 bg-gray-200 dark:bg-gray-600"></div>
+
+                                <div className="flex overflow-x-auto pb-2 gap-0" style={{ scrollbarWidth: 'thin' }}>
+                                    {/* Nodo inicial: estado de creación */}
+                                    <div className="flex flex-col items-center flex-shrink-0 relative" style={{ minWidth: '120px' }}>
+                                        <div className="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center z-10 border-2 border-white dark:border-gray-800 shadow-sm">
+                                            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                            </svg>
+                                        </div>
+                                        <div className="mt-2 text-center px-1">
+                                            <span className="inline-block px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                                                {statusHistory[0].previous_status || 'Creada'}
+                                            </span>
+                                            <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1">Inicio</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Nodos de cambio de estado */}
+                                    {statusHistory.map((entry, idx) => {
+                                        const isLast = idx === statusHistory.length - 1;
+                                        return (
+                                            <div key={entry.id} className="flex flex-col items-center flex-shrink-0 relative" style={{ minWidth: '140px' }}>
+                                                {/* Flecha */}
+                                                <div className="absolute top-4 -left-4 text-gray-300 dark:text-gray-600">
+                                                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                                                    </svg>
+                                                </div>
+                                                {/* Círculo */}
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center z-10 border-2 border-white dark:border-gray-800 shadow-sm ${
+                                                    isLast ? 'bg-purple-500' : 'bg-blue-400'
+                                                }`}>
+                                                    {isLast ? (
+                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                    ) : (
+                                                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                        </svg>
+                                                    )}
+                                                </div>
+                                                {/* Info */}
+                                                <div className="mt-2 text-center px-1">
+                                                    <span className={`inline-block px-2 py-0.5 text-xs font-bold rounded-full ${
+                                                        isLast
+                                                            ? 'bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200'
+                                                            : 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                                                    }`}>
+                                                        {entry.new_status}
+                                                    </span>
+                                                    <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 leading-tight">
+                                                        {new Date(entry.created_at).toLocaleDateString('es-CO', { day: '2-digit', month: 'short' })}
+                                                        {' '}
+                                                        {new Date(entry.created_at).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' })}
+                                                    </p>
+                                                    {entry.changed_by_name && (
+                                                        <p className="text-[10px] text-gray-400 dark:text-gray-500 truncate max-w-[120px]" title={entry.changed_by_name}>
+                                                            {entry.changed_by_name}
+                                                        </p>
+                                                    )}
+                                                    {entry.reason && (
+                                                        <p className="text-[10px] text-amber-500 dark:text-amber-400 truncate max-w-[120px] italic" title={entry.reason}>
+                                                            {entry.reason}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                         </div>
                     </div>
                 </>

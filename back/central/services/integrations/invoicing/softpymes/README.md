@@ -118,6 +118,8 @@ Orders Module
 | `/app/integration/sales_invoice/` | POST | Crear factura electrónica |
 | `/app/integration/search/documents/` | POST | Listar / buscar documentos |
 | `/search/documents/notes/` | POST | Crear nota de crédito |
+| `/app/integration/cash_receipt/` | POST | Generar recibo de caja |
+| `/app/integration/bank_accounts` | GET | Listar cuentas bancarias |
 
 ---
 
@@ -228,6 +230,80 @@ type AuditData struct {
     ResponseBody   string      // Body crudo de la respuesta
 }
 ```
+
+---
+
+## Recibo de Caja (Cash Receipt)
+
+Endpoint: `POST /app/integration/cash_receipt/`
+
+Se ejecuta después de crear una factura exitosamente. Registra el pago en Softpymes.
+
+### Request Body
+
+```json
+{
+    "documents": [{"documentNumber": "0000000183", "prefix": "FEV"}],
+    "documentDate": "2026-03-30",
+    "branchCode": "001",
+    "customerNit": "222222222222",
+    "customerBranchCode": "000",
+    "payment": [{
+        "type": "TR",
+        "value": 127847.13,
+        "accountNumber": "2",
+        "documentNumber": "0000000183",
+        "prefixNumber": "FEV"
+    }]
+}
+```
+
+### Tipos de pago
+
+| Tipo | Descripción | Campos obligatorios adicionales |
+|------|-------------|-------------------------------|
+| `EF` | Efectivo | Ninguno |
+| `BN` | Bonos | `code` (código del bono) |
+| `CH` | Cheque | `accountNumber`, `bankName` |
+| `TR` | Transferencia | `accountNumber`, `documentNumber`, `prefixNumber` |
+| `TC` | Tarjeta crédito | `authorizationNumber`, `franchisesId` |
+| `TD` | Tarjeta débito | `authorizationNumber`, `franchisesId` |
+
+### customerBranchCode — CRÍTICO (no documentado por Softpymes)
+
+| Tipo de cliente | `customerBranchCode` | Notas |
+|----------------|----------------------|-------|
+| Cliente real (CC) | `"001"` | Sucursal estándar |
+| **Consumidor final** (`default_customer_nit`) | **`"000"`** | Softpymes asigna branch `"000"` al consumidor final genérico. Enviar `"001"` causa **500 internal server error** sin mensaje descriptivo |
+
+Este detalle **no está documentado** en la API de Softpymes. Se descubrió por prueba y error (2026-03-30).
+
+### Configuración en `invoicing_config.invoice_config`
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `send_cash_receipt` | bool | Habilita envío de recibo de caja |
+| `payment_type` | string | Tipo de pago (`"EF"`, `"TR"`, etc.) |
+| `payment_bank_account_id` | string | ID de cuenta bancaria (usado como `accountNumber` para TR) |
+| `payment_bonus_code` | string | Código del bono (para BN) |
+| `payment_bank_name` | string | Nombre del banco (para CH) |
+
+### Flujos
+
+1. **Automático**: Se ejecuta al crear factura si `send_cash_receipt = true`. Non-fatal: si falla, la factura queda como `issued` y el error se registra en `provider_response.cash_receipt`.
+2. **Manual**: Endpoint `POST /invoicing/invoices/:id/cash-receipt`. Crea un sync log con `operation_type = "cash_receipt"` y envía el request via RabbitMQ.
+3. **Retry vía botón "Reintentar"**: Si la factura ya tiene `invoice_number` y el cash receipt falló, el retry redirige automáticamente a generar solo el recibo de caja (no re-crea la factura).
+
+### Audit
+
+Los campos de audit del recibo de caja se guardan **separados** de los de la factura en `invoice_sync_logs`:
+
+| Columna | Tipo | Descripción |
+|---------|------|-------------|
+| `cash_receipt_request_url` | varchar(512) | URL del endpoint |
+| `cash_receipt_request_payload` | jsonb | Payload enviado |
+| `cash_receipt_response_status` | int | HTTP status code |
+| `cash_receipt_response_body` | jsonb | Respuesta del proveedor |
 
 ---
 

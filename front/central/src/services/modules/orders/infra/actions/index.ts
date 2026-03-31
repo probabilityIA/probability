@@ -34,6 +34,15 @@ export const getOrderByIdAction = async (id: string) => {
     }
 };
 
+export const getOrderHistoryAction = async (orderId: string) => {
+    try {
+        return await (await getUseCases()).getOrderHistory(orderId);
+    } catch (error: any) {
+        console.error('Get Order History Action Error:', error.message);
+        return { success: false, data: [] };
+    }
+};
+
 export const createOrderAction = async (data: CreateOrderDTO) => {
     try {
         return await (await getUseCases()).createOrder(data);

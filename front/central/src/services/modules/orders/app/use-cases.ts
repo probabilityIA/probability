@@ -17,6 +17,10 @@ export class OrderUseCases {
         return this.repository.getOrderById(id);
     }
 
+    async getOrderHistory(orderId: string) {
+        return this.repository.getOrderHistory(orderId);
+    }
+
     async createOrder(data: CreateOrderDTO) {
         return this.repository.createOrder(data);
     }

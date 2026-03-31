@@ -858,3 +858,31 @@ func (r *Repository) CreateOrderHistory(ctx context.Context, history *entities.O
 	}
 	return r.db.Conn(ctx).Create(dbHistory).Error
 }
+
+// GetOrderHistory obtiene el historial de cambios de estado de una orden
+func (r *Repository) GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error) {
+	var dbHistory []models.OrderHistory
+	err := r.db.Conn(ctx).
+		Where("order_id = ?", orderID).
+		Order("created_at ASC").
+		Find(&dbHistory).Error
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]entities.OrderHistory, len(dbHistory))
+	for i, h := range dbHistory {
+		result[i] = entities.OrderHistory{
+			ID:             h.ID,
+			CreatedAt:      h.CreatedAt,
+			OrderID:        h.OrderID,
+			PreviousStatus: h.PreviousStatus,
+			NewStatus:      h.NewStatus,
+			ChangedBy:      h.ChangedBy,
+			ChangedByName:  h.ChangedByName,
+			Reason:         h.Reason,
+		}
+	}
+
+	return result, nil
+}

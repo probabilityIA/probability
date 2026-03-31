@@ -2,6 +2,7 @@ import { env } from '@/shared/config/env';
 import { IOrderRepository } from '../../domain/ports';
 import {
     Order,
+    OrderHistory,
     PaginatedResponse,
     GetOrdersParams,
     SingleResponse,
@@ -72,6 +73,10 @@ export class OrderApiRepository implements IOrderRepository {
 
     async getOrderById(id: string): Promise<SingleResponse<Order>> {
         return this.fetch<SingleResponse<Order>>(`/orders/${id}`);
+    }
+
+    async getOrderHistory(orderId: string): Promise<{ success: boolean; data: OrderHistory[] }> {
+        return this.fetch<{ success: boolean; data: OrderHistory[] }>(`/orders/${orderId}/history`);
     }
 
     async createOrder(data: CreateOrderDTO): Promise<SingleResponse<Order>> {

@@ -13,6 +13,7 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 		orders.GET("", middleware.JWT(), h.ListOrders)
 		orders.GET("/:id", middleware.JWT(), h.GetOrderByID)
 		orders.GET("/:id/raw", middleware.JWT(), h.GetOrderRaw)
+		orders.GET("/:id/history", middleware.JWT(), h.GetOrderHistory)
 		orders.POST("", middleware.JWT(), h.CreateOrder)
 		orders.POST("/upload-bulk", middleware.JWT(), h.UploadBulkOrders)
 		orders.PUT("/:id", middleware.JWT(), h.UpdateOrder)

@@ -237,3 +237,11 @@ func (m *RepositoryMock) CreateOrderHistory(ctx context.Context, history *entiti
 	args := m.Called(ctx, history)
 	return args.Error(0)
 }
+
+func (m *RepositoryMock) GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error) {
+	args := m.Called(ctx, orderID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]entities.OrderHistory), args.Error(1)
+}

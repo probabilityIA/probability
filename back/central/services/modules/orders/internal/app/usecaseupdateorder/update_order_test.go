@@ -232,6 +232,9 @@ func (m *mockRepository) CreateOrderHistory(ctx context.Context, history *entiti
 	}
 	return nil
 }
+func (m *mockRepository) GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error) {
+	return nil, nil
+}
 
 // ─── Mock: IOrderRabbitPublisher ────────────────────────────────────────────
 

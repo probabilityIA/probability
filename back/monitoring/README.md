@@ -160,22 +160,24 @@ front/monitoring/
 │   │   │   └── actions/index.ts         # Server Actions (login, logout, restart, stop, start)
 │   │   └── ui/
 │   │       ├── components/
-│   │       │   ├── ArchitectureView.tsx  # Vista por grupos de servicios con conexiones
-│   │       │   ├── ContainerCard.tsx     # Card de un contenedor (estado, uptime, puertos)
+│   │       │   ├── ArchitectureView.tsx  # Diagrama SVG: nodos + flechas animadas entre pares
+│   │       │   ├── ContainerCard.tsx     # Card clickeable (abre modal)
+│   │       │   ├── ContainerModal.tsx    # Modal: info + stats + logs en vivo + acciones
 │   │       │   ├── ContainerGrid.tsx     # Grid simple de cards
 │   │       │   ├── ContainerDetail.tsx   # Info detallada de un contenedor
 │   │       │   ├── ActionButtons.tsx     # Restart/Stop/Start con feedback
 │   │       │   ├── StatsBar.tsx          # CPU/RAM bars de un contenedor (polling 5s)
 │   │       │   ├── SystemStatsBar.tsx    # CPU/RAM/Disk del servidor (polling 5s)
-│   │       │   ├── LogViewer.tsx         # Terminal con SSE, scanline, colorized logs
+│   │       │   ├── LogViewer.tsx         # Terminal con SSE, ANSI stripped, colorized
 │   │       │   └── Header.tsx           # Nav con logo + logout
 │   │       └── hooks/
-│   │           ├── useLogStream.ts       # EventSource hook para SSE
+│   │           ├── useLogStream.ts       # ReadableStream + SSE parsing
 │   │           ├── useContainerStats.ts  # Polling stats de un contenedor
 │   │           └── useSystemStats.ts     # Polling stats del servidor
 │   └── shared/
 │       ├── auth/middleware.ts            # JWT cookie check + redirect
-│       └── lib/api.ts                   # Fetch wrapper con token
+│       ├── lib/api.ts                   # Fetch wrapper con token
+│       └── lib/token.ts                 # Lee JWT desde document.cookie
 ```
 
 ### Paginas
@@ -183,49 +185,64 @@ front/monitoring/
 | Ruta | Tipo | Descripcion |
 |------|------|-------------|
 | `/login` | Client Component | Login con email + password |
-| `/dashboard` | SSR (force-dynamic) | Vista de arquitectura con todos los servicios agrupados |
-| `/dashboard/[id]` | SSR (force-dynamic) | Detalle del contenedor + stats + logs en vivo |
+| `/dashboard` | SSR (force-dynamic) | Diagrama de arquitectura + system stats |
 
-### Dashboard - Vista de Arquitectura
+### Dashboard - Diagrama de Arquitectura (SVG)
 
-El dashboard muestra los servicios agrupados por su topologia real:
+El dashboard muestra un diagrama tipo mapa conceptual con 3 capas horizontales y flechas SVG animadas entre pares de servicios conectados:
 
 ```
-┌─────────────────────────────────────────────┐
-│  GATEWAY (nginx)                            │
-│  Reverse proxy → routes traffic             │
-└──────────┬─────────────────┬────────────────┘
-           │ HTTPS → :8080   │ HTTPS → :8081
-┌──────────▼──────────┐  ┌───▼──────────────┐
-│  CENTRAL APP        │  │  WEBSITE          │
-│  front-central      │  │  front-website    │
-│     ↕ HTTP :3050    │  │  (static, no back)│
-│  back-central       │  └──────────────────┘
-└──────────┬──────────┘
-           │ TCP :6379 / AMQP :5672
-┌──────────▼──────────┐  ┌──────────────────┐
-│  DATA & MESSAGING   │  │  TESTING          │
-│  redis + rabbitmq   │  │  front-testing    │
-└─────────────────────┘  │     ↕ HTTP :9092  │
-                         │  back-testing     │
-┌─────────────────────┐  └──────────────────┘
-│  MONITORING          │
-│  monitoring-web      │
-│     ↕ HTTP :3070     │
-│  monitoring-api      │
-└──────────────────────┘
+FRONTEND
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ monitoring-web│  │ front-central│  │ front-website│  │ front-testing│
+└──────┬───────┘  └──────┬───────┘  └──────────────┘  └──────┬───────┘
+       │ HTTP             │ HTTP       (standalone)           │ HTTP
+       ▼                  ▼                                   ▼
+BACKEND
+┌──────────────┐  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐
+│ monitoring-api│  │ back-central │  │    nginx     │  │ back-testing │
+└──────────────┘  └───┬──────┬───┘  └──────────────┘  └──────┬───────┘
+                      │      │                                │
+                  TCP:6379  AMQP:5672            testea APIs ──┘
+                      ▼      ▼
+DATA & MESSAGING
+                  ┌──────────────┐  ┌──────────────┐
+                  │  rabbitmq    │  │    redis     │
+                  └──────────────┘  └──────────────┘
 ```
 
-Cada grupo tiene:
-- **Color propio** para identificacion visual rapida
-- **Conexiones animadas internas** (front ↔ back) con protocolo y puerto
-- **Conexiones animadas entre grupos** mostrando dependencias reales
+- **Flechas SVG reales** con puntos luminosos animados que viajan por la linea
+- **Labels** con protocolo y puerto en cada conexion
+- **Click en cualquier nodo** abre un modal con logs en vivo, stats, y acciones
+
+### Modal de Servicio
+
+Al hacer click en un servicio se abre un modal con:
+- **Info**: nombre, estado, uptime, imagen, puertos, container ID
+- **Stats**: CPU y RAM del contenedor (polling cada 5s)
+- **Logs en vivo**: streaming SSE con ReadableStream reader
+- **Acciones**: Restart, Stop, Start
+- Cerrar con **ESC** o click en backdrop
+
+### Procesamiento de Logs
+
+- Los logs de Docker se streamean via SSE desde el Go API
+- Se eliminan los headers multiplexados de Docker (8 bytes)
+- Se limpian codigos ANSI de colores (`\x1b[32m`, etc.) en el backend
+- El frontend coloriza por nivel: error=rojo, warn=amber, info=cyan, debug=gris
+
+### Autenticacion (Frontend)
+
+- Login genera JWT almacenado en cookie `monitoring_token` (`httpOnly: false`, `secure: false`)
+- Los hooks client-side leen el token via `document.cookie` (sin Server Actions)
+- Los Route Handlers proxy reciben el token via query param `?token=JWT`
+- Acceso restringido por IP via AWS Security Group (no requiere HTTPS)
 
 ### Diseno Visual
 
 - **Tema:** Dark cyberpunk (#0a0a0f fondo, neon accents)
-- **Animaciones:** Pulsing dots para status, flow animations para conexiones, scanline overlay en logs
-- **LogViewer:** Terminal-style con colorizado automatico (error=rojo, warn=amber, info=cyan)
+- **Animaciones:** Pulsing dots para status, SVG flow animations para conexiones, scanline overlay en logs
+- **LogViewer:** Terminal-style con ANSI stripping y colorizado por nivel
 - **Stats:** Barras de progreso con gradientes neon y glow effects
 - **Responsive:** Mobile-friendly con breakpoints sm/lg
 

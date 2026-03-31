@@ -208,6 +208,17 @@ export interface ActionResponse {
     error?: string;
 }
 
+export interface OrderHistory {
+    id: number;
+    created_at: string;
+    order_id: string;
+    previous_status: string;
+    new_status: string;
+    changed_by?: number;
+    changed_by_name: string;
+    reason?: string;
+}
+
 export interface GetOrdersParams {
     page?: number;
     page_size?: number;
