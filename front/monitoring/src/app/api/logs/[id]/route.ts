@@ -1,7 +1,9 @@
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 
-const API_URL = process.env.MONITORING_API_URL || 'http://localhost:3070';
+function getApiUrl() {
+    return process.env.MONITORING_API_URL || 'http://localhost:3070';
+}
 
 export async function GET(
     request: NextRequest,
@@ -15,7 +17,7 @@ export async function GET(
         return new Response('Unauthorized', { status: 401 });
     }
 
-    const upstream = await fetch(`${API_URL}/api/v1/containers/${id}/logs/stream`, {
+    const upstream = await fetch(`${getApiUrl()}/api/v1/containers/${id}/logs/stream`, {
         headers: { Authorization: `Bearer ${token}` },
         signal: request.signal,
     });

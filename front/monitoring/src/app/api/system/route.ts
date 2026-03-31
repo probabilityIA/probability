@@ -1,6 +1,8 @@
 import { cookies } from 'next/headers';
 
-const API_URL = process.env.MONITORING_API_URL || 'http://localhost:3070';
+function getApiUrl() {
+    return process.env.MONITORING_API_URL || 'http://localhost:3070';
+}
 
 export async function GET() {
     const cookieStore = await cookies();
@@ -10,7 +12,7 @@ export async function GET() {
         return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const res = await fetch(`${API_URL}/api/v1/system/stats`, {
+    const res = await fetch(`${getApiUrl()}/api/v1/system/stats`, {
         headers: { Authorization: `Bearer ${token}` },
         cache: 'no-store',
     });

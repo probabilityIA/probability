@@ -1,4 +1,6 @@
-const API_URL = process.env.MONITORING_API_URL || 'http://localhost:3070';
+function getApiUrl() {
+    return process.env.MONITORING_API_URL || 'http://localhost:3070';
+}
 
 export async function apiFetch<T>(path: string, options?: RequestInit & { token?: string }): Promise<T> {
     const { token, ...fetchOptions } = options || {};
@@ -12,7 +14,7 @@ export async function apiFetch<T>(path: string, options?: RequestInit & { token?
         headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const res = await fetch(`${API_URL}${path}`, {
+    const res = await fetch(`${getApiUrl()}${path}`, {
         ...fetchOptions,
         headers,
         cache: 'no-store',
