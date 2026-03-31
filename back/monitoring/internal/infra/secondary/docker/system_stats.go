@@ -52,7 +52,7 @@ func getCPUPercent() (float64, error) {
 	if err != nil {
 		return 0, err
 	}
-	time.Sleep(200 * time.Millisecond)
+	time.Sleep(100 * time.Millisecond)
 	idle2, total2, err := readCPUStat()
 	if err != nil {
 		return 0, err

@@ -9,7 +9,7 @@ export function useSystemStats(interval = 5000) {
 
     const fetchStats = useCallback(async () => {
         try {
-            const res = await fetch('/api/system');
+            const res = await fetch('/api/system', { credentials: 'include' });
             if (res.ok) setStats(await res.json());
         } catch { /* non-critical */ }
     }, []);
