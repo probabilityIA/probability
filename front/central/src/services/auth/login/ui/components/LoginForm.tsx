@@ -123,7 +123,7 @@ export const LoginForm = () => {
             {/* Logo */}
             <div className={isDark ? 'login-logo-dark' : 'login-logo-light'}>
                 <img
-                    src="/logo (2).png"
+                    src="https://images-cam93.s3.us-east-1.amazonaws.com/logo+(2).png"
                     alt="ProbabilityIA Logo"
                     className="w-8 h-8"
                 />
