@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { getTokenAction } from '../../infra/actions';
+import { getToken } from '@/shared/lib/token';
 
 interface UseLogStreamOptions {
     containerId: string;
@@ -17,29 +17,21 @@ export function useLogStream({ containerId, enabled = true }: UseLogStreamOption
     const connect = useCallback(async () => {
         if (!containerId || !enabled) return;
 
-        // Close existing
         abortRef.current?.abort();
         setError(null);
 
-        const token = await getTokenAction();
-        if (!token) {
-            setError('Not authenticated');
-            return;
-        }
+        const token = getToken();
+        if (!token) { setError('Not authenticated'); return; }
 
         const controller = new AbortController();
         abortRef.current = controller;
 
         try {
-            // Fetch logs via Next.js proxy with token in query (avoids SSE proxy issues)
             const res = await fetch(`/api/logs/${containerId}?token=${encodeURIComponent(token)}`, {
                 signal: controller.signal,
             });
 
-            if (!res.ok || !res.body) {
-                setError(`HTTP ${res.status}`);
-                return;
-            }
+            if (!res.ok || !res.body) { setError(`HTTP ${res.status}`); return; }
 
             setConnected(true);
             const reader = res.body.getReader();
@@ -56,23 +48,18 @@ export function useLogStream({ containerId, enabled = true }: UseLogStreamOption
 
                 const newLines: string[] = [];
                 for (const part of parts) {
-                    if (part.startsWith('data: ')) {
-                        newLines.push(part.slice(6));
-                    }
+                    if (part.startsWith('data: ')) newLines.push(part.slice(6));
                 }
 
                 if (newLines.length > 0) {
                     setLines(prev => {
                         const next = [...prev, ...newLines];
-                        if (next.length > 1000) return next.slice(-1000);
-                        return next;
+                        return next.length > 1000 ? next.slice(-1000) : next;
                     });
                 }
             }
         } catch (err) {
-            if (err instanceof Error && err.name !== 'AbortError') {
-                setError('Connection lost');
-            }
+            if (err instanceof Error && err.name !== 'AbortError') setError('Connection lost');
         } finally {
             setConnected(false);
         }
@@ -84,14 +71,10 @@ export function useLogStream({ containerId, enabled = true }: UseLogStreamOption
         setConnected(false);
     }, []);
 
-    const clear = useCallback(() => {
-        setLines([]);
-    }, []);
+    const clear = useCallback(() => setLines([]), []);
 
     useEffect(() => {
-        if (enabled) {
-            connect();
-        }
+        if (enabled) connect();
         return () => disconnect();
     }, [connect, disconnect, enabled]);
 

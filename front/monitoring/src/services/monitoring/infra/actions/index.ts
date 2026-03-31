@@ -12,7 +12,7 @@ export async function loginAction(email: string, password: string): Promise<{ er
 
         const cookieStore = await cookies();
         cookieStore.set('monitoring_token', result.token, {
-            httpOnly: true,
+            httpOnly: false,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
             path: '/',

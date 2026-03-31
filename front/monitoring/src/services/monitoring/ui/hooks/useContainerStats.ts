@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ContainerStats } from '../../domain/types';
-import { getTokenAction } from '../../infra/actions';
+import { getToken } from '@/shared/lib/token';
 
 interface UseContainerStatsOptions {
     containerId: string;
@@ -14,16 +14,13 @@ export function useContainerStats({ containerId, interval = 5000, enabled = true
     const [stats, setStats] = useState<ContainerStats | null>(null);
     const [loading, setLoading] = useState(true);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const tokenRef = useRef<string | null>(null);
 
     const fetchStats = useCallback(async () => {
         if (!containerId || !enabled) return;
-        if (!tokenRef.current) {
-            tokenRef.current = await getTokenAction();
-        }
-        if (!tokenRef.current) return;
+        const token = getToken();
+        if (!token) return;
         try {
-            const res = await fetch(`/api/stats/${containerId}?token=${encodeURIComponent(tokenRef.current)}`);
+            const res = await fetch(`/api/stats/${containerId}?token=${encodeURIComponent(token)}`);
             if (res.ok) setStats(await res.json());
         } catch { /* non-critical */ }
         finally { setLoading(false); }

@@ -2,20 +2,17 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { SystemStats } from '../../domain/types';
-import { getTokenAction } from '../../infra/actions';
+import { getToken } from '@/shared/lib/token';
 
 export function useSystemStats(interval = 5000) {
     const [stats, setStats] = useState<SystemStats | null>(null);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const tokenRef = useRef<string | null>(null);
 
     const fetchStats = useCallback(async () => {
-        if (!tokenRef.current) {
-            tokenRef.current = await getTokenAction();
-        }
-        if (!tokenRef.current) return;
+        const token = getToken();
+        if (!token) return;
         try {
-            const res = await fetch(`/api/system?token=${encodeURIComponent(tokenRef.current)}`);
+            const res = await fetch(`/api/system?token=${encodeURIComponent(token)}`);
             if (res.ok) setStats(await res.json());
         } catch { /* non-critical */ }
     }, []);
