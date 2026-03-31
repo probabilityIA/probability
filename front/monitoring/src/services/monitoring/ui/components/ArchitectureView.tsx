@@ -86,7 +86,7 @@ function SvgConnections({ connections, containerRef }: { connections: Connection
     const calculate = useCallback(() => {
         if (!containerRef.current) return;
         const box = containerRef.current.getBoundingClientRect();
-        const newLines: typeof lines = [];
+        const newLines: { x1: number; y1: number; x2: number; y2: number; label: string; color: string }[] = [];
 
         for (const conn of connections) {
             const fromEl = document.getElementById(conn.from);
@@ -128,15 +128,22 @@ function SvgConnections({ connections, containerRef }: { connections: Connection
         setLines(newLines);
     }, [connections, containerRef]);
 
-    useEffect(() => {
-        calculate();
-        window.addEventListener('resize', calculate);
-        // Recalculate after a short delay for layout stabilization
-        const t = setTimeout(calculate, 200);
-        return () => { window.removeEventListener('resize', calculate); clearTimeout(t); };
-    }, [calculate]);
+    const [mounted, setMounted] = useState(false);
 
-    if (lines.length === 0) return null;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
+        // Delay to ensure DOM nodes are rendered
+        const t1 = setTimeout(calculate, 100);
+        const t2 = setTimeout(calculate, 500);
+        window.addEventListener('resize', calculate);
+        return () => { window.removeEventListener('resize', calculate); clearTimeout(t1); clearTimeout(t2); };
+    }, [calculate, mounted]);
+
+    if (!mounted || lines.length === 0) return null;
 
     return (
         <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
