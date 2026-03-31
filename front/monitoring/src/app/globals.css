@@ -116,24 +116,18 @@ body {
 }
 
 /* ====== Connection flow animations ====== */
-@keyframes flow-down {
-  0% { top: -12px; opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { top: calc(100% + 4px); opacity: 0; }
-}
-@keyframes flow-down-delayed {
-  0% { top: -12px; opacity: 0; }
-  20% { opacity: 1; }
-  80% { opacity: 1; }
-  100% { top: calc(100% + 4px); opacity: 0; }
+@keyframes flow-right {
+  0% { left: -12px; opacity: 0; }
+  15% { opacity: 1; }
+  85% { opacity: 1; }
+  100% { left: calc(100% + 4px); opacity: 0; }
 }
 .animate-flow {
-  animation: flow-down 1.8s ease-in-out infinite;
+  animation: flow-right 1.6s ease-in-out infinite;
 }
 .animate-flow-delayed {
-  animation: flow-down-delayed 1.8s ease-in-out infinite;
-  animation-delay: 0.9s;
+  animation: flow-right 1.6s ease-in-out infinite;
+  animation-delay: 0.8s;
 }
 
 /* ====== Selection ====== */
