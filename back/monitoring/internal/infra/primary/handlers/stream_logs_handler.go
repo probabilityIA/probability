@@ -4,9 +4,16 @@ import (
 	"bufio"
 	"fmt"
 	"net/http"
+	"regexp"
 
 	"github.com/gin-gonic/gin"
 )
+
+var ansiRegex = regexp.MustCompile(`\x1b\[[0-9;]*[a-zA-Z]`)
+
+func stripANSI(s string) string {
+	return ansiRegex.ReplaceAllString(s, "")
+}
 
 func (h *handler) StreamLogs(c *gin.Context) {
 	id := c.Param("id")
@@ -30,16 +37,20 @@ func (h *handler) StreamLogs(c *gin.Context) {
 	}
 
 	scanner := bufio.NewScanner(reader)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024)
+
 	for scanner.Scan() {
 		select {
 		case <-c.Request.Context().Done():
 			return
 		default:
 			line := scanner.Text()
-			// Docker log lines have 8-byte header, skip it if present
+			// Docker log lines have 8-byte header, skip it
 			if len(line) > 8 {
 				line = line[8:]
 			}
+			// Strip ANSI escape codes
+			line = stripANSI(line)
 			fmt.Fprintf(c.Writer, "data: %s\n\n", line)
 			flusher.Flush()
 		}
