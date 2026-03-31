@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { loginAction, getRolesPermissionsAction, loginServerAction } from '../../infra/actions';
 import { TokenStorage } from '@/shared/config';
 import { applyBusinessTheme, resetTheme } from '@/shared/utils/apply-business-theme';
@@ -15,6 +15,19 @@ export const LoginForm = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        const htmlElement = document.documentElement;
+        setIsDark(htmlElement.classList.contains('dark'));
+
+        const observer = new MutationObserver(() => {
+            setIsDark(htmlElement.classList.contains('dark'));
+        });
+
+        observer.observe(htmlElement, { attributes: true });
+        return () => observer.disconnect();
+    }, []);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -22,42 +35,30 @@ export const LoginForm = () => {
 
         startTransition(async () => {
             try {
-                // Detectar si estamos en desarrollo local
                 const isLocalDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
-
                 let response;
 
                 if (isLocalDev) {
-                    // ✅ En desarrollo local: usar Server Action para evitar problemas de proxy con cookies
                     const result = await loginServerAction(email, password);
-
-                    if (!result.success) {
-                        throw new Error(result.error || 'Error al iniciar sesión');
-                    }
-
+                    if (!result.success) throw new Error(result.error || 'Error al iniciar sesión');
                     response = result.data;
                 } else {
-                    // ✅ En producción: hacer fetch directo para que el navegador reciba la cookie Partitioned
-                    // Esto es NECESARIO para que funcione en iframes de Shopify
                     const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || '/api/v1';
                     const loginResponse = await fetch(`${baseUrl}/auth/login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ email, password }),
-                        credentials: 'include', // IMPORTANTE: incluir cookies en la request
+                        credentials: 'include',
                     });
 
                     if (!loginResponse.ok) {
                         const errorData = await loginResponse.json();
                         throw new Error(errorData.error || errorData.message || 'Error al iniciar sesión');
                     }
-
                     response = await loginResponse.json();
                 }
 
                 if (response.success) {
-                    // ✅ Cookie Partitioned ya está seteada en el navegador por el backend
-                    // Solo guardar datos del usuario en sessionStorage
                     TokenStorage.setUser({
                         userId: response.data.user.id.toString(),
                         name: response.data.user.name,
@@ -72,14 +73,12 @@ export const LoginForm = () => {
                         TokenStorage.setBusinessesData(response.data.businesses);
                     }
 
-                    // Aplicar tema de colores del business
                     if (!response.data.is_super_admin && response.data.businesses?.length > 0) {
                         applyBusinessTheme(response.data.businesses[0]);
                     } else {
                         resetTheme();
                     }
 
-                    // Obtener roles y permisos (cookie se envía automáticamente)
                     try {
                         const permissionsResponse = await getRolesPermissionsAction();
                         if (permissionsResponse.success && permissionsResponse.data) {
@@ -108,7 +107,6 @@ export const LoginForm = () => {
                         }
                     }
 
-                    console.log('✅ Login exitoso, redirigiendo...');
                     router.push('/home');
                 }
             } catch (err: any) {
@@ -118,82 +116,106 @@ export const LoginForm = () => {
         });
     };
 
+    const formClass = isDark ? 'login-form-dark' : 'login-form-light';
+
     return (
-        <div className="mb-10 mt-1 flex h-full w-full items-center justify-center px-2 md:mx-0 md:px-0 lg:mb-10 lg:items-center lg:justify-start text-gray-900 dark:text-white">
-            <div className="mt-[1vh] w-full max-w-full flex-col items-center md:pl-4 lg:pl-0 xl:max-w-[420px]">
-                <h1 className="mb-2.5 text-5xl font-bold text-navy-700 dark:text-black dark:text-white">¡Bienvenido!</h1>
-                <p className="mb-9 ml-1 text-base text-gray-600 dark:text-gray-300">Inicia sesión con tu correo electrónico y contraseña.</p>
+        <div className={`w-full max-w-sm ${formClass}`}>
+            {/* Logo */}
+            <div className={isDark ? 'login-logo-dark' : 'login-logo-light'}>
+                <img
+                    src="/logo (2).png"
+                    alt="ProbabilityIA Logo"
+                    className="w-8 h-8"
+                />
+                <div className={isDark ? 'login-logo-text-dark' : 'login-logo-text-light'}>
+                    ProbabilityIA
+                </div>
+            </div>
 
+            {/* Header */}
+            <div className={isDark ? 'login-header-dark' : 'login-header-light'}>
+                <h1 className={isDark ? 'login-title-dark' : 'login-title-light'}>
+                    {isDark ? 'Bienvenido de vuelta' : '¡Bienvenido!'}
+                </h1>
+                <p className={isDark ? 'login-subtitle-dark' : 'login-subtitle-light'}>
+                    {isDark ? 'Ingresa tus credenciales para acceder al panel de gestión.' : 'Inicia sesión con tu correo electrónico y contraseña.'}
+                </p>
+            </div>
 
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="w-full">
+                {/* Email Field */}
+                <div className={isDark ? 'login-form-group-dark' : 'login-form-group-light'}>
+                    <label className={isDark ? 'login-label-dark' : 'login-label-light'}>
+                        {isDark ? 'Correo electrónico' : 'Correo'}
+                    </label>
+                    <div className={isDark ? 'login-input-wrapper-dark' : 'login-input-wrapper-light'}>
+                        <EnvelopeIcon className="w-5 h-5" />
+                        <input
+                            type="email"
+                            placeholder={isDark ? 'correo@ejemplo.com' : 'usuario@gmail.com'}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            required
+                        />
+                    </div>
+                </div>
 
-                <form onSubmit={handleSubmit} className="w-full">
-                    <div className="mb-5">
-                        <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-300">Correo</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                <EnvelopeIcon className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <input
-                                id="email"
-                                name="email"
-                                type="text"
-                                placeholder="usuario@gmail.com"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="w-full rounded-lg border border-gray-200 pl-10 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[rgba(124,58,237,0.12)] focus:border-[#7c3aed]"
-                            />
+                {/* Password Field */}
+                <div className={isDark ? 'login-form-group-dark' : 'login-form-group-light'}>
+                    {isDark ? (
+                        <label className="login-label-dark">Contraseña</label>
+                    ) : (
+                        <div className="login-label-row-light">
+                            <label className="login-label-light">Contraseña</label>
+                            <a href="#" className="login-forgot-light">¿Olvidó su contraseña?</a>
                         </div>
-                    </div>
-
-                    <div className="mb-2">
-                        <label htmlFor="password" className="mb-2 block text-sm font-medium text-gray-600 dark:text-gray-300">Contraseña</label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                <LockClosedIcon className="w-5 h-5 text-gray-400" />
-                            </div>
-                            <button
-                                type="button"
-                                aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
-                                onClick={() => setShowPassword((s) => !s)}
-                                className="absolute inset-y-0 right-3 flex items-center focus:outline-none active:scale-95"
-                            >
-                                {showPassword ? (
-                                    <EyeSlashIcon className={`w-5 h-5 transition-colors duration-150 ease-in-out ${showPassword ? 'text-[#7c3aed]' : 'text-gray-400'}`} />
-                                ) : (
-                                    <EyeIcon className={`w-5 h-5 transition-colors duration-150 ease-in-out ${showPassword ? 'text-[#7c3aed]' : 'text-gray-400'}`} />
-                                )}
-                            </button>
-                            <input
-                                id="password"
-                                name="password"
-                                type={showPassword ? 'text' : 'password'}
-                                placeholder="Min. 8 characters"
-                                required
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                className="w-full rounded-lg border border-gray-200 pl-10 pr-10 px-4 py-3 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[rgba(124,58,237,0.12)] focus:border-[#7c3aed]"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mb-8 flex items-center justify-between px-2">
-
-                        <a className="text-sm font-medium text-[#a78bfa] hover:text-[#6d28d9]" href=" ">¿Olvidó su contraseña?</a>
-                    </div>
-
-                    {error && (
-                        <div className="mb-3 p-3 rounded-lg bg-red-50 text-red-500 text-sm">{error}</div>
                     )}
-
-                    <button type="submit" disabled={isPending} className="linear w-full rounded-xl bg-[#7c3aed] py-3 text-base font-medium text-white transition duration-200 hover:bg-[#6d28d9] active:bg-[#5b21b6] dark:bg-[#7c3aed] dark:text-white dark:hover:bg-[#6d28d9]">
-                        {isPending ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
-                    </button>
-
-                    <div className="mt-4 text-center">
-
+                    <div className={isDark ? 'login-input-wrapper-dark' : 'login-input-wrapper-light'}>
+                        <LockClosedIcon className="w-5 h-5" />
+                        <input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            aria-label={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                        >
+                            {showPassword ? (
+                                <EyeSlashIcon className="w-5 h-5" />
+                            ) : (
+                                <EyeIcon className="w-5 h-5" />
+                            )}
+                        </button>
                     </div>
-                </form>
+                </div>
+
+                {/* Error */}
+                {error && (
+                    <div className={`p-3 rounded-lg text-sm mb-5 ${isDark ? 'bg-red-900/30 text-red-400 border border-red-800/50' : 'bg-red-50 text-red-600 border border-red-200'}`}>
+                        {error}
+                    </div>
+                )}
+
+                {/* Submit Button */}
+                <button
+                    type="submit"
+                    disabled={isPending}
+                    className={isDark ? 'login-button-dark' : 'login-button-light'}
+                >
+                    {isPending ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
+                </button>
+            </form>
+
+            {/* Footer */}
+            <div className={isDark ? 'login-footer-dark' : 'login-footer-light'} style={{ marginTop: '32px' }}>
+                <a href="#">Términos</a>
+                <a href="#">Planes</a>
+                <a href="#">Contáctanos</a>
             </div>
         </div>
     );

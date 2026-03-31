@@ -29,7 +29,7 @@
     "react-hook-form": "^7.69.0",
     "react-leaflet": "^5.0.0",
     "react-map-gl": "^8.1.0",
-    "recharts": "^3.6.0",
+    "recharts": "^3.8.1",
     "styled-jsx": "^5.1.7",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",

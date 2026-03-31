@@ -35,6 +35,9 @@ export * from './footer';
 export * from './shopify-iframe-detector';
 export * from './super-admin-business-selector';
 export { MyIntegrationsButton } from '@/services/modules/my-integrations/ui';
+export * from './theme-toggle';
+export * from './dashboard-panel';
+export * from './login-hero-panel';
 
 
 // Re-exportar tipos útiles
