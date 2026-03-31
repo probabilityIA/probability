@@ -91,14 +91,15 @@ export function LogViewer({ containerId }: LogViewerProps) {
             </div>
 
             {/* Log content */}
-            <div className="flex-1 relative overflow-hidden" style={{ background: '#06060a' }}>
+            <div className="relative overflow-hidden" style={{ background: '#06060a', minHeight: 300, maxHeight: '60vh' }}>
                 {/* Scanline overlay */}
                 <div className="scanline-overlay" />
 
                 <div
                     ref={scrollRef}
                     onScroll={handleScroll}
-                    className="absolute inset-0 overflow-auto p-4 font-mono text-[11px] leading-[1.6]"
+                    className="overflow-auto p-4 font-mono text-[11px] leading-[1.6]"
+                    style={{ minHeight: 300, maxHeight: '60vh' }}
                 >
                     {lines.length === 0 ? (
                         <div className="flex items-center justify-center h-full" style={{ color: '#55556a' }}>
