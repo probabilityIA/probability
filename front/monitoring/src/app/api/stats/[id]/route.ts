@@ -6,12 +6,16 @@ function getApiUrl() {
 }
 
 export async function GET(
-    _request: NextRequest,
+    request: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     const { id } = await params;
-    const cookieStore = await cookies();
-    const token = cookieStore.get('monitoring_token')?.value;
+
+    let token = request.nextUrl.searchParams.get('token');
+    if (!token) {
+        const cookieStore = await cookies();
+        token = cookieStore.get('monitoring_token')?.value || null;
+    }
 
     if (!token) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 });
@@ -26,6 +30,5 @@ export async function GET(
         return Response.json({ error: res.statusText }, { status: res.status });
     }
 
-    const data = await res.json();
-    return Response.json(data);
+    return Response.json(await res.json());
 }

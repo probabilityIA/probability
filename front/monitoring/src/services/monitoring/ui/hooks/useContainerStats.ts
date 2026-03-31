@@ -2,10 +2,11 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import type { ContainerStats } from '../../domain/types';
+import { getTokenAction } from '../../infra/actions';
 
 interface UseContainerStatsOptions {
     containerId: string;
-    interval?: number; // ms, default 5000
+    interval?: number;
     enabled?: boolean;
 }
 
@@ -13,31 +14,26 @@ export function useContainerStats({ containerId, interval = 5000, enabled = true
     const [stats, setStats] = useState<ContainerStats | null>(null);
     const [loading, setLoading] = useState(true);
     const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const tokenRef = useRef<string | null>(null);
 
     const fetchStats = useCallback(async () => {
         if (!containerId || !enabled) return;
-        try {
-            const res = await fetch(`/api/stats/${containerId}`);
-            if (res.ok) {
-                const data = await res.json();
-                setStats(data);
-            }
-        } catch {
-            // Silently fail - stats are non-critical
-        } finally {
-            setLoading(false);
+        if (!tokenRef.current) {
+            tokenRef.current = await getTokenAction();
         }
+        if (!tokenRef.current) return;
+        try {
+            const res = await fetch(`/api/stats/${containerId}?token=${encodeURIComponent(tokenRef.current)}`);
+            if (res.ok) setStats(await res.json());
+        } catch { /* non-critical */ }
+        finally { setLoading(false); }
     }, [containerId, enabled]);
 
     useEffect(() => {
         if (!enabled) return;
-
         fetchStats();
         timerRef.current = setInterval(fetchStats, interval);
-
-        return () => {
-            if (timerRef.current) clearInterval(timerRef.current);
-        };
+        return () => { if (timerRef.current) clearInterval(timerRef.current); };
     }, [fetchStats, interval, enabled]);
 
     return { stats, loading };
