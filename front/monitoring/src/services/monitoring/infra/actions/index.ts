@@ -13,14 +13,14 @@ export async function loginAction(email: string, password: string): Promise<{ er
         const cookieStore = await cookies();
         cookieStore.set('monitoring_token', result.token, {
             httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false,
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24, // 24 hours
         });
         cookieStore.set('monitoring_user', JSON.stringify({ name: result.name, email: result.email }), {
             httpOnly: false,
-            secure: process.env.NODE_ENV === 'production',
+            secure: false,
             sameSite: 'lax',
             path: '/',
             maxAge: 60 * 60 * 24,
