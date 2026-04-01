@@ -106,18 +106,19 @@ import Footer from '../components/Footer.astro';
 			<div class="blob" style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"></div>
 			<div class="blob" style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"></div>
 
-			<div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
-				<!-- Tablet Container -->
-				<div class="hidden lg:flex lg:flex-shrink-0 lg:order-first">
-					<img
-						src="/website/TabletNegocio.png"
-						alt="Dashboard Tablet"
-						class="w-[550px] lg:w-[700px] xl:w-[880px] object-contain drop-shadow-2xl tablet-float"
-					/>
-				</div>
+			<!-- iPhone Container - Positioned at parent level, left side -->
+			<div class="hidden lg:block absolute left-40 -bottom-40 w-[380px] xl:w-[450px]">
+				<img
+					src="/website/iphone-orders-map.png"
+					alt="iPhone - Órdenes por Ubicación"
+					class="w-[380px] xl:w-[450px] object-cover drop-shadow-2xl tablet-float"
+				/>
+			</div>
 
-				<!-- Text Container -->
-				<div class="w-full lg:w-[90%] lg:flex-1 order-first lg:order-last">
+			<!-- Content Container -->
+			<div class="relative z-10 max-w-7xl mx-auto">
+				<!-- Text Container - Positioned to the right -->
+				<div class="lg:ml-auto lg:max-w-2xl">
 					<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
 						<span class="text-[#8B5CF6] font-medium text-sm">NUESTRO PRODUCTO</span>
 					</div>
