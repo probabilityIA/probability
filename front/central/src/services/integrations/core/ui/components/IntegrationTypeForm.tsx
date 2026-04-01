@@ -52,6 +52,11 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         verify_token: '',
         webhook_secret: '',
         test_phone_number: '',
+        ai_sales_enabled: false,
+        ai_sales_model_id: 'amazon.nova-micro-v1:0',
+        ai_sales_session_ttl_minutes: '20',
+        ai_sales_max_tool_iterations: '5',
+        ai_sales_demo_business_id: '1',
     });
 
     useEffect(() => {
@@ -94,14 +99,20 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                         if (res.success && res.data && Object.keys(res.data).length > 0) {
                             if (integrationType.id === WHATSAPP_TYPE_ID) {
                                 // Poblar campos estructurados de WhatsApp
+                                const d = res.data as Record<string, unknown>;
                                 setWhatsappCredentials({
-                                    whatsapp_url: res.data.whatsapp_url || '',
-                                    webhook_callback_url: res.data.webhook_callback_url || '',
-                                    phone_number_id: res.data.phone_number_id || '',
-                                    access_token: res.data.access_token || '',
-                                    verify_token: res.data.verify_token || '',
-                                    webhook_secret: res.data.webhook_secret || '',
-                                    test_phone_number: res.data.test_phone_number || '',
+                                    whatsapp_url: String(d.whatsapp_url || ''),
+                                    webhook_callback_url: String(d.webhook_callback_url || ''),
+                                    phone_number_id: String(d.phone_number_id || ''),
+                                    access_token: String(d.access_token || ''),
+                                    verify_token: String(d.verify_token || ''),
+                                    webhook_secret: String(d.webhook_secret || ''),
+                                    test_phone_number: String(d.test_phone_number || ''),
+                                    ai_sales_enabled: d.ai_sales_enabled === true,
+                                    ai_sales_model_id: String(d.ai_sales_model_id || 'amazon.nova-micro-v1:0'),
+                                    ai_sales_session_ttl_minutes: String(d.ai_sales_session_ttl_minutes || '20'),
+                                    ai_sales_max_tool_iterations: String(d.ai_sales_max_tool_iterations || '5'),
+                                    ai_sales_demo_business_id: String(d.ai_sales_demo_business_id || '1'),
                                 });
                             } else {
                                 setFormData((prev) => ({
@@ -140,10 +151,10 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
         try {
             let success = false;
             // Parse platform_credentials — only send if non-empty
-            let platformCredentials: Record<string, string> | undefined;
+            let platformCredentials: Record<string, unknown> | undefined;
             if (integrationType?.id === WHATSAPP_TYPE_ID) {
                 // Para WhatsApp, construir desde campos estructurados
-                const wa: Record<string, string> = {};
+                const wa: Record<string, unknown> = {};
                 if (whatsappCredentials.whatsapp_url.trim()) wa.whatsapp_url = whatsappCredentials.whatsapp_url.trim();
                 if (whatsappCredentials.webhook_callback_url.trim()) wa.webhook_callback_url = whatsappCredentials.webhook_callback_url.trim();
                 if (whatsappCredentials.phone_number_id.trim()) wa.phone_number_id = whatsappCredentials.phone_number_id.trim();
@@ -151,6 +162,11 @@ export default function IntegrationTypeForm({ integrationType, onSuccess, onCanc
                 if (whatsappCredentials.verify_token.trim()) wa.verify_token = whatsappCredentials.verify_token.trim();
                 if (whatsappCredentials.webhook_secret.trim()) wa.webhook_secret = whatsappCredentials.webhook_secret.trim();
                 if (whatsappCredentials.test_phone_number.trim()) wa.test_phone_number = whatsappCredentials.test_phone_number.trim();
+                wa.ai_sales_enabled = whatsappCredentials.ai_sales_enabled;
+                if (whatsappCredentials.ai_sales_model_id.trim()) wa.ai_sales_model_id = whatsappCredentials.ai_sales_model_id.trim();
+                if (whatsappCredentials.ai_sales_session_ttl_minutes.trim()) wa.ai_sales_session_ttl_minutes = Number(whatsappCredentials.ai_sales_session_ttl_minutes);
+                if (whatsappCredentials.ai_sales_max_tool_iterations.trim()) wa.ai_sales_max_tool_iterations = Number(whatsappCredentials.ai_sales_max_tool_iterations);
+                if (whatsappCredentials.ai_sales_demo_business_id.trim()) wa.ai_sales_demo_business_id = Number(whatsappCredentials.ai_sales_demo_business_id);
                 if (Object.keys(wa).length > 0) platformCredentials = wa;
             } else {
                 try {

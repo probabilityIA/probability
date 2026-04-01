@@ -85,6 +85,17 @@ type WhatsAppConfig struct {
 	WhatsAppURL   string
 }
 
+// ============================================
+// AI FORWARDER (forward messages to AI Sales agent)
+// ============================================
+
+// IAIForwarder reenvia mensajes sin conversacion activa al agente de ventas AI.
+// La implementacion lee platform_creds de Redis para verificar ai_sales_enabled
+// y obtener el business_id demo antes de publicar a whatsapp.ai.incoming.
+type IAIForwarder interface {
+	ForwardToAI(ctx context.Context, phoneNumber, messageText, messageID, messageType string) error
+}
+
 // IPlatformCredentialsGetter obtiene credenciales de plataforma cacheadas por tipo de integración.
 // Implementado por integrations/core — evita que WhatsApp dependa de Redis directamente.
 type IPlatformCredentialsGetter interface {

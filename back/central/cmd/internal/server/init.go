@@ -10,6 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/events"
 	"github.com/secamc93/probability/back/central/services/integrations"
 	"github.com/secamc93/probability/back/central/services/modules"
+	"github.com/secamc93/probability/back/central/shared/bedrock"
 	"github.com/secamc93/probability/back/central/shared/db"
 	"github.com/secamc93/probability/back/central/shared/email"
 	"github.com/secamc93/probability/back/central/shared/env"
@@ -58,6 +59,9 @@ func Init(ctx context.Context) error {
 		}
 	}
 
+	// Initialize Bedrock (AI)
+	bedrockClient := bedrock.New(logger, environment)
+
 	middleware.InitFromEnv(environment, logger)
 	r := routes.BuildRouter(ctx, logger, environment)
 
@@ -73,7 +77,7 @@ func Init(ctx context.Context) error {
 	events.New(v1Group, logger, rabbitMQ, redisClient)
 
 	// Initialize Order Module (and others)
-	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service)
+	_ = modules.New(v1Group, database, logger, environment, rabbitMQ, redisClient, s3Service, bedrockClient)
 
 	// Initialize Integrations Module (coordina core, WhatsApp, Shopify, Softpymes, etc.)
 	_ = integrations.New(v1Group, database, logger, environment, rabbitMQ, s3Service, redisClient, emailService)

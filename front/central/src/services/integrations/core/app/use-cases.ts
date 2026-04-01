@@ -107,7 +107,7 @@ export class IntegrationUseCases {
         return this.repository.deleteIntegrationType(id);
     }
 
-    async getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, string> }> {
+    async getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, unknown> }> {
         return this.repository.getIntegrationTypePlatformCredentials(id);
     }
 

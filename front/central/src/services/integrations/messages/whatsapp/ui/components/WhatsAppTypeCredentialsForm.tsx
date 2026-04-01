@@ -14,6 +14,12 @@ export interface WhatsAppPlatformCredentials {
     verify_token: string;
     webhook_secret: string;
     test_phone_number: string;
+    // AI Sales Agent
+    ai_sales_enabled: boolean;
+    ai_sales_model_id: string;
+    ai_sales_session_ttl_minutes: string;
+    ai_sales_max_tool_iterations: string;
+    ai_sales_demo_business_id: string;
 }
 
 interface WhatsAppTypeCredentialsFormProps {
@@ -42,7 +48,7 @@ export default function WhatsAppTypeCredentialsForm({
         setTimeout(() => setCopied(false), 2000);
     };
 
-    const handleChange = (field: keyof WhatsAppPlatformCredentials, value: string) => {
+    const handleChange = (field: keyof WhatsAppPlatformCredentials, value: string | boolean) => {
         onChange({ ...credentials, [field]: value });
     };
 
@@ -88,12 +94,12 @@ export default function WhatsAppTypeCredentialsForm({
 
     return (
         <div className="space-y-4">
-            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200">
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200">
                 Credenciales de WhatsApp (se encriptan)
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         WhatsApp API URL *
                     </label>
                     <Input
@@ -103,16 +109,16 @@ export default function WhatsAppTypeCredentialsForm({
                         placeholder="https://graph.facebook.com/v22.0"
                         className="font-mono"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         URL base de la API de WhatsApp Cloud (Meta Graph API)
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Webhook URL
                     </label>
                     <div className="flex gap-2">
-                        <div className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-mono text-sm text-gray-700 dark:text-gray-200 dark:text-gray-200 select-all break-all">
+                        <div className="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md font-mono text-sm text-gray-700 dark:text-gray-200 select-all break-all">
                             {webhookUrl}
                         </div>
                         <button
@@ -128,18 +134,18 @@ export default function WhatsAppTypeCredentialsForm({
                                 </>
                             ) : (
                                 <>
-                                    <ClipboardDocumentIcon className="w-4 h-4 text-gray-500 dark:text-gray-400 dark:text-gray-400" />
+                                    <ClipboardDocumentIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
                                     <span>Copiar</span>
                                 </>
                             )}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Copia esta URL en Meta &rarr; WhatsApp &rarr; Configuration &rarr; Webhook
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Phone Number ID *
                     </label>
                     <Input
@@ -151,12 +157,12 @@ export default function WhatsAppTypeCredentialsForm({
                         placeholder="123456789012345"
                         className="font-mono"
                     />
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         ID del numero de telefono en Meta Business Manager
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Access Token *
                     </label>
                     <div className="relative">
@@ -172,17 +178,17 @@ export default function WhatsAppTypeCredentialsForm({
                         <button
                             type="button"
                             onClick={() => setShowAccessToken((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
                         >
                             {showAccessToken ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Token de acceso permanente de la app en Meta
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Verify Token (Webhook)
                     </label>
                     <div className="relative">
@@ -198,17 +204,17 @@ export default function WhatsAppTypeCredentialsForm({
                         <button
                             type="button"
                             onClick={() => setShowVerifyToken((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
                         >
                             {showVerifyToken ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Token de verificacion para el webhook (Meta &rarr; Configuration)
                     </p>
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Webhook Secret (App Secret)
                     </label>
                     <div className="relative">
@@ -224,19 +230,19 @@ export default function WhatsAppTypeCredentialsForm({
                         <button
                             type="button"
                             onClick={() => setShowWebhookSecret((v) => !v)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:text-gray-300 transition-colors"
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-300 transition-colors"
                         >
                             {showWebhookSecret ? <EyeSlashIcon className="w-5 h-5" /> : <EyeIcon className="w-5 h-5" />}
                         </button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         App Secret de Meta (Developers &rarr; App &rarr; Settings &rarr; Basic)
                     </p>
                 </div>
 
                 {/* Test connection - full width */}
                 <div className="md:col-span-2 border-t border-gray-300 dark:border-gray-600 pt-4">
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 dark:text-gray-200 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
                         Numero de pruebas
                     </label>
                     <div className="flex gap-2">
@@ -257,14 +263,120 @@ export default function WhatsAppTypeCredentialsForm({
                             {testing ? 'Enviando...' : 'Probar conexion'}
                         </Button>
                     </div>
-                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
                         Se enviara un mensaje de prueba (hello_world) a este numero para verificar las credenciales
                     </p>
                 </div>
 
             </div>
+
+            {/* ── AI Sales Agent ────────────────────────────────────── */}
+            <h3 className="text-sm font-medium text-gray-700 dark:text-gray-200 pt-2">
+                Agente de Ventas AI (WhatsApp)
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-700">
+                {/* Habilitar AI Sales */}
+                <div className="md:col-span-2 flex items-center gap-3">
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={credentials.ai_sales_enabled}
+                        onClick={() => handleChange('ai_sales_enabled', !credentials.ai_sales_enabled)}
+                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                            credentials.ai_sales_enabled
+                                ? 'bg-green-500'
+                                : 'bg-gray-300 dark:bg-gray-600'
+                        }`}
+                    >
+                        <span
+                            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+                                credentials.ai_sales_enabled ? 'translate-x-6' : 'translate-x-1'
+                            }`}
+                        />
+                    </button>
+                    <div>
+                        <p className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                            Habilitar Agente AI
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                            Activa el agente de ventas con IA para mensajes sin conversacion activa
+                        </p>
+                    </div>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Modelo Bedrock
+                    </label>
+                    <Input
+                        type="text"
+                        value={credentials.ai_sales_model_id}
+                        onChange={(e) => handleChange('ai_sales_model_id', e.target.value)}
+                        placeholder="amazon.nova-micro-v1:0"
+                        className="font-mono"
+                        disabled={!credentials.ai_sales_enabled}
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Model ID de Amazon Bedrock (Nova Micro recomendado)
+                    </p>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Business ID Demo
+                    </label>
+                    <Input
+                        type="number"
+                        value={credentials.ai_sales_demo_business_id}
+                        onChange={(e) => handleChange('ai_sales_demo_business_id', e.target.value)}
+                        placeholder="1"
+                        min="1"
+                        disabled={!credentials.ai_sales_enabled}
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        ID del negocio que recibe las ordenes del agente AI (Fase 1)
+                    </p>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        TTL de Sesion (minutos)
+                    </label>
+                    <Input
+                        type="number"
+                        value={credentials.ai_sales_session_ttl_minutes}
+                        onChange={(e) => handleChange('ai_sales_session_ttl_minutes', e.target.value)}
+                        placeholder="20"
+                        min="5"
+                        max="60"
+                        disabled={!credentials.ai_sales_enabled}
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Tiempo de inactividad antes de resetear la conversacion (5-60 min)
+                    </p>
+                </div>
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                        Max. Iteraciones de Herramientas
+                    </label>
+                    <Input
+                        type="number"
+                        value={credentials.ai_sales_max_tool_iterations}
+                        onChange={(e) => handleChange('ai_sales_max_tool_iterations', e.target.value)}
+                        placeholder="5"
+                        min="1"
+                        max="10"
+                        disabled={!credentials.ai_sales_enabled}
+                    />
+                    <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                        Numero maximo de llamadas a herramientas por mensaje (1-10)
+                    </p>
+                </div>
+            </div>
+
             {isEditing && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 dark:text-gray-400">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                     Deja los campos vacios para no modificar los valores actuales.
                 </p>
             )}
@@ -287,7 +399,7 @@ export default function WhatsAppTypeCredentialsForm({
                         <h3 className={`text-lg font-semibold mb-2 ${testResult.type === 'success' ? 'text-green-700' : 'text-red-700'}`}>
                             {testResult.type === 'success' ? 'Conexion exitosa' : 'Error de conexion'}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-300 dark:text-gray-300 mb-6">
+                        <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
                             {testResult.message}
                         </p>
                         <Button
