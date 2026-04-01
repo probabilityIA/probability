@@ -133,6 +133,7 @@ function LoginContent() {
             <circle cx="350" cy="420" r="20" fill="#1a1430" stroke="#4c1d95" strokeWidth="5" />
             <circle cx="350" cy="420" r="9" fill="#8b5cf6" />
 
+
             {/* Packages */}
             <rect x="70" y="260" width="70" height="80" rx="10" fill="#14f5a0" opacity="0.85" />
             <text x="105" y="310" fontSize="32" fontWeight="700" fill="white" textAnchor="middle" opacity="0.25">📦</text>
@@ -171,8 +172,7 @@ function LoginContent() {
 
             {/* Hero Text */}
             <text x="50" y="560" fontSize="22" fontWeight="800" fill="white">Haz tu mejor</text>
-            <text x="50" y="590" fontSize="22" fontWeight="800" fill="white">movimiento financiero</text>
-            <text x="50" y="615" fontSize="12" fontWeight="400" fill="#a1a1aa">Shopify, Softpymes y muchas transportadoras</text>
+            <text x="50" y="590" fontSize="22" fontWeight="800" fill="white">movimiento logístico</text>
 
             {/* Ecommerce Badges */}
             <g>

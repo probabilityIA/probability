@@ -77,7 +77,11 @@ export const LoginHeroPanel = () => {
         />
 
         {/* Pantalla del iPhone */}
-        <div className="w-full h-full rounded-[40px] bg-[#1a1a2e]" />
+        <img
+          src="/imagenMapa.jpeg"
+          alt="Dashboard - Órdenes por Ubicación"
+          className="w-full h-full rounded-[40px] object-cover"
+        />
       </div>
 
       {/* CARD "Órdenes del mes" - Arriba derecha del iPhone */}
@@ -198,27 +202,22 @@ export const LoginHeroPanel = () => {
           Predice y elimina<br />devoluciones antes de que sucedan
         </h1>
 
-        {/* Subtítulo */}
-        <p className="text-base text-[#6B7280] mb-8 leading-relaxed font-medium">
-          Shopify, Softpymes y muchas<br />transportadoras
-        </p>
-
-        {/* Pills */}
+        {/* Carriers */}
         <div className="flex gap-2.5 flex-wrap">
           <div className="bg-[#E9D5FF] text-[#6B21E8] px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap">
-            🛍️ Shopify
+            Coordinadora
           </div>
           <div className="bg-[#E9D5FF] text-[#6B21E8] px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap">
-            💬 WhatsApp
+            Deprisa
           </div>
           <div className="bg-[#E9D5FF] text-[#6B21E8] px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap">
-            🛒 Woocommerce
+            Inter Rapidísimo
           </div>
           <div className="bg-[#E9D5FF] text-[#6B21E8] px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap">
-            📦 Mercado Libre
+            Envia
           </div>
           <div className="bg-[#E9D5FF] text-[#6B21E8] px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap">
-            🏬 Falabella
+            99 Minutos
           </div>
         </div>
       </div>
