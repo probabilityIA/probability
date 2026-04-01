@@ -78,7 +78,7 @@ export const LoginHeroPanel = () => {
 
         {/* Pantalla del iPhone */}
         <img
-          src="/imagenMapa.jpeg"
+          src="https://images-cam93.s3.us-east-1.amazonaws.com/imagenMapa.jpeg"
           alt="Dashboard - Órdenes por Ubicación"
           className="w-full h-full rounded-[40px] object-cover"
         />
