@@ -2,6 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+const title = 'Integraciones - Conecta tus Plataformas con ProbabilityIA';
+const description = 'Integración fácil con Shopify, WooCommerce, Mercado Libre y más. Sincronización automática en tiempo real con tu ecommerce.';
 ---
 
 <style>
@@ -88,7 +91,7 @@ import Footer from '../components/Footer.astro';
 	}
 </style>
 
-<Layout title="Integraciones - probabilityIA">
+<Layout title={title} description={description}>
 	<Header />
 	<main>
 		<!-- WhatsApp Float Button -->

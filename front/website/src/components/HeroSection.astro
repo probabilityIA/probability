@@ -102,12 +102,14 @@
 	<div class="particle" style="bottom: 30%; right: 15%; animation: float 10s ease-in-out infinite; animation-delay: 3s;"></div>
 	<div class="particle" style="bottom: 15%; left: 25%; animation: float 8s ease-in-out infinite; animation-delay: 1.5s;"></div>
 
-	<!-- Box Image - Absolute positioned -->
+	<!-- Box Image - Absolute positioned with lazy loading -->
 	<img
 		src="https://images-cam93.s3.us-east-1.amazonaws.com/probability-box.png"
 		alt="Caja de Probabilidad - Predice devoluciones"
 		class="hidden lg:block absolute right-0 top-0 h-full w-[1200px] object-contain drop-shadow-2xl -mr-[400px] box-float"
 		style="z-index: 2;"
+		loading="lazy"
+		decoding="async"
 	/>
 
 	<div class="max-w-7xl mx-auto relative z-10">

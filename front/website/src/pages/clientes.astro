@@ -2,6 +2,9 @@
 import Layout from "../layouts/Layout.astro";
 import Header from "../components/Header.astro";
 import Footer from "../components/Footer.astro";
+
+const title = 'Nuestros Clientes - Casos de Éxito | ProbabilityIA';
+const description = 'Descubre cómo empresas de ecommerce reducen devoluciones y aumentan ganancias con ProbabilityIA. Resultados reales, ROI probado.';
 ---
 
 <style>
@@ -47,7 +50,7 @@ import Footer from "../components/Footer.astro";
 	}
 </style>
 
-<Layout title="Nuestros Clientes - probabilityIA">
+<Layout title={title} description={description}>
 	<Header />
 	<main>
 		<!-- Hero Section -->

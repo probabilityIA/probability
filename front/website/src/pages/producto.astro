@@ -2,6 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+const title = 'Producto - Solución Avanzada de IA para Reducir Devoluciones';
+const description = 'Dashboard inteligente, alertas en tiempo real y análisis predictivo. Descubre cómo ProbabilityIA optimiza tu operación ecommerce.';
 ---
 
 <style>
@@ -88,7 +91,7 @@ import Footer from '../components/Footer.astro';
 	}
 </style>
 
-<Layout title="Producto - probabilityIA">
+<Layout title={title} description={description}>
 	<Header />
 	<main>
 		<!-- WhatsApp Float Button -->
@@ -112,6 +115,8 @@ import Footer from '../components/Footer.astro';
 					src="/website/iphone-orders-map.png"
 					alt="iPhone - Órdenes por Ubicación"
 					class="w-[380px] xl:w-[450px] object-cover drop-shadow-2xl tablet-float"
+					loading="lazy"
+					decoding="async"
 				/>
 			</div>
 

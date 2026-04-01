@@ -2,6 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+const title = 'Planes y Precios - ProbabilityIA | Elige el Plan Perfecto';
+const description = 'Planes flexibles para ecommerce. Desde $0. Comienza gratis sin tarjeta de crédito. Paga solo por lo que uses.';
 ---
 
 <style>
@@ -89,7 +92,7 @@ import Footer from '../components/Footer.astro';
 	}
 </style>
 
-<Layout title="Precios - probabilityIA">
+<Layout title={title} description={description}>
 	<Header />
 	<main>
 		<!-- WhatsApp Float Button -->

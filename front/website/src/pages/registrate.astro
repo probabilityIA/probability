@@ -2,6 +2,9 @@
 import Layout from '../layouts/Layout.astro';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
+
+const title = 'Regístrate - Comienza Gratis con ProbabilityIA';
+const description = 'Crea tu cuenta en 2 minutos. Acceso gratuito por 30 días. Sin tarjeta de crédito requerida. Empieza ahora.';
 ---
 
 <style>
@@ -30,7 +33,7 @@ import Footer from '../components/Footer.astro';
 	}
 </style>
 
-<Layout title="Registrate - probabilityIA">
+<Layout title={title} description={description}>
 	<Header />
 	<main>
 		<!-- Hero Section -->
