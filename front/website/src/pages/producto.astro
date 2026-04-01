@@ -63,6 +63,29 @@ import Footer from '../components/Footer.astro';
 		-webkit-text-fill-color: transparent;
 		background-clip: text;
 	}
+
+	#carbon-fiber-canvas-producto {
+		position: absolute;
+		top: 0;
+		left: 0;
+		width: 100%;
+		height: 100%;
+		z-index: 0;
+		pointer-events: none;
+	}
+
+	@keyframes float-tablet {
+		0%, 100% {
+			transform: translateY(0px) rotate(-8deg);
+		}
+		50% {
+			transform: translateY(-30px) rotate(-8deg);
+		}
+	}
+
+	.tablet-float {
+		animation: float-tablet 5s ease-in-out infinite;
+	}
 </style>
 
 <Layout title="Producto - probabilityIA">
@@ -76,20 +99,35 @@ import Footer from '../components/Footer.astro';
 		</div>
 
 		<!-- Hero Section -->
-		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden">
+		<section class="relative bg-gradient-to-br from-white via-purple-50 to-white py-20 px-6 sm:px-20 overflow-hidden" id="producto-hero">
+			<!-- Carbon Fiber Canvas Background -->
+			<canvas id="carbon-fiber-canvas-producto"></canvas>
+
 			<div class="blob" style="width: 400px; height: 400px; background: #8B5CF6; top: -100px; right: -100px;"></div>
 			<div class="blob" style="width: 300px; height: 300px; background: #A855F7; bottom: -50px; left: -50px; animation-delay: 2s;"></div>
 
-			<div class="max-w-6xl mx-auto relative z-10">
-				<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
-					<span class="text-[#8B5CF6] font-medium text-sm">NUESTRO PRODUCTO</span>
+			<div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-4 lg:gap-8">
+				<!-- Tablet Container -->
+				<div class="hidden lg:flex lg:flex-shrink-0 lg:order-first">
+					<img
+						src="/website/TabletNegocio.png"
+						alt="Dashboard Tablet"
+						class="w-[550px] lg:w-[700px] xl:w-[880px] object-contain drop-shadow-2xl tablet-float"
+					/>
 				</div>
-				<h1 class="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
-					La solución más <span class="gradient-text">avanzada</span> para reducir devoluciones
-				</h1>
-				<p class="text-lg sm:text-xl text-gray-600 max-w-3xl">
-					Descubre todas las capacidades de ProbabilityIA y cómo puede transformar tu negocio de eCommerce
-				</p>
+
+				<!-- Text Container -->
+				<div class="w-full lg:w-[90%] lg:flex-1 order-first lg:order-last">
+					<div class="inline-flex items-center gap-2 bg-purple-100 border border-purple-300 rounded-full px-4 py-2 mb-6 hover:bg-purple-200 transition-colors">
+						<span class="text-[#8B5CF6] font-medium text-sm">NUESTRO PRODUCTO</span>
+					</div>
+					<h1 class="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl 2xl:text-7xl font-extrabold text-gray-900 mb-6 leading-tight">
+						La solución más <span class="gradient-text">avanzada</span> para reducir devoluciones
+					</h1>
+					<p class="text-sm sm:text-base lg:text-lg xl:text-xl text-gray-600">
+						Descubre todas las capacidades de ProbabilityIA y cómo puede transformar tu negocio de eCommerce
+					</p>
+				</div>
 			</div>
 		</section>
 
@@ -183,3 +221,123 @@ import Footer from '../components/Footer.astro';
 	</main>
 	<Footer />
 </Layout>
+
+<script>
+	interface Particle {
+		x: number;
+		y: number;
+		baseX: number;
+		baseY: number;
+		vx: number;
+		vy: number;
+		opacity: number;
+	}
+
+	const canvas = document.getElementById('carbon-fiber-canvas-producto') as HTMLCanvasElement;
+	const ctx = canvas?.getContext('2d');
+
+	if (!canvas || !ctx) {
+		throw new Error('Canvas or context not found');
+	}
+
+	let particles: Particle[] = [];
+	let mouseX = 0;
+	let mouseY = 0;
+	let mousePresent = false;
+
+	function resizeCanvas() {
+		const section = document.getElementById('producto-hero');
+		if (section) {
+			canvas.width = section.offsetWidth;
+			canvas.height = section.offsetHeight;
+		}
+	}
+
+	function initParticles() {
+		particles = [];
+		const particleCount = Math.floor((canvas.width * canvas.height) / 2000);
+
+		for (let i = 0; i < particleCount; i++) {
+			const x = Math.random() * canvas.width;
+			const y = Math.random() * canvas.height;
+
+			particles.push({
+				x,
+				y,
+				baseX: x,
+				baseY: y,
+				vx: 0,
+				vy: 0,
+				opacity: Math.random() * 0.6 + 0.2,
+			});
+		}
+	}
+
+	function draw() {
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		particles.forEach((particle) => {
+			const dx = particle.x - mouseX;
+			const dy = particle.y - mouseY;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+			const repelDistance = 150;
+
+			if (mousePresent && distance < repelDistance) {
+				const angle = Math.atan2(dy, dx);
+				const force = (1 - distance / repelDistance) * 3;
+				particle.vx += Math.cos(angle) * force;
+				particle.vy += Math.sin(angle) * force;
+			}
+
+			particle.vx += (particle.baseX - particle.x) * 0.02;
+			particle.vy += (particle.baseY - particle.y) * 0.02;
+
+			particle.vx *= 0.95;
+			particle.vy *= 0.95;
+
+			particle.x += particle.vx;
+			particle.y += particle.vy;
+
+			ctx.fillStyle = `rgba(139, 92, 246, ${particle.opacity})`;
+			ctx.beginPath();
+			ctx.arc(particle.x, particle.y, 1.5, 0, Math.PI * 2);
+			ctx.fill();
+
+			particles.forEach((otherParticle) => {
+				const lineDx = otherParticle.x - particle.x;
+				const lineDy = otherParticle.y - particle.y;
+				const lineDistance = Math.sqrt(lineDx * lineDx + lineDy * lineDy);
+
+				if (lineDistance < 80) {
+					ctx.strokeStyle = `rgba(139, 92, 246, ${(1 - lineDistance / 80) * particle.opacity * 0.3})`;
+					ctx.lineWidth = 0.5;
+					ctx.beginPath();
+					ctx.moveTo(particle.x, particle.y);
+					ctx.lineTo(otherParticle.x, otherParticle.y);
+					ctx.stroke();
+				}
+			});
+		});
+
+		requestAnimationFrame(draw);
+	}
+
+	document.addEventListener('mousemove', (e) => {
+		mouseX = e.clientX;
+		mouseY = e.clientY;
+		mousePresent = true;
+	});
+
+	document.addEventListener('mouseleave', () => {
+		mousePresent = false;
+	});
+
+	window.addEventListener('resize', () => {
+		resizeCanvas();
+		initParticles();
+	});
+
+	resizeCanvas();
+	initParticles();
+	draw();
+</script>
