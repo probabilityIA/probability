@@ -270,7 +270,7 @@ export class IntegrationApiRepository implements IIntegrationRepository {
         });
     }
 
-    async getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, string> }> {
+    async getIntegrationTypePlatformCredentials(id: number): Promise<{ success: boolean; message: string; data: Record<string, unknown> }> {
         return this.fetch<{ success: boolean; message: string; data: Record<string, string> }>(`/integration-types/${id}/platform-credentials`);
     }
 

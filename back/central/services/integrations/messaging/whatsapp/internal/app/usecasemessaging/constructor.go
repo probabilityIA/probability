@@ -34,14 +34,15 @@ type WhatsAppClientFactory func(baseURL string) ports.IWhatsApp
 
 // usecases contiene todas las dependencias compartidas
 type usecases struct {
-	whatsApp         ports.IWhatsApp
-	clientFactory    WhatsAppClientFactory
+	whatsApp          ports.IWhatsApp
+	clientFactory     WhatsAppClientFactory
 	conversationCache ports.IConversationCache
 	credentialsCache  ports.ICredentialsCache
 	persistPublisher  ports.IPersistencePublisher
-	publisher        ports.IEventPublisher
-	log              log.ILogger
-	config           env.IConfig
+	publisher         ports.IEventPublisher
+	aiForwarder       ports.IAIForwarder
+	log               log.ILogger
+	config            env.IConfig
 }
 
 // New crea la instancia única de use case con todas las dependencias
@@ -53,6 +54,7 @@ func New(
 	publisher ports.IEventPublisher,
 	logger log.ILogger,
 	config env.IConfig,
+	aiForwarder ports.IAIForwarder,
 	clientFactory ...WhatsAppClientFactory,
 ) IUseCase {
 	uc := &usecases{
@@ -61,6 +63,7 @@ func New(
 		credentialsCache:  credentialsCache,
 		persistPublisher:  persistPublisher,
 		publisher:         publisher,
+		aiForwarder:       aiForwarder,
 		log:               logger,
 		config:            config,
 	}

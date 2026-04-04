@@ -263,6 +263,21 @@ const (
 	QueueWhatsAppMessageLogEvents = "whatsapp.messagelog.events"
 )
 
+// ─── Queues: AI Sales Agent ──────────────────────────────────────
+
+const (
+	// QueueWhatsAppAIIncoming recibe mensajes de WhatsApp para procesamiento por IA.
+	// Publicado cuando no hay conversacion activa para el numero de telefono.
+	// Publisher: integrations/messaging/whatsapp (handle-webhook.go)
+	// Consumer: modules/ai_sales/consumer
+	QueueWhatsAppAIIncoming = "whatsapp.ai.incoming"
+
+	// QueueWhatsAppAIResponse lleva respuestas generadas por IA de vuelta a WhatsApp.
+	// Publisher: modules/ai_sales/response_publisher
+	// Consumer: integrations/messaging/whatsapp/consumerai
+	QueueWhatsAppAIResponse = "whatsapp.ai.response"
+)
+
 // ─── Queues: Email ─────────────────────────────────────────────
 
 const (

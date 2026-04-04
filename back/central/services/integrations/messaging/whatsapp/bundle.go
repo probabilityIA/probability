@@ -11,6 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerai"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumeralert"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumerorder"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/queue/consumershipment"
@@ -64,6 +65,12 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 	// Publisher de eventos de negocio (RabbitMQ)
 	publisher := queue.NewWebhookPublisher(rabbit, logger)
 
+	// AI Forwarder: publica mensajes sin conversación activa a whatsapp.ai.incoming
+	var aiForwarder ports.IAIForwarder
+	if rabbit != nil {
+		aiForwarder = queue.NewAIForwarder(rabbit, redisClient, logger)
+	}
+
 	// 2. Capa de aplicación (casos de uso)
 	// Factory para crear clients con URL dinámica (de platform_creds, no de .env)
 	clientFactory := func(baseURL string) ports.IWhatsApp {
@@ -78,6 +85,7 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		publisher,
 		logger,
 		config,
+		aiForwarder,
 		clientFactory,
 	)
 
@@ -103,7 +111,6 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		}()
 
 		// Inicializar consumidor de alertas de monitoreo
-		// Usa credentialsCache para leer credenciales desde Redis
 		alertConsumer := consumeralert.New(rabbit, wa, credsCache, logger)
 		go func() {
 			if err := alertConsumer.Start(context.Background()); err != nil {
@@ -118,10 +125,15 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 				logger.Error().Err(err).Msg("Error starting shipment guide notification consumer")
 			}
 		}()
-	}
 
-	// El routing de eventos a WhatsApp ahora lo maneja el módulo unificado services/events
-	// (consume de RabbitMQ, consulta config en Redis cache, encola a orders.confirmation.requested)
+		// Inicializar consumidor de respuestas AI (whatsapp.ai.response → envío de texto libre)
+		aiResponseConsumer := consumerai.New(rabbit, wa, credsCache, logger)
+		go func() {
+			if err := aiResponseConsumer.Start(context.Background()); err != nil {
+				logger.Error().Err(err).Msg("Error starting AI response consumer")
+			}
+		}()
+	}
 
 	return &bundle{
 		wa:          wa,
@@ -163,8 +175,6 @@ func (b *bundle) TestConnection(ctx context.Context, config map[string]interface
 
 // GetWebhookURL retorna la URL del webhook de WhatsApp (implementa IWebhookProvider)
 func (b *bundle) GetWebhookURL(ctx context.Context, baseURL string, integrationID uint) (*core.WebhookInfo, error) {
-	// Construir la URL del webhook
-	// El webhook se recibe en: /integrations/whatsapp/webhook
 	webhookURL := fmt.Sprintf("%s/integrations/whatsapp/webhook", baseURL)
 
 	return &core.WebhookInfo{

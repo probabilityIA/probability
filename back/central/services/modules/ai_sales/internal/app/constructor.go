@@ -1,0 +1,44 @@
+package app
+
+import (
+	"context"
+
+	domain "github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/domain"
+	"github.com/secamc93/probability/back/central/shared/log"
+)
+
+// IUseCase define la interfaz del caso de uso de AI Sales
+type IUseCase interface {
+	HandleIncoming(ctx context.Context, dto domain.IncomingMessageDTO) error
+}
+
+type useCase struct {
+	aiProvider        domain.IAIProvider
+	sessionCache      domain.ISessionCache
+	productRepo       domain.IProductRepository
+	responsePublisher domain.IAIResponsePublisher
+	orderPublisher    domain.IAIOrderPublisher
+	configProvider    domain.IConfigProvider
+	log               log.ILogger
+}
+
+// New crea un nuevo caso de uso de AI Sales
+func New(
+	aiProvider domain.IAIProvider,
+	sessionCache domain.ISessionCache,
+	productRepo domain.IProductRepository,
+	responsePublisher domain.IAIResponsePublisher,
+	orderPublisher domain.IAIOrderPublisher,
+	configProvider domain.IConfigProvider,
+	logger log.ILogger,
+) IUseCase {
+	return &useCase{
+		aiProvider:        aiProvider,
+		sessionCache:      sessionCache,
+		productRepo:       productRepo,
+		responsePublisher: responsePublisher,
+		orderPublisher:    orderPublisher,
+		configProvider:    configProvider,
+		log:               logger,
+	}
+}

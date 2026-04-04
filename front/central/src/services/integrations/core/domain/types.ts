@@ -135,7 +135,7 @@ export interface CreateIntegrationTypeDTO {
     image_file?: File; // Archivo de imagen para subir
     base_url?: string;
     base_url_test?: string;
-    platform_credentials?: Record<string, string>; // Credenciales de plataforma (se encriptarán en backend)
+    platform_credentials?: Record<string, unknown>; // Credenciales de plataforma (se encriptarán en backend)
 }
 
 export interface UpdateIntegrationTypeDTO {
@@ -153,7 +153,7 @@ export interface UpdateIntegrationTypeDTO {
     remove_image?: boolean; // Flag para eliminar la imagen existente
     base_url?: string;
     base_url_test?: string;
-    platform_credentials?: Record<string, string>; // Credenciales de plataforma (se encriptarán en backend)
+    platform_credentials?: Record<string, unknown>; // Credenciales de plataforma (se encriptarán en backend)
 }
 
 // Información del webhook para configurar en plataformas externas

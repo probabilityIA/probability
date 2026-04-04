@@ -55,7 +55,16 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 		u.log.Debug(ctx).
 			Str("phone_number", phoneNumber).
 			Msg("[WhatsApp Webhook] - no hay conversación activa para este usuario")
-		// No hay conversación activa, ignorar mensaje
+
+		// Sin conversación activa: reenviar al agente AI si está configurado
+		if u.aiForwarder != nil {
+			if fwdErr := u.aiForwarder.ForwardToAI(ctx, phoneNumber, messageText, message.ID, message.Type); fwdErr != nil {
+				u.log.Error(ctx).Err(fwdErr).
+					Str("phone_number", phoneNumber).
+					Msg("[WhatsApp Webhook] - error reenviando a AI Sales")
+			}
+		}
+
 		return nil
 	}
 

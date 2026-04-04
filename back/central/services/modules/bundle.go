@@ -3,6 +3,7 @@ package modules
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/ai"
+	"github.com/secamc93/probability/back/central/services/modules/ai_sales"
 	"github.com/secamc93/probability/back/central/services/modules/customers"
 	"github.com/secamc93/probability/back/central/services/modules/dashboard"
 	"github.com/secamc93/probability/back/central/services/modules/drivers"
@@ -29,6 +30,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 	"github.com/secamc93/probability/back/central/shared/redis"
+	"github.com/secamc93/probability/back/central/shared/bedrock"
 	"github.com/secamc93/probability/back/central/shared/storage"
 )
 
@@ -44,7 +46,7 @@ type ModuleBundles struct {
 
 // New inicializa todos los módulos (excepto invoicing que requiere integrationCore)
 // y retorna referencias a bundles compartidos
-func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service) *ModuleBundles {
+func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, environment env.IConfig, rabbitMQ rabbitmq.IQueue, redisClient redis.IRedis, s3 storage.IS3Service, bedrockClient bedrock.IBedrock) *ModuleBundles {
 	// Inicializar módulo de payments
 	payments.New(router, database, logger, environment)
 
@@ -112,6 +114,13 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 		monitoring.New(router, logger, environment, rabbitMQ)
 	} else {
 		logger.Warn().Msg("RabbitMQ no disponible, módulo de monitoreo no se inicializará")
+	}
+
+	// Inicializar módulo de AI Sales (agente de ventas via WhatsApp + Bedrock)
+	if bedrockClient != nil && rabbitMQ != nil && redisClient != nil {
+		ai_sales.New(database, logger, rabbitMQ, redisClient, bedrockClient)
+	} else {
+		logger.Warn().Msg("AI Sales: Bedrock, RabbitMQ o Redis no disponible, módulo no se inicializará")
 	}
 
 	// Retornar referencias a bundles compartidos
