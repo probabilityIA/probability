@@ -3,12 +3,16 @@ package app
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
 	domain "github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/domain"
 )
+
+var thinkingTagRegex = regexp.MustCompile(`(?s)<thinking>.*?</thinking>`)
 
 const (
 	maxHistoryMessages = 20
@@ -166,7 +170,12 @@ func (uc *useCase) executeTools(ctx context.Context, content []domain.ContentBlo
 func extractTextFromContent(content []domain.ContentBlock) string {
 	for _, block := range content {
 		if block.Type == domain.ContentTypeText && block.Text != "" {
-			return block.Text
+			// Strip <thinking>...</thinking> blocks that some models include in output
+			clean := thinkingTagRegex.ReplaceAllString(block.Text, "")
+			clean = strings.TrimSpace(clean)
+			if clean != "" {
+				return clean
+			}
 		}
 	}
 	return ""
