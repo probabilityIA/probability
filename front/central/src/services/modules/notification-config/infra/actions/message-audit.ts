@@ -73,3 +73,46 @@ export async function getConversationMessagesAction(
         return { success: false, error: error.message };
     }
 }
+
+export async function sendManualReplyAction(
+    conversationId: string,
+    phoneNumber: string,
+    businessId: number,
+    text: string
+): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    try {
+        const repo = await getRepository();
+        const messageId = await repo.sendManualReply(conversationId, phoneNumber, businessId, text);
+        return { success: true, messageId };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function pauseAIAction(
+    conversationId: string,
+    phoneNumber: string,
+    businessId: number
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const repo = await getRepository();
+        await repo.pauseAI(conversationId, phoneNumber, businessId);
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function resumeAIAction(
+    conversationId: string,
+    phoneNumber: string,
+    businessId: number
+): Promise<{ success: boolean; error?: string }> {
+    try {
+        const repo = await getRepository();
+        await repo.resumeAI(conversationId, phoneNumber, businessId);
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}

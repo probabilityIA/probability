@@ -95,6 +95,18 @@ const (
 	InventoryLowStock        = "inventory.low_stock"
 )
 
+// ───────────────────────────────────────────
+// WHATSAPP EVENT TYPES
+// ───────────────────────────────────────────
+
+const (
+	CategoryWhatsApp = "whatsapp"
+
+	WhatsAppMessageReceived      = "whatsapp.message_received"
+	WhatsAppConversationStarted  = "whatsapp.conversation_started"
+	WhatsAppMessageStatusUpdated = "whatsapp.message_status_updated"
+)
+
 // NotificationTypeSSE es el ID del tipo de notificación SSE
 const NotificationTypeSSE = 1
 

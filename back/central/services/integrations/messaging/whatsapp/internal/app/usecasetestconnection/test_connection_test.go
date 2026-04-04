@@ -73,6 +73,10 @@ func (m *testWhatsApp) SendMessage(ctx context.Context, phoneNumberID uint, msg 
 	return "wamid.test.ok", nil
 }
 
+func (m *testWhatsApp) SendTextMessage(_ context.Context, _ uint, _, _, _ string) (string, error) {
+	return "wamid.text.test.ok", nil
+}
+
 // waFactory construye una factory que siempre retorna el mismo mock de IWhatsApp
 func waFactory(wa ports.IWhatsApp) func(string, log.ILogger) ports.IWhatsApp {
 	return func(_ string, _ log.ILogger) ports.IWhatsApp {

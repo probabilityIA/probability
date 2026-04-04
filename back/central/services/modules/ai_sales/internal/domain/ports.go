@@ -34,3 +34,15 @@ type IAIOrderPublisher interface {
 type IConfigProvider interface {
 	GetAIConfig(ctx context.Context) (*AIConfig, error)
 }
+
+// IAIPersistencePublisher persiste conversaciones y mensajes AI en BD via RabbitMQ
+type IAIPersistencePublisher interface {
+	PublishConversationUpsert(ctx context.Context, session *AISession) error
+	PublishMessageLog(ctx context.Context, conversationID, phoneNumber, direction, content string) error
+}
+
+// IAIPauseChecker verifica si el AI está pausado para un número (humano tomó control).
+// Implementado en infra/secondary/cache usando la misma clave Redis que el módulo WhatsApp.
+type IAIPauseChecker interface {
+	IsAIPaused(ctx context.Context, phoneNumber string) bool
+}

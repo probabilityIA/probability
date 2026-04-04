@@ -110,4 +110,69 @@ export class MessageAuditApiRepository {
 
         return response.json();
     }
+
+    async sendManualReply(
+        conversationId: string,
+        phoneNumber: string,
+        businessId: number,
+        text: string
+    ): Promise<string> {
+        const response = await fetch(
+            `${this.baseUrl}/whatsapp/conversations/${conversationId}/reply`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${this.token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ phone_number: phoneNumber, business_id: businessId, text }),
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to send reply");
+        }
+
+        const data = await response.json();
+        return data.message_id as string;
+    }
+
+    async pauseAI(conversationId: string, phoneNumber: string, businessId: number): Promise<void> {
+        const response = await fetch(
+            `${this.baseUrl}/whatsapp/conversations/${conversationId}/pause-ai`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${this.token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ phone_number: phoneNumber, business_id: businessId }),
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to pause AI");
+        }
+    }
+
+    async resumeAI(conversationId: string, phoneNumber: string, businessId: number): Promise<void> {
+        const response = await fetch(
+            `${this.baseUrl}/whatsapp/conversations/${conversationId}/resume-ai`,
+            {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${this.token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ phone_number: phoneNumber, business_id: businessId }),
+            }
+        );
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.message || "Failed to resume AI");
+        }
+    }
 }

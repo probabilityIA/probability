@@ -11,6 +11,7 @@ import (
 	whaerrors "github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/errors"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/domain/ports"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client/mappers"
+	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client/request"
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/secondary/client/response"
 	"github.com/secamc93/probability/back/central/shared/httpclient"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -119,6 +120,55 @@ func (c *whatsAppClient) SendMessage(ctx context.Context, phoneNumberID uint, ms
 		Uint("phone_number_id", phoneNumberID).
 		Str("to", msg.To).
 		Msg("WhatsApp message sent successfully")
+	return messageID, nil
+}
+
+// SendTextMessage envía un mensaje de texto libre vía WhatsApp Cloud API.
+// Solo funciona dentro de la ventana de servicio de 24h tras el último mensaje del cliente.
+func (c *whatsAppClient) SendTextMessage(ctx context.Context, phoneNumberID uint, toPhone, text, accessToken string) (string, error) {
+	c.logger.Info().
+		Uint("phone_number_id", phoneNumberID).
+		Str("to", toPhone).
+		Msg("Sending WhatsApp text message")
+
+	payload := request.TextMessageRequest{
+		MessagingProduct: "whatsapp",
+		To:               toPhone,
+		Type:             "text",
+		Text:             request.TextBody{Body: text},
+	}
+
+	endpoint := fmt.Sprintf("%d/messages", phoneNumberID)
+
+	var result response.SendMessageResponse
+	var errorResponse map[string]interface{}
+
+	resp, err := c.httpClient.R().
+		SetContext(ctx).
+		SetHeader("Authorization", "Bearer "+accessToken).
+		SetBody(payload).
+		SetResult(&result).
+		SetError(&errorResponse).
+		Post(endpoint)
+
+	if err != nil {
+		c.logger.Error().Err(err).Uint("phone_number_id", phoneNumberID).Msg("Network error sending text message to WhatsApp")
+		return "", fmt.Errorf("error al comunicarse con WhatsApp API: %w", err)
+	}
+
+	statusCode := resp.StatusCode()
+	if statusCode < 200 || statusCode >= 300 {
+		errorBody := resp.String()
+		c.logger.Error().Int("status_code", statusCode).Str("response_body", errorBody).Msg("WhatsApp API returned error on text message")
+		return "", parseMetaGraphError(errorBody, statusCode, phoneNumberID)
+	}
+
+	if len(result.Messages) == 0 {
+		return "", fmt.Errorf("la respuesta de WhatsApp no contiene mensajes: %s", resp.String())
+	}
+
+	messageID := result.Messages[0].ID
+	c.logger.Info().Str("message_id", messageID).Str("to", toPhone).Msg("WhatsApp text message sent successfully")
 	return messageID, nil
 }
 

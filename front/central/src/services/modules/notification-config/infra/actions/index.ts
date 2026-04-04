@@ -42,4 +42,7 @@ export {
   getMessageAuditStatsAction,
   listConversationsAction,
   getConversationMessagesAction,
+  sendManualReplyAction,
+  pauseAIAction,
+  resumeAIAction,
 } from "./message-audit";

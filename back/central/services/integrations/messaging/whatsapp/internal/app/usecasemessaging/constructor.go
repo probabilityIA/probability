@@ -19,6 +19,15 @@ type IUseCase interface {
 	SendTemplate(ctx context.Context, templateName, phoneNumber string, variables map[string]string, orderNumber string, businessID uint) (string, error)
 	SendTemplateWithConversation(ctx context.Context, templateName, phoneNumber string, variables map[string]string, conversationID string) (string, error)
 
+	// SendManualReply envía un mensaje de texto libre desde el dashboard del agente
+	SendManualReply(ctx context.Context, conversationID, phoneNumber string, businessID uint, text, sentBy string) (string, error)
+
+	// PauseAI pausa el bot AI y activa la sesión humana para una conversación
+	PauseAI(ctx context.Context, conversationID, phoneNumber string, businessID uint) error
+
+	// ResumeAI reactiva el bot AI para una conversación
+	ResumeAI(ctx context.Context, conversationID, phoneNumber string, businessID uint) error
+
 	// HandleWebhook
 	HandleIncomingMessage(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error
 	HandleMessageStatus(ctx context.Context, whPayload dtos.WebhookPayloadDTO) error
@@ -40,6 +49,7 @@ type usecases struct {
 	credentialsCache  ports.ICredentialsCache
 	persistPublisher  ports.IPersistencePublisher
 	publisher         ports.IEventPublisher
+	ssePublisher      ports.ISSEEventPublisher
 	aiForwarder       ports.IAIForwarder
 	log               log.ILogger
 	config            env.IConfig
@@ -55,6 +65,7 @@ func New(
 	logger log.ILogger,
 	config env.IConfig,
 	aiForwarder ports.IAIForwarder,
+	ssePublisher ports.ISSEEventPublisher,
 	clientFactory ...WhatsAppClientFactory,
 ) IUseCase {
 	uc := &usecases{
@@ -63,6 +74,7 @@ func New(
 		credentialsCache:  credentialsCache,
 		persistPublisher:  persistPublisher,
 		publisher:         publisher,
+		ssePublisher:      ssePublisher,
 		aiForwarder:       aiForwarder,
 		log:               logger,
 		config:            config,

@@ -13,13 +13,15 @@ type IUseCase interface {
 }
 
 type useCase struct {
-	aiProvider        domain.IAIProvider
-	sessionCache      domain.ISessionCache
-	productRepo       domain.IProductRepository
-	responsePublisher domain.IAIResponsePublisher
-	orderPublisher    domain.IAIOrderPublisher
-	configProvider    domain.IConfigProvider
-	log               log.ILogger
+	aiProvider           domain.IAIProvider
+	sessionCache         domain.ISessionCache
+	productRepo          domain.IProductRepository
+	responsePublisher    domain.IAIResponsePublisher
+	orderPublisher       domain.IAIOrderPublisher
+	configProvider       domain.IConfigProvider
+	persistencePublisher domain.IAIPersistencePublisher
+	pauseChecker         domain.IAIPauseChecker
+	log                  log.ILogger
 }
 
 // New crea un nuevo caso de uso de AI Sales
@@ -30,15 +32,19 @@ func New(
 	responsePublisher domain.IAIResponsePublisher,
 	orderPublisher domain.IAIOrderPublisher,
 	configProvider domain.IConfigProvider,
+	persistencePublisher domain.IAIPersistencePublisher,
+	pauseChecker domain.IAIPauseChecker,
 	logger log.ILogger,
 ) IUseCase {
 	return &useCase{
-		aiProvider:        aiProvider,
-		sessionCache:      sessionCache,
-		productRepo:       productRepo,
-		responsePublisher: responsePublisher,
-		orderPublisher:    orderPublisher,
-		configProvider:    configProvider,
-		log:               logger,
+		aiProvider:           aiProvider,
+		sessionCache:         sessionCache,
+		productRepo:          productRepo,
+		responsePublisher:    responsePublisher,
+		orderPublisher:       orderPublisher,
+		configProvider:       configProvider,
+		persistencePublisher: persistencePublisher,
+		pauseChecker:         pauseChecker,
+		log:                  logger,
 	}
 }

@@ -71,6 +71,14 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		aiForwarder = queue.NewAIForwarder(rabbit, redisClient, logger)
 	}
 
+	// SSE Publisher: notifica al frontend vía RabbitMQ → events module → SSE endpoint
+	var ssePublisher ports.ISSEEventPublisher
+	if rabbit != nil {
+		ssePublisher = queue.NewSSEPublisher(rabbit, logger)
+	} else {
+		ssePublisher = queue.NewNoopSSEPublisher()
+	}
+
 	// 2. Capa de aplicación (casos de uso)
 	// Factory para crear clients con URL dinámica (de platform_creds, no de .env)
 	clientFactory := func(baseURL string) ports.IWhatsApp {
@@ -86,6 +94,7 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		logger,
 		config,
 		aiForwarder,
+		ssePublisher,
 		clientFactory,
 	)
 

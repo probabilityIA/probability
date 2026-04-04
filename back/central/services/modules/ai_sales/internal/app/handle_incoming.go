@@ -16,6 +16,14 @@ const (
 )
 
 func (uc *useCase) HandleIncoming(ctx context.Context, dto domain.IncomingMessageDTO) error {
+	// Verificar si un humano tomó control de esta conversación
+	if uc.pauseChecker != nil && uc.pauseChecker.IsAIPaused(ctx, dto.PhoneNumber) {
+		uc.log.Info(ctx).
+			Str("phone", dto.PhoneNumber).
+			Msg("[AI Sales] - AI pausado por atención humana, ignorando mensaje")
+		return nil
+	}
+
 	// 1. Obtener config
 	config, err := uc.configProvider.GetAIConfig(ctx)
 	if err != nil {
@@ -39,6 +47,7 @@ func (uc *useCase) HandleIncoming(ctx context.Context, dto domain.IncomingMessag
 		Msg("Procesando mensaje AI incoming")
 
 	// 2. Get/create session
+	isNewSession := false
 	session, err := uc.sessionCache.Get(ctx, dto.PhoneNumber)
 	if err != nil || session == nil {
 		session = &domain.AISession{
@@ -48,6 +57,7 @@ func (uc *useCase) HandleIncoming(ctx context.Context, dto domain.IncomingMessag
 			Messages:    []domain.AIMessage{},
 			CreatedAt:   time.Now(),
 		}
+		isNewSession = true
 	}
 
 	// 3. Append user message
@@ -57,6 +67,9 @@ func (uc *useCase) HandleIncoming(ctx context.Context, dto domain.IncomingMessag
 			{Type: domain.ContentTypeText, Text: dto.MessageText},
 		},
 	})
+
+	// Persistir mensaje entrante y conversación
+	uc.persistMessage(ctx, session, "inbound", dto.MessageText, isNewSession)
 
 	// 4. Trim history
 	if len(session.Messages) > maxHistoryMessages {
@@ -99,6 +112,7 @@ func (uc *useCase) HandleIncoming(ctx context.Context, dto domain.IncomingMessag
 
 			// Save session y publicar respuesta
 			uc.saveSession(ctx, session, config)
+			uc.persistMessage(ctx, session, "outbound", responseText, false)
 			return uc.responsePublisher.PublishResponse(ctx, dto.PhoneNumber, businessID, responseText)
 		}
 
@@ -177,4 +191,18 @@ func (uc *useCase) sendErrorResponse(ctx context.Context, phone string, config *
 		businessID = config.DemoBusinessID
 	}
 	return uc.responsePublisher.PublishResponse(ctx, phone, businessID, msg)
+}
+
+func (uc *useCase) persistMessage(ctx context.Context, session *domain.AISession, direction, content string, isNewSession bool) {
+	if uc.persistencePublisher == nil {
+		return
+	}
+	if isNewSession {
+		if err := uc.persistencePublisher.PublishConversationUpsert(ctx, session); err != nil {
+			uc.log.Error(ctx).Err(err).Msg("Error persistiendo conversación AI")
+		}
+	}
+	if err := uc.persistencePublisher.PublishMessageLog(ctx, session.ID, session.PhoneNumber, direction, content); err != nil {
+		uc.log.Error(ctx).Err(err).Str("direction", direction).Msg("Error persistiendo mensaje AI")
+	}
 }

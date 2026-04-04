@@ -56,7 +56,46 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 			Str("phone_number", phoneNumber).
 			Msg("[WhatsApp Webhook] - no hay conversación activa para este usuario")
 
-		// Sin conversación activa: reenviar al agente AI si está configurado
+		// ¿Hay un humano atendiendo este chat desde el dashboard?
+		if humanSession, hsErr := u.conversationCache.GetHumanSession(ctx, phoneNumber); hsErr == nil && humanSession != nil {
+			u.log.Info(ctx).
+				Str("phone_number", phoneNumber).
+				Str("conversation_id", humanSession.ConversationID).
+				Msg("[WhatsApp Webhook] - mensaje enrutado a sesión humana (dashboard)")
+
+			// Persistir mensaje del cliente en BD (async)
+			humanLog := &entities.MessageLog{
+				ConversationID: humanSession.ConversationID,
+				Direction:      entities.MessageDirectionInbound,
+				MessageID:      message.ID,
+				Content:        messageText,
+				Status:         entities.MessageStatusDelivered,
+				CreatedAt:      time.Now(),
+			}
+			if logErr := u.persistPublisher.PublishMessageLogCreated(ctx, humanLog); logErr != nil {
+				u.log.Error(ctx).Err(logErr).
+					Str("conversation_id", humanSession.ConversationID).
+					Msg("[WhatsApp Webhook] - error persistiendo mensaje de sesión humana")
+			}
+
+			// Publicar SSE → aparece en tiempo real en el chat del dashboard
+			if sseErr := u.ssePublisher.PublishMessageReceived(
+				ctx,
+				humanSession.BusinessID,
+				humanSession.ConversationID,
+				phoneNumber,
+				message.ID,
+				messageText,
+			); sseErr != nil {
+				u.log.Error(ctx).Err(sseErr).
+					Str("conversation_id", humanSession.ConversationID).
+					Msg("[WhatsApp Webhook] - error publicando SSE de sesión humana")
+			}
+
+			return nil
+		}
+
+		// Sin sesión humana: reenviar al agente AI si está configurado
 		if u.aiForwarder != nil {
 			if fwdErr := u.aiForwarder.ForwardToAI(ctx, phoneNumber, messageText, message.ID, message.Type); fwdErr != nil {
 				u.log.Error(ctx).Err(fwdErr).
@@ -92,6 +131,20 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 			Str("message_id", message.ID).
 			Msg("[WhatsApp Webhook] - error publicando mensaje entrante en log")
 		// Continuamos aunque falle el log
+	}
+
+	// Publicar SSE para actualización en tiempo real del dashboard
+	if sseErr := u.ssePublisher.PublishMessageReceived(
+		ctx,
+		conversation.BusinessID,
+		conversation.ID,
+		phoneNumber,
+		message.ID,
+		messageText,
+	); sseErr != nil {
+		u.log.Error(ctx).Err(sseErr).
+			Str("conversation_id", conversation.ID).
+			Msg("[WhatsApp Webhook] - error publicando SSE message_received")
 	}
 
 	// 4. Procesar según el estado actual de la conversación
@@ -304,6 +357,15 @@ func (u *usecases) processMessageStatus(ctx context.Context, status dtos.Webhook
 			Str("message_id", status.ID).
 			Msg("[WhatsApp Webhook] - error publicando actualización de estado")
 		return err
+	}
+
+	// Publicar SSE para que el frontend actualice el estado visual del mensaje (✓✓ azul, etc.)
+	if conv, convErr := u.conversationCache.GetActiveByPhone(ctx, status.RecipientID); convErr == nil && conv != nil {
+		if sseErr := u.ssePublisher.PublishMessageStatusUpdated(ctx, conv.BusinessID, status.ID, string(messageStatus)); sseErr != nil {
+			u.log.Error(ctx).Err(sseErr).
+				Str("message_id", status.ID).
+				Msg("[WhatsApp Webhook] - error publicando SSE message_status_updated")
+		}
 	}
 
 	u.log.Info(ctx).

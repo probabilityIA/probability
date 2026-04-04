@@ -9,11 +9,21 @@ import (
 
 type IWhatsApp interface {
 	SendMessage(ctx context.Context, phoneNumberID uint, msg entities.TemplateMessage, accessToken string) (string, error)
+	SendTextMessage(ctx context.Context, phoneNumberID uint, toPhone, text, accessToken string) (string, error)
 }
 
 // ============================================
 // CACHE INTERFACES (reemplazan repositorios DB)
 // ============================================
+
+// HumanSession representa una sesión de atención humana activa.
+// Se crea cuando un agente humano responde manualmente a un cliente.
+// Permite que las respuestas del cliente lleguen al dashboard en lugar del bot AI.
+type HumanSession struct {
+	ConversationID string
+	BusinessID     uint
+	PhoneNumber    string
+}
 
 // IConversationCache define operaciones de cache para conversaciones WhatsApp.
 // Las conversaciones se mantienen en Redis como fuente primaria de estado
@@ -34,6 +44,24 @@ type IConversationCache interface {
 
 	// Expire marca una conversación como expirada y limpia índices activos
 	Expire(ctx context.Context, id string) error
+
+	// ActivateHumanSession crea o renueva una sesión de atención humana para un teléfono.
+	// TTL: 24h (alineado con la ventana de servicio de WhatsApp).
+	// Cada llamada renueva el TTL automáticamente.
+	ActivateHumanSession(ctx context.Context, phoneNumber, conversationID string, businessID uint) error
+
+	// GetHumanSession retorna la sesión humana activa para un teléfono.
+	// Retorna nil, nil si no existe (no es un error).
+	GetHumanSession(ctx context.Context, phoneNumber string) (*HumanSession, error)
+
+	// SetAIPaused pausa el bot AI para un teléfono. TTL: 24h.
+	SetAIPaused(ctx context.Context, phoneNumber, conversationID string, businessID uint) error
+
+	// IsAIPaused retorna true si el AI está pausado para este teléfono.
+	IsAIPaused(ctx context.Context, phoneNumber string) bool
+
+	// ClearAIPaused reactiva el AI para un teléfono.
+	ClearAIPaused(ctx context.Context, phoneNumber string) error
 }
 
 // ICredentialsCache lee credenciales de WhatsApp desde Redis.
@@ -100,4 +128,12 @@ type IAIForwarder interface {
 // Implementado por integrations/core — evita que WhatsApp dependa de Redis directamente.
 type IPlatformCredentialsGetter interface {
 	GetCachedPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]any, error)
+}
+
+// ISSEEventPublisher publica eventos SSE al exchange de eventos (para notificar al frontend en tiempo real).
+// Implementado por infra/secondary/queue/sse_publisher.go usando rabbitmq.PublishEvent.
+type ISSEEventPublisher interface {
+	PublishMessageReceived(ctx context.Context, businessID uint, conversationID, phoneNumber, messageID, content string) error
+	PublishConversationStarted(ctx context.Context, businessID uint, conversationID, phoneNumber string) error
+	PublishMessageStatusUpdated(ctx context.Context, businessID uint, messageID, status string) error
 }

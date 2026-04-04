@@ -16,6 +16,13 @@ type IHandler interface {
 	// Template
 	SendTemplate(c *gin.Context)
 
+	// Manual reply desde dashboard
+	SendManualReply(c *gin.Context)
+
+	// AI control
+	PauseAI(c *gin.Context)
+	ResumeAI(c *gin.Context)
+
 	// Webhook
 	VerifyWebhook(c *gin.Context)
 	ReceiveWebhook(c *gin.Context)

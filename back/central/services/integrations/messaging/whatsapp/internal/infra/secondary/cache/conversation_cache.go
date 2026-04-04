@@ -18,11 +18,14 @@ const (
 	conversationTTL = 25 * time.Hour
 	// TTL corto para conversaciones expiradas (cleanup)
 	expiredTTL = 1 * time.Hour
+	// TTL de sesión humana: 24h (ventana de servicio WhatsApp)
+	humanSessionTTL = 24 * time.Hour
 
 	// Prefijos de claves Redis
-	convKeyPrefix      = "whatsapp:conv:"
-	convPhoneOrderIdx  = "whatsapp:conv:idx:po:"
-	convActivePhoneIdx = "whatsapp:conv:idx:active:"
+	convKeyPrefix       = "whatsapp:conv:"
+	convPhoneOrderIdx   = "whatsapp:conv:idx:po:"
+	convActivePhoneIdx  = "whatsapp:conv:idx:active:"
+	humanSessionPrefix  = "whatsapp:human_session:"
 )
 
 // conversationCache implementa IConversationCache usando Redis
@@ -190,6 +193,98 @@ func (c *conversationCache) GetActiveByPhone(ctx context.Context, phoneNumber st
 	}
 
 	return conv, nil
+}
+
+// humanSessionKey genera la clave Redis para la sesión humana de un teléfono
+func humanSessionKey(phone string) string {
+	return humanSessionPrefix + phone
+}
+
+// cachedHumanSession es la representación JSON de una sesión humana en Redis
+type cachedHumanSession struct {
+	ConversationID string `json:"conversation_id"`
+	BusinessID     uint   `json:"business_id"`
+	PhoneNumber    string `json:"phone_number"`
+}
+
+// ActivateHumanSession crea o renueva la sesión de atención humana para un teléfono.
+// Cada llamada reinicia el TTL de 24h, permitiendo conversaciones largas.
+func (c *conversationCache) ActivateHumanSession(ctx context.Context, phoneNumber, conversationID string, businessID uint) error {
+	session := cachedHumanSession{
+		ConversationID: conversationID,
+		BusinessID:     businessID,
+		PhoneNumber:    phoneNumber,
+	}
+	data, err := json.Marshal(session)
+	if err != nil {
+		return fmt.Errorf("error serializando human session: %w", err)
+	}
+	if err := c.redis.Set(ctx, humanSessionKey(phoneNumber), string(data), humanSessionTTL); err != nil {
+		return fmt.Errorf("error guardando human session en Redis: %w", err)
+	}
+	c.log.Info(ctx).
+		Str("phone", phoneNumber).
+		Str("conversation_id", conversationID).
+		Uint("business_id", businessID).
+		Msg("[HumanSession] - sesión de atención humana activada")
+	return nil
+}
+
+// GetHumanSession retorna la sesión humana activa para un teléfono.
+// Retorna nil, nil si no existe (no es error).
+func (c *conversationCache) GetHumanSession(ctx context.Context, phoneNumber string) (*ports.HumanSession, error) {
+	data, err := c.redis.Get(ctx, humanSessionKey(phoneNumber))
+	if err != nil {
+		// No existe — comportamiento normal, no es error
+		return nil, nil
+	}
+	var cached cachedHumanSession
+	if err := json.Unmarshal([]byte(data), &cached); err != nil {
+		c.log.Error(ctx).Err(err).Str("phone", phoneNumber).Msg("[HumanSession] - error deserializando human session")
+		return nil, nil
+	}
+	return &ports.HumanSession{
+		ConversationID: cached.ConversationID,
+		BusinessID:     cached.BusinessID,
+		PhoneNumber:    cached.PhoneNumber,
+	}, nil
+}
+
+const (
+	aiPausedPrefix = "whatsapp:ai_paused:"
+	aiPausedTTL    = 24 * time.Hour
+)
+
+type cachedAIPaused struct {
+	ConversationID string `json:"conversation_id"`
+	BusinessID     uint   `json:"business_id"`
+}
+
+func aiPausedKey(phone string) string { return aiPausedPrefix + phone }
+
+func (c *conversationCache) SetAIPaused(ctx context.Context, phoneNumber, conversationID string, businessID uint) error {
+	data, err := json.Marshal(cachedAIPaused{ConversationID: conversationID, BusinessID: businessID})
+	if err != nil {
+		return fmt.Errorf("error serializando ai paused: %w", err)
+	}
+	if err := c.redis.Set(ctx, aiPausedKey(phoneNumber), string(data), aiPausedTTL); err != nil {
+		return fmt.Errorf("error guardando ai paused en Redis: %w", err)
+	}
+	c.log.Info(ctx).Str("phone", phoneNumber).Msg("[AIPaused] - AI pausado para atención humana")
+	return nil
+}
+
+func (c *conversationCache) IsAIPaused(ctx context.Context, phoneNumber string) bool {
+	_, err := c.redis.Get(ctx, aiPausedKey(phoneNumber))
+	return err == nil
+}
+
+func (c *conversationCache) ClearAIPaused(ctx context.Context, phoneNumber string) error {
+	if err := c.redis.Delete(ctx, aiPausedKey(phoneNumber)); err != nil {
+		return fmt.Errorf("error borrando ai paused: %w", err)
+	}
+	c.log.Info(ctx).Str("phone", phoneNumber).Msg("[AIPaused] - AI reactivado")
+	return nil
 }
 
 // Expire marca una conversación como expirada y limpia índices activos

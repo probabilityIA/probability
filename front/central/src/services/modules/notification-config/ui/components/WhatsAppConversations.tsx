@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { useSSE } from '@/shared/hooks/use-sse';
 import {
   listConversationsAction,
   getConversationMessagesAction,
+  sendManualReplyAction,
+  pauseAIAction,
+  resumeAIAction,
 } from '../../infra/actions';
 import type {
   ConversationSummary,
@@ -88,7 +92,20 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
   // Mobile view toggle
   const [showChat, setShowChat] = useState(false);
 
+  // Composer state
+  const [replyText, setReplyText] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  // AI control state — true = AI is active (human cannot write)
+  const [aiPaused, setAiPaused] = useState(false);
+  const [aiToggling, setAiToggling] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  // Ref para tracking de conversación activa sin reconectar el SSE
+  const selectedIdRef = useRef<string | null>(null);
+  useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
 
   // ─── Fetch conversations ────────────────
   const fetchConversations = useCallback(async () => {
@@ -139,6 +156,149 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [detail]);
+
+  // Reset composer and AI state when switching conversations
+  useEffect(() => {
+    setReplyText('');
+    setSendError(null);
+    setAiPaused(false); // assume AI is active until user toggles
+  }, [selectedId]);
+
+  // Ventana activa: el cliente escribió en las últimas 24h
+  // Buscamos el último mensaje inbound en el historial
+  const isWindowActive = (() => {
+    if (!detail?.messages?.length) return false;
+    const lastInbound = [...detail.messages].reverse().find(m => m.direction === 'inbound');
+    if (!lastInbound) return false;
+    const diffHours = (Date.now() - new Date(lastInbound.created_at).getTime()) / 3600000;
+    return diffHours < 24;
+  })();
+
+  // ─── AI toggle ────────────────
+  const handleToggleAI = useCallback(async () => {
+    if (!selectedId || !detail || aiToggling) return;
+    setAiToggling(true);
+    const phone = detail.phone_number;
+    const biz = businessId ?? 0;
+
+    if (aiPaused) {
+      // Resume: reactivate AI
+      const res = await resumeAIAction(selectedId, phone, biz);
+      if (res.success) setAiPaused(false);
+    } else {
+      // Pause: human takes control
+      const res = await pauseAIAction(selectedId, phone, biz);
+      if (res.success) setAiPaused(true);
+    }
+    setAiToggling(false);
+  }, [selectedId, detail, businessId, aiPaused, aiToggling]);
+
+  // ─── Send manual reply ────────────────
+  const handleSend = useCallback(async () => {
+    if (!replyText.trim() || !selectedId || !detail) return;
+    setSending(true);
+    setSendError(null);
+
+    const phone = detail.phone_number;
+    const biz = businessId ?? 0;
+    const text = replyText.trim();
+
+    // Optimistic: agregar mensaje al chat inmediatamente
+    const optimisticMsg: ConversationMessage = {
+      id: `optimistic-${Date.now()}`,
+      direction: 'outbound',
+      message_id: '',
+      template_name: '',
+      content: text,
+      status: 'sent',
+      created_at: new Date().toISOString(),
+    };
+    setDetail(prev => prev ? {
+      ...prev,
+      messages: [...prev.messages, optimisticMsg],
+    } : prev);
+    setReplyText('');
+
+    const res = await sendManualReplyAction(selectedId, phone, biz, text);
+    if (!res.success) {
+      setSendError(res.error ?? 'Error al enviar');
+      // Revertir optimistic
+      setDetail(prev => prev ? {
+        ...prev,
+        messages: prev.messages.filter(m => m.id !== optimisticMsg.id),
+      } : prev);
+      setReplyText(text);
+    }
+    setSending(false);
+  }, [replyText, selectedId, detail, businessId]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
+
+  // ─── SSE: actualizaciones en tiempo real ────────────────
+  useSSE({
+    businessId: businessId ?? 0,
+    eventTypes: [
+      'whatsapp.message_received',
+      'whatsapp.conversation_started',
+      'whatsapp.message_status_updated',
+    ],
+    onMessage: (event: MessageEvent) => {
+      try {
+        const envelope = JSON.parse(event.data) as {
+          type: string;
+          timestamp: string;
+          data: {
+            conversation_id?: string;
+            message_id?: string;
+            content?: string;
+            status?: string;
+          };
+        };
+        const type = envelope.type || event.type;
+        const data = envelope.data || {};
+
+        if (type === 'whatsapp.message_received') {
+          // Si es la conversación activa, agregar el mensaje al chat
+          if (data.conversation_id && data.conversation_id === selectedIdRef.current) {
+            const newMsg: ConversationMessage = {
+              id: data.message_id || `sse-${Date.now()}`,
+              direction: 'inbound',
+              message_id: data.message_id || '',
+              template_name: '',
+              content: data.content || '',
+              status: 'delivered',
+              created_at: envelope.timestamp || new Date().toISOString(),
+            };
+            setDetail(prev => prev ? { ...prev, messages: [...prev.messages, newMsg] } : prev);
+          }
+          // Siempre refrescar la lista para actualizar preview y contador
+          fetchConversations();
+        } else if (type === 'whatsapp.conversation_started') {
+          fetchConversations();
+        } else if (type === 'whatsapp.message_status_updated' && data.message_id && data.status) {
+          // Actualizar estado visual del mensaje (✓✓ azul para leído, etc.)
+          setDetail(prev => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: prev.messages.map(m =>
+                m.message_id === data.message_id
+                  ? { ...m, status: data.status as string }
+                  : m
+              ),
+            };
+          });
+        }
+      } catch {
+        // ignorar errores de parse
+      }
+    },
+  });
 
   // ─── Group messages by date ────────────────
   const groupedMessages: { date: string; messages: ConversationMessage[] }[] = [];
@@ -350,7 +510,30 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                     })()}
                   </div>
                 </div>
-                <span className="text-[10px] text-gray-400 dark:text-gray-500">{detail.messages.length} mensajes</span>
+                {/* AI toggle */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500">{detail.messages.length} msg</span>
+                  <button
+                    onClick={handleToggleAI}
+                    disabled={aiToggling}
+                    title={aiPaused ? 'Reactivar IA' : 'Pausar IA y tomar control'}
+                    className={`flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-medium transition-colors disabled:opacity-50 ${
+                      aiPaused
+                        ? 'bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-300'
+                        : 'bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/40 dark:text-green-300'
+                    }`}
+                  >
+                    {aiToggling ? (
+                      <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                      </svg>
+                    ) : (
+                      <span>{aiPaused ? '🔴' : '🟢'}</span>
+                    )}
+                    <span>IA {aiPaused ? 'Pausada' : 'Activa'}</span>
+                  </button>
+                </div>
               </div>
 
               {/* Messages area */}
@@ -413,11 +596,70 @@ export function WhatsAppConversations({ businessId }: WhatsAppConversationsProps
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Bottom bar - read only notice */}
-              <div className="px-4 py-2 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-750">
-                <p className="text-[10px] text-center text-gray-400 dark:text-gray-500">
-                  Vista de solo lectura — historial de mensajes automaticos
-                </p>
+              {/* Bottom bar */}
+              <div className="border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2">
+                {!aiPaused ? (
+                  /* AI is active — show blocked state */
+                  <div className="flex flex-col items-center justify-center py-2 gap-1">
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                      La IA está respondiendo. Pausa la IA para escribir manualmente.
+                    </p>
+                    <button
+                      onClick={handleToggleAI}
+                      disabled={aiToggling}
+                      className="px-3 py-1 text-[11px] bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300 rounded-full hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors disabled:opacity-50"
+                    >
+                      {aiToggling ? 'Pausando...' : '🔴 Pausar IA y escribir'}
+                    </button>
+                  </div>
+                ) : (
+                  /* AI paused — composer active */
+                  <>
+                    {!isWindowActive && (
+                      <p className="text-[10px] text-amber-500 dark:text-amber-400 mb-1 text-center">
+                        ⚠ El cliente no ha respondido en 24h — Meta puede rechazar el mensaje
+                      </p>
+                    )}
+                    {sendError && (
+                      <p className="text-[10px] text-red-500 mb-1 text-center">{sendError}</p>
+                    )}
+                    <div className="flex items-end gap-2">
+                      <textarea
+                        ref={textareaRef}
+                        value={replyText}
+                        onChange={e => setReplyText(e.target.value)}
+                        onKeyDown={handleKeyDown}
+                        placeholder="Escribe un mensaje... (Enter para enviar, Shift+Enter para nueva línea)"
+                        rows={1}
+                        disabled={sending}
+                        className="flex-1 resize-none bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-green-500 placeholder-gray-400 disabled:opacity-50 max-h-32 overflow-y-auto"
+                        style={{ fieldSizing: 'content' } as React.CSSProperties}
+                      />
+                      <button
+                        onClick={handleSend}
+                        disabled={sending || !replyText.trim()}
+                        className="flex-shrink-0 bg-green-500 hover:bg-green-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded-full p-2 transition-colors"
+                        title="Enviar mensaje"
+                      >
+                        {sending ? (
+                          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                    {isWindowActive && (
+                      <p className="text-[9px] text-green-600 dark:text-green-400 mt-1 text-center">
+                        Ventana activa — el cliente respondio recientemente
+                      </p>
+                    )}
+                  </>
+                )}
               </div>
             </>
           ) : (
