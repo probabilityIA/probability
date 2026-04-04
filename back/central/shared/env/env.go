@@ -206,6 +206,11 @@ type Config struct {
 	// Bold.co
 	BoldIdentityKey string `env:"BOLD_IDENTITY_KEY"`
 	BoldSecretKey   string `env:"BOLD_SECRET_KEY"`
+
+	// Amazon Bedrock (AI)
+	BedrockAccessKey string `env:"BEDROCK_ACCESS_KEY"`
+	BedrockSecretKey string `env:"BEDROCK_SECRET_KEY"`
+	BedrockRegion    string `env:"BEDROCK_REGION"`
 }
 
 func splitTag(tag string) []string {

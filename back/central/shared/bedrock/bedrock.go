@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/bedrockruntime"
 	"github.com/secamc93/probability/back/central/shared/env"
 	"github.com/secamc93/probability/back/central/shared/log"
@@ -40,12 +42,27 @@ func New(logger log.ILogger, cfg env.IConfig) IBedrock {
 }
 
 func (b *bedrock) connect(ctx context.Context) error {
-	region := "us-east-1"
+	region := b.env.Get("BEDROCK_REGION")
+	if region == "" {
+		region = "us-east-1"
+	}
 
-	cfg, err := config.LoadDefaultConfig(ctx,
+	accessKey := b.env.Get("BEDROCK_ACCESS_KEY")
+	secretKey := b.env.Get("BEDROCK_SECRET_KEY")
+
+	opts := []func(*config.LoadOptions) error{
 		config.WithRegion(region),
-		config.WithSharedConfigProfile("probability"),
-	)
+	}
+
+	if accessKey != "" && secretKey != "" {
+		opts = append(opts, config.WithCredentialsProvider(
+			aws.NewCredentialsCache(
+				credentials.NewStaticCredentialsProvider(accessKey, secretKey, ""),
+			),
+		))
+	}
+
+	cfg, err := config.LoadDefaultConfig(ctx, opts...)
 	if err != nil {
 		b.log.Error(ctx).
 			Err(err).
