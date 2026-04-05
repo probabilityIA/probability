@@ -74,6 +74,11 @@ func (m *CacheMock) SetPlatformCredentials(ctx context.Context, integrationTypeI
 	return args.Error(0)
 }
 
+func (m *CacheMock) InvalidatePlatformCredentials(ctx context.Context, integrationTypeID uint) error {
+	args := m.Called(ctx, integrationTypeID)
+	return args.Error(0)
+}
+
 func (m *CacheMock) GetPlatformCredentials(ctx context.Context, integrationTypeID uint) (map[string]interface{}, error) {
 	args := m.Called(ctx, integrationTypeID)
 	if args.Get(0) == nil {

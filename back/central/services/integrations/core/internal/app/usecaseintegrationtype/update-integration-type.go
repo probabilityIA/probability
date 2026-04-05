@@ -142,6 +142,13 @@ func (uc *integrationTypeUseCase) UpdateIntegrationType(ctx context.Context, id 
 		Uint("id", id).
 		Msg("Tipo de integración actualizado exitosamente")
 
+	// Invalidar caché de platform_credentials si se actualizaron
+	if dto.PlatformCredentials != nil {
+		if cacheErr := uc.cache.InvalidatePlatformCredentials(ctx, id); cacheErr != nil {
+			uc.log.Warn(ctx).Err(cacheErr).Uint("type_id", id).Msg("Error al invalidar caché de platform credentials")
+		}
+	}
+
 	// Invalidar caché de todas las integraciones que usan este tipo
 	// para que en la próxima consulta se recarguen con las URLs actualizadas
 	if integrations, err := uc.repo.ListIntegrationsByIntegrationTypeID(ctx, id); err == nil {

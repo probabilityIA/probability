@@ -196,6 +196,17 @@ func (c *IntegrationCache) InvalidateIntegration(ctx context.Context, integratio
 	return nil
 }
 
+// InvalidatePlatformCredentials elimina las credenciales de plataforma de un tipo de integración del cache
+func (c *IntegrationCache) InvalidatePlatformCredentials(ctx context.Context, integrationTypeID uint) error {
+	key := platformCredentialsKey(integrationTypeID)
+	if err := c.redis.Delete(ctx, key); err != nil {
+		c.log.Warn(ctx).Err(err).Uint("integration_type_id", integrationTypeID).Msg("Failed to delete platform credentials cache")
+		return err
+	}
+	c.log.Info(ctx).Uint("integration_type_id", integrationTypeID).Msg("Platform credentials cache invalidated")
+	return nil
+}
+
 // InvalidateMetadata elimina solo metadata de cache, preservando credentials
 func (c *IntegrationCache) InvalidateMetadata(ctx context.Context, integrationID uint) error {
 	if err := c.redis.Delete(ctx, integrationKey(integrationID)); err != nil {

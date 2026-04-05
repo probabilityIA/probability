@@ -181,6 +181,7 @@ type IIntegrationCache interface {
 	// Invalidación
 	InvalidateIntegration(ctx context.Context, integrationID uint) error
 	InvalidateMetadata(ctx context.Context, integrationID uint) error
+	InvalidatePlatformCredentials(ctx context.Context, integrationTypeID uint) error
 
 	// Búsquedas indexadas
 	GetByCode(ctx context.Context, code string) (*CachedIntegration, error)
