@@ -23,8 +23,10 @@ export interface Product {
 
     // Inventario
     stock: number;
+    stock_quantity?: number;
     stock_status?: string;
     manage_stock: boolean;
+    track_inventory: boolean;
 
     // Dimensiones y peso
     weight?: number;
@@ -103,6 +105,7 @@ export interface CreateProductDTO {
     stock: number;
     stock_status?: string;
     manage_stock?: boolean;
+    track_inventory?: boolean;
     weight?: number;
     height?: number;
     width?: number;
@@ -125,6 +128,7 @@ export interface UpdateProductDTO {
     stock?: number;
     stock_status?: string;
     manage_stock?: boolean;
+    track_inventory?: boolean;
     weight?: number;
     height?: number;
     width?: number;

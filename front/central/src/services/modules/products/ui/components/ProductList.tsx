@@ -161,6 +161,9 @@ const ProductList = forwardRef(function ProductList(
                                     Stock
                                 </th>
                                 <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
+                                    Inventario
+                                </th>
+                                <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden lg:table-cell">
                                     Estado
                                 </th>
                                 <th className="px-3 sm:px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider hidden md:table-cell">
@@ -174,7 +177,7 @@ const ProductList = forwardRef(function ProductList(
                         <tbody>
                             {products.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className="px-4 sm:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
+                                    <td colSpan={8} className="px-4 sm:px-6 py-8 text-center text-gray-500 dark:text-gray-400">
                                         No hay productos disponibles
                                     </td>
                                 </tr>
@@ -208,8 +211,17 @@ const ProductList = forwardRef(function ProductList(
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap">
                                             <div className="text-sm text-gray-900 dark:text-white">
-                                                {product.manage_stock ? product.stock : '∞'}
+                                                {product.track_inventory ? (product.stock_quantity ?? product.stock ?? 0) : '∞'}
                                             </div>
+                                        </td>
+                                        <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
+                                            <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                                                product.track_inventory
+                                                    ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300'
+                                                    : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
+                                            }`}>
+                                                {product.track_inventory ? 'Habilitado' : 'No'}
+                                            </span>
                                         </td>
                                         <td className="px-3 sm:px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                                             <button

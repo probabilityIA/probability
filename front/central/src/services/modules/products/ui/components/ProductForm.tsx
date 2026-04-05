@@ -29,6 +29,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
         currency: product?.currency || 'COP',
         stock: product?.stock || 0,
         manage_stock: product?.manage_stock ?? true,
+        track_inventory: product?.track_inventory ?? true,
         is_active: product?.is_active ?? true,
         status: product?.status || 'active',
         weight: product?.weight || undefined,
@@ -62,6 +63,7 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                     cost_price: formData.cost_price,
                     currency: formData.currency,
                     manage_stock: formData.manage_stock,
+                    track_inventory: formData.track_inventory,
                     is_active: formData.is_active,
                     status: formData.status,
                     weight: formData.weight,
@@ -246,8 +248,8 @@ export default function ProductForm({ product, onSuccess, onCancel, businessId }
                         <label className="flex items-center gap-2 cursor-pointer">
                             <input
                                 type="checkbox"
-                                checked={formData.manage_stock ?? true}
-                                onChange={(e) => handleChange('manage_stock', e.target.checked)}
+                                checked={formData.track_inventory ?? true}
+                                onChange={(e) => handleChange('track_inventory', e.target.checked)}
                                 className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                             />
                             <span className="text-sm text-gray-700 dark:text-gray-200">Gestionar inventario</span>

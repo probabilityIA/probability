@@ -28,6 +28,7 @@ const makeProduct = (overrides: Partial<Product> = {}): Product => ({
     currency: 'COP',
     stock: 100,
     manage_stock: true,
+    track_inventory: true,
     status: 'active',
     is_active: true,
     ...overrides,
