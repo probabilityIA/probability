@@ -21,11 +21,8 @@ func (uc *useCase) AdjustStock(ctx context.Context, dto dtos.AdjustStockDTO) (*e
 		return nil, domainerrors.ErrProductNotFound
 	}
 
-	// Auto-habilitar track_inventory si no está activo
 	if !trackInventory {
-		if err := uc.repo.EnableProductTrackInventory(ctx, dto.ProductID); err != nil {
-			return nil, err
-		}
+		return nil, domainerrors.ErrProductNoTracking
 	}
 
 	// Verificar bodega

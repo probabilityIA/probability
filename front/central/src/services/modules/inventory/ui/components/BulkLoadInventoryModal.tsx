@@ -4,7 +4,6 @@ import { useState, useRef } from 'react';
 import { BulkLoadItem, BulkLoadResult, BulkLoadAccepted } from '../../domain/types';
 import { bulkLoadInventoryAction } from '../../infra/actions';
 import { Button, Alert } from '@/shared/ui';
-import { getActionError } from '@/shared/utils/action-result';
 
 interface BulkLoadInventoryModalProps {
     warehouseId: number;
@@ -101,20 +100,19 @@ export default function BulkLoadInventoryModal({ warehouseId, businessId, onSucc
         setLoading(true);
         setError(null);
 
-        try {
-            const res = await bulkLoadInventoryAction({
-                warehouse_id: warehouseId,
-                reason: reason.trim() || 'Carga masiva de inventario',
-                items: validItems,
-            }, businessId);
+        const res = await bulkLoadInventoryAction({
+            warehouse_id: warehouseId,
+            reason: reason.trim() || 'Carga masiva de inventario',
+            items: validItems,
+        }, businessId);
 
-            setResult(res);
+        if (!res.success) {
+            setError(res.error);
+        } else {
+            setResult(res.data);
             setStep('result');
-        } catch (err: any) {
-            setError(getActionError(err, 'Error en carga masiva'));
-        } finally {
-            setLoading(false);
         }
+        setLoading(false);
     };
 
     const handleDone = () => {

@@ -36,17 +36,19 @@ export const getWarehouseInventoryAction = async (warehouseId: number, params?: 
 
 export const adjustStockAction = async (data: AdjustStockDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).adjustStock(data, businessId);
+        const result = await (await getUseCases()).adjustStock(data, businessId);
+        return { success: true as const, data: result };
     } catch (error: any) {
-        throw new Error(error.message);
+        return { success: false as const, error: error.message || 'Error al ajustar stock' };
     }
 };
 
 export const transferStockAction = async (data: TransferStockDTO, businessId?: number) => {
     try {
-        return await (await getUseCases()).transferStock(data, businessId);
+        const result = await (await getUseCases()).transferStock(data, businessId);
+        return { success: true as const, data: result };
     } catch (error: any) {
-        throw new Error(error.message);
+        return { success: false as const, error: error.message || 'Error al transferir stock' };
     }
 };
 
@@ -55,9 +57,10 @@ export const bulkLoadInventoryAction = async (data: BulkLoadDTO, businessId?: nu
         const cookieStore = await cookies();
         const token = cookieStore.get('session_token')?.value || null;
         const repository = new InventoryApiRepository(token);
-        return await repository.bulkLoadInventory(data, businessId);
+        const result = await repository.bulkLoadInventory(data, businessId);
+        return { success: true as const, data: result };
     } catch (error: any) {
-        throw new Error(error.message);
+        return { success: false as const, error: error.message || 'Error en carga masiva' };
     }
 };
 

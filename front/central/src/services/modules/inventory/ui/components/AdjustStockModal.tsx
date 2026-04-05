@@ -5,7 +5,6 @@ import { AdjustStockDTO } from '../../domain/types';
 import { adjustStockAction } from '../../infra/actions';
 import { getProductsAction } from '@/services/modules/products/infra/actions';
 import { Button, Alert, Input } from '@/shared/ui';
-import { getActionError } from '@/shared/utils/action-result';
 
 interface ProductOption {
     id: string;
@@ -105,22 +104,21 @@ export default function AdjustStockModal({ warehouseId, businessId, productId, o
         setError(null);
         setSuccess(null);
 
-        try {
-            const dto: AdjustStockDTO = {
-                product_id: selectedProduct.id,
-                warehouse_id: warehouseId,
-                quantity,
-                reason: reason.trim(),
-                notes: notes.trim() || undefined,
-            };
-            await adjustStockAction(dto, businessId);
+        const dto: AdjustStockDTO = {
+            product_id: selectedProduct.id,
+            warehouse_id: warehouseId,
+            quantity,
+            reason: reason.trim(),
+            notes: notes.trim() || undefined,
+        };
+        const result = await adjustStockAction(dto, businessId);
+        if (!result.success) {
+            setError(result.error);
+        } else {
             setSuccess('Stock ajustado exitosamente');
             setTimeout(() => onSuccess(), 800);
-        } catch (err: any) {
-            setError(getActionError(err, 'Error al ajustar stock'));
-        } finally {
-            setLoading(false);
         }
+        setLoading(false);
     };
 
     return (

@@ -7,7 +7,6 @@ import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions
 import { getProductsAction } from '@/services/modules/products/infra/actions';
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 import { Button, Alert, Input } from '@/shared/ui';
-import { getActionError } from '@/shared/utils/action-result';
 
 interface ProductOption {
     id: string;
@@ -126,23 +125,22 @@ export default function TransferStockModal({ fromWarehouseId, businessId, produc
         setError(null);
         setSuccess(null);
 
-        try {
-            const dto: TransferStockDTO = {
-                product_id: selectedProduct.id,
-                from_warehouse_id: fromWarehouseId,
-                to_warehouse_id: toWarehouseId,
-                quantity,
-                reason: reason.trim() || undefined,
-                notes: notes.trim() || undefined,
-            };
-            await transferStockAction(dto, businessId);
+        const dto: TransferStockDTO = {
+            product_id: selectedProduct.id,
+            from_warehouse_id: fromWarehouseId,
+            to_warehouse_id: toWarehouseId,
+            quantity,
+            reason: reason.trim() || undefined,
+            notes: notes.trim() || undefined,
+        };
+        const result = await transferStockAction(dto, businessId);
+        if (!result.success) {
+            setError(result.error);
+        } else {
             setSuccess('Transferencia realizada exitosamente');
             setTimeout(() => onSuccess(), 800);
-        } catch (err: any) {
-            setError(getActionError(err, 'Error al transferir stock'));
-        } finally {
-            setLoading(false);
         }
+        setLoading(false);
     };
 
     return (
