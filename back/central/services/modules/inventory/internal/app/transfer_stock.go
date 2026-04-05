@@ -20,8 +20,12 @@ func (uc *useCase) TransferStock(ctx context.Context, dto dtos.TransferStockDTO)
 	if err != nil {
 		return domainerrors.ErrProductNotFound
 	}
+
+	// Auto-habilitar track_inventory si no está activo
 	if !trackInventory {
-		return domainerrors.ErrProductNoTracking
+		if err := uc.repo.EnableProductTrackInventory(ctx, dto.ProductID); err != nil {
+			return err
+		}
 	}
 
 	// Verificar bodegas
