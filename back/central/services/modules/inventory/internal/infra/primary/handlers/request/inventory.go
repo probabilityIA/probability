@@ -10,6 +10,22 @@ type AdjustStockRequest struct {
 	Notes       string `json:"notes" binding:"omitempty,max=1000"`
 }
 
+// BulkLoadItemRequest un item de la carga masiva
+type BulkLoadItemRequest struct {
+	SKU          string `json:"sku" binding:"required"`
+	Quantity     int    `json:"quantity" binding:"required,min=1"`
+	MinStock     *int   `json:"min_stock"`
+	MaxStock     *int   `json:"max_stock"`
+	ReorderPoint *int   `json:"reorder_point"`
+}
+
+// BulkLoadRequest payload para carga masiva de inventario
+type BulkLoadRequest struct {
+	WarehouseID uint                 `json:"warehouse_id" binding:"required,min=1"`
+	Reason      string               `json:"reason" binding:"omitempty,max=255"`
+	Items       []BulkLoadItemRequest `json:"items" binding:"required,min=1,max=500,dive"`
+}
+
 // TransferStockRequest payload para transferir stock entre bodegas
 type TransferStockRequest struct {
 	ProductID       string `json:"product_id" binding:"required"`

@@ -18,6 +18,7 @@ type UseCaseMock struct {
 	CreateMovementTypeFn     func(ctx context.Context, dto dtos.CreateStockMovementTypeDTO) (*entities.StockMovementType, error)
 	UpdateMovementTypeFn     func(ctx context.Context, dto dtos.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error)
 	DeleteMovementTypeFn     func(ctx context.Context, id uint) error
+	BulkLoadInventoryFn      func(ctx context.Context, dto dtos.BulkLoadDTO) (*dtos.BulkLoadResult, error)
 	ReserveStockForOrderFn   func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error)
 	ConfirmSaleForOrderFn    func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error)
 	ReleaseStockForOrderFn   func(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error)
@@ -85,6 +86,13 @@ func (m *UseCaseMock) DeleteMovementType(ctx context.Context, id uint) error {
 		return m.DeleteMovementTypeFn(ctx, id)
 	}
 	return nil
+}
+
+func (m *UseCaseMock) BulkLoadInventory(ctx context.Context, dto dtos.BulkLoadDTO) (*dtos.BulkLoadResult, error) {
+	if m.BulkLoadInventoryFn != nil {
+		return m.BulkLoadInventoryFn(ctx, dto)
+	}
+	return &dtos.BulkLoadResult{}, nil
 }
 
 func (m *UseCaseMock) ReserveStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error) {

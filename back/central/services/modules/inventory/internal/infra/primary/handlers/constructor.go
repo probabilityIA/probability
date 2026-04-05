@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/app"
+	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
 // IHandlers define la interfaz de handlers del módulo inventory
@@ -13,6 +14,7 @@ type IHandlers interface {
 	ListWarehouseInventory(c *gin.Context)
 	AdjustStock(c *gin.Context)
 	TransferStock(c *gin.Context)
+	BulkLoadInventory(c *gin.Context)
 	ListMovements(c *gin.Context)
 	ListMovementTypes(c *gin.Context)
 	CreateMovementType(c *gin.Context)
@@ -23,12 +25,13 @@ type IHandlers interface {
 
 // handlers contiene el use case
 type handlers struct {
-	uc app.IUseCase
+	uc     app.IUseCase
+	rabbit rabbitmq.IQueue
 }
 
 // New crea una nueva instancia de los handlers
-func New(uc app.IUseCase) IHandlers {
-	return &handlers{uc: uc}
+func New(uc app.IUseCase, rabbit rabbitmq.IQueue) IHandlers {
+	return &handlers{uc: uc, rabbit: rabbit}
 }
 
 // resolveBusinessID obtiene el business_id efectivo.

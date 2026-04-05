@@ -23,6 +23,8 @@ type RepositoryMock struct {
 	UpdateMovementTypeFn                               func(ctx context.Context, movType *entities.StockMovementType) error
 	DeleteMovementTypeFn                               func(ctx context.Context, id uint) error
 	GetProductByIDFn                                   func(ctx context.Context, productID string, businessID uint) (string, string, bool, error)
+	GetProductBySKUFn                                  func(ctx context.Context, sku string, businessID uint) (string, string, bool, error)
+	EnableProductTrackInventoryFn                      func(ctx context.Context, productID string) error
 	UpdateProductStockQuantityFn                       func(ctx context.Context, productID string, totalQuantity int) error
 	WarehouseExistsFn                                  func(ctx context.Context, warehouseID uint, businessID uint) (bool, error)
 	GetProductIntegrationsFn                           func(ctx context.Context, productID string, businessID uint) ([]ports.ProductIntegrationInfo, error)
@@ -124,6 +126,20 @@ func (m *RepositoryMock) GetProductByID(ctx context.Context, productID string, b
 		return m.GetProductByIDFn(ctx, productID, businessID)
 	}
 	return "Producto Test", "SKU-001", true, nil
+}
+
+func (m *RepositoryMock) GetProductBySKU(ctx context.Context, sku string, businessID uint) (string, string, bool, error) {
+	if m.GetProductBySKUFn != nil {
+		return m.GetProductBySKUFn(ctx, sku, businessID)
+	}
+	return "product-uuid", "Producto Test", true, nil
+}
+
+func (m *RepositoryMock) EnableProductTrackInventory(ctx context.Context, productID string) error {
+	if m.EnableProductTrackInventoryFn != nil {
+		return m.EnableProductTrackInventoryFn(ctx, productID)
+	}
+	return nil
 }
 
 func (m *RepositoryMock) UpdateProductStockQuantity(ctx context.Context, productID string, totalQuantity int) error {

@@ -3,6 +3,7 @@ package response
 import (
 	"time"
 
+	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/dtos"
 	"github.com/secamc93/probability/back/central/services/modules/inventory/internal/domain/entities"
 )
 
@@ -50,6 +51,45 @@ type StockMovementResponse struct {
 	ProductSKU       string    `json:"product_sku,omitempty"`
 	WarehouseName    string    `json:"warehouse_name,omitempty"`
 	CreatedAt        time.Time `json:"created_at"`
+}
+
+// BulkLoadResultResponse respuesta de carga masiva
+type BulkLoadResultResponse struct {
+	TotalItems   int                          `json:"total_items"`
+	SuccessCount int                          `json:"success_count"`
+	FailureCount int                          `json:"failure_count"`
+	Items        []BulkLoadItemResultResponse `json:"items"`
+}
+
+// BulkLoadItemResultResponse resultado individual de un item de carga masiva
+type BulkLoadItemResultResponse struct {
+	SKU         string `json:"sku"`
+	ProductID   string `json:"product_id,omitempty"`
+	Success     bool   `json:"success"`
+	PreviousQty int    `json:"previous_qty"`
+	NewQty      int    `json:"new_qty"`
+	Error       string `json:"error,omitempty"`
+}
+
+// BulkLoadResultFromDTO convierte el resultado del use case a response HTTP
+func BulkLoadResultFromDTO(r *dtos.BulkLoadResult) BulkLoadResultResponse {
+	items := make([]BulkLoadItemResultResponse, len(r.Items))
+	for i, item := range r.Items {
+		items[i] = BulkLoadItemResultResponse{
+			SKU:         item.SKU,
+			ProductID:   item.ProductID,
+			Success:     item.Success,
+			PreviousQty: item.PreviousQty,
+			NewQty:      item.NewQty,
+			Error:       item.Error,
+		}
+	}
+	return BulkLoadResultResponse{
+		TotalItems:   r.TotalItems,
+		SuccessCount: r.SuccessCount,
+		FailureCount: r.FailureCount,
+		Items:        items,
+	}
 }
 
 // InventoryListResponse respuesta paginada de niveles de inventario

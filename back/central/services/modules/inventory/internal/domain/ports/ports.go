@@ -29,6 +29,8 @@ type IRepository interface {
 
 	// Product queries (replicadas localmente)
 	GetProductByID(ctx context.Context, productID string, businessID uint) (productName string, productSKU string, trackInventory bool, err error)
+	GetProductBySKU(ctx context.Context, sku string, businessID uint) (productID string, name string, trackInventory bool, err error)
+	EnableProductTrackInventory(ctx context.Context, productID string) error
 	UpdateProductStockQuantity(ctx context.Context, productID string, totalQuantity int) error
 
 	// Warehouse validation (replicada localmente)

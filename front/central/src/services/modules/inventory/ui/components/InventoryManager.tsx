@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { ArrowsRightLeftIcon, AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
+import { ArrowsRightLeftIcon, AdjustmentsHorizontalIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import InventoryLevelList from './InventoryLevelList';
 import StockMovementList from './StockMovementList';
 import AdjustStockModal from './AdjustStockModal';
 import TransferStockModal from './TransferStockModal';
+import BulkLoadInventoryModal from './BulkLoadInventoryModal';
 import { Button, Spinner } from '@/shared/ui';
 import { usePermissions } from '@/shared/contexts/permissions-context';
 import { useBusinessesSimple } from '@/services/auth/business/ui/hooks/useBusinessesSimple';
@@ -13,7 +14,7 @@ import { getWarehousesAction } from '@/services/modules/warehouses/infra/actions
 import { Warehouse } from '@/services/modules/warehouses/domain/types';
 
 type Tab = 'stock' | 'movements';
-type ModalType = 'adjust' | 'transfer' | null;
+type ModalType = 'adjust' | 'transfer' | 'bulk-load' | null;
 
 export default function InventoryManager() {
     const { isSuperAdmin } = usePermissions();
@@ -94,6 +95,10 @@ export default function InventoryManager() {
                 </div>
                 {selectedWarehouseId && !requiresBusinessSelection && (
                     <div className="flex gap-2">
+                        <Button variant="outline" onClick={() => setModalType('bulk-load')}>
+                            <ArrowUpTrayIcon className="w-4 h-4 mr-2" />
+                            Cargar inventario
+                        </Button>
                         <Button variant="outline" onClick={() => setModalType('adjust')}>
                             <AdjustmentsHorizontalIcon className="w-4 h-4 mr-2" />
                             Ajustar stock
@@ -219,6 +224,15 @@ export default function InventoryManager() {
             )}
 
             {/* Modals */}
+            {modalType === 'bulk-load' && selectedWarehouseId && (
+                <BulkLoadInventoryModal
+                    warehouseId={selectedWarehouseId}
+                    businessId={effectiveBusinessId}
+                    onSuccess={handleModalSuccess}
+                    onClose={() => setModalType(null)}
+                />
+            )}
+
             {modalType === 'adjust' && selectedWarehouseId && (
                 <AdjustStockModal
                     warehouseId={selectedWarehouseId}

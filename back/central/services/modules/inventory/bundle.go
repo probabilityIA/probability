@@ -38,7 +38,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	uc := app.New(repo, publisher, eventPublisher, logger)
 
 	// 6. Init Handlers
-	h := handlers.New(uc)
+	h := handlers.New(uc, rabbitMQ)
 
 	// 7. Register Routes
 	h.RegisterRoutes(router)
@@ -46,4 +46,8 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 	// 8. Start Order Event Consumer (RabbitMQ)
 	consumer := orderqueue.NewOrderConsumer(rabbitMQ, uc, logger)
 	consumer.Start(context.Background())
+
+	// 9. Start Bulk Load Consumer (RabbitMQ)
+	bulkConsumer := orderqueue.NewBulkLoadConsumer(rabbitMQ, uc, eventPublisher, logger)
+	bulkConsumer.Start(context.Background())
 }

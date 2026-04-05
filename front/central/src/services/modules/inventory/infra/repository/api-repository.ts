@@ -10,6 +10,9 @@ import {
     GetMovementsParams,
     AdjustStockDTO,
     TransferStockDTO,
+    BulkLoadDTO,
+    BulkLoadResult,
+    BulkLoadAccepted,
 } from '../../domain/types';
 
 export class InventoryApiRepository implements IInventoryRepository {
@@ -76,6 +79,13 @@ export class InventoryApiRepository implements IInventoryRepository {
 
     async transferStock(data: TransferStockDTO, businessId?: number): Promise<{ message: string }> {
         return this.fetch<{ message: string }>(this.withBusinessId('/inventory/transfer', businessId), {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async bulkLoadInventory(data: BulkLoadDTO, businessId?: number): Promise<BulkLoadResult | BulkLoadAccepted> {
+        return this.fetch<BulkLoadResult | BulkLoadAccepted>(this.withBusinessId('/inventory/bulk-load', businessId), {
             method: 'POST',
             body: JSON.stringify(data),
         });

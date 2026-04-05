@@ -37,6 +37,40 @@ func (r *Repository) GetProductByID(ctx context.Context, productID string, busin
 	return result.Name, result.SKU, result.TrackInventory, nil
 }
 
+// GetProductBySKU obtiene datos básicos de un producto por SKU.
+// Tabla consultada: products (gestionada por módulo products)
+func (r *Repository) GetProductBySKU(ctx context.Context, sku string, businessID uint) (string, string, bool, error) {
+	var result struct {
+		ID             string
+		Name           string
+		TrackInventory bool
+	}
+
+	err := r.db.Conn(ctx).
+		Table("products").
+		Select("id, name, track_inventory").
+		Where("sku = ? AND business_id = ? AND deleted_at IS NULL", sku, businessID).
+		Scan(&result).Error
+
+	if err != nil {
+		return "", "", false, err
+	}
+	if result.ID == "" {
+		return "", "", false, gorm.ErrRecordNotFound
+	}
+
+	return result.ID, result.Name, result.TrackInventory, nil
+}
+
+// EnableProductTrackInventory habilita track_inventory para un producto.
+// Tabla consultada: products (gestionada por módulo products)
+func (r *Repository) EnableProductTrackInventory(ctx context.Context, productID string) error {
+	return r.db.Conn(ctx).
+		Table("products").
+		Where("id = ? AND deleted_at IS NULL", productID).
+		Update("track_inventory", true).Error
+}
+
 // UpdateProductStockQuantity actualiza el campo StockQuantity del producto con el total de inventario.
 // Tabla consultada: products (gestionada por módulo products)
 func (r *Repository) UpdateProductStockQuantity(ctx context.Context, productID string, totalQuantity int) error {

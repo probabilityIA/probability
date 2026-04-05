@@ -23,6 +23,9 @@ type IUseCase interface {
 	UpdateMovementType(ctx context.Context, dto dtos.UpdateStockMovementTypeDTO) (*entities.StockMovementType, error)
 	DeleteMovementType(ctx context.Context, id uint) error
 
+	// Bulk load
+	BulkLoadInventory(ctx context.Context, dto dtos.BulkLoadDTO) (*dtos.BulkLoadResult, error)
+
 	// Order-driven inventory operations
 	ReserveStockForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error)
 	ConfirmSaleForOrder(ctx context.Context, orderID string, businessID uint, warehouseID *uint, items []dtos.OrderInventoryItem) (*dtos.OrderStockResult, error)

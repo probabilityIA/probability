@@ -14,6 +14,7 @@ func (h *handlers) RegisterRoutes(router *gin.RouterGroup) {
 		inventory.GET("/warehouse/:warehouseId", h.ListWarehouseInventory)
 		inventory.POST("/adjust", h.AdjustStock)
 		inventory.POST("/transfer", h.TransferStock)
+		inventory.POST("/bulk-load", h.BulkLoadInventory)
 		inventory.GET("/movements", h.ListMovements)
 
 		// Movement Types CRUD

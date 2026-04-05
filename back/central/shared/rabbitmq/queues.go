@@ -278,6 +278,15 @@ const (
 	QueueWhatsAppAIResponse = "whatsapp.ai.response"
 )
 
+// ─── Queues: Inventory ──────────────────────────────────────────
+
+const (
+	// QueueInventoryBulkLoad solicitudes de carga masiva de inventario.
+	// Publisher: modules/inventory/handlers (POST /inventory/bulk-load)
+	// Consumer: modules/inventory/bulk_load_consumer
+	QueueInventoryBulkLoad = "inventory.bulk_load.requests"
+)
+
 // ─── Queues: Email ─────────────────────────────────────────────
 
 const (

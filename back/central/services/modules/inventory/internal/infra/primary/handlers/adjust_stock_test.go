@@ -51,7 +51,7 @@ func setupTestContext(w *httptest.ResponseRecorder, body []byte, businessID uint
 func TestAdjustStock_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","warehouse_id":1,"quantity":5,"reason":"ajuste"}`)
@@ -69,7 +69,7 @@ func TestAdjustStock_SinBusinessID_RetornaBadRequest(t *testing.T) {
 func TestAdjustStock_BodyInvalido_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	// Falta el campo "reason" (required)
@@ -92,7 +92,7 @@ func TestAdjustStock_ProductoNoEncontrado_RetornaNotFound(t *testing.T) {
 			return nil, domainerrors.ErrProductNotFound
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-inexistente","warehouse_id":1,"quantity":5,"reason":"ajuste test"}`)
@@ -114,7 +114,7 @@ func TestAdjustStock_BodegaNoEncontrada_RetornaNotFound(t *testing.T) {
 			return nil, domainerrors.ErrWarehouseNotFound
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","warehouse_id":99,"quantity":5,"reason":"ajuste test"}`)
@@ -136,7 +136,7 @@ func TestAdjustStock_CantidadInvalida_RetornaBadRequest(t *testing.T) {
 			return nil, domainerrors.ErrInvalidQuantity
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","warehouse_id":1,"quantity":0,"reason":"ajuste test"}`)
@@ -158,7 +158,7 @@ func TestAdjustStock_ErrorInterno_RetornaInternalServerError(t *testing.T) {
 			return nil, errors.New("error de base de datos")
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","warehouse_id":1,"quantity":5,"reason":"ajuste test"}`)
@@ -190,7 +190,7 @@ func TestAdjustStock_Exitoso_RetornaCreatedConMovimiento(t *testing.T) {
 			return movimientoEsperado, nil
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","warehouse_id":1,"quantity":5,"reason":"reposicion de stock","notes":"notas opcionales"}`)
@@ -232,7 +232,7 @@ func TestAdjustStock_ProductoSinTracking_RetornaBadRequest(t *testing.T) {
 			return nil, domainerrors.ErrProductNoTracking
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-servicio","warehouse_id":1,"quantity":5,"reason":"ajuste test"}`)

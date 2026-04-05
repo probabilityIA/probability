@@ -8,6 +8,7 @@ import {
     GetMovementsParams,
     AdjustStockDTO,
     TransferStockDTO,
+    BulkLoadDTO,
 } from '../../domain/types';
 
 async function getUseCases() {
@@ -44,6 +45,17 @@ export const adjustStockAction = async (data: AdjustStockDTO, businessId?: numbe
 export const transferStockAction = async (data: TransferStockDTO, businessId?: number) => {
     try {
         return await (await getUseCases()).transferStock(data, businessId);
+    } catch (error: any) {
+        throw new Error(error.message);
+    }
+};
+
+export const bulkLoadInventoryAction = async (data: BulkLoadDTO, businessId?: number) => {
+    try {
+        const cookieStore = await cookies();
+        const token = cookieStore.get('session_token')?.value || null;
+        const repository = new InventoryApiRepository(token);
+        return await repository.bulkLoadInventory(data, businessId);
     } catch (error: any) {
         throw new Error(error.message);
     }

@@ -98,6 +98,41 @@ export interface TransferStockDTO {
     notes?: string;
 }
 
+export interface BulkLoadItem {
+    sku: string;
+    quantity: number;
+    min_stock?: number | null;
+    max_stock?: number | null;
+    reorder_point?: number | null;
+}
+
+export interface BulkLoadDTO {
+    warehouse_id: number;
+    reason?: string;
+    items: BulkLoadItem[];
+}
+
+export interface BulkLoadItemResult {
+    sku: string;
+    product_id: string;
+    success: boolean;
+    previous_qty: number;
+    new_qty: number;
+    error?: string;
+}
+
+export interface BulkLoadResult {
+    total_items: number;
+    success_count: number;
+    failure_count: number;
+    items: BulkLoadItemResult[];
+}
+
+export interface BulkLoadAccepted {
+    message: string;
+    total_items: number;
+}
+
 // ============================================
 // RESPONSES
 // ============================================

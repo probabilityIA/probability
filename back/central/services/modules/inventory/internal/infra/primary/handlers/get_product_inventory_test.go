@@ -31,7 +31,7 @@ func setupGetProductInventoryContext(w *httptest.ResponseRecorder, productID str
 func TestGetProductInventory_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupGetProductInventoryContext(w, "prod-001", 0) // sin business_id
@@ -58,7 +58,7 @@ func TestGetProductInventory_ProductoNoEncontrado_RetornaNotFound(t *testing.T) 
 			return nil, domainerrors.ErrProductNotFound
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupGetProductInventoryContext(w, "prod-inexistente", 10)
@@ -79,7 +79,7 @@ func TestGetProductInventory_ErrorInterno_RetornaInternalServerError(t *testing.
 			return nil, errors.New("error de base de datos")
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupGetProductInventoryContext(w, "prod-001", 10)
@@ -116,7 +116,7 @@ func TestGetProductInventory_Exitoso_RetornaListaInventario(t *testing.T) {
 			return levelsEsperados, nil
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupGetProductInventoryContext(w, "prod-001", 10)
@@ -154,7 +154,7 @@ func TestGetProductInventory_InventarioVacio_RetornaArrayVacio(t *testing.T) {
 			return []entities.InventoryLevel{}, nil
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupGetProductInventoryContext(w, "prod-001", 10)
@@ -190,7 +190,7 @@ func setupListWarehouseContext(w *httptest.ResponseRecorder, warehouseID string,
 func TestListWarehouseInventory_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListWarehouseContext(w, "1", 0, "")
@@ -207,7 +207,7 @@ func TestListWarehouseInventory_SinBusinessID_RetornaBadRequest(t *testing.T) {
 func TestListWarehouseInventory_WarehouseIDInvalido_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListWarehouseContext(w, "no-es-numero", 10, "")
@@ -228,7 +228,7 @@ func TestListWarehouseInventory_BodegaNoEncontrada_RetornaNotFound(t *testing.T)
 			return nil, 0, domainerrors.ErrWarehouseNotFound
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListWarehouseContext(w, "99", 10, "")
@@ -252,7 +252,7 @@ func TestListWarehouseInventory_Exitoso_RetornaRespuestaPaginada(t *testing.T) {
 			}, 45, nil
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	c := setupListWarehouseContext(w, "1", 10, "page=1&page_size=2")
@@ -303,7 +303,7 @@ func setupTransferStockContext(w *httptest.ResponseRecorder, body []byte, busine
 func TestTransferStock_SinBusinessID_RetornaBadRequest(t *testing.T) {
 	// Arrange
 	uc := &mocks.UseCaseMock{}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","from_warehouse_id":1,"to_warehouse_id":2,"quantity":5}`)
@@ -325,7 +325,7 @@ func TestTransferStock_MismasBodegas_RetornaBadRequest(t *testing.T) {
 			return domainerrors.ErrSameWarehouse
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","from_warehouse_id":1,"to_warehouse_id":1,"quantity":5}`)
@@ -347,7 +347,7 @@ func TestTransferStock_Exitoso_RetornaOKConMensaje(t *testing.T) {
 			return nil
 		},
 	}
-	h := New(uc)
+	h := New(uc, nil)
 
 	w := httptest.NewRecorder()
 	body := []byte(`{"product_id":"prod-001","from_warehouse_id":1,"to_warehouse_id":2,"quantity":5}`)
