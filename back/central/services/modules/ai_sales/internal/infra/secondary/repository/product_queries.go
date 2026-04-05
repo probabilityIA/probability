@@ -37,6 +37,22 @@ func normalizeCol(col string) string {
 	return fmt.Sprintf("translate(lower(%s), '%s', '%s')", col, accentedChars, plainChars)
 }
 
+// spanishStem aplica stemming básico para español: quita sufijos de plural
+// para que "proteinas" también encuentre "proteina", "camisetas" encuentre "camiseta", etc.
+func spanishStem(word string) string {
+	// Separar en palabras y hacer stem de cada una
+	words := strings.Fields(word)
+	for i, w := range words {
+		switch {
+		case strings.HasSuffix(w, "es") && len(w) > 4:
+			words[i] = strings.TrimSuffix(w, "es")
+		case strings.HasSuffix(w, "s") && len(w) > 3:
+			words[i] = strings.TrimSuffix(w, "s")
+		}
+	}
+	return strings.Join(words, " ")
+}
+
 // SearchProducts busca productos por query accent-insensitive en name, title, description,
 // short_description, category y brand.
 // Tabla consultada: products (gestionada por modulo products)
@@ -48,17 +64,22 @@ func (r *repository) SearchProducts(ctx context.Context, businessID uint, query 
 
 	// Normalizar el patrón de búsqueda: quitar acentos y lowercase
 	normalized := accentReplacer.Replace(strings.ToLower(query))
+	// Stemming básico español: quitar plural para ampliar la búsqueda
+	stemmed := spanishStem(normalized)
+
 	searchPattern := fmt.Sprintf("%%%s%%", normalized)
+	stemmedPattern := fmt.Sprintf("%%%s%%", stemmed)
 
 	// Buscar en 6 campos con normalización de acentos en ambos lados
+	// Usa OR entre el patrón original y el stemmed para cubrir singular/plural
+	col := func(name string) string { return normalizeCol(name) }
 	searchCondition := fmt.Sprintf(
-		"%s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ?",
-		normalizeCol("name"),
-		normalizeCol("title"),
-		normalizeCol("description"),
-		normalizeCol("short_description"),
-		normalizeCol("category"),
-		normalizeCol("brand"),
+		"%s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ?"+
+			" OR %s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ? OR %s LIKE ?",
+		col("name"), col("title"), col("description"),
+		col("short_description"), col("category"), col("brand"),
+		col("name"), col("title"), col("description"),
+		col("short_description"), col("category"), col("brand"),
 	)
 
 	var products []models.Product
@@ -69,6 +90,8 @@ func (r *repository) SearchProducts(ctx context.Context, businessID uint, query 
 		Where(searchCondition,
 			searchPattern, searchPattern, searchPattern,
 			searchPattern, searchPattern, searchPattern,
+			stemmedPattern, stemmedPattern, stemmedPattern,
+			stemmedPattern, stemmedPattern, stemmedPattern,
 		).
 		Limit(limit).
 		Find(&products).Error
