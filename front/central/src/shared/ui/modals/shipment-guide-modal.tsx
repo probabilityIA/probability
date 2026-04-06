@@ -521,7 +521,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         setLoading(true);
         setError(null);
         try {
-            const quoteHasCOD = (data.codValue ?? 0) > 0;
             const quotePayload: EnvioClickQuoteRequest = {
                 order_uuid: order?.id,
                 packages: [{
@@ -532,10 +531,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 }],
                 description: data.description,
                 contentValue: data.contentValue,
-                codValue: quoteHasCOD ? data.codValue : 0,
+                codValue: (data.codValue ?? 0) > 0 ? data.codValue : data.contentValue,
                 includeGuideCost: data.includeGuideCost,
                 insurance: data.insurance,
-                ...(quoteHasCOD ? { codPaymentMethod: data.codPaymentMethod } : {}),
+                codPaymentMethod: data.codPaymentMethod,
                 origin: {
                     daneCode: data.originDaneCode,
                     address: data.originAddress,
@@ -699,7 +698,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         console.log('DEBUG: selectedRate.carrier=', selectedRate.carrier);
 
         try {
-            const hasCOD = (step1Data.codValue ?? 0) > 0;
             const generatePayload: EnvioClickQuoteRequest = {
                 idRate: selectedRate.idRate,
                 carrier: selectedRate.carrier,
@@ -711,9 +709,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 insurance: step1Data.insurance,
                 description: step1Data.description,
                 contentValue: step1Data.contentValue,
-                codValue: hasCOD ? step1Data.codValue : 0,
+                codValue: (step1Data.codValue ?? 0) > 0 ? step1Data.codValue : step1Data.contentValue,
                 includeGuideCost: step1Data.includeGuideCost,
-                ...(hasCOD ? { codPaymentMethod: step1Data.codPaymentMethod } : {}),
+                codPaymentMethod: step1Data.codPaymentMethod,
                 totalCost: totalCost,
                 packages: [{
                     weight: step1Data.weight,
