@@ -18,9 +18,14 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		baseURL = DefaultBaseURL
 	}
 
+	// Log the full request payload for debugging
+	reqJSON, _ := json.Marshal(req)
 	c.log.Info(ctx).
 		Str("reference", req.MyShipmentReference).
 		Int64("rate_id", req.IDRate).
+		Float64("cod_value", req.CODValue).
+		Str("cod_payment_method", req.CODPaymentMethod).
+		Str("request_payload", string(reqJSON)).
 		Msg("🚀 Generating EnvioClick shipment")
 
 	// No usar SetResult para evitar error de unmarshal cuando EnvioClick
@@ -29,6 +34,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetBody(req).
+		SetDebug(true).
 		Post(strings.TrimRight(baseURL, "/") + "/shipment")
 
 	if err != nil {
