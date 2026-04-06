@@ -521,6 +521,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         setLoading(true);
         setError(null);
         try {
+            const quoteHasCOD = (data.codValue ?? 0) > 0;
             const quotePayload: EnvioClickQuoteRequest = {
                 order_uuid: order?.id,
                 packages: [{
@@ -531,10 +532,10 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 }],
                 description: data.description,
                 contentValue: data.contentValue,
-                codValue: data.codValue,
+                codValue: quoteHasCOD ? data.codValue : 0,
                 includeGuideCost: data.includeGuideCost,
                 insurance: data.insurance,
-                codPaymentMethod: data.codPaymentMethod,
+                ...(quoteHasCOD ? { codPaymentMethod: data.codPaymentMethod } : {}),
                 origin: {
                     daneCode: data.originDaneCode,
                     address: data.originAddress,
@@ -698,6 +699,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         console.log('DEBUG: selectedRate.carrier=', selectedRate.carrier);
 
         try {
+            const hasCOD = (step1Data.codValue ?? 0) > 0;
             const generatePayload: EnvioClickQuoteRequest = {
                 idRate: selectedRate.idRate,
                 carrier: selectedRate.carrier,
@@ -709,9 +711,9 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                 insurance: step1Data.insurance,
                 description: step1Data.description,
                 contentValue: step1Data.contentValue,
-                codValue: step1Data.codValue,
+                codValue: hasCOD ? step1Data.codValue : 0,
                 includeGuideCost: step1Data.includeGuideCost,
-                codPaymentMethod: step1Data.codPaymentMethod,
+                ...(hasCOD ? { codPaymentMethod: step1Data.codPaymentMethod } : {}),
                 totalCost: totalCost,
                 packages: [{
                     weight: step1Data.weight,

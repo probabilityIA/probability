@@ -100,7 +100,7 @@ export interface EnvioClickQuoteRequest {
     contentValue: number;
     codValue?: number;
     includeGuideCost: boolean;
-    codPaymentMethod: string;
+    codPaymentMethod?: string;
     totalCost?: number;
     packages: EnvioClickPackage[];
     origin: EnvioClickAddress;
