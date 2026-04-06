@@ -1051,7 +1051,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     </div>
 
                                     {/* Additional Info */}
-                                    <div className="grid grid-cols-2 gap-2">
+                                    <div className="grid grid-cols-3 gap-2">
                                         <Input
                                             compact
                                             label="Descripción *"
@@ -1065,6 +1065,14 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             type="number"
                                             {...step1Form.register("contentValue", { valueAsNumber: true })}
                                             error={step1Form.formState.errors.contentValue?.message}
+                                        />
+                                        <Input
+                                            compact
+                                            label="Valor contra-entrega (COD)"
+                                            type="number"
+                                            {...step1Form.register("codValue", { valueAsNumber: true })}
+                                            error={step1Form.formState.errors.codValue?.message}
+                                            placeholder="0 = sin contra-entrega"
                                         />
                                     </div>
 
@@ -1120,6 +1128,13 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                     Filtra por servicio / Transportadora
                                 </h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-300 mb-2">Todos los precios incluyen IVA</p>
+                                {(step1Data?.codValue ?? 0) > 0 && (
+                                    <div className="bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2 mb-2">
+                                        <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+                                            Contra-entrega: ${(step1Data?.codValue ?? 0).toLocaleString()} COP - Solo transportadoras compatibles
+                                        </p>
+                                    </div>
+                                )}
                             </div>
 
                             <div className="overflow-y-auto border border-purple-200 rounded-lg p-3 bg-purple-50" style={{ maxHeight: 'calc(85vh - 350px)' }}>
@@ -1135,12 +1150,18 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                             const insuranceCost = step1Data?.insurance ? ((rate.minimumInsurance ?? 0) + (rate.extraInsurance ?? 0)) : 0;
                                             const totalCost = rate.flete + insuranceCost;
                                             const isCOD = rate.cod;
+                                            const needsCOD = (step1Data?.codValue ?? 0) > 0;
+                                            const isDisabled = needsCOD && !isCOD;
 
                                             return (
                                                 <div
                                                     key={rate.idRate}
-                                                    onClick={() => handleRateSelection(rate)}
-                                                    className="border border-gray-200 dark:border-gray-600 rounded-lg p-3 hover:border-purple-500 hover:shadow-md cursor-pointer transition-all bg-white dark:bg-gray-800"
+                                                    onClick={() => !isDisabled && handleRateSelection(rate)}
+                                                    className={`border rounded-lg p-3 transition-all ${
+                                                        isDisabled
+                                                            ? 'border-gray-300 dark:border-gray-700 opacity-50 cursor-not-allowed bg-gray-100 dark:bg-gray-900'
+                                                            : 'border-gray-200 dark:border-gray-600 hover:border-purple-500 hover:shadow-md cursor-pointer bg-white dark:bg-gray-800'
+                                                    }`}
                                                 >
                                                     <div className="flex flex-col h-full">
                                                         <div className="flex flex-col items-center mb-2">
@@ -1163,7 +1184,7 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
 
                                                         <div className="border-t pt-2 mt-2 flex-1">
                                                             <div className="text-center mb-1">
-                                                                <div className="text-xl font-bold text-purple-600">
+                                                                <div className={`text-xl font-bold ${isDisabled ? 'text-gray-400' : 'text-purple-600'}`}>
                                                                     ${totalCost.toLocaleString()}
                                                                 </div>
                                                                 <div className="text-xs text-gray-500 dark:text-gray-400">COP</div>
@@ -1180,13 +1201,22 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
                                                                 )}
                                                             </div>
                                                             <div className="text-center">
-                                                                <div className="text-xs text-gray-700 dark:text-gray-200 dark:text-gray-200 font-medium">
+                                                                <div className="text-xs text-gray-700 dark:text-gray-200 font-medium">
                                                                     {rate.deliveryDays} días
                                                                 </div>
                                                             </div>
-                                                            {isCOD && (
-                                                                <div className="text-xs text-blue-600 mt-1 text-center font-medium">
-                                                                    ✓ COD disponible
+                                                            {isCOD ? (
+                                                                <div className="text-xs text-green-600 mt-1 text-center font-medium">
+                                                                    Contra-entrega
+                                                                </div>
+                                                            ) : (
+                                                                <div className="text-xs text-gray-400 mt-1 text-center">
+                                                                    Sin contra-entrega
+                                                                </div>
+                                                            )}
+                                                            {isDisabled && (
+                                                                <div className="text-[10px] text-red-500 mt-1 text-center">
+                                                                    No disponible para COD
                                                                 </div>
                                                             )}
                                                         </div>
