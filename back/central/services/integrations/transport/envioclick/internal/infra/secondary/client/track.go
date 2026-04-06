@@ -30,6 +30,7 @@ func (c *Client) Track(baseURL, apiKey string, trackingNumber string) (*domain.T
 		SetHeader("Authorization", apiKey).
 		SetBody(payload).
 		SetResult(&apiResp).
+		SetDebug(true).
 		Post(strings.TrimRight(baseURL, "/") + "/track")
 
 	if err != nil {

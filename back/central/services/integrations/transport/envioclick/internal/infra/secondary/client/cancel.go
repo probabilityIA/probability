@@ -27,6 +27,7 @@ func (c *Client) Cancel(baseURL, apiKey string, idShipment string) (*domain.Canc
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetResult(&apiResp).
+		SetDebug(true).
 		Delete(strings.TrimRight(baseURL, "/") + fmt.Sprintf("/shipment/%s", idShipment))
 
 	if err != nil {

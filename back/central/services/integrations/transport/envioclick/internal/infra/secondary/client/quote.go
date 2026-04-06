@@ -30,7 +30,7 @@ func (c *Client) Quote(baseURL, apiKey string, req domain.QuoteRequest) (*domain
 		SetHeader("Authorization", apiKey).
 		SetBody(req).
 		SetResult(&apiResp).
-		SetDebug(true).
+		SetDebug(true). // TODO: remove after debugging EnvioClick COD issue
 		Post(strings.TrimRight(baseURL, "/") + "/quotation")
 
 	if err != nil {
