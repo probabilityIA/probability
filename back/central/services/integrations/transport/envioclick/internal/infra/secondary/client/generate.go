@@ -29,6 +29,7 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		SetContext(ctx).
 		SetHeader("Authorization", apiKey).
 		SetBody(req).
+		SetDebug(true).
 		Post(strings.TrimRight(baseURL, "/") + "/shipment")
 
 	if err != nil {

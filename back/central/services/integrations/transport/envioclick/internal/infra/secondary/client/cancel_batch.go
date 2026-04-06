@@ -28,6 +28,7 @@ func (c *Client) CancelBatch(baseURL, apiKey string, req domain.CancelBatchReque
 		SetHeader("Authorization", apiKey).
 		SetBody(req).
 		SetResult(&apiResp).
+		SetDebug(true).
 		Post(strings.TrimRight(baseURL, "/") + "/v2cancellation/batch/order")
 
 	if err != nil {
