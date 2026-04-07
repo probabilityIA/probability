@@ -276,6 +276,11 @@ const (
 	// Publisher: modules/ai_sales/response_publisher
 	// Consumer: integrations/messaging/whatsapp/consumerai
 	QueueWhatsAppAIResponse = "whatsapp.ai.response"
+
+	// QueueAIOrderResult resultado de procesamiento de ordenes creadas por IA.
+	// Publisher: modules/orders/consumer (cuando platform=whatsapp_ai)
+	// Consumer: modules/ai_sales/order_result_consumer
+	QueueAIOrderResult = "ai.order.result"
 )
 
 // ─── Queues: Inventory ──────────────────────────────────────────

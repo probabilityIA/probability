@@ -104,6 +104,17 @@ type CustomerLastAddress struct {
 	OrderDate  string
 }
 
+// OrderResultDTO resultado del procesamiento de una orden AI recibido via queue
+type OrderResultDTO struct {
+	ExternalID   string `json:"external_id"`
+	PhoneNumber  string `json:"phone_number"`
+	BusinessID   uint   `json:"business_id"`
+	Success      bool   `json:"success"`
+	OrderID      string `json:"order_id"`
+	OrderNumber  string `json:"order_number"`
+	ErrorMessage string `json:"error_message"`
+}
+
 // AIConfig configuracion del agente de ventas IA leida de platform_creds
 type AIConfig struct {
 	Enabled           bool

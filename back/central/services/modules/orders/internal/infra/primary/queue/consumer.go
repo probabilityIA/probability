@@ -186,6 +186,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		// Guardar error con JSON original
 		c.saveOrderError(ctx, &orderDTO, err, "processing_error", messageBody)
 		c.publishRejected(ctx, &orderDTO, "Error procesando: "+err.Error())
+		c.publishAIOrderResult(ctx, &orderDTO, false, "", err.Error())
 		return fmt.Errorf("failed to map and save order: %w", err)
 	}
 
@@ -200,6 +201,9 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		Int("payments_count", len(orderDTO.Payments)).
 		Int("shipments_count", len(orderDTO.Shipments)).
 		Msg("Order processed and saved successfully from queue")
+
+	// Notificar resultado al modulo AI Sales si la orden viene de whatsapp_ai
+	c.publishAIOrderResult(ctx, &orderDTO, true, orderResponse.ID, "")
 
 	return nil
 }
@@ -292,6 +296,42 @@ func (c *OrderConsumer) publishRejected(ctx context.Context, dto *dtos.Probabili
 		"reason":       reason,
 		"rejected_at":  time.Now().Format(time.RFC3339),
 	})
+}
+
+// publishAIOrderResult publica el resultado del procesamiento de una orden AI al queue ai.order.result
+// para que el modulo ai_sales notifique al cliente por WhatsApp.
+func (c *OrderConsumer) publishAIOrderResult(ctx context.Context, dto *dtos.ProbabilityOrderDTO, success bool, orderID string, errMsg string) {
+	if dto == nil || dto.Platform != "whatsapp_ai" {
+		return
+	}
+
+	var businessID uint
+	if dto.BusinessID != nil {
+		businessID = *dto.BusinessID
+	}
+
+	result := map[string]interface{}{
+		"external_id":   dto.ExternalID,
+		"phone_number":  dto.CustomerPhone,
+		"business_id":   businessID,
+		"success":       success,
+		"order_id":      orderID,
+		"order_number":  dto.OrderNumber,
+		"error_message": errMsg,
+	}
+
+	payload, err := json.Marshal(result)
+	if err != nil {
+		c.logger.Error().Err(err).Msg("Error marshaling AI order result")
+		return
+	}
+
+	if err := c.queue.Publish(ctx, rabbitmq.QueueAIOrderResult, payload); err != nil {
+		c.logger.Error().
+			Err(err).
+			Str("external_id", dto.ExternalID).
+			Msg("Error publishing AI order result")
+	}
 }
 
 func contains(s, substr string) bool {
