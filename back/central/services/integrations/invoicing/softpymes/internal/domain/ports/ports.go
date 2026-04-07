@@ -7,9 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/domain/dtos"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // CLIENTE DE SOFTPYMES (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // ISoftpymesClient define las operaciones con la API de Softpymes
 type ISoftpymesClient interface {
@@ -107,9 +105,7 @@ type ListedDocument struct {
 	Details        []ListedDocumentDetail
 }
 
-// ═══════════════════════════════════════════════════════════════
 // USE CASE DE FACTURACIÓN AUTOMÁTICA (Primary Port - Driving Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IInvoiceUseCase define el caso de uso para procesar órdenes y crear facturas automáticamente
 // Este use case es consumido por el OrderConsumer (RabbitMQ) y NO requiere base de datos
@@ -123,9 +119,7 @@ type IInvoiceUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // ESTRUCTURAS DE EVENTOS (Replicadas localmente)
-// ═══════════════════════════════════════════════════════════════
 
 // OrderEventMessage representa el payload de eventos de órdenes en RabbitMQ
 type OrderEventMessage struct {

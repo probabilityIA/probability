@@ -1,9 +1,7 @@
 package domain
 
-// ═══════════════════════════════════════════════════════════════
 // MiPaquete transport DTOs
 // TODO: Replace with actual MiPaquete API request/response models
-// ═══════════════════════════════════════════════════════════════
 
 type QuoteRequest struct {
 	Origin      Location  `json:"origin"`

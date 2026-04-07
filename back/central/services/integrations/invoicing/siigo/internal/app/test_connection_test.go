@@ -358,7 +358,7 @@ func TestTestConnection_TipoIncorrectoEnCredenciales(t *testing.T) {
 	// Act
 	err := uc.TestConnection(ctx, nil, credenciales)
 
-	// Assert: la aserción de tipo falla → username queda vacío → error de validación
+	// Assert: la aserción de tipo falla -> username queda vacío -> error de validación
 	if err == nil {
 		t.Fatal("se esperaba error por tipo incorrecto en username, se obtuvo nil")
 	}

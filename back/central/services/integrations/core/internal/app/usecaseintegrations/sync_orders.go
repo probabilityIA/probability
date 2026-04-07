@@ -70,7 +70,7 @@ func (uc *IntegrationUseCase) SyncOrdersByIntegrationIDWithBatches(ctx context.C
 	// Dividir en chunks de 7 días
 	chunks := SplitDateRange(start, end, 7)
 
-	// Si solo 1 chunk → flujo directo (sin overhead de cola)
+	// Si solo 1 chunk -> flujo directo (sin overhead de cola)
 	if len(chunks) <= 1 {
 		genericParams := params.ToGenericMap()
 		return uc.SyncOrdersByIntegrationIDWithParams(ctx, integrationID, genericParams)

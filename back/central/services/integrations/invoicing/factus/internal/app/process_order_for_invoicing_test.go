@@ -11,9 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/mocks"
 )
 
-// ─────────────────────────────────────────────────────────────
 // Helpers para construir fixtures reutilizables
-// ─────────────────────────────────────────────────────────────
 
 func buildProcessInvoiceRequest() *dtos.ProcessInvoiceRequest {
 	return &dtos.ProcessInvoiceRequest{
@@ -75,9 +73,7 @@ func buildSuccessInvoiceResult() *dtos.CreateInvoiceResult {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — camino feliz
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_Success(t *testing.T) {
 	// Arrange
@@ -139,9 +135,7 @@ func TestCreateInvoice_Success(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — combina config de integración con config del request
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_ConfigMerge_RequestOverridesIntegration(t *testing.T) {
 	// Arrange
@@ -197,9 +191,7 @@ func TestCreateInvoice_ConfigMerge_RequestOverridesIntegration(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — error al obtener integración
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_GetIntegrationError(t *testing.T) {
 	// Arrange
@@ -231,9 +223,7 @@ func TestCreateInvoice_GetIntegrationError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — error al descifrar client_id
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_DecryptClientIDError(t *testing.T) {
 	// Arrange
@@ -271,9 +261,7 @@ func TestCreateInvoice_DecryptClientIDError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — error al descifrar client_secret
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_DecryptClientSecretError(t *testing.T) {
 	ctx := context.Background()
@@ -308,9 +296,7 @@ func TestCreateInvoice_DecryptClientSecretError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — error al descifrar username
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_DecryptUsernameError(t *testing.T) {
 	ctx := context.Background()
@@ -345,9 +331,7 @@ func TestCreateInvoice_DecryptUsernameError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — error al descifrar password
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_DecryptPasswordError(t *testing.T) {
 	ctx := context.Background()
@@ -382,9 +366,7 @@ func TestCreateInvoice_DecryptPasswordError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — el cliente HTTP retorna error pero sí retorna AuditData
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_ClientError_PropagatesAuditData(t *testing.T) {
 	// Arrange
@@ -436,9 +418,7 @@ func TestCreateInvoice_ClientError_PropagatesAuditData(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — el cliente retorna error SIN AuditData
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_ClientError_NilResult_ReturnsEmptyResult(t *testing.T) {
 	// Arrange
@@ -477,9 +457,7 @@ func TestCreateInvoice_ClientError_NilResult_ReturnsEmptyResult(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — el mensaje de error debe incluir el integrationID
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_ErrorMessage_ContainsIntegrationID(t *testing.T) {
 	ctx := context.Background()
@@ -505,9 +483,7 @@ func TestCreateInvoice_ErrorMessage_ContainsIntegrationID(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — api_url es opcional (puede estar vacía)
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_ApiURLIsOptional(t *testing.T) {
 	// Arrange
@@ -521,7 +497,7 @@ func TestCreateInvoice_ApiURLIsOptional(t *testing.T) {
 			return buildPublicIntegration(nil), nil
 		},
 		DecryptCredentialFn: func(_ context.Context, _ string, field string) (string, error) {
-			// api_url no existe en las credenciales → error ignorado por el use case
+			// api_url no existe en las credenciales -> error ignorado por el use case
 			if field == "api_url" {
 				return "", errors.New("field not found")
 			}
@@ -560,9 +536,7 @@ func TestCreateInvoice_ApiURLIsOptional(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // CreateInvoice — tabla de escenarios (table-driven)
-// ─────────────────────────────────────────────────────────────
 
 func TestCreateInvoice_TableDriven_DecryptErrors(t *testing.T) {
 	credentialFields := []string{"client_id", "client_secret", "username", "password"}

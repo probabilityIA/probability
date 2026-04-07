@@ -1,9 +1,7 @@
 package dtos
 
-// ═══════════════════════════════════════════════════════════════
 // DOMAIN TYPES — Consulta de facturas Factus
 // Sin tags (pureza de dominio)
-// ═══════════════════════════════════════════════════════════════
 
 // ListBillsParams parámetros para filtrar la consulta de facturas
 type ListBillsParams struct {

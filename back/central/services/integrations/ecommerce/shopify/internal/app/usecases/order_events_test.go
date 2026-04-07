@@ -39,9 +39,7 @@ func buildIntegrationSvc(t *testing.T, expectedDomain string, integrationID uint
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // ProcessOrderPaid
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestProcessOrderPaid_Success(t *testing.T) {
 	// Arrange
@@ -125,9 +123,7 @@ func TestProcessOrderPaid_PublisherError(t *testing.T) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // ProcessOrderFulfilled
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestProcessOrderFulfilled_Success(t *testing.T) {
 	ctx := context.Background()
@@ -178,9 +174,7 @@ func TestProcessOrderFulfilled_PublisherError(t *testing.T) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // ProcessOrderCancelled
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestProcessOrderCancelled_Success(t *testing.T) {
 	ctx := context.Background()
@@ -231,9 +225,7 @@ func TestProcessOrderCancelled_IntegrationError(t *testing.T) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // ProcessOrderUpdated
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestProcessOrderUpdated_Success(t *testing.T) {
 	ctx := context.Background()
@@ -296,9 +288,7 @@ func TestProcessOrderUpdated_BusinessIDAndIntegrationTypeSet(t *testing.T) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // ProcessOrderPartiallyFulfilled
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestProcessOrderPartiallyFulfilled_Success(t *testing.T) {
 	ctx := context.Background()

@@ -7,7 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/meli/internal/domain"
 )
 
-// integrationServiceAdapter adapta core.IIntegrationService → domain.IIntegrationService.
+// integrationServiceAdapter adapta core.IIntegrationService -> domain.IIntegrationService.
 type integrationServiceAdapter struct {
 	core integrationcore.IIntegrationService
 }

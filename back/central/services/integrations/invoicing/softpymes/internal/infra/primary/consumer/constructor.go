@@ -13,10 +13,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // DTOs locales replicados del módulo Invoicing para deserialización
 // (Regla de aislamiento: no importar entre módulos)
-// ═══════════════════════════════════════════════════════════════
 
 // invoiceCustomerData datos del cliente (replicado de invoicing module)
 type invoiceCustomerData struct {
@@ -173,7 +171,7 @@ func (c *InvoiceRequestConsumer) handleInvoiceRequest(message []byte) error {
 		return c.processListBankAccountsRequest(ctx, &request)
 	}
 
-	// Procesar según operación (create/retry/cancel/check_status → InvoiceResponseMessage)
+	// Procesar según operación (create/retry/cancel/check_status -> InvoiceResponseMessage)
 	var response *queue.InvoiceResponseMessage
 	switch request.Operation {
 	case "create", "retry":

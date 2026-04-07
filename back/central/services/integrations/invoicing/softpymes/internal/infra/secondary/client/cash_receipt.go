@@ -318,7 +318,7 @@ func parseCashReceiptResponse(body []byte) (message string, errorMsg string) {
 		return "", errMsg
 	}
 
-	// Status < 400 o no es un status code → éxito
+	// Status < 400 o no es un status code -> éxito
 	// Extraer message del primer elemento
 	if json.Unmarshal(arr[0], &obj) == nil {
 		return obj.Message, obj.Error

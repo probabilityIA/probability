@@ -11,7 +11,6 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// ─── Mock: IIntegrationService ──────────────────────────────────────────────
 
 type mockIntegrationService struct {
 	GetIntegrationByIDFn         func(ctx context.Context, integrationID string) (*domain.Integration, error)
@@ -48,7 +47,6 @@ func (m *mockIntegrationService) UpdateIntegrationConfig(ctx context.Context, in
 	return nil
 }
 
-// ─── Mock: ShopifyClient ────────────────────────────────────────────────────
 
 type mockShopifyClient struct {
 	ValidateTokenFn  func(ctx context.Context, storeName, accessToken string) (bool, map[string]interface{}, error)
@@ -116,7 +114,6 @@ func (m *mockShopifyClient) SetDebug(enabled bool) {
 	}
 }
 
-// ─── Mock: OrderPublisher ───────────────────────────────────────────────────
 
 type mockOrderPublisher struct {
 	PublishFn       func(ctx context.Context, order *domain.ProbabilityOrderDTO) error
@@ -131,7 +128,6 @@ func (m *mockOrderPublisher) Publish(ctx context.Context, order *domain.Probabil
 	return nil
 }
 
-// ─── Mock: log.ILogger ──────────────────────────────────────────────────────
 
 // mockLoggerILogger implementa log.ILogger usando zerolog.Nop() para que los
 // logs de los use cases no emitan salida ni fallen durante la ejecucion de tests.
@@ -176,7 +172,6 @@ func (m *mockLoggerILogger) WithService(service string) log.ILogger     { return
 func (m *mockLoggerILogger) WithModule(module string) log.ILogger       { return m }
 func (m *mockLoggerILogger) WithBusinessID(businessID uint) log.ILogger { return m }
 
-// ─── Mock: ISyncEventPublisher ─────────────────────────────────────────────
 
 type capturedSyncEvent struct {
 	IntegrationID uint
@@ -198,7 +193,6 @@ func (m *mockSyncEventPublisher) PublishSyncEvent(ctx context.Context, integrati
 	})
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 // newTestUseCase construye una instancia de SyncOrdersUseCase con todos los mocks
 // inyectados directamente, sin depender de infraestructura real (DB, logger, etc.).

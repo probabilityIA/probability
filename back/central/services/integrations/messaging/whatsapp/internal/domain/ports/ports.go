@@ -68,7 +68,7 @@ type IConversationCache interface {
 // Las claves son calentadas por integrations/core al startup.
 type ICredentialsCache interface {
 	// GetWhatsAppConfig obtiene credenciales de WhatsApp para un business.
-	// Lee de: integration:idx:biz:{businessID}:type:2 → integration:creds:{id} + integration:meta:{id}
+	// Lee de: integration:idx:biz:{businessID}:type:2 -> integration:creds:{id} + integration:meta:{id}
 	GetWhatsAppConfig(ctx context.Context, businessID uint) (*WhatsAppConfig, error)
 
 	// GetWhatsAppDefaultConfig obtiene credenciales globales de plataforma.

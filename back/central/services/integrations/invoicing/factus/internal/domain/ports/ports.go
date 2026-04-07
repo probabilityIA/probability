@@ -7,9 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/domain/dtos"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // CLIENTE DE FACTUS (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IFactusClient define las operaciones con la API de Factus
 type IFactusClient interface {
@@ -31,9 +29,7 @@ type IFactusClient interface {
 	GetBillByNumber(ctx context.Context, credentials dtos.Credentials, number string) (*dtos.BillDetail, error)
 }
 
-// ═══════════════════════════════════════════════════════════════
 // USE CASE DE FACTURACIÓN AUTOMÁTICA (Primary Port - Driving Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IInvoiceUseCase define el caso de uso para procesar solicitudes de facturación de Factus.
 // El use case es el único punto de entrada para toda la lógica de negocio:
@@ -49,9 +45,7 @@ type IInvoiceUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // ESTRUCTURAS DE EVENTOS (Replicadas localmente)
-// ═══════════════════════════════════════════════════════════════
 
 // OrderEventMessage representa el payload de eventos de órdenes en RabbitMQ
 type OrderEventMessage struct {

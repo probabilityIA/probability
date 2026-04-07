@@ -540,7 +540,7 @@ func TestSyncOrdersByIntegrationIDHandler_SinBody_Retorna202(t *testing.T) {
 	uc := new(mockIntegrationUseCase)
 	h, _ := handlerSetup(uc)
 
-	// Sin body → flujo directo en goroutine → siempre retorna 202 (fire-and-forget)
+	// Sin body -> flujo directo en goroutine -> siempre retorna 202 (fire-and-forget)
 	uc.On("SyncOrdersByIntegrationID", mock.Anything, "5").Return(errors.New("sync error")).Maybe()
 
 	r := gin.New()
@@ -963,7 +963,7 @@ func TestTestIntegrationHandler_SinPermisos_Retorna403(t *testing.T) {
 	h, _ := handlerSetup(uc)
 
 	r := gin.New()
-	// Sin business_id configurado → IsSuperAdmin retorna false → 403
+	// Sin business_id configurado -> IsSuperAdmin retorna false -> 403
 	r.POST("/integrations/:id/test", h.TestIntegrationHandler)
 
 	req := httptest.NewRequest(http.MethodPost, "/integrations/5/test", nil)

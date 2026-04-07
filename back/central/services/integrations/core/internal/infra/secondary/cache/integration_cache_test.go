@@ -203,7 +203,7 @@ func TestSetIntegration_SinCodigo_NoCreaMacIndice(t *testing.T) {
 
 	integracion := &domain.CachedIntegration{
 		ID:   3,
-		Code: "", // Sin código → no debe crear índice de código
+		Code: "", // Sin código -> no debe crear índice de código
 	}
 	r.On("Set", mock.Anything, "integration:meta:3", mock.Anything, ttlMetadata).Return(nil)
 

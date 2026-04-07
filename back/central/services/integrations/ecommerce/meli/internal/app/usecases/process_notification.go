@@ -107,7 +107,7 @@ func (uc *meliUseCase) ProcessNotification(ctx context.Context, notification *do
 }
 
 // extractOrderIDFromResource extrae el order_id numérico del resource path.
-// Ejemplo: "/orders/123456789" → 123456789
+// Ejemplo: "/orders/123456789" -> 123456789
 func extractOrderIDFromResource(resource string) (int64, error) {
 	// El resource puede ser "/orders/123456789" o "orders/123456789"
 	parts := strings.Split(strings.Trim(resource, "/"), "/")

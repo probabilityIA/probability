@@ -172,8 +172,8 @@ func (c *TransportRequestConsumer) handleRequest(message []byte) error {
 
 // resolveAPIKey resolves the API key for EnvioClick.
 // Priority:
-//  1. If config has use_platform_token=true → reads ENVIOCLICK_API_KEY from integration_types.platform_credentials_encrypted
-//  2. Otherwise → decrypts api_key from integration credentials (per-business)
+//  1. If config has use_platform_token=true -> reads ENVIOCLICK_API_KEY from integration_types.platform_credentials_encrypted
+//  2. Otherwise -> decrypts api_key from integration credentials (per-business)
 func (c *TransportRequestConsumer) resolveAPIKey(ctx context.Context, request *TransportRequestMessage, config map[string]interface{}) (string, error) {
 	integrationIDStr := fmt.Sprintf("%d", request.IntegrationID)
 

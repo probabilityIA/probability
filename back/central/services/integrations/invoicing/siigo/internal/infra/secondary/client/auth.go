@@ -20,8 +20,8 @@ type AuthResponse struct {
 
 // authenticate obtiene un access token de Siigo
 // Estrategia:
-//  1. Si hay access_token válido en cache → retornar
-//  2. Si expirado → login completo con credenciales (no hay refresh en Siigo)
+//  1. Si hay access_token válido en cache -> retornar
+//  2. Si expirado -> login completo con credenciales (no hay refresh en Siigo)
 func (c *Client) authenticate(ctx context.Context, username, accessKey, accountID, partnerID, baseURL string) (string, error) {
 	// 1. Intentar usar access_token cacheado
 	if token, ok := c.tokenCache.GetAccessToken(); ok {

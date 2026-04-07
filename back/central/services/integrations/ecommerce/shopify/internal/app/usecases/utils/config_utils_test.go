@@ -8,9 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/shopify/internal/domain"
 )
 
-// ──────────────────────────────────────────────────────────────────────────────
 // NormalizeConfig
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestNormalizeConfig_ValidMap(t *testing.T) {
 	// Arrange
@@ -76,9 +74,7 @@ func TestNormalizeConfig_InvalidType_FallbackToName(t *testing.T) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // ExtractStoreName
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestExtractStoreName_FromStoreURL_HTTPS(t *testing.T) {
 	// Arrange
@@ -185,9 +181,7 @@ func TestExtractStoreName_StoreURL_RemovesTrailingSlash(t *testing.T) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // GetAccessToken
-// ──────────────────────────────────────────────────────────────────────────────
 
 func TestGetAccessToken_Success(t *testing.T) {
 	// Arrange
@@ -245,9 +239,7 @@ func TestGetAccessToken_DecryptError(t *testing.T) {
 	}
 }
 
-// ──────────────────────────────────────────────────────────────────────────────
 // Mock local para domain.IIntegrationService (solo lo que usa utils)
-// ──────────────────────────────────────────────────────────────────────────────
 
 type mockIntegrationSvc struct {
 	DecryptCredentialFn func(ctx context.Context, integrationID string, fieldName string) (string, error)

@@ -13,10 +13,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // DTOs locales — structs de deserialización del mensaje RabbitMQ
 // (Regla de aislamiento: no importar entre módulos)
-// ═══════════════════════════════════════════════════════════════
 
 type invoiceCustomerData struct {
 	Name    string `json:"name"`

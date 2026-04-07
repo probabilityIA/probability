@@ -1,9 +1,7 @@
 package domain
 
-// ═══════════════════════════════════════════════════════════════
 // Enviame transport DTOs
 // TODO: Replace with actual Enviame API request/response models
-// ═══════════════════════════════════════════════════════════════
 
 type QuoteRequest struct {
 	Origin      Location  `json:"origin"`

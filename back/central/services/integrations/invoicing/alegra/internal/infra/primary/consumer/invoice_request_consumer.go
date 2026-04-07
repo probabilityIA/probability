@@ -13,10 +13,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // DTOs locales replicados del módulo Invoicing para deserialización
 // (Regla de aislamiento: no importar entre módulos)
-// ═══════════════════════════════════════════════════════════════
 
 type invoiceCustomerData struct {
 	Name    string `json:"name"`

@@ -8,9 +8,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/factus/internal/mocks"
 )
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — camino feliz con todas las credenciales
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_Success(t *testing.T) {
 	// Arrange
@@ -47,9 +45,7 @@ func TestTestConnection_Success(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — camino feliz sin api_url (campo opcional)
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_Success_WithoutAPIURL(t *testing.T) {
 	ctx := context.Background()
@@ -82,9 +78,7 @@ func TestTestConnection_Success_WithoutAPIURL(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — client_id ausente
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_MissingClientID(t *testing.T) {
 	ctx := context.Background()
@@ -108,9 +102,7 @@ func TestTestConnection_MissingClientID(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — client_id con string vacío
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_EmptyClientID(t *testing.T) {
 	ctx := context.Background()
@@ -131,9 +123,7 @@ func TestTestConnection_EmptyClientID(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — client_secret ausente
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_MissingClientSecret(t *testing.T) {
 	ctx := context.Background()
@@ -154,9 +144,7 @@ func TestTestConnection_MissingClientSecret(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — client_secret con string vacío
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_EmptyClientSecret(t *testing.T) {
 	ctx := context.Background()
@@ -177,9 +165,7 @@ func TestTestConnection_EmptyClientSecret(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — username ausente
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_MissingUsername(t *testing.T) {
 	ctx := context.Background()
@@ -200,9 +186,7 @@ func TestTestConnection_MissingUsername(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — username con string vacío
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_EmptyUsername(t *testing.T) {
 	ctx := context.Background()
@@ -223,9 +207,7 @@ func TestTestConnection_EmptyUsername(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — password ausente
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_MissingPassword(t *testing.T) {
 	ctx := context.Background()
@@ -246,9 +228,7 @@ func TestTestConnection_MissingPassword(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — password con string vacío
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_EmptyPassword(t *testing.T) {
 	ctx := context.Background()
@@ -269,9 +249,7 @@ func TestTestConnection_EmptyPassword(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — tabla de validaciones de campos requeridos
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_TableDriven_RequiredFields(t *testing.T) {
 	baseCredentials := map[string]interface{}{
@@ -324,9 +302,7 @@ func TestTestConnection_TableDriven_RequiredFields(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — el cliente HTTP retorna error de autenticación
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_ClientAuthenticationFails(t *testing.T) {
 	ctx := context.Background()
@@ -357,9 +333,7 @@ func TestTestConnection_ClientAuthenticationFails(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — el map de config puede ser nil (se ignora)
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_NilConfigIsIgnored(t *testing.T) {
 	ctx := context.Background()
@@ -386,9 +360,7 @@ func TestTestConnection_NilConfigIsIgnored(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — tipo de dato incorrecto en credenciales (no string)
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_NonStringCredentialValue(t *testing.T) {
 	ctx := context.Background()
@@ -405,7 +377,7 @@ func TestTestConnection_NonStringCredentialValue(t *testing.T) {
 
 	err := uc.TestConnection(ctx, nil, credentials)
 
-	// La aserción de tipo fallará y okClientID será false → error esperado
+	// La aserción de tipo fallará y okClientID será false -> error esperado
 	if err == nil {
 		t.Fatal("esperaba error cuando client_id no es string, recibí nil")
 	}

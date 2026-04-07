@@ -7,9 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/siigo/internal/domain/dtos"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // CLIENTE DE SIIGO (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // ISiigoClient define las operaciones con la API de Siigo
 type ISiigoClient interface {
@@ -38,9 +36,7 @@ type ISiigoClient interface {
 	CreateJournal(ctx context.Context, req *dtos.CreateJournalRequest) (*dtos.CreateJournalResult, error)
 }
 
-// ═══════════════════════════════════════════════════════════════
 // USE CASE DE FACTURACIÓN AUTOMÁTICA (Primary Port - Driving Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IInvoiceUseCase define el caso de uso para procesar órdenes y crear facturas automáticamente
 type IInvoiceUseCase interface {
@@ -52,9 +48,7 @@ type IInvoiceUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // ESTRUCTURAS DE EVENTOS (Replicadas localmente)
-// ═══════════════════════════════════════════════════════════════
 
 // OrderEventMessage representa el payload de eventos de órdenes en RabbitMQ
 type OrderEventMessage struct {

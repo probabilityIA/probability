@@ -12,8 +12,8 @@ import (
 // Acepta el formato combinado que retorna la creación (ej: "FEV23") o el número bare ("23").
 //
 // La API de Softpymes usa formatos distintos según el endpoint:
-//   - Creación  → documentNumber: "FEV23"  (prefix + número, sin ceros)
-//   - Búsqueda  → documentNumber: "0000000023" (solo número, con ceros), prefix: "FEV" (separado)
+//   - Creación  -> documentNumber: "FEV23"  (prefix + número, sin ceros)
+//   - Búsqueda  -> documentNumber: "0000000023" (solo número, con ceros), prefix: "FEV" (separado)
 //
 // Este método parsea el combinado en prefix + número bare antes de llamar al endpoint de búsqueda.
 //
@@ -47,7 +47,7 @@ func (c *Client) GetDocumentByNumber(ctx context.Context, apiKey, apiSecret, ref
 	}
 
 	// Zero-pad el número bare a 10 dígitos (formato estándar de Softpymes)
-	// Ej: "26" → "0000000026"
+	// Ej: "26" -> "0000000026"
 	paddedNumber := bareNumber
 	if n, err := strconv.ParseInt(bareNumber, 10, 64); err == nil {
 		paddedNumber = fmt.Sprintf("%010d", n)

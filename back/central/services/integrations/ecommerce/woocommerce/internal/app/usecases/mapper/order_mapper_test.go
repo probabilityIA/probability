@@ -7,9 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/domain"
 )
 
-// ─────────────────────────────────────────────────────────────
 // MapWooOrderToProbability — orden completa
-// ─────────────────────────────────────────────────────────────
 
 func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 	now := time.Now()
@@ -110,7 +108,7 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 
 	// Status mapping
 	if dto.Status != "paid" {
-		t.Errorf("Status esperado 'paid' (processing→paid), recibí '%s'", dto.Status)
+		t.Errorf("Status esperado 'paid' (processing->paid), recibí '%s'", dto.Status)
 	}
 	if dto.OriginalStatus != "processing" {
 		t.Errorf("OriginalStatus esperado 'processing', recibí '%s'", dto.OriginalStatus)
@@ -257,9 +255,7 @@ func TestMapWooOrderToProbability_FullOrder(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // MapWooOrderToProbability — orden mínima (sin items opcionales)
-// ─────────────────────────────────────────────────────────────
 
 func TestMapWooOrderToProbability_MinimalOrder(t *testing.T) {
 	order := &domain.WooCommerceOrder{
@@ -295,9 +291,7 @@ func TestMapWooOrderToProbability_MinimalOrder(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // mapWooStatus — tabla de mapeos de estado
-// ─────────────────────────────────────────────────────────────
 
 func TestMapWooStatus_AllStatuses(t *testing.T) {
 	tests := []struct {
@@ -326,9 +320,7 @@ func TestMapWooStatus_AllStatuses(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // mapShipmentStatus — tabla de mapeos de estado de envío
-// ─────────────────────────────────────────────────────────────
 
 func TestMapShipmentStatus_AllStatuses(t *testing.T) {
 	tests := []struct {
@@ -356,9 +348,7 @@ func TestMapShipmentStatus_AllStatuses(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // MapWooOrderToProbability — pago sin DatePaid (status pending)
-// ─────────────────────────────────────────────────────────────
 
 func TestMapWooOrderToProbability_PaymentPending(t *testing.T) {
 	order := &domain.WooCommerceOrder{
@@ -384,9 +374,7 @@ func TestMapWooOrderToProbability_PaymentPending(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // MapWooOrderToProbability — múltiples cupones
-// ─────────────────────────────────────────────────────────────
 
 func TestMapWooOrderToProbability_MultipleCoupons(t *testing.T) {
 	order := &domain.WooCommerceOrder{
@@ -411,9 +399,7 @@ func TestMapWooOrderToProbability_MultipleCoupons(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // parseFloat — conversión de strings a float
-// ─────────────────────────────────────────────────────────────
 
 func TestParseFloat(t *testing.T) {
 	tests := []struct {

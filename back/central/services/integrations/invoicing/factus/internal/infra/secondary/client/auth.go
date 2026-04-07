@@ -18,9 +18,9 @@ type AuthResponse struct {
 // authenticate obtiene un access token usando OAuth2 Password Grant o Refresh Token
 // baseURL es opcional: si está vacío usa la baseURL del cliente HTTP
 // Estrategia:
-//  1. Si hay access_token válido en cache → retornar
-//  2. Si access_token expirado pero refresh_token válido → usar refresh
-//  3. Si ambos expirados → login completo con credenciales
+//  1. Si hay access_token válido en cache -> retornar
+//  2. Si access_token expirado pero refresh_token válido -> usar refresh
+//  3. Si ambos expirados -> login completo con credenciales
 func (c *Client) authenticate(ctx context.Context, baseURL, clientID, clientSecret, username, password string) (string, error) {
 	// 1. Intentar usar access_token cacheado
 	if token, ok := c.tokenCache.GetAccessToken(); ok {

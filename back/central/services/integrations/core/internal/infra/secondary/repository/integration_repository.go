@@ -353,7 +353,7 @@ func (r *Repository) ExistsActiveIntegrationByTypeID(ctx context.Context, integr
 		return count > 0, nil
 	}
 
-	// Sin business_id → buscar solo global
+	// Sin business_id -> buscar solo global
 	if err := r.db.Conn(ctx).
 		Model(&models.Integration{}).
 		Where("integration_type_id = ? AND is_active = ? AND business_id IS NULL", integrationTypeID, true).

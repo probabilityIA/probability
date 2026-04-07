@@ -78,7 +78,7 @@ func (u *usecases) processIncomingMessage(ctx context.Context, message dtos.Webh
 					Msg("[WhatsApp Webhook] - error persistiendo mensaje de sesión humana")
 			}
 
-			// Publicar SSE → aparece en tiempo real en el chat del dashboard
+			// Publicar SSE -> aparece en tiempo real en el chat del dashboard
 			if sseErr := u.ssePublisher.PublishMessageReceived(
 				ctx,
 				humanSession.BusinessID,

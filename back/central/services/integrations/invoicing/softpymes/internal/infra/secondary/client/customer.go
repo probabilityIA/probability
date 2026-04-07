@@ -244,10 +244,10 @@ func (c *Client) checkResponseForErrors(body []byte, operation string) error {
 // splitCustomerName separa un nombre completo en firstName y lastName
 // Ejemplos:
 //
-//	"Sebastian Camacho"       → "Sebastian", "Camacho"
-//	"Juan Carlos Pérez López" → "Juan Carlos", "Pérez López"
-//	"Sebastian"               → "Sebastian", "."
-//	""                        → "Cliente", "Probability"
+//	"Sebastian Camacho"       -> "Sebastian", "Camacho"
+//	"Juan Carlos Pérez López" -> "Juan Carlos", "Pérez López"
+//	"Sebastian"               -> "Sebastian", "."
+//	""                        -> "Cliente", "Probability"
 func splitCustomerName(fullName string) (string, string) {
 	fullName = strings.TrimSpace(fullName)
 	if fullName == "" {
@@ -261,10 +261,10 @@ func splitCustomerName(fullName string) (string, string) {
 	case 2:
 		return parts[0], parts[1]
 	case 3:
-		// "Juan Carlos Pérez" → firstName="Juan Carlos", lastName="Pérez"
+		// "Juan Carlos Pérez" -> firstName="Juan Carlos", lastName="Pérez"
 		return parts[0] + " " + parts[1], parts[2]
 	default:
-		// "Juan Carlos Pérez López" → firstName="Juan Carlos", lastName="Pérez López"
+		// "Juan Carlos Pérez López" -> firstName="Juan Carlos", lastName="Pérez López"
 		mid := len(parts) / 2
 		return strings.Join(parts[:mid], " "), strings.Join(parts[mid:], " ")
 	}

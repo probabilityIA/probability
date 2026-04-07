@@ -9,9 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/softpymes/internal/mocks"
 )
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Helpers para construir maps de credenciales y configuración en tests
-// ─────────────────────────────────────────────────────────────────────────────
 
 func validCredentials() map[string]interface{} {
 	return map[string]interface{}{
@@ -26,9 +24,7 @@ func validConfig() map[string]interface{} {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Tests: caso feliz
-// ─────────────────────────────────────────────────────────────────────────────
 
 // TestTestConnection_Success verifica que cuando el cliente autentica correctamente
 // el use case retorna nil.
@@ -94,9 +90,7 @@ func TestTestConnection_PassesCorrectCredentialsToClient(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Tests: validación de campos requeridos en credentials
-// ─────────────────────────────────────────────────────────────────────────────
 
 // TestTestConnection_MissingApiKey verifica que se retorna error cuando
 // api_key no está presente en credentials.
@@ -224,9 +218,7 @@ func TestTestConnection_EmptyApiSecret(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Tests: validación de campos requeridos en config
-// ─────────────────────────────────────────────────────────────────────────────
 
 // TestTestConnection_MissingReferer verifica que se retorna error cuando
 // referer no está presente en config.
@@ -299,9 +291,7 @@ func TestTestConnection_RefererWrongType(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Tests: errores del cliente
-// ─────────────────────────────────────────────────────────────────────────────
 
 // TestTestConnection_ClientAuthenticationError verifica que cuando el cliente
 // retorna error, el use case propaga el error envuelto correctamente.
@@ -481,9 +471,7 @@ func TestTestConnection_TableDriven(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 // containsString reporta si s contiene substr.
 func containsString(s, substr string) bool {

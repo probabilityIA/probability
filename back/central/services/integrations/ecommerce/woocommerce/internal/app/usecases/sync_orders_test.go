@@ -10,9 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/mocks"
 )
 
-// ─────────────────────────────────────────────────────────────
 // SyncOrdersWithParams — camino feliz
-// ─────────────────────────────────────────────────────────────
 
 func TestSyncOrdersWithParams_Success(t *testing.T) {
 	ctx := context.Background()
@@ -42,9 +40,7 @@ func TestSyncOrdersWithParams_Success(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // SyncOrdersWithParams — integración no encontrada
-// ─────────────────────────────────────────────────────────────
 
 func TestSyncOrdersWithParams_IntegrationNotFound(t *testing.T) {
 	ctx := context.Background()
@@ -67,9 +63,7 @@ func TestSyncOrdersWithParams_IntegrationNotFound(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // SyncOrdersWithParams — error al obtener integración
-// ─────────────────────────────────────────────────────────────
 
 func TestSyncOrdersWithParams_GetIntegrationError(t *testing.T) {
 	ctx := context.Background()
@@ -93,9 +87,7 @@ func TestSyncOrdersWithParams_GetIntegrationError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // SyncOrdersWithParams — store_url faltante en config
-// ─────────────────────────────────────────────────────────────
 
 func TestSyncOrdersWithParams_MissingStoreURL(t *testing.T) {
 	ctx := context.Background()
@@ -123,9 +115,7 @@ func TestSyncOrdersWithParams_MissingStoreURL(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // SyncOrdersWithParams — error al descifrar consumer_key
-// ─────────────────────────────────────────────────────────────
 
 func TestSyncOrdersWithParams_DecryptConsumerKeyError(t *testing.T) {
 	ctx := context.Background()
@@ -160,9 +150,7 @@ func TestSyncOrdersWithParams_DecryptConsumerKeyError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // SyncOrdersWithParams — error al descifrar consumer_secret
-// ─────────────────────────────────────────────────────────────
 
 func TestSyncOrdersWithParams_DecryptConsumerSecretError(t *testing.T) {
 	ctx := context.Background()
@@ -197,9 +185,7 @@ func TestSyncOrdersWithParams_DecryptConsumerSecretError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // buildQueryParams — verificar parseo de parámetros
-// ─────────────────────────────────────────────────────────────
 
 func TestBuildQueryParams_WithAllParams(t *testing.T) {
 	minDate := "2026-01-01T00:00:00Z"
@@ -263,9 +249,7 @@ func TestBuildQueryParams_InvalidDateFormat(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // SyncOrders — verifica que use los últimos 30 días
-// ─────────────────────────────────────────────────────────────
 
 func TestSyncOrders_Uses30DaysDefault(t *testing.T) {
 	ctx := context.Background()

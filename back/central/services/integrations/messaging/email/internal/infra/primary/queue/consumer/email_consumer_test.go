@@ -24,7 +24,6 @@ func makeEventJSON(event request.EmailNotificationEvent) []byte {
 	return data
 }
 
-// ── handleMessage ──────────────────────────────────────────────
 
 func TestHandleMessage_ValidEvent_CallsUseCase(t *testing.T) {
 	uc := &mocks.UseCaseMock{}

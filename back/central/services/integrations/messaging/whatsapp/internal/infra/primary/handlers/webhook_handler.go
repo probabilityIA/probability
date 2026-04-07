@@ -161,7 +161,7 @@ func (h *handler) processWebhookAsync(webhook request.WebhookPayload) {
 		Int("entries", len(webhook.Entry)).
 		Msg("[Webhook Handler] - procesando webhook de forma asíncrona")
 
-	// Mapear de infra → domain ANTES de invocar use case
+	// Mapear de infra -> domain ANTES de invocar use case
 	webhookDTO := mappers.WebhookPayloadToDomain(webhook)
 
 	// Determinar tipo de evento y procesar

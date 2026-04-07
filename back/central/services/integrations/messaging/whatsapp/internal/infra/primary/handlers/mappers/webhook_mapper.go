@@ -5,7 +5,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/messaging/whatsapp/internal/infra/primary/handlers/request"
 )
 
-// WebhookPayloadToDomain convierte request.WebhookPayload → dtos.WebhookPayloadDTO
+// WebhookPayloadToDomain convierte request.WebhookPayload -> dtos.WebhookPayloadDTO
 func WebhookPayloadToDomain(req request.WebhookPayload) dtos.WebhookPayloadDTO {
 	entries := make([]dtos.WebhookEntryDTO, len(req.Entry))
 	for i, entry := range req.Entry {

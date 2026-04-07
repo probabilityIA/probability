@@ -71,7 +71,7 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 		aiForwarder = queue.NewAIForwarder(rabbit, redisClient, logger)
 	}
 
-	// SSE Publisher: notifica al frontend vía RabbitMQ → events module → SSE endpoint
+	// SSE Publisher: notifica al frontend vía RabbitMQ -> events module -> SSE endpoint
 	var ssePublisher ports.ISSEEventPublisher
 	if rabbit != nil {
 		ssePublisher = queue.NewSSEPublisher(rabbit, logger)
@@ -135,7 +135,7 @@ func New(config env.IConfig, logger log.ILogger, rabbit rabbitmq.IQueue, redisCl
 			}
 		}()
 
-		// Inicializar consumidor de respuestas AI (whatsapp.ai.response → envío de texto libre)
+		// Inicializar consumidor de respuestas AI (whatsapp.ai.response -> envío de texto libre)
 		aiResponseConsumer := consumerai.New(rabbit, wa, credsCache, logger)
 		go func() {
 			if err := aiResponseConsumer.Start(context.Background()); err != nil {

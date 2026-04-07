@@ -32,7 +32,7 @@ func NormalizePhoneNumber(phone string) string {
 		clean = clean[2:]
 	}
 
-	// Si tiene 10 dígitos y empieza con 3 → número colombiano sin código de país
+	// Si tiene 10 dígitos y empieza con 3 -> número colombiano sin código de país
 	if len(clean) == 10 && strings.HasPrefix(clean, "3") {
 		clean = "57" + clean
 	}

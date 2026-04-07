@@ -22,7 +22,7 @@ import (
 // shopifyTypeID es el ID del tipo de integración Shopify en la tabla integration_types.
 const shopifyTypeID = uint(1)
 
-// shopifyConfigEnvFallback mapea nombre de campo en platform_credentials → variable de entorno de fallback.
+// shopifyConfigEnvFallback mapea nombre de campo en platform_credentials -> variable de entorno de fallback.
 var shopifyConfigEnvFallback = map[string]string{
 	"client_id":     "SHOPIFY_CLIENT_ID",
 	"client_secret": "SHOPIFY_CLIENT_SECRET",

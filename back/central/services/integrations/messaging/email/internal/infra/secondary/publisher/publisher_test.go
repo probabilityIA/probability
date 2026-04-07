@@ -26,7 +26,6 @@ func sampleResult() *entities.DeliveryResult {
 	}
 }
 
-// ── PublishResult ──────────────────────────────────────────────
 
 func TestPublishResult_Success(t *testing.T) {
 	rmq := &mocks.RabbitMQMock{}

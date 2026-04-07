@@ -270,7 +270,7 @@ func TestSyncOrdersByIntegrationIDWithParams_FallbackCuandoNoSoportado(t *testin
 		IntegrationTypeID: domain.IntegrationTypeShopify,
 	}
 	repo.On("GetIntegrationByID", mock.Anything, uint(11)).Return(integracion, nil)
-	// SyncOrdersByIntegrationIDWithParams retorna ErrNotSupported → debe hacer fallback
+	// SyncOrdersByIntegrationIDWithParams retorna ErrNotSupported -> debe hacer fallback
 	provider.On("SyncOrdersByIntegrationIDWithParams", mock.Anything, "11", mock.Anything).Return(domain.ErrNotSupported)
 	provider.On("SyncOrdersByIntegrationID", mock.Anything, "11").Return(nil)
 

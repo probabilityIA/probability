@@ -2,9 +2,7 @@ package errors
 
 import "errors"
 
-// ═══════════════════════════════════════════════════════════════
 // ERRORES DE DOMINIO - Softpymes Providers
-// ═══════════════════════════════════════════════════════════════
 
 var (
 	// Provider errors

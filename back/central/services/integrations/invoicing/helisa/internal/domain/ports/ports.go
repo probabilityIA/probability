@@ -7,9 +7,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/invoicing/helisa/internal/domain/dtos"
 )
 
-// ═══════════════════════════════════════════════════════════════
 // CLIENTE DE HELISA (Secondary Port - Driven Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IHelisaClient define las operaciones con la API de Helisa
 type IHelisaClient interface {
@@ -22,9 +20,7 @@ type IHelisaClient interface {
 	CreateInvoice(ctx context.Context, req *dtos.CreateInvoiceRequest) (*dtos.CreateInvoiceResult, error)
 }
 
-// ═══════════════════════════════════════════════════════════════
 // USE CASE DE FACTURACIÓN AUTOMÁTICA (Primary Port - Driving Adapter)
-// ═══════════════════════════════════════════════════════════════
 
 // IInvoiceUseCase define el caso de uso para procesar órdenes y crear facturas automáticamente
 type IInvoiceUseCase interface {
@@ -36,9 +32,7 @@ type IInvoiceUseCase interface {
 	TestConnection(ctx context.Context, config map[string]interface{}, credentials map[string]interface{}) error
 }
 
-// ═══════════════════════════════════════════════════════════════
 // ESTRUCTURAS DE EVENTOS (Replicadas localmente)
-// ═══════════════════════════════════════════════════════════════
 
 // OrderEventMessage representa el payload de eventos de órdenes en RabbitMQ
 type OrderEventMessage struct {

@@ -9,9 +9,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/mocks"
 )
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — camino feliz con todas las credenciales
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_Success(t *testing.T) {
 	ctx := context.Background()
@@ -47,9 +45,7 @@ func TestTestConnection_Success(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — store_url ausente
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_MissingStoreURL(t *testing.T) {
 	ctx := context.Background()
@@ -73,9 +69,7 @@ func TestTestConnection_MissingStoreURL(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — store_url vacío
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_EmptyStoreURL(t *testing.T) {
 	ctx := context.Background()
@@ -96,9 +90,7 @@ func TestTestConnection_EmptyStoreURL(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — consumer_key ausente
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_MissingConsumerKey(t *testing.T) {
 	ctx := context.Background()
@@ -122,9 +114,7 @@ func TestTestConnection_MissingConsumerKey(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — consumer_key vacío
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_EmptyConsumerKey(t *testing.T) {
 	ctx := context.Background()
@@ -145,9 +135,7 @@ func TestTestConnection_EmptyConsumerKey(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — consumer_secret ausente
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_MissingConsumerSecret(t *testing.T) {
 	ctx := context.Background()
@@ -171,9 +159,7 @@ func TestTestConnection_MissingConsumerSecret(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — consumer_secret vacío
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_EmptyConsumerSecret(t *testing.T) {
 	ctx := context.Background()
@@ -194,9 +180,7 @@ func TestTestConnection_EmptyConsumerSecret(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — tabla de validaciones de campos requeridos
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_TableDriven_RequiredFields(t *testing.T) {
 	baseConfig := map[string]interface{}{
@@ -250,9 +234,7 @@ func TestTestConnection_TableDriven_RequiredFields(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — el cliente HTTP retorna error
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_ClientFails(t *testing.T) {
 	ctx := context.Background()
@@ -284,9 +266,7 @@ func TestTestConnection_ClientFails(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — tipo de dato incorrecto en config (no string)
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_NonStringStoreURL(t *testing.T) {
 	ctx := context.Background()
@@ -307,9 +287,7 @@ func TestTestConnection_NonStringStoreURL(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // TestConnection — tipo de dato incorrecto en credentials (no string)
-// ─────────────────────────────────────────────────────────────
 
 func TestTestConnection_NonStringConsumerKey(t *testing.T) {
 	ctx := context.Background()

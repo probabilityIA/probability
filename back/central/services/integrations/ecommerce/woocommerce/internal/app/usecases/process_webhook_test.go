@@ -10,9 +10,7 @@ import (
 	"github.com/secamc93/probability/back/central/services/integrations/ecommerce/woocommerce/internal/mocks"
 )
 
-// ─────────────────────────────────────────────────────────────
 // ProcessWebhookOrder — camino feliz order.created
-// ─────────────────────────────────────────────────────────────
 
 func TestProcessWebhookOrder_Success_OrderCreated(t *testing.T) {
 	ctx := context.Background()
@@ -42,16 +40,14 @@ func TestProcessWebhookOrder_Success_OrderCreated(t *testing.T) {
 		t.Errorf("IntegrationType esperado 'woocommerce', recibí '%s'", dto.IntegrationType)
 	}
 	if dto.Status != "paid" {
-		t.Errorf("Status esperado 'paid' (processing→paid), recibí '%s'", dto.Status)
+		t.Errorf("Status esperado 'paid' (processing->paid), recibí '%s'", dto.Status)
 	}
 	if dto.OriginalStatus != "processing" {
 		t.Errorf("OriginalStatus esperado 'processing', recibí '%s'", dto.OriginalStatus)
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // ProcessWebhookOrder — camino feliz order.updated
-// ─────────────────────────────────────────────────────────────
 
 func TestProcessWebhookOrder_Success_OrderUpdated(t *testing.T) {
 	ctx := context.Background()
@@ -71,9 +67,7 @@ func TestProcessWebhookOrder_Success_OrderUpdated(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // ProcessWebhookOrder — order.deleted es ignorado (no publica)
-// ─────────────────────────────────────────────────────────────
 
 func TestProcessWebhookOrder_OrderDeletedSkipped(t *testing.T) {
 	ctx := context.Background()
@@ -93,9 +87,7 @@ func TestProcessWebhookOrder_OrderDeletedSkipped(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // ProcessWebhookOrder — JSON inválido retorna error
-// ─────────────────────────────────────────────────────────────
 
 func TestProcessWebhookOrder_InvalidJSON(t *testing.T) {
 	ctx := context.Background()
@@ -113,9 +105,7 @@ func TestProcessWebhookOrder_InvalidJSON(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // ProcessWebhookOrder — error al publicar
-// ─────────────────────────────────────────────────────────────
 
 func TestProcessWebhookOrder_PublishError(t *testing.T) {
 	ctx := context.Background()
@@ -141,9 +131,7 @@ func TestProcessWebhookOrder_PublishError(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // ProcessWebhookOrder — order.restored se procesa normalmente
-// ─────────────────────────────────────────────────────────────
 
 func TestProcessWebhookOrder_OrderRestored(t *testing.T) {
 	ctx := context.Background()
@@ -163,9 +151,7 @@ func TestProcessWebhookOrder_OrderRestored(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // ProcessWebhookOrder — verificar mapeo de campos del DTO
-// ─────────────────────────────────────────────────────────────
 
 func TestProcessWebhookOrder_VerifyDTOMapping(t *testing.T) {
 	ctx := context.Background()
@@ -231,9 +217,7 @@ func TestProcessWebhookOrder_VerifyDTOMapping(t *testing.T) {
 	}
 }
 
-// ─────────────────────────────────────────────────────────────
 // Helper: construir JSON de una orden WooCommerce de ejemplo
-// ─────────────────────────────────────────────────────────────
 
 func buildSampleOrderJSON(t *testing.T) []byte {
 	t.Helper()

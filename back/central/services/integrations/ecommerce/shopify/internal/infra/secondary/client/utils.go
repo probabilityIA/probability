@@ -10,13 +10,13 @@ import (
 // Esto permite modo test apuntando a un mock server (ej: http://localhost:3051).
 // Si es un dominio de Shopify normal, construye la URL estándar de Shopify Admin API.
 func buildURL(storeName, path string) string {
-	// URL completa con protocolo → usar directamente
+	// URL completa con protocolo -> usar directamente
 	if strings.HasPrefix(storeName, "http://") || strings.HasPrefix(storeName, "https://") {
 		base := strings.TrimRight(storeName, "/")
 		return base + path
 	}
 
-	// Si tiene puerto (ej: "back-testing:9090") → es un mock server, agregar http://
+	// Si tiene puerto (ej: "back-testing:9090") -> es un mock server, agregar http://
 	if strings.Contains(storeName, ":") {
 		base := strings.TrimRight(storeName, "/")
 		return "http://" + base + path

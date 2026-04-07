@@ -451,7 +451,7 @@ func (c *Client) CancelInvoice(ctx context.Context, apiKey, apiSecret, referer, 
 
 // resolveItemCode determines the Softpymes item code for a regular line item.
 // Resolution order:
-//  1. Named service mappings (membership_sku→membership_code, tip_sku→tip_code)
+//  1. Named service mappings (membership_sku->membership_code, tip_sku->tip_code)
 //  2. by_sku[SKU]
 //  3. default
 //  4. SKU as-is (original behavior)

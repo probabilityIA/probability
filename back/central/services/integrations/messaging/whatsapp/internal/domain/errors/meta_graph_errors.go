@@ -21,7 +21,6 @@ func (e *MetaGraphError) FriendlyMessage() string {
 	subcode := e.Subcode
 
 	switch {
-	// ── Autenticación ──
 	case code == 190:
 		switch subcode {
 		case 463:
@@ -32,15 +31,13 @@ func (e *MetaGraphError) FriendlyMessage() string {
 			return "Access Token invalido o expirado. Verifica el token en Meta Business Manager"
 		}
 
-	// ── Objeto no existe / permisos insuficientes ──
 	case code == 100 && subcode == 33:
-		return fmt.Sprintf("El Phone Number ID '%d' no existe o no tiene permisos. Verifica el ID en Meta Business Manager → WhatsApp → Numeros de telefono", e.PhoneNumberID)
+		return fmt.Sprintf("El Phone Number ID '%d' no existe o no tiene permisos. Verifica el ID en Meta Business Manager -> WhatsApp -> Numeros de telefono", e.PhoneNumberID)
 	case code == 100 && subcode == 2018109:
 		return "Parametros invalidos en el mensaje. Verifica que el numero de destino tenga formato internacional (ej: +573001234567)"
 	case code == 100:
 		return fmt.Sprintf("Solicitud invalida (code 100). Verifica que el Phone Number ID '%d' sea correcto y tenga permisos asignados", e.PhoneNumberID)
 
-	// ── Límites de envío ──
 	case code == 130429:
 		return "Se excedio el limite de mensajes. WhatsApp tiene restricciones de envio por minuto. Intenta de nuevo en unos minutos"
 	case code == 131048:
@@ -48,9 +45,8 @@ func (e *MetaGraphError) FriendlyMessage() string {
 	case code == 131026:
 		return "El numero de destino no esta registrado en WhatsApp"
 	case code == 131030:
-		return "El numero de destino no esta en la lista de permitidos. En cuentas de prueba, agrega el numero en Meta Business Manager → WhatsApp → API Setup → Allowed Numbers"
+		return "El numero de destino no esta en la lista de permitidos. En cuentas de prueba, agrega el numero en Meta Business Manager -> WhatsApp -> API Setup -> Allowed Numbers"
 
-	// ── Plantillas ──
 	case code == 132000:
 		return "La plantilla de mensaje no existe o no esta aprobada. Verifica el nombre de la plantilla en Meta Business Manager"
 	case code == 132001:
@@ -60,23 +56,19 @@ func (e *MetaGraphError) FriendlyMessage() string {
 	case code == 132012:
 		return "La plantilla tiene demasiados parametros. Simplifica la plantilla en Meta Business Manager"
 
-	// ── Cuenta / Negocio ──
 	case code == 131031:
 		return "La cuenta de WhatsApp Business no esta verificada. Completa la verificacion en Meta Business Manager"
 	case code == 131009:
 		return "El numero de telefono no esta registrado en la API de WhatsApp Cloud. Registra el numero en Meta Business Manager"
 
-	// ── Permisos de API ──
 	case code == 10 || code == 200:
 		return "Permisos insuficientes en el Access Token. Asegurate de que el token tenga el permiso 'whatsapp_business_messaging'"
 
-	// ── Errores de servidor de Meta ──
 	case code == 1 || code == 2:
 		return "Error temporal en los servidores de Meta. Intenta de nuevo en unos minutos"
 	case code == 4:
 		return "Se excedio el limite de llamadas a la API de Meta. Intenta de nuevo en unos minutos"
 
-	// ── HTTP genéricos (cuando Meta no retorna código de error en JSON) ──
 	case e.StatusCode == 401:
 		return "No autorizado. El Access Token es invalido o no tiene permisos"
 	case e.StatusCode == 403:

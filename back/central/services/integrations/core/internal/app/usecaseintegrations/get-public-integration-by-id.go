@@ -113,7 +113,7 @@ func (uc *IntegrationUseCase) DecryptCredentialField(ctx context.Context, integr
 // GetPlatformCredentialByIntegrationID obtiene un campo específico de las credenciales
 // de plataforma del tipo de integración asociado a la integración dada.
 // Se usa cuando una integración tiene use_platform_token=true en su configuración.
-// Flujo: cache (24h) → DB + desencriptar → cachear resultado
+// Flujo: cache (24h) -> DB + desencriptar -> cachear resultado
 func (uc *IntegrationUseCase) GetPlatformCredentialByIntegrationID(ctx context.Context, integrationID string, fieldName string) (string, error) {
 	ctx = log.WithFunctionCtx(ctx, "GetPlatformCredentialByIntegrationID")
 

@@ -31,9 +31,7 @@ func New(router *gin.RouterGroup, db db.IDatabase, logger log.ILogger, config en
 	// Inicializar Integration Core (hub central de integraciones)
 	integrationCore := core.New(router, db, redisClient, logger, config, s3, rabbitMQ)
 
-	// ═══════════════════════════════════════════════════════════════
 	// REGISTRO DE INTEGRACIONES
-	// ═══════════════════════════════════════════════════════════════
 
 	// Messaging: todos los proveedores de mensajería (sin DB — cache-first, DB-async)
 	messaging.New(config, logger, rabbitMQ, redisClient, integrationCore, emailService, router)
