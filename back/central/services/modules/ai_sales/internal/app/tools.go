@@ -65,12 +65,41 @@ func GetToolDefinitions() []domain.ToolDefinition {
 				"required": ["customer_name", "customer_phone", "items"]
 			}`,
 		},
+		{
+			Name:        "SearchCustomer",
+			Description: "Busca un cliente existente por DNI, email, telefono o nombre. Usa esta herramienta para verificar si el cliente ya existe antes de crear un pedido.",
+			InputSchema: `{
+				"type": "object",
+				"properties": {
+					"query": {
+						"type": "string",
+						"description": "Termino de busqueda: DNI, email, telefono o nombre del cliente"
+					}
+				},
+				"required": ["query"]
+			}`,
+		},
+		{
+			Name:        "GetCustomerLastAddress",
+			Description: "Obtiene la ultima direccion de envio de un cliente a partir de sus pedidos anteriores. Usa esta herramienta despues de identificar al cliente con SearchCustomer para sugerir su direccion.",
+			InputSchema: `{
+				"type": "object",
+				"properties": {
+					"customer_id": {
+						"type": "integer",
+						"description": "ID del cliente obtenido de SearchCustomer"
+					}
+				},
+				"required": ["customer_id"]
+			}`,
+		},
 	}
 }
 
 // toolDeps agrupa las dependencias necesarias para ejecutar tools
 type toolDeps struct {
 	productRepo    domain.IProductRepository
+	customerRepo   domain.ICustomerRepository
 	orderPublisher domain.IAIOrderPublisher
 	businessID     uint
 }
@@ -82,6 +111,10 @@ func DispatchTool(ctx context.Context, toolName string, inputJSON string, deps *
 		return executeSearchProducts(ctx, inputJSON, deps)
 	case "CreateOrder":
 		return executeCreateOrder(ctx, inputJSON, deps)
+	case "SearchCustomer":
+		return executeSearchCustomer(ctx, inputJSON, deps)
+	case "GetCustomerLastAddress":
+		return executeGetCustomerLastAddress(ctx, inputJSON, deps)
 	default:
 		return "", fmt.Errorf("unknown tool: %s", toolName)
 	}

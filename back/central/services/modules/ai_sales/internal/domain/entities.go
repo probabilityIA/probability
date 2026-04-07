@@ -78,10 +78,30 @@ type ProductSearchResult struct {
 	Price            float64
 	Currency         string
 	StockQuantity    int
+	TrackInventory   bool
 	Category         string
 	Brand            string
 	ImageURL         string
 	IsActive         bool
+}
+
+// CustomerSearchResult resultado de busqueda de cliente
+type CustomerSearchResult struct {
+	ID    uint
+	Name  string
+	Email string
+	Phone string
+	DNI   string
+}
+
+// CustomerLastAddress ultima direccion de envio extraida de ordenes anteriores
+type CustomerLastAddress struct {
+	Street     string
+	City       string
+	State      string
+	Country    string
+	PostalCode string
+	OrderDate  string
 }
 
 // AIConfig configuracion del agente de ventas IA leida de platform_creds

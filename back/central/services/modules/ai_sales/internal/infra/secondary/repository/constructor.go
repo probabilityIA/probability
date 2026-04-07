@@ -18,3 +18,11 @@ func New(database db.IDatabase, logger log.ILogger) domain.IProductRepository {
 		log: logger,
 	}
 }
+
+// NewCustomerRepository crea un repositorio de clientes para el modulo ai_sales
+func NewCustomerRepository(database db.IDatabase, logger log.ILogger) domain.ICustomerRepository {
+	return &repository{
+		db:  database,
+		log: logger,
+	}
+}

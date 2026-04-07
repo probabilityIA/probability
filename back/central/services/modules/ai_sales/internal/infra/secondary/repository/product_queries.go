@@ -4,37 +4,67 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"unicode"
+
+	"golang.org/x/text/transform"
+	"golang.org/x/text/unicode/norm"
 
 	"github.com/secamc93/probability/back/migration/shared/models"
 
 	domain "github.com/secamc93/probability/back/central/services/modules/ai_sales/internal/domain"
 )
 
-const (
-	// Caracteres acentuados y sus equivalentes sin acento para búsqueda accent-insensitive
-	accentedChars = "áéíóúàèìòùâêîôûãõñäëïöüÁÉÍÓÚÀÈÌÒÙÂÊÎÔÛÃÕÑÄËÏÖÜçÇ"
-	plainChars    = "aeiouaeiouaeiouaonaeiouAEIOUAEIOUAEIOUAONAEIOUcC"
+// accentTransformer quita diacriticos (acentos, tildes, cedillas) descomponiendo
+// los caracteres Unicode (NFD) y removiendo las marcas combinantes.
+// Resultado: "proteinas" == "proteinas", "camion" == "camion", etc.
+var accentTransformer = transform.Chain(
+	norm.NFD,
+	transform.RemoveFunc(func(r rune) bool {
+		return unicode.Is(unicode.Mn, r)
+	}),
+	norm.NFC,
 )
 
-// accentReplacer normaliza acentos en Go para que el patrón de búsqueda coincida
-// con la normalización SQL (translate) aplicada a las columnas
-var accentReplacer = strings.NewReplacer(
-	"á", "a", "é", "e", "í", "i", "ó", "o", "ú", "u",
-	"à", "a", "è", "e", "ì", "i", "ò", "o", "ù", "u",
-	"â", "a", "ê", "e", "î", "i", "ô", "o", "û", "u",
-	"ã", "a", "õ", "o", "ñ", "n", "ç", "c",
-	"ä", "a", "ë", "e", "ï", "i", "ö", "o", "ü", "u",
-	"Á", "A", "É", "E", "Í", "I", "Ó", "O", "Ú", "U",
-	"À", "A", "È", "E", "Ì", "I", "Ò", "O", "Ù", "U",
-	"Â", "A", "Ê", "E", "Î", "I", "Ô", "O", "Û", "U",
-	"Ã", "A", "Õ", "O", "Ñ", "N", "Ç", "C",
-	"ä", "a", "ë", "e", "ï", "i", "ö", "o", "ü", "u",
-)
+// removeAccents quita acentos de un string usando descomposicion Unicode
+func removeAccents(s string) string {
+	result, _, _ := transform.String(accentTransformer, s)
+	return result
+}
 
-// normalizeCol genera la expresión SQL para normalizar acentos en una columna:
-// translate(lower(column), 'áéí...', 'aei...')
+// sqlAccentedChars y sqlPlainChars se usan en la funcion SQL translate()
+// para normalizar acentos en columnas de la base de datos.
+// Se generan programaticamente para evitar literals UTF-8 densos en el codigo fuente.
+var sqlAccentedChars, sqlPlainChars = buildSQLTranslateChars()
+
+func buildSQLTranslateChars() (string, string) {
+	// Pares: caracter acentuado -> caracter sin acento
+	// Se definen como runas individuales para evitar strings densos de multibyte
+	pairs := [][2]rune{
+		{'\u00e1', 'a'}, {'\u00e9', 'e'}, {'\u00ed', 'i'}, {'\u00f3', 'o'}, {'\u00fa', 'u'}, // a-grave, etc
+		{'\u00e0', 'a'}, {'\u00e8', 'e'}, {'\u00ec', 'i'}, {'\u00f2', 'o'}, {'\u00f9', 'u'},
+		{'\u00e2', 'a'}, {'\u00ea', 'e'}, {'\u00ee', 'i'}, {'\u00f4', 'o'}, {'\u00fb', 'u'},
+		{'\u00e3', 'a'}, {'\u00f5', 'o'}, {'\u00f1', 'n'}, {'\u00e4', 'a'}, {'\u00eb', 'e'},
+		{'\u00ef', 'i'}, {'\u00f6', 'o'}, {'\u00fc', 'u'},
+		{'\u00c1', 'A'}, {'\u00c9', 'E'}, {'\u00cd', 'I'}, {'\u00d3', 'O'}, {'\u00da', 'U'},
+		{'\u00c0', 'A'}, {'\u00c8', 'E'}, {'\u00cc', 'I'}, {'\u00d2', 'O'}, {'\u00d9', 'U'},
+		{'\u00c2', 'A'}, {'\u00ca', 'E'}, {'\u00ce', 'I'}, {'\u00d4', 'O'}, {'\u00db', 'U'},
+		{'\u00c3', 'A'}, {'\u00d5', 'O'}, {'\u00d1', 'N'}, {'\u00c7', 'C'},
+		{'\u00c4', 'A'}, {'\u00cb', 'E'}, {'\u00cf', 'I'}, {'\u00d6', 'O'}, {'\u00dc', 'U'},
+		{'\u00e7', 'c'},
+	}
+
+	var accented, plain strings.Builder
+	for _, p := range pairs {
+		accented.WriteRune(p[0])
+		plain.WriteRune(p[1])
+	}
+	return accented.String(), plain.String()
+}
+
+// normalizeCol genera la expresion SQL para normalizar acentos en una columna:
+// translate(lower(column), '<accented>', '<plain>')
 func normalizeCol(col string) string {
-	return fmt.Sprintf("translate(lower(%s), '%s', '%s')", col, accentedChars, plainChars)
+	return fmt.Sprintf("translate(lower(%s), '%s', '%s')", col, sqlAccentedChars, sqlPlainChars)
 }
 
 // spanishStem aplica stemming básico para español: quita sufijos de plural
@@ -62,8 +92,8 @@ func (r *repository) SearchProducts(ctx context.Context, businessID uint, query 
 		limit = 5
 	}
 
-	// Normalizar el patrón de búsqueda: quitar acentos y lowercase
-	normalized := accentReplacer.Replace(strings.ToLower(query))
+	// Normalizar el patron de busqueda: quitar acentos y lowercase
+	normalized := removeAccents(strings.ToLower(query))
 	// Stemming básico español: quitar plural para ampliar la búsqueda
 	stemmed := spanishStem(normalized)
 
@@ -134,6 +164,7 @@ func mapProductToDomain(p *models.Product) domain.ProductSearchResult {
 		Price:            p.Price,
 		Currency:         p.Currency,
 		StockQuantity:    p.StockQuantity,
+		TrackInventory:   p.TrackInventory,
 		Category:         p.Category,
 		Brand:            p.Brand,
 		ImageURL:         p.ImageURL,

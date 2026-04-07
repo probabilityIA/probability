@@ -16,6 +16,7 @@ type useCase struct {
 	aiProvider           domain.IAIProvider
 	sessionCache         domain.ISessionCache
 	productRepo          domain.IProductRepository
+	customerRepo         domain.ICustomerRepository
 	responsePublisher    domain.IAIResponsePublisher
 	orderPublisher       domain.IAIOrderPublisher
 	configProvider       domain.IConfigProvider
@@ -29,6 +30,7 @@ func New(
 	aiProvider domain.IAIProvider,
 	sessionCache domain.ISessionCache,
 	productRepo domain.IProductRepository,
+	customerRepo domain.ICustomerRepository,
 	responsePublisher domain.IAIResponsePublisher,
 	orderPublisher domain.IAIOrderPublisher,
 	configProvider domain.IConfigProvider,
@@ -40,6 +42,7 @@ func New(
 		aiProvider:           aiProvider,
 		sessionCache:         sessionCache,
 		productRepo:          productRepo,
+		customerRepo:         customerRepo,
 		responsePublisher:    responsePublisher,
 		orderPublisher:       orderPublisher,
 		configProvider:       configProvider,

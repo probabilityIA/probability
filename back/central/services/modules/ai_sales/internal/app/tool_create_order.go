@@ -53,7 +53,8 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 			return fmt.Sprintf(`{"error": "Producto no encontrado: %s"}`, item.ProductSKU), nil
 		}
 
-		if product.StockQuantity < item.Quantity {
+		// Solo validar stock si el producto trackea inventario
+		if product.TrackInventory && product.StockQuantity < item.Quantity {
 			return fmt.Sprintf(`{"error": "Stock insuficiente para %s. Disponible: %d, solicitado: %d"}`,
 				product.Name, product.StockQuantity, item.Quantity), nil
 		}

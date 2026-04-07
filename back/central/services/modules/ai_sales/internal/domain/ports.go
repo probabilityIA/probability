@@ -20,6 +20,16 @@ type IProductRepository interface {
 	GetProductBySKU(ctx context.Context, businessID uint, sku string) (*ProductSearchResult, error)
 }
 
+// ICustomerRepository busca clientes e integraciones para el modulo ai_sales
+type ICustomerRepository interface {
+	// SearchCustomers busca clientes por DNI, email, telefono o nombre
+	SearchCustomers(ctx context.Context, businessID uint, query string) ([]CustomerSearchResult, error)
+	// GetCustomerLastAddress obtiene la ultima direccion de envio del cliente desde ordenes anteriores
+	GetCustomerLastAddress(ctx context.Context, businessID uint, customerID uint) (*CustomerLastAddress, error)
+	// GetWhatsAppIntegrationID obtiene el integration_id de WhatsApp para un business
+	GetWhatsAppIntegrationID(ctx context.Context, businessID uint) (uint, error)
+}
+
 // IAIResponsePublisher publica respuestas de AI a la cola de WhatsApp
 type IAIResponsePublisher interface {
 	PublishResponse(ctx context.Context, phoneNumber string, businessID uint, text string) error

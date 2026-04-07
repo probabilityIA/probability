@@ -44,6 +44,9 @@ func executeSearchProducts(ctx context.Context, inputJSON string, deps *toolDeps
 
 	results := make([]productResult, 0, len(products))
 	for _, p := range products {
+		// Si el producto no trackea inventario, siempre está disponible
+		available := !p.TrackInventory || p.StockQuantity > 0
+
 		results = append(results, productResult{
 			SKU:       p.SKU,
 			Name:      p.Name,
@@ -52,7 +55,7 @@ func executeSearchProducts(ctx context.Context, inputJSON string, deps *toolDeps
 			Stock:     p.StockQuantity,
 			Category:  p.Category,
 			Brand:     p.Brand,
-			Available: p.StockQuantity > 0,
+			Available: available,
 		})
 	}
 

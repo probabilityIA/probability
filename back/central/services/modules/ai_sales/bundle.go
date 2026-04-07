@@ -23,6 +23,7 @@ func New(database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue, re
 	aiProvider := ai_adapter.New(bedrockClient, logger)
 	sessionCache := aicache.New(redisClient, logger)
 	productRepo := repository.New(database, logger)
+	customerRepo := repository.NewCustomerRepository(database, logger)
 	responsePublisher := queue.NewResponsePublisher(rabbitMQ, logger)
 	orderPublisher := queue.NewOrderPublisher(rabbitMQ, logger)
 	configProvider := configprovider.New(redisClient, logger)
@@ -30,7 +31,7 @@ func New(database db.IDatabase, logger log.ILogger, rabbitMQ rabbitmq.IQueue, re
 	pauseChecker := aicache.NewPauseChecker(redisClient)
 
 	// 2. Caso de uso
-	useCase := app.New(aiProvider, sessionCache, productRepo, responsePublisher, orderPublisher, configProvider, persistencePublisher, pauseChecker, logger)
+	useCase := app.New(aiProvider, sessionCache, productRepo, customerRepo, responsePublisher, orderPublisher, configProvider, persistencePublisher, pauseChecker, logger)
 
 	// 3. Consumer (infraestructura primaria)
 	aiConsumer := consumer.New(rabbitMQ, useCase, logger)
