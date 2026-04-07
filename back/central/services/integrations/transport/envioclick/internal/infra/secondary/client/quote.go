@@ -17,6 +17,10 @@ func (c *Client) Quote(baseURL, apiKey string, req domain.QuoteRequest) (*domain
 		baseURL = DefaultBaseURL
 	}
 
+	if req.CODValue == 0 {
+		req.CODPaymentMethod = ""
+	}
+
 	c.log.Info(ctx).
 		Str("origin_dane", req.Origin.DaneCode).
 		Str("dest_dane", req.Destination.DaneCode).

@@ -18,6 +18,10 @@ func (c *Client) Generate(baseURL, apiKey string, req domain.QuoteRequest) (*dom
 		baseURL = DefaultBaseURL
 	}
 
+	if req.CODValue == 0 {
+		req.CODPaymentMethod = ""
+	}
+
 	c.log.Info(ctx).
 		Str("reference", req.MyShipmentReference).
 		Int64("rate_id", req.IDRate).
