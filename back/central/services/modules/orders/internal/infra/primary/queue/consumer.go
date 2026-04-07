@@ -16,11 +16,8 @@ import (
 	"github.com/secamc93/probability/back/central/shared/rabbitmq"
 )
 
-// OrdersCanonicalQueueName usa la constante centralizada de shared/rabbitmq.
 const OrdersCanonicalQueueName = rabbitmq.QueueOrdersCanonical
 
-// OrderConsumer consume órdenes canónicas de RabbitMQ y las procesa
-// Implementa ports.IOrderConsumer
 type OrderConsumer struct {
 	queue          rabbitmq.IQueue
 	logger         log.ILogger
@@ -29,7 +26,6 @@ type OrderConsumer struct {
 	eventPublisher ports.IIntegrationEventPublisher
 }
 
-// New crea una nueva instancia del consumidor de órdenes
 func New(
 	queue rabbitmq.IQueue,
 	logger log.ILogger,
@@ -46,9 +42,7 @@ func New(
 	}
 }
 
-// Start inicia el consumidor de órdenes
 func (c *OrderConsumer) Start(ctx context.Context) error {
-	// Declarar la cola si no existe (durable para persistencia)
 	if err := c.queue.DeclareQueue(OrdersCanonicalQueueName, true); err != nil {
 		c.logger.Error().
 			Err(err).
@@ -57,7 +51,6 @@ func (c *OrderConsumer) Start(ctx context.Context) error {
 		return fmt.Errorf("failed to declare queue: %w", err)
 	}
 
-	// Iniciar el consumo de mensajes
 	if err := c.queue.Consume(ctx, OrdersCanonicalQueueName, c.handleMessage); err != nil {
 		c.logger.Error().
 			Err(err).
@@ -69,7 +62,6 @@ func (c *OrderConsumer) Start(ctx context.Context) error {
 	return nil
 }
 
-// handleMessage procesa cada mensaje recibido de la cola
 func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 	ctx := context.Background()
 
@@ -78,7 +70,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		Int("message_size", len(messageBody)).
 		Msg("Processing order message from queue")
 
-	// Deserializar el mensaje a ProbabilityOrderDTO
 	var orderDTO dtos.ProbabilityOrderDTO
 	if err := json.Unmarshal(messageBody, &orderDTO); err != nil {
 		c.logger.Error().
@@ -87,13 +78,11 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Str("message_body", string(messageBody)).
 			Msg("Failed to unmarshal order message")
 
-		// Guardar error con JSON original
 		c.saveOrderError(ctx, nil, err, "unmarshal_error", messageBody)
 		c.publishRejected(ctx, &orderDTO, "Error de formato: "+err.Error())
-		return fmt.Errorf("failed to unmarshal order message: %w", err)
+		return nil
 	}
 
-	// Validar que la orden tenga los campos mínimos requeridos
 	if orderDTO.ExternalID == "" {
 		err := fmt.Errorf("order message missing external_id")
 		c.logger.Error().
@@ -101,7 +90,7 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Msg("Order message missing external_id")
 		c.saveOrderError(ctx, &orderDTO, err, "validation_error", messageBody)
 		c.publishRejected(ctx, &orderDTO, "Falta external_id")
-		return err
+		return nil
 	}
 
 	if orderDTO.IntegrationID == 0 {
@@ -112,14 +101,12 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Msg("Order message missing integration_id")
 		c.saveOrderError(ctx, &orderDTO, err, "validation_error", messageBody)
 		c.publishRejected(ctx, &orderDTO, "Falta integration_id")
-		return err
+		return nil
 	}
 
-	// Llamar al caso de uso para mapear y guardar la orden
 	orderResponse, err := c.createUC.MapAndSaveOrder(ctx, &orderDTO)
 	if err != nil {
 		errStr := err.Error()
-		// Check for specific errors to discard message
 		if errors.Is(err, domainerrors.ErrOrderAlreadyExists) {
 			c.logger.Info().
 				Str("queue", OrdersCanonicalQueueName).
@@ -129,7 +116,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			return nil
 		}
 
-		// Discard messages with missing required business/integration checks from domain logic
 		if contains(errStr, "business_id is required") || contains(errStr, "integration_id is required") {
 			c.logger.Warn().
 				Str("queue", OrdersCanonicalQueueName).
@@ -139,7 +125,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			return nil
 		}
 
-		// If error is a FK violation (data integrity), discard message to avoid loop
 		if contains(errStr, "violates foreign key constraint") {
 			c.logger.Warn().
 				Err(err).
@@ -150,7 +135,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			return nil
 		}
 
-		// If error is a duplicate key violation for external_id (race condition), discard message
 		if contains(errStr, "duplicate key value violates unique constraint") &&
 			(contains(errStr, "idx_integration_external_id") || contains(errStr, "SQLSTATE 23505")) {
 			c.logger.Info().
@@ -162,7 +146,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			return nil
 		}
 
-		// If error is a data-too-long error (varchar overflow), discard to avoid infinite retry loop
 		if contains(errStr, "value too long for type") || contains(errStr, "SQLSTATE 22001") {
 			c.logger.Warn().
 				Err(err).
@@ -183,7 +166,6 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 			Str("platform", orderDTO.Platform).
 			Msg("Failed to map and save order")
 
-		// Guardar error con JSON original
 		c.saveOrderError(ctx, &orderDTO, err, "processing_error", messageBody)
 		c.publishRejected(ctx, &orderDTO, "Error procesando: "+err.Error())
 		c.publishAIOrderResult(ctx, &orderDTO, false, "", err.Error())
@@ -202,20 +184,17 @@ func (c *OrderConsumer) handleMessage(messageBody []byte) error {
 		Int("shipments_count", len(orderDTO.Shipments)).
 		Msg("Order processed and saved successfully from queue")
 
-	// Notificar resultado al modulo AI Sales si la orden viene de whatsapp_ai
 	c.publishAIOrderResult(ctx, &orderDTO, true, orderResponse.ID, "")
 
 	return nil
 }
 
-// saveOrderError guarda un error en la tabla order_errors con el JSON original
 func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.ProbabilityOrderDTO, err error, errorType string, messageBody []byte) {
 	if c.repo == nil {
 		c.logger.Warn().Msg("Repository not available, cannot save order error")
 		return
 	}
 
-	// Determinar el tipo de error basado en el mensaje
 	if errorType == "" {
 		errMsg := err.Error()
 		if strings.Contains(errMsg, "validation") || strings.Contains(errMsg, "required") {
@@ -227,7 +206,6 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 		}
 	}
 
-	// Extraer información del DTO si está disponible
 	var externalID string
 	var integrationID uint
 	var businessID *uint
@@ -241,7 +219,6 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 		integrationType = orderDTO.IntegrationType
 		platform = orderDTO.Platform
 	} else {
-		// Intentar extraer del JSON si el DTO no está disponible
 		var rawMap map[string]interface{}
 		if json.Unmarshal(messageBody, &rawMap) == nil {
 			if extID, ok := rawMap["external_id"].(string); ok {
@@ -275,7 +252,6 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 		Status:          "new",
 	}
 
-	// Intentar guardar el error (no bloqueamos si falla)
 	if saveErr := c.repo.CreateOrderError(ctx, orderError); saveErr != nil {
 		c.logger.Error().
 			Err(saveErr).
@@ -283,8 +259,6 @@ func (c *OrderConsumer) saveOrderError(ctx context.Context, orderDTO *dtos.Proba
 	}
 }
 
-// publishRejected emite un evento SSE integration.sync.order.rejected para que el frontend
-// sepa que esta orden fue procesada (aunque falló) y pueda completar la barra de progreso.
 func (c *OrderConsumer) publishRejected(ctx context.Context, dto *dtos.ProbabilityOrderDTO, reason string) {
 	if c.eventPublisher == nil || dto == nil {
 		return
@@ -298,8 +272,6 @@ func (c *OrderConsumer) publishRejected(ctx context.Context, dto *dtos.Probabili
 	})
 }
 
-// publishAIOrderResult publica el resultado del procesamiento de una orden AI al queue ai.order.result
-// para que el modulo ai_sales notifique al cliente por WhatsApp.
 func (c *OrderConsumer) publishAIOrderResult(ctx context.Context, dto *dtos.ProbabilityOrderDTO, success bool, orderID string, errMsg string) {
 	if dto == nil || dto.Platform != "whatsapp_ai" {
 		return

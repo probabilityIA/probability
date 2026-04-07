@@ -63,6 +63,11 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 		currency = product.Currency
 	}
 
+	integrationID, err := deps.customerRepo.GetWhatsAppIntegrationID(ctx, deps.businessID)
+	if err != nil {
+		return fmt.Sprintf(`{"error": "No se encontro integracion de WhatsApp para este negocio: %s"}`, err.Error()), nil
+	}
+
 	externalID := uuid.New().String()
 	orderNumber := fmt.Sprintf("AI-%s", externalID[:8])
 	now := time.Now().Format(time.RFC3339)
@@ -84,6 +89,7 @@ func executeCreateOrder(ctx context.Context, inputJSON string, deps *toolDeps) (
 	}
 
 	order := serializableOrder{
+		IntegrationID:   integrationID,
 		BusinessID:      &businessID,
 		IntegrationType: "whatsapp_ai",
 		Platform:        "whatsapp_ai",
