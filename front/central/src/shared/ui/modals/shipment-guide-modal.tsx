@@ -319,7 +319,6 @@ export default function ShipmentGuideModal({ isOpen, onClose, order, onGuideGene
         if (isOpen && order) {
             // Step 1
             step1Form.setValue("contentValue", order.total_amount);
-            step1Form.setValue("codValue", order.total_amount);
             step1Form.setValue("description", `Order ${order.order_number}`);
             step1Form.setValue("destAddress", order.shipping_street, { shouldValidate: true });
 
