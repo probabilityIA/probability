@@ -37,6 +37,11 @@ func (m *RabbitPublisherMock) PublishConfirmationRequested(ctx context.Context, 
 	return args.Error(0)
 }
 
+func (m *RabbitPublisherMock) PublishGuideNotificationRequested(ctx context.Context, order *entities.ProbabilityOrder) error {
+	args := m.Called(ctx, order)
+	return args.Error(0)
+}
+
 func (m *RabbitPublisherMock) PublishOrderEvent(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error {
 	args := m.Called(ctx, event, order)
 	return args.Error(0)

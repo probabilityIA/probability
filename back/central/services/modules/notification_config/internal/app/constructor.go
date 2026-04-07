@@ -11,6 +11,7 @@ type useCase struct {
 	notificationEventRepo ports.INotificationEventTypeRepository
 	cacheManager          ports.ICacheManager
 	messageAuditQuerier   ports.IMessageAuditQuerier
+	aiPauseChecker        ports.IAIPauseChecker
 	logger                log.ILogger
 }
 
@@ -21,6 +22,7 @@ func New(
 	notificationEventRepo ports.INotificationEventTypeRepository,
 	cacheManager ports.ICacheManager,
 	messageAuditQuerier ports.IMessageAuditQuerier,
+	aiPauseChecker ports.IAIPauseChecker,
 	logger log.ILogger,
 ) ports.IUseCase {
 	return &useCase{
@@ -29,6 +31,7 @@ func New(
 		notificationEventRepo: notificationEventRepo,
 		cacheManager:          cacheManager,
 		messageAuditQuerier:   messageAuditQuerier,
+		aiPauseChecker:        aiPauseChecker,
 		logger:                logger.WithModule("notification_config_usecase"),
 	}
 }

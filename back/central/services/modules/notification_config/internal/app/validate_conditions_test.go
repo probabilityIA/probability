@@ -124,7 +124,7 @@ func TestValidateConditions_Success(t *testing.T) {
 			mockCacheManager := &mocks.CacheManagerMock{}
 			mockLogger := mocks.NewLoggerMock()
 
-			useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
+			useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 			// Act
 			result := useCase.ValidateConditions(tt.config, tt.orderStatusID, tt.paymentMethodID)
@@ -145,7 +145,7 @@ func TestValidateConditions_PaymentMethod(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 	config := &entities.IntegrationNotificationConfig{
 		ID:                      1,
@@ -173,7 +173,7 @@ func TestValidateConditions_EmptyOrderStatusIDs(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 	config := &entities.IntegrationNotificationConfig{
 		ID:                      1,
@@ -204,7 +204,7 @@ func TestValidateConditions_NilConfig(t *testing.T) {
 	mockCacheManager := &mocks.CacheManagerMock{}
 	mockLogger := mocks.NewLoggerMock()
 
-	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
+	useCase := New(mockRepo, mockNotificationTypeRepo, mockEventTypeRepo, mockCacheManager, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 	// Act - Con config nil debería hacer panic (comportamiento actual)
 	// Este test documenta el comportamiento actual: no maneja nil

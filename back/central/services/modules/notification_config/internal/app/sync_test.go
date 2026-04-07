@@ -40,7 +40,7 @@ func TestSyncByIntegration_Success_RecachesEnabledConfigs(t *testing.T) {
 	}
 
 	mockLogger := mocks.NewLoggerMock()
-	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
+	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, mockCacheManager, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 	dto := dtos.SyncNotificationConfigsDTO{
 		BusinessID:    businessID,
@@ -95,7 +95,7 @@ func TestSyncByIntegration_CacheErrorShouldNotFail(t *testing.T) {
 	}
 
 	mockLogger := mocks.NewLoggerMock()
-	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, mockCacheManager, &mocks.MessageAuditQuerierMock{}, mockLogger)
+	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, mockCacheManager, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 	dto := dtos.SyncNotificationConfigsDTO{
 		BusinessID:    businessID,
@@ -125,7 +125,7 @@ func TestSyncByIntegration_DuplicateRulesError(t *testing.T) {
 	}
 
 	mockLogger := mocks.NewLoggerMock()
-	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, &mocks.CacheManagerMock{}, &mocks.MessageAuditQuerierMock{}, mockLogger)
+	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, &mocks.CacheManagerMock{}, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 	dto := dtos.SyncNotificationConfigsDTO{
 		BusinessID:    26,
@@ -160,7 +160,7 @@ func TestSyncByIntegration_SyncConfigsError(t *testing.T) {
 	}
 
 	mockLogger := mocks.NewLoggerMock()
-	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, &mocks.CacheManagerMock{}, &mocks.MessageAuditQuerierMock{}, mockLogger)
+	useCase := New(mockRepo, &mocks.NotificationTypeRepositoryMock{}, &mocks.NotificationEventTypeRepositoryMock{}, &mocks.CacheManagerMock{}, &mocks.MessageAuditQuerierMock{}, &mocks.AIPauseCheckerMock{}, mockLogger)
 
 	dto := dtos.SyncNotificationConfigsDTO{
 		BusinessID:    26,

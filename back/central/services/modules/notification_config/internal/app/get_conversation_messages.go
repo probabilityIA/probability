@@ -38,11 +38,14 @@ func (uc *useCase) GetConversationMessages(ctx context.Context, conversationID s
 		msgDTOs[i] = dto
 	}
 
+	aiPaused := uc.aiPauseChecker.IsAIPaused(ctx, conv.PhoneNumber)
+
 	return &dtos.ConversationDetailResponseDTO{
 		ConversationID: conv.ID,
 		PhoneNumber:    conv.PhoneNumber,
 		OrderNumber:    conv.OrderNumber,
 		CurrentState:   conv.CurrentState,
+		AiPaused:       aiPaused,
 		Messages:       msgDTOs,
 	}, nil
 }

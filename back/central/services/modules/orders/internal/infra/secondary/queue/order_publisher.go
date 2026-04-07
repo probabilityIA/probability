@@ -85,7 +85,7 @@ func (p *OrderRabbitPublisher) PublishOrderStatusChanged(ctx context.Context, or
 		BusinessID:    order.BusinessID,
 		IntegrationID: &order.IntegrationID,
 		Timestamp:     time.Now(),
-		Changes: map[string]interface{}{
+		Changes: map[string]any{
 			"previous_status": previousStatus,
 			"current_status":  currentStatus,
 		},
@@ -107,7 +107,7 @@ func (p *OrderRabbitPublisher) PublishOrderEvent(ctx context.Context, event *ent
 		IntegrationID: event.IntegrationID,
 		Timestamp:     event.Timestamp,
 		Order:         mappers.OrderToSnapshot(order), // ✅ Snapshot completo
-		Changes: map[string]interface{}{
+		Changes: map[string]any{
 			"previous_status": event.Data.PreviousStatus,
 			"current_status":  event.Data.CurrentStatus,
 			"platform":        event.Data.Platform,
@@ -127,7 +127,7 @@ func (p *OrderRabbitPublisher) PublishConfirmationRequested(ctx context.Context,
 	shippingAddress := buildShippingAddress(order)
 
 	// Construir evento
-	event := map[string]interface{}{
+	event := map[string]any{
 		"event_type":        "order.confirmation_requested",
 		"order_id":          order.ID,
 		"order_number":      order.OrderNumber,
@@ -214,6 +214,53 @@ func buildShippingAddress(order *entities.ProbabilityOrder) string {
 	return address
 }
 
+// PublishGuideNotificationRequested publica un evento cuando se solicita enviar la guia por WhatsApp
+func (p *OrderRabbitPublisher) PublishGuideNotificationRequested(ctx context.Context, order *entities.ProbabilityOrder) error {
+	trackingNumber := ""
+	if order.TrackingNumber != nil {
+		trackingNumber = *order.TrackingNumber
+	}
+
+	event := map[string]any{
+		"event_type":      "order.guide_notification_requested",
+		"order_id":        order.ID,
+		"order_number":    order.OrderNumber,
+		"business_id":     order.BusinessID,
+		"customer_name":   order.CustomerName,
+		"customer_phone":  order.CustomerPhone,
+		"tracking_number": trackingNumber,
+		"integration_id":  order.IntegrationID,
+		"platform":        order.Platform,
+		"timestamp":       time.Now().Unix(),
+	}
+
+	payload, err := json.Marshal(event)
+	if err != nil {
+		p.log.Error().
+			Err(err).
+			Str("order_id", order.ID).
+			Msg("Error marshaling guide notification event")
+		return fmt.Errorf("error marshaling event: %w", err)
+	}
+
+	if err := p.rabbit.Publish(ctx, rabbitmq.QueueShipmentsWhatsAppGuideNotification, payload); err != nil {
+		p.log.Error().
+			Err(err).
+			Str("order_id", order.ID).
+			Str("queue", rabbitmq.QueueShipmentsWhatsAppGuideNotification).
+			Msg("Error publishing guide notification event to RabbitMQ")
+		return fmt.Errorf("error publishing to RabbitMQ: %w", err)
+	}
+
+	p.log.Info().
+		Str("order_id", order.ID).
+		Str("order_number", order.OrderNumber).
+		Str("tracking_number", trackingNumber).
+		Msg("Guide notification event published successfully")
+
+	return nil
+}
+
 // ───────────────────────────────────────────
 //
 //	FUNCIONES HELPER
@@ -221,7 +268,7 @@ func buildShippingAddress(order *entities.ProbabilityOrder) string {
 // ───────────────────────────────────────────
 
 // publishToQueue publica un mensaje a una queue específica de RabbitMQ
-func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, queue string, message *response.OrderEventMessage) error {
+func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, _ string, message *response.OrderEventMessage) error {
 	// Serializar a JSON
 	payload, err := json.Marshal(message)
 	if err != nil {

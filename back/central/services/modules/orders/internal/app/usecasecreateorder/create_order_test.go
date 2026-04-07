@@ -244,7 +244,8 @@ type mockRabbitPublisher struct {
 	PublishOrderCancelledFn        func(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishOrderStatusChangedFn    func(ctx context.Context, order *entities.ProbabilityOrder, previousStatus, currentStatus string) error
 	PublishConfirmationRequestedFn func(ctx context.Context, order *entities.ProbabilityOrder) error
-	PublishOrderEventFn            func(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
+	PublishOrderEventFn                    func(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error
+	PublishGuideNotificationRequestedFn    func(ctx context.Context, order *entities.ProbabilityOrder) error
 }
 
 func (m *mockRabbitPublisher) PublishOrderCreated(ctx context.Context, order *entities.ProbabilityOrder) error {
@@ -280,6 +281,12 @@ func (m *mockRabbitPublisher) PublishConfirmationRequested(ctx context.Context, 
 func (m *mockRabbitPublisher) PublishOrderEvent(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error {
 	if m.PublishOrderEventFn != nil {
 		return m.PublishOrderEventFn(ctx, event, order)
+	}
+	return nil
+}
+func (m *mockRabbitPublisher) PublishGuideNotificationRequested(ctx context.Context, order *entities.ProbabilityOrder) error {
+	if m.PublishGuideNotificationRequestedFn != nil {
+		return m.PublishGuideNotificationRequestedFn(ctx, order)
 	}
 	return nil
 }

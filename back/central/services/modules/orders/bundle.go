@@ -42,9 +42,10 @@ func New(router *gin.RouterGroup, database db.IDatabase, logger log.ILogger, env
 
 	statusUC := usecaseupdatestatus.New(repo, logger, rabbitPublisher)
 	requestConfirmationUC := initRequestConfirmationUseCase(repo, rabbitPublisher, logger)
+	sendGuideNotificationUC := initSendGuideNotificationUseCase(repo, rabbitPublisher, logger)
 
 	// 4. Inicializar Handlers y Registrar Rutas
-	h := handlers.New(orderCRUD, createUC, requestConfirmationUC, statusUC, logger)
+	h := handlers.New(orderCRUD, createUC, requestConfirmationUC, sendGuideNotificationUC, statusUC, logger)
 	h.RegisterRoutes(router)
 
 	// 5. Inicializar Consumers (background goroutines)
@@ -120,6 +121,15 @@ func initRequestConfirmationUseCase(repo ports.IRepository, rabbitPublisher port
 	useCase := usecaseorder.NewRequestConfirmationUseCase(repo, rabbitPublisher, logger)
 
 	return useCase
+}
+
+// initSendGuideNotificationUseCase inicializa el caso de uso de notificacion de guia por WhatsApp
+func initSendGuideNotificationUseCase(repo ports.IRepository, rabbitPublisher ports.IOrderRabbitPublisher, logger log.ILogger) ports.ISendGuideNotificationUseCase {
+	if rabbitPublisher == nil {
+		logger.Warn(context.Background()).Msg("RabbitMQ publisher not available, send guide notification use case disabled")
+		return nil
+	}
+	return usecaseorder.NewSendGuideNotificationUseCase(repo, rabbitPublisher, logger)
 }
 
 // startRabbitMQConsumer inicia el consumer de RabbitMQ para órdenes

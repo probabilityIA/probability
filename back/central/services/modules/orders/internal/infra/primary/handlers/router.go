@@ -25,5 +25,8 @@ func (h *Handlers) RegisterRoutes(router *gin.RouterGroup) {
 
 		// Confirmación de órdenes vía WhatsApp
 		orders.POST("/:id/request-confirmation", middleware.JWT(), h.RequestConfirmation)
+
+		// Notificación de guía de envío vía WhatsApp
+		orders.POST("/:id/send-guide-notification", middleware.JWT(), h.SendGuideNotification)
 	}
 }

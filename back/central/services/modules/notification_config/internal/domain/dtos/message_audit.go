@@ -47,7 +47,7 @@ type PaginatedMessageAuditResponseDTO struct {
 	TotalPages int                          `json:"total_pages"`
 }
 
-// ─── Conversation List & Detail ────────────────────────────────
+// --- Conversation List & Detail ---
 
 // ConversationListFilterDTO define los filtros para listar conversaciones
 type ConversationListFilterDTO struct {
@@ -98,9 +98,10 @@ type ConversationMessageResponseDTO struct {
 
 // ConversationDetailResponseDTO es la respuesta con el detalle de una conversación y sus mensajes
 type ConversationDetailResponseDTO struct {
-	ConversationID string                        `json:"conversation_id"`
-	PhoneNumber    string                        `json:"phone_number"`
-	OrderNumber    string                        `json:"order_number"`
-	CurrentState   string                        `json:"current_state"`
+	ConversationID string                           `json:"conversation_id"`
+	PhoneNumber    string                           `json:"phone_number"`
+	OrderNumber    string                           `json:"order_number"`
+	CurrentState   string                           `json:"current_state"`
+	AiPaused       bool                             `json:"ai_paused"`
 	Messages       []ConversationMessageResponseDTO `json:"messages"`
 }

@@ -35,6 +35,9 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	// Cache Manager
 	cacheManager := cache.New(redisClient, repo, orderStatusQuerier, logger)
 
+	// AI Pause Checker (lee estado de IA pausada desde Redis)
+	aiPauseChecker := cache.NewAIPauseChecker(redisClient)
+
 	// Warmup inicial del cache
 	ctx := context.Background()
 	if err := cacheManager.WarmupCache(ctx); err != nil {
@@ -44,7 +47,7 @@ func New(router *gin.RouterGroup, database db.IDatabase, redisClient redisclient
 	}
 
 	// 2. Capa de aplicación (casos de uso) - inyectar cache manager
-	useCase := app.New(repo, notificationTypeRepo, notificationEventTypeRepo, cacheManager, messageAuditQuerier, logger)
+	useCase := app.New(repo, notificationTypeRepo, notificationEventTypeRepo, cacheManager, messageAuditQuerier, aiPauseChecker, logger)
 
 	// 3. Infraestructura primaria (adaptadores de entrada)
 	configHandler := notification_config.New(useCase, logger)

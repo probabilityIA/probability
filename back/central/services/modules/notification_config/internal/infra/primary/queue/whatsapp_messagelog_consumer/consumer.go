@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/domain/entities"
 	"github.com/secamc93/probability/back/central/services/modules/notification_config/internal/infra/primary/queue/whatsapp_messagelog_consumer/request"
@@ -59,6 +61,31 @@ func (c *MessageLogConsumer) handleCreated(ctx context.Context, event *request.M
 	entry := toMessageLogEntity(event.MessageLog)
 
 	if err := c.persister.CreateMessageLog(ctx, entry); err != nil {
+		// Si es FK violation, la conversación puede no haberse persistido aún (race condition entre consumers)
+		// Reintentar una vez después de esperar a que el conversation consumer la persista
+		if isFKViolation(err) {
+			c.logger.Warn(ctx).
+				Str("conversation_id", event.MessageLog.ConversationID).
+				Msg("FK violation en message log, esperando a que la conversación se persista...")
+
+			time.Sleep(500 * time.Millisecond)
+
+			if retryErr := c.persister.CreateMessageLog(ctx, entry); retryErr != nil {
+				c.logger.Error(ctx).
+					Err(retryErr).
+					Str("message_id", event.MessageLog.MessageID).
+					Str("conversation_id", event.MessageLog.ConversationID).
+					Msg("Error persistiendo message log después de retry")
+				return
+			}
+
+			c.logger.Info(ctx).
+				Str("message_id", event.MessageLog.MessageID).
+				Str("conversation_id", event.MessageLog.ConversationID).
+				Msg("Message log WhatsApp persistido después de retry")
+			return
+		}
+
 		c.logger.Error(ctx).
 			Err(err).
 			Str("message_id", event.MessageLog.MessageID).
@@ -70,6 +97,11 @@ func (c *MessageLogConsumer) handleCreated(ctx context.Context, event *request.M
 		Str("message_id", event.MessageLog.MessageID).
 		Str("conversation_id", event.MessageLog.ConversationID).
 		Msg("Message log WhatsApp persistido")
+}
+
+// isFKViolation verifica si el error es una violación de foreign key (SQLSTATE 23503)
+func isFKViolation(err error) bool {
+	return err != nil && strings.Contains(err.Error(), "23503")
 }
 
 func (c *MessageLogConsumer) handleStatusUpdated(ctx context.Context, event *request.MessageLogEvent) {

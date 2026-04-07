@@ -7,11 +7,11 @@ import (
 	"github.com/secamc93/probability/back/central/services/modules/orders/internal/domain/entities"
 )
 
-// ───────────────────────────────────────────
+// -------------------------------------------
 //
 //	REPOSITORY INTERFACE
 //
-// ───────────────────────────────────────────
+// -------------------------------------------
 
 // IRepository define todos los métodos de repositorio del módulo orders
 type IRepository interface {
@@ -94,11 +94,11 @@ type IRepository interface {
 	GetOrderHistory(ctx context.Context, orderID string) ([]entities.OrderHistory, error)
 }
 
-// ───────────────────────────────────────────
+// -------------------------------------------
 //
 //	ORDER CONSUMER INTERFACE
 //
-// ───────────────────────────────────────────
+// -------------------------------------------
 
 // IOrderConsumer define la interfaz para consumir órdenes desde colas
 type IOrderConsumer interface {
@@ -106,11 +106,11 @@ type IOrderConsumer interface {
 	Start(ctx context.Context) error
 }
 
-// ───────────────────────────────────────────
+// -------------------------------------------
 //
 //	USE CASE INTERFACES
 //
-// ───────────────────────────────────────────
+// -------------------------------------------
 
 // IOrderCreateUseCase define el caso de uso para crear y mapear órdenes desde integraciones
 type IOrderCreateUseCase interface {
@@ -123,15 +123,20 @@ type IOrderUpdateUseCase interface {
 	UpdateOrder(ctx context.Context, existingOrder *entities.ProbabilityOrder, dto *dtos.ProbabilityOrderDTO) (*dtos.OrderResponse, error)
 }
 
-// ───────────────────────────────────────────
+// -------------------------------------------
 //
 //	SCORE & CONFIRMATION USE CASES
 //
-// ───────────────────────────────────────────
+// -------------------------------------------
 
 // IRequestConfirmationUseCase define la interfaz del caso de uso de solicitud de confirmación
 type IRequestConfirmationUseCase interface {
 	RequestConfirmation(ctx context.Context, orderID string) error
+}
+
+// ISendGuideNotificationUseCase define la interfaz del caso de uso de envío de notificación de guía
+type ISendGuideNotificationUseCase interface {
+	SendGuideNotification(ctx context.Context, orderID string) error
 }
 
 // IOrderStatusUseCase define el caso de uso para cambio de estado de órdenes
@@ -149,11 +154,11 @@ type IOrderUseCase interface {
 	DeleteOrder(ctx context.Context, id string) error
 }
 
-// ───────────────────────────────────────────
+// -------------------------------------------
 //
 //	RABBITMQ PUBLISHER INTERFACE
 //
-// ───────────────────────────────────────────
+// -------------------------------------------
 
 // IIntegrationEventPublisher publica eventos de sincronización de integraciones al exchange de eventos
 type IIntegrationEventPublisher interface {
@@ -174,6 +179,9 @@ type IOrderRabbitPublisher interface {
 
 	// Eventos de confirmación (ya existe)
 	PublishConfirmationRequested(ctx context.Context, order *entities.ProbabilityOrder) error
+
+	// Eventos de guía de envío
+	PublishGuideNotificationRequested(ctx context.Context, order *entities.ProbabilityOrder) error
 
 	// Método genérico para cualquier evento con snapshot completo
 	PublishOrderEvent(ctx context.Context, event *entities.OrderEvent, order *entities.ProbabilityOrder) error

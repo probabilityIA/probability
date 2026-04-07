@@ -95,6 +95,7 @@ func DomainToConversationDetailResponse(dto *dtos.ConversationDetailResponseDTO)
 		PhoneNumber:    dto.PhoneNumber,
 		OrderNumber:    dto.OrderNumber,
 		CurrentState:   dto.CurrentState,
+		AiPaused:       dto.AiPaused,
 		Messages:       messages,
 	}
 }

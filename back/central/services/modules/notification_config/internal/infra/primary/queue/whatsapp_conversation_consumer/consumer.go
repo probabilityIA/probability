@@ -41,6 +41,8 @@ func (c *ConversationConsumer) handleMessage(body []byte) error {
 		c.handleCreated(ctx, &event)
 	case "conversation.updated":
 		c.handleUpdated(ctx, &event)
+	case "conversation.upsert":
+		c.handleUpsert(ctx, &event)
 	case "conversation.expired":
 		c.handleExpired(ctx, &event)
 	default:
@@ -84,6 +86,25 @@ func (c *ConversationConsumer) handleUpdated(ctx context.Context, event *request
 		Str("conversation_id", event.Conversation.ID).
 		Str("state", event.Conversation.CurrentState).
 		Msg("Conversación WhatsApp actualizada")
+}
+
+func (c *ConversationConsumer) handleUpsert(ctx context.Context, event *request.ConversationEvent) {
+	conv := toConversationEntity(&event.Conversation)
+
+	// UpdateConversation ya tiene fallback a CreateConversation si no existe
+	if err := c.persister.UpdateConversation(ctx, conv); err != nil {
+		c.logger.Error(ctx).
+			Err(err).
+			Str("conversation_id", event.Conversation.ID).
+			Msg("Error en upsert de conversación")
+		return
+	}
+
+	c.logger.Info(ctx).
+		Str("conversation_id", event.Conversation.ID).
+		Str("phone_number", event.Conversation.PhoneNumber).
+		Str("state", event.Conversation.CurrentState).
+		Msg("Conversación WhatsApp upserted")
 }
 
 func (c *ConversationConsumer) handleExpired(ctx context.Context, event *request.ConversationEvent) {

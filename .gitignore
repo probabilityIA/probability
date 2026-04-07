@@ -86,3 +86,6 @@ probability.pem
 
 # Lock file (opcional - algunos lo versionan, otros no)
 # .terraform.lock.hcl
+
+# MCP config (contains DB credentials)
+.mcp.json

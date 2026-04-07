@@ -35,7 +35,7 @@ type PaginatedMessageAuditResponse struct {
 	TotalPages int               `json:"total_pages"`
 }
 
-// ─── Conversation View ────────────────────────────────────────
+// --- Conversation View ---
 
 // ConversationSummary es el resumen de una conversación para la vista de lista
 type ConversationSummary struct {
@@ -79,5 +79,6 @@ type ConversationDetailResponse struct {
 	PhoneNumber    string                `json:"phone_number"`
 	OrderNumber    string                `json:"order_number"`
 	CurrentState   string                `json:"current_state"`
+	AiPaused       bool                  `json:"ai_paused"`
 	Messages       []ConversationMessage `json:"messages"`
 }

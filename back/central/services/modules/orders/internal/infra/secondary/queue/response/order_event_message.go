@@ -11,8 +11,8 @@ type OrderEventMessage struct {
 	IntegrationID *uint                  `json:"integration_id"`
 	Timestamp     time.Time              `json:"timestamp"`
 	Order         *OrderSnapshot         `json:"order"`      // Snapshot completo SIEMPRE incluido
-	Changes       map[string]interface{} `json:"changes,omitempty"`    // Cambios específicos
-	Metadata      map[string]interface{} `json:"metadata,omitempty"`
+	Changes       map[string]any `json:"changes,omitempty"`    // Cambios específicos
+	Metadata      map[string]any `json:"metadata,omitempty"`
 }
 
 // OrderSnapshot representa un snapshot completo de una orden

@@ -28,3 +28,9 @@ type ICacheManager interface {
 	// InvalidateAll invalida todo el cache
 	InvalidateAll(ctx context.Context) error
 }
+
+// IAIPauseChecker verifica si la IA está pausada para un número de teléfono.
+// Lee la clave Redis whatsapp:ai_paused:{phone} (gestionada por el módulo whatsapp).
+type IAIPauseChecker interface {
+	IsAIPaused(ctx context.Context, phoneNumber string) bool
+}
