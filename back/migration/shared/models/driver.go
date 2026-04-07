@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	DRIVERS - Conductores de ultima milla
 //
-// ───────────────────────────────────────────
 
 type Driver struct {
 	gorm.Model

@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	EMAIL LOGS - Logs de envío de emails de notificación
 //
-// ───────────────────────────────────────────
 
 // EmailLog registra cada intento de envío de email de notificación.
 // Útil para auditoría, debugging y reintentos futuros.

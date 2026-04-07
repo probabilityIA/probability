@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	BUSINESS NOTIFICATION CONFIG - Configuraciones de notificaciones internas por negocio
 //
-// ───────────────────────────────────────────
 
 // BusinessNotificationConfig configura qué eventos de órdenes se notifican a un negocio
 // Estas son notificaciones internas para el panel administrativo (SSE)
@@ -71,11 +69,9 @@ func (BusinessNotificationConfig) TableName() string {
 	return "business_notification_configs"
 }
 
-// ───────────────────────────────────────────
 //
 //	BUSINESS NOTIFICATION CONFIG ORDER STATUS - Tabla intermedia
 //
-// ───────────────────────────────────────────
 
 // BusinessNotificationConfigOrderStatus representa la relación many-to-many
 // entre configuraciones de notificaciones y estados de orden

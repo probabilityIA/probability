@@ -10,12 +10,10 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	ORDERS - Órdenes unificadas del sistema
 //	Modelo desnormalizado para fácil migración a DynamoDB
 //
-// ───────────────────────────────────────────
 
 // Order representa una orden unificada en el sistema Probability
 // Este modelo es auto-contenido y no depende de relaciones externas
@@ -239,11 +237,9 @@ func (o *Order) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// ───────────────────────────────────────────
 //
 //	ORDER HISTORY - Historial de cambios
 //
-// ───────────────────────────────────────────
 
 // OrderHistory registra cada cambio de estado de una orden
 type OrderHistory struct {
@@ -265,11 +261,9 @@ func (OrderHistory) TableName() string {
 	return "order_history"
 }
 
-// ───────────────────────────────────────────
 //
 //	HELPER FUNCTIONS
 //
-// ───────────────────────────────────────────
 
 // generateUUID genera un UUID v4 único
 func generateUUID() string {
@@ -296,11 +290,9 @@ func generateRandomString(n int) string {
 	return string(b)
 }
 
-// ───────────────────────────────────────────
 //
 //	ORDER ITEMS - Items/Productos de la orden
 //
-// ───────────────────────────────────────────
 
 // OrderItem representa la relación entre una orden y un producto del catálogo
 // Esta tabla solo guarda información específica de la orden (cantidad, precios de la venta, descuentos)
@@ -357,11 +349,9 @@ func (OrderItem) TableName() string {
 	return "order_items"
 }
 
-// ───────────────────────────────────────────
 //
 //	ADDRESSES - Direcciones de envío y facturación
 //
-// ───────────────────────────────────────────
 
 // Address representa una dirección (puede ser de envío o facturación)
 type Address struct {
@@ -405,11 +395,9 @@ func (Address) TableName() string {
 	return "addresses"
 }
 
-// ───────────────────────────────────────────
 //
 //	PAYMENTS - Pagos de la orden
 //
-// ───────────────────────────────────────────
 
 // Payment representa un pago asociado a una orden
 type Payment struct {
@@ -452,11 +440,9 @@ func (Payment) TableName() string {
 	return "payments"
 }
 
-// ───────────────────────────────────────────
 //
 //	ORDER CHANNEL METADATA - Datos crudos del canal
 //
-// ───────────────────────────────────────────
 
 // OrderChannelMetadata almacena los datos crudos originales de la orden
 // tal como los recibió el canal de venta (Shopify, Mercado Libre, etc.)

@@ -5,11 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	NOTIFICATION TYPES - Tipos de notificaciones disponibles
 //
-// ───────────────────────────────────────────
 
 // NotificationType representa un tipo/canal de notificación disponible en el sistema
 // Ejemplos: WhatsApp, SSE (Server-Sent Events), Email, SMS

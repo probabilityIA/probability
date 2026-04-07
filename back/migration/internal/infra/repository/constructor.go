@@ -49,11 +49,11 @@ func (r *Repository) Migrate(ctx context.Context) error {
 		&models.StockMovement{},
 
 		// Ampliar columnas varchar para soportar datos largos de Shopify
-		// Client.Phone: 20→50, Client.Dni: 30→50
+		// Client.Phone: 20->50, Client.Dni: 30->50
 		&models.Client{},
-		// Order.CustomerPhone: 32→50
+		// Order.CustomerPhone: 32->50
 		&models.Order{},
-		// Invoice.CustomerPhone: 32→50
+		// Invoice.CustomerPhone: 32->50
 		&models.Invoice{},
 
 		// Ultima milla (drivers, vehicles, routes)
@@ -243,7 +243,7 @@ func (r *Repository) migrateOrderStatusesV2(ctx context.Context) error {
 		return fmt.Errorf("failed to insert new order statuses: %w", err)
 	}
 
-	// 2. Normalizar estados existentes: Novelty → delivery_novelty, Refund → returned
+	// 2. Normalizar estados existentes: Novelty -> delivery_novelty, Refund -> returned
 	db.Exec(`
 		UPDATE order_statuses
 		SET code = 'delivery_novelty', name = 'Novedad de entrega', description = 'Novedad de entrega',
@@ -710,7 +710,7 @@ func (r *Repository) seedSoftpymesIntegrationType(ctx context.Context) error {
 	return nil
 }
 
-// migrateInvoicingProvidersToIntegrations migra datos de invoicing_providers → integrations
+// migrateInvoicingProvidersToIntegrations migra datos de invoicing_providers -> integrations
 func (r *Repository) migrateInvoicingProvidersToIntegrations(ctx context.Context) error {
 	db := r.db.Conn(ctx)
 
@@ -727,7 +727,7 @@ func (r *Repository) migrateInvoicingProvidersToIntegrations(ctx context.Context
 		return nil
 	}
 
-	// 2. Migrar invoicing_providers → integrations
+	// 2. Migrar invoicing_providers -> integrations
 	err := db.Exec(`
 		INSERT INTO integrations (
 			business_id, integration_type_id, name, description,
@@ -1259,20 +1259,20 @@ func (r *Repository) fixNotificationConfigIndex(ctx context.Context) error {
 }
 
 // seedAllowedOrderStatusesByEventType inserta los estados de orden permitidos por tipo de evento
-// Si vacío → significa "todos los estados permitidos"
+// Si vacío -> significa "todos los estados permitidos"
 func (r *Repository) seedAllowedOrderStatusesByEventType(ctx context.Context) error {
 	db := r.db.Conn(ctx)
 
-	// Mapeo: eventTypeID → []orderStatusID
+	// Mapeo: eventTypeID -> []orderStatusID
 	// IDs de order_statuses: pending=1, processing=2, shipped=3, delivered=4, completed=5, cancelled=6, refunded=7
 	allowedMap := map[uint][]uint{
-		1: {1, 2}, // SSE order.created → pending, processing
-		2: {},     // SSE order.status_changed → todos (vacío)
-		3: {1, 2}, // WA order.created → pending, processing
-		4: {3, 4}, // WA order.shipped → shipped, delivered
-		5: {4, 5}, // WA order.delivered → delivered, completed
-		6: {6, 7}, // WA order.canceled → cancelled, refunded
-		7: {},     // WA invoice.created → todos (vacío)
+		1: {1, 2}, // SSE order.created -> pending, processing
+		2: {},     // SSE order.status_changed -> todos (vacío)
+		3: {1, 2}, // WA order.created -> pending, processing
+		4: {3, 4}, // WA order.shipped -> shipped, delivered
+		5: {4, 5}, // WA order.delivered -> delivered, completed
+		6: {6, 7}, // WA order.canceled -> cancelled, refunded
+		7: {},     // WA invoice.created -> todos (vacío)
 	}
 
 	for eventTypeID, statusIDs := range allowedMap {

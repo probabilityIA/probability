@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	BUSINESS TYPES - Tipos de negocios
 //
-// ───────────────────────────────────────────
 type BusinessType struct {
 	gorm.Model
 	Name        string `gorm:"size:100;not null;unique"`
@@ -33,11 +31,9 @@ type BusinessType struct {
 	Permissions []Permission `gorm:"foreignKey:BusinessTypeID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
-// ───────────────────────────────────────────
 //
 //	SCOPES - Ámbitos de permisos y roles
 //
-// ───────────────────────────────────────────
 type Scope struct {
 	gorm.Model
 	Name        string `gorm:"size:100;not null;unique"`
@@ -50,11 +46,9 @@ type Scope struct {
 	Permissions []Permission `gorm:"foreignKey:ScopeID"`
 }
 
-// ───────────────────────────────────────────
 //
 //	BUSINESSES  (multi-tenant) - MARCA BLANCA
 //
-// ───────────────────────────────────────────
 type Business struct {
 	gorm.Model
 	Name             string `gorm:"size:120;not null"`
@@ -99,11 +93,9 @@ type Business struct {
 	Integrations                []Integration                `gorm:"foreignKey:BusinessID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"` // Integraciones del negocio
 }
 
-// ───────────────────────────────────────────
 //
 //	BUSINESS RESOURCE CONFIGURED – recursos del negocio configurados para un negocio
 //
-// ───────────────────────────────────────────
 type BusinessResourceConfigured struct {
 	gorm.Model
 	BusinessID uint `gorm:"not null;index;uniqueIndex:idx_business_resource_config,priority:1"`
@@ -115,11 +107,9 @@ type BusinessResourceConfigured struct {
 	Resource Resource `gorm:"foreignKey:ResourceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
-// ───────────────────────────────────────────
 //
 //	RESOURCES – recursos del negocio
 //
-// ───────────────────────────────────────────
 type Resource struct {
 	gorm.Model
 	Name        string `gorm:"size:100;not null;unique"`
@@ -134,11 +124,9 @@ type Resource struct {
 	Permissions                 []Permission                 `gorm:"foreignKey:ResourceID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
-// ───────────────────────────────────────────
 //
 //	ROLES DEL SISTEMA
 //
-// ───────────────────────────────────────────
 type Role struct {
 	gorm.Model
 	Name        string `gorm:"size:50;not null;unique"`
@@ -158,11 +146,9 @@ type Role struct {
 	Users       []User       `gorm:"many2many:user_roles;"`
 }
 
-// ───────────────────────────────────────────
 //
 //	PERMISOS DEL SISTEMA
 //
-// ───────────────────────────────────────────
 type Permission struct {
 	gorm.Model
 	Name        string `gorm:"size:50;unique"`
@@ -181,11 +167,9 @@ type Permission struct {
 	Action   Action   `gorm:"foreignKey:ActionID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ───────────────────────────────────────────
 //
 //	USUARIOS DEL SISTEMA
 //
-// ───────────────────────────────────────────
 type User struct {
 	gorm.Model
 	Name        string `gorm:"size:255;not null"`
@@ -211,11 +195,9 @@ type User struct {
 	StaffOf []BusinessStaff
 }
 
-// ───────────────────────────────────────────
 //
 //	BUSINESS STAFF  (N:M usuario ↔ negocio)
 //
-// ───────────────────────────────────────────
 type BusinessStaff struct {
 	gorm.Model
 	UserID     uint  `gorm:"not null;index;uniqueIndex:idx_user_business,priority:1"`
@@ -228,11 +210,9 @@ type BusinessStaff struct {
 	Role     Role     `gorm:"foreignKey:RoleID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ───────────────────────────────────────────
 //
 //	CLIENTS – personas que hacen la reserva
 //
-// ───────────────────────────────────────────
 type Client struct {
 	gorm.Model
 	BusinessID uint    `gorm:"not null;index;uniqueIndex:idx_business_client_email,priority:1;uniqueIndex:idx_business_client_dni,priority:1"`
@@ -246,11 +226,9 @@ type Client struct {
 	User     *User    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:SET NULL"`
 }
 
-// ───────────────────────────────────────────
 //
 //	ACTIONS – acciones que se pueden realizar en el sistema
 //
-// ───────────────────────────────────────────
 type Action struct {
 	gorm.Model
 	Name        string `gorm:"size:20;not null;unique"`
@@ -260,11 +238,9 @@ type Action struct {
 	Permissions []Permission `gorm:"foreignKey:ActionID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ───────────────────────────────────────────
 //
 //	API KEYS - Claves de API para integraciones
 //
-// ───────────────────────────────────────────
 type APIKey struct {
 	gorm.Model
 	UserID      uint   `gorm:"not null;index"`    // Usuario para el cual se genera la API Key
@@ -289,11 +265,9 @@ type APIKey struct {
 	CreatedBy User     `gorm:"foreignKey:CreatedByID;constraint:OnUpdate:CASCADE,OnDelete:RESTRICT"`
 }
 
-// ───────────────────────────────────────────
 //
 //	INTEGRATION CATEGORIES - Categorías de integraciones
 //
-// ───────────────────────────────────────────
 type IntegrationCategory struct {
 	gorm.Model
 	Code             string `gorm:"size:50;not null;unique;index"` // "ecommerce", "invoicing", "messaging"
@@ -316,11 +290,9 @@ func (IntegrationCategory) TableName() string {
 	return "integration_categories"
 }
 
-// ───────────────────────────────────────────
 //
 //	INTEGRATION TYPES - Tipos de integraciones disponibles
 //
-// ───────────────────────────────────────────
 type IntegrationType struct {
 	gorm.Model
 	Name          string `gorm:"size:100;not null;unique"` // "WhatsApp", "Shopify", "Mercado Libre"
@@ -363,11 +335,9 @@ func (IntegrationType) TableName() string {
 	return "integration_types"
 }
 
-// ───────────────────────────────────────────
 //
 //	INTEGRATIONS – Integraciones del sistema (WhatsApp, Shopify, Mercado Libre, etc.)
 //
-// ───────────────────────────────────────────
 type Integration struct {
 	gorm.Model
 
@@ -418,11 +388,9 @@ func (Integration) TableName() string {
 	return "integrations"
 }
 
-// ───────────────────────────────────────────
 //
 //	INTEGRATION NOTIFICATION CONFIG - Configuraciones de notificaciones por integración
 //
-// ───────────────────────────────────────────
 type IntegrationNotificationConfig struct {
 	gorm.Model
 

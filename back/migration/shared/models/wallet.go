@@ -6,11 +6,9 @@ import (
 	"github.com/google/uuid"
 )
 
-// ───────────────────────────────────────────
 //
 //	WALLET - Billetera por negocio
 //
-// ───────────────────────────────────────────
 
 type Wallet struct {
 	ID         uuid.UUID `gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`

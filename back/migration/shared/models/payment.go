@@ -5,11 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	PAYMENT METHODS - Métodos de pago del sistema
 //
-// ───────────────────────────────────────────
 
 // PaymentMethod representa un método de pago en Probability
 type PaymentMethod struct {
@@ -39,11 +37,9 @@ func (PaymentMethod) TableName() string {
 	return "payment_methods"
 }
 
-// ───────────────────────────────────────────
 //
 //	PAYMENT METHOD MAPPINGS - Mapeo por integración
 //
-// ───────────────────────────────────────────
 
 // PaymentMethodMapping mapea métodos de pago de integraciones externas
 // a los métodos de pago unificados de Probability
@@ -69,11 +65,9 @@ func (PaymentMethodMapping) TableName() string {
 	return "payment_method_mappings"
 }
 
-// ───────────────────────────────────────────
 //
 //	ORDER STATUSES - Estados de órdenes del sistema
 //
-// ───────────────────────────────────────────
 
 // OrderStatus representa un estado de orden en Probability
 type OrderStatus struct {
@@ -102,11 +96,9 @@ func (OrderStatus) TableName() string {
 	return "order_statuses"
 }
 
-// ───────────────────────────────────────────
 //
 //	ORDER STATUS MAPPINGS - Mapeo de estados
 //
-// ───────────────────────────────────────────
 
 // OrderStatusMapping mapea estados de órdenes de integraciones externas
 // a los estados unificados de Probability
@@ -133,11 +125,9 @@ func (OrderStatusMapping) TableName() string {
 	return "order_status_mappings"
 }
 
-// ───────────────────────────────────────────
 //
 //	PAYMENT STATUSES - Estados de pago del sistema
 //
-// ───────────────────────────────────────────
 
 // PaymentStatus representa un estado de pago en Probability
 type PaymentStatus struct {
@@ -165,11 +155,9 @@ func (PaymentStatus) TableName() string {
 	return "payment_statuses"
 }
 
-// ───────────────────────────────────────────
 //
 //	FULFILLMENT STATUSES - Estados de fulfillment del sistema
 //
-// ───────────────────────────────────────────
 
 // FulfillmentStatus representa un estado de fulfillment en Probability
 type FulfillmentStatus struct {
@@ -197,11 +185,9 @@ func (FulfillmentStatus) TableName() string {
 	return "fulfillment_statuses"
 }
 
-// ───────────────────────────────────────────
 //
 //	CHANNEL PAYMENT METHODS - Métodos de pago nativos por canal
 //
-// ───────────────────────────────────────────
 
 // ChannelPaymentMethod representa un método de pago nativo de un canal de venta externo.
 // Son datos de catálogo cargados por el desarrollador (seed data), no configurables por el usuario.
@@ -226,11 +212,9 @@ func (ChannelPaymentMethod) TableName() string {
 	return "channel_payment_methods"
 }
 
-// ───────────────────────────────────────────
 //
 //	INTEGRATION CHANNEL STATUSES - Estados nativos por canal de integración
 //
-// ───────────────────────────────────────────
 
 // IntegrationChannelStatus representa un estado de orden nativo de un canal de integración.
 // Son los estados que reportan plataformas como Shopify o MercadoLibre (ej. "paid", "pending").

@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	SHIPMENTS - Envíos de la orden
 //
-// ───────────────────────────────────────────
 
 // Shipment representa un envío asociado a una orden
 type Shipment struct {

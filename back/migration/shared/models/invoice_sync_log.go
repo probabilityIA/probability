@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	INVOICE SYNC LOGS - Logs de sincronización de facturas
 //
-// ───────────────────────────────────────────
 
 // InvoiceSyncLog registra cada intento de sincronización con el proveedor
 // Útil para debugging, reintentos y auditoría

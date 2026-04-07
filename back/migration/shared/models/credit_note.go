@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	CREDIT NOTES - Notas de crédito
 //
-// ───────────────────────────────────────────
 
 // CreditNote representa una nota de crédito asociada a una factura
 // Se usa para devoluciones, anulaciones parciales o correcciones

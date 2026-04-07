@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	INVOICES - Facturas generadas
 //
-// ───────────────────────────────────────────
 
 // Invoice representa una factura electrónica generada para una orden
 type Invoice struct {

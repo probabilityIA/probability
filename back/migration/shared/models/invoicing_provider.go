@@ -5,11 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	INVOICING PROVIDERS - Instancias de proveedores de facturación por negocio
 //
-// ───────────────────────────────────────────
 
 // InvoicingProvider representa una instancia configurada de un proveedor de facturación
 // para un negocio específico. Contiene las credenciales y configuración necesarias.

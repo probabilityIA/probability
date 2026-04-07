@@ -5,11 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	INVOICE ITEMS - Líneas/Items de factura
 //
-// ───────────────────────────────────────────
 
 // InvoiceItem representa un item/línea de una factura
 type InvoiceItem struct {

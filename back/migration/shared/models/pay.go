@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	PAYMENT TRANSACTIONS - Transacciones de pago via pasarelas externas
 //
-// ───────────────────────────────────────────
 type PaymentTransaction struct {
 	gorm.Model
 	BusinessID      uint           `gorm:"not null;index"`

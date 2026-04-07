@@ -6,11 +6,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	BUSINESS SUBSCRIPTIONS - Historial de pagos y estado de suscripción
 //
-// ───────────────────────────────────────────
 type BusinessSubscription struct {
 	gorm.Model
 	BusinessID       uint    `gorm:"not null;index"`

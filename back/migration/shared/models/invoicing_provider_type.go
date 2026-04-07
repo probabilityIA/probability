@@ -2,11 +2,9 @@ package models
 
 import "gorm.io/gorm"
 
-// ───────────────────────────────────────────
 //
 //	INVOICING PROVIDER TYPES - Tipos de proveedores de facturación
 //
-// ───────────────────────────────────────────
 
 // InvoicingProviderType representa un tipo de proveedor de facturación electrónica
 // Ejemplo: Softpymes, Siigo, Facturama, Alegra, etc.

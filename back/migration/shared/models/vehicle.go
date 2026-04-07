@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	VEHICLES - Vehiculos de ultima milla
 //
-// ───────────────────────────────────────────
 
 type Vehicle struct {
 	gorm.Model

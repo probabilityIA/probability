@@ -7,11 +7,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	ROUTES - Rutas de ultima milla
 //
-// ───────────────────────────────────────────
 
 type Route struct {
 	gorm.Model
@@ -44,11 +42,9 @@ type Route struct {
 	Stops           []RouteStop `gorm:"foreignKey:RouteID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
-// ───────────────────────────────────────────
 //
 //	ROUTE STOPS - Paradas de una ruta
 //
-// ───────────────────────────────────────────
 
 type RouteStop struct {
 	gorm.Model

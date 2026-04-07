@@ -7,7 +7,7 @@ import "gorm.io/gorm"
 // Si ProductID tiene valor, aplica solo a ese producto.
 // Los descuentos por cantidad son iguales para todos los clientes (no dependen de ClientID).
 // Se apilan sobre el precio ajustado del cliente (ClientPricingRule).
-// Múltiples tiers: MinQuantity=10 → 5%, MinQuantity=50 → 10%, etc.
+// Múltiples tiers: MinQuantity=10 -> 5%, MinQuantity=50 -> 10%, etc.
 // Se aplica el tier con mayor MinQuantity que el pedido cumpla.
 type QuantityDiscount struct {
 	gorm.Model

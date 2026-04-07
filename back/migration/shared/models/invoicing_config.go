@@ -5,11 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	INVOICING CONFIGS - Configuraciones de facturación por integración
 //
-// ───────────────────────────────────────────
 
 // InvoicingConfig define qué integraciones deben facturar automáticamente
 // y con qué proveedor de facturación.

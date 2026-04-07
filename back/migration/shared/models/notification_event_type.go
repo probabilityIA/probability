@@ -5,11 +5,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// ───────────────────────────────────────────
 //
 //	NOTIFICATION EVENT TYPES - Tipos de eventos de notificación
 //
-// ───────────────────────────────────────────
 
 // NotificationEventType representa un tipo de evento específico para un tipo de notificación
 // Ejemplos: "order.created", "order.shipped", "invoice.created"
@@ -41,7 +39,7 @@ type NotificationEventType struct {
 
 	// Estados de orden permitidos para este tipo de evento (M2M)
 	// Si está vacío, significa "todos los estados permitidos"
-	// Ejemplo: order.created → [pending, processing], order.shipped → [shipped, delivered]
+	// Ejemplo: order.created -> [pending, processing], order.shipped -> [shipped, delivered]
 	AllowedOrderStatuses []OrderStatus `gorm:"many2many:notification_event_type_allowed_statuses;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 }
 
