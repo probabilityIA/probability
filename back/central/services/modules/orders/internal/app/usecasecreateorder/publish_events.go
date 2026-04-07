@@ -25,11 +25,9 @@ func (uc *UseCaseCreateOrder) publishOrderEvents(ctx context.Context, order *ent
 	// Score calculation handled by probability module via QueueOrdersToScore
 }
 
-// ───────────────────────────────────────────
 //
 //	INTEGRATION SYNC EVENTS
 //
-// ───────────────────────────────────────────
 
 // publishSyncOrderCreated notifica al módulo de integraciones que la orden se creó exitosamente
 func (uc *UseCaseCreateOrder) publishSyncOrderCreated(ctx context.Context, order *entities.ProbabilityOrder) {
@@ -50,11 +48,9 @@ func (uc *UseCaseCreateOrder) publishSyncOrderCreated(ctx context.Context, order
 	})
 }
 
-// ───────────────────────────────────────────
 //
 //	RABBITMQ FANOUT EVENTS
 //
-// ───────────────────────────────────────────
 
 // publishOrderCreatedEvent publica el evento de orden creada al exchange fanout de RabbitMQ
 // (invoicing, inventory, score, whatsapp consumers)

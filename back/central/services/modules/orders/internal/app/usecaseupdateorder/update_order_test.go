@@ -11,8 +11,7 @@ import (
 	"github.com/secamc93/probability/back/central/shared/log"
 )
 
-// ─── Mock: IRepository ──────────────────────────────────────────────────────
-
+// Mock: IRepository
 type mockRepository struct {
 	CreateOrderFn                                        func(ctx context.Context, order *entities.ProbabilityOrder) error
 	GetOrderByIDFn                                       func(ctx context.Context, id string) (*entities.ProbabilityOrder, error)
@@ -236,8 +235,7 @@ func (m *mockRepository) GetOrderHistory(ctx context.Context, orderID string) ([
 	return nil, nil
 }
 
-// ─── Mock: IOrderRabbitPublisher ────────────────────────────────────────────
-
+// Mock: IOrderRabbitPublisher
 type mockRabbitPublisher struct {
 	PublishOrderCreatedFn          func(ctx context.Context, order *entities.ProbabilityOrder) error
 	PublishOrderUpdatedFn          func(ctx context.Context, order *entities.ProbabilityOrder) error
@@ -291,8 +289,7 @@ func (m *mockRabbitPublisher) PublishGuideNotificationRequested(ctx context.Cont
 	return nil
 }
 
-// ─── Mock: IIntegrationEventPublisher ───────────────────────────────────────
-
+// Mock: IIntegrationEventPublisher
 type mockIntegrationEventPublisher struct {
 	PublishSyncOrderCreatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
 	PublishSyncOrderUpdatedFn  func(ctx context.Context, integrationID uint, businessID *uint, data map[string]interface{})
@@ -315,8 +312,7 @@ func (m *mockIntegrationEventPublisher) PublishSyncOrderRejected(ctx context.Con
 	}
 }
 
-// ─── Mock: log.ILogger ──────────────────────────────────────────────────────
-
+// Mock: log.ILogger
 type mockLogger struct{}
 
 func (m *mockLogger) Info(ctx ...context.Context) *zerolog.Event {
@@ -351,7 +347,6 @@ func (m *mockLogger) WithService(service string) log.ILogger     { return m }
 func (m *mockLogger) WithModule(module string) log.ILogger       { return m }
 func (m *mockLogger) WithBusinessID(businessID uint) log.ILogger { return m }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
 
 func newTestUpdateUseCase(
 	repo *mockRepository,
@@ -371,10 +366,8 @@ func newTestUpdateUseCase(
 	return uc
 }
 
-// ─── Tests: UpdateOrder ───────────────────────────────────────────────────────
-
+// Tests: UpdateOrder
 func TestUpdateOrder_SinCambios_RetornaSinActualizar(t *testing.T) {
-	// Arrange
 	updateOrderCalled := false
 	existingOrder := &entities.ProbabilityOrder{
 		ID:            "ORDER-U01",
@@ -400,10 +393,8 @@ func TestUpdateOrder_SinCambios_RetornaSinActualizar(t *testing.T) {
 		CustomerEmail: "",        // No actualiza (vacío)
 	}
 
-	// Act
 	result, err := uc.UpdateOrder(context.Background(), existingOrder, dto)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
 	}
@@ -419,7 +410,6 @@ func TestUpdateOrder_SinCambios_RetornaSinActualizar(t *testing.T) {
 }
 
 func TestUpdateOrder_CambioDeEstado_ActualizaYPublicaEvento(t *testing.T) {
-	// Arrange
 	updateOrderCalled := false
 	existingOrder := &entities.ProbabilityOrder{
 		ID:          "ORDER-U02",
@@ -440,10 +430,8 @@ func TestUpdateOrder_CambioDeEstado_ActualizaYPublicaEvento(t *testing.T) {
 		Status: "completed", // Cambio de estado
 	}
 
-	// Act
 	result, err := uc.UpdateOrder(context.Background(), existingOrder, dto)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
 	}
@@ -459,7 +447,6 @@ func TestUpdateOrder_CambioDeEstado_ActualizaYPublicaEvento(t *testing.T) {
 }
 
 func TestUpdateOrder_ErrorEnRepositorio_RetornaError(t *testing.T) {
-	// Arrange
 	expectedErr := errors.New("error de conexion BD")
 	existingOrder := &entities.ProbabilityOrder{
 		ID:          "ORDER-U03",
@@ -478,10 +465,8 @@ func TestUpdateOrder_ErrorEnRepositorio_RetornaError(t *testing.T) {
 		Status: "shipped", // Hay un cambio para que se intente actualizar
 	}
 
-	// Act
 	result, err := uc.UpdateOrder(context.Background(), existingOrder, dto)
 
-	// Assert
 	if err == nil {
 		t.Fatal("se esperaba error al fallar el repositorio, pero no se obtuvo ninguno")
 	}
@@ -494,7 +479,6 @@ func TestUpdateOrder_ErrorEnRepositorio_RetornaError(t *testing.T) {
 }
 
 func TestUpdateOrder_CambioInformacionFinanciera_ActualizaCampos(t *testing.T) {
-	// Arrange
 	existingOrder := &entities.ProbabilityOrder{
 		ID:          "ORDER-U04",
 		TotalAmount: 100.0,
@@ -514,10 +498,8 @@ func TestUpdateOrder_CambioInformacionFinanciera_ActualizaCampos(t *testing.T) {
 		Subtotal:    160.0, // Subtotal diferente
 	}
 
-	// Act
 	result, err := uc.UpdateOrder(context.Background(), existingOrder, dto)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
 	}
@@ -533,7 +515,6 @@ func TestUpdateOrder_CambioInformacionFinanciera_ActualizaCampos(t *testing.T) {
 }
 
 func TestUpdateOrder_CambioInformacionCliente_ActualizaCampos(t *testing.T) {
-	// Arrange
 	existingOrder := &entities.ProbabilityOrder{
 		ID:            "ORDER-U05",
 		CustomerName:  "Juan Perez",
@@ -554,10 +535,8 @@ func TestUpdateOrder_CambioInformacionCliente_ActualizaCampos(t *testing.T) {
 		CustomerPhone: "3009999999",
 	}
 
-	// Act
 	result, err := uc.UpdateOrder(context.Background(), existingOrder, dto)
 
-	// Assert
 	if err != nil {
 		t.Fatalf("no se esperaba error, pero se obtuvo: %v", err)
 	}

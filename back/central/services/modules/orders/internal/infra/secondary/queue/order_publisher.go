@@ -28,11 +28,9 @@ func NewOrderRabbitPublisher(rabbit rabbitmq.IQueue, logger log.ILogger) ports.I
 	}
 }
 
-// ───────────────────────────────────────────
 //
 //	MÉTODOS DE PUBLICACIÓN DE EVENTOS
 //
-// ───────────────────────────────────────────
 
 // PublishOrderCreated publica un evento de orden creada
 func (p *OrderRabbitPublisher) PublishOrderCreated(ctx context.Context, order *entities.ProbabilityOrder) error {
@@ -261,11 +259,9 @@ func (p *OrderRabbitPublisher) PublishGuideNotificationRequested(ctx context.Con
 	return nil
 }
 
-// ───────────────────────────────────────────
 //
 //	FUNCIONES HELPER
 //
-// ───────────────────────────────────────────
 
 // publishToQueue publica un mensaje a una queue específica de RabbitMQ
 func (p *OrderRabbitPublisher) publishToQueue(ctx context.Context, _ string, message *response.OrderEventMessage) error {

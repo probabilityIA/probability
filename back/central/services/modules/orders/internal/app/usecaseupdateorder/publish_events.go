@@ -31,11 +31,9 @@ func (uc *UseCaseUpdateOrder) publishUpdateEvents(ctx context.Context, order *en
 	// Score recalculation handled by probability module via QueueOrdersToScore
 }
 
-// ───────────────────────────────────────────
 //
 //	INTEGRATION SYNC EVENTS
 //
-// ───────────────────────────────────────────
 
 // publishSyncOrderUpdated notifica al módulo de integraciones que la orden se actualizó
 func (uc *UseCaseUpdateOrder) publishSyncOrderUpdated(ctx context.Context, order *entities.ProbabilityOrder) {
@@ -56,11 +54,9 @@ func (uc *UseCaseUpdateOrder) publishSyncOrderUpdated(ctx context.Context, order
 	})
 }
 
-// ───────────────────────────────────────────
 //
 //	RABBITMQ FANOUT EVENTS
 //
-// ───────────────────────────────────────────
 
 // publishOrderUpdatedEvent publica el evento de orden actualizada al exchange fanout de RabbitMQ
 func (uc *UseCaseUpdateOrder) publishOrderUpdatedEvent(ctx context.Context, order *entities.ProbabilityOrder) {

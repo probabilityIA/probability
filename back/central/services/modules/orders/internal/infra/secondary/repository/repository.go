@@ -342,7 +342,6 @@ func (r *Repository) ListOrders(ctx context.Context, page, pageSize int, filters
 		Preload("OrderItems.Product"). // Precargar OrderItems con Product para obtener información del catálogo
 		Preload("Shipments") // Cargar TODOS los shipments, luego filteramos en código
 
-	// Paginación
 	offset := (page - 1) * pageSize
 	if err := query.Offset(offset).Limit(pageSize).Find(&dbOrders).Error; err != nil {
 		return nil, 0, err
@@ -511,11 +510,9 @@ func (r *Repository) GetOrderByExternalID(ctx context.Context, externalID string
 	return mappers.ToDomainOrder(&order, r.imageURLBase), nil
 }
 
-// ───────────────────────────────────────────
 //
 //	MÉTODOS PARA TABLAS RELACIONADAS
 //
-// ───────────────────────────────────────────
 
 // CreateOrderItems crea múltiples items de orden
 func (r *Repository) CreateOrderItems(ctx context.Context, items []*entities.ProbabilityOrderItem) error {
@@ -684,11 +681,9 @@ func (r *Repository) CreateChannelMetadata(ctx context.Context, metadata *entiti
 	return r.db.Conn(ctx).Create(dbMetadata).Error
 }
 
-// ───────────────────────────────────────────
 //
 //	MÉTODOS DE CATÁLOGO (VALIDACIÓN)
 //
-// ───────────────────────────────────────────
 
 // GetProductBySKU busca un producto por SKU y BusinessID
 func (r *Repository) GetProductBySKU(ctx context.Context, businessID uint, sku string) (*entities.Product, error) {

@@ -4,9 +4,7 @@ package entities
 type OrderStatus string
 
 const (
-	// ════════════════════════════════════════════
 	// Estados iniciales
-	// ════════════════════════════════════════════
 
 	// OrderStatusPending - Orden recibida, pendiente de procesamiento
 	OrderStatusPending OrderStatus = "pending"
@@ -14,9 +12,7 @@ const (
 	// OrderStatusOnHold - Orden en espera
 	OrderStatusOnHold OrderStatus = "on_hold"
 
-	// ════════════════════════════════════════════
 	// Fase Almacén (Fulfillment)
-	// ════════════════════════════════════════════
 
 	// OrderStatusPicking - Seleccionando productos del inventario
 	OrderStatusPicking OrderStatus = "picking"
@@ -30,9 +26,7 @@ const (
 	// OrderStatusInventoryIssue - Novedad de inventario (sin stock, producto dañado)
 	OrderStatusInventoryIssue OrderStatus = "inventory_issue"
 
-	// ════════════════════════════════════════════
 	// Fase Asignación y Recogida
-	// ════════════════════════════════════════════
 
 	// OrderStatusAssignedToDriver - Asignado a piloto/conductor
 	OrderStatusAssignedToDriver OrderStatus = "assigned_to_driver"
@@ -40,9 +34,7 @@ const (
 	// OrderStatusPickedUp - Recogido por el piloto
 	OrderStatusPickedUp OrderStatus = "picked_up"
 
-	// ════════════════════════════════════════════
 	// Fase Tránsito / Última Milla
-	// ════════════════════════════════════════════
 
 	// OrderStatusInTransit - En camino al destino
 	OrderStatusInTransit OrderStatus = "in_transit"
@@ -50,9 +42,7 @@ const (
 	// OrderStatusOutForDelivery - En reparto final (última milla)
 	OrderStatusOutForDelivery OrderStatus = "out_for_delivery"
 
-	// ════════════════════════════════════════════
 	// Resultado de Entrega
-	// ════════════════════════════════════════════
 
 	// OrderStatusDelivered - Entregada al cliente
 	OrderStatusDelivered OrderStatus = "delivered"
@@ -66,9 +56,6 @@ const (
 	// OrderStatusRejected - Rechazado por el cliente
 	OrderStatusRejected OrderStatus = "rejected"
 
-	// ════════════════════════════════════════════
-	// Devoluciones
-	// ════════════════════════════════════════════
 
 	// OrderStatusReturnInTransit - Devolución en camino al almacén
 	OrderStatusReturnInTransit OrderStatus = "return_in_transit"
@@ -76,9 +63,7 @@ const (
 	// OrderStatusReturned - Devuelto al almacén
 	OrderStatusReturned OrderStatus = "returned"
 
-	// ════════════════════════════════════════════
 	// Estados finales / financieros
-	// ════════════════════════════════════════════
 
 	// OrderStatusCompleted - Orden completada exitosamente
 	OrderStatusCompleted OrderStatus = "completed"
@@ -92,9 +77,7 @@ const (
 	// OrderStatusFailed - Fallo del sistema durante procesamiento
 	OrderStatusFailed OrderStatus = "failed"
 
-	// ════════════════════════════════════════════
 	// Deprecados (backward compat - no usar en código nuevo)
-	// ════════════════════════════════════════════
 
 	// OrderStatusProcessing - DEPRECADO: usar OrderStatusPicking
 	OrderStatusProcessing OrderStatus = "processing"
